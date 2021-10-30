@@ -1,0 +1,664 @@
+{
+    "units": {
+        "1": {
+            "attackType": "attacked",
+            "properties": {
+                "mov": 1,
+                "com": 2,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 3,
+                "res": 6
+            },
+            "status": ["wizard", "noCorpse"],
+            "name": "Wizard"
+        },
+        "2": {
+            "attackType": "struck",
+            "properties": {
+                "mov": 1,
+                "com": 4,
+                "rcm": 0,
+                "rng": 0,
+                "def": 1,
+                "mnv": 1,
+                "res": 6
+            },
+            "status": [],
+            "name": "King Cobra",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4,
+            "shadowScale": 2
+        },
+        "3": {
+            "attackType": "savaged",
+            "properties": {
+                "mov": 3,
+                "com": 3,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 2,
+                "res": 7
+            },
+            "status": [],
+            "name": "Dire Wolf",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 3,
+            "shadowScale": 2
+        },
+        "4": {
+            "attackType": "bit",
+            "properties": {
+                "mov": 1,
+                "com": 5,
+                "rcm": 0,
+                "rng": 0,
+                "def": 6,
+                "mnv": 2,
+                "res": 2
+            },
+            "status": [],
+            "name": "Crocodile",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 5
+        },
+        "5": {
+            "attackType": "stabbed",
+            "properties": {
+                "mov": 1,
+                "com": 3,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 8,
+                "res": 7
+            },
+            "status": [],
+            "name": "Faun",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "6": {
+            "attackType": "mauled",
+            "properties": {
+                "mov": 4,
+                "com": 6,
+                "rcm": 0,
+                "rng": 0,
+                "def": 4,
+                "mnv": 3,
+                "res": 8
+            },
+            "status": [],
+            "name": "Lion",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "7": {
+            "attackType": "hit",
+            "rangedType": "shot",
+            "projectileType": "arrow",
+            "properties": {
+                "mov": 1,
+                "com": 1,
+                "rcm": 2,
+                "rng": 6,
+                "def": 2,
+                "mnv": 7,
+                "res": 5
+            },
+            "status": [],
+            "name": "Elf",
+            "animFrames": [0, 1, 2, 3, 0],
+            "animSpeed": 4
+        },
+        "8": {
+            "attackType": "slashed",
+            "properties": {
+                "mov": 1,
+                "com": 2,
+                "rcm": 0,
+                "rng": 0,
+                "def": 1,
+                "mnv": 4,
+                "res": 4
+            },
+            "status": [],
+            "name": "Orc",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "9": {
+            "attackType": "mauled",
+            "properties": {
+                "mov": 2,
+                "com": 6,
+                "rcm": 0,
+                "rng": 0,
+                "def": 7,
+                "mnv": 2,
+                "res": 6
+            },
+            "status": [],
+            "name": "Bear",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "10": {
+            "attackType": "kicked",
+            "properties": {
+                "mov": 4,
+                "com": 5,
+                "rcm": 0,
+                "rng": 0,
+                "def": 4,
+                "mnv": 7,
+                "res": 9
+            },
+            "status": ["mount"],
+            "name": "Unicorn",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "11": {
+            "attackType": "kicked",
+            "rangedType": "shot",
+            "projectileType": "arrow",
+            "properties": {
+                "mov": 4,
+                "com": 1,
+                "rcm": 2,
+                "rng": 4,
+                "def": 3,
+                "mnv": 5,
+                "res": 5
+            },
+            "status": ["mount"],
+            "name": "Centaur",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "12": {
+            "attackType": "kicked",
+            "properties": {
+                "mov": 5,
+                "com": 2,
+                "rcm": 0,
+                "rng": 0,
+                "def": 4,
+                "mnv": 7,
+                "res": 6
+            },
+            "status": ["mount", "flying"],
+            "name": "Pegasus",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "13": {
+            "attackType": "clawed",
+            "properties": {
+                "mov": 5,
+                "com": 3,
+                "rcm": 0,
+                "rng": 0,
+                "def": 5,
+                "mnv": 6,
+                "res": 5
+            },
+            "status": ["mount", "flying"],
+            "name": "Gryphon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "14": {
+            "attackType": "struck",
+            "rangedType": "shot",
+            "projectileType": "arrow",
+            "properties": {
+                "mov": 5,
+                "com": 3,
+                "rcm": 1,
+                "rng": 3,
+                "def": 6,
+                "mnv": 8,
+                "res": 6
+            },
+            "status": ["mount", "flying"],
+            "name": "Manticore",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "15": {
+            "attackType": "bit",
+            "properties": {
+                "mov": 5,
+                "com": 1,
+                "rcm": 0,
+                "rng": 0,
+                "def": 1,
+                "mnv": 4,
+                "res": 9
+            },
+            "status": ["flying"],
+            "name": "Bat",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 1,
+            "shadowScale": 1
+        },
+        "16": {
+            "attackType": "attacked",
+            "rangedType": "burned",
+            "projectileType": "dragonfire",
+            "properties": {
+                "mov": 3,
+                "com": 5,
+                "rcm": 4,
+                "rng": 6,
+                "def": 8,
+                "mnv": 4,
+                "res": 4
+            },
+            "status": ["flying"],
+            "name": "Green Dragon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 8,
+            "offY": 1
+        },
+        "17": {
+            "attackType": "attacked",
+            "rangedType": "burned",
+            "projectileType": "dragonfire",
+            "properties": {
+                "mov": 3,
+                "com": 7,
+                "rcm": 3,
+                "rng": 5,
+                "def": 9,
+                "mnv": 5,
+                "res": 4
+            },
+            "status": ["flying"],
+            "name": "Red Dragon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 8,
+            "offY": 2
+        },
+        "18": {
+            "attackType": "attacked",
+            "rangedType": "burned",
+            "projectileType": "dragonfire",
+            "properties": {
+                "mov": 3,
+                "com": 7,
+                "rcm": 5,
+                "rng": 4,
+                "def": 9,
+                "mnv": 5,
+                "res": 4
+            },
+            "status": ["flying"],
+            "name": "Golden Dragon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 8
+        },
+        "19": {
+            "attackType": "clawed",
+            "properties": {
+                "mov": 5,
+                "com": 4,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 5,
+                "res": 8
+            },
+            "status": ["flying"],
+            "name": "Harpy",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 3,
+            "shadowScale": 2
+        },
+        "20": {
+            "attackType": "bit",
+            "properties": {
+                "mov": 1,
+                "com": 1,
+                "rcm": 0,
+                "rng": 0,
+                "def": 1,
+                "mnv": 3,
+                "res": 2
+            },
+            "status": ["undead", "noCorpse"],
+            "name": "Zombie",
+            "animFrames": [3, 2, 1, 0],
+            "animSpeed": 6
+        },
+        "21": {
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 5,
+                "mnv": 0,
+                "res": 9
+            },
+            "status": ["tree", "expires", "expiresGiveSpell", "noCorpse"],
+            "name": "Magic Wood",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "22": {
+            "attackType": "attacked",
+            "properties": {
+                "mov": 0,
+                "com": 2,
+                "rcm": 0,
+                "rng": 0,
+                "def": 4,
+                "mnv": 0,
+                "res": 9
+            },
+            "status": ["tree", "noCorpse"],
+            "name": "Shadow Wood",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "23": {
+            "attackType": "burned",
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 0,
+                "mnv": 0,
+                "res": 0
+            },
+            "status": ["invuln", "spread", "trans", "noCorpse"],
+            "name": "Magic Fire",
+            "animFrames": [3, 2, 1, 0],
+            "animSpeed": 1,
+            "shadowScale": 0
+        },
+        "24": {
+            "attackType": "engulfed",
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 3,
+                "mnv": 0,
+                "res": 0
+            },
+            "status": ["spread", "engulf", "noCorpse"],
+            "name": "Gooey Blob",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 6
+        },
+        "25": {
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 0,
+                "mnv": 0,
+                "res": 0
+            },
+            "status": ["mount", "invuln", "expires", "struct", "noCorpse"],
+            "name": "Magic Castle",
+            "animFrames": [0],
+            "offY": 2,
+            "shadowScale": 4
+        },
+        "26": {
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 0,
+                "mnv": 0,
+                "res": 0
+            },
+            "status": ["mount", "invuln", "expires", "struct", "noCorpse"],
+            "name": "Dark Citadel",
+            "animFrames": [0],
+            "offY": 2,
+            "shadowScale": 4
+        },
+        "27": {
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 0,
+                "rng": 0,
+                "def": 0,
+                "mnv": 0,
+                "res": 0
+            },
+            "status": ["invuln", "struct", "noCorpse"],
+            "name": "Wall",
+            "animFrames": [0],
+            "offY": -2,
+            "shadowScale": 4
+        },
+        "28": {
+            "properties": {
+                "mov": 1,
+                "com": 2,
+                "rcm": 0,
+                "rng": 0,
+                "def": 4,
+                "mnv": 4,
+                "res": 4
+            },
+            "status": [],
+            "name": "Goblin",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 3
+        },
+        "a": {
+            "attackType": "pounded",
+            "properties": {
+                "mov": 1,
+                "com": 6,
+                "rcm": 0,
+                "rng": 0,
+                "def": 5,
+                "mnv": 2,
+                "res": 4
+            },
+            "status": [],
+            "name": "Gorilla",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "b": {
+            "attackType": "clubbed",
+            "properties": {
+                "mov": 1,
+                "com": 4,
+                "rcm": 0,
+                "rng": 0,
+                "def": 7,
+                "mnv": 6,
+                "res": 3
+            },
+            "status": [],
+            "name": "Ogre",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "c": {
+            "attackType": "struck",
+            "properties": {
+                "mov": 1,
+                "com": 7,
+                "rcm": 0,
+                "rng": 0,
+                "def": 8,
+                "mnv": 6,
+                "res": 4
+            },
+            "status": [],
+            "name": "Hydra",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 6
+        },
+        "d": {
+            "attackType": "bit",
+            "properties": {
+                "mov": 3,
+                "com": 1,
+                "rcm": 0,
+                "rng": 0,
+                "def": 1,
+                "mnv": 2,
+                "res": 8
+            },
+            "status": [],
+            "name": "Giant Rat",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 3
+        },
+        "e": {
+            "attackType": "crushed",
+            "properties": {
+                "mov": 2,
+                "com": 9,
+                "rcm": 0,
+                "rng": 0,
+                "def": 7,
+                "mnv": 5,
+                "res": 6
+            },
+            "status": [],
+            "name": "Giant",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 6,
+            "offY": 2
+        },
+        "f": {
+            "attackType": "kicked",
+            "properties": {
+                "mov": 4,
+                "com": 1,
+                "rcm": 0,
+                "rng": 0,
+                "def": 3,
+                "mnv": 1,
+                "res": 8
+            },
+            "status": ["mount"],
+            "name": "Horse",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        },
+        "1a": {
+            "attackType": "clawed",
+            "properties": {
+                "mov": 6,
+                "com": 3,
+                "rcm": 0,
+                "rng": 0,
+                "def": 3,
+                "mnv": 2,
+                "res": 8
+            },
+            "status": ["flying"],
+            "name": "Eagle",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 5,
+            "shadowScale": 2
+        },
+        "1b": {
+            "attackType": "savaged",
+            "properties": {
+                "mov": 4,
+                "com": 6,
+                "rcm": 0,
+                "rng": 0,
+                "def": 8,
+                "mnv": 5,
+                "res": 6
+            },
+            "status": ["undead", "trans", "flying", "noCorpse"],
+            "name": "Vampire",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 5
+        },
+        "1c": {
+            "attackType": "attacked",
+            "properties": {
+                "mov": 2,
+                "com": 1,
+                "rcm": 0,
+                "rng": 0,
+                "def": 3,
+                "mnv": 6,
+                "res": 9
+            },
+            "status": ["undead", "trans", "flying", "noCorpse"],
+            "name": "Ghost",
+            "animFrames": [0, 1, 2, 3],
+            "animSpeed": 4,
+            "shadowScale": 0
+        },
+        "1d": {
+            "attackType": "slashed",
+            "properties": {
+                "mov": 1,
+                "com": 4,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 4,
+                "res": 6
+            },
+            "status": ["undead", "trans", "noCorpse"],
+            "name": "Spectre",
+            "animFrames": [0, 1, 2, 3],
+            "animSpeed": 2,
+            "shadowScale": 0
+        },
+        "1e": {
+            "attackType": "stabbed",
+            "properties": {
+                "mov": 2,
+                "com": 5,
+                "rcm": 0,
+                "rng": 0,
+                "def": 5,
+                "mnv": 5,
+                "res": 4
+            },
+            "status": ["undead", "noCorpse"],
+            "name": "Wraith",
+            "animFrames": [0, 1, 2, 3],
+            "animSpeed": 2,
+            "shadowScale": 0
+        },
+        "1f": {
+            "attackType": "stabbed",
+            "properties": {
+                "mov": 1,
+                "com": 3,
+                "rcm": 0,
+                "rng": 0,
+                "def": 2,
+                "mnv": 4,
+                "res": 3
+            },
+            "status": ["undead", "noCorpse"],
+            "name": "Skeleton",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 4
+        }
+    }
+}

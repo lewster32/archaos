@@ -1,0 +1,60 @@
+{
+    "textures": [
+        {
+            "image": "board.png",
+            "format": "RGBA8888",
+            "size": { "w": 32, "h": 64 },
+            "scale": 1,
+            "frames": [
+                {
+                    "filename": "empty",
+                    "frame": { "x": 0, "y": 0, "w": 28, "h": 18 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 28, "h": 18 },
+                    "sourceSize": { "w": 28, "h": 18 }
+                },
+                {
+                    "filename": "shadow-1",
+                    "frame": { "x": 0, "y": 18, "w": 14, "h": 5 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 5 },
+                    "sourceSize": { "w": 14, "h": 5 }
+                },
+                {
+                    "filename": "shadow-2",
+                    "frame": { "x": 14, "y": 18, "w": 14, "h": 5 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 5 },
+                    "sourceSize": { "w": 14, "h": 5 }
+                },
+                {
+                    "filename": "shadow-3",
+                    "frame": { "x": 0, "y": 23, "w": 14, "h": 5 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 5 },
+                    "sourceSize": { "w": 14, "h": 5 }
+                },
+                {
+                    "filename": "shadow-4",
+                    "frame": { "x": 14, "y": 23, "w": 18, "h": 8 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 18, "h": 8 },
+                    "sourceSize": { "w": 18, "h": 8 }
+                },
+                {
+                    "filename": "shadow",
+                    "frame": { "x": 0, "y": 31, "w": 27, "h": 14 },
+                    "rotated": false,
+                    "trimmed": false,
+                    "spriteSourceSize": { "x": 0, "y": 0, "w": 27, "h": 14 },
+                    "sourceSize": { "w": 27, "h": 14 }
+                }
+            ]
+        }
+    ]
+}
