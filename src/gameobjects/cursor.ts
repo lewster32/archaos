@@ -5,7 +5,6 @@ import { CursorType } from "./enums/cursortype";
 import { Piece } from "./piece";
 
 export class Cursor {
-
     private _position: Phaser.Geom.Point;
     private _image: Phaser.GameObjects.Image;
     private _board: Board;
@@ -17,7 +16,7 @@ export class Cursor {
         this._board = board;
 
         this._image = this._board.scene.add.image(0, 0, "cursors", "idle");
-        this._image.setOrigin(.5, .5);
+        this._image.setOrigin(0.5, 0.5);
         this._board.getLayer(BoardLayer.Pieces).add(this._image);
         this._type = CursorType.Idle;
 
@@ -33,8 +32,25 @@ export class Cursor {
         });
 
         this._board.scene.input.keyboard.on("keyup", (event: KeyboardEvent) => {
-            if (event.key === "Escape" && this._board.state === BoardState.MovePieces && this._board.selected) {
-                this._board.deselectPiece();
+            if (
+                event.key === "Escape" &&
+                this._board.state === BoardState.MovePieces &&
+                this._board.selected
+            ) {
+                if (this._board.selected.moved) {
+                    if (this._board.selected.canAttack) {
+                        this._board.selected.attacked = true;
+                    } else if (this._board.selected.canRangedAttack) {
+                        this._board.selected.rangedAttacked = true;
+                    }
+                    if (!this._board.selected.canSelect) {
+                        this._board.deselectPiece();
+                    }
+                }
+                else {
+                    this._board.deselectPiece();
+                }
+
                 this.update(true);
             }
         });
@@ -48,11 +64,16 @@ export class Cursor {
 
         this._image.setVisible(true);
 
-        const pointer: Phaser.Input.Pointer = this._board.scene.input.activePointer;
+        const pointer: Phaser.Input.Pointer =
+            this._board.scene.input.activePointer;
 
-        const translatedIsoPosition: Phaser.Geom.Point = this.translateCursorPosition(pointer.position);
+        const translatedIsoPosition: Phaser.Geom.Point =
+            this.translateCursorPosition(pointer.position);
 
-        if (!force && Phaser.Geom.Point.Equals(translatedIsoPosition, this._position)) {
+        if (
+            !force &&
+            Phaser.Geom.Point.Equals(translatedIsoPosition, this._position)
+        ) {
             return;
         }
         this._position.setTo(translatedIsoPosition.x, translatedIsoPosition.y);
@@ -64,13 +85,20 @@ export class Cursor {
             )
         );
 
-        if (translatedIsoPosition.x < 0 || translatedIsoPosition.y < 0 || translatedIsoPosition.x >= this._board.width || translatedIsoPosition.y >= this._board.height) {
+        if (
+            translatedIsoPosition.x < 0 ||
+            translatedIsoPosition.y < 0 ||
+            translatedIsoPosition.x >= this._board.width ||
+            translatedIsoPosition.y >= this._board.height
+        ) {
             this._image.setVisible(false);
             return;
         }
         this._image.setVisible(true);
 
-        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(this._position);
+        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(
+            this._position
+        );
 
         switch (this._board.state) {
             case BoardState.View:
@@ -82,23 +110,39 @@ export class Cursor {
                 break;
             case BoardState.MovePieces:
                 if (this._board.selected) {
-
-                    if (!this._board.selected.inMovementRange(this._position)) {
-                        this.type = CursorType.Invalid;
-                    }
-                    else {
-                        if (hoveredPieces.length > 0 && hoveredPieces[0] !== this._board.selected) {
+                    if (
+                        hoveredPieces.length > 0 &&
+                        hoveredPieces[0] !== this._board.selected
+                    ) {
+                        if (
+                            this._board.selected.canAttack &&
+                            this._board.selected.inAttackRange(
+                                this._position
+                            )
+                        ) {
                             this.type = CursorType.Attack;
+                        } else if (
+                            this._board.selected.canRangedAttack &&
+                            this._board.selected.inRangedAttackRange(
+                                this._position
+                            )
+                        ) {
+                            this.type = CursorType.RangedAttack;
                         } else {
+                            this.type = CursorType.Invalid;
+                        }
+                    } else {
+                        if (this._board.selected.inMovementRange(this._position) && !this._board.selected.moved) {
                             this.type = CursorType.Fly;
+                        } else {
+                            this.type = CursorType.Invalid;
                         }
                     }
                 } else {
                     if (hoveredPieces.length > 0) {
-                        if (!hoveredPieces[0].moved) {
+                        if (hoveredPieces[0].canSelect) {
                             this.type = CursorType.Select;
-                        }
-                        else {
+                        } else {
                             this.type = CursorType.Invalid;
                         }
                     } else {
@@ -117,21 +161,32 @@ export class Cursor {
             return;
         }
 
-        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(this._position);
+        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(
+            this._position
+        );
 
         switch (this._board.state) {
             case BoardState.View:
                 if (hoveredPieces.length > 0) {
-                    this._board.scene.events.emit("piece-info", hoveredPieces[0]);
+                    this._board.scene.events.emit(
+                        "piece-info",
+                        hoveredPieces[0]
+                    );
                 }
                 break;
             case BoardState.MovePieces:
                 if (this._board.selected) {
-                    if (hoveredPieces.length > 0 && hoveredPieces[0] === this._board.selected) {
+                    if (
+                        hoveredPieces.length > 0 &&
+                        hoveredPieces[0] === this._board.selected
+                    ) {
                         return;
                     }
 
-                    if (!this._board.selected.inMovementRange(this._position)) {
+                    if (
+                        this._board.selected.moved ||
+                        !this._board.selected.inMovementRange(this._position)
+                    ) {
                         this.type = CursorType.Invalid;
                         return;
                     }
@@ -139,14 +194,25 @@ export class Cursor {
                     this._board.state = BoardState.Idle;
                     this.type = CursorType.Idle;
 
-                    await this._board.movePiece(this._board.selected.id, this._position);
+                    await this._board.movePiece(
+                        this._board.selected.id,
+                        this._position
+                    );
                     this._board.selected.moved = true;
-                    this._board.deselectPiece();
                     this._board.state = previousState;
-                    
-                }
-                else {
-                    if (hoveredPieces.length > 0 && !hoveredPieces[0].moved) {
+
+                    if (this._board.selected.canAttack) {
+                        this.type = CursorType.Attack;
+                    } else if (this._board.selected.canRangedAttack) {
+                        this.type = CursorType.RangedAttack;
+                    } else {
+                        this._board.deselectPiece();
+                    }
+                } else {
+                    if (
+                        hoveredPieces.length > 0 &&
+                        hoveredPieces[0].canSelect
+                    ) {
                         this._board.selectPiece(hoveredPieces[0].id);
                         this.type = CursorType.Fly;
                     }
@@ -174,20 +240,27 @@ export class Cursor {
 
     /**
      * Make this better :(
-     * 
-     * @param vector 
-     * @returns 
+     *
+     * @param vector
+     * @returns
      */
-    private translateCursorPosition(vector: Phaser.Math.Vector2): Phaser.Geom.Point {
-        const point: Phaser.Math.Vector2 = new Phaser.Math.Vector2(vector.x, vector.y);
+    private translateCursorPosition(
+        vector: Phaser.Math.Vector2
+    ): Phaser.Geom.Point {
+        const point: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
+            vector.x,
+            vector.y
+        );
 
-        point.x -= (Board.DEFAULT_CELLSIZE * -1) + (this._board.scene.game.config.width as number) / 2;
-        point.y += (Board.DEFAULT_CELLSIZE * -2.5);
+        point.x -=
+            Board.DEFAULT_CELLSIZE * -1 +
+            (this._board.scene.game.config.width as number) / 2;
+        point.y += Board.DEFAULT_CELLSIZE * -2.5;
 
         point.y *= 1.6;
 
-        const ly: number = ((2 * point.y - point.x) / 2) - Board.DEFAULT_CELLSIZE;
-        const lx: number = (point.x + ly) - Board.DEFAULT_CELLSIZE;
+        const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
+        const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;
 
         const ax: number = Math.round(lx / Board.DEFAULT_CELLSIZE) - 1;
         const ay: number = Math.round(ly / Board.DEFAULT_CELLSIZE) - 1;

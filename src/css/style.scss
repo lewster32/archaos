@@ -6,7 +6,15 @@ html, body, #app {
 }
 
 body {
-    background: #171717;
+    background: #555 url('../../assets/images/bg.png') repeat-x 0 50%; 
+    color: #eee;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    -o-transition: background-color 0.2s;
+    -moz-transition: background-color 0.2s;
+    -webkit-transition: background-color 0.2s;
+    transition: background-color 0.2s;
 }
 
 #app {

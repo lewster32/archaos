@@ -84,12 +84,37 @@ export class Piece extends Entity {
     }
 
     get moved(): boolean {
+        if (this.properties.movement === 0) {
+            return true;
+        }
         return this._moved;
     }
 
     set moved(moved: boolean) {
         this._moved = moved;
         this._sprite?.setTint(moved ? 0x444444 : 0xffffff);
+    }
+
+    get attacked(): boolean {
+        if (this.properties.combat === 0) {
+            return true;
+        }
+        return this._attacked;
+    }
+
+    set attacked(attacked: boolean) {
+        this._attacked = attacked;
+    }
+
+    get rangedAttacked(): boolean {
+        if (this.properties.rangedCombat === 0 || this.properties.range === 0) {
+            return true;
+        }
+        return this._rangedAttacked;
+    }
+
+    set rangedAttacked(rangedAttacked: boolean) {
+        this._rangedAttacked = rangedAttacked;
     }
 
     get properties(): IUnitProperties {
@@ -158,12 +183,56 @@ export class Piece extends Entity {
         return this._properties.status.indexOf(status) !== -1;
     }
 
-    get movementRange(): number {
-        return Math.max(this.properties.movement, this.properties.range);
+    inMovementRange(point: Phaser.Geom.Point): boolean {
+        if (Board.distance(this.position, point) > this.properties.movement + 0.5) {
+            return false;
+        }
+        return true;
     }
 
-    inMovementRange(point: Phaser.Geom.Point): boolean {
-        if (Board.distance(this.position, point) > this.movementRange + .5) {
+    inAttackRange(point: Phaser.Geom.Point): boolean {
+        if (Board.distance(this.position, point) > 1.5) {
+            return false;
+        }
+        return true;
+    }
+
+    inRangedAttackRange(point: Phaser.Geom.Point): boolean {
+        if (Board.distance(this.position, point) > this.properties.range + 0.5) {
+            return false;
+        }
+        return true;
+    }
+
+    get canSelect(): boolean {
+        if (
+            this.dead ||
+            (this.moved && this.attacked && this.rangedAttacked) || 
+            this.hasStatus(UnitStatus.Structure) ||
+            (this.properties.combat === 0 && this.properties.rangedCombat === 0 && this.properties.movement === 0)
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    get canAttack(): boolean {
+        if (
+            this._dead ||
+            this.attacked ||
+            this.properties.combat === 0
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    get canRangedAttack(): boolean {
+        if (
+            this._dead ||
+            this.rangedAttacked ||
+            this.properties.rangedCombat === 0
+        ) {
             return false;
         }
         return true;
