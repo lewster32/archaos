@@ -1,5 +1,7 @@
 import "phaser";
 import { GameScene } from "./game-scene";
+import { EventType } from "./gameobjects/enums/eventtype";
+import { Piece } from "./gameobjects/piece";
 
 const GameConfig: Phaser.Types.Core.GameConfig = {
     title: "Archaos",
@@ -39,4 +41,10 @@ export class Game extends Phaser.Game {
 
 window.addEventListener("load", () => {
     (window as any)._game = new Game(GameConfig);
+});
+
+window.addEventListener(EventType.PieceInfo, (event: any) => {
+    const piece: Piece = event.detail;
+    const info = document.getElementById("piece-info");
+    info!.innerHTML = `<h2>${piece.owner?.name}'s ${piece.name} #${piece.id}</h2>`;
 });

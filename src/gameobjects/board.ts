@@ -1,10 +1,13 @@
 import { PieceConfig } from "./configs/piececonfig";
+import { PlayerConfig } from "./configs/playerconfig";
 import { Cursor } from "./cursor";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
 import { Model } from "./model";
 import { Piece } from "./piece";
+import { Player } from "./player";
+import { Rules } from "./services/rules";
 
 export class Board extends Model {
     private _scene: Phaser.Scene;
@@ -21,8 +24,11 @@ export class Board extends Model {
     private _cursor: Cursor;
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
+    private _players: Map<number, Player>;
 
     private _idCounter: number = 1;
+
+    private _rules: Rules;
 
     get entities(): Entity[] {
         return Array.from(this._pieces.values());
@@ -54,10 +60,13 @@ export class Board extends Model {
         );
 
         this._pieces = new Map();
-        this._state = BoardState.MovePieces;
+        this._players = new Map();
+        this._state = BoardState.View;
 
         this._cursor = new Cursor(this);
         this._selected = null;
+
+        this._rules = Rules.getInstance();
     }
 
     get scene(): Phaser.Scene {
@@ -86,6 +95,14 @@ export class Board extends Model {
 
     get selected(): Piece | null {
         return this._selected;
+    }
+
+    get cursor(): Cursor {
+        return this._cursor;
+    }
+
+    get rules(): Rules {
+        return this._rules;
     }
 
     createFloor() {
@@ -197,10 +214,10 @@ export class Board extends Model {
         this._pieces.delete(id);
     }
 
-    getPiecesAtPosition(point: Phaser.Geom.Point): Piece[] {
+    getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
         return Array.from(
             this.pieces.filter((piece) => {
-                return Phaser.Geom.Point.Equals(piece.position, point);
+                return Phaser.Geom.Point.Equals(piece.position, point) && (filter ? filter(piece) : true);
             })
         );
     }
@@ -222,5 +239,11 @@ export class Board extends Model {
             Math.min(difference.x, difference.y) +
             Math.min(difference.x, difference.y) * 1.5
         );
+    }
+
+    addPlayer(config: PlayerConfig): Player {
+        const player: Player = new Player(this, this._idCounter++, config);
+        this._players.set(player.id, player);
+        return player;
     }
 }

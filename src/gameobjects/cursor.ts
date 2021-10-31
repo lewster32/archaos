@@ -1,7 +1,9 @@
 import { Board } from "./board";
+import { ActionType } from "./enums/actiontype";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
 import { CursorType } from "./enums/cursortype";
+import { InputType } from "./enums/inputtype";
 import { Piece } from "./piece";
 
 export class Cursor {
@@ -22,21 +24,20 @@ export class Cursor {
 
         this._position = new Phaser.Geom.Point(0, 0);
 
-        this._board.scene.input.on("pointermove", () => {
-            this.update();
+        this._board.scene.input.on("pointermove", async () => {
+            await this.update();
         });
 
         this._board.scene.input.on("pointerup", async () => {
-            this.update();
-            await this.action();
+            await this.action(InputType.Click);
         });
 
-        this._board.scene.input.keyboard.on("keyup", (event: KeyboardEvent) => {
+        this._board.scene.input.keyboard.on("keyup", async (event: KeyboardEvent) => {
             if (
-                event.key === "Escape" &&
-                this._board.state === BoardState.MovePieces &&
-                this._board.selected
+                event.key === "Escape" 
             ) {
+                await this.action(InputType.Cancel);
+                /*
                 if (this._board.selected.moved) {
                     if (this._board.selected.canAttack) {
                         this._board.selected.attacked = true;
@@ -50,13 +51,81 @@ export class Cursor {
                 else {
                     this._board.deselectPiece();
                 }
-
-                this.update(true);
+                
+                await this.update();
+                */
             }
         });
+
+        setTimeout(async () => {
+            await this.update(true);
+        }, 0);
+    }
+    
+    get position(): Phaser.Geom.Point {
+        return this._position;
     }
 
-    update(force?: boolean) {
+    async update(force?: boolean): Promise<ActionType> {
+        const pointer: Phaser.Input.Pointer =
+            this._board.scene.input.activePointer;
+
+        const translatedIsoPosition: Phaser.Geom.Point =
+            this.translateCursorPosition(pointer.position);
+
+        // Only perform one intent check per tile (unless forced)
+        if (
+            !force &&
+            Phaser.Geom.Point.Equals(translatedIsoPosition, this._position)
+        ) {
+            return ActionType.None;
+        }
+        this._position.setTo(translatedIsoPosition.x, translatedIsoPosition.y);
+
+        // Board bounds check
+        if (
+            this._position.x < 0 ||
+            this._position.y < 0 ||
+            this._position.x >= this._board.width ||
+            this._position.y >= this._board.height
+        ) {
+            this._image.setVisible(false);
+            return ActionType.None;
+        }
+
+        this._image.setVisible(true);
+        
+        const allowedAction: ActionType = await this._board.rules.processIntent(this._board);
+
+        switch (allowedAction) {
+            case ActionType.None:
+                this._image.setVisible(false);
+                return ActionType.None;
+            case ActionType.Idle:
+                this.type = CursorType.Idle;
+                break;
+            case ActionType.Info:
+                this.type = CursorType.Info;
+                break;
+            case ActionType.Select:
+                this.type = CursorType.Select;
+                break;
+        }
+
+
+        const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
+            new Phaser.Geom.Point(
+                translatedIsoPosition.x,
+                translatedIsoPosition.y
+            )
+        );
+
+        this._image.x = isoPosition.x + Cursor.OFFSET.x;
+        this._image.y = isoPosition.y + Cursor.OFFSET.y;
+
+        return allowedAction;
+
+        /*
         if (this._board.state === BoardState.Idle) {
             this._image.setVisible(false);
             return;
@@ -97,7 +166,8 @@ export class Cursor {
         this._image.setVisible(true);
 
         const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(
-            this._position
+            this._position,
+            (piece: Piece) => piece.owner == null
         );
 
         switch (this._board.state) {
@@ -154,9 +224,18 @@ export class Cursor {
 
         this._image.x = isoPosition.x + Cursor.OFFSET.x;
         this._image.y = isoPosition.y + Cursor.OFFSET.y;
+        */
     }
 
-    async action() {
+    async action(input: InputType) {
+        const intendedAction: ActionType = await this.update(true);
+
+        const invokedAction: ActionType = await this._board.rules.processAction(
+            this._board,
+            intendedAction,
+            input
+        );
+        /*
         if (this._board.state === BoardState.Idle) {
             return;
         }
@@ -219,6 +298,7 @@ export class Cursor {
                 }
                 break;
         }
+        */
     }
 
     set type(type: CursorType) {

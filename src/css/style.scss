@@ -1,7 +1,13 @@
+@import "reset";
+
+html {
+    font-size: 16px;
+    font-family: sans-serif;
+}
+
 html, body, #app {
     padding: 0;
     margin: 0;
-    font-size: 16px;
     height: 100%;
 }
 
@@ -27,4 +33,12 @@ body {
         object-fit: contain;
         object-position: 50% 50%;
     }
+}
+
+#piece-info {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    padding: 1em;
+    margin: 0;
 }

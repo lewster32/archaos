@@ -10,6 +10,7 @@ import { PieceType } from "./gameobjects/enums/piecetype";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { Piece } from "./gameobjects/piece";
 import { UnitDirection } from "./gameobjects/enums/unitdirection";
+import { Player } from "./gameobjects/player";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -55,7 +56,15 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
+        this.testGame();
+    }
+
+    testGame(): void {
         const board: Board = new Board(this, 1);
+
+        const player: Player = board.addPlayer({
+            name: "Lew"
+        });
 
         for (let i = 0; i < 2; i++) {
             for (let [key, unit] of Object.entries(units) as [string, any]) {
@@ -86,6 +95,7 @@ export class GameScene extends Phaser.Scene {
                     },
                     shadowScale: unit.shadowScale,
                     offsetY: unit.offY,
+                    owner: player
                 });
 
                 piece.direction =
