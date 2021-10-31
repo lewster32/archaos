@@ -217,10 +217,29 @@ export class Piece extends Entity {
     }
 
     get canAttack(): boolean {
+        const neighbours: Piece[] = this.getNeighbours();
+
         if (
             this._dead ||
             this.attacked ||
-            this.properties.combat === 0
+            this.properties.combat === 0 ||
+            neighbours.length === 0 ||
+            neighbours.filter((neighbour: Piece) => this.canAttackPiece(neighbour)).length === 0
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    canAttackPiece(piece: Piece): boolean {
+        if (
+            this == piece ||
+            this._dead ||
+            piece.dead ||
+            this.attacked ||
+            piece.hasStatus(UnitStatus.Invulnerable) ||
+            (piece.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.AttackUndead)) ||
+            !this.inAttackRange(piece.position)
         ) {
             return false;
         }
@@ -231,7 +250,38 @@ export class Piece extends Entity {
         if (
             this._dead ||
             this.rangedAttacked ||
-            this.properties.rangedCombat === 0
+            this.properties.rangedCombat === 0 ||
+            this.board.pieces.filter((piece: Piece) => this.canRangedAttackPiece(piece)).length === 0
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    canRangedAttackPiece(piece: Piece): boolean {
+        if (
+            this == piece ||
+            this._dead ||
+            piece.dead ||
+            this.rangedAttacked ||
+            piece.hasStatus(UnitStatus.Invulnerable) ||
+            (piece.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.AttackUndead)) ||
+            !this.inRangedAttackRange(piece.position)
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    canMountPiece(piece: Piece): boolean {
+        if (
+            this == piece ||
+            this._dead ||
+            piece.dead ||
+            this.moved ||
+            !this.hasStatus(UnitStatus.Wizard) ||
+            (piece.hasStatus(UnitStatus.Mount) && piece.owner !== this.owner) ||
+            (!piece.hasStatus(UnitStatus.MountAny))
         ) {
             return false;
         }
@@ -239,7 +289,7 @@ export class Piece extends Entity {
     }
 
     getNeighbours(): Piece[] {
-        const neighbours: Piece[] = [];
+        let neighbours: Piece[] = [];
         const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
             this.position
         );
@@ -248,10 +298,11 @@ export class Piece extends Entity {
                 new Phaser.Geom.Point(
                     position.x + direction.x,
                     position.y + direction.y
-                )
+                ),
+                (piece: Piece) => !piece.dead
             );
             if (directionNeighbours) {
-                neighbours.concat(directionNeighbours);
+                neighbours = neighbours.concat(directionNeighbours);
             }
         }
         return neighbours;

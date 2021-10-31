@@ -4,6 +4,7 @@ import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
 import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
+import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 
 export class Cursor {
@@ -32,36 +33,20 @@ export class Cursor {
             await this.action(InputType.Click);
         });
 
-        this._board.scene.input.keyboard.on("keyup", async (event: KeyboardEvent) => {
-            if (
-                event.key === "Escape" 
-            ) {
-                await this.action(InputType.Cancel);
-                /*
-                if (this._board.selected.moved) {
-                    if (this._board.selected.canAttack) {
-                        this._board.selected.attacked = true;
-                    } else if (this._board.selected.canRangedAttack) {
-                        this._board.selected.rangedAttacked = true;
-                    }
-                    if (!this._board.selected.canSelect) {
-                        this._board.deselectPiece();
-                    }
+        this._board.scene.input.keyboard.on(
+            "keyup",
+            async (event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                    await this.action(InputType.Cancel);
                 }
-                else {
-                    this._board.deselectPiece();
-                }
-                
-                await this.update();
-                */
             }
-        });
+        );
 
         setTimeout(async () => {
             await this.update(true);
         }, 0);
     }
-    
+
     get position(): Phaser.Geom.Point {
         return this._position;
     }
@@ -94,8 +79,12 @@ export class Cursor {
         }
 
         this._image.setVisible(true);
-        
-        const allowedAction: ActionType = await this._board.rules.processIntent(this._board);
+
+        const allowedAction: ActionType = await this._board.rules.processIntent(
+            this._board
+        );
+
+        const selectedPiece: Piece | null = this._board.selected;
 
         switch (allowedAction) {
             case ActionType.None:
@@ -107,11 +96,37 @@ export class Cursor {
             case ActionType.Info:
                 this.type = CursorType.Info;
                 break;
+            case ActionType.Invalid:
+                this.type = CursorType.Invalid;
+                break;
             case ActionType.Select:
                 this.type = CursorType.Select;
                 break;
+            case ActionType.Move:
+                if (selectedPiece) {
+                    if (selectedPiece.hasStatus(UnitStatus.Flying)) {
+                        this.type = CursorType.Fly;
+                        break;
+                    }
+                    this.type = Cursor.getMovementDirectionType(
+                        selectedPiece?.position,
+                        this._position
+                    );
+                }
+                break;
+            case ActionType.Mount:
+                this.type = CursorType.Mount;
+                break;
+            case ActionType.Dismount:
+                this.type = CursorType.Dismount;
+                break;
+            case ActionType.Attack:
+                this.type = CursorType.Attack;
+                break;
+            case ActionType.RangedAttack:
+                this.type = CursorType.RangedAttack;
+                break;
         }
-
 
         const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
             new Phaser.Geom.Point(
@@ -235,6 +250,21 @@ export class Cursor {
             intendedAction,
             input
         );
+
+        this.update(true);
+
+        const selected: Piece | null = this._board.selected;
+
+        if (
+            selected &&
+            selected.moved &&
+            !selected.canAttack &&
+            !selected.canRangedAttack
+        ) {
+            selected.moved = selected.attacked = selected.rangedAttacked = true;
+            this._board.deselectPiece();
+        }
+
         /*
         if (this._board.state === BoardState.Idle) {
             return;
@@ -349,5 +379,33 @@ export class Cursor {
         point.y = Math.round(ay);
 
         return new Phaser.Geom.Point(point.x, point.y);
+    }
+
+    static getMovementDirectionType(
+        fromPoint: Phaser.Geom.Point,
+        toPoint: Phaser.Geom.Point
+    ): CursorType {
+        const dx: number = toPoint.x - fromPoint.x;
+        const dy: number = toPoint.y - fromPoint.y;
+
+        if (dx === 0 && dy === 1) {
+            return CursorType.DownLeft;
+        } else if (dx === 1 && dy === 1) {
+            return CursorType.Down;
+        } else if (dx === 1 && dy === 0) {
+            return CursorType.DownRight;
+        } else if (dx === 1 && dy === -1) {
+            return CursorType.Right;
+        } else if (dx === 0 && dy === -1) {
+            return CursorType.UpRight;
+        } else if (dx === -1 && dy === -1) {
+            return CursorType.Up;
+        } else if (dx === -1 && dy === 0) {
+            return CursorType.UpLeft;
+        } else if (dx === -1 && dy === 1) {
+            return CursorType.Left;
+        } else {
+            return CursorType.Invalid;
+        }
     }
 }

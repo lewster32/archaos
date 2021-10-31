@@ -25,14 +25,11 @@ export class Board extends Model {
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
     private _players: Map<number, Player>;
+    private _currentPlayer: Player | null;
 
     private _idCounter: number = 1;
 
     private _rules: Rules;
-
-    get entities(): Entity[] {
-        return Array.from(this._pieces.values());
-    }
 
     constructor(
         scene: Phaser.Scene,
@@ -61,40 +58,23 @@ export class Board extends Model {
 
         this._pieces = new Map();
         this._players = new Map();
-        this._state = BoardState.View;
+        this._state = BoardState.Idle;
 
         this._cursor = new Cursor(this);
         this._selected = null;
+        this._currentPlayer = null;
 
         this._rules = Rules.getInstance();
     }
 
-    get scene(): Phaser.Scene {
-        return this._scene;
-    }
-
-    get width(): number {
-        return this._width;
-    }
-
-    get height(): number {
-        return this._height;
-    }
-
-    get pieces(): Piece[] {
-        return Array.from(this._pieces.values());
-    }
-
-    set state(state: BoardState) {
-        this._state = state;
-    }
+    /* #region State */
 
     get state(): BoardState {
         return this._state;
     }
 
-    get selected(): Piece | null {
-        return this._selected;
+    set state(state: BoardState) {
+        this._state = state;
     }
 
     get cursor(): Cursor {
@@ -104,6 +84,99 @@ export class Board extends Model {
     get rules(): Rules {
         return this._rules;
     }
+
+    /* #endregion */
+
+    /* #region Pieces */
+
+    get pieces(): Piece[] {
+        return Array.from(this._pieces.values());
+    }
+
+    get selected(): Piece | null {
+        return this._selected;
+    }
+
+    addPiece(config: PieceConfig): Piece {
+        const piece: Piece = new Piece(this, this._idCounter++, config);
+        this._pieces.set(piece.id, piece);
+        return piece;
+    }
+
+    getPiece(id: number): Piece | null {
+        if (this._pieces.has(id)) {
+            return this._pieces.get(id)!;
+        }
+        return null;
+    }
+
+    selectPiece(id: number): void {
+        this._selected = this.getPiece(id);
+    }
+
+    deselectPiece(): void {
+        this._selected = null;
+    }
+
+    removePiece(id: number): void {
+        this._pieces.delete(id);
+    }
+
+    getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
+        return Array.from(
+            this.pieces.filter((piece) => {
+                return Phaser.Geom.Point.Equals(piece.position, point) && (filter ? filter(piece) : true);
+            })
+        );
+    }
+
+    async movePiece(id: number, positon: Phaser.Geom.Point): Promise<Piece> {
+        const piece: Piece | null = this.getPiece(id);
+        if (piece) {
+            await piece.moveTo(positon);
+            piece.moved = true;
+            return piece;
+        }
+        throw new Error(`Could not find piece with ID ${id}`);
+    }
+
+    /* #endregion */
+
+    /* #region Players */
+
+    get players(): Player[] {
+        return Array.from(this._players.values());
+    }
+
+    get currentPlayer(): Player | null {
+        return this._currentPlayer;
+    }
+
+    addPlayer(config: PlayerConfig): Player {
+        const player: Player = new Player(this, this._idCounter++, config);
+        this._players.set(player.id, player);
+        return player;
+    }
+
+
+    getPlayer(id: number): Player | null {
+        if (this._players.has(id)) {
+            return this._players.get(id)!;
+        }
+        return null;
+    }
+
+    selectPlayer(id: number): void {
+        this._currentPlayer = this.getPlayer(id);
+    }
+
+    deselectPlayer(): void {
+        this._currentPlayer = null;
+    }
+
+    /* #endregion */
+
+    /* #region Initialisation */
 
     createFloor() {
         const floorLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
@@ -129,17 +202,24 @@ export class Board extends Model {
         this._layers.set(BoardLayer.Floor, floorLayer);
     }
 
-    getRandomEmptySpace(): Phaser.Geom.Point {
-        const x: number = Math.floor(Math.random() * this.width);
-        const y: number = Math.floor(Math.random() * this.height);
+    /* #endregion */
 
-        const point: Phaser.Geom.Point = new Phaser.Geom.Point(x, y);
+    /* #region Utils */
 
-        if (this.getPiecesAtPosition(point).length > 0) {
-            return this.getRandomEmptySpace();
-        }
+    get scene(): Phaser.Scene {
+        return this._scene;
+    }
 
-        return point;
+    get width(): number {
+        return this._width;
+    }
+
+    get height(): number {
+        return this._height;
+    }
+
+    getLayer(layer: BoardLayer): Phaser.GameObjects.Layer {
+        return this._layers.get(layer)!;
     }
 
     getIsoPosition(point: Phaser.Geom.Point): Phaser.Geom.Point {
@@ -166,66 +246,6 @@ export class Board extends Model {
         return screenPos;
     }
 
-    static toIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        return new Phaser.Geom.Point(
-            point.x - point.y,
-            (point.x + point.y) / 2
-        );
-    }
-
-    static fromIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        return new Phaser.Geom.Point(
-            point.x + point.y / 2,
-            point.y - point.x / 2
-        );
-    }
-
-    addPiece(config: PieceConfig): Piece {
-        const piece: Piece = new Piece(this, this._idCounter++, config);
-        this._pieces.set(piece.id, piece);
-        return piece;
-    }
-
-    getPiece(id: number): Piece | null {
-        if (this._pieces.has(id)) {
-            return this._pieces.get(id)!;
-        }
-        return null;
-    }
-
-    selectPiece(id: number): void {
-        this._selected = this.getPiece(id);
-    }
-
-    deselectPiece(): void {
-        this._selected = null;
-    }
-
-    async movePiece(id: number, positon: Phaser.Geom.Point): Promise<Piece> {
-        const piece: Piece | null = this.getPiece(id);
-        if (piece) {
-            await piece.moveTo(positon);
-            return piece;
-        }
-        throw new Error(`Could not find piece with ID ${id}`);
-    }
-
-    removePiece(id: number): void {
-        this._pieces.delete(id);
-    }
-
-    getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
-        return Array.from(
-            this.pieces.filter((piece) => {
-                return Phaser.Geom.Point.Equals(piece.position, point) && (filter ? filter(piece) : true);
-            })
-        );
-    }
-
-    getLayer(layer: BoardLayer): Phaser.GameObjects.Layer {
-        return this._layers.get(layer)!;
-    }
-
     static distance(a: Phaser.Geom.Point, b: Phaser.Geom.Point): number {
         if (Phaser.Geom.Point.Equals(a, b)) {
             return 0;
@@ -241,9 +261,36 @@ export class Board extends Model {
         );
     }
 
-    addPlayer(config: PlayerConfig): Player {
-        const player: Player = new Player(this, this._idCounter++, config);
-        this._players.set(player.id, player);
-        return player;
+    static toIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
+        return new Phaser.Geom.Point(
+            point.x - point.y,
+            (point.x + point.y) / 2
+        );
     }
+
+    static fromIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
+        return new Phaser.Geom.Point(
+            point.x + point.y / 2,
+            point.y - point.x / 2
+        );
+    }
+
+    /* #endregion */
+
+    /* #region Dev helpers */
+
+    getRandomEmptySpace(): Phaser.Geom.Point {
+        const x: number = Math.floor(Math.random() * this.width);
+        const y: number = Math.floor(Math.random() * this.height);
+
+        const point: Phaser.Geom.Point = new Phaser.Geom.Point(x, y);
+
+        if (this.getPiecesAtPosition(point).length > 0) {
+            return this.getRandomEmptySpace();
+        }
+
+        return point;
+    }
+
+    /* #endregion */
 }

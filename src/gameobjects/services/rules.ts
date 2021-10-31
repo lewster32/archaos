@@ -21,6 +21,7 @@ export class Rules {
         if (board.state === BoardState.Idle) {
             return ActionType.None;
         }
+
         const hoveredPieces: Piece[] = board.getPiecesAtPosition(
             board.cursor.position
         );
@@ -30,6 +31,59 @@ export class Rules {
                 return ActionType.Info;
             }
             return ActionType.Idle;
+        }
+
+        if (!board.currentPlayer) {
+            return ActionType.Idle;
+        }
+
+        const currentAliveHoveredPiece: Piece | null =
+            hoveredPieces.find((piece: Piece) => !piece.dead) || null;
+
+        const selectedPiece: Piece | null = board.selected;
+
+        if (board.state === BoardState.MovePieces) {
+            if (selectedPiece) {
+                if (currentAliveHoveredPiece) {
+                    if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
+                        return ActionType.Mount;
+                    }
+                    if (
+                        selectedPiece.canAttackPiece(currentAliveHoveredPiece)
+                    ) {
+                        return ActionType.Attack;
+                    }
+                    if (
+                        selectedPiece.canRangedAttackPiece(
+                            currentAliveHoveredPiece
+                        )
+                    ) {
+                        return ActionType.RangedAttack;
+                    }
+                    if (selectedPiece === currentAliveHoveredPiece) {
+                        return ActionType.Move;
+                    } else {
+                        return ActionType.Invalid;
+                    }
+                } else {
+                    if (
+                        !selectedPiece.moved &&
+                        selectedPiece.inMovementRange(board.cursor.position)
+                    ) {
+                        return ActionType.Move;
+                    }
+                    return ActionType.Invalid;
+                }
+            } else {
+                if (currentAliveHoveredPiece) {
+                    if (currentAliveHoveredPiece.canSelect) {
+                        return ActionType.Select;
+                    } else {
+                        return ActionType.Invalid;
+                    }
+                }
+                return ActionType.Idle;
+            }
         }
 
         return ActionType.Idle;
@@ -62,25 +116,75 @@ export class Rules {
     private dispatchEvent(type: EventType, data: any) {
         window.dispatchEvent(
             new CustomEvent(type, {
-                detail: data
-            }) 
+                detail: data,
+            })
         );
     }
 
-    private async processClick(board: Board, actionType: ActionType, hoveredPieces: Piece[]): Promise<ActionType> {
+    private async processClick(
+        board: Board,
+        actionType: ActionType,
+        hoveredPieces: Piece[]
+    ): Promise<ActionType> {
         if (actionType === ActionType.Info) {
             if (hoveredPieces.length > 0) {
                 this.dispatchEvent(EventType.PieceInfo, hoveredPieces[0]);
                 return ActionType.Info;
             }
         }
+        if (actionType === ActionType.Select) {
+            if (hoveredPieces.length > 0) {
+                if (hoveredPieces[0].canSelect) {
+                    board.selectPiece(hoveredPieces[0].id);
+                    return ActionType.Select;
+                } else {
+                    return ActionType.Invalid;
+                }
+            }
+        }
+        const selectedPiece: Piece | null = board.selected;
+        if (!selectedPiece) {
+            return ActionType.None;
+        }
+
+        if (actionType === ActionType.Move) {
+            if (
+                !selectedPiece.moved &&
+                selectedPiece.inMovementRange(board.cursor.position)
+            ) {
+                await board.movePiece(selectedPiece.id, board.cursor.position);
+                return ActionType.Move;
+            } else {
+                return ActionType.Invalid;
+            }
+        }
         return ActionType.None;
     }
 
-    private async processCancel(board: Board, actionType: ActionType, hoveredPieces: Piece[]): Promise<ActionType> {
-        if (actionType === ActionType.Info) {
+    private async processCancel(
+        board: Board,
+        actionType: ActionType,
+        hoveredPieces: Piece[]
+    ): Promise<ActionType> {
+        const selectedPiece: Piece | null = board.selected;
 
+        if (!selectedPiece) {
+            return ActionType.None;
         }
+
+        if (selectedPiece.moved) {
+            if (selectedPiece.canAttack) {
+                selectedPiece.attacked = true;
+            } else if (selectedPiece.canRangedAttack) {
+                selectedPiece.rangedAttacked = true;
+            }
+            if (!selectedPiece.canSelect) {
+                board.deselectPiece();
+            }
+        } else {
+            board.deselectPiece();
+        }
+
         return ActionType.None;
     }
 }

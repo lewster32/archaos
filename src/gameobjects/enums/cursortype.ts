@@ -3,12 +3,23 @@ export enum CursorType {
     
     Select = "select",
     Info = "info",
+    Invalid = "invalid",
+
     Attack = "attack",
     RangedAttack = "rangedattack",
     Cast = "cast",
     Mount = "mount",
     Dismount = "dismount",
-    Fly = "fly",
     Warning = "warning",
-    Invalid = "invalid",
+
+    Fly = "fly",
+    
+    Up = "up",
+    UpRight = "up-right",
+    Right = "right",
+    DownRight = "down-right",
+    Down = "down",
+    DownLeft = "down-left",
+    Left = "left",
+    UpLeft = "up-left"
 }

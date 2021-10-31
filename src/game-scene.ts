@@ -11,6 +11,7 @@ import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { Piece } from "./gameobjects/piece";
 import { UnitDirection } from "./gameobjects/enums/unitdirection";
 import { Player } from "./gameobjects/player";
+import { BoardState } from "./gameobjects/enums/boardstate";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -104,6 +105,9 @@ export class GameScene extends Phaser.Scene {
                         : UnitDirection.Right;
             }
         }
+
+        board.state = BoardState.MovePieces;
+        board.selectPlayer(player.id);
 
         /*
         setInterval(async () => {

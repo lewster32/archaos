@@ -5,6 +5,7 @@ export enum UnitStatus {
     Flying = "flying",
     Invulnerable = "invuln",
     Mount = "mount",
+    MountAny = "mountAny",
     Spreads = "spread",
     Structure = "struct",
     Transparent = "trans",
@@ -12,4 +13,5 @@ export enum UnitStatus {
     Undead = "undead",
     Wizard = "wizard",
     NoCorpse = "noCorpse",
+    AttackUndead = "attackUndead"
 }
