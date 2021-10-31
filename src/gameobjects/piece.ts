@@ -15,6 +15,11 @@ export class Piece extends Entity {
         { x: 1, y: 0 },
         { x: 0, y: 1 },
         { x: -1, y: 0 },
+
+        { x: -1, y: -1 },
+        { x: 1, y: 1 },
+        { x: -1, y: 1 },
+        { x: 1, y: -1 },
     ];
 
     private _type: PieceType;
@@ -30,6 +35,7 @@ export class Piece extends Entity {
     private _moved: boolean;
     private _attacked: boolean;
     private _rangedAttacked: boolean;
+    private _engaged: boolean;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
@@ -43,6 +49,7 @@ export class Piece extends Entity {
         this._moved = false;
         this._attacked = false;
         this._rangedAttacked = false;
+        this._engaged = false;
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
@@ -117,6 +124,14 @@ export class Piece extends Entity {
         this._rangedAttacked = rangedAttacked;
     }
 
+    get engaged(): boolean {
+        return this._engaged;
+    }
+
+    set engaged(engaged: boolean) {
+        this._engaged = engaged;
+    }
+
     get properties(): IUnitProperties {
         return this._properties;
     }
@@ -184,7 +199,10 @@ export class Piece extends Entity {
     }
 
     inMovementRange(point: Phaser.Geom.Point): boolean {
-        if (Board.distance(this.position, point) > this.properties.movement + 0.5) {
+        if (
+            Board.distance(this.position, point) >
+            this.properties.movement + 0.5
+        ) {
             return false;
         }
         return true;
@@ -198,7 +216,10 @@ export class Piece extends Entity {
     }
 
     inRangedAttackRange(point: Phaser.Geom.Point): boolean {
-        if (Board.distance(this.position, point) > this.properties.range + 0.5) {
+        if (
+            Board.distance(this.position, point) >
+            this.properties.range + 0.5
+        ) {
             return false;
         }
         return true;
@@ -207,9 +228,11 @@ export class Piece extends Entity {
     get canSelect(): boolean {
         if (
             this.dead ||
-            (this.moved && this.attacked && this.rangedAttacked) || 
+            (this.moved && this.attacked && this.rangedAttacked) ||
             this.hasStatus(UnitStatus.Structure) ||
-            (this.properties.combat === 0 && this.properties.rangedCombat === 0 && this.properties.movement === 0)
+            (this.properties.combat === 0 &&
+                this.properties.rangedCombat === 0 &&
+                this.properties.movement === 0)
         ) {
             return false;
         }
@@ -224,7 +247,9 @@ export class Piece extends Entity {
             this.attacked ||
             this.properties.combat === 0 ||
             neighbours.length === 0 ||
-            neighbours.filter((neighbour: Piece) => this.canAttackPiece(neighbour)).length === 0
+            neighbours.filter((neighbour: Piece) =>
+                this.canAttackPiece(neighbour)
+            ).length === 0
         ) {
             return false;
         }
@@ -238,7 +263,9 @@ export class Piece extends Entity {
             piece.dead ||
             this.attacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
-            (piece.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.AttackUndead)) ||
+            (piece.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.AttackUndead)) ||
             !this.inAttackRange(piece.position)
         ) {
             return false;
@@ -251,7 +278,9 @@ export class Piece extends Entity {
             this._dead ||
             this.rangedAttacked ||
             this.properties.rangedCombat === 0 ||
-            this.board.pieces.filter((piece: Piece) => this.canRangedAttackPiece(piece)).length === 0
+            this.board.pieces.filter((piece: Piece) =>
+                this.canRangedAttackPiece(piece)
+            ).length === 0
         ) {
             return false;
         }
@@ -265,7 +294,9 @@ export class Piece extends Entity {
             piece.dead ||
             this.rangedAttacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
-            (piece.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.Undead) && !this.hasStatus(UnitStatus.AttackUndead)) ||
+            (piece.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.AttackUndead)) ||
             !this.inRangedAttackRange(piece.position)
         ) {
             return false;
@@ -281,7 +312,21 @@ export class Piece extends Entity {
             this.moved ||
             !this.hasStatus(UnitStatus.Wizard) ||
             (piece.hasStatus(UnitStatus.Mount) && piece.owner !== this.owner) ||
-            (!piece.hasStatus(UnitStatus.MountAny))
+            !piece.hasStatus(UnitStatus.MountAny)
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    canEngagePiece(piece: Piece): boolean {
+        if (
+            this == piece ||
+            this._dead ||
+            piece.dead ||
+            this.properties.maneuverability === 0 ||
+            piece.properties.maneuverability === 0
+            // this.owner === piece.owner
         ) {
             return false;
         }
@@ -289,23 +334,10 @@ export class Piece extends Entity {
     }
 
     getNeighbours(): Piece[] {
-        let neighbours: Piece[] = [];
-        const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
-            this.position
+        return this.board.getAdjacentPiecesAtPosition(
+            this.position,
+            (piece: Piece) => !piece.dead
         );
-        for (const direction of Piece.NEIGHBOUR_DIRECTIONS) {
-            const directionNeighbours: Piece[] = this.board.getPiecesAtPosition(
-                new Phaser.Geom.Point(
-                    position.x + direction.x,
-                    position.y + direction.y
-                ),
-                (piece: Piece) => !piece.dead
-            );
-            if (directionNeighbours) {
-                neighbours = neighbours.concat(directionNeighbours);
-            }
-        }
-        return neighbours;
     }
 
     kill() {

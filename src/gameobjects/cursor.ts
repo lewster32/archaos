@@ -104,6 +104,20 @@ export class Cursor {
                 break;
             case ActionType.Move:
                 if (selectedPiece) {
+                    const neighbours: Piece[] =
+                        this._board.getAdjacentPiecesAtPosition(
+                            this._position,
+                            (piece: Piece) => piece !== selectedPiece
+                        );
+                    if (
+                        neighbours &&
+                        neighbours.some((neighbour: Piece) =>
+                            selectedPiece.canEngagePiece(neighbour)
+                        )
+                    ) {
+                        this.type = CursorType.Warning;
+                        break;
+                    }
                     if (selectedPiece.hasStatus(UnitStatus.Flying)) {
                         this.type = CursorType.Fly;
                         break;
@@ -255,14 +269,20 @@ export class Cursor {
 
         const selected: Piece | null = this._board.selected;
 
-        if (
-            selected &&
-            selected.moved &&
-            !selected.canAttack &&
-            !selected.canRangedAttack
-        ) {
-            selected.moved = selected.attacked = selected.rangedAttacked = true;
-            this._board.deselectPiece();
+        if (selected && selected.moved) {
+            if (selected.getNeighbours().some((neighbour: Piece) => selected.canEngagePiece(neighbour))) {
+                selected.engaged = true;
+            }
+            if (
+                !selected.canAttack &&
+                !selected.canRangedAttack
+            ) {
+                selected.moved =
+                    selected.attacked =
+                    selected.rangedAttacked =
+                        true;
+                this._board.deselectPiece();
+            }
         }
 
         /*
@@ -385,8 +405,8 @@ export class Cursor {
         fromPoint: Phaser.Geom.Point,
         toPoint: Phaser.Geom.Point
     ): CursorType {
-        const dx: number = toPoint.x - fromPoint.x;
-        const dy: number = toPoint.y - fromPoint.y;
+        const dx: number = Phaser.Math.Clamp(toPoint.x - fromPoint.x, -1, 1);
+        const dy: number = Phaser.Math.Clamp(toPoint.y - fromPoint.y, -1, 1);
 
         if (dx === 0 && dy === 1) {
             return CursorType.DownLeft;

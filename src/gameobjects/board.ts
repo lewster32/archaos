@@ -122,6 +122,26 @@ export class Board extends Model {
         this._pieces.delete(id);
     }
 
+    getAdjacentPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
+        let neighbours: Piece[] = [];
+        const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
+            point
+        );
+        for (const direction of Piece.NEIGHBOUR_DIRECTIONS) {
+            const directionNeighbours: Piece[] = this.getPiecesAtPosition(
+                new Phaser.Geom.Point(
+                    position.x + direction.x,
+                    position.y + direction.y
+                ),
+                filter
+            );
+            if (directionNeighbours) {
+                neighbours = neighbours.concat(directionNeighbours);
+            }
+        }
+        return neighbours;
+    }
+
     getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
         return Array.from(
             this.pieces.filter((piece) => {

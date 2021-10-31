@@ -67,7 +67,7 @@ export class GameScene extends Phaser.Scene {
             name: "Lew"
         });
 
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 1; i++) {
             for (let [key, unit] of Object.entries(units) as [string, any]) {
                 if ((unit.status as any).includes(UnitStatus.Wizard)) {
                     continue;
