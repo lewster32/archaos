@@ -12,7 +12,11 @@ export class WizardSprite extends Phaser.GameObjects.Sprite {
         super(scene, x, y, "wizards");
         this._wizCode = wizCode;
 
-        this.generateFrames();
+        if (this.texture.manager.exists(this._wizCode.code)) {
+            this.setTexture(this._wizCode.code);
+        } else {
+            this.generateFrames();
+        }
     }
 
     protected generateFrames() {
@@ -43,7 +47,7 @@ export class WizardSprite extends Phaser.GameObjects.Sprite {
         canvas.add(`${this._wizCode.code}_r`, 0, 0, 0, 18, 24);
         canvas.add(`${this._wizCode.code}_l`, 0, 18, 0, 18, 24);
 
-        this.setTexture(`${this._wizCode.code}`);
+        this.setTexture(this._wizCode.code);
     }
 
     static replaceColor(canvas: Phaser.Textures.CanvasTexture, searchColor: number[], replaceColor: number[]): Phaser.Textures.CanvasTexture {

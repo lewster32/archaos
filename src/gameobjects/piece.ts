@@ -10,16 +10,6 @@ import { Player } from "./player";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
-    static NEIGHBOUR_DIRECTIONS: { x: number; y: number }[] = [
-        { x: 0, y: -1 },
-        { x: 1, y: 0 },
-        { x: 0, y: 1 },
-        { x: -1, y: 0 },
-        { x: -1, y: -1 },
-        { x: 1, y: 1 },
-        { x: -1, y: 1 },
-        { x: 1, y: -1 },
-    ];
 
     protected _type: UnitType;
     protected _owner: Player | null;

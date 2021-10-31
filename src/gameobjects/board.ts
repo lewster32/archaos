@@ -10,6 +10,8 @@ import { Piece } from "./piece";
 import { Player } from "./player";
 import { Rules } from "./services/rules";
 
+type SimplePoint = { x: number, y: number };;
+
 export class Board extends Model {
     private _scene: Phaser.Scene;
     private _width: number;
@@ -20,6 +22,17 @@ export class Board extends Model {
     static DEFAULT_WIDTH: number = 13;
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
+
+    static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
+        { x: 0, y: -1 },
+        { x: 1, y: 0 },
+        { x: 0, y: 1 },
+        { x: -1, y: 0 },
+        { x: -1, y: -1 },
+        { x: 1, y: 1 },
+        { x: -1, y: 1 },
+        { x: 1, y: -1 },
+    ];
 
     private _state: BoardState;
     private _cursor: Cursor;
@@ -134,7 +147,7 @@ export class Board extends Model {
         const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
             point
         );
-        for (const direction of Piece.NEIGHBOUR_DIRECTIONS) {
+        for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
             const directionNeighbours: Piece[] = this.getPiecesAtPosition(
                 new Phaser.Geom.Point(
                     position.x + direction.x,

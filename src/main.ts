@@ -1,6 +1,7 @@
 import "phaser";
 import { GameScene } from "./game-scene";
 import { EventType } from "./gameobjects/enums/eventtype";
+import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { Piece } from "./gameobjects/piece";
 
 const GameConfig: Phaser.Types.Core.GameConfig = {
@@ -46,5 +47,11 @@ window.addEventListener("load", () => {
 window.addEventListener(EventType.PieceInfo, (event: any) => {
     const piece: Piece = event.detail;
     const info = document.getElementById("piece-info");
-    info!.innerHTML = `<h2>${piece.owner?.name}'s ${piece.name} #${piece.id}</h2>`;
+    if (piece.hasStatus(UnitStatus.Wizard)) {
+        info!.innerHTML = `<h2>${piece.owner?.name} #${piece.id}</h2>`;
+    }
+    else {
+        info!.innerHTML = `<h2>${piece.owner?.name}'s ${piece.name} #${piece.id}</h2>`;
+    }
+    
 });

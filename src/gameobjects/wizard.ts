@@ -66,7 +66,7 @@ export class Wizard extends Piece {
 
         this.updateDepth();
 
-        this._sprite.setOrigin(0.5, 0.5);
+        this._sprite.setOrigin(0.5, 0.6);
 
         this.board.getLayer(BoardLayer.Pieces).add(this._sprite);
 
@@ -84,7 +84,7 @@ export class Wizard extends Piece {
             code: wizCode,
             wiz: Math.min(parseInt(wizCode.substr(0, 2), 16), wizcodes.max.wiz),
             pri: Math.min(parseInt(wizCode.substr(2, 2), 16), wizcodes.max.pri),
-            sec: Math.min(parseInt(wizCode.substr(2, 2), 16), wizcodes.max.sec),
+            sec: Math.min(parseInt(wizCode.substr(4, 2), 16), wizcodes.max.sec),
             skin: Math.min(parseInt(wizCode.substr(6, 2), 16), wizcodes.max.skin),
             hat: Math.min(parseInt(wizCode.substr(8, 2), 16), wizcodes.max.hat)
         };

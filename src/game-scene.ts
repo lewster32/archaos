@@ -86,13 +86,19 @@ export class GameScene extends Phaser.Scene {
             name: "Lew"
         });
 
-        board.addWizard({
-            owner: player,
-            x: 12,
-            y: 12,
-            wizCode: Wizard.randomWizCode()
-        })
+        for (let i = 0; i < 80; i++) {
 
+            const randomEmptySpace: Phaser.Geom.Point = board.getRandomEmptySpace();
+
+            board.addWizard({
+                owner: player,
+                x: randomEmptySpace.x,
+                y: randomEmptySpace.y,
+                wizCode: Wizard.randomWizCode()
+            })
+        }
+
+        /* 
         for (let i = 0; i < 1; i++) {
             for (let [key, unit] of Object.entries(units) as [string, any]) {
                 if ((unit.status as any).includes(UnitStatus.Wizard)) {
@@ -135,7 +141,11 @@ export class GameScene extends Phaser.Scene {
         board.state = BoardState.MovePieces;
         board.selectPlayer(player.id);
 
+        */
+
+        board.state = BoardState.View;
         /*
+
         setInterval(async () => {
             const piece: Piece = board.getPiece(
                 Math.floor(Math.random() * board.pieces.length) + 1
@@ -148,6 +158,7 @@ export class GameScene extends Phaser.Scene {
                 new Phaser.Geom.Point(randomEmptySpace.x, randomEmptySpace.y)
             );
         }, Piece.DEFAULT_MOVE_DURATION);
+
         */
     }
 
