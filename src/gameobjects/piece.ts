@@ -2,7 +2,7 @@ import { Board } from "./board";
 import { PieceConfig } from "./configs/piececonfig";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
-import { PieceType } from "./enums/piecetype";
+import { UnitType } from "./enums/unittype";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { IUnitProperties } from "./interfaces/unitproperties";
@@ -15,34 +15,46 @@ export class Piece extends Entity {
         { x: 1, y: 0 },
         { x: 0, y: 1 },
         { x: -1, y: 0 },
-
         { x: -1, y: -1 },
         { x: 1, y: 1 },
         { x: -1, y: 1 },
         { x: 1, y: -1 },
     ];
 
-    private _type: PieceType;
-    private _owner: Player | null;
-    private _properties: IUnitProperties;
-    private _shadowScale: number;
-    private _shadow?: Phaser.GameObjects.Image;
-    private _sprite?: Phaser.GameObjects.Sprite;
-    private _offsetY: number;
-    private _direction: UnitDirection;
+    protected _type: UnitType;
+    protected _owner: Player | null;
+    protected _properties: IUnitProperties;
+    protected _shadowScale: number;
+    protected _shadow?: Phaser.GameObjects.Image;
+    protected _sprite?: Phaser.GameObjects.Sprite;
+    protected _offsetY: number;
+    protected _direction: UnitDirection;
 
-    private _dead: boolean;
-    private _moved: boolean;
-    private _attacked: boolean;
-    private _rangedAttacked: boolean;
-    private _engaged: boolean;
+    protected _dead: boolean;
+    protected _moved: boolean;
+    protected _attacked: boolean;
+    protected _rangedAttacked: boolean;
+    protected _engaged: boolean;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
         this._type = config.type;
 
         this._owner = config.owner || null;
-        this._properties = config.properties;
+        this._properties = config.properties || {
+            id: "",
+            name: "Unnamed Unit",
+            movement: 1,
+            combat: 3,
+            rangedCombat: 0,
+            range: 0,
+            defense: 3,
+            maneuverability: 3,
+            magicResistance: 3,
+            attackDescription: "hit",
+            rangedDescription: "shot",
+            status: [] as UnitStatus[]
+        };
         this._direction = UnitDirection.Right;
 
         this._dead = false;
@@ -53,11 +65,18 @@ export class Piece extends Entity {
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
+
+        setTimeout(() => {
+            this.initSprites();
+        });
+    }
+
+    initSprites() {
         this.createShadow();
         this.createSprite();
     }
 
-    get type(): PieceType {
+    get type(): UnitType {
         return this._type;
     }
 
@@ -83,7 +102,7 @@ export class Piece extends Entity {
     }
 
     get name(): string {
-        return this._properties.name;
+        return this._properties?.name || "Unnamed Unit";
     }
 
     get sprite(): Phaser.GameObjects.Sprite {

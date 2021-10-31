@@ -2,8 +2,8 @@ import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitStatus } from "../enums/unitstatus";
 
 export interface IUnitProperties {
-    id: string;
-    name: string;
+    id?: string;
+    name?: string;
 
     movement: number;
     combat: number;
@@ -13,8 +13,8 @@ export interface IUnitProperties {
     maneuverability: number;
     magicResistance: number;
 
-    attackDescription: string;
-    rangedDescription: string;
+    attackDescription?: string;
+    rangedDescription?: string;
 
     projectileType?: UnitRangedProjectileType;
 

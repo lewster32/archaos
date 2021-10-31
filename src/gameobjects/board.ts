@@ -1,4 +1,5 @@
-import { PieceConfig } from "./configs/piececonfig";
+import { Wizard } from "./wizard";
+import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { PlayerConfig } from "./configs/playerconfig";
 import { Cursor } from "./cursor";
 import { Entity } from "./entity";
@@ -101,6 +102,12 @@ export class Board extends Model {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
         return piece;
+    }
+
+    addWizard(config: WizardConfig): Wizard {
+        const wizard: Wizard = new Wizard(this, this._idCounter++, config);
+        this._pieces.set(wizard.id, wizard);
+        return wizard;
     }
 
     getPiece(id: number): Piece | null {

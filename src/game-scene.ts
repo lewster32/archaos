@@ -6,12 +6,13 @@ import "../assets/spritesheets/cursors.json";
 
 import { units } from "../assets/units/classicunits.json";
 import { Board } from "./gameobjects/board";
-import { PieceType } from "./gameobjects/enums/piecetype";
+import { UnitType } from "./gameobjects/enums/unittype";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { Piece } from "./gameobjects/piece";
 import { UnitDirection } from "./gameobjects/enums/unitdirection";
 import { Player } from "./gameobjects/player";
 import { BoardState } from "./gameobjects/enums/boardstate";
+import { Wizard } from "./gameobjects/wizard";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -35,6 +36,24 @@ export class GameScene extends Phaser.Scene {
             "cursors",
             "assets/spritesheets/cursors.json",
             "assets/spritesheets"
+        );
+
+        this.load.spritesheet(
+            "wizards",
+            "assets/spritesheets/wizards.png",
+            {
+                frameWidth: 18,
+                frameHeight: 18,
+            }
+        );
+
+        this.load.spritesheet(
+            "hats",
+            "assets/spritesheets/hats.png",
+            {
+                frameWidth: 14,
+                frameHeight: 14,
+            }
         );
     }
 
@@ -67,6 +86,13 @@ export class GameScene extends Phaser.Scene {
             name: "Lew"
         });
 
+        board.addWizard({
+            owner: player,
+            x: 12,
+            y: 12,
+            wizCode: Wizard.randomWizCode()
+        })
+
         for (let i = 0; i < 1; i++) {
             for (let [key, unit] of Object.entries(units) as [string, any]) {
                 if ((unit.status as any).includes(UnitStatus.Wizard)) {
@@ -77,7 +103,7 @@ export class GameScene extends Phaser.Scene {
                     board.getRandomEmptySpace();
 
                 const piece: Piece = board.addPiece({
-                    type: PieceType.Creature,
+                    type: UnitType.Creature,
                     x: randomEmptySpace.x,
                     y: randomEmptySpace.y,
                     properties: {
