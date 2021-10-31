@@ -9,7 +9,6 @@ import { WizCode } from "./interfaces/wizcode";
 import { WizardSprite } from "./wizardsprite";
 
 export class Wizard extends Piece {
-
     static DEFAULT_WIZARD_CONFIG: PieceConfig = {
         x: 0,
         y: 0,
@@ -24,18 +23,20 @@ export class Wizard extends Piece {
             magicResistance: 3,
             attackDescription: "hit",
             rangedDescription: "shot",
-            status: [UnitStatus.Wizard]
-        }
-    }
+            status: [UnitStatus.Wizard],
+        },
+    };
 
     private _wizCode: WizCode;
 
     constructor(board: Board, id: number, config: WizardConfig) {
         super(board, id, {
             ...Wizard.DEFAULT_WIZARD_CONFIG,
-            ...config
+            ...config,
         });
-        this._wizCode = Wizard.parseWizCode(config.wizCode || Wizard.randomWizCode());
+        this._wizCode = Wizard.parseWizCode(
+            config.wizCode || Wizard.randomWizCode()
+        );
     }
 
     get name(): string {
@@ -83,18 +84,31 @@ export class Wizard extends Piece {
             wiz: Math.min(parseInt(wizCode.substr(0, 2), 16), wizcodes.max.wiz),
             pri: Math.min(parseInt(wizCode.substr(2, 2), 16), wizcodes.max.pri),
             sec: Math.min(parseInt(wizCode.substr(4, 2), 16), wizcodes.max.sec),
-            skin: Math.min(parseInt(wizCode.substr(6, 2), 16), wizcodes.max.skin),
-            hat: Math.min(parseInt(wizCode.substr(8, 2), 16), wizcodes.max.hat)
+            skin: Math.min(
+                parseInt(wizCode.substr(6, 2), 16),
+                wizcodes.max.skin
+            ),
+            hat: Math.min(parseInt(wizCode.substr(8, 2), 16), wizcodes.max.hat),
         };
     }
 
     static randomWizCode(): string {
         return [
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.wiz).toString(16).padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.pri).toString(16).padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.sec).toString(16).padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.skin).toString(16).padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.hat).toString(16).padStart(2, "0")
+            Phaser.Math.RND.integerInRange(0, wizcodes.max.wiz)
+                .toString(16)
+                .padStart(2, "0"),
+            Phaser.Math.RND.integerInRange(0, wizcodes.max.pri)
+                .toString(16)
+                .padStart(2, "0"),
+            Phaser.Math.RND.integerInRange(0, wizcodes.max.sec)
+                .toString(16)
+                .padStart(2, "0"),
+            Phaser.Math.RND.integerInRange(0, wizcodes.max.skin)
+                .toString(16)
+                .padStart(2, "0"),
+            Phaser.Math.RND.integerInRange(0, wizcodes.max.hat)
+                .toString(16)
+                .padStart(2, "0"),
         ].join("");
     }
 }

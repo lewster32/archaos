@@ -9,7 +9,7 @@ import { Piece } from "./piece";
 import { Player } from "./player";
 import { Rules } from "./services/rules";
 
-type SimplePoint = { x: number, y: number };;
+type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
     private _scene: Phaser.Scene;
@@ -141,11 +141,12 @@ export class Board extends Model {
         this._pieces.delete(id);
     }
 
-    getAdjacentPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
+    getAdjacentPiecesAtPosition(
+        point: Phaser.Geom.Point,
+        filter?: Function
+    ): Piece[] {
         let neighbours: Piece[] = [];
-        const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
-            point
-        );
+        const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
             const directionNeighbours: Piece[] = this.getPiecesAtPosition(
                 new Phaser.Geom.Point(
@@ -164,7 +165,10 @@ export class Board extends Model {
     getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
         return Array.from(
             this.pieces.filter((piece) => {
-                return Phaser.Geom.Point.Equals(piece.position, point) && (filter ? filter(piece) : true);
+                return (
+                    Phaser.Geom.Point.Equals(piece.position, point) &&
+                    (filter ? filter(piece) : true)
+                );
             })
         );
     }
@@ -196,7 +200,6 @@ export class Board extends Model {
         this._players.set(player.id, player);
         return player;
     }
-
 
     getPlayer(id: number): Player | null {
         if (this._players.has(id)) {
@@ -234,10 +237,14 @@ export class Board extends Model {
                 );
 
                 tile.setDisplayOrigin(14, 1);
+                tile.setActive(false);
 
                 floorLayer.add(tile);
             }
         }
+
+        floorLayer.setActive(false);
+
         this._layers.set(BoardLayer.Floor, floorLayer);
     }
 

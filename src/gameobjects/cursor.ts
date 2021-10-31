@@ -269,13 +269,16 @@ export class Cursor {
         const selected: Piece | null = this._board.selected;
 
         if (selected && selected.moved) {
-            if (selected.getNeighbours().some((neighbour: Piece) => selected.canEngagePiece(neighbour))) {
+            if (
+                selected
+                    .getNeighbours()
+                    .some((neighbour: Piece) =>
+                        selected.canEngagePiece(neighbour)
+                    )
+            ) {
                 selected.engaged = true;
             }
-            if (
-                !selected.canAttack &&
-                !selected.canRangedAttack
-            ) {
+            if (!selected.canAttack && !selected.canRangedAttack) {
                 selected.moved =
                     selected.attacked =
                     selected.rangedAttacked =
