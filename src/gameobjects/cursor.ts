@@ -1,7 +1,6 @@
 import { Board } from "./board";
 import { ActionType } from "./enums/actiontype";
 import { BoardLayer } from "./enums/boardlayer";
-import { BoardState } from "./enums/boardstate";
 import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
@@ -259,7 +258,7 @@ export class Cursor {
     async action(input: InputType) {
         const intendedAction: ActionType = await this.update(true);
 
-        const invokedAction: ActionType = await this._board.rules.processAction(
+        await this._board.rules.processAction(
             this._board,
             intendedAction,
             input

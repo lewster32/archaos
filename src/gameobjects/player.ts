@@ -16,4 +16,8 @@ export class Player extends Model {
         return this._name || `Player ${this.id}`;
     }
 
+    get board(): Board {
+        return this._board;
+    }
+
 }

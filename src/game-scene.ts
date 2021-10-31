@@ -6,13 +6,9 @@ import "../assets/spritesheets/cursors.json";
 
 import { units } from "../assets/units/classicunits.json";
 import { Board } from "./gameobjects/board";
-import { UnitType } from "./gameobjects/enums/unittype";
-import { UnitStatus } from "./gameobjects/enums/unitstatus";
-import { Piece } from "./gameobjects/piece";
-import { UnitDirection } from "./gameobjects/enums/unitdirection";
 import { Player } from "./gameobjects/player";
-import { BoardState } from "./gameobjects/enums/boardstate";
 import { Wizard } from "./gameobjects/wizard";
+import { Piece } from "./gameobjects/piece";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -143,9 +139,6 @@ export class GameScene extends Phaser.Scene {
 
         */
 
-        board.state = BoardState.View;
-        /*
-
         setInterval(async () => {
             const piece: Piece = board.getPiece(
                 Math.floor(Math.random() * board.pieces.length) + 1
@@ -158,8 +151,6 @@ export class GameScene extends Phaser.Scene {
                 new Phaser.Geom.Point(randomEmptySpace.x, randomEmptySpace.y)
             );
         }, Piece.DEFAULT_MOVE_DURATION);
-
-        */
     }
 
     update(): void {}

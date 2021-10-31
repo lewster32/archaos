@@ -4,11 +4,9 @@ import { BoardLayer } from "./enums/boardlayer";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { Piece } from "./piece";
-
 import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { WizCode } from "./interfaces/wizcode";
 import { WizardSprite } from "./wizardsprite";
-import { UnitDirection } from "./enums/unitdirection";
 
 export class Wizard extends Piece {
 

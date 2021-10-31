@@ -163,8 +163,8 @@ export class Rules {
 
     private async processCancel(
         board: Board,
-        actionType: ActionType,
-        hoveredPieces: Piece[]
+        _actionType: ActionType,
+        _hoveredPieces: Piece[]
     ): Promise<ActionType> {
         const selectedPiece: Piece | null = board.selected;
 

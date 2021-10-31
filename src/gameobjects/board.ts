@@ -2,7 +2,6 @@ import { Wizard } from "./wizard";
 import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { PlayerConfig } from "./configs/playerconfig";
 import { Cursor } from "./cursor";
-import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
 import { Model } from "./model";
