@@ -61,6 +61,11 @@ export class Player extends Model {
 
     async defeat(): Promise<void> {
         this._defeated = true;
+        this.board.getPiecesByOwner(this).forEach(piece => {
+            setTimeout(() => {
+                piece.destroy()
+            }, 500 + (Math.random() * 1000));
+        });
     }
 
     addSpell(spell: Spell) {

@@ -154,7 +154,7 @@ export class GameScene extends Phaser.Scene {
         const spell1: Spell = board.addSpell(player, this.getSpellProperties("shadow wood"));
         player.pickSpell(spell1);
 
-        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("manticore"));
+        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("vampire"));
         player2.pickSpell(spell2);
 
 

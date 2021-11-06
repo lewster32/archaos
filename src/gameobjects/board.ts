@@ -449,7 +449,7 @@ export class Board extends Model {
         this.deselectPlayer();
 
         if (this.players.filter((player) => !player.defeated).length < 2) {
-            this.state = BoardState.Idle;
+            this.state = BoardState.View;
             console.log("Game over!");
             return;
         }
