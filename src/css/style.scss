@@ -16,16 +16,17 @@ html, body, #app {
 }
 
 body {
+    --bg-transition-time: 0.15s;
     background: url('../../assets/images/bg.png') repeat-x 60% 40%; 
     background-color: var(--bg-colour, #555);
     color: #eee;
     margin: 0;
     padding: 0;
     height: 100%;
-    -o-transition: background-color 0.5s;
-    -moz-transition: background-color 0.5s;
-    -webkit-transition: background-color 0.5s;
-    transition: background-color 0.5s;
+    -o-transition: background-color var(--bg-transition-time);
+    -moz-transition: background-color var(--bg-transition-time);
+    -webkit-transition: background-color var(--bg-transition-time);
+    transition: background-color var(--bg-transition-time);
 }
 
 #app {

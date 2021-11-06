@@ -27,6 +27,8 @@ export class Board extends Model {
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
 
+    static END_TURN_DELAY: number = 500;
+
     static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
         { x: 1, y: 0 },
@@ -202,7 +204,7 @@ export class Board extends Model {
             ) {
                 this.nextPlayer();
             }
-        }, 1000);
+        }, Board.END_TURN_DELAY);
     }
 
     selectWizard(player: Player): Wizard | null {
@@ -257,6 +259,9 @@ export class Board extends Model {
         if (piece) {
             await piece.moveTo(positon);
             piece.moved = true;
+            if (piece.currentRider) {
+                piece.currentRider.moved = true;
+            }
             return piece;
         }
         throw new Error(`Could not find piece with ID ${id}`);

@@ -154,7 +154,7 @@ export class Piece extends Entity {
     set attacked(attacked: boolean) {
         this._attacked = attacked;
         if (this.currentRider) {
-            this.currentRider.moved = attacked;
+            this.currentRider.attacked = attacked;
         }
     }
 
@@ -167,6 +167,9 @@ export class Piece extends Entity {
 
     set rangedAttacked(rangedAttacked: boolean) {
         this._rangedAttacked = rangedAttacked;
+        if (this.currentRider) {
+            this.currentRider.turnOver = true;
+        }
     }
 
     get engaged(): boolean {
@@ -186,7 +189,7 @@ export class Piece extends Entity {
             !this.hasStatus(UnitStatus.Mount) &&
             !this.hasStatus(UnitStatus.MountAny)
         ) {
-            console.error("Cannot mount on unmountable unit");
+            console.error("Cannot mount an unmountable unit");
             return;
         }
         this._currentRider = rider;
@@ -366,7 +369,6 @@ export class Piece extends Entity {
     get canMove(): boolean {
         if (
             this._dead ||
-            this.moved ||
             this.properties.movement === 0 ||
             this.hasStatus(UnitStatus.Structure) ||
             this.hasStatus(UnitStatus.Tree)
@@ -411,6 +413,7 @@ export class Piece extends Entity {
     canRangedAttackPiece(piece: Piece): boolean {
         if (
             this == piece ||
+            piece == this.currentRider ||
             this._dead ||
             piece.dead ||
             this.rangedAttacked ||
@@ -555,9 +558,9 @@ export class Piece extends Entity {
         if (this.canMountPiece(piece)) {
             this.turnOver = true;
             this.currentMount = piece;
-            piece.moved = true;
+
             piece.currentRider = this;
-            await this.moveTo(piece.position);
+            piece.moved = true;
 
             if (piece.canAttack || piece.canRangedAttack) {
                 this.board.selectPiece(piece.id);
@@ -565,6 +568,8 @@ export class Piece extends Entity {
             } else {
                 piece.turnOver = true;
             }
+
+            await this.moveTo(piece.position);
         }
     }
 
@@ -582,6 +587,9 @@ export class Piece extends Entity {
         this._dead = true;
         if (this._sprite) {
             this._sprite.destroy();
+        }
+        if (this._shadow) {
+            this._shadow.destroy();
         }
         this.board.removePiece(this.id);
     }
@@ -628,6 +636,9 @@ export class Piece extends Entity {
     reset() {
         this.turnOver = false;
         this.engaged = false;
+        if (this.currentRider) {
+            this.currentRider.reset();
+        }
     }
 
     protected createSprite(): Phaser.GameObjects.Sprite {

@@ -87,7 +87,7 @@
         "manticore": {
             "chance": 0.4,
             "balance": -1,
-            "unitId": "1",
+            "unitId": "14",
             "name": "Manticore"
         },
         "green-dragon": {
