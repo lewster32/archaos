@@ -28,7 +28,7 @@ export class Piece extends Entity {
     protected _engaged: boolean;
 
     protected _currentMount: Piece | null;
-    protected _mounted: boolean;
+    protected _currentRider: Piece | null;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
@@ -57,8 +57,8 @@ export class Piece extends Entity {
         this._rangedAttacked = false;
         this._engaged = false;
 
+        this._currentRider = null;
         this._currentMount = null;
-        this._mounted = false;
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
@@ -130,8 +130,8 @@ export class Piece extends Entity {
 
     set moved(moved: boolean) {
         this._moved = moved;
-        if (this.currentMount) {
-            this.currentMount.moved = moved;
+        if (this.currentRider) {
+            this.currentRider.moved = moved;
         }
     }
 
@@ -144,8 +144,8 @@ export class Piece extends Entity {
 
     set attacked(attacked: boolean) {
         this._attacked = attacked;
-        if (this.currentMount) {
-            this.currentMount.moved = attacked;
+        if (this.currentRider) {
+            this.currentRider.moved = attacked;
             // this.currentMount.attacked = attacked;
         }
     }
@@ -173,31 +173,31 @@ export class Piece extends Entity {
         return this._properties;
     }
 
-    set currentMount(piece: Piece | null) {
+    set currentRider(rider: Piece | null) {
         if (!this.hasStatus(UnitStatus.Mount) && !this.hasStatus(UnitStatus.MountAny)) {
             console.error("Cannot mount on unmountable unit");
             return;
         }
-        this._currentMount = piece;
+        this._currentRider = rider;
     }
 
-    get currentMount(): Piece | null {
-        return this._currentMount;
+    get currentRider(): Piece | null {
+        return this._currentRider;
     }
 
-    set mounted(mounted: boolean) {
-        this._mounted = mounted;
+    set currentMount(mount: Piece | null) {
+        this._currentMount = mount;
 
         this.board.scene.tweens.add({
             targets: [this._sprite, this._shadow],
-            alpha: this._mounted ? 0 : 1,
+            alpha: mount != null ? 0 : 1,
             duration: Piece.DEFAULT_MOVE_DURATION / 2
         });
 
     }
 
-    get mounted(): boolean {
-        return this._mounted;
+    get currentMount(): Piece | null {
+        return this._currentMount;
     }
 
     async updatePosition(
@@ -255,8 +255,12 @@ export class Piece extends Entity {
             this.direction = UnitDirection.Right;
         }
         this.position = point;
-        if (this.currentMount) {
-            this.currentMount.position = point;
+        if (this.currentRider) {
+            this.currentRider.position = point;
+            this.currentRider.updatePosition(0);
+        }
+        if (this.currentMount && !Phaser.Geom.Point.Equals(this.currentMount.position, this.position)) {
+            await this.board.dismountPiece(this.id);
         }
         await this.updatePosition();
     }
@@ -267,6 +271,7 @@ export class Piece extends Entity {
 
     inMovementRange(point: Phaser.Geom.Point): boolean {
         if (
+            Phaser.Geom.Point.Equals(this.position, point) ||
             Board.distance(this.position, point) >
             this.properties.movement + 0.5
         ) {
@@ -296,7 +301,7 @@ export class Piece extends Entity {
     }
 
     get canSelect(): boolean {
-        if ((this.hasStatus(UnitStatus.Mount) || this.hasStatus(UnitStatus.MountAny)) && this.currentMount && !this.currentMount.moved) {
+        if ((this.hasStatus(UnitStatus.Mount) || this.hasStatus(UnitStatus.MountAny)) && this.currentRider && !this.currentRider.moved) {
             return true;
         }
         if (
@@ -335,7 +340,7 @@ export class Piece extends Entity {
             this.owner === piece.owner ||
             this._dead ||
             piece.dead ||
-            piece.mounted ||
+            piece.currentMount ||
             this.attacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -367,7 +372,7 @@ export class Piece extends Entity {
             this == piece ||
             this._dead ||
             piece.dead ||
-            piece.mounted ||
+            piece.currentMount ||
             this.rangedAttacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -389,7 +394,7 @@ export class Piece extends Entity {
             this.hasStatus(UnitStatus.Wizard) &&
             (
                 (piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
-                piece.hasStatus(UnitStatus.MountAny) && !piece.currentMount
+                piece.hasStatus(UnitStatus.MountAny) && !piece.currentRider
             )
         ) {
             return true;
@@ -489,9 +494,9 @@ export class Piece extends Entity {
     async mount(piece: Piece): Promise<void>  {
         if (this.canMountPiece(piece)) {
             this.turnOver = true;
-            this.mounted = true;
+            this.currentMount = piece;
             piece.moved = true;
-            piece.currentMount = this;
+            piece.currentRider = this;
             await this.moveTo(piece.position);
 
             if (piece.canAttack || piece.canRangedAttack) {
@@ -504,22 +509,13 @@ export class Piece extends Entity {
         }
     }
 
-    async dismount(piece: Piece, position: Phaser.Geom.Point): Promise<void>  {
-        if (this.mounted && piece.currentMount === this) {
-            this.mounted = false;
+    async dismount(): Promise<void>  {
+        if (this.currentMount) {
+            this.currentMount.currentRider = null;
+            
             this.moved = true;
-            piece.turnOver = true;
-            piece.currentMount = null;
-
-            await this.moveTo(position);
-
-            if (this.canAttack || this.canRangedAttack) {
-                this.board.selectPiece(this.id);
-                this.board.cursor.update(true);
-            }
-            else {
-                this.turnOver = true;
-            }
+            this.currentMount.turnOver = true;
+            this.currentMount = null;
         }
     }
 
@@ -569,6 +565,10 @@ export class Piece extends Entity {
         this._shadow.displayOriginY = -4;
 
         return this._shadow;
+    }
+
+    reset() {
+        this.turnOver = false;
     }
 
     createSprite(): Phaser.GameObjects.Sprite {

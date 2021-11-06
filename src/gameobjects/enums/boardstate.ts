@@ -3,6 +3,8 @@ export enum BoardState {
     View,
     SelectSpell,
     CastSpell,
-    MovePieces,
+    Move,
+    Attack,
+    RangedAttack,
     Dismount
 }

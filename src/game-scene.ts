@@ -124,8 +124,8 @@ export class GameScene extends Phaser.Scene {
 
         const wiz: Wizard = board.addWizard({
             owner: player,
-            x: 1,
-            y: 1,
+            x: 0,
+            y: 0,
             wizCode: "0000000000"
         });
 
@@ -144,12 +144,6 @@ export class GameScene extends Phaser.Scene {
             properties: this.getUnitProperties("centaur")
         });
 
-        setTimeout(() => {
-            wiz.mounted = true;
-            mount.currentMount = wiz;
-        }, 0);
-
-
         board.addPiece({
             owner: player2,
             x: 2,
@@ -166,7 +160,7 @@ export class GameScene extends Phaser.Scene {
             properties: this.getUnitProperties("giant rat")
         });
 
-        board.state = BoardState.MovePieces;  
+        board.state = BoardState.Move;  
         board.selectPlayer(player.id);
 
         /*

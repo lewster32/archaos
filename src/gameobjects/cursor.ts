@@ -122,6 +122,10 @@ export class Cursor {
                         this.type = CursorType.Fly;
                         break;
                     }
+                    if (selectedPiece.currentMount) {
+                        this.type = CursorType.Dismount;
+                        break;
+                    }
                     this.type = Cursor.getMovementDirectionType(
                         selectedPiece?.position,
                         this._position
@@ -279,7 +283,7 @@ export class Cursor {
             ) {
                 selected.engaged = true;
             }
-            if (selected.currentMount && !selected.currentMount.moved) {
+            if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
             }
             else if (!selected.canAttack && !selected.canRangedAttack) {

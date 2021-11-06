@@ -12,7 +12,7 @@ html, body, #app {
 }
 
 body {
-    background: #555 url('../../assets/images/bg.png') repeat-x 0 50%; 
+    background: var(--bg-color, #555) url('../../assets/images/bg.png') repeat-x 0 50%; 
     color: #eee;
     margin: 0;
     padding: 0;

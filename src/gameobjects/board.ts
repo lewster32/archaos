@@ -78,6 +78,13 @@ export class Board extends Model {
         this._currentPlayer = null;
 
         this._rules = Rules.getInstance();
+
+        let spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        spaceKey.on("up", () => {
+            this.pieces.forEach((piece) => {
+                piece.reset();
+            });
+        });
     }
 
     /* #region State */
@@ -234,13 +241,13 @@ export class Board extends Model {
         return null;
     }
 
-    async dismountPiece(dismountingPieceId: number, position: Phaser.Geom.Point): Promise<Piece | null> {
+    async dismountPiece(dismountingPieceId: number): Promise<Piece | null> {
         const dismountingPiece: Piece | null = this.getPiece(dismountingPieceId);
         if (!dismountingPiece) {
             throw new Error(`Could not find piece with ID ${dismountingPieceId}`);
         }
         if (dismountingPiece) {
-            await dismountingPiece.currentMount!.dismount(dismountingPiece, position);
+            await dismountingPiece.dismount();
             return dismountingPiece;
         }
         return null;

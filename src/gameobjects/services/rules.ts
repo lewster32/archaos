@@ -38,17 +38,30 @@ export class Rules {
         }
 
         const currentAliveHoveredPiece: Piece | null =
-            hoveredPieces.find((piece: Piece) => !piece.dead && !piece.mounted) || null;
+            hoveredPieces.find(
+                (piece: Piece) => !piece.dead && !piece.currentMount
+            ) || null;
 
         const selectedPiece: Piece | null = board.selected;
 
+        /*
         if (board.state === BoardState.Dismount) {
             if (selectedPiece && selectedPiece.currentMount && !selectedPiece.currentMount.moved && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
-                return ActionType.Dismount;
+                if (currentAliveHoveredPiece) {
+                    board.state = BoardState.Move;
+                    board.cursor.update(true);
+                }
+                else {
+                    return ActionType.Dismount;
+                }
             }
             return ActionType.Invalid;
         }
-        if (board.state === BoardState.MovePieces) {
+        */
+        if (
+            board.state === BoardState.Move ||
+            board.state == BoardState.Dismount
+        ) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
                     if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
@@ -66,6 +79,9 @@ export class Rules {
                     ) {
                         return ActionType.RangedAttack;
                     }
+                    if (selectedPiece.moved) {
+                        return ActionType.Invalid;
+                    }
                     if (selectedPiece === currentAliveHoveredPiece) {
                         return ActionType.Move;
                     } else {
@@ -82,10 +98,11 @@ export class Rules {
                 }
             } else {
                 if (currentAliveHoveredPiece) {
-                    if (currentAliveHoveredPiece.owner !== board.currentPlayer) {
+                    if (
+                        currentAliveHoveredPiece.owner !== board.currentPlayer
+                    ) {
                         return ActionType.Info;
-                    }
-                    else {
+                    } else {
                         if (currentAliveHoveredPiece.canSelect) {
                             return ActionType.Select;
                         } else {
@@ -146,10 +163,28 @@ export class Rules {
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
                 const currentAliveHoveredPiece: Piece | null =
-                hoveredPieces.find((piece: Piece) => !piece.dead && !piece.mounted) || null;
-                
-                if (currentAliveHoveredPiece && currentAliveHoveredPiece.canSelect) {
-                    this.dispatchEvent(EventType.PieceInfo, currentAliveHoveredPiece);
+                    hoveredPieces.find((piece: Piece) => !piece.dead && !piece.currentMount) || null;
+
+                if (
+                    currentAliveHoveredPiece &&
+                    currentAliveHoveredPiece.currentRider &&
+                    currentAliveHoveredPiece.currentRider.canSelect
+                ) {
+                    this.dispatchEvent(
+                        EventType.PieceInfo,
+                        currentAliveHoveredPiece.currentRider
+                    );
+                    board.selectPiece(currentAliveHoveredPiece.currentRider.id);
+                    board.state = BoardState.Dismount;
+                    return ActionType.Dismount;
+                } else if (
+                    currentAliveHoveredPiece &&
+                    currentAliveHoveredPiece.canSelect
+                ) {
+                    this.dispatchEvent(
+                        EventType.PieceInfo,
+                        currentAliveHoveredPiece
+                    );
                     board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {
@@ -160,14 +195,6 @@ export class Rules {
         const selectedPiece: Piece | null = board.selected;
         if (!selectedPiece) {
             return ActionType.None;
-        }
-        if (actionType === ActionType.Dismount) {
-            if (selectedPiece && selectedPiece.currentMount && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
-                await board.dismountPiece(selectedPiece.id, board.cursor.position);
-                board.state = BoardState.MovePieces;
-                return ActionType.Dismount;
-            }
-            return ActionType.Invalid;
         }
         if (actionType === ActionType.Move) {
             if (
@@ -186,25 +213,23 @@ export class Rules {
                 if (selectedPiece.canMountPiece(hoveredPieces[0])) {
                     board.mountPiece(selectedPiece.id, hoveredPieces[0].id);
                     return ActionType.Mount;
-                }
-                else {
+                } else {
                     return ActionType.Invalid;
                 }
             }
             if (actionType === ActionType.Attack) {
-                if (
-                    selectedPiece.canAttackPiece(hoveredPieces[0])
-                ) {
-                    await board.attackPiece(selectedPiece.id, hoveredPieces[0].id);
+                if (selectedPiece.canAttackPiece(hoveredPieces[0])) {
+                    await board.attackPiece(
+                        selectedPiece.id,
+                        hoveredPieces[0].id
+                    );
                     return ActionType.Attack;
                 } else {
                     return ActionType.Invalid;
                 }
             }
             if (actionType === ActionType.RangedAttack) {
-                if (
-                    selectedPiece.canRangedAttackPiece(hoveredPieces[0])
-                ) {
+                if (selectedPiece.canRangedAttackPiece(hoveredPieces[0])) {
                     await board.rangedAttackPiece(
                         selectedPiece.id,
                         hoveredPieces[0].id
@@ -233,13 +258,21 @@ export class Rules {
             if (selectedPiece) {
                 selectedPiece.moved = true;
             }
-            if (selectedPiece.currentMount) {
-                selectedPiece.currentMount.moved = true;
+            if (selectedPiece.currentRider) {
+                selectedPiece.currentRider.moved = true;
             }
-            board.state = BoardState.MovePieces;
+            if (selectedPiece.currentMount && selectedPiece.currentMount.canSelect) {
+                console.log("Whee");
+                board.selectPiece(selectedPiece.currentMount.id);
+                return ActionType.Move;
+            }
         }
 
-        if (!selectedPiece.moved && selectedPiece.currentMount && !selectedPiece.currentMount.moved) {
+        if (
+            !selectedPiece.moved &&
+            selectedPiece.currentRider &&
+            !selectedPiece.currentRider.moved
+        ) {
             board.state = BoardState.Dismount;
             return ActionType.Dismount;
         }
