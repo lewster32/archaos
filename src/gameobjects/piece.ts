@@ -8,6 +8,7 @@ import { UnitStatus } from "./enums/unitstatus";
 import { IUnitProperties } from "./interfaces/unitproperties";
 import { Player } from "./player";
 import { Wizard } from "./wizard";
+import { units } from "../../assets/data/classicunits.json";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
@@ -47,9 +48,13 @@ export class Piece extends Entity {
             magicResistance: 3,
             attackDescription: "hit",
             rangedDescription: "shot",
-            status: [] as UnitStatus[]
+            status: [] as UnitStatus[],
         };
-        this._direction = UnitDirection.Right;
+
+        this._direction =
+            this.position.x - this.position.y > 0
+                ? UnitDirection.Left
+                : UnitDirection.Right;
 
         this._dead = false;
         this._moved = false;
@@ -65,16 +70,19 @@ export class Piece extends Entity {
 
         setTimeout(() => {
             this.initSprites();
-        });
+        }, Math.random() * 20);
     }
 
-    initSprites() {
+    protected initSprites() {
         this.createShadow();
         this.createSprite();
+        this.createShaders();
     }
 
     get turnOver(): boolean {
-        return this.dead || (this.moved && this.attacked && this.rangedAttacked);
+        return (
+            this.dead || (this.moved && this.attacked && this.rangedAttacked)
+        );
     }
 
     set turnOver(state: boolean) {
@@ -82,8 +90,7 @@ export class Piece extends Entity {
 
         if (state) {
             this._sprite?.setTint(0x7f7f7f);
-        }
-        else {
+        } else {
             this._sprite?.clearTint();
         }
     }
@@ -174,7 +181,10 @@ export class Piece extends Entity {
     }
 
     set currentRider(rider: Piece | null) {
-        if (!this.hasStatus(UnitStatus.Mount) && !this.hasStatus(UnitStatus.MountAny)) {
+        if (
+            !this.hasStatus(UnitStatus.Mount) &&
+            !this.hasStatus(UnitStatus.MountAny)
+        ) {
             console.error("Cannot mount on unmountable unit");
             return;
         }
@@ -191,9 +201,8 @@ export class Piece extends Entity {
         this.board.scene.tweens.add({
             targets: [this._sprite, this._shadow],
             alpha: mount != null ? 0 : 1,
-            duration: Piece.DEFAULT_MOVE_DURATION / 2
+            duration: Piece.DEFAULT_MOVE_DURATION / 2,
         });
-
     }
 
     get currentMount(): Piece | null {
@@ -214,7 +223,7 @@ export class Piece extends Entity {
 
             this.board.scene.tweens.add({
                 targets: this._sprite,
-                displayOriginY: Board.DEFAULT_CELLSIZE,
+                displayOriginY: "+" + Board.DEFAULT_CELLSIZE,
                 duration: duration / 2,
                 yoyo: true,
             });
@@ -238,7 +247,7 @@ export class Piece extends Entity {
         });
     }
 
-    updateDepth() {
+    protected updateDepth() {
         this._sprite?.setDepth(this._sprite?.y as number);
     }
 
@@ -246,20 +255,27 @@ export class Piece extends Entity {
         return this._sprite?.y || 0;
     }
 
-    async moveTo(point: Phaser.Geom.Point) {
+    protected updateDirection(fromPoint: Phaser.Geom.Point, toPoint: Phaser.Geom.Point) {
         const isoXOffset: number =
-            Board.toIsometric(point).x - Board.toIsometric(this.position).x;
+            Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
         if (isoXOffset < 0) {
             this.direction = UnitDirection.Left;
         } else if (isoXOffset > 0) {
             this.direction = UnitDirection.Right;
         }
+    }
+
+    async moveTo(point: Phaser.Geom.Point) {
+        this.updateDirection(this.position, point);
         this.position = point;
         if (this.currentRider) {
             this.currentRider.position = point;
             this.currentRider.updatePosition(0);
         }
-        if (this.currentMount && !Phaser.Geom.Point.Equals(this.currentMount.position, this.position)) {
+        if (
+            this.currentMount &&
+            !Phaser.Geom.Point.Equals(this.currentMount.position, this.position)
+        ) {
             await this.board.dismountPiece(this.id);
         }
         await this.updatePosition();
@@ -273,7 +289,7 @@ export class Piece extends Entity {
         if (
             Phaser.Geom.Point.Equals(this.position, point) ||
             Board.distance(this.position, point) >
-            this.properties.movement + 0.5
+                this.properties.movement + 0.5
         ) {
             return false;
         }
@@ -281,7 +297,11 @@ export class Piece extends Entity {
     }
 
     inAttackRange(point: Phaser.Geom.Point): boolean {
-        if (!this.moved && this.hasStatus(UnitStatus.Flying) && this.inMovementRange(point)) {
+        if (
+            !this.moved &&
+            this.hasStatus(UnitStatus.Flying) &&
+            this.inMovementRange(point)
+        ) {
             return true;
         }
         if (Board.distance(this.position, point) > 1.5) {
@@ -301,7 +321,12 @@ export class Piece extends Entity {
     }
 
     get canSelect(): boolean {
-        if ((this.hasStatus(UnitStatus.Mount) || this.hasStatus(UnitStatus.MountAny)) && this.currentRider && !this.currentRider.moved) {
+        if (
+            (this.hasStatus(UnitStatus.Mount) ||
+                this.hasStatus(UnitStatus.MountAny)) &&
+            this.currentRider &&
+            !this.currentRider.moved
+        ) {
             return true;
         }
         if (
@@ -390,10 +415,9 @@ export class Piece extends Entity {
             !piece.dead &&
             !this.moved &&
             this.hasStatus(UnitStatus.Wizard) &&
-            (
-                (piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
-                piece.hasStatus(UnitStatus.MountAny) && !piece.currentRider
-            )
+            ((piece.hasStatus(UnitStatus.Mount) &&
+                piece.owner === this.owner) ||
+                (piece.hasStatus(UnitStatus.MountAny) && !piece.currentRider))
         ) {
             return true;
         }
@@ -423,6 +447,7 @@ export class Piece extends Entity {
 
     async attack(piece: Piece): Promise<void> {
         if (this.canAttackPiece(piece)) {
+            this.updateDirection(this.position, piece.position);
             this.attacked = true;
             this.moved = true;
             const attackRoll: number = Phaser.Math.Between(
@@ -434,13 +459,24 @@ export class Piece extends Entity {
                 piece.properties.defense
             );
 
-            console.log("Attack!", this.name, attackRoll, piece.name, defenseRoll);
+            console.log(
+                "Attack!",
+                this.name,
+                attackRoll,
+                piece.name,
+                defenseRoll
+            );
 
             if (attackRoll > defenseRoll) {
                 await piece.kill();
-                if (this.board.getPiecesAtPosition(piece.position, (piece: Piece) => {
-                    return !piece.dead
-                }).length === 0) {
+                if (
+                    this.board.getPiecesAtPosition(
+                        piece.position,
+                        (piece: Piece) => {
+                            return !piece.dead;
+                        }
+                    ).length === 0
+                ) {
                     await this.moveTo(piece.position);
                 }
             }
@@ -449,6 +485,7 @@ export class Piece extends Entity {
 
     async rangedAttack(piece: Piece): Promise<void> {
         if (this.canRangedAttackPiece(piece)) {
+            this.updateDirection(this.position, piece.position);
             this.rangedAttacked = true;
             this.attacked = true;
             this.moved = true;
@@ -469,7 +506,7 @@ export class Piece extends Entity {
         }
     }
 
-    async kill(): Promise<void>  {
+    async kill(): Promise<void> {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
@@ -496,8 +533,7 @@ export class Piece extends Entity {
         }
     }
 
-
-    async mount(piece: Piece): Promise<void>  {
+    async mount(piece: Piece): Promise<void> {
         if (this.canMountPiece(piece)) {
             this.turnOver = true;
             this.currentMount = piece;
@@ -508,23 +544,21 @@ export class Piece extends Entity {
             if (piece.canAttack || piece.canRangedAttack) {
                 this.board.selectPiece(piece.id);
                 this.board.cursor.update(true);
-            }
-            else {
+            } else {
                 piece.turnOver = true;
             }
         }
     }
 
-    async dismount(): Promise<void>  {
+    async dismount(): Promise<void> {
         if (this.currentMount) {
             this.currentMount.currentRider = null;
-            
+
             this.moved = true;
             this.currentMount.turnOver = true;
             this.currentMount = null;
         }
     }
-
 
     destroy() {
         this._dead = true;
@@ -534,7 +568,7 @@ export class Piece extends Entity {
         this.board.removePiece(this.id);
     }
 
-    playAnim() {
+    protected playAnim() {
         if (!this._sprite) {
             return;
         }
@@ -550,7 +584,7 @@ export class Piece extends Entity {
         }
     }
 
-    createShadow(): Phaser.GameObjects.Image | null {
+    protected createShadow(): Phaser.GameObjects.Image | null {
         if (this.hasStatus(UnitStatus.Transparent)) {
             return null;
         }
@@ -578,7 +612,7 @@ export class Piece extends Entity {
         this.engaged = false;
     }
 
-    createSprite(): Phaser.GameObjects.Sprite {
+    protected createSprite(): Phaser.GameObjects.Sprite {
         if (this._sprite) {
             return this._sprite;
         }
@@ -603,5 +637,44 @@ export class Piece extends Entity {
         this.board.getLayer(BoardLayer.Pieces).add(this._sprite);
 
         return this._sprite;
+    }
+
+    protected createShaders(): void {
+        // TODO: Implement shaders
+    }
+
+    static getUnitConfig(id: string): any {
+        return (units as any)[id];
+    }
+
+    static getUnitPropertiesByName(name: string): any {
+        let key = "";
+        for (let [k, unit] of Object.entries(units)) {
+            if (unit.name.toLowerCase() === name.toLowerCase()) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const unit: any = this.getUnitConfig(key);
+
+        return {
+            id: key,
+            name: unit.name,
+            movement: unit.properties.mov,
+            combat: unit.properties.com,
+            rangedCombat: unit.properties.rcm,
+            range: unit.properties.rng,
+            defense: unit.properties.def,
+            maneuverability: unit.properties.mnv,
+            magicResistance: unit.properties.res,
+            attackDescription: unit.attackType || "attacked",
+            rangedDescription: unit.rangedDescription || "shot",
+            status: unit.status || [],
+        };
     }
 }

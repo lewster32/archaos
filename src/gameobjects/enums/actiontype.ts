@@ -8,5 +8,6 @@ export enum ActionType {
     Attack = "attack",
     RangedAttack = "rangedAttack",
     Mount = "mount",
-    Dismount = "dismount"
+    Dismount = "dismount",
+    Cast = "cast"
 }

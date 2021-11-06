@@ -213,8 +213,8 @@
             "animSpeed": 4
         },
         "14": {
-            "attackType": "struck",
-            "rangedType": "shot",
+            "attackType": "bit",
+            "rangedType": "stung",
             "projectileType": "arrow",
             "properties": {
                 "mov": 5,
@@ -645,7 +645,7 @@
             "shadowScale": 0
         },
         "1f": {
-            "attackType": "stabbed",
+            "attackType": "slashed",
             "properties": {
                 "mov": 1,
                 "com": 3,

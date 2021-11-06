@@ -102,6 +102,9 @@ export class Cursor {
             case ActionType.Select:
                 this.type = CursorType.Select;
                 break;
+            case ActionType.Cast:
+                this.type = CursorType.Cast;
+                break;
             case ActionType.Move:
                 if (selectedPiece) {
                     const neighbours: Piece[] =
@@ -291,71 +294,6 @@ export class Cursor {
                 this._board.deselectPiece();
             }
         }
-
-        /*
-        if (this._board.state === BoardState.Idle) {
-            return;
-        }
-
-        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(
-            this._position
-        );
-
-        switch (this._board.state) {
-            case BoardState.View:
-                if (hoveredPieces.length > 0) {
-                    this._board.scene.events.emit(
-                        "piece-info",
-                        hoveredPieces[0]
-                    );
-                }
-                break;
-            case BoardState.MovePieces:
-                if (this._board.selected) {
-                    if (
-                        hoveredPieces.length > 0 &&
-                        hoveredPieces[0] === this._board.selected
-                    ) {
-                        return;
-                    }
-
-                    if (
-                        this._board.selected.moved ||
-                        !this._board.selected.inMovementRange(this._position)
-                    ) {
-                        this.type = CursorType.Invalid;
-                        return;
-                    }
-                    const previousState: BoardState = this._board.state;
-                    this._board.state = BoardState.Idle;
-                    this.type = CursorType.Idle;
-
-                    await this._board.movePiece(
-                        this._board.selected.id,
-                        this._position
-                    );
-                    this._board.selected.moved = true;
-                    this._board.state = previousState;
-
-                    if (this._board.selected.canAttack) {
-                        this.type = CursorType.Attack;
-                    } else if (this._board.selected.canRangedAttack) {
-                        this.type = CursorType.RangedAttack;
-                    } else {
-                        this._board.deselectPiece();
-                    }
-                } else {
-                    if (
-                        hoveredPieces.length > 0 &&
-                        hoveredPieces[0].canSelect
-                    ) {
-                        this._board.selectPiece(hoveredPieces[0].id);
-                        this.type = CursorType.Fly;
-                    }
-                }
-                break;
-        }
-        */
     }
 
     set type(type: CursorType) {
@@ -392,9 +330,8 @@ export class Cursor {
         point.x -=
             Board.DEFAULT_CELLSIZE * -1 +
             (this._board.scene.game.config.width as number) / 2;
-        point.y += Board.DEFAULT_CELLSIZE * -2.5;
+        point.y += Board.DEFAULT_CELLSIZE
 
-        point.y *= 1.6;
 
         const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
         const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;

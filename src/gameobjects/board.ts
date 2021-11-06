@@ -9,6 +9,11 @@ import { Piece } from "./piece";
 import { Player } from "./player";
 import { Rules } from "./services/rules";
 
+import { Spell } from "./spell";
+import { SpellConfig } from "./configs/spellconfig";
+import { UnitType } from "./enums/unittype";
+import { BoardPhase } from "./enums/boardphase";
+
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
@@ -33,7 +38,10 @@ export class Board extends Model {
         { x: 1, y: -1 },
     ];
 
+    private _phase: BoardPhase;
+
     private _state: BoardState;
+    private _balance: number;
     private _cursor: Cursor;
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
@@ -74,6 +82,8 @@ export class Board extends Model {
         this._pieces = new Map();
         this._players = new Map();
         this._state = BoardState.Idle;
+        this._phase = BoardPhase.Idle;
+        this._balance = 0;
 
         this._cursor = new Cursor(this);
         this._selected = null;
@@ -99,6 +109,23 @@ export class Board extends Model {
         this._state = state;
     }
 
+    get phase(): BoardPhase {
+        return this._phase;
+    }
+
+    set phase(phase: BoardPhase) {
+        this._phase = phase;
+        console.log("Board phase:", BoardPhase[this._phase]);
+    }
+
+    get balance(): number {
+        return this._balance;
+    }
+
+    set balance(balance: number) {
+        this._balance = balance;
+    }
+
     get cursor(): Cursor {
         return this._cursor;
     }
@@ -112,6 +139,15 @@ export class Board extends Model {
         this.pieces.forEach((piece) => {
             piece.reset();
         });
+
+        if (this.phase === BoardPhase.Idle || this.phase === BoardPhase.Moving) {
+            this.phase = BoardPhase.Casting;
+            this.state = BoardState.CastSpell;
+        }
+        else if (this.phase === BoardPhase.Casting) {
+            this.phase = BoardPhase.Moving;
+            this.state = BoardState.Move;
+        }
     }
 
     /* #endregion */
@@ -161,6 +197,17 @@ export class Board extends Model {
                 this.nextPlayer();
             }
         }, 1000);
+    }
+
+    selectWizard(player: Player): Wizard | null {
+        const ownedPieces: Piece[] = this.getPiecesByOwner(player);
+        for (let i: number = 0; i < ownedPieces.length; i++) {
+            if (ownedPieces[i].type === UnitType.Wizard) {
+                this.selectPiece(ownedPieces[i].id);
+                return ownedPieces[i] as Wizard;
+            }            
+        }
+        throw new Error(`Player '${player.name}' does not own a wizard`);
     }
 
     removePiece(id: number): void {
@@ -300,6 +347,12 @@ export class Board extends Model {
         return player;
     }
 
+    addSpell(player: Player, config: SpellConfig): Spell {
+        const spell: Spell = new Spell(this, this._idCounter++, config);
+        player.addSpell(spell);
+        return spell;
+    }
+
     getPlayer(id: number): Player | null {
         if (this._players.has(id)) {
             return this._players.get(id)!;
@@ -357,15 +410,42 @@ export class Board extends Model {
         this._currentPlayer = null;
     }
 
+    async startGame(): Promise<void> {
+        this._currentPlayerIndex = -1;
+        this._currentPlayer = null;
+        this.state = BoardState.Idle;
+        this.phase = BoardPhase.Idle;
+        await this.nextPlayer();
+    }
+
     async nextPlayer(): Promise<void> {
         this._currentPlayerIndex =
             (this._currentPlayerIndex + 1) % this._players.size;
         this.deselectPlayer();
+
+        if (this.players.filter((player) => !player.defeated).length < 2) {
+            this.state = BoardState.Idle;
+            console.log("Game over!")
+            return;
+        }
+
         this.selectPlayer(
             Array.from(this._players.keys())[this._currentPlayerIndex]
         );
+
+        console.log(`${this.currentPlayer?.name}'s turn`);
+
         if (this._currentPlayerIndex === 0) {
             this.newTurn();
+        }
+
+        if (this._phase === BoardPhase.Casting) {
+            this.selectWizard(this.currentPlayer!);
+        }
+
+        if (this._phase === BoardPhase.Casting && this.currentPlayer && !this.currentPlayer.selectedSpell) {
+            console.log(`Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`);
+            return this.nextPlayer();
         }
     }
 

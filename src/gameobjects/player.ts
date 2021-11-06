@@ -1,11 +1,17 @@
 import { Board } from "./board";
 import { PlayerConfig } from "./configs/playerconfig";
 import { Model } from "./model";
+import { Spell } from "./spell";
 
 export class Player extends Model {
     private _name?: string;
     private _board: Board;
     private _colour: number | null;
+
+    private _spells: Set<Spell>;
+
+    private _selectedSpell: Spell | null;
+    private _defeated: boolean;
 
     static PLAYER_COLOURS: number[] = [
         0x0000ff,
@@ -23,6 +29,10 @@ export class Player extends Model {
         this._name = config.name;
         this._board = board;
         this._colour = null;
+
+        this._spells = new Set();
+        this._selectedSpell = null;
+        this._defeated = false;
     }
 
     get colour(): number | null {
@@ -41,4 +51,41 @@ export class Player extends Model {
         return this._board;
     }
 
+    get spells(): Spell[] {
+        return Array.from(this._spells);
+    }
+
+    get defeated(): boolean {
+        return this._defeated;
+    }
+
+    async defeat(): Promise<void> {
+        this._defeated = true;
+    }
+
+    addSpell(spell: Spell) {
+        this._spells.add(spell);
+    }
+
+    get selectedSpell(): Spell | null {
+        return this._selectedSpell;
+    }
+
+    async pickSpell(spell: Spell): Promise<Spell> {
+        if (this._spells.has(spell)) {
+            this._selectedSpell = spell;
+            return this._selectedSpell;
+        }
+        throw new Error("This player does not have that spell")
+    }
+
+    async useSpell(): Promise<Spell | null> {
+        if (this._selectedSpell) {
+            this._spells.delete(this._selectedSpell);
+            const spell: Spell = this._selectedSpell;
+            this._selectedSpell = null;
+            return spell;
+        }
+        return null;
+    }
 }

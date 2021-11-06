@@ -2,19 +2,19 @@ import { UnitType } from "../enums/unittype";
 import { IUnitProperties } from "../interfaces/unitproperties";
 import { Player } from "../player";
 
-interface Config {
+interface UnitConfig {
     x: number;
     y: number;
     owner?: Player;
 }
 
-export interface PieceConfig extends Config {
+export interface PieceConfig extends UnitConfig {
     type: UnitType;
     properties?: IUnitProperties;
     shadowScale?: number;
     offsetY?: number;
 }
 
-export interface WizardConfig extends Config {
+export interface WizardConfig extends UnitConfig {
     wizCode: string;
 }

@@ -16,7 +16,7 @@ html, body, #app {
 }
 
 body {
-    background: url('../../assets/images/bg.png') repeat-x 0 50%; 
+    background: url('../../assets/images/bg.png') repeat-x 60% 40%; 
     background-color: var(--bg-colour, #555);
     color: #eee;
     margin: 0;
@@ -32,12 +32,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    canvas {
-        max-width: 100%;
-        height: 100% !important;
-        object-fit: contain;
-        object-position: 50% 50%;
-    }
 }
 
 #piece-info {

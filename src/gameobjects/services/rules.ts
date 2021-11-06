@@ -3,7 +3,9 @@ import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
+import { SpellType } from "../enums/spelltype";
 import { Piece } from "../piece";
+import { Spell } from "../spell";
 
 export class Rules {
     private static instance: Rules;
@@ -44,9 +46,31 @@ export class Rules {
 
         const selectedPiece: Piece | null = board.selected;
 
+        if (board.state === BoardState.CastSpell && board.selected) {
+            const selectedSpell: Spell | null =
+                board.currentPlayer?.selectedSpell;
+
+            if (selectedSpell) {
+                if (
+                    selectedSpell.inCastingRange(
+                        board.selected.position,
+                        board.cursor.position
+                    )
+                ) {
+                    if (
+                        selectedSpell.type === SpellType.Summon &&
+                        !currentAliveHoveredPiece
+                    ) {
+                        return ActionType.Cast;
+                    }
+                }
+                return ActionType.Invalid;
+            }
+            return ActionType.Idle;
+        }
         if (
             board.state === BoardState.Move ||
-            board.state == BoardState.Dismount
+            board.state === BoardState.Dismount
         ) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
@@ -146,10 +170,23 @@ export class Rules {
                 return ActionType.Info;
             }
         }
+        if (actionType === ActionType.Cast) {
+            if (board.currentPlayer && board.selected) {
+                const casted: Spell | null = await board.currentPlayer.useSpell();
+                if (casted) {
+                    await casted.cast(board.currentPlayer, board.cursor.position, hoveredPieces);
+                    board.selected.turnOver = true;
+                    return ActionType.Cast;
+                }
+            }
+            return ActionType.None;
+        }
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
                 const currentAliveHoveredPiece: Piece | null =
-                    hoveredPieces.find((piece: Piece) => !piece.dead && !piece.currentMount) || null;
+                    hoveredPieces.find(
+                        (piece: Piece) => !piece.dead && !piece.currentMount
+                    ) || null;
 
                 if (
                     currentAliveHoveredPiece &&
@@ -196,15 +233,20 @@ export class Rules {
         }
         if (hoveredPieces.length > 0) {
             const currentAliveHoveredPiece: Piece | null =
-            hoveredPieces.find((piece: Piece) => !piece.dead && !piece.currentMount) || null;
+                hoveredPieces.find(
+                    (piece: Piece) => !piece.dead && !piece.currentMount
+                ) || null;
 
             if (!currentAliveHoveredPiece) {
                 return ActionType.Idle;
             }
-            
+
             if (actionType === ActionType.Mount) {
                 if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
-                    board.mountPiece(selectedPiece.id, currentAliveHoveredPiece.id);
+                    board.mountPiece(
+                        selectedPiece.id,
+                        currentAliveHoveredPiece.id
+                    );
                     return ActionType.Mount;
                 } else {
                     return ActionType.Invalid;
@@ -222,7 +264,9 @@ export class Rules {
                 }
             }
             if (actionType === ActionType.RangedAttack) {
-                if (selectedPiece.canRangedAttackPiece(currentAliveHoveredPiece)) {
+                if (
+                    selectedPiece.canRangedAttackPiece(currentAliveHoveredPiece)
+                ) {
                     await board.rangedAttackPiece(
                         selectedPiece.id,
                         currentAliveHoveredPiece.id
@@ -244,6 +288,16 @@ export class Rules {
         const selectedPiece: Piece | null = board.selected;
 
         if (!selectedPiece) {
+            board.nextPlayer();
+            return ActionType.None;
+        }
+
+        if (board.state === BoardState.CastSpell) {
+            console.log(BoardState[board.state], board);
+            if (board.currentPlayer && board.selected) {
+                const wasted: Spell | null = await board.currentPlayer.useSpell();
+                board.selected.turnOver = true;
+            }
             return ActionType.None;
         }
 
@@ -254,7 +308,10 @@ export class Rules {
             if (selectedPiece.currentRider) {
                 selectedPiece.currentRider.moved = true;
             }
-            if (selectedPiece.currentMount && selectedPiece.currentMount.canSelect) {
+            if (
+                selectedPiece.currentMount &&
+                selectedPiece.currentMount.canSelect
+            ) {
                 board.selectPiece(selectedPiece.currentMount.id);
                 return ActionType.Move;
             }

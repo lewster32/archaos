@@ -1,0 +1,239 @@
+{
+    "spells": {
+        "king-cobra": {
+            "chance": 0.9,
+            "balance": 1,
+            "unitId": "1",
+            "name": "King Cobra"
+        },
+        "dire-wolf": {
+            "chance": 0.9,
+            "balance": -1,
+            "unitId": "2",
+            "name": "Dire Wolf"
+        },
+        "goblin": {
+            "chance": 0.9,
+            "balance": -1,
+            "unitId": "28",
+            "name": "Goblin"
+        },
+        "crocodile": {
+            "chance": 0.8,
+            "balance": 0,
+            "unitId": "3",
+            "name": "Crocodile"
+        },
+        "faun": { "chance": 0.8, "balance": -1, "unitId": "5", "name": "Faun" },
+        "lion": { "chance": 0.6, "balance": 1, "unitId": "6", "name": "Lion" },
+        "elf": { "chance": 0.7, "balance": 2, "unitId": "7", "name": "Elf" },
+        "orc": { "chance": 1, "balance": -1, "unitId": "8", "name": "Orc" },
+        "bear": { "chance": 0.6, "balance": 1, "unitId": "9", "name": "Bear" },
+        "gorilla": {
+            "chance": 0.7,
+            "balance": 0,
+            "unitId": "a",
+            "name": "Gorilla"
+        },
+        "ogre": { "chance": 0.7, "balance": -1, "unitId": "b", "name": "Ogre" },
+        "hydra": {
+            "chance": 0.5,
+            "balance": -1,
+            "unitId": "c",
+            "name": "Hydra"
+        },
+        "giant-rat": {
+            "chance": 1,
+            "balance": 0,
+            "unitId": "d",
+            "name": "Giant Rat"
+        },
+        "giant": {
+            "chance": 0.4,
+            "balance": 1,
+            "unitId": "e",
+            "name": "Giant"
+        },
+        "horse": {
+            "chance": 0.9,
+            "balance": 1,
+            "unitId": "f",
+            "name": "Horse"
+        },
+        "unicorn": {
+            "chance": 0.6,
+            "balance": 2,
+            "unitId": "10",
+            "name": "Unicorn"
+        },
+        "centaur": {
+            "chance": 0.7,
+            "balance": 1,
+            "unitId": "11",
+            "name": "Centaur"
+        },
+        "pegasus": {
+            "chance": 0.6,
+            "balance": 2,
+            "unitId": "12",
+            "name": "Pegasus"
+        },
+        "gryphon": {
+            "chance": 0.6,
+            "balance": 1,
+            "unitId": "13",
+            "name": "Gryphon"
+        },
+        "manticore": {
+            "chance": 0.4,
+            "balance": -1,
+            "unitId": "1",
+            "name": "Manticore"
+        },
+        "green-dragon": {
+            "chance": 0.1,
+            "balance": -1,
+            "unitId": "16",
+            "name": "Green Dragon"
+        },
+        "red-dragon": {
+            "chance": 0.1,
+            "balance": -2,
+            "unitId": "17",
+            "name": "Red Dragon"
+        },
+        "golden-dragon": {
+            "chance": 0.1,
+            "balance": 2,
+            "unitId": "18",
+            "name": "Golden Dragon"
+        },
+        "harpy": {
+            "chance": 0.6,
+            "balance": -1,
+            "unitId": "19",
+            "name": "Harpy"
+        },
+        "eagle": {
+            "chance": 0.7,
+            "balance": 1,
+            "unitId": "1a",
+            "name": "Eagle"
+        },
+        "vampire": {
+            "chance": 0.2,
+            "balance": -2,
+            "unitId": "1b",
+            "name": "Vampire"
+        },
+        "ghost": {
+            "chance": 0.5,
+            "balance": -1,
+            "unitId": "1c",
+            "name": "Ghost"
+        },
+        "spectre": {
+            "chance": 0.6,
+            "balance": -1,
+            "unitId": "1d",
+            "name": "Spectre"
+        },
+        "wraith": {
+            "chance": 0.5,
+            "balance": -1,
+            "unitId": "1e",
+            "name": "Wraith"
+        },
+        "skeleton": {
+            "chance": 0.7,
+            "balance": -1,
+            "unitId": "1f",
+            "name": "Skeleton"
+        },
+        "zombie": {
+            "chance": 0.8,
+            "balance": -1,
+            "unitId": "20",
+            "name": "Zombie"
+        },
+        "magic-wood": {
+            "chance": 0.8,
+            "autoPlace": true,
+            "tree": true,
+            "lineOfSight": true,
+            "balance": 2,
+            "range": 5,
+            "castTimes": 6,
+            "allowIllusion": false,
+            "unitId": "21",
+            "name": "Magic Wood"
+        },
+        "shadow-wood": {
+            "chance": 0.4,
+            "lineOfSight": true,
+            "tree": true,
+            "balance": -2,
+            "range": 5,
+            "castTimes": 6,
+            "allowIllusion": false,
+            "unitId": "22",
+            "name": "Shadow Wood"
+        },
+        "magic-fire": {
+            "chance": 0.8,
+            "lineOfSight": true,
+            "balance": -1,
+            "range": 6,
+            "allowIllusion": false,
+            "unitId": "23",
+            "name": "Magic Fire"
+        },
+        "gooey-blob": {
+            "chance": 0.9,
+            "lineOfSight": true,
+            "balance": -1,
+            "range": 6,
+            "allowIllusion": false,
+            "unitId": "24",
+            "name": "Gooey Blob"
+        },
+        "magic-castle": {
+            "chance": 0.5,
+            "balance": 1,
+            "allowIllusion": false,
+            "unitId": "25",
+            "name": "Magic Castle"
+        },
+        "dark-citadel": {
+            "chance": 0.5,
+            "balance": -1,
+            "allowIllusion": false,
+            "unitId": "26",
+            "name": "Dark Citadel"
+        },
+        "wall": {
+            "chance": 0.8,
+            "balance": 0,
+            "allowIllusion": false,
+            "castTimes": 4,
+            "unitId": "27",
+            "name": "Wall"
+        },
+        "magic-bolt": {
+            "castOnEnemyUnit": true,
+            "lineOfSight": true,
+            "range": 6,
+            "projectile": "fireball",
+            "damage": 3,
+            "name": "Magic Bolt"
+        },
+        "lightning": {
+            "castOnEnemyUnit": true,
+            "lineOfSight": true,
+            "range": 4,
+            "projectile": "lightning",
+            "damage": 6,
+            "name": "Lightning"
+        }
+    }
+}

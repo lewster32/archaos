@@ -47,6 +47,11 @@ export class Wizard extends Piece {
         this._sprite?.setFrame(`${this._wizCode.code}_${this._direction}`);
     }
 
+    async kill(): Promise<void> {
+        await this.owner?.defeat();
+        this.destroy();
+    }
+
     createSprite(): Phaser.GameObjects.Sprite {
         if (this._sprite) {
             return this._sprite;

@@ -1,10 +1,13 @@
 import "phaser";
 
 import "../assets/spritesheets/classicunits.json";
+import "../assets/spritesheets/classicspells.json";
 import "../assets/spritesheets/board.json";
 import "../assets/spritesheets/cursors.json";
 
-import { units } from "../assets/units/classicunits.json";
+import { units } from "../assets/data/classicunits.json";
+import { spells } from "../assets/data/classicspells.json";
+
 import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
 import { Wizard } from "./gameobjects/wizard";
@@ -13,6 +16,9 @@ import { BoardState } from "./gameobjects/enums/boardstate";
 import { UnitDirection } from "./gameobjects/enums/unitdirection";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
+import { SpellConfig } from "./gameobjects/configs/spellconfig";
+import { Spell } from "./gameobjects/spell";
+import { BoardPhase } from "./gameobjects/enums/boardphase";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -27,11 +33,19 @@ export class GameScene extends Phaser.Scene {
             "assets/spritesheets/classicunits.json",
             "assets/spritesheets"
         );
+
+        this.load.multiatlas(
+            "classicspells",
+            "assets/spritesheets/classicspells.json",
+            "assets/spritesheets"
+        );
+
         this.load.multiatlas(
             "board",
             "assets/spritesheets/board.json",
             "assets/spritesheets"
         );
+        
         this.load.multiatlas(
             "cursors",
             "assets/spritesheets/cursors.json",
@@ -55,8 +69,6 @@ export class GameScene extends Phaser.Scene {
                 frameHeight: 14,
             }
         );
-
-        this.load.image("unit-glow", "assets/spritesheets/unit-glow.png");
     }
 
     create(): void {
@@ -81,10 +93,10 @@ export class GameScene extends Phaser.Scene {
         this.testGame();
     }
 
-    getUnitProperties(name: string): any {
+    getSpellProperties(name: string): any {
         let key = "";
-        for (let [k, unit] of Object.entries(units)) {
-            if (unit.name.toLowerCase() === name.toLowerCase()) {
+        for (let [k, spell] of Object.entries(spells)) {
+            if (spell.name.toLowerCase() === name.toLowerCase()) {
                 key = k;
                 break;
             }
@@ -94,26 +106,26 @@ export class GameScene extends Phaser.Scene {
             return;
         }
 
-        const unit: any = (units as any)[key];
+        const spell: SpellConfig = (spells as any)[key];
 
         return {
             id: key,
-            name: unit.name,
-            movement: unit.properties.mov,
-            combat: unit.properties.com,
-            rangedCombat: unit.properties.rcm,
-            range: unit.properties.rng,
-            defense: unit.properties.def,
-            maneuverability: unit.properties.mnv,
-            magicResistance: unit.properties.res,
-            attackDescription: unit.attackType || "attacked",
-            rangedDescription: unit.rangedDescription || "shot",
-            status: unit.status || [],
+            name: spell.name,
+            chance: spell.chance,
+            balance: spell.balance,
+            unitId: spell.unitId,
+            allowIllusion: spell.allowIllusion,
+            autoPlace: spell.autoPlace,
+            tree: spell.tree,
+            castTimes: spell.castTimes,
+            range: spell.range,
+            damage: spell.damage,
+            lineOfSight: spell.lineOfSight
         };
     }
 
     testGame(): void {
-        const board: Board = new Board(this, 1);
+        const board: Board = new Board(this, 1, 13, 13);
 
         const player: Player = board.addPlayer({
             name: "Lew"
@@ -124,47 +136,30 @@ export class GameScene extends Phaser.Scene {
         });
 
 
-        const wiz: Wizard = board.addWizard({
-            owner: player,
-            x: 0,
-            y: 0,
-            wizCode: "0000000000"
-        });
-
         board.addWizard({
-            owner: player2,
-            x: 12,
-            y: 12,
+            owner: player,
+            x: Math.floor(board.width / 2),
+            y: board.height - 1,
             wizCode: "0003030000"
         });
 
-        const mount: Piece = board.addPiece({
-            owner: player,
-            x: 1,
-            y: 1,
-            type: UnitType.Creature,
-            properties: this.getUnitProperties("centaur")
+
+        board.addWizard({
+            owner: player2,
+            x: Math.floor(board.width / 2),
+            y: 0,
+            wizCode: "0600000000"
         });
 
-        board.addPiece({
-            owner: player2,
-            x: 2,
-            y: 2,
-            type: UnitType.Creature,
-            properties: this.getUnitProperties("hydra")
-        });
+        const spell1: Spell = board.addSpell(player, this.getSpellProperties("lion"));
+        player.pickSpell(spell1);
 
-        board.addPiece({
-            owner: player2,
-            x: 8,
-            y: 2,
-            type: UnitType.Creature,
-            properties: this.getUnitProperties("giant rat")
-        });
+        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("lion"));
+        player2.pickSpell(spell2);
+
 
         setTimeout(() => {
-            board.state = BoardState.Move;  
-            board.nextPlayer();
+            board.startGame();
         }, 1000);
 
 
