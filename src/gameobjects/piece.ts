@@ -66,6 +66,21 @@ export class Piece extends Entity {
         this.createSprite();
     }
 
+    get turnOver(): boolean {
+        return this.moved && this.attacked && this.rangedAttacked;
+    }
+
+    set turnOver(state: boolean) {
+        this.moved = this.attacked = this.rangedAttacked = state;
+
+        if (state) {
+            this._sprite?.setTint(0x7f7f7f);
+        }
+        else {
+            this._sprite?.clearTint();
+        }
+    }
+
     get type(): UnitType {
         return this._type;
     }
@@ -108,7 +123,6 @@ export class Piece extends Entity {
 
     set moved(moved: boolean) {
         this._moved = moved;
-        this._sprite?.setTint(moved ? 0x444444 : 0xffffff);
     }
 
     get attacked(): boolean {
@@ -218,6 +232,9 @@ export class Piece extends Entity {
     }
 
     inAttackRange(point: Phaser.Geom.Point): boolean {
+        if (!this.moved && this.hasStatus(UnitStatus.Flying) && this.inMovementRange(point)) {
+            return true;
+        }
         if (Board.distance(this.position, point) > 1.5) {
             return false;
         }
@@ -349,7 +366,51 @@ export class Piece extends Entity {
         );
     }
 
-    kill() {
+    async attack(piece: Piece): Promise<void> {
+        if (this.canAttackPiece(piece)) {
+            this.attacked = true;
+            this.moved = true;
+            const attackRoll: number = Phaser.Math.Between(
+                0,
+                this.properties.combat
+            );
+            const defenseRoll: number = Phaser.Math.Between(
+                0,
+                piece.properties.defense
+            );
+
+            console.log("Attack!", attackRoll, defenseRoll);
+
+            if (attackRoll > defenseRoll) {
+                await piece.kill();
+                await this.moveTo(piece.position);
+            }
+        }
+    }
+
+    async rangedAttack(piece: Piece): Promise<void> {
+        if (this.canRangedAttackPiece(piece)) {
+            this.rangedAttacked = true;
+            this.attacked = true;
+            this.moved = true;
+            const attackRoll: number = Phaser.Math.Between(
+                0,
+                this.properties.rangedCombat
+            );
+            const defenseRoll: number = Phaser.Math.Between(
+                0,
+                piece.properties.defense
+            );
+
+            console.log("Ranged Attack!", attackRoll, defenseRoll);
+
+            if (attackRoll > defenseRoll) {
+                await piece.kill();
+            }
+        }
+    }
+
+    async kill() {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
@@ -367,6 +428,7 @@ export class Piece extends Entity {
         ) {
             this._sprite.visible = false;
         } else {
+            this._sprite.depth -= 1;
             this.playAnim();
         }
     }

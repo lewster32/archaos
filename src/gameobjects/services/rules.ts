@@ -76,10 +76,15 @@ export class Rules {
                 }
             } else {
                 if (currentAliveHoveredPiece) {
-                    if (currentAliveHoveredPiece.canSelect) {
-                        return ActionType.Select;
-                    } else {
-                        return ActionType.Invalid;
+                    if (currentAliveHoveredPiece.owner !== board.currentPlayer) {
+                        return ActionType.Info;
+                    }
+                    else {
+                        if (currentAliveHoveredPiece.canSelect) {
+                            return ActionType.Select;
+                        } else {
+                            return ActionType.Invalid;
+                        }
                     }
                 }
                 return ActionType.Idle;
@@ -134,6 +139,7 @@ export class Rules {
         }
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
+                this.dispatchEvent(EventType.PieceInfo, hoveredPieces[0]);
                 if (hoveredPieces[0].canSelect) {
                     board.selectPiece(hoveredPieces[0].id);
                     return ActionType.Select;
@@ -153,7 +159,31 @@ export class Rules {
                 selectedPiece.inMovementRange(board.cursor.position)
             ) {
                 await board.movePiece(selectedPiece.id, board.cursor.position);
+                this.dispatchEvent(EventType.PieceInfo, null);
                 return ActionType.Move;
+            } else {
+                return ActionType.Invalid;
+            }
+        }
+        if (actionType === ActionType.Attack) {
+            if (
+                selectedPiece.canAttackPiece(hoveredPieces[0])
+            ) {
+                await board.attackPiece(selectedPiece.id, hoveredPieces[0].id);
+                return ActionType.Attack;
+            } else {
+                return ActionType.Invalid;
+            }
+        }
+        if (actionType === ActionType.RangedAttack) {
+            if (
+                selectedPiece.canRangedAttackPiece(hoveredPieces[0])
+            ) {
+                await board.rangedAttackPiece(
+                    selectedPiece.id,
+                    hoveredPieces[0].id
+                );
+                return ActionType.RangedAttack;
             } else {
                 return ActionType.Invalid;
             }
@@ -179,6 +209,7 @@ export class Rules {
                 selectedPiece.rangedAttacked = true;
             }
             if (!selectedPiece.canSelect) {
+                selectedPiece.turnOver = true;
                 board.deselectPiece();
             }
         } else {

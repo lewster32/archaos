@@ -45,8 +45,12 @@ window.addEventListener("load", () => {
 });
 
 window.addEventListener(EventType.PieceInfo, (event: any) => {
-    const piece: Piece = event.detail;
     const info = document.getElementById("piece-info");
+    if (!event.detail) {
+        info!.innerHTML = ``;
+        return;
+    }
+    const piece: Piece = event.detail;
     if (piece.hasStatus(UnitStatus.Wizard)) {
         info!.innerHTML = `<h2><span class="unit-id">${piece.id}</span> ${piece.owner?.name}</h2>`;
     }

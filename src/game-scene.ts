@@ -117,6 +117,11 @@ export class GameScene extends Phaser.Scene {
             name: "Lew"
         });
 
+        const player2: Player = board.addPlayer({
+            name: "Not Lew"
+        });
+
+
         board.addWizard({
             owner: player,
             x: 0,
@@ -124,13 +129,36 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0000000000"
         });
 
+        board.addWizard({
+            owner: player2,
+            x: 12,
+            y: 12,
+            wizCode: "0003030000"
+        });
+
         board.addPiece({
             owner: player,
             x: 2,
             y: 2,
             type: UnitType.Creature,
-            properties: this.getUnitProperties("dire wolf")
-        })
+            properties: this.getUnitProperties("golden dragon")
+        });
+
+        board.addPiece({
+            owner: player2,
+            x: 4,
+            y: 2,
+            type: UnitType.Creature,
+            properties: this.getUnitProperties("giant rat")
+        });
+
+        board.addPiece({
+            owner: player2,
+            x: 5,
+            y: 2,
+            type: UnitType.Creature,
+            properties: this.getUnitProperties("giant rat")
+        });
 
         board.state = BoardState.MovePieces;  
         board.selectPlayer(player.id);

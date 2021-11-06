@@ -183,6 +183,41 @@ export class Board extends Model {
         throw new Error(`Could not find piece with ID ${id}`);
     }
 
+    async attackPiece(attackingPieceId: number, defendingPieceId: number): Promise<Piece | null> {
+        const attackingPiece: Piece | null = this.getPiece(attackingPieceId);
+        const defendingPiece: Piece | null = this.getPiece(defendingPieceId);
+        if (!attackingPiece) {
+            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
+        }
+        if (!defendingPiece) {
+            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
+        }
+        if (attackingPiece && defendingPiece) {
+            await attackingPiece.attack(defendingPiece);
+            return attackingPiece;
+        }
+        return null;
+    }
+
+    async rangedAttackPiece(
+        attackingPieceId: number,
+        defendingPieceId: number
+    ): Promise<Piece | null> {
+        const attackingPiece: Piece | null = this.getPiece(attackingPieceId);
+        const defendingPiece: Piece | null = this.getPiece(defendingPieceId);
+        if (!attackingPiece) {
+            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
+        }
+        if (!defendingPiece) {
+            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
+        }
+        if (attackingPiece && defendingPiece) {
+            await attackingPiece.rangedAttack(defendingPiece);
+            return attackingPiece;
+        }
+        return null;
+    }
+
     /* #endregion */
 
     /* #region Players */

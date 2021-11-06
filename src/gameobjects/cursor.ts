@@ -279,10 +279,7 @@ export class Cursor {
                 selected.engaged = true;
             }
             if (!selected.canAttack && !selected.canRangedAttack) {
-                selected.moved =
-                    selected.attacked =
-                    selected.rangedAttacked =
-                        true;
+                selected.turnOver = true;
                 this._board.deselectPiece();
             }
         }
