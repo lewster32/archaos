@@ -81,8 +81,22 @@ export class Player extends Model {
 
     async useSpell(): Promise<Spell | null> {
         if (this._selectedSpell) {
-            this._spells.delete(this._selectedSpell);
+            if (this._selectedSpell.castTimes <= 0) {
+                this.discardSpell();
+                return null;
+            }
+            else {
+                const spell: Spell = this._selectedSpell;
+                return spell;
+            }
+        }
+        return null;
+    }
+
+    async discardSpell(): Promise<Spell | null> {
+        if (this._selectedSpell) {
             const spell: Spell = this._selectedSpell;
+            this._spells.delete(this._selectedSpell);
             this._selectedSpell = null;
             return spell;
         }

@@ -153,7 +153,6 @@ export class Piece extends Entity {
         this._attacked = attacked;
         if (this.currentRider) {
             this.currentRider.moved = attacked;
-            // this.currentMount.attacked = attacked;
         }
     }
 

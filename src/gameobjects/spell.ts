@@ -6,12 +6,14 @@ import { SpellConfig } from "./configs/spellconfig";
 import { Piece } from "./piece";
 import { UnitType } from "./enums/unittype";
 import { Player } from "./player";
+import { UnitStatus } from "./enums/unitstatus";
 
 export class Spell extends Model {
     private _board: Board;
     private _type: SpellType;
 
     private _properties: SpellConfig;
+    private _castTimes: number;
 
     constructor(board: Board, id: number, config: SpellConfig) {
         super(id);
@@ -26,6 +28,7 @@ export class Spell extends Model {
         }
 
         this._properties = config;
+        this._castTimes = config.castTimes || 1;
     }
 
     get name(): string {
@@ -62,6 +65,10 @@ export class Spell extends Model {
         return this._properties.unitId || "";
     }
 
+    get castTimes(): number {
+        return this._castTimes;
+    }
+
     inCastingRange(
         casterPosition: Phaser.Geom.Point,
         point: Phaser.Geom.Point
@@ -72,7 +79,22 @@ export class Spell extends Model {
         return true;
     }
 
+    canCastAtPosition(point: Phaser.Geom.Point): boolean {
+        // Trees cannot be placed next to one another
+        if (this._properties.tree) {
+            const neighbourTrees: Piece[] = this._board.getAdjacentPiecesAtPosition(
+                point,
+                (p: Piece) => p.hasStatus(UnitStatus.Tree)
+            );
+            if (neighbourTrees.length > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     async cast(owner: Player, point: Phaser.Geom.Point, _targets: Piece[]): Promise<Piece | boolean | null> {
+        this._castTimes--;
         switch (this._type) {
             case SpellType.Summon:
                 return await this.castSummon(owner, point);

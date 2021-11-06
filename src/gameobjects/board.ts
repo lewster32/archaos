@@ -140,11 +140,13 @@ export class Board extends Model {
             piece.reset();
         });
 
-        if (this.phase === BoardPhase.Idle || this.phase === BoardPhase.Moving) {
+        if (
+            this.phase === BoardPhase.Idle ||
+            this.phase === BoardPhase.Moving
+        ) {
             this.phase = BoardPhase.Casting;
             this.state = BoardState.CastSpell;
-        }
-        else if (this.phase === BoardPhase.Casting) {
+        } else if (this.phase === BoardPhase.Casting) {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
         }
@@ -193,7 +195,11 @@ export class Board extends Model {
         this._selected = null;
 
         setTimeout(() => {
-            if (this.getPiecesByOwner(this.currentPlayer!).every((piece) => piece.turnOver)) {
+            if (
+                this.getPiecesByOwner(this.currentPlayer!).every(
+                    (piece) => piece.turnOver
+                )
+            ) {
                 this.nextPlayer();
             }
         }, 1000);
@@ -205,7 +211,7 @@ export class Board extends Model {
             if (ownedPieces[i].type === UnitType.Wizard) {
                 this.selectPiece(ownedPieces[i].id);
                 return ownedPieces[i] as Wizard;
-            }            
+            }
         }
         throw new Error(`Player '${player.name}' does not own a wizard`);
     }
@@ -371,10 +377,19 @@ export class Board extends Model {
             if (this._currentPlayer?.colour) {
                 document.body.style.setProperty(
                     "--bg-colour",
-                    `${Phaser.Display.Color.ValueToColor(this._currentPlayer.colour).rgba}`
+                    `${
+                        Phaser.Display.Color.ValueToColor(
+                            this._currentPlayer.colour
+                        ).rgba
+                    }`
                 );
-            }
-            else {
+                this.getLayer(BoardLayer.Floor).getChildren().forEach(child => {
+                    const tintColour: Phaser.Display.Color = Phaser.Display.Color.ValueToColor(
+                        this._currentPlayer!.colour!
+                    );
+                    (child as Phaser.GameObjects.Sprite).setTint(tintColour.brighten(80).color);
+                });
+            } else {
                 document.body.style.removeProperty("--bg-colour");
             }
 
@@ -425,7 +440,7 @@ export class Board extends Model {
 
         if (this.players.filter((player) => !player.defeated).length < 2) {
             this.state = BoardState.Idle;
-            console.log("Game over!")
+            console.log("Game over!");
             return;
         }
 
@@ -443,8 +458,14 @@ export class Board extends Model {
             this.selectWizard(this.currentPlayer!);
         }
 
-        if (this._phase === BoardPhase.Casting && this.currentPlayer && !this.currentPlayer.selectedSpell) {
-            console.log(`Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`);
+        if (
+            this._phase === BoardPhase.Casting &&
+            this.currentPlayer &&
+            !this.currentPlayer.selectedSpell
+        ) {
+            console.log(
+                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`
+            );
             return this.nextPlayer();
         }
     }

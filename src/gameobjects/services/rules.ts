@@ -50,10 +50,13 @@ export class Rules {
             const selectedSpell: Spell | null =
                 board.currentPlayer?.selectedSpell;
 
-            if (selectedSpell) {
+            if (selectedSpell && selectedSpell.castTimes > 0) {
                 if (
                     selectedSpell.inCastingRange(
                         board.selected.position,
+                        board.cursor.position
+                    ) &&
+                    selectedSpell.canCastAtPosition(
                         board.cursor.position
                     )
                 ) {
@@ -171,11 +174,16 @@ export class Rules {
             }
         }
         if (actionType === ActionType.Cast) {
-            if (board.currentPlayer && board.selected) {
+            if (board.currentPlayer && board.selected && board.currentPlayer.selectedSpell) {
                 const casted: Spell | null = await board.currentPlayer.useSpell();
                 if (casted) {
                     await casted.cast(board.currentPlayer, board.cursor.position, hoveredPieces);
-                    board.selected.turnOver = true;
+                    if (casted?.castTimes <= 0) {
+                        await board.currentPlayer.discardSpell();
+                        board.selected.turnOver = true;
+                        board.deselectPlayer();
+                        return ActionType.None;
+                    }
                     return ActionType.Cast;
                 }
             }
@@ -287,17 +295,21 @@ export class Rules {
     ): Promise<ActionType> {
         const selectedPiece: Piece | null = board.selected;
 
-        if (!selectedPiece) {
-            board.nextPlayer();
+        if (board.state === BoardState.CastSpell) {
+            if (board.currentPlayer && board.currentPlayer.selectedSpell) {
+                const wasted: Spell | null = await board.currentPlayer.discardSpell();
+                if (wasted) {
+                    console.log(`Wasted ${board.currentPlayer.name}'s spell '${wasted.name}'`);
+                }
+                if (board.selected) {
+                    board.selected.turnOver = true;
+                }
+            }
             return ActionType.None;
         }
 
-        if (board.state === BoardState.CastSpell) {
-            console.log(BoardState[board.state], board);
-            if (board.currentPlayer && board.selected) {
-                const wasted: Spell | null = await board.currentPlayer.useSpell();
-                board.selected.turnOver = true;
-            }
+        if (!selectedPiece) {
+            board.nextPlayer();
             return ActionType.None;
         }
 

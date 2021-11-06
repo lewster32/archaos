@@ -151,10 +151,10 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000"
         });
 
-        const spell1: Spell = board.addSpell(player, this.getSpellProperties("lion"));
+        const spell1: Spell = board.addSpell(player, this.getSpellProperties("shadow wood"));
         player.pickSpell(spell1);
 
-        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("lion"));
+        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("wall"));
         player2.pickSpell(spell2);
 
 

@@ -216,6 +216,7 @@
             "balance": 0,
             "allowIllusion": false,
             "castTimes": 4,
+            "range": 4,
             "unitId": "27",
             "name": "Wall"
         },
