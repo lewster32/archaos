@@ -9,6 +9,10 @@ import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
 import { Wizard } from "./gameobjects/wizard";
 import { Piece } from "./gameobjects/piece";
+import { BoardState } from "./gameobjects/enums/boardstate";
+import { UnitDirection } from "./gameobjects/enums/unitdirection";
+import { UnitType } from "./gameobjects/enums/unittype";
+import { UnitStatus } from "./gameobjects/enums/unitstatus";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -75,6 +79,37 @@ export class GameScene extends Phaser.Scene {
         this.testGame();
     }
 
+    getUnitProperties(name: string): any {
+        let key = "";
+        for (let [k, unit] of Object.entries(units)) {
+            if (unit.name.toLowerCase() === name.toLowerCase()) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const unit: any = (units as any)[key];
+
+        return {
+            id: key,
+            name: unit.name,
+            movement: unit.properties.mov,
+            combat: unit.properties.com,
+            rangedCombat: unit.properties.rcm,
+            range: unit.properties.rng,
+            defense: unit.properties.def,
+            maneuverability: unit.properties.mnv,
+            magicResistance: unit.properties.res,
+            attackDescription: unit.attackType || "attacked",
+            rangedDescription: unit.rangedDescription || "shot",
+            status: unit.status || [],
+        };
+    }
+
     testGame(): void {
         const board: Board = new Board(this, 1);
 
@@ -82,7 +117,27 @@ export class GameScene extends Phaser.Scene {
             name: "Lew"
         });
 
-        for (let i = 0; i < 80; i++) {
+        board.addWizard({
+            owner: player,
+            x: 0,
+            y: 0,
+            wizCode: "0000000000"
+        });
+
+        board.addPiece({
+            owner: player,
+            x: 2,
+            y: 2,
+            type: UnitType.Creature,
+            properties: this.getUnitProperties("dire wolf")
+        })
+
+        board.state = BoardState.MovePieces;  
+        board.selectPlayer(player.id);
+
+        /*
+
+        for (let i = 0; i < 2; i++) {
 
             const randomEmptySpace: Phaser.Geom.Point = board.getRandomEmptySpace();
 
@@ -94,7 +149,7 @@ export class GameScene extends Phaser.Scene {
             })
         }
 
-        /* 
+
         for (let i = 0; i < 1; i++) {
             for (let [key, unit] of Object.entries(units) as [string, any]) {
                 if ((unit.status as any).includes(UnitStatus.Wizard)) {
@@ -137,11 +192,11 @@ export class GameScene extends Phaser.Scene {
         board.state = BoardState.MovePieces;
         board.selectPlayer(player.id);
 
-        */
+
 
         setInterval(async () => {
             const piece: Piece = board.getPiece(
-                Math.floor(Math.random() * board.pieces.length) + 1
+                Math.floor(Math.random() * board.pieces.length)
             )!;
 
             const randomEmptySpace: Phaser.Geom.Point =
@@ -151,6 +206,8 @@ export class GameScene extends Phaser.Scene {
                 new Phaser.Geom.Point(randomEmptySpace.x, randomEmptySpace.y)
             );
         }, Piece.DEFAULT_MOVE_DURATION);
+
+        */
     }
 
     update(): void {}

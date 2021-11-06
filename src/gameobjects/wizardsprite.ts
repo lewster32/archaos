@@ -82,6 +82,8 @@ export class WizardSprite extends Phaser.GameObjects.Sprite {
             replaceSkin[this._wizCode.skin].light
         );
 
+        canvas.refresh();
+
         // Hat
         if (this._wizCode.hat > 0) {
             canvas.drawFrame(

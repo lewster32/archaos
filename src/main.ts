@@ -48,10 +48,10 @@ window.addEventListener(EventType.PieceInfo, (event: any) => {
     const piece: Piece = event.detail;
     const info = document.getElementById("piece-info");
     if (piece.hasStatus(UnitStatus.Wizard)) {
-        info!.innerHTML = `<h2>${piece.owner?.name} #${piece.id}</h2>`;
+        info!.innerHTML = `<h2><span class="unit-id">${piece.id}</span> ${piece.owner?.name}</h2>`;
     }
     else {
-        info!.innerHTML = `<h2>${piece.owner?.name}'s ${piece.name} #${piece.id}</h2>`;
+        info!.innerHTML = `<h2><span class="unit-id">${piece.id}</span> ${piece.owner?.name}'s ${piece.name}</h2>`;
     }
     
 });
