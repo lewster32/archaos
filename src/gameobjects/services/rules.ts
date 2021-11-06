@@ -38,10 +38,16 @@ export class Rules {
         }
 
         const currentAliveHoveredPiece: Piece | null =
-            hoveredPieces.find((piece: Piece) => !piece.dead) || null;
+            hoveredPieces.find((piece: Piece) => !piece.dead && !piece.mounted) || null;
 
         const selectedPiece: Piece | null = board.selected;
 
+        if (board.state === BoardState.Dismount) {
+            if (selectedPiece && selectedPiece.currentMount && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
+                return ActionType.Dismount;
+            }
+            return ActionType.Invalid;
+        }
         if (board.state === BoardState.MovePieces) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
@@ -139,9 +145,12 @@ export class Rules {
         }
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
-                this.dispatchEvent(EventType.PieceInfo, hoveredPieces[0]);
-                if (hoveredPieces[0].canSelect) {
-                    board.selectPiece(hoveredPieces[0].id);
+                const currentAliveHoveredPiece: Piece | null =
+                hoveredPieces.find((piece: Piece) => !piece.dead && !piece.mounted) || null;
+                
+                if (currentAliveHoveredPiece && currentAliveHoveredPiece.canSelect) {
+                    this.dispatchEvent(EventType.PieceInfo, currentAliveHoveredPiece);
+                    board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {
                     return ActionType.Invalid;
@@ -152,7 +161,14 @@ export class Rules {
         if (!selectedPiece) {
             return ActionType.None;
         }
-
+        if (actionType === ActionType.Dismount) {
+            if (selectedPiece && selectedPiece.currentMount && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
+                await board.dismountPiece(selectedPiece.id, board.cursor.position);
+                board.state = BoardState.MovePieces;
+                return ActionType.Dismount;
+            }
+            return ActionType.Invalid;
+        }
         if (actionType === ActionType.Move) {
             if (
                 !selectedPiece.moved &&
@@ -165,27 +181,38 @@ export class Rules {
                 return ActionType.Invalid;
             }
         }
-        if (actionType === ActionType.Attack) {
-            if (
-                selectedPiece.canAttackPiece(hoveredPieces[0])
-            ) {
-                await board.attackPiece(selectedPiece.id, hoveredPieces[0].id);
-                return ActionType.Attack;
-            } else {
-                return ActionType.Invalid;
+        if (hoveredPieces.length > 0) {
+            if (actionType === ActionType.Mount) {
+                if (selectedPiece.canMountPiece(hoveredPieces[0])) {
+                    board.mountPiece(selectedPiece.id, hoveredPieces[0].id);
+                    return ActionType.Mount;
+                }
+                else {
+                    return ActionType.Invalid;
+                }
             }
-        }
-        if (actionType === ActionType.RangedAttack) {
-            if (
-                selectedPiece.canRangedAttackPiece(hoveredPieces[0])
-            ) {
-                await board.rangedAttackPiece(
-                    selectedPiece.id,
-                    hoveredPieces[0].id
-                );
-                return ActionType.RangedAttack;
-            } else {
-                return ActionType.Invalid;
+            if (actionType === ActionType.Attack) {
+                if (
+                    selectedPiece.canAttackPiece(hoveredPieces[0])
+                ) {
+                    await board.attackPiece(selectedPiece.id, hoveredPieces[0].id);
+                    return ActionType.Attack;
+                } else {
+                    return ActionType.Invalid;
+                }
+            }
+            if (actionType === ActionType.RangedAttack) {
+                if (
+                    selectedPiece.canRangedAttackPiece(hoveredPieces[0])
+                ) {
+                    await board.rangedAttackPiece(
+                        selectedPiece.id,
+                        hoveredPieces[0].id
+                    );
+                    return ActionType.RangedAttack;
+                } else {
+                    return ActionType.Invalid;
+                }
             }
         }
         return ActionType.None;
@@ -200,6 +227,18 @@ export class Rules {
 
         if (!selectedPiece) {
             return ActionType.None;
+        }
+
+        if (board.state === BoardState.Dismount) {
+            if (selectedPiece) {
+                selectedPiece.moved = true;
+            }
+            board.state = BoardState.MovePieces;
+        }
+
+        if (!selectedPiece.moved && selectedPiece.currentMount) {
+            board.state = BoardState.Dismount;
+            return ActionType.Dismount;
         }
 
         if (selectedPiece.moved) {

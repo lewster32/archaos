@@ -7,6 +7,7 @@ import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { IUnitProperties } from "./interfaces/unitproperties";
 import { Player } from "./player";
+import { Wizard } from "./wizard";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
@@ -25,6 +26,9 @@ export class Piece extends Entity {
     protected _attacked: boolean;
     protected _rangedAttacked: boolean;
     protected _engaged: boolean;
+
+    protected _currentMount: Piece | null;
+    protected _mounted: boolean;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
@@ -52,6 +56,9 @@ export class Piece extends Entity {
         this._attacked = false;
         this._rangedAttacked = false;
         this._engaged = false;
+
+        this._currentMount = null;
+        this._mounted = false;
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
@@ -159,6 +166,33 @@ export class Piece extends Entity {
         return this._properties;
     }
 
+    set currentMount(piece: Piece | null) {
+        if (!this.hasStatus(UnitStatus.Mount) && !this.hasStatus(UnitStatus.MountAny)) {
+            console.error("Cannot mount on unmountable unit");
+            return;
+        }
+        this._currentMount = piece;
+    }
+
+    get currentMount(): Piece | null {
+        return this._currentMount;
+    }
+
+    set mounted(mounted: boolean) {
+        this._mounted = mounted;
+
+        this.board.scene.tweens.add({
+            targets: [this._sprite, this._shadow],
+            alpha: this._mounted ? 0 : 1,
+            duration: Piece.DEFAULT_MOVE_DURATION / 2
+        });
+
+    }
+
+    get mounted(): boolean {
+        return this._mounted;
+    }
+
     async updatePosition(
         duration: number = Piece.DEFAULT_MOVE_DURATION
     ): Promise<void> {
@@ -214,6 +248,9 @@ export class Piece extends Entity {
             this.direction = UnitDirection.Right;
         }
         this.position = point;
+        if (this.currentMount) {
+            this.currentMount.position = point;
+        }
         await this.updatePosition();
     }
 
@@ -254,7 +291,7 @@ export class Piece extends Entity {
     get canSelect(): boolean {
         if (
             this.dead ||
-            (this.moved && this.attacked && this.rangedAttacked) ||
+            this.turnOver ||
             this.hasStatus(UnitStatus.Structure) ||
             (this.properties.combat === 0 &&
                 this.properties.rangedCombat === 0 &&
@@ -285,8 +322,10 @@ export class Piece extends Entity {
     canAttackPiece(piece: Piece): boolean {
         if (
             this == piece ||
+            this.owner === piece.owner ||
             this._dead ||
             piece.dead ||
+            piece.mounted ||
             this.attacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -318,6 +357,7 @@ export class Piece extends Entity {
             this == piece ||
             this._dead ||
             piece.dead ||
+            piece.mounted ||
             this.rangedAttacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -332,17 +372,19 @@ export class Piece extends Entity {
 
     canMountPiece(piece: Piece): boolean {
         if (
-            this == piece ||
-            this._dead ||
-            piece.dead ||
-            this.moved ||
-            !this.hasStatus(UnitStatus.Wizard) ||
-            (piece.hasStatus(UnitStatus.Mount) && piece.owner !== this.owner) ||
-            !piece.hasStatus(UnitStatus.MountAny)
+            this != piece &&
+            !this._dead &&
+            !piece.dead &&
+            !this.moved &&
+            this.hasStatus(UnitStatus.Wizard) &&
+            (
+                (piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
+                piece.hasStatus(UnitStatus.MountAny) && !piece.currentMount
+            )
         ) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     canEngagePiece(piece: Piece): boolean {
@@ -351,8 +393,8 @@ export class Piece extends Entity {
             this._dead ||
             piece.dead ||
             this.properties.maneuverability === 0 ||
-            piece.properties.maneuverability === 0
-            // this.owner === piece.owner
+            piece.properties.maneuverability === 0 ||
+            this.owner === piece.owner
         ) {
             return false;
         }
@@ -410,7 +452,7 @@ export class Piece extends Entity {
         }
     }
 
-    async kill() {
+    async kill(): Promise<void>  {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
@@ -432,6 +474,45 @@ export class Piece extends Entity {
             this.playAnim();
         }
     }
+
+
+    async mount(piece: Piece): Promise<void>  {
+        if (this.canMountPiece(piece)) {
+            this.turnOver = true;
+            this.mounted = true;
+            piece.moved = true;
+            piece.currentMount = this;
+            await this.moveTo(piece.position);
+
+            if (piece.canAttack || piece.canRangedAttack) {
+                this.board.selectPiece(piece.id);
+                this.board.cursor.update(true);
+            }
+            else {
+                piece.turnOver = true;
+            }
+        }
+    }
+
+    async dismount(piece: Piece, position: Phaser.Geom.Point): Promise<void>  {
+        if (this.mounted && piece.currentMount === this) {
+            this.mounted = false;
+            this.moved = true;
+            piece.turnOver = true;
+            piece.currentMount = null;
+
+            await this.moveTo(position);
+
+            if (this.canAttack || this.canRangedAttack) {
+                this.board.selectPiece(this.id);
+                this.board.cursor.update(true);
+            }
+            else {
+                this.turnOver = true;
+            }
+        }
+    }
+
 
     destroy() {
         this._dead = true;

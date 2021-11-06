@@ -218,6 +218,34 @@ export class Board extends Model {
         return null;
     }
 
+    async mountPiece(mountingPieceId: number, mountedPieceId: number): Promise<Piece | null> {
+        const mountingPiece: Piece | null = this.getPiece(mountingPieceId);
+        const mountedPiece: Piece | null = this.getPiece(mountedPieceId);
+        if (!mountingPiece) {
+            throw new Error(`Could not find piece with ID ${mountingPieceId}`);
+        }
+        if (!mountedPiece) {
+            throw new Error(`Could not find piece with ID ${mountedPieceId}`);
+        }
+        if (mountingPiece && mountedPiece) {
+            await mountingPiece.mount(mountedPiece);
+            return mountingPiece;
+        }
+        return null;
+    }
+
+    async dismountPiece(dismountingPieceId: number, position: Phaser.Geom.Point): Promise<Piece | null> {
+        const dismountingPiece: Piece | null = this.getPiece(dismountingPieceId);
+        if (!dismountingPiece) {
+            throw new Error(`Could not find piece with ID ${dismountingPieceId}`);
+        }
+        if (dismountingPiece) {
+            await dismountingPiece.currentMount!.dismount(dismountingPiece, position);
+            return dismountingPiece;
+        }
+        return null;
+    }
+
     /* #endregion */
 
     /* #region Players */

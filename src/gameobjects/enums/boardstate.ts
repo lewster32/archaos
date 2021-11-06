@@ -3,5 +3,6 @@ export enum BoardState {
     View,
     SelectSpell,
     CastSpell,
-    MovePieces
+    MovePieces,
+    Dismount
 }

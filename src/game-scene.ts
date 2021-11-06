@@ -122,10 +122,10 @@ export class GameScene extends Phaser.Scene {
         });
 
 
-        board.addWizard({
+        const wiz: Wizard = board.addWizard({
             owner: player,
-            x: 0,
-            y: 0,
+            x: 1,
+            y: 1,
             wizCode: "0000000000"
         });
 
@@ -136,17 +136,23 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0003030000"
         });
 
-        board.addPiece({
+        const mount: Piece = board.addPiece({
             owner: player,
-            x: 2,
-            y: 2,
+            x: 1,
+            y: 1,
             type: UnitType.Creature,
-            properties: this.getUnitProperties("golden dragon")
+            properties: this.getUnitProperties("centaur")
         });
+
+        setTimeout(() => {
+            wiz.mounted = true;
+            mount.currentMount = wiz;
+        }, 0);
+
 
         board.addPiece({
             owner: player2,
-            x: 4,
+            x: 2,
             y: 2,
             type: UnitType.Creature,
             properties: this.getUnitProperties("giant rat")
@@ -154,7 +160,7 @@ export class GameScene extends Phaser.Scene {
 
         board.addPiece({
             owner: player2,
-            x: 5,
+            x: 8,
             y: 2,
             type: UnitType.Creature,
             properties: this.getUnitProperties("giant rat")
