@@ -132,8 +132,13 @@ export class GameScene extends Phaser.Scene {
         });
 
         const player2: Player = board.addPlayer({
-            name: "Not Lew"
+            name: "Gandalf"
         });
+
+        const player3: Player = board.addPlayer({
+            name: "Gerald"
+        });
+
 
 
         board.addWizard({
@@ -151,11 +156,21 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000"
         });
 
+        board.addWizard({
+            owner: player3,
+            x: 0,
+            y: Math.floor(board.height / 2),
+            wizCode: "0307070000"
+        });
+
         const spell1: Spell = board.addSpell(player, this.getSpellProperties("shadow wood"));
         player.pickSpell(spell1);
 
         const spell2: Spell = board.addSpell(player2, this.getSpellProperties("vampire"));
         player2.pickSpell(spell2);
+
+        const spell3: Spell = board.addSpell(player3, this.getSpellProperties("wall"));
+        player3.pickSpell(spell3);
 
 
         setTimeout(() => {

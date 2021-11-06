@@ -458,6 +458,10 @@ export class Board extends Model {
             Array.from(this._players.keys())[this._currentPlayerIndex]
         );
 
+        if (this.currentPlayer?.defeated) {
+            return this.nextPlayer();
+        }
+
         console.log(`${this.currentPlayer?.name}'s turn`);
 
         if (this._currentPlayerIndex === 0) {
