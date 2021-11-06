@@ -1,6 +1,7 @@
 import { Board } from "./board";
 import { ActionType } from "./enums/actiontype";
 import { BoardLayer } from "./enums/boardlayer";
+import { BoardState } from "./enums/boardstate";
 import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
@@ -278,7 +279,10 @@ export class Cursor {
             ) {
                 selected.engaged = true;
             }
-            if (!selected.canAttack && !selected.canRangedAttack) {
+            if (selected.currentMount && !selected.currentMount.moved) {
+                this._board.state = BoardState.Dismount;
+            }
+            else if (!selected.canAttack && !selected.canRangedAttack) {
                 selected.turnOver = true;
                 this._board.deselectPiece();
             }

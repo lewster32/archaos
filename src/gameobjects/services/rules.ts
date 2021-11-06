@@ -43,7 +43,7 @@ export class Rules {
         const selectedPiece: Piece | null = board.selected;
 
         if (board.state === BoardState.Dismount) {
-            if (selectedPiece && selectedPiece.currentMount && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
+            if (selectedPiece && selectedPiece.currentMount && !selectedPiece.currentMount.moved && selectedPiece.currentMount.inMovementRange(board.cursor.position)) {
                 return ActionType.Dismount;
             }
             return ActionType.Invalid;
@@ -233,10 +233,13 @@ export class Rules {
             if (selectedPiece) {
                 selectedPiece.moved = true;
             }
+            if (selectedPiece.currentMount) {
+                selectedPiece.currentMount.moved = true;
+            }
             board.state = BoardState.MovePieces;
         }
 
-        if (!selectedPiece.moved && selectedPiece.currentMount) {
+        if (!selectedPiece.moved && selectedPiece.currentMount && !selectedPiece.currentMount.moved) {
             board.state = BoardState.Dismount;
             return ActionType.Dismount;
         }

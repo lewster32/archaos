@@ -57,5 +57,7 @@ window.addEventListener(EventType.PieceInfo, (event: any) => {
     else {
         info!.innerHTML = `<h2><span class="unit-id">${piece.id}</span> ${piece.owner?.name}'s ${piece.name}</h2>`;
     }
+
+    console.log(piece);
     
 });

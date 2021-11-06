@@ -130,6 +130,9 @@ export class Piece extends Entity {
 
     set moved(moved: boolean) {
         this._moved = moved;
+        if (this.currentMount) {
+            this.currentMount.moved = moved;
+        }
     }
 
     get attacked(): boolean {
@@ -141,6 +144,10 @@ export class Piece extends Entity {
 
     set attacked(attacked: boolean) {
         this._attacked = attacked;
+        if (this.currentMount) {
+            this.currentMount.moved = attacked;
+            // this.currentMount.attacked = attacked;
+        }
     }
 
     get rangedAttacked(): boolean {
@@ -289,6 +296,9 @@ export class Piece extends Entity {
     }
 
     get canSelect(): boolean {
+        if ((this.hasStatus(UnitStatus.Mount) || this.hasStatus(UnitStatus.MountAny)) && this.currentMount && !this.currentMount.moved) {
+            return true;
+        }
         if (
             this.dead ||
             this.turnOver ||
