@@ -74,7 +74,7 @@ export class Piece extends Entity {
     }
 
     get turnOver(): boolean {
-        return this.moved && this.attacked && this.rangedAttacked;
+        return this.dead || (this.moved && this.attacked && this.rangedAttacked);
     }
 
     set turnOver(state: boolean) {
@@ -340,7 +340,6 @@ export class Piece extends Entity {
             this.owner === piece.owner ||
             this._dead ||
             piece.dead ||
-            piece.currentMount ||
             this.attacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -372,7 +371,6 @@ export class Piece extends Entity {
             this == piece ||
             this._dead ||
             piece.dead ||
-            piece.currentMount ||
             this.rangedAttacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             (piece.hasStatus(UnitStatus.Undead) &&
@@ -436,11 +434,15 @@ export class Piece extends Entity {
                 piece.properties.defense
             );
 
-            console.log("Attack!", attackRoll, defenseRoll);
+            console.log("Attack!", this.name, attackRoll, piece.name, defenseRoll);
 
             if (attackRoll > defenseRoll) {
                 await piece.kill();
-                await this.moveTo(piece.position);
+                if (this.board.getPiecesAtPosition(piece.position, (piece: Piece) => {
+                    return !piece.dead
+                }).length === 0) {
+                    await this.moveTo(piece.position);
+                }
             }
         }
     }
@@ -471,6 +473,10 @@ export class Piece extends Entity {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
+        if (this.currentRider) {
+            await this.currentRider.dismount();
+        }
+        this.owner = null;
         this._dead = true;
         if (this.hasStatus(UnitStatus.NoCorpse)) {
             this.destroy();
@@ -569,6 +575,7 @@ export class Piece extends Entity {
 
     reset() {
         this.turnOver = false;
+        this.engaged = false;
     }
 
     createSprite(): Phaser.GameObjects.Sprite {

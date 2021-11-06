@@ -37,8 +37,10 @@ export class Board extends Model {
     private _cursor: Cursor;
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
+
     private _players: Map<number, Player>;
     private _currentPlayer: Player | null;
+    private _currentPlayerIndex: number = -1;
 
     private _idCounter: number = 1;
 
@@ -79,11 +81,11 @@ export class Board extends Model {
 
         this._rules = Rules.getInstance();
 
-        let spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        let spaceKey = this.scene.input.keyboard.addKey(
+            Phaser.Input.Keyboard.KeyCodes.SPACE
+        );
         spaceKey.on("up", () => {
-            this.pieces.forEach((piece) => {
-                piece.reset();
-            });
+            this.nextPlayer();
         });
     }
 
@@ -103,6 +105,13 @@ export class Board extends Model {
 
     get rules(): Rules {
         return this._rules;
+    }
+
+    async newTurn(): Promise<void> {
+        this._selected = null;
+        this.pieces.forEach((piece) => {
+            piece.reset();
+        });
     }
 
     /* #endregion */
@@ -136,12 +145,22 @@ export class Board extends Model {
         return null;
     }
 
+    getPiecesByOwner(owner: Player): Piece[] {
+        return this.pieces.filter((piece) => piece.owner === owner);
+    }
+
     selectPiece(id: number): void {
         this._selected = this.getPiece(id);
     }
 
     deselectPiece(): void {
         this._selected = null;
+
+        setTimeout(() => {
+            if (this.getPiecesByOwner(this.currentPlayer!).every((piece) => piece.turnOver)) {
+                this.nextPlayer();
+            }
+        }, 1000);
     }
 
     removePiece(id: number): void {
@@ -190,7 +209,10 @@ export class Board extends Model {
         throw new Error(`Could not find piece with ID ${id}`);
     }
 
-    async attackPiece(attackingPieceId: number, defendingPieceId: number): Promise<Piece | null> {
+    async attackPiece(
+        attackingPieceId: number,
+        defendingPieceId: number
+    ): Promise<Piece | null> {
         const attackingPiece: Piece | null = this.getPiece(attackingPieceId);
         const defendingPiece: Piece | null = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
@@ -225,7 +247,10 @@ export class Board extends Model {
         return null;
     }
 
-    async mountPiece(mountingPieceId: number, mountedPieceId: number): Promise<Piece | null> {
+    async mountPiece(
+        mountingPieceId: number,
+        mountedPieceId: number
+    ): Promise<Piece | null> {
         const mountingPiece: Piece | null = this.getPiece(mountingPieceId);
         const mountedPiece: Piece | null = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
@@ -242,9 +267,12 @@ export class Board extends Model {
     }
 
     async dismountPiece(dismountingPieceId: number): Promise<Piece | null> {
-        const dismountingPiece: Piece | null = this.getPiece(dismountingPieceId);
+        const dismountingPiece: Piece | null =
+            this.getPiece(dismountingPieceId);
         if (!dismountingPiece) {
-            throw new Error(`Could not find piece with ID ${dismountingPieceId}`);
+            throw new Error(
+                `Could not find piece with ID ${dismountingPieceId}`
+            );
         }
         if (dismountingPiece) {
             await dismountingPiece.dismount();
@@ -268,6 +296,7 @@ export class Board extends Model {
     addPlayer(config: PlayerConfig): Player {
         const player: Player = new Player(this, this._idCounter++, config);
         this._players.set(player.id, player);
+        player.colour = Player.PLAYER_COLOURS[this._players.size - 1];
         return player;
     }
 
@@ -280,10 +309,64 @@ export class Board extends Model {
 
     selectPlayer(id: number): void {
         this._currentPlayer = this.getPlayer(id);
+
+        setTimeout(() => {
+            const targets: Phaser.GameObjects.Sprite[] = this.pieces
+                .filter((piece: Piece) => piece.owner === this._currentPlayer)
+                .map((piece) => piece.sprite);
+
+            if (this._currentPlayer?.colour) {
+                document.body.style.setProperty(
+                    "--bg-colour",
+                    `${Phaser.Display.Color.ValueToColor(this._currentPlayer.colour).rgba}`
+                );
+            }
+            else {
+                document.body.style.removeProperty("--bg-colour");
+            }
+
+            let previousVal = 0;
+
+            this.scene.tweens.addCounter({
+                from: 0,
+                to: 7,
+                onUpdate: (tween) => {
+                    const currentVal = Math.round(tween.getValue()) % 2;
+                    if (currentVal !== previousVal) {
+                        previousVal = currentVal;
+                        targets.forEach((target: Phaser.GameObjects.Sprite) => {
+                            currentVal === 0
+                                ? target.setTintFill(
+                                      this._currentPlayer?.colour || 0xffffff
+                                  )
+                                : target.clearTint();
+                        });
+                    }
+                },
+                onComplete: () => {
+                    targets.forEach((target: Phaser.GameObjects.Sprite) => {
+                        target.clearTint();
+                    });
+                },
+                duration: 700,
+            });
+        });
     }
 
     deselectPlayer(): void {
         this._currentPlayer = null;
+    }
+
+    async nextPlayer(): Promise<void> {
+        this._currentPlayerIndex =
+            (this._currentPlayerIndex + 1) % this._players.size;
+        this.deselectPlayer();
+        this.selectPlayer(
+            Array.from(this._players.keys())[this._currentPlayerIndex]
+        );
+        if (this._currentPlayerIndex === 0) {
+            this.newTurn();
+        }
     }
 
     /* #endregion */

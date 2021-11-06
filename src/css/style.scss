@@ -11,16 +11,21 @@ html, body, #app {
     height: 100%;
 }
 
+:root {
+    --bg-colour: #555;
+}
+
 body {
-    background: var(--bg-color, #555) url('../../assets/images/bg.png') repeat-x 0 50%; 
+    background: url('../../assets/images/bg.png') repeat-x 0 50%; 
+    background-color: var(--bg-colour, #555);
     color: #eee;
     margin: 0;
     padding: 0;
     height: 100%;
-    -o-transition: background-color 0.2s;
-    -moz-transition: background-color 0.2s;
-    -webkit-transition: background-color 0.2s;
-    transition: background-color 0.2s;
+    -o-transition: background-color 0.5s;
+    -moz-transition: background-color 0.5s;
+    -webkit-transition: background-color 0.5s;
+    transition: background-color 0.5s;
 }
 
 #app {

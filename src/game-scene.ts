@@ -55,6 +55,8 @@ export class GameScene extends Phaser.Scene {
                 frameHeight: 14,
             }
         );
+
+        this.load.image("unit-glow", "assets/spritesheets/unit-glow.png");
     }
 
     create(): void {
@@ -149,7 +151,7 @@ export class GameScene extends Phaser.Scene {
             x: 2,
             y: 2,
             type: UnitType.Creature,
-            properties: this.getUnitProperties("giant rat")
+            properties: this.getUnitProperties("hydra")
         });
 
         board.addPiece({
@@ -160,8 +162,11 @@ export class GameScene extends Phaser.Scene {
             properties: this.getUnitProperties("giant rat")
         });
 
-        board.state = BoardState.Move;  
-        board.selectPlayer(player.id);
+        setTimeout(() => {
+            board.state = BoardState.Move;  
+            board.nextPlayer();
+        }, 1000);
+
 
         /*
 
