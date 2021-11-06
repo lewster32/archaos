@@ -383,12 +383,17 @@ export class Board extends Model {
                         ).rgba
                     }`
                 );
-                this.getLayer(BoardLayer.Floor).getChildren().forEach(child => {
-                    const tintColour: Phaser.Display.Color = Phaser.Display.Color.ValueToColor(
-                        this._currentPlayer!.colour!
-                    );
-                    (child as Phaser.GameObjects.Sprite).setTint(tintColour.brighten(80).color);
-                });
+                this.getLayer(BoardLayer.Floor)
+                    .getChildren()
+                    .forEach((child) => {
+                        const tintColour: Phaser.Display.Color =
+                            Phaser.Display.Color.ValueToColor(
+                                this._currentPlayer!.colour!
+                            );
+                        (child as Phaser.GameObjects.Sprite).setTint(
+                            tintColour.brighten(80).color
+                        );
+                    });
             } else {
                 document.body.style.removeProperty("--bg-colour");
             }

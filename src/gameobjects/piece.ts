@@ -81,7 +81,9 @@ export class Piece extends Entity {
 
     get turnOver(): boolean {
         return (
-            this.dead || (this.moved && this.attacked && this.rangedAttacked)
+            (this.moved && !this.canAttack && !this.canRangedAttack) ||
+            this.dead ||
+            (this.moved && this.attacked && this.rangedAttacked)
         );
     }
 
@@ -254,7 +256,10 @@ export class Piece extends Entity {
         return this._sprite?.y || 0;
     }
 
-    protected updateDirection(fromPoint: Phaser.Geom.Point, toPoint: Phaser.Geom.Point) {
+    protected updateDirection(
+        fromPoint: Phaser.Geom.Point,
+        toPoint: Phaser.Geom.Point
+    ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
         if (isoXOffset < 0) {
@@ -352,6 +357,19 @@ export class Piece extends Entity {
             neighbours.filter((neighbour: Piece) =>
                 this.canAttackPiece(neighbour)
             ).length === 0
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    get canMove(): boolean {
+        if (
+            this._dead ||
+            this.moved ||
+            this.properties.movement === 0 ||
+            this.hasStatus(UnitStatus.Structure) ||
+            this.hasStatus(UnitStatus.Tree)
         ) {
             return false;
         }
@@ -474,7 +492,8 @@ export class Piece extends Entity {
                         (piece: Piece) => {
                             return !piece.dead;
                         }
-                    ).length === 0
+                    ).length === 0 &&
+                    this.canMove
                 ) {
                     await this.moveTo(piece.position);
                 }
