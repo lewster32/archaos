@@ -12,7 +12,9 @@
                 </p>
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Type:</span>
-                    <span class="spell-stats__value">{{ spellType(spell) }}</span>
+                    <span class="spell-stats__value">{{
+                        spellType(spell)
+                    }}</span>
                 </p>
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Casting chance:</span>
@@ -29,7 +31,14 @@
                 </p>
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Balance:</span>
-                    <span class="spell-stats__value" :class="{'balance-lawful': spell.balance > 0, 'balance-chaotic': spell.balance < 0}">{{ balance(spell) }}</span>
+                    <span
+                        class="spell-stats__value"
+                        :class="{
+                            'balance-lawful': spell.balance > 0,
+                            'balance-chaotic': spell.balance < 0,
+                        }"
+                        >{{ balance(spell) }}</span
+                    >
                 </p>
                 <p v-if="spell.range > 1.5" class="spell-stats__item">
                     <span class="spell-stats__label">Range:</span>
@@ -37,13 +46,21 @@
                 </p>
                 <p v-if="spell.castTimes > 1" class="spell-stats__item">
                     <span class="spell-stats__label">Quantity:</span>
-                    <span class="spell-stats__value">{{ spell.castTimes }}</span>
+                    <span class="spell-stats__value">{{
+                        spell.castTimes
+                    }}</span>
                 </p>
                 <div v-if="spell.unitProperties">
-                    <p style="color: var(--color-yellow)">{{ spell.unitProperties.properties }}</p>
-                    <p style="color: var(--color-cyan)">{{ spell.unitProperties.status.join(", ") }}</p>
+                    <p style="color: var(--color-yellow)">
+                        {{ spell.unitProperties.properties }}
+                    </p>
+                    <p style="color: var(--color-cyan)">
+                        {{ spell.unitProperties.status.join(", ") }}
+                    </p>
                 </div>
-                <button class="spellinfo__select" @click="select()">Select</button>
+                <button class="spellinfo__select" @click="select()">
+                    Select
+                </button>
             </div>
         </div>
     </div>
@@ -52,7 +69,7 @@
 <script lang="ts">
 import { PropType } from "@vue/runtime-core";
 import { Spell } from "../gameobjects/spell";
-import { SpellType } from '../gameobjects/enums/spelltype';
+import { SpellType } from "../gameobjects/enums/spelltype";
 export default {
     props: {
         spell: Object as PropType<Spell | null>,
@@ -84,10 +101,15 @@ export default {
         },
         balance(spell: Spell) {
             if (spell.balance > 0) {
-                return `Law ${spell.balance} (${new Array(spell.balance).fill("^").join("")})`;
-            }
-            else if (spell.balance < 0) {
-                return `Chaos ${Math.abs(spell.balance)} (${new Array(Math.abs(spell.balance)).fill("*").join("")})`;
+                return `Law ${spell.balance} (${new Array(spell.balance)
+                    .fill("^")
+                    .join("")})`;
+            } else if (spell.balance < 0) {
+                return `Chaos ${Math.abs(spell.balance)} (${new Array(
+                    Math.abs(spell.balance)
+                )
+                    .fill("*")
+                    .join("")})`;
             }
             return "Neutral";
         },
@@ -110,7 +132,7 @@ export default {
         width: 96px;
         height: 96px;
         image-rendering: pixelated;
-        margin: 0 .5em;
+        margin: 0 0.5em;
     }
     &__stats {
         flex: 1 1 auto;
@@ -120,7 +142,7 @@ export default {
         z-index: 5;
     }
     &__inner {
-        padding: .5em 0;
+        padding: 0.5em 0;
         background: rgba(0, 0, 0, 0.25);
         backdrop-filter: blur(5px);
         width: 460px;
@@ -138,7 +160,7 @@ export default {
     flex-direction: column;
     &__item {
         display: flex;
-        margin-bottom: .25em;
+        margin-bottom: 0.25em;
     }
     &__label {
         flex: 0 0 8em;

@@ -56,9 +56,7 @@ export class Rules {
                         board.selected.position,
                         board.cursor.position
                     ) &&
-                    selectedSpell.canCastAtPosition(
-                        board.cursor.position
-                    )
+                    selectedSpell.canCastAtPosition(board.cursor.position)
                 ) {
                     if (
                         selectedSpell.type === SpellType.Summon &&
@@ -174,10 +172,19 @@ export class Rules {
             }
         }
         if (actionType === ActionType.Cast) {
-            if (board.currentPlayer && board.selected && board.currentPlayer.selectedSpell) {
-                const casted: Spell | null = await board.currentPlayer.useSpell();
+            if (
+                board.currentPlayer &&
+                board.selected &&
+                board.currentPlayer.selectedSpell
+            ) {
+                const casted: Spell | null =
+                    await board.currentPlayer.useSpell();
                 if (casted) {
-                    await casted.cast(board.currentPlayer, board.cursor.position, hoveredPieces);
+                    await casted.cast(
+                        board.currentPlayer,
+                        board.cursor.position,
+                        hoveredPieces
+                    );
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
                         board.selected.turnOver = true;
@@ -297,9 +304,12 @@ export class Rules {
 
         if (board.state === BoardState.CastSpell) {
             if (board.currentPlayer && board.currentPlayer.selectedSpell) {
-                const wasted: Spell | null = await board.currentPlayer.discardSpell();
+                const wasted: Spell | null =
+                    await board.currentPlayer.discardSpell();
                 if (wasted) {
-                    console.log(`Wasted ${board.currentPlayer.name}'s spell '${wasted.name}'`);
+                    console.log(
+                        `Wasted ${board.currentPlayer.name}'s spell '${wasted.name}'`
+                    );
                 }
                 if (board.selected) {
                     board.selected.turnOver = true;

@@ -46,7 +46,11 @@ export class Spell extends Model {
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return Phaser.Math.Clamp(this._properties.chance + balanceOffset, 0.1, 1);
+        return Phaser.Math.Clamp(
+            this._properties.chance + balanceOffset,
+            0.1,
+            1
+        );
     }
 
     get type(): SpellType {
@@ -70,7 +74,7 @@ export class Spell extends Model {
     get unitId(): string {
         return this._properties.unitId || "";
     }
-    
+
     get unitProperties(): PieceConfig {
         return Piece.getUnitConfig(this.unitId);
     }
@@ -92,10 +96,10 @@ export class Spell extends Model {
     canCastAtPosition(point: Phaser.Geom.Point): boolean {
         // Trees cannot be placed next to one another
         if (this._properties.tree) {
-            const neighbourTrees: Piece[] = this._board.getAdjacentPiecesAtPosition(
-                point,
-                (p: Piece) => p.hasStatus(UnitStatus.Tree)
-            );
+            const neighbourTrees: Piece[] =
+                this._board.getAdjacentPiecesAtPosition(point, (p: Piece) =>
+                    p.hasStatus(UnitStatus.Tree)
+                );
             if (neighbourTrees.length > 0) {
                 return false;
             }
@@ -103,7 +107,11 @@ export class Spell extends Model {
         return true;
     }
 
-    async cast(owner: Player, point: Phaser.Geom.Point, _targets: Piece[]): Promise<Piece | boolean | null> {
+    async cast(
+        owner: Player,
+        point: Phaser.Geom.Point,
+        _targets: Piece[]
+    ): Promise<Piece | boolean | null> {
         this._castTimes--;
         switch (this._type) {
             case SpellType.Summon:
@@ -115,35 +123,31 @@ export class Spell extends Model {
     async castSummon(owner: Player, point: Phaser.Geom.Point): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
-        const newPiece: Piece = this._board.addPiece(
-            {
-                type: UnitType.Creature,
-                x: point.x,
-                y: point.y,
-                properties: {
-                    id: this.unitId,
-                    name: unit.name,
-                    movement: unit.properties.mov,
-                    combat: unit.properties.com,
-                    rangedCombat: unit.properties.rcm,
-                    range: unit.properties.rng,
-                    defense: unit.properties.def,
-                    maneuverability: unit.properties.mnv,
-                    magicResistance: unit.properties.res,
-                    attackDescription: unit.attackType || "attacked",
-                    rangedDescription: unit.rangedDescription || "shot",
-                    status: unit.status || [],
-                },
-                shadowScale: unit.shadowScale,
-                offsetY: unit.offY,
-                owner: owner
-            }
-        );
+        const newPiece: Piece = this._board.addPiece({
+            type: UnitType.Creature,
+            x: point.x,
+            y: point.y,
+            properties: {
+                id: this.unitId,
+                name: unit.name,
+                movement: unit.properties.mov,
+                combat: unit.properties.com,
+                rangedCombat: unit.properties.rcm,
+                range: unit.properties.rng,
+                defense: unit.properties.def,
+                maneuverability: unit.properties.mnv,
+                magicResistance: unit.properties.res,
+                attackDescription: unit.attackType || "attacked",
+                rangedDescription: unit.rangedDescription || "shot",
+                status: unit.status || [],
+            },
+            shadowScale: unit.shadowScale,
+            offsetY: unit.offY,
+            owner: owner,
+        });
 
         newPiece.turnOver = true;
 
         return newPiece;
     }
-
-
 }

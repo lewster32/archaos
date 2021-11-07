@@ -1,26 +1,28 @@
 @import "reset";
 
 @font-face {
-    font-family: 'Chaos Sans';
-    src: url('../../assets/fonts/chaos.woff2') format('woff2'),
-        url('../../assets/fonts/chaos.woff') format('woff');
+    font-family: "Chaos Sans";
+    src: url("../../assets/fonts/chaos.woff2") format("woff2"),
+        url("../../assets/fonts/chaos.woff") format("woff");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
 
-
-
 html {
-    font-family: Chaos Sans,sans-serif;
+    font-family: Chaos Sans, sans-serif;
     font-weight: 300;
 }
 
-input, select, button {
+input,
+select,
+button {
     font-family: inherit;
 }
 
-html, body, #app {
+html,
+body,
+#app {
     padding: 0;
     margin: 0;
     height: 100%;
@@ -56,7 +58,7 @@ html, body, #app {
 
 body {
     --bg-transition-time: 0.15s;
-    background: url('../../assets/images/bg.png') repeat-x 60% 40%; 
+    background: url("../../assets/images/bg.png") repeat-x 60% 40%;
     background-color: var(--bg-colour, #555);
     color: #eee;
     margin: 0;
@@ -86,7 +88,7 @@ body {
     font-family: monospace;
     background: #333;
     border-radius: 2px;
-    padding: .1em .25em;
+    padding: 0.1em 0.25em;
 }
 
 button {
@@ -105,7 +107,7 @@ button {
     right: 0;
     z-index: 1;
     margin: 1.175em 0.5em;
-    padding: .25em .5em;
+    padding: 0.25em 0.5em;
     font-size: 16px;
     &:hover {
         background: #fff;

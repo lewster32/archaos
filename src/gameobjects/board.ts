@@ -266,9 +266,9 @@ export class Board extends Model {
                 piece.currentRider.moved = true;
             }
             setTimeout(() => {
-                this.cursor.update(true);    
+                this.cursor.update(true);
             }, 100);
-            
+
             return piece;
         }
         throw new Error(`Could not find piece with ID ${id}`);
@@ -495,8 +495,7 @@ export class Board extends Model {
                     },
                 });
             }
-        }
-        else {
+        } else {
             this.scene.game.events.emit("spellbook-close");
         }
 

@@ -45,30 +45,22 @@ export class GameScene extends Phaser.Scene {
             "assets/spritesheets/board.json",
             "assets/spritesheets"
         );
-        
+
         this.load.multiatlas(
             "cursors",
             "assets/spritesheets/cursors.json",
             "assets/spritesheets"
         );
 
-        this.load.spritesheet(
-            "wizards",
-            "assets/spritesheets/wizards.png",
-            {
-                frameWidth: 18,
-                frameHeight: 18,
-            }
-        );
+        this.load.spritesheet("wizards", "assets/spritesheets/wizards.png", {
+            frameWidth: 18,
+            frameHeight: 18,
+        });
 
-        this.load.spritesheet(
-            "hats",
-            "assets/spritesheets/hats.png",
-            {
-                frameWidth: 14,
-                frameHeight: 14,
-            }
-        );
+        this.load.spritesheet("hats", "assets/spritesheets/hats.png", {
+            frameWidth: 14,
+            frameHeight: 14,
+        });
     }
 
     create(): void {
@@ -120,7 +112,7 @@ export class GameScene extends Phaser.Scene {
             castTimes: spell.castTimes,
             range: spell.range,
             damage: spell.damage,
-            lineOfSight: spell.lineOfSight
+            lineOfSight: spell.lineOfSight,
         };
     }
 
@@ -128,50 +120,47 @@ export class GameScene extends Phaser.Scene {
         const board: Board = new Board(this, 1, 13, 13);
 
         const player: Player = board.addPlayer({
-            name: "Gandalf"
+            name: "Gandalf",
         });
 
         const player2: Player = board.addPlayer({
-            name: "Merlin"
+            name: "Merlin",
         });
 
         const player3: Player = board.addPlayer({
-            name: "Glinda"
+            name: "Glinda",
         });
 
         const player4: Player = board.addPlayer({
-            name: "Morgana"
+            name: "Morgana",
         });
-
-
 
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2),
             y: board.height - 1,
-            wizCode: "0003030000"
+            wizCode: "0003030000",
         });
-
 
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
             y: 0,
-            wizCode: "0600000000"
+            wizCode: "0600000000",
         });
 
         board.addWizard({
             owner: player3,
             x: 0,
             y: Math.floor(board.height / 2),
-            wizCode: "0307070000"
+            wizCode: "0307070000",
         });
 
         board.addWizard({
             owner: player4,
             x: board.width - 1,
             y: Math.floor(board.height / 2),
-            wizCode: "0205050000"
+            wizCode: "0205050000",
         });
 
         for (let [key, spell] of Object.entries(spells)) {
@@ -181,15 +170,12 @@ export class GameScene extends Phaser.Scene {
             board.addSpell(player4, this.getSpellProperties(spell.name));
         }
 
-        
         // board.addSpell(player, this.getSpellProperties("vampire"));
         // board.addSpell(player, this.getSpellProperties("wall"));
-
 
         setTimeout(() => {
             board.startGame();
         }, 1000);
-
 
         /*
 
