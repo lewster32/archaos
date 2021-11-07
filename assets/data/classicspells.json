@@ -3,13 +3,13 @@
         "king-cobra": {
             "chance": 0.9,
             "balance": 1,
-            "unitId": "1",
+            "unitId": "2",
             "name": "King Cobra"
         },
         "dire-wolf": {
             "chance": 0.9,
             "balance": -1,
-            "unitId": "2",
+            "unitId": "3",
             "name": "Dire Wolf"
         },
         "goblin": {
@@ -21,7 +21,7 @@
         "crocodile": {
             "chance": 0.8,
             "balance": 0,
-            "unitId": "3",
+            "unitId": "4",
             "name": "Crocodile"
         },
         "faun": { "chance": 0.8, "balance": -1, "unitId": "5", "name": "Faun" },
@@ -221,6 +221,7 @@
             "name": "Wall"
         },
         "magic-bolt": {
+            "chance": 0.6,
             "castOnEnemyUnit": true,
             "lineOfSight": true,
             "range": 6,
@@ -229,6 +230,7 @@
             "name": "Magic Bolt"
         },
         "lightning": {
+            "chance": 0.4,
             "castOnEnemyUnit": true,
             "lineOfSight": true,
             "range": 4,

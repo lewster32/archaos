@@ -31,6 +31,10 @@ export class Spell extends Model {
         this._castTimes = config.castTimes || 1;
     }
 
+    get spellId(): string {
+        return this._properties.id;
+    }
+
     get name(): string {
         return this._properties.name;
     }

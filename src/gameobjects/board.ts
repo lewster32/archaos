@@ -146,6 +146,9 @@ export class Board extends Model {
             this.phase === BoardPhase.Idle ||
             this.phase === BoardPhase.Moving
         ) {
+            this.phase = BoardPhase.Spellbook;
+            this.state = BoardState.SelectSpell;
+        } else if (this.phase === BoardPhase.Spellbook) {
             this.phase = BoardPhase.Casting;
             this.state = BoardState.CastSpell;
         } else if (this.phase === BoardPhase.Casting) {
@@ -262,6 +265,7 @@ export class Board extends Model {
             if (piece.currentRider) {
                 piece.currentRider.moved = true;
             }
+            this.cursor.update(true);
             return piece;
         }
         throw new Error(`Could not find piece with ID ${id}`);
@@ -466,6 +470,30 @@ export class Board extends Model {
 
         if (this._currentPlayerIndex === 0) {
             this.newTurn();
+        }
+
+        if (this.phase === BoardPhase.Spellbook) {
+            if (this.currentPlayer?.spells?.length) {
+                this.scene.game.events.emit("spellbook-open", {
+                    data: {
+                        caster: this.currentPlayer?.name,
+                        spells: this.currentPlayer?.spells,
+                    },
+                    callback: (spell: Spell | null) => {
+                        if (spell) {
+                            this.currentPlayer?.pickSpell(spell.id);
+                        }
+                        this.scene.game.events.emit("spellbook-close")
+                        this.nextPlayer();
+                    },
+                });
+            }
+        }
+
+        if (this._phase === BoardPhase.Spellbook) {
+            if (this.currentPlayer?.spells.length === 0) {
+                this.nextPlayer();
+            }
         }
 
         if (this._phase === BoardPhase.Casting) {

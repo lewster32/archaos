@@ -163,14 +163,15 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0307070000"
         });
 
-        const spell1: Spell = board.addSpell(player, this.getSpellProperties("shadow wood"));
-        player.pickSpell(spell1);
+        for (let [key, spell] of Object.entries(spells)) {
+            board.addSpell(player, this.getSpellProperties(spell.name));
+            board.addSpell(player2, this.getSpellProperties(spell.name));
+            board.addSpell(player3, this.getSpellProperties(spell.name));
+        }
 
-        const spell2: Spell = board.addSpell(player2, this.getSpellProperties("vampire"));
-        player2.pickSpell(spell2);
-
-        const spell3: Spell = board.addSpell(player3, this.getSpellProperties("wall"));
-        player3.pickSpell(spell3);
+        
+        // board.addSpell(player, this.getSpellProperties("vampire"));
+        // board.addSpell(player, this.getSpellProperties("wall"));
 
 
         setTimeout(() => {

@@ -4,6 +4,7 @@
         "module": "ESNext",
         "lib": ["ESNext", "DOM", "scripthost"],
         "moduleResolution": "Node",
+        "jsx": "preserve",
         "strict": true,
         "sourceMap": true,
         "resolveJsonModule": true,
@@ -12,7 +13,8 @@
         "noEmit": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "noImplicitReturns": true
+        "noImplicitReturns": true,
+        "useDefineForClassFields": true,
     },
-    "include": ["./src"]
+    "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

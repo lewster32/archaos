@@ -8,7 +8,7 @@ export class Player extends Model {
     private _board: Board;
     private _colour: number | null;
 
-    private _spells: Set<Spell>;
+    private _spells: Map<number, Spell>;
 
     private _selectedSpell: Spell | null;
     private _defeated: boolean;
@@ -30,7 +30,7 @@ export class Player extends Model {
         this._board = board;
         this._colour = null;
 
-        this._spells = new Set();
+        this._spells = new Map();
         this._selectedSpell = null;
         this._defeated = false;
     }
@@ -52,7 +52,7 @@ export class Player extends Model {
     }
 
     get spells(): Spell[] {
-        return Array.from(this._spells);
+        return Array.from(this._spells.values());
     }
 
     get defeated(): boolean {
@@ -69,15 +69,16 @@ export class Player extends Model {
     }
 
     addSpell(spell: Spell) {
-        this._spells.add(spell);
+        this._spells.set(spell.id, spell);
     }
 
     get selectedSpell(): Spell | null {
         return this._selectedSpell;
     }
 
-    async pickSpell(spell: Spell): Promise<Spell> {
-        if (this._spells.has(spell)) {
+    async pickSpell(id: number): Promise<Spell> {
+        const spell: Spell | undefined = this._spells.get(id);
+        if (spell) {
             this._selectedSpell = spell;
             return this._selectedSpell;
         }
@@ -101,7 +102,7 @@ export class Player extends Model {
     async discardSpell(): Promise<Spell | null> {
         if (this._selectedSpell) {
             const spell: Spell = this._selectedSpell;
-            this._spells.delete(this._selectedSpell);
+            this._spells.delete(this._selectedSpell.id);
             this._selectedSpell = null;
             return spell;
         }
