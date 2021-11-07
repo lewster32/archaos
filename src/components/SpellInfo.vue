@@ -68,7 +68,7 @@ export default {
     watch: {},
     methods: {
         getImageUrl(spell: Spell) {
-            return `assets/images/spells/classicspells/${spell.spellId}.png`;
+            return `/images/spells/classicspells/${spell.spellId}.png`;
         },
         chancePercent(chance: number) {
             return Math.round(chance * 100);

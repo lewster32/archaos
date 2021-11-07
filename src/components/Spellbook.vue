@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SpellInfo from "./SpellInfo.vue";
+SpellInfo;
 </script>
 
 <template>
@@ -101,7 +102,7 @@ export default {
             });
         },
         getImageUrl(spell: Spell) {
-            return `assets/images/spells/classicspells/${spell.spellId}.png`;
+            return `/images/spells/classicspells/${spell.spellId}.png`;
         },
         chancePercent(chance: number) {
             return Math.round(chance * 100);
