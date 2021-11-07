@@ -1,19 +1,57 @@
 @import "reset";
 
+@font-face {
+    font-family: 'Chaos Sans';
+    src: url('../../assets/fonts/chaos.woff2') format('woff2'),
+        url('../../assets/fonts/chaos.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+
 html {
-    font-size: 16px;
-    font-family: sans-serif;
+    font-family: Chaos Sans,sans-serif;
+    font-weight: 300;
+}
+
+input, select, button {
+    font-family: inherit;
 }
 
 html, body, #app {
     padding: 0;
     margin: 0;
     height: 100%;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 :root {
     --bg-colour: #555;
+
+    // Speccy colours
+    --color-white: #fff;
+    --color-yellow: #ff0;
+    --color-cyan: #0ff;
+    --color-green: #0f0;
+    --color-magenta: #f0f;
+    --color-red: #f00;
+    --color-blue: #00f;
+    --color-black: #000;
+
+    // Spell chances
+    --spell-chance-colour-100: var(--color-white);
+    --spell-chance-colour-90: var(--color-white);
+    --spell-chance-colour-80: var(--color-yellow);
+    --spell-chance-colour-70: var(--color-yellow);
+    --spell-chance-colour-60: var(--color-cyan);
+    --spell-chance-colour-50: var(--color-cyan);
+    --spell-chance-colour-40: var(--color-green);
+    --spell-chance-colour-30: var(--color-green);
+    --spell-chance-colour-20: var(--color-magenta);
+    --spell-chance-colour-10: var(--color-magenta);
+    --spell-chance-colour-0: var(--color-red);
 }
 
 body {
@@ -49,4 +87,36 @@ body {
     background: #333;
     border-radius: 2px;
     padding: .1em .25em;
+}
+
+button {
+    border: none;
+    border-radius: 3px;
+    padding: 0.5em;
+    cursor: pointer;
+    font-size: inherit;
+}
+
+.window-button {
+    background: #444;
+    color: #fff;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    margin: 1.175em 0.5em;
+    padding: .25em .5em;
+    font-size: 16px;
+    &:hover {
+        background: #fff;
+        color: #000;
+    }
+}
+
+.balance-lawful {
+    color: var(--color-cyan);
+}
+
+.balance-chaotic {
+    color: var(--color-magenta);
 }

@@ -7,6 +7,8 @@ import { Piece } from "./piece";
 import { UnitType } from "./enums/unittype";
 import { Player } from "./player";
 import { UnitStatus } from "./enums/unitstatus";
+import { IUnitProperties } from "./interfaces/unitproperties";
+import { PieceConfig } from "./configs/piececonfig";
 
 export class Spell extends Model {
     private _board: Board;
@@ -67,6 +69,10 @@ export class Spell extends Model {
 
     get unitId(): string {
         return this._properties.unitId || "";
+    }
+    
+    get unitProperties(): PieceConfig {
+        return Piece.getUnitConfig(this.unitId);
     }
 
     get castTimes(): number {

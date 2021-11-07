@@ -265,7 +265,10 @@ export class Board extends Model {
             if (piece.currentRider) {
                 piece.currentRider.moved = true;
             }
-            this.cursor.update(true);
+            setTimeout(() => {
+                this.cursor.update(true);    
+            }, 100);
+            
             return piece;
         }
         throw new Error(`Could not find piece with ID ${id}`);
@@ -462,14 +465,18 @@ export class Board extends Model {
             Array.from(this._players.keys())[this._currentPlayerIndex]
         );
 
-        if (this.currentPlayer?.defeated) {
-            return this.nextPlayer();
-        }
-
         console.log(`${this.currentPlayer?.name}'s turn`);
+
+        setTimeout(() => {
+            this.cursor.update(true);
+        }, 100);
 
         if (this._currentPlayerIndex === 0) {
             this.newTurn();
+        }
+
+        if (this.currentPlayer?.defeated) {
+            return this.nextPlayer();
         }
 
         if (this.phase === BoardPhase.Spellbook) {
@@ -483,11 +490,14 @@ export class Board extends Model {
                         if (spell) {
                             this.currentPlayer?.pickSpell(spell.id);
                         }
-                        this.scene.game.events.emit("spellbook-close")
+                        this.scene.game.events.emit("spellbook-close");
                         this.nextPlayer();
                     },
                 });
             }
+        }
+        else {
+            this.scene.game.events.emit("spellbook-close");
         }
 
         if (this._phase === BoardPhase.Spellbook) {

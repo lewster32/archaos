@@ -128,15 +128,19 @@ export class GameScene extends Phaser.Scene {
         const board: Board = new Board(this, 1, 13, 13);
 
         const player: Player = board.addPlayer({
-            name: "Lew"
-        });
-
-        const player2: Player = board.addPlayer({
             name: "Gandalf"
         });
 
+        const player2: Player = board.addPlayer({
+            name: "Merlin"
+        });
+
         const player3: Player = board.addPlayer({
-            name: "Gerald"
+            name: "Glinda"
+        });
+
+        const player4: Player = board.addPlayer({
+            name: "Morgana"
         });
 
 
@@ -163,10 +167,18 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0307070000"
         });
 
+        board.addWizard({
+            owner: player4,
+            x: board.width - 1,
+            y: Math.floor(board.height / 2),
+            wizCode: "0205050000"
+        });
+
         for (let [key, spell] of Object.entries(spells)) {
             board.addSpell(player, this.getSpellProperties(spell.name));
             board.addSpell(player2, this.getSpellProperties(spell.name));
             board.addSpell(player3, this.getSpellProperties(spell.name));
+            board.addSpell(player4, this.getSpellProperties(spell.name));
         }
 
         

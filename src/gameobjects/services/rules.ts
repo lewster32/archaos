@@ -304,6 +304,7 @@ export class Rules {
                 if (board.selected) {
                     board.selected.turnOver = true;
                 }
+                board.deselectPlayer();
             }
             return ActionType.None;
         }
