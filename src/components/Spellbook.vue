@@ -59,7 +59,7 @@ export default {
             return `assets/images/spells/classicspells/${spell.spellId}.png`;
         },
         chancePercent(chance) {
-            return chance * 100;
+            return Math.round(chance * 100);
         },
         toggle() {
             this.minimised = !this.minimised;

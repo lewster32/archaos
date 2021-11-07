@@ -44,7 +44,7 @@ export class Spell extends Model {
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return this._properties.chance + balanceOffset;
+        return Phaser.Math.Clamp(this._properties.chance + balanceOffset, 0.1, 1);
     }
 
     get type(): SpellType {
