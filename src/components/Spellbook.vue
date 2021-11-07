@@ -5,11 +5,11 @@ SpellInfo;
 
 <template>
     <div class="spellbook" v-if="show">
-        <button class="spellbook__toggle window-button" @click="toggle()">
+        <button class="spellbook__toggle button button--small" @click="toggle()" :class="{'button--yellow': minimised}">
             {{ minimised ? "&lt;" : "&gt;" }}
         </button>
         <div
-            class="spellbook__inner"
+            class="spellbook__inner callout"
             :class="{ 'spellbook__inner--minimised': minimised }"
         >
             <h1 class="spellbook__title">{{ data?.caster }}'s spells</h1>
@@ -32,16 +32,16 @@ SpellInfo;
                             )}% chance of successfully casting`"
                             >{{ chancePercent(spell.chance) }}%</span
                         >
-                        <button class="spell__info" @click="info(spell)">
+                        <button class="spell__info button" @click="info(spell)">
                             i
                         </button>
-                        <button class="spell__select" @click="select(spell)">
+                        <button class="spell__select button button--green button--important" @click="select(spell)">
                             Select
                         </button>
                     </li>
                 </ul>
             </div>
-            <button class="spellbook__skip" @click="select(null)">
+            <button class="spellbook__skip button button--red" @click="select(null)">
                 Skip selection
             </button>
         </div>
@@ -51,19 +51,18 @@ SpellInfo;
 
 <script lang="ts">
 import { Spell } from "../gameobjects/spell";
-import { PropType } from '@vue/runtime-core';
 
 export default {
     $refs: {
         scroll: HTMLDivElement,
     },
     props: {
-        data: Object as PropType<any>,
+        data: Object as any,
     },
     data() {
         return {
             minimised: true as boolean,
-            currentSpell: null as Spell | null,
+            currentSpell: null as any,
         };
     },
     computed: {
@@ -129,27 +128,20 @@ export default {
     top: 0;
     bottom: 0;
     z-index: 1;
+    padding: 1em;
     display: flex;
     justify-content: right;
     &__toggle {
         z-index: 2;
     }
     &__inner {
-        padding: 1em;
-        background: rgba(0, 0, 0, 0.25);
-        backdrop-filter: blur(5px);
         width: 360px;
         display: flex;
         flex-direction: column;
-        transition: width 0.25s;
-        > * {
-            transition: opacity 0.25s;
-        }
+        transition: width 0.25s, opacity 0.25s;
         &--minimised {
-            width: .5em;
-            > * {
-                opacity: 0;
-            }
+            width: 0;
+            opacity: 0;
         }
     }
     &__title {
@@ -162,18 +154,22 @@ export default {
         flex: 0 0 1em;
     }
     &__scroll {
+        border-top: 2px solid var(--color-black);
+        border-bottom: 2px solid var(--color-black);
+        
+
         flex: 1 1 auto;
         overflow-y: scroll;
-        margin-bottom: 0.5em;
+        margin-bottom: 1em;
+        padding-right: .5em;
         &::-webkit-scrollbar {
             width: 0.5em;
         }
         &::-webkit-scrollbar-track {
-            background: transparent;
+            background: rgba(0,0,0,.25);
         }
         &::-webkit-scrollbar-thumb {
-            border-radius: 1em;
-            background: #777;
+            background: #666;
             &:hover {
                 background: #fff;
             }
@@ -184,15 +180,32 @@ export default {
         flex-direction: column;
     }
     &__skip {
-        background-color: #800;
-        color: #fff;
+
+    }
+    &__toggle {
+        position: absolute;
+        left: 2px;
+        top: 2em;
+        z-index: 50;
     }
 }
 .spell {
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 0.5em;
+
+    image-rendering: pixelated;
+    border-style: solid;
+    border-width: 6px;
+    border-image-width: 6px;
+    border-image-slice: 3 fill;
+    border-image-repeat: repeat;
+    border-image-source: url('../../assets/images/ui/callout-disabled.png');
+
+    &:hover {
+        border-image-source: url('../../assets/images/ui/callout-selected.png');
+    }
+
+
     + .spell {
         margin-top: 0.5em;
     }
@@ -208,11 +221,10 @@ export default {
         flex: 1 1 auto;
     }
     &__select {
-        background: var(--color-white);
+
     }
     &__info {
-        border-radius: 9999px;
-        background: var(--color-cyan);
+
     }
 }
 </style>

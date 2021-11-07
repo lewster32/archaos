@@ -1,0 +1,29 @@
+.callout {
+    position: relative;
+    padding: 12px;
+    image-rendering: pixelated;
+    border-style: solid;
+    border-width: 6px;
+    border-image-width: 6px;
+    border-image-slice: 3;
+    border-image-repeat: repeat;
+    border-image-source: url('../../assets/images/ui/callout.png');
+
+    background-image: url('../../assets/images/ui/background.png');
+    background-size: 32px; 
+
+    box-shadow: -2px 8px rgba(0,0,0,.5);
+
+    &:hover {
+        border-image-source: url('../../assets/images/ui/callout-hover.png');
+    }
+
+    &__buttons {
+        margin-top: .5em;
+        display: flex;
+        gap: .5em;
+        > * {
+            flex: 1 1 auto;
+        }
+    }
+}

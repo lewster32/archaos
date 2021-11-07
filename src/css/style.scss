@@ -1,4 +1,6 @@
 @import "reset";
+@import "ui";
+@import "buttons";
 
 @font-face {
     font-family: "Chaos Sans";
@@ -41,6 +43,10 @@ body,
     --color-red: #f00;
     --color-blue: #00f;
     --color-black: #000;
+
+    // Additional colours
+    --color-brown: #8b5731;
+    --color-light-blue: #009cef;
 
     // Spell chances
     --spell-chance-colour-100: var(--color-white);
