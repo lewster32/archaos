@@ -5,6 +5,8 @@ import "../assets/spritesheets/classicspells.json";
 import "../assets/spritesheets/board.json";
 import "../assets/spritesheets/cursors.json";
 
+import "../assets/plugins/rexcolorreplacepipelineplugin.min.js";
+
 import { units } from "../assets/data/classicunits.json";
 import { spells } from "../assets/data/classicspells.json";
 
@@ -61,6 +63,12 @@ export class GameScene extends Phaser.Scene {
             frameWidth: 14,
             frameHeight: 14,
         });
+
+        this.load.plugin(
+            "rexcolorreplacepipelineplugin",
+            "assets/plugins/rexcolorreplacepipelineplugin.min.js",
+            true
+        );
     }
 
     create(): void {

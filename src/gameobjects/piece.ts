@@ -31,6 +31,8 @@ export class Piece extends Entity {
     protected _currentMount: Piece | null;
     protected _currentRider: Piece | null;
 
+    protected _ownerHighlightTween: Phaser.Tweens.Tween;
+
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
         this._type = config.type;
@@ -87,11 +89,24 @@ export class Piece extends Entity {
         );
     }
 
+    setActive(state: boolean) {
+        if (!this._ownerHighlightTween) {
+            return;
+        }
+        this._ownerHighlightTween.restart();
+        if (state && this.canSelect) {
+            this._ownerHighlightTween.play();
+        } else {
+            this._ownerHighlightTween.pause();
+        }
+    }
+
     set turnOver(state: boolean) {
         this.moved = this.attacked = this.rangedAttacked = state;
 
         if (state) {
             this._sprite?.setTint(0x7f7f7f);
+            this.setActive(false);
         } else {
             this._sprite?.clearTint();
         }
@@ -669,7 +684,49 @@ export class Piece extends Entity {
     }
 
     protected createShaders(): void {
-        // TODO: Implement shaders
+        if (this._ownerHighlightTween) {
+            return;
+        }
+        const startColor: Phaser.Display.Color = new Phaser.Display.Color(
+            0,
+            0,
+            0
+        );
+        const endColor: Phaser.Display.Color =
+            Phaser.Display.Color.ValueToColor(this.owner?.colour || 0);
+
+        const postFxPlugin: any = this.board.scene.game.plugins.get(
+            "rexcolorreplacepipelineplugin"
+        );
+        const postFxPipeline = postFxPlugin.add(this._sprite, {
+            originalColor: startColor,
+            epsilon: 0,
+        });
+
+        this._ownerHighlightTween = this.board.scene.tweens.addCounter({
+            from: 0,
+            to: 100,
+            duration: 1000,
+            repeat: -1,
+            yoyo: true,
+            onUpdate: (tween) => {
+                const newColor: Phaser.Types.Display.ColorObject =
+                    Phaser.Display.Color.Interpolate.ColorWithColor(
+                        startColor,
+                        endColor,
+                        100,
+                        tween.getValue()
+                    );
+
+                postFxPipeline.newColor = Phaser.Display.Color.GetColor(
+                    newColor.r,
+                    newColor.g,
+                    newColor.b
+                );
+            },
+        });
+
+        this._ownerHighlightTween.pause();
     }
 
     static getUnitConfig(id: string): any {

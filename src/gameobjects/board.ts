@@ -381,10 +381,18 @@ export class Board extends Model {
     selectPlayer(id: number): void {
         this._currentPlayer = this.getPlayer(id);
 
+        this.pieces.forEach((piece: Piece) => {
+            piece.setActive(false);
+        });
+
         setTimeout(() => {
-            const targets: Phaser.GameObjects.Sprite[] = this.pieces
-                .filter((piece: Piece) => piece.owner === this._currentPlayer)
-                .map((piece) => piece.sprite);
+            const units: Piece[] = this.pieces.filter(
+                (piece: Piece) => piece.owner === this._currentPlayer
+            );
+
+            const targets: Phaser.GameObjects.Sprite[] = units.map(
+                (piece) => piece.sprite
+            );
 
             if (this._currentPlayer?.colour) {
                 document.body.style.setProperty(
@@ -431,6 +439,9 @@ export class Board extends Model {
                 onComplete: () => {
                     targets.forEach((target: Phaser.GameObjects.Sprite) => {
                         target.clearTint();
+                    });
+                    units.forEach((piece: Piece) => {
+                        piece.setActive(true);
                     });
                 },
                 duration: 700,
