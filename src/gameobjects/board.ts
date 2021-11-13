@@ -123,7 +123,7 @@ export class Board extends Model {
 
     set phase(phase: BoardPhase) {
         this._phase = phase;
-        this.logger.log(`New ${BoardPhase[this._phase]} phase`);
+        // this.logger.log(`New ${BoardPhase[this._phase]} phase`);
     }
 
     get balance(): number {
@@ -426,6 +426,29 @@ export class Board extends Model {
 
                 let previousVal = 0;
 
+                switch (this.phase) {
+                    case BoardPhase.Spellbook:
+                        this.logger.log(
+                            `${this.currentPlayer?.name}'s turn to select a spell`
+                        );
+                        break;
+                    case BoardPhase.Casting:
+                        if (this.currentPlayer?.selectedSpell) {
+                            this.logger.log(
+                                `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
+                            );
+                        }
+                        else {
+                            this.logger.log(
+                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`
+                            );
+                        }
+                        break;
+                    case BoardPhase.Moving:
+                        this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
+                        break;
+                }
+
                 this.scene.tweens.addCounter({
                     from: 0,
                     to: Board.NEW_TURN_HIGHLIGHT_STEPS,
@@ -446,7 +469,6 @@ export class Board extends Model {
                         }
                     },
                     onComplete: () => {
-                        console.log(units);
                         units.forEach((piece: Piece) => {
                             const target: Phaser.GameObjects.Sprite =
                                 piece.sprite;
@@ -487,10 +509,6 @@ export class Board extends Model {
             return;
         }
 
-        await this.selectPlayer(
-            Array.from(this._players.keys())[this._currentPlayerIndex]
-        );
-
         setTimeout(() => {
             this.cursor.update(true);
         }, 100);
@@ -498,6 +516,12 @@ export class Board extends Model {
         if (this._currentPlayerIndex === 0) {
             await this.newTurn();
         }
+
+
+        await this.selectPlayer(
+            Array.from(this._players.keys())[this._currentPlayerIndex]
+        );
+
 
         if (this.currentPlayer?.defeated) {
             return await this.nextPlayer();
@@ -538,26 +562,7 @@ export class Board extends Model {
             this.currentPlayer &&
             !this.currentPlayer.selectedSpell
         ) {
-            this.logger.log(
-                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`
-            );
             return await this.nextPlayer();
-        }
-
-        switch (this.phase) {
-            case BoardPhase.Spellbook:
-                this.logger.log(
-                    `${this.currentPlayer?.name}'s turn to select a spell`
-                );
-                break;
-            case BoardPhase.Casting:
-                this.logger.log(
-                    `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
-                );
-                break;
-            case BoardPhase.Moving:
-                this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
-                break;
         }
     }
 
