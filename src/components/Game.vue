@@ -1,11 +1,13 @@
 <script setup>
 import Spellbook from "./Spellbook.vue";
+import Log from "./Log.vue";
 </script>
 
 <template>
     <div :id="containerId" v-if="downloaded" />
     <div class="placeholder" v-else>Loading...</div>
     <Spellbook :data="spellbook.data" @select="spellSelect" />
+    <Log :logs="logs" />
 </template>
 
 <script>
@@ -38,6 +40,7 @@ export default {
                 caster: "",
                 spells: [],
             },
+            logs: [],
         };
     },
     async mounted() {
@@ -47,6 +50,14 @@ export default {
         this.$nextTick(() => {
             this.gameInstance = game.launch(this.containerId);
             this.eventEmitter = this.gameInstance.events;
+
+            this.eventEmitter.on("log", (log) => {
+                this.logs.push({
+                    message: log.message,
+                    id: this.logs.length,
+                    timestamp: new Date(),
+                });
+            });
 
             this.eventEmitter.on("spellbook-open", (event) => {
                 this.spellbook.data = event.data;
@@ -66,8 +77,4 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.placeholder {
-    font-size: 1rem;
-    font-family: "Courier New", Courier, monospace;
-}
 </style>

@@ -61,6 +61,7 @@ export class Player extends Model {
 
     async defeat(): Promise<void> {
         this._defeated = true;
+        this.board.logger.log(`Game over for ${this.name}`);
         this.board.getPiecesByOwner(this).forEach(piece => {
             setTimeout(() => {
                 piece.destroy()

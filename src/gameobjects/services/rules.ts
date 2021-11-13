@@ -187,9 +187,13 @@ export class Rules {
                     );
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
+                        board.logger.log(`${board.currentPlayer.name} casted '${casted.name}'`);
                         board.selected.turnOver = true;
                         board.deselectPlayer();
                         return ActionType.None;
+                    }
+                    else {
+                        board.logger.log(`${board.currentPlayer.name} casted '${casted.name}' (${casted.castTimes} more available)`);
                     }
                     return ActionType.Cast;
                 }
@@ -307,9 +311,7 @@ export class Rules {
                 const wasted: Spell | null =
                     await board.currentPlayer.discardSpell();
                 if (wasted) {
-                    console.log(
-                        `Wasted ${board.currentPlayer.name}'s spell '${wasted.name}'`
-                    );
+                    board.logger.log(`Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`);
                 }
                 if (board.selected) {
                     board.selected.turnOver = true;

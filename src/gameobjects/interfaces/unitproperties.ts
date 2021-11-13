@@ -13,8 +13,8 @@ export interface IUnitProperties {
     maneuverability: number;
     magicResistance: number;
 
-    attackDescription?: string;
-    rangedDescription?: string;
+    attackType?: string;
+    rangedType?: string;
 
     projectileType?: UnitRangedProjectileType;
 

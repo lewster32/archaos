@@ -9,14 +9,18 @@
     border-image-repeat: repeat;
     background-color: transparent;
     color: var(--color-white);
-    text-shadow: -2px -2px var(--color-black), 2px -2px var(--color-black), 2px 2px var(--color-black), -2px 2px var(--color-black);
+    text-shadow: -2px -2px var(--color-black), 2px -2px var(--color-black),
+        2px 2px var(--color-black), -2px 2px var(--color-black),
+        0 -2px var(--color-black), 0 2px var(--color-black),
+        2px 0 var(--color-black), -2px 0 var(--color-black);
     font-weight: 300;
     letter-spacing: 1px;
-    border-image-source: url('../../assets/images/ui/button-header.png');
+    border-image-source: url("../../assets/images/ui/button-header.png");
     text-align: center;
+    user-select: none;
 
     &:hover {
-        border-image-source: url('../../assets/images/ui/button-header-hover.png');
+        border-image-source: url("../../assets/images/ui/button-header-hover.png");
     }
 
     &--important {
@@ -24,31 +28,31 @@
     }
 
     &--red {
-        border-image-source: url('../../assets/images/ui/button-red.png');
+        border-image-source: url("../../assets/images/ui/button-red.png");
         &:hover {
-            border-image-source: url('../../assets/images/ui/button-red-hover.png');
+            border-image-source: url("../../assets/images/ui/button-red-hover.png");
         }
     }
 
     &--green {
-        border-image-source: url('../../assets/images/ui/button-green.png');
+        border-image-source: url("../../assets/images/ui/button-green.png");
         &:hover {
-            border-image-source: url('../../assets/images/ui/button-green-hover.png');
+            border-image-source: url("../../assets/images/ui/button-green-hover.png");
         }
     }
 
     &--yellow {
         color: var(--color-black);
         text-shadow: none;
-        border-image-source: url('../../assets/images/ui/button-yellow.png');
+        border-image-source: url("../../assets/images/ui/button-yellow.png");
         &:hover {
-            border-image-source: url('../../assets/images/ui/button-yellow.png');
-            opacity: .9;
+            border-image-source: url("../../assets/images/ui/button-yellow.png");
+            opacity: 0.9;
         }
     }
 
     &--small {
-        padding: 0 .25em;
+        padding: 0 0.25em;
         line-height: 1;
     }
 }

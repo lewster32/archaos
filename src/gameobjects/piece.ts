@@ -9,9 +9,13 @@ import { IUnitProperties } from "./interfaces/unitproperties";
 import { Player } from "./player";
 import { Wizard } from "./wizard";
 import { units } from "../../assets/data/classicunits.json";
+import { BoardState } from "./enums/boardstate";
+import { BoardPhase } from "./enums/boardphase";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
+    static DEFAULT_HIGHLIGHT_DURATION: number = 600;
+    static DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
     protected _type: UnitType;
     protected _owner: Player | null;
@@ -48,8 +52,8 @@ export class Piece extends Entity {
             defense: 3,
             maneuverability: 3,
             magicResistance: 3,
-            attackDescription: "hit",
-            rangedDescription: "shot",
+            attackType: "hit",
+            rangedType: "shot",
             status: [] as UnitStatus[],
         };
 
@@ -494,16 +498,11 @@ export class Piece extends Entity {
                 piece.properties.defense
             );
 
-            console.log(
-                "Attack!",
-                this.name,
-                attackRoll,
-                piece.name,
-                defenseRoll
-            );
+            this.board.logger.log(`${this.name} ${this.properties.attackType} ${piece.name}`);
 
             if (attackRoll > defenseRoll) {
                 await piece.kill();
+                this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 if (
                     this.board.getPiecesAtPosition(
                         piece.position,
@@ -534,10 +533,11 @@ export class Piece extends Entity {
                 piece.properties.defense
             );
 
-            console.log("Ranged Attack!", attackRoll, defenseRoll);
+            this.board.logger.log(`${this.name} ${this.properties.rangedType} ${piece.name}`)
 
             if (attackRoll > defenseRoll) {
                 await piece.kill();
+                this.board.logger.log(`${this.name} defeated ${piece.name}`);
             }
         }
     }
@@ -583,7 +583,7 @@ export class Piece extends Entity {
             } else {
                 piece.turnOver = true;
             }
-
+            this.board.logger.log(`${this.name} mounted ${piece.name}`);
             await this.moveTo(piece.position);
         }
     }
@@ -594,6 +594,7 @@ export class Piece extends Entity {
 
             this.moved = true;
             this.currentMount.turnOver = true;
+            this.board.logger.log(`${this.name} dismounted ${this.currentMount.name}`);
             this.currentMount = null;
         }
     }
@@ -700,23 +701,28 @@ export class Piece extends Entity {
         );
         const postFxPipeline = postFxPlugin.add(this._sprite, {
             originalColor: startColor,
-            epsilon: 0,
+            epsilon: 0
         });
+
+        const tweenColours: Phaser.Types.Display.ColorObject[] = new Array(Piece.DEFAULT_HIGHLIGHT_STEPS);
+        for (let i = 0; i < Piece.DEFAULT_HIGHLIGHT_STEPS; i++) {
+            tweenColours[i] = Phaser.Display.Color.Interpolate.ColorWithColor(
+                startColor,
+                endColor,
+                Piece.DEFAULT_HIGHLIGHT_STEPS - 1,
+                i
+            );
+        }
 
         this._ownerHighlightTween = this.board.scene.tweens.addCounter({
             from: 0,
-            to: 100,
-            duration: 1000,
+            to: Piece.DEFAULT_HIGHLIGHT_STEPS - 1,
+            duration: Piece.DEFAULT_HIGHLIGHT_DURATION,
             repeat: -1,
             yoyo: true,
             onUpdate: (tween) => {
                 const newColor: Phaser.Types.Display.ColorObject =
-                    Phaser.Display.Color.Interpolate.ColorWithColor(
-                        startColor,
-                        endColor,
-                        100,
-                        tween.getValue()
-                    );
+                    tweenColours[Math.round(tween.getValue())];
 
                 postFxPipeline.newColor = Phaser.Display.Color.GetColor(
                     newColor.r,
@@ -758,8 +764,8 @@ export class Piece extends Entity {
             defense: unit.properties.def,
             maneuverability: unit.properties.mnv,
             magicResistance: unit.properties.res,
-            attackDescription: unit.attackType || "attacked",
-            rangedDescription: unit.rangedDescription || "shot",
+            attackType: unit.attackType || "attacked",
+            rangedType: unit.rangedType || "shot",
             status: unit.status || [],
         };
     }

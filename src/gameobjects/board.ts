@@ -8,6 +8,7 @@ import { Model } from "./model";
 import { Piece } from "./piece";
 import { Player } from "./player";
 import { Rules } from "./services/rules";
+import { Logger } from "./services/logger";
 
 import { Spell } from "./spell";
 import { SpellConfig } from "./configs/spellconfig";
@@ -17,6 +18,9 @@ import { BoardPhase } from "./enums/boardphase";
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
+    static NEW_TURN_HIGHLIGHT_DURATION: number = 700;
+    static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
+
     private _scene: Phaser.Scene;
     private _width: number;
     private _height: number;
@@ -55,6 +59,7 @@ export class Board extends Model {
     private _idCounter: number = 1;
 
     private _rules: Rules;
+    private _logger: Logger;
 
     constructor(
         scene: Phaser.Scene,
@@ -92,6 +97,7 @@ export class Board extends Model {
         this._currentPlayer = null;
 
         this._rules = Rules.getInstance();
+        this._logger = Logger.getInstance(this.scene.game.events);
 
         let spaceKey = this.scene.input.keyboard.addKey(
             Phaser.Input.Keyboard.KeyCodes.SPACE
@@ -117,7 +123,7 @@ export class Board extends Model {
 
     set phase(phase: BoardPhase) {
         this._phase = phase;
-        console.log("Board phase:", BoardPhase[this._phase]);
+        this.logger.log(`New ${BoardPhase[this._phase]} phase`);
     }
 
     get balance(): number {
@@ -134,6 +140,10 @@ export class Board extends Model {
 
     get rules(): Rules {
         return this._rules;
+    }
+
+    get logger(): Logger {
+        return this._logger;
     }
 
     async newTurn(): Promise<void> {
@@ -199,13 +209,13 @@ export class Board extends Model {
     deselectPiece(): void {
         this._selected = null;
 
-        setTimeout(() => {
+        setTimeout(async () => {
             if (
                 this.getPiecesByOwner(this.currentPlayer!).every(
                     (piece) => piece.turnOver
                 )
             ) {
-                this.nextPlayer();
+                await this.nextPlayer();
             }
         }, Board.END_TURN_DELAY);
     }
@@ -378,73 +388,78 @@ export class Board extends Model {
         return null;
     }
 
-    selectPlayer(id: number): void {
-        this._currentPlayer = this.getPlayer(id);
-
+    async selectPlayer(id: number): Promise<void> {
         this.pieces.forEach((piece: Piece) => {
             piece.setActive(false);
         });
 
-        setTimeout(() => {
-            const units: Piece[] = this.pieces.filter(
-                (piece: Piece) => piece.owner === this._currentPlayer
-            );
+        this._currentPlayer = this.getPlayer(id);
+        const units: Piece[] = this.pieces.filter(
+            (piece: Piece) => piece.owner === this._currentPlayer
+        );
 
-            const targets: Phaser.GameObjects.Sprite[] = units.map(
-                (piece) => piece.sprite
-            );
-
-            if (this._currentPlayer?.colour) {
-                document.body.style.setProperty(
-                    "--bg-colour",
-                    `${
-                        Phaser.Display.Color.ValueToColor(
-                            this._currentPlayer.colour
-                        ).rgba
-                    }`
-                );
-                this.getLayer(BoardLayer.Floor)
-                    .getChildren()
-                    .forEach((child) => {
-                        const tintColour: Phaser.Display.Color =
+        return new Promise<void>((resolve) => {
+            setTimeout(async () => {
+                if (this._currentPlayer?.colour) {
+                    document.body.style.setProperty(
+                        "--bg-colour",
+                        `${
                             Phaser.Display.Color.ValueToColor(
-                                this._currentPlayer!.colour!
+                                this._currentPlayer.colour
+                            ).rgba
+                        }`
+                    );
+                    this.getLayer(BoardLayer.Floor)
+                        .getChildren()
+                        .forEach((child) => {
+                            const tintColour: Phaser.Display.Color =
+                                Phaser.Display.Color.ValueToColor(
+                                    this._currentPlayer!.colour!
+                                );
+                            (child as Phaser.GameObjects.Sprite).setTint(
+                                tintColour.brighten(80).color
                             );
-                        (child as Phaser.GameObjects.Sprite).setTint(
-                            tintColour.brighten(80).color
-                        );
-                    });
-            } else {
-                document.body.style.removeProperty("--bg-colour");
-            }
-
-            let previousVal = 0;
-
-            this.scene.tweens.addCounter({
-                from: 0,
-                to: 7,
-                onUpdate: (tween) => {
-                    const currentVal = Math.round(tween.getValue()) % 2;
-                    if (currentVal !== previousVal) {
-                        previousVal = currentVal;
-                        targets.forEach((target: Phaser.GameObjects.Sprite) => {
-                            currentVal === 0
-                                ? target.setTintFill(
-                                      this._currentPlayer?.colour || 0xffffff
-                                  )
-                                : target.clearTint();
                         });
-                    }
-                },
-                onComplete: () => {
-                    targets.forEach((target: Phaser.GameObjects.Sprite) => {
-                        target.clearTint();
-                    });
-                    units.forEach((piece: Piece) => {
-                        piece.setActive(true);
-                    });
-                },
-                duration: 700,
+                } else {
+                    document.body.style.removeProperty("--bg-colour");
+                }
+
+                let previousVal = 0;
+
+                this.scene.tweens.addCounter({
+                    from: 0,
+                    to: Board.NEW_TURN_HIGHLIGHT_STEPS,
+                    onUpdate: (tween) => {
+                        const currentVal = Math.round(tween.getValue()) % 2;
+                        if (currentVal !== previousVal) {
+                            previousVal = currentVal;
+                            units.forEach((piece: Piece) => {
+                                const target: Phaser.GameObjects.Sprite =
+                                    piece.sprite;
+                                currentVal === 0
+                                    ? target.setTintFill(
+                                          this._currentPlayer?.colour ||
+                                              0xffffff
+                                      )
+                                    : target.clearTint();
+                            });
+                        }
+                    },
+                    onComplete: () => {
+                        console.log(units);
+                        units.forEach((piece: Piece) => {
+                            const target: Phaser.GameObjects.Sprite =
+                                piece.sprite;
+                            target.clearTint();
+                            piece.turnOver = false;
+                            piece.setActive(true);
+                        });
+                        setTimeout(() => {
+                            resolve();
+                        }, 100);
+                    },
+                    duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
+                });
             });
         });
     }
@@ -468,26 +483,24 @@ export class Board extends Model {
 
         if (this.players.filter((player) => !player.defeated).length < 2) {
             this.state = BoardState.View;
-            console.log("Game over!");
+            this.logger.log(`Game over!`);
             return;
         }
 
-        this.selectPlayer(
+        await this.selectPlayer(
             Array.from(this._players.keys())[this._currentPlayerIndex]
         );
-
-        console.log(`${this.currentPlayer?.name}'s turn`);
 
         setTimeout(() => {
             this.cursor.update(true);
         }, 100);
 
         if (this._currentPlayerIndex === 0) {
-            this.newTurn();
+            await this.newTurn();
         }
 
         if (this.currentPlayer?.defeated) {
-            return this.nextPlayer();
+            return await this.nextPlayer();
         }
 
         if (this.phase === BoardPhase.Spellbook) {
@@ -497,12 +510,12 @@ export class Board extends Model {
                         caster: this.currentPlayer?.name,
                         spells: this.currentPlayer?.spells,
                     },
-                    callback: (spell: Spell | null) => {
+                    callback: async (spell: Spell | null) => {
                         if (spell) {
                             this.currentPlayer?.pickSpell(spell.id);
                         }
                         this.scene.game.events.emit("spellbook-close");
-                        this.nextPlayer();
+                        await this.nextPlayer();
                     },
                 });
             }
@@ -512,7 +525,7 @@ export class Board extends Model {
 
         if (this._phase === BoardPhase.Spellbook) {
             if (this.currentPlayer?.spells.length === 0) {
-                this.nextPlayer();
+                await this.nextPlayer();
             }
         }
 
@@ -525,10 +538,26 @@ export class Board extends Model {
             this.currentPlayer &&
             !this.currentPlayer.selectedSpell
         ) {
-            console.log(
+            this.logger.log(
                 `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`
             );
-            return this.nextPlayer();
+            return await this.nextPlayer();
+        }
+
+        switch (this.phase) {
+            case BoardPhase.Spellbook:
+                this.logger.log(
+                    `${this.currentPlayer?.name}'s turn to select a spell`
+                );
+                break;
+            case BoardPhase.Casting:
+                this.logger.log(
+                    `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
+                );
+                break;
+            case BoardPhase.Moving:
+                this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
+                break;
         }
     }
 
