@@ -93,16 +93,26 @@ export class Piece extends Entity {
         );
     }
 
-    setActive(state: boolean) {
+    private _highlighted: boolean = false;
+
+    get highlighted(): boolean {
+        return this._highlighted;
+    }
+
+    set highlighted(state: boolean) {
         if (!this._ownerHighlightTween) {
+            console.log("Highlighted - no tween", state, this.name);
             return;
         }
-        this._ownerHighlightTween.restart();
         if (state && this.canSelect) {
-            this._ownerHighlightTween.play();
-        } else {
-            this._ownerHighlightTween.pause();
+            this._highlighted = true;
+            this._ownerHighlightTween.play().resume();
+            console.log("Highlighted middle", state, this.name);
+            return;
         }
+        this._highlighted = false;
+        this._ownerHighlightTween.pause().seek(0);
+        console.log("Highlighted end", state, this.name);
     }
 
     set turnOver(state: boolean) {
@@ -110,7 +120,7 @@ export class Piece extends Entity {
 
         if (state) {
             this._sprite?.setTint(0x7f7f7f);
-            this.setActive(false);
+            this.highlighted = false;
         } else {
             this._sprite?.clearTint();
         }

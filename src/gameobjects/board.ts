@@ -105,6 +105,8 @@ export class Board extends Model {
         spaceKey.on("up", () => {
             this.nextPlayer();
         });
+
+        window['currentBoard'] = this;
     }
 
     /* #region State */
@@ -390,10 +392,15 @@ export class Board extends Model {
 
     async selectPlayer(id: number): Promise<void> {
         this.pieces.forEach((piece: Piece) => {
-            piece.setActive(false);
+            piece.highlighted = false;
         });
 
         this._currentPlayer = this.getPlayer(id);
+
+        if (this._currentPlayer.defeated) {
+            return;
+        }
+
         const units: Piece[] = this.pieces.filter(
             (piece: Piece) => piece.owner === this._currentPlayer
         );
@@ -474,7 +481,7 @@ export class Board extends Model {
                                 piece.sprite;
                             target.clearTint();
                             piece.turnOver = false;
-                            piece.setActive(true);
+                            piece.highlighted = true;
                         });
                         setTimeout(() => {
                             resolve();
@@ -508,10 +515,6 @@ export class Board extends Model {
             this.logger.log(`Game over!`);
             return;
         }
-
-        setTimeout(() => {
-            this.cursor.update(true);
-        }, 100);
 
         if (this._currentPlayerIndex === 0) {
             await this.newTurn();
@@ -564,6 +567,10 @@ export class Board extends Model {
         ) {
             return await this.nextPlayer();
         }
+        
+        setTimeout(() => {
+            this.cursor.update(true);
+        }, 100);
     }
 
     /* #endregion */

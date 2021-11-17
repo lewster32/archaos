@@ -93,6 +93,12 @@ export class GameScene extends Phaser.Scene {
         this.testGame();
     }
 
+    getRandomSpell(): any {
+        const spellNames: string[] = Object.values(spells).map((spell: any) => spell.name);
+        
+        return this.getSpellProperties(spellNames[Math.floor(Math.random() * spellNames.length)]);
+    }
+
     getSpellProperties(name: string): any {
         let key = "";
         for (let [k, spell] of Object.entries(spells)) {
@@ -171,11 +177,20 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0205050000",
         });
 
+        /*
         for (let [key, spell] of Object.entries(spells)) {
             board.addSpell(player, this.getSpellProperties(spell.name));
             board.addSpell(player2, this.getSpellProperties(spell.name));
             board.addSpell(player3, this.getSpellProperties(spell.name));
             board.addSpell(player4, this.getSpellProperties(spell.name));
+        }
+        */
+
+        for (let i = 0; i < 10; i++) {
+            board.addSpell(player, this.getRandomSpell());
+            board.addSpell(player2, this.getRandomSpell());
+            board.addSpell(player3, this.getRandomSpell());
+            board.addSpell(player4, this.getRandomSpell());
         }
 
         // board.addSpell(player, this.getSpellProperties("vampire"));
