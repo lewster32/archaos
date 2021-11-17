@@ -1,5 +1,5 @@
 <template>
-    <div class="game-log callout" :class="{'game-log--minimised': minimised || !logs || !logs.length}">
+    <div class="game-log" :class="{'game-log--minimised': minimised || !logs || !logs.length}">
         <button class="game-log__toggle button button--small" @click="toggle()">
             {{ minimised ? "+" : "-" }}
         </button>
@@ -23,14 +23,14 @@ export default {
     },
     data() {
         return {
-            minimised: false
+            minimised: true
         };
     },
     computed: {
         logsSorted() {
             return this.logs.sort((a: Log, b: Log) => {
                 return b.id - a.id;
-            }).slice(0, 10);
+            }).slice(0, 25);
         }
     },
     watch: {},
@@ -55,17 +55,16 @@ export default {
 <style lang="scss" scoped>
     .game-log {
         position: fixed;
-        left: 1em;
-        bottom: 1em;
-        width: calc(100% - 480px);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: 1em;
         height: 17.5vh;
-        min-height: 100px;
+        min-height: 50%;
         transition: min-height 0.25s, height 0.25s;
         &--minimised {
-            min-height: 0;
-            height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
+            min-height: 2.5em;
+            height: 2.5em;
         }
         &__scroll {            
             height: 100%;
@@ -90,8 +89,8 @@ export default {
         }
         &__toggle {
             position: absolute;
-            right: 0;
-            top: -1em;
+            left: -.5em;
+            top: -2em;
         }
         &__item {
             line-height: 1.25;

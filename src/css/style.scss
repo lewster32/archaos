@@ -11,9 +11,19 @@
     font-display: swap;
 }
 
+%text-shadow {
+    text-shadow: -2px -2px var(--color-black), 2px -2px var(--color-black),
+    2px 2px var(--color-black), -2px 2px var(--color-black),
+    0 -2px var(--color-black), 0 2px var(--color-black),
+    2px 0 var(--color-black), -2px 0 var(--color-black);
+}
+
 html {
     font-family: Chaos Sans, sans-serif;
     font-weight: 300;
+    * {
+        box-sizing: border-box;
+    }
 }
 
 input,
@@ -152,4 +162,8 @@ button {
 }
 .c-white {
     color: var(--color-white);
+}
+
+.game-log__item {
+    @extend %text-shadow;
 }
