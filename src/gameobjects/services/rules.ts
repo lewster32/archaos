@@ -1,6 +1,7 @@
 import { Board } from "../board";
 import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
+import { Colour } from "../enums/colour";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
 import { SpellType } from "../enums/spelltype";
@@ -187,13 +188,18 @@ export class Rules {
                     );
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
-                        board.logger.log(`${board.currentPlayer.name} casted '${casted.name}'`);
+                        if (!casted.failed) {
+                            board.logger.log(`${board.currentPlayer.name} casts '${casted.name}'`);
+                        }
+                        else {
+                            board.logger.log(`Spell failed`, Colour.Magenta);
+                        }
                         board.selected.turnOver = true;
                         board.deselectPlayer();
                         return ActionType.None;
                     }
                     else {
-                        board.logger.log(`${board.currentPlayer.name} casted '${casted.name}' (${casted.castTimes} more available)`);
+                        board.logger.log(`${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`);
                     }
                     return ActionType.Cast;
                 }

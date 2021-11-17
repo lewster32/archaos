@@ -7,15 +7,17 @@ import { Piece } from "./piece";
 import { UnitType } from "./enums/unittype";
 import { Player } from "./player";
 import { UnitStatus } from "./enums/unitstatus";
-import { IUnitProperties } from "./interfaces/unitproperties";
 import { PieceConfig } from "./configs/piececonfig";
+import { Colour } from "./enums/colour";
 
 export class Spell extends Model {
     private _board: Board;
     private _type: SpellType;
 
     private _properties: SpellConfig;
+    private _totalCastTimes: number;
     private _castTimes: number;
+    private _failed: boolean;
 
     constructor(board: Board, id: number, config: SpellConfig) {
         super(id);
@@ -31,6 +33,8 @@ export class Spell extends Model {
 
         this._properties = config;
         this._castTimes = config.castTimes || 1;
+        this._totalCastTimes = this._castTimes;
+        this._failed = false;
     }
 
     get spellId(): string {
@@ -83,6 +87,10 @@ export class Spell extends Model {
         return this._castTimes;
     }
 
+    get failed(): boolean {
+        return this._failed;
+    }
+
     inCastingRange(
         casterPosition: Phaser.Geom.Point,
         point: Phaser.Geom.Point
@@ -94,7 +102,6 @@ export class Spell extends Model {
     }
 
     canCastAtPosition(point: Phaser.Geom.Point): boolean {
-        // Trees cannot be placed next to one another
         if (this._properties.tree) {
             const neighbourTrees: Piece[] =
                 this._board.getAdjacentPiecesAtPosition(point, (p: Piece) =>
@@ -112,12 +119,27 @@ export class Spell extends Model {
         point: Phaser.Geom.Point,
         _targets: Piece[]
     ): Promise<Piece | boolean | null> {
+        const castRoll: number = Phaser.Math.RND.frac();
+        // Prevent failure on subsequent cast of multiple-cast spells
+        if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
+            return await this.castFail(owner, point);
+        }
         this._castTimes--;
         switch (this._type) {
             case SpellType.Summon:
                 return await this.castSummon(owner, point);
         }
         return null;
+    }
+
+    async castFail(owner: Player, point: Phaser.Geom.Point): Promise<null> {
+        this._failed = true;
+        return new Promise((resolve) => {
+            this._castTimes = 0;
+            setTimeout(() => {
+                resolve(null);
+            }, 1000)
+        });
     }
 
     async castSummon(owner: Player, point: Phaser.Geom.Point): Promise<Piece> {

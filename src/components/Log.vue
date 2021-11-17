@@ -5,12 +5,14 @@
         </button>
         <ul class="game-log__scroll">
             <li class="game-log__item" v-for="log in logsSorted" :key="log.id">
-                <span class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span><span class="game-log__message">{{ log.message }}</span>
+                <span class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span>
+                <span class="game-log__message" :style="getColour(log)">{{ log.message }}</span>
             </li>
         </ul>
     </div>
 </template>
 <script lang="ts">
+import { Colour } from '../gameobjects/enums/colour';
 import { Log } from '../gameobjects/services/logger';
 export default {
     props: {
@@ -38,6 +40,12 @@ export default {
         },
         toggle() {
             this.minimised = !this.minimised;
+        },
+        getColour(log: Log) {
+            if (log.colour) {
+                return { color: `var(--color-${Colour[log.colour].toLowerCase()})` };
+            }
+            return { color: `var(--color-white)` };
         }
     },
     async mounted() {},

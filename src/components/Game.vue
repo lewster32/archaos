@@ -56,6 +56,7 @@ export default {
                     message: log.message,
                     id: this.logs.length,
                     timestamp: new Date(),
+                    colour: log.colour
                 });
             });
 

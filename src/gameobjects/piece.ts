@@ -11,6 +11,7 @@ import { Wizard } from "./wizard";
 import { units } from "../../assets/data/classicunits.json";
 import { BoardState } from "./enums/boardstate";
 import { BoardPhase } from "./enums/boardphase";
+import { Colour } from "./enums/colour";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
@@ -101,18 +102,15 @@ export class Piece extends Entity {
 
     set highlighted(state: boolean) {
         if (!this._ownerHighlightTween) {
-            console.log("Highlighted - no tween", state, this.name);
             return;
         }
         if (state && this.canSelect) {
             this._highlighted = true;
             this._ownerHighlightTween.play().resume();
-            console.log("Highlighted middle", state, this.name);
             return;
         }
         this._highlighted = false;
         this._ownerHighlightTween.pause().seek(0);
-        console.log("Highlighted end", state, this.name);
     }
 
     set turnOver(state: boolean) {
