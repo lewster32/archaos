@@ -14,6 +14,7 @@ import { Spell } from "./spell";
 import { SpellConfig } from "./configs/spellconfig";
 import { UnitType } from "./enums/unittype";
 import { BoardPhase } from "./enums/boardphase";
+import { Colour } from "./enums/colour";
 
 type SimplePoint = { x: number; y: number };
 
@@ -31,7 +32,7 @@ export class Board extends Model {
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
 
-    static END_TURN_DELAY: number = 500;
+    static END_TURN_DELAY: number = 1000;
 
     static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
@@ -125,7 +126,17 @@ export class Board extends Model {
 
     set phase(phase: BoardPhase) {
         this._phase = phase;
-        // this.logger.log(`New ${BoardPhase[this._phase]} phase`);
+        switch (this._phase) {
+            case BoardPhase.Spellbook:
+                this._logger.log(`Spell selection phase`, Colour.Green);
+                break;
+            case BoardPhase.Casting:
+                this._logger.log(`Spell casting phase`, Colour.Green);
+                break;
+            case BoardPhase.Moving:
+                this._logger.log(`Movement phase`, Colour.Green);
+                break;
+        }
     }
 
     get balance(): number {
@@ -158,6 +169,7 @@ export class Board extends Model {
             this.phase === BoardPhase.Idle ||
             this.phase === BoardPhase.Moving
         ) {
+            this._logger.log(`New turn`, Colour.Green);
             this.phase = BoardPhase.Spellbook;
             this.state = BoardState.SelectSpell;
         } else if (this.phase === BoardPhase.Spellbook) {
@@ -447,7 +459,7 @@ export class Board extends Model {
                         }
                         else {
                             this.logger.log(
-                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`
+                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`, Colour.Magenta
                             );
                         }
                         break;
@@ -512,7 +524,7 @@ export class Board extends Model {
 
         if (this.players.filter((player) => !player.defeated).length < 2) {
             this.state = BoardState.View;
-            this.logger.log(`Game over!`);
+            this.logger.log(`Game over!`, Colour.Yellow);
             return;
         }
 

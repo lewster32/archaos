@@ -136,9 +136,10 @@ export class Spell extends Model {
         this._failed = true;
         return new Promise((resolve) => {
             this._castTimes = 0;
+            // TODO: Add animation
             setTimeout(() => {
                 resolve(null);
-            }, 1000)
+            })
         });
     }
 

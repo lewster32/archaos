@@ -6,7 +6,7 @@
         <ul class="game-log__scroll">
             <li class="game-log__item" v-for="log in logsSorted" :key="log.id">
                 <span class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span>
-                <span class="game-log__message" :style="getColour(log)">{{ log.message }}</span>
+                <span class="game-log__message" :style="getColour(log)" v-html="log.message"></span>
             </li>
         </ul>
     </div>
