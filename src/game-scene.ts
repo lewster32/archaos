@@ -21,6 +21,8 @@ import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { Spell } from "./gameobjects/spell";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
+import { EffectType } from "./gameobjects/effectemitter";
+import { WizardSprite } from "./gameobjects/wizardsprite";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -90,7 +92,7 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        this.testPieces();
+        this.testGame();
     }
 
     getRandomSpell(): any {
@@ -141,6 +143,7 @@ export class GameScene extends Phaser.Scene {
             name: "Merlin",
         });
 
+        /*
         const player3: Player = board.addPlayer({
             name: "Glinda",
         });
@@ -148,19 +151,20 @@ export class GameScene extends Phaser.Scene {
         const player4: Player = board.addPlayer({
             name: "Morgana",
         });
+        */
 
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2),
             y: board.height - 2,
-            wizCode: "0003030000",
+            wizCode: Wizard.randomWizCode(),
         });
 
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
             y: 1,
-            wizCode: "0600000000",
+            wizCode: Wizard.randomWizCode(),
         });
 
         /*
@@ -307,8 +311,24 @@ export class GameScene extends Phaser.Scene {
         board.addSpell(player, this.getSpellProperties("green dragon"));
         board.addSpell(player2, this.getSpellProperties("red dragon"));
 
+        // Test effect
+        /**
+        setTimeout(async () => {
+            console.time("Start cast");
+            await board.playEffect(EffectType.DragonFireBeam,
+                board.pieces[0].sprite.getCenter(),
+                board.pieces[1].sprite.getCenter()
+            );
+            await board.playEffect(EffectType.DragonFireHit,
+                board.pieces[1].sprite.getCenter()
+            );
+            console.timeEnd("Start cast");
+        }, 100);
+        /**/
+
         setTimeout(() => {
             board.startGame();
+
         }, 1000);
     }
 

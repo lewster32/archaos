@@ -679,21 +679,6 @@ export class Board extends Model {
 
         this._particles = this.scene.add.particles("effects");
 
-        // Test effect
-        /**
-        setTimeout(async () => {
-            console.time("Start cast");
-            await this.playEffect(EffectType.DragonFireBeam,
-                this.pieces[0].sprite.getCenter(),
-                this.pieces[1].sprite.getCenter()
-            );
-            await this.playEffect(EffectType.DragonFireHit,
-                this.pieces[1].sprite.getCenter()
-            );
-            console.timeEnd("Start cast");
-        }, 100);
-        /**/
-
         this._layers.set(BoardLayer.Effects, effectsLayer);
     }
 
