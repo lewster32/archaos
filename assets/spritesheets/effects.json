@@ -4,11 +4,32 @@
 			"image": "effects.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 19,
-				"h": 7
+				"w": 24,
+				"h": 20
 			},
 			"scale": 1,
 			"frames": [
+				{
+					"filename": "dragonfire3",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 11,
+						"h": 12
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 11,
+						"h": 12
+					},
+					"frame": {
+						"x": 1,
+						"y": 1,
+						"w": 11,
+						"h": 12
+					}
+				},
 				{
 					"filename": "sparkle2",
 					"rotated": false,
@@ -25,7 +46,7 @@
 					},
 					"frame": {
 						"x": 1,
-						"y": 1,
+						"y": 14,
 						"w": 5,
 						"h": 5
 					}
@@ -45,10 +66,52 @@
 						"h": 5
 					},
 					"frame": {
-						"x": 8,
-						"y": 1,
+						"x": 7,
+						"y": 14,
 						"w": 5,
 						"h": 5
+					}
+				},
+				{
+					"filename": "dragonfire2",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 9,
+						"h": 10
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 9,
+						"h": 10
+					},
+					"frame": {
+						"x": 13,
+						"y": 1,
+						"w": 9,
+						"h": 10
+					}
+				},
+				{
+					"filename": "dragonfire1",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 6,
+						"h": 6
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 6,
+						"h": 6
+					},
+					"frame": {
+						"x": 13,
+						"y": 12,
+						"w": 6,
+						"h": 6
 					}
 				},
 				{
@@ -66,8 +129,8 @@
 						"h": 3
 					},
 					"frame": {
-						"x": 15,
-						"y": 1,
+						"x": 20,
+						"y": 12,
 						"w": 3,
 						"h": 3
 					}
@@ -78,6 +141,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:30f8555a2273c9d56c5075cb4c9fc645:a3b3ef4082c7cac117f606f3309370da:05d3c1256da5d10ff4f36ef2966c3322$"
+		"smartupdate": "$TexturePacker:SmartUpdate:361971e868fcf958f90c70e6e6b61c8a:e187d947c78ff798464030615f1dc7c2:05d3c1256da5d10ff4f36ef2966c3322$"
 	}
 }

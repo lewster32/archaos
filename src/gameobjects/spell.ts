@@ -117,42 +117,54 @@ export class Spell extends Model {
 
     async cast(
         owner: Player,
+        castingPiece: Piece,
         point: Phaser.Geom.Point,
         _targets: Piece[],
-        _castingPiece?: Piece,
     ): Promise<Piece | boolean | null> {
+        const castPoint: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
         const castRoll: number = Phaser.Math.RND.frac();
+
         // Prevent failure on subsequent cast of multiple-cast spells
+        /*
         if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
-            return await this.castFail(owner, point);
+            return await this.castFail(owner, castingPiece);
         }
-        if (_castingPiece) {
-            await this._board.playEffect(
-                EffectType.WizardCasting,
-                _castingPiece.sprite.getCenter()
-            );
-        }
+        */
+        await this._board.playEffect(
+            EffectType.WizardCasting,
+            castingPiece.sprite.getCenter()
+        );
         this._castTimes--;
         switch (this._type) {
             case SpellType.Summon:
-                return await this.castSummon(owner, point);
+                return await this.castSummon(owner, castingPiece, castPoint);
         }
         return null;
     }
 
-    async castFail(owner: Player, point: Phaser.Geom.Point): Promise<null> {
+    async castFail(owner: Player, castingPiece:Piece): Promise<null> {
         this._failed = true;
-        return new Promise((resolve) => {
-            this._castTimes = 0;
-            // TODO: Add animation
-            setTimeout(() => {
-                resolve(null);
-            })
-        });
+        this._castTimes = 0;
+        await this._board.playEffect(
+            EffectType.WizardCastFail,
+            castingPiece.sprite.getCenter()
+        );
+        return null;
     }
 
-    async castSummon(owner: Player, point: Phaser.Geom.Point): Promise<Piece> {
+    async castSummon(owner: Player, castingPiece: Piece, point: Phaser.Geom.Point): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
+
+        await this._board.playEffect(
+            EffectType.WizardCastBeam,
+            castingPiece.sprite.getCenter(),
+            this._board.getIsoPosition(point)
+        );
+
+        await this._board.playEffect(
+            EffectType.SummonPiece,
+            this._board.getIsoPosition(point)
+        );
 
         const newPiece: Piece = this._board.addPiece({
             type: UnitType.Creature,

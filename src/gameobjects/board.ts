@@ -15,7 +15,7 @@ import { SpellConfig } from "./configs/spellconfig";
 import { UnitType } from "./enums/unittype";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
-import { EffectEmitter, EffectParticle, EffectType } from "./effectemitter";
+import { EffectEmitter, EffectType } from "./effectemitter";
 
 type SimplePoint = { x: number; y: number };
 
@@ -650,31 +650,49 @@ export class Board extends Model {
 
     async playEffect(type: EffectType, startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point, endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point): Promise<void> {
         return new Promise((resolve) => {
-            switch (type) {
-                case EffectType.WizardCasting:
-                    this._particles.addEmitter(
-                        new EffectEmitter(
-                            this._particles,
-                            EffectType.WizardCasting,
-                            startPosition,
-                            endPosition,
-                            resolve
-                        )
-                    );
-            }
+            this._particles.addEmitter(
+                new EffectEmitter(
+                    this._particles,
+                    type,
+                    startPosition,
+                    endPosition,
+                    resolve
+                )
+            );
         });
     }
 
     createEffects() {
         const effectsLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
 
-        const anim = this.scene.anims.create({
+        this.scene.anims.create({
             key: "sparkle",
-            frames: this.scene.anims.generateFrameNames("effects", { prefix: "sparkle", start: 3, end: 1 }),
+            frames: this.scene.anims.generateFrameNames("effects", { prefix: "sparkle", start: 1, end: 3 }),
+            frameRate: 10
+        });
+
+        this.scene.anims.create({
+            key: "dragonfire",
+            frames: this.scene.anims.generateFrameNames("effects", { prefix: "dragonfire", start: 1, end: 3 }),
             frameRate: 10
         });
 
         this._particles = this.scene.add.particles("effects");
+
+        // Test effect
+        /**
+        setTimeout(async () => {
+            console.time("Start cast");
+            await this.playEffect(EffectType.DragonFireBeam,
+                this.pieces[0].sprite.getCenter(),
+                this.pieces[1].sprite.getCenter()
+            );
+            await this.playEffect(EffectType.DragonFireHit,
+                this.pieces[1].sprite.getCenter()
+            );
+            console.timeEnd("Start cast");
+        }, 100);
+        /**/
 
         this._layers.set(BoardLayer.Effects, effectsLayer);
     }

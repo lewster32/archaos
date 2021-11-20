@@ -304,8 +304,8 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        board.addSpell(player, this.getSpellProperties("elf"));
-        board.addSpell(player2, this.getSpellProperties("elf"));
+        board.addSpell(player, this.getSpellProperties("green dragon"));
+        board.addSpell(player2, this.getSpellProperties("red dragon"));
 
         setTimeout(() => {
             board.startGame();

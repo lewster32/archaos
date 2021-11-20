@@ -12,6 +12,7 @@ import { units } from "../../assets/data/classicunits.json";
 import { BoardState } from "./enums/boardstate";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
+import { EffectType } from "./effectemitter";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
@@ -555,6 +556,26 @@ export class Piece extends Entity {
     async rangedAttack(piece: Piece): Promise<void> {
         if (this.canRangedAttackPiece(piece)) {
             this.updateDirection(this.position, piece.position);
+
+            let beamEffectType: EffectType = EffectType.ArrowBeam;
+            let hitEffectType: EffectType = EffectType.ArrowHit;
+
+            switch (this.properties.rangedType) {
+                case "burned":
+                    beamEffectType = EffectType.DragonFireBeam;
+                    hitEffectType = EffectType.DragonFireHit;
+                break;
+            }
+
+            await this.board.playEffect(beamEffectType,
+                this.sprite.getCenter(),
+                piece.sprite.getCenter()
+            );
+
+            await this.board.playEffect(hitEffectType,
+                piece.sprite.getCenter()
+            );
+
             this.rangedAttacked = true;
             this.attacked = true;
             this.moved = true;
