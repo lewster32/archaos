@@ -90,6 +90,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: margin-right .25s ease-out;
 }
 
 #piece-info {
@@ -162,6 +163,12 @@ button {
 }
 .c-white {
     color: var(--color-white);
+}
+.c-brown {
+    color: var(--color-brown);
+}
+.c-light-blue {
+    color: var(--color-light-blue);
 }
 
 .game-log__item {

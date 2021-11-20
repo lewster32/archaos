@@ -5,7 +5,7 @@
         </button>
         <ul class="game-log__scroll">
             <li class="game-log__item" v-for="log in logsSorted" :key="log.id">
-                <span class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span>
+                <span v-if="showTimestamps" class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span>
                 <span class="game-log__message" :style="getColour(log)" v-html="log.message"></span>
             </li>
         </ul>
@@ -23,7 +23,8 @@ export default {
     },
     data() {
         return {
-            minimised: true
+            minimised: true,
+            showTimestamps: false
         };
     },
     computed: {

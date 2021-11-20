@@ -5,7 +5,7 @@ UnitStats;
 
 <template>
     <div class="spellinfo" v-if="show">
-        <button class="spellinfo__close button button--red button--small" @click="close()">
+        <button class="spellinfo__close button button--small" @click="close()">
             &times;
         </button>
         <div class="spellinfo__inner callout">
@@ -62,7 +62,7 @@ UnitStats;
                     <button class="spellinfo__select button button--green button--important" @click="select()">
                         Select
                     </button>
-                    <button class="spellinfo__select button button--red" @click="close()">
+                    <button class="spellinfo__select button" @click="close()">
                         Dismiss
                     </button>
                 </div>

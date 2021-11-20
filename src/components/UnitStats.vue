@@ -5,7 +5,7 @@
                 v-if="!canFly"
                 class="unit-properties__item unit-properties__item--mov"
                 :class="itemNumClass(unit.properties?.mov)"
-                title="Movement range"
+                :title="'Movement range: ' + unit.properties?.mov"
             >
                 <span>{{ unit.properties?.mov }}</span>
             </div>
@@ -13,14 +13,14 @@
                 v-if="canFly"
                 class="unit-properties__item unit-properties__item--fly"
                 :class="itemNumClass(unit.properties?.mov)"
-                title="Flying range"
+                :title="'Flying range: ' + unit.properties?.mov"
             >
                 <span>{{ unit.properties?.mov }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--com"
                 :class="itemNumClass(unit.properties?.com)"
-                title="Combat strength"
+                :title="'Combat rating: ' + unit.properties?.com"
             >
                 <span>{{ unit.properties?.com }}</span>
             </div>
@@ -28,7 +28,7 @@
                 v-if="unit.properties?.rcm"
                 class="unit-properties__item unit-properties__item--rcm"
                 :class="itemNumClass(unit.properties?.rcm)"
-                title="Ranged combat strength"
+                :title="'Ranged combat rating: ' + unit.properties?.rcm"
             >
                 <span>{{ unit.properties?.rcm }}</span>
             </div>
@@ -36,41 +36,41 @@
                 v-if="unit.properties?.rng"
                 class="unit-properties__item unit-properties__item--rng"
                 :class="itemNumClass(unit.properties?.rng)"
-                title="Ranged combat range"
+                :title="'Ranged combat range: ' + unit.properties?.rng"
             >
                 <span>{{ unit.properties?.rng }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--def"
                 :class="itemNumClass(unit.properties?.def)"
-                title="Defense strength"
+                :title="'Defense rating: ' + unit.properties?.def"
             >
                 <span>{{ unit.properties?.def }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--mnv"
                 :class="itemNumClass(unit.properties?.mnv)"
-                title="Maneuverability"
+                :title="'Maneuverability: ' + unit.properties?.mnv"
             >
                 <span>{{ unit.properties?.mnv }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--res"
                 :class="itemNumClass(unit.properties?.res)"
-                title="Magic resistance"
+                :title="'Magic resistance: ' + unit.properties?.res"
             >
                 <span>{{ unit.properties?.res }}</span>
             </div>
         </div>
         <div class="unit-stats__status unit-statuses">
-            <span class="unit-statuses__item" v-if="canFly" style="color: var(--color-yellow)">Flying</span>
-            <span class="unit-statuses__item" v-if="isUndead" style="color: var(--color-light-blue)">Undead</span>
-            <span class="unit-statuses__item" v-if="isMount" style="color: var(--color-brown)">Mountable</span>
-            <span class="unit-statuses__item" v-if="canSpread" style="color: var(--color-green)">Spreads</span>
-            <span class="unit-statuses__item" v-if="isInvulnerable" style="color: var(--color-cyan)">Invulnerable</span>
-            <span class="unit-statuses__item" v-if="isTree" style="color: var(--color-green)">Tree</span>
-            <span class="unit-statuses__item" v-if="expires" style="color: var(--color-yellow)">Expires</span>
-            <span class="unit-statuses__item" v-if="expiresGiveSpell" style="color: var(--color-cyan)">Gives spell</span>
+            <span class="unit-statuses__item c-yellow" v-if="canFly">Flying</span>
+            <span class="unit-statuses__item c-light-blue" v-if="isUndead">Undead</span>
+            <span class="unit-statuses__item c-brown" v-if="isMount">Mountable</span>
+            <span class="unit-statuses__item c-green" v-if="canSpread">Spreads</span>
+            <span class="unit-statuses__item c-cyan" v-if="isInvulnerable">Invulnerable</span>
+            <span class="unit-statuses__item c-green" v-if="isTree">Tree</span>
+            <span class="unit-statuses__item c-yellow" v-if="expires">Expires</span>
+            <span class="unit-statuses__item c-cyan" v-if="expiresGiveSpell">Gives spell</span>
         </div>
     </div>
 </template>

@@ -5,7 +5,7 @@ SpellInfo;
 
 <template>
     <div class="spellbook" v-if="show">
-        <button class="spellbook__toggle button button--small" @click="toggle()" :class="{'button--yellow': minimised}">
+        <button class="spellbook__toggle button button--small" @click="toggle()">
             {{ minimised ? "&lt;" : "&gt;" }}
         </button>
         <div
