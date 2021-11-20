@@ -80,11 +80,16 @@ export class Board extends Model {
         this._layers.set(BoardLayer.Shadows, this.scene.add.layer());
         this._layers.set(BoardLayer.Pieces, this.scene.add.layer());
 
+        this._scene.game.scale.resize(
+            (this._width * Board.DEFAULT_CELLSIZE * 2) + Board.DEFAULT_CELLSIZE * 2, 
+            (this._height * Board.DEFAULT_CELLSIZE) + Board.DEFAULT_CELLSIZE
+        );
+
         this._scene.cameras.main.setBounds(
-            (this._scene.game.config.width as number) / -2,
-            Board.DEFAULT_CELLSIZE / -2,
-            this._scene.game.config.width as number,
-            this._scene.game.config.height as number
+            (this._scene.game.scale.width as number) / -2,
+            0,
+            this._scene.game.scale.width as number,
+            this._scene.game.scale.height as number
         );
 
         this._pieces = new Map();
@@ -106,6 +111,8 @@ export class Board extends Model {
         spaceKey.on("up", () => {
             this.nextPlayer();
         });
+
+        
 
         window['currentBoard'] = this;
     }

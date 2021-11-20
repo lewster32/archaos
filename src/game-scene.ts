@@ -90,7 +90,7 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        this.testGame();
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -152,16 +152,18 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2),
-            y: board.height - 1,
+            y: board.height - 2,
             wizCode: "0003030000",
         });
 
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 0,
+            y: 1,
             wizCode: "0600000000",
         });
+
+        /*
 
         board.addWizard({
             owner: player3,
@@ -177,6 +179,8 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0205050000",
         });
 
+        */
+
         /*
         for (let [key, spell] of Object.entries(spells)) {
             board.addSpell(player, this.getSpellProperties(spell.name));
@@ -189,8 +193,8 @@ export class GameScene extends Phaser.Scene {
         for (let i = 0; i < 10; i++) {
             board.addSpell(player, this.getRandomSpell());
             board.addSpell(player2, this.getRandomSpell());
-            board.addSpell(player3, this.getRandomSpell());
-            board.addSpell(player4, this.getRandomSpell());
+            // board.addSpell(player3, this.getRandomSpell());
+            // board.addSpell(player4, this.getRandomSpell());
         }
 
         // board.addSpell(player, this.getSpellProperties("vampire"));
@@ -273,6 +277,39 @@ export class GameScene extends Phaser.Scene {
         }, Piece.DEFAULT_MOVE_DURATION);
 
         */
+    }
+
+    testPieces(): void {
+        const board: Board = new Board(this, 1, 7, 7);
+
+        const player: Player = board.addPlayer({
+            name: "Gandalf",
+        });
+
+        const player2: Player = board.addPlayer({
+            name: "Merlin",
+        });
+
+        board.addWizard({
+            owner: player,
+            x: Math.floor(board.width / 2),
+            y: board.height - 2,
+            wizCode: "0003030000",
+        });
+
+        board.addWizard({
+            owner: player2,
+            x: Math.floor(board.width / 2),
+            y: 1,
+            wizCode: "0600000000",
+        });
+
+        board.addSpell(player, this.getSpellProperties("orc"));
+        board.addSpell(player2, this.getSpellProperties("orc"));
+
+        setTimeout(() => {
+            board.startGame();
+        }, 1000);
     }
 
     update(): void {}

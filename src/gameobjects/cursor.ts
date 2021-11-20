@@ -160,107 +160,6 @@ export class Cursor {
         this._image.y = isoPosition.y + Cursor.OFFSET.y;
 
         return allowedAction;
-
-        /*
-        if (this._board.state === BoardState.Idle) {
-            this._image.setVisible(false);
-            return;
-        }
-
-        this._image.setVisible(true);
-
-        const pointer: Phaser.Input.Pointer =
-            this._board.scene.input.activePointer;
-
-        const translatedIsoPosition: Phaser.Geom.Point =
-            this.translateCursorPosition(pointer.position);
-
-        if (
-            !force &&
-            Phaser.Geom.Point.Equals(translatedIsoPosition, this._position)
-        ) {
-            return;
-        }
-        this._position.setTo(translatedIsoPosition.x, translatedIsoPosition.y);
-
-        const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
-            new Phaser.Geom.Point(
-                translatedIsoPosition.x,
-                translatedIsoPosition.y
-            )
-        );
-
-        if (
-            translatedIsoPosition.x < 0 ||
-            translatedIsoPosition.y < 0 ||
-            translatedIsoPosition.x >= this._board.width ||
-            translatedIsoPosition.y >= this._board.height
-        ) {
-            this._image.setVisible(false);
-            return;
-        }
-        this._image.setVisible(true);
-
-        const hoveredPieces: Piece[] = this._board.getPiecesAtPosition(
-            this._position,
-            (piece: Piece) => piece.owner == null
-        );
-
-        switch (this._board.state) {
-            case BoardState.View:
-                if (hoveredPieces.length > 0) {
-                    this.type = CursorType.Info;
-                } else {
-                    this.type = CursorType.Idle;
-                }
-                break;
-            case BoardState.MovePieces:
-                if (this._board.selected) {
-                    if (
-                        hoveredPieces.length > 0 &&
-                        hoveredPieces[0] !== this._board.selected
-                    ) {
-                        if (
-                            this._board.selected.canAttack &&
-                            this._board.selected.inAttackRange(
-                                this._position
-                            )
-                        ) {
-                            this.type = CursorType.Attack;
-                        } else if (
-                            this._board.selected.canRangedAttack &&
-                            this._board.selected.inRangedAttackRange(
-                                this._position
-                            )
-                        ) {
-                            this.type = CursorType.RangedAttack;
-                        } else {
-                            this.type = CursorType.Invalid;
-                        }
-                    } else {
-                        if (this._board.selected.inMovementRange(this._position) && !this._board.selected.moved) {
-                            this.type = CursorType.Fly;
-                        } else {
-                            this.type = CursorType.Invalid;
-                        }
-                    }
-                } else {
-                    if (hoveredPieces.length > 0) {
-                        if (hoveredPieces[0].canSelect) {
-                            this.type = CursorType.Select;
-                        } else {
-                            this.type = CursorType.Invalid;
-                        }
-                    } else {
-                        this.type = CursorType.Idle;
-                    }
-                }
-                break;
-        }
-
-        this._image.x = isoPosition.x + Cursor.OFFSET.x;
-        this._image.y = isoPosition.y + Cursor.OFFSET.y;
-        */
     }
 
     async action(input: InputType) {
@@ -288,8 +187,7 @@ export class Cursor {
             }
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
-            }
-            else if (!selected.canAttack && !selected.canRangedAttack) {
+            } else if (!selected.canAttack && !selected.canRangedAttack) {
                 selected.turnOver = true;
                 this._board.deselectPiece();
             }
@@ -328,10 +226,9 @@ export class Cursor {
         );
 
         point.x -=
-            Board.DEFAULT_CELLSIZE * -1 +
-            (this._board.scene.game.config.width as number) / 2;
-        point.y += Board.DEFAULT_CELLSIZE
-
+            (this._board.scene.game.scale.width as number) / 2 -
+            Board.DEFAULT_CELLSIZE;
+        point.y += Board.DEFAULT_CELLSIZE * 1.5;
 
         const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
         const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;
