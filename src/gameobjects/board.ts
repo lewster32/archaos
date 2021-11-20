@@ -15,6 +15,7 @@ import { SpellConfig } from "./configs/spellconfig";
 import { UnitType } from "./enums/unittype";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
+import { EffectEmitter, EffectParticle, EffectType } from "./effectemitter";
 
 type SimplePoint = { x: number; y: number };
 
@@ -27,6 +28,7 @@ export class Board extends Model {
     private _height: number;
 
     private _layers: Map<BoardLayer, Phaser.GameObjects.Layer>;
+    private _particles: Phaser.GameObjects.Particles.ParticleEmitterManager;
 
     static DEFAULT_WIDTH: number = 13;
     static DEFAULT_HEIGHT: number = 13;
@@ -112,7 +114,7 @@ export class Board extends Model {
             this.nextPlayer();
         });
 
-        
+        this.createEffects();
 
         window['currentBoard'] = this;
     }
@@ -644,6 +646,37 @@ export class Board extends Model {
         floorLayer.setActive(false);
 
         this._layers.set(BoardLayer.Floor, floorLayer);
+    }
+
+    async playEffect(type: EffectType, startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point, endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point): Promise<void> {
+        return new Promise((resolve) => {
+            switch (type) {
+                case EffectType.WizardCasting:
+                    this._particles.addEmitter(
+                        new EffectEmitter(
+                            this._particles,
+                            EffectType.WizardCasting,
+                            startPosition,
+                            endPosition,
+                            resolve
+                        )
+                    );
+            }
+        });
+    }
+
+    createEffects() {
+        const effectsLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
+
+        const anim = this.scene.anims.create({
+            key: "sparkle",
+            frames: this.scene.anims.generateFrameNames("effects", { prefix: "sparkle", start: 3, end: 1 }),
+            frameRate: 10
+        });
+
+        this._particles = this.scene.add.particles("effects");
+
+        this._layers.set(BoardLayer.Effects, effectsLayer);
     }
 
     /* #endregion */

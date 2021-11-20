@@ -184,7 +184,8 @@ export class Rules {
                     await casted.cast(
                         board.currentPlayer,
                         board.cursor.position,
-                        hoveredPieces
+                        hoveredPieces,
+                        board.selected
                     );
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();

@@ -9,6 +9,7 @@ import { Player } from "./player";
 import { UnitStatus } from "./enums/unitstatus";
 import { PieceConfig } from "./configs/piececonfig";
 import { Colour } from "./enums/colour";
+import { EffectType } from "./effectemitter";
 
 export class Spell extends Model {
     private _board: Board;
@@ -117,12 +118,19 @@ export class Spell extends Model {
     async cast(
         owner: Player,
         point: Phaser.Geom.Point,
-        _targets: Piece[]
+        _targets: Piece[],
+        _castingPiece?: Piece,
     ): Promise<Piece | boolean | null> {
         const castRoll: number = Phaser.Math.RND.frac();
         // Prevent failure on subsequent cast of multiple-cast spells
         if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
             return await this.castFail(owner, point);
+        }
+        if (_castingPiece) {
+            await this._board.playEffect(
+                EffectType.WizardCasting,
+                _castingPiece.sprite.getCenter()
+            );
         }
         this._castTimes--;
         switch (this._type) {

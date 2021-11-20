@@ -204,7 +204,6 @@ export class Piece extends Entity {
     }
 
     set engaged(engaged: boolean) {
-        console.trace(engaged);
         this._engaged = engaged;
     }
 

@@ -1,9 +1,9 @@
 import "phaser";
 
 import "../assets/spritesheets/classicunits.json";
-import "../assets/spritesheets/classicspells.json";
 import "../assets/spritesheets/board.json";
 import "../assets/spritesheets/cursors.json";
+import "../assets/spritesheets/effects.json";
 
 import "../assets/plugins/rexcolorreplacepipelineplugin.min.js";
 
@@ -37,12 +37,6 @@ export class GameScene extends Phaser.Scene {
         );
 
         this.load.multiatlas(
-            "classicspells",
-            "assets/spritesheets/classicspells.json",
-            "assets/spritesheets"
-        );
-
-        this.load.multiatlas(
             "board",
             "assets/spritesheets/board.json",
             "assets/spritesheets"
@@ -51,6 +45,12 @@ export class GameScene extends Phaser.Scene {
         this.load.multiatlas(
             "cursors",
             "assets/spritesheets/cursors.json",
+            "assets/spritesheets"
+        );
+
+        this.load.multiatlas(
+            "effects",
+            "assets/spritesheets/effects.json",
             "assets/spritesheets"
         );
 
@@ -280,7 +280,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 7, 7);
+        const board: Board = new Board(this, 1, 5, 5);
 
         const player: Player = board.addPlayer({
             name: "Gandalf",
@@ -304,8 +304,8 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        board.addSpell(player, this.getSpellProperties("orc"));
-        board.addSpell(player2, this.getSpellProperties("orc"));
+        board.addSpell(player, this.getSpellProperties("elf"));
+        board.addSpell(player2, this.getSpellProperties("elf"));
 
         setTimeout(() => {
             board.startGame();
