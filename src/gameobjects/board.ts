@@ -168,14 +168,14 @@ export class Board extends Model {
 
     async newTurn(): Promise<void> {
         this._selected = null;
-        this.pieces.forEach((piece) => {
-            piece.reset();
-        });
 
         if (
             this.phase === BoardPhase.Idle ||
             this.phase === BoardPhase.Moving
         ) {
+            this.pieces.forEach((piece) => {
+                piece.reset();
+            });
             this._logger.log(`New turn`, Colour.Green);
             this.phase = BoardPhase.Spellbook;
             this.state = BoardState.SelectSpell;
@@ -223,8 +223,23 @@ export class Board extends Model {
         return this.pieces.filter((piece) => piece.owner === owner);
     }
 
-    selectPiece(id: number): void {
+    async selectPiece(id: number): Promise<void> {
         this._selected = this.getPiece(id);
+
+        if (this.phase === BoardPhase.Moving) {
+            const firstEngagingPiece: Piece | null = this._selected.getFirstEngagingPiece();
+
+            if (firstEngagingPiece != null) {
+                if (this._selected.engaged || Phaser.Math.RND.integerInRange(1, 9) > this._selected.properties.maneuverability) {
+                    await this._selected.engage(firstEngagingPiece);
+                }
+                else {
+                    this.logger.log(
+                        `${this._selected.name} disengaged from ${firstEngagingPiece.name}`, Colour.Green
+                    );
+                }
+            }
+        }
     }
 
     deselectPiece(): void {
@@ -241,11 +256,11 @@ export class Board extends Model {
         }, Board.END_TURN_DELAY);
     }
 
-    selectWizard(player: Player): Wizard | null {
+    async selectWizard(player: Player): Promise<Wizard | null> {
         const ownedPieces: Piece[] = this.getPiecesByOwner(player);
         for (let i: number = 0; i < ownedPieces.length; i++) {
             if (ownedPieces[i].type === UnitType.Wizard) {
-                this.selectPiece(ownedPieces[i].id);
+                await this.selectPiece(ownedPieces[i].id);
                 return ownedPieces[i] as Wizard;
             }
         }
@@ -288,14 +303,21 @@ export class Board extends Model {
         );
     }
 
-    async movePiece(id: number, positon: Phaser.Geom.Point): Promise<Piece> {
+    async movePiece(id: number, position: Phaser.Geom.Point): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
-            await piece.moveTo(positon);
+            await piece.moveTo(position);
             piece.moved = true;
             if (piece.currentRider) {
                 piece.currentRider.moved = true;
             }
+
+            const firstEngagingPiece:Piece | null = piece.getFirstEngagingPiece();
+
+            if (firstEngagingPiece) {
+                await piece.engage(firstEngagingPiece);
+            }
+
             setTimeout(() => {
                 this.cursor.update(true);
             }, 100);

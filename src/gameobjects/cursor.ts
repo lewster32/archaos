@@ -176,6 +176,7 @@ export class Cursor {
         const selected: Piece | null = this._board.selected;
 
         if (selected && selected.moved) {
+            /*
             if (
                 selected
                     .getNeighbours()
@@ -185,6 +186,7 @@ export class Cursor {
             ) {
                 selected.engaged = true;
             }
+            */
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
             } else if (!selected.canAttack && !selected.canRangedAttack) {

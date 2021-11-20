@@ -222,7 +222,7 @@ export class Rules {
                         EventType.PieceInfo,
                         currentAliveHoveredPiece.currentRider
                     );
-                    board.selectPiece(currentAliveHoveredPiece.currentRider.id);
+                    await board.selectPiece(currentAliveHoveredPiece.currentRider.id);
                     board.state = BoardState.Dismount;
                     return ActionType.Dismount;
                 } else if (
@@ -233,7 +233,7 @@ export class Rules {
                         EventType.PieceInfo,
                         currentAliveHoveredPiece
                     );
-                    board.selectPiece(currentAliveHoveredPiece.id);
+                    await board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {
                     return ActionType.Invalid;
@@ -343,7 +343,7 @@ export class Rules {
                 selectedPiece.currentMount &&
                 selectedPiece.currentMount.canSelect
             ) {
-                board.selectPiece(selectedPiece.currentMount.id);
+                await board.selectPiece(selectedPiece.currentMount.id);
                 return ActionType.Move;
             }
         }

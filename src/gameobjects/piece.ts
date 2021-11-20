@@ -158,7 +158,7 @@ export class Piece extends Entity {
     }
 
     get moved(): boolean {
-        if (this.properties.movement === 0) {
+        if (this.properties.movement === 0 || this._engaged) {
             return true;
         }
         return this._moved;
@@ -204,6 +204,7 @@ export class Piece extends Entity {
     }
 
     set engaged(engaged: boolean) {
+        console.trace(engaged);
         this._engaged = engaged;
     }
 
@@ -485,6 +486,32 @@ export class Piece extends Entity {
         return true;
     }
 
+    getFirstEngagingPiece(): Piece | null {
+        const neighbours: Piece[] = this.getNeighbours();
+        for (const neighbour of neighbours) {
+            if (this.canEngagePiece(neighbour)) {
+                return neighbour;
+            }
+        }
+        return null;
+    }
+
+    async engage(piece: Piece) {
+        return new Promise((resolve: Function) => {
+            if (this.canEngagePiece(piece)) {
+                this.engaged = true;
+                piece.engaged = true;
+            }
+            this.board.logger.log(
+                `${this.name} is engaged with ${piece.name}`,
+                Colour.Yellow
+            ); 
+            setTimeout(() => {
+                resolve();
+            }, 500);
+        });
+    }
+
     getNeighbours(): Piece[] {
         return this.board.getAdjacentPiecesAtPosition(
             this.position,
@@ -520,7 +547,7 @@ export class Piece extends Entity {
                     ).length === 0 &&
                     this.canMove
                 ) {
-                    await this.moveTo(piece.position);
+                    await this.board.movePiece(this.id, piece.position);
                 }
             }
         }
@@ -586,13 +613,13 @@ export class Piece extends Entity {
             piece.moved = true;
 
             if (piece.canAttack || piece.canRangedAttack) {
-                this.board.selectPiece(piece.id);
+                await this.board.selectPiece(piece.id);
                 this.board.cursor.update(true);
             } else {
                 piece.turnOver = true;
             }
             this.board.logger.log(`${this.name} mounted ${piece.name}`);
-            await this.moveTo(piece.position);
+            await this.board.movePiece(this.id, piece.position);
         }
     }
 
@@ -660,6 +687,7 @@ export class Piece extends Entity {
     reset() {
         this.turnOver = false;
         this.engaged = false;
+        
         if (this.currentRider) {
             this.currentRider.reset();
         }
