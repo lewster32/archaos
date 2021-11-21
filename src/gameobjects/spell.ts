@@ -128,7 +128,7 @@ export class Spell extends Model {
         const castRoll: number = Phaser.Math.RND.frac();
 
         // Prevent failure on subsequent cast of multiple-cast spells
-        if (castRoll > this.chance) {
+        if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
             return await this.castFail(owner, castingPiece);
         }
         await this._board.playEffect(

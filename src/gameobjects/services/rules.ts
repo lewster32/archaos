@@ -181,12 +181,14 @@ export class Rules {
                 const casted: Spell | null =
                     await board.currentPlayer.useSpell();
                 if (casted) {
+                    board.state = BoardState.Idle;
                     await casted.cast(
                         board.currentPlayer,
                         board.selected,
                         board.cursor.position,
                         hoveredPieces
                     );
+                    board.state = BoardState.CastSpell;
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
                         if (!casted.failed) {
