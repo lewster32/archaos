@@ -1,3 +1,4 @@
+import { units } from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { PieceConfig } from "./configs/piececonfig";
 import { Entity } from "./entity";
@@ -7,13 +8,16 @@ import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { IUnitProperties } from "./interfaces/unitproperties";
 import { Player } from "./player";
-import { Wizard } from "./wizard";
-import { units } from "../../assets/data/classicunits.json";
-import { BoardState } from "./enums/boardstate";
-import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
 import { EffectType } from "./effectemitter";
-import { Path } from "./movegizmo";
+
+enum PieceState {
+    Idle,
+    Moving,
+    Attacking,
+    RangedAttacking,
+    TurnOver
+}
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
@@ -35,6 +39,8 @@ export class Piece extends Entity {
     protected _attacked: boolean;
     protected _rangedAttacked: boolean;
     protected _engaged: boolean;
+
+    protected _state: PieceState;
 
     protected _currentMount: Piece | null;
     protected _currentRider: Piece | null;
@@ -71,6 +77,8 @@ export class Piece extends Entity {
         this._attacked = false;
         this._rangedAttacked = false;
         this._engaged = false;
+
+        this._state = PieceState.Idle;
 
         this._currentRider = null;
         this._currentMount = null;

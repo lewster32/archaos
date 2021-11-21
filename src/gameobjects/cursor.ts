@@ -179,9 +179,18 @@ export class Cursor {
         if (selected && selected.moved) {
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
-            } else if (!selected.canAttack && !selected.canRangedAttack) {
-                selected.turnOver = true;
-                this._board.deselectPiece();
+            }
+            else {
+                if (selected.canAttack) {
+                    return;
+                }
+                else if (selected.canRangedAttack) {
+                    await this._board.moveGizmo.generateSimpleRange(this._board.selected.position, this._board.selected.properties.range, CursorType.RangeRangedAttack);
+                }
+                else {
+                    selected.turnOver = true;
+                    this._board.deselectPiece();
+                }
             }
         }
     }

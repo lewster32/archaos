@@ -343,36 +343,37 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 3,
+            y: 1,
             wizCode: "0600000000",
         });
 
-        board.addSpell(player, this.getSpellProperties("horse"));
-        board.addSpell(player2, this.getSpellProperties("gooey blob"));
+        // board.addSpell(player, this.getSpellProperties("elf"));
+        // board.addSpell(player, this.getSpellProperties("centaur"));
+        // board.addSpell(player, this.getSpellProperties("manticore"));
 
         board.addPiece({
-            ...this.getPieceProperties("eagle"),
+            ...this.getPieceProperties("elf"),
             owner: player,
-            x: 5,
+            x: 4,
             y: 5
         });
 
         board.addPiece({
-            ...this.getPieceProperties("eagle"),
-            owner: player2,
-            x: 3,
+            ...this.getPieceProperties("centaur"),
+            owner: player,
+            x: 4,
             y: 3
         });
 
         board.addPiece({
-            ...this.getPieceProperties("eagle"),
-            owner: player2,
-            x: 3,
+            ...this.getPieceProperties("manticore"),
+            owner: player,
+            x: 4,
             y: 7
         });
 
         board.addPiece({
-            ...this.getPieceProperties("skeleton"),
+            ...this.getPieceProperties("ghost"),
             owner: player2,
             x: 6,
             y: 5

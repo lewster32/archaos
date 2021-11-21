@@ -25,6 +25,7 @@ export enum CursorType {
 
     RangeMove = "range-move",
     RangeCast = "range-cast",
+    RangeRangedAttack = "range-rangedattack",
     RangeMoveWarning = "range-move-warning",
 
 }

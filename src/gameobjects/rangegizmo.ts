@@ -6,7 +6,7 @@ import { CursorType } from "./enums/cursortype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 
-export class MoveGizmo {
+export class RangeGizmo {
     private static GIZMO_REVEAL_DURATION: number = 50;
     private static GIZMO_REVEAL_STAGGER_DELAY: number = 5;
 
@@ -117,13 +117,13 @@ export class MoveGizmo {
         }
     }
 
-    public reset(): MoveGizmo {
+    public reset(): RangeGizmo {
         this._piece = null;
         this._board.scene.tweens.add({
             targets: this._rangeLayer.getChildren(),
-            duration: MoveGizmo.GIZMO_REVEAL_DURATION,
+            duration: RangeGizmo.GIZMO_REVEAL_DURATION,
             alpha: 0,
-            delay: this._board.scene.tweens.stagger(MoveGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+            delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
                 from: "last",
             }),
             onComplete: () => {
@@ -177,8 +177,8 @@ export class MoveGizmo {
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: MoveGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(MoveGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
                     from: "first",
                 }),
                 onComplete: () => {
@@ -188,7 +188,18 @@ export class MoveGizmo {
         });
     }
 
+    private lastSimplePosition: Phaser.Geom.Point = new Phaser.Geom.Point(-1, -1);
+    private lastDistance: number = -1;
+    private lastCursor: CursorType;
+
     public async generateSimpleRange(position: Phaser.Geom.Point, distance: number, cursor: CursorType = CursorType.RangeCast): Promise<void> {
+        if (Phaser.Geom.Point.Equals(position, this.lastSimplePosition) && distance === this.lastDistance && cursor === this.lastCursor) {
+            return;
+        }
+        this.lastSimplePosition = Phaser.Geom.Point.Clone(position);
+        this.lastDistance = distance;
+        this.lastCursor = cursor;
+
         const startPosition = Phaser.Geom.Point.Clone(position);
         this._rangeLayer.removeAll();
 
@@ -218,8 +229,8 @@ export class MoveGizmo {
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: MoveGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(MoveGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
                     from: "first",
                 }),
                 onComplete: () => {
@@ -263,8 +274,8 @@ export class MoveGizmo {
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: MoveGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(MoveGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
                     from: "first",
                 }),
                 onComplete: () => {
@@ -374,7 +385,7 @@ export class MoveGizmo {
         let f: number;
 
         currentNode.g = 0;
-        currentNode.h = MoveGizmo.diagonalHeuristic(
+        currentNode.h = RangeGizmo.diagonalHeuristic(
             currentNode,
             destinationNode,
             travelCost
@@ -393,12 +404,12 @@ export class MoveGizmo {
                     continue;
                 g =
                     currentNode.g +
-                    MoveGizmo.diagonalHeuristic(
+                    RangeGizmo.diagonalHeuristic(
                         currentNode,
                         testNode,
                         travelCost
                     );
-                h = MoveGizmo.diagonalHeuristic(
+                h = RangeGizmo.diagonalHeuristic(
                     testNode,
                     destinationNode,
                     travelCost
@@ -406,8 +417,8 @@ export class MoveGizmo {
                 f = g + h;
 
                 if (
-                    MoveGizmo.isOpen(testNode, openNodes) ||
-                    MoveGizmo.isClosed(testNode, closedNodes)
+                    RangeGizmo.isOpen(testNode, openNodes) ||
+                    RangeGizmo.isClosed(testNode, closedNodes)
                 ) {
                     if (testNode.f > f) {
                         testNode.f = f;
@@ -433,7 +444,7 @@ export class MoveGizmo {
             });
             currentNode = openNodes.shift() as Node;
         }
-        return MoveGizmo.buildPath(destinationNode, firstNode);
+        return RangeGizmo.buildPath(destinationNode, firstNode);
     }
 
     public findConnectedNodes(node: Node): Node[] {

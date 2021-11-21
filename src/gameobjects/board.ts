@@ -16,7 +16,7 @@ import { UnitType } from "./enums/unittype";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
 import { EffectEmitter, EffectType } from "./effectemitter";
-import { MoveGizmo, Path } from "./movegizmo";
+import { RangeGizmo, Path } from "./rangegizmo";
 import { UnitStatus } from "./enums/unitstatus";
 
 type SimplePoint = { x: number; y: number };
@@ -54,7 +54,7 @@ export class Board extends Model {
     private _state: BoardState;
     private _balance: number;
     private _cursor: Cursor;
-    private _moveGizmo: MoveGizmo;
+    private _moveGizmo: RangeGizmo;
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
 
@@ -105,7 +105,7 @@ export class Board extends Model {
         this._balance = 0;
 
         this._cursor = new Cursor(this);
-        this._moveGizmo = new MoveGizmo(this);
+        this._moveGizmo = new RangeGizmo(this);
 
         this._selected = null;
         this._currentPlayer = null;
@@ -166,7 +166,7 @@ export class Board extends Model {
         return this._cursor;
     }
 
-    get moveGizmo(): MoveGizmo {
+    get moveGizmo(): RangeGizmo {
         return this._moveGizmo;
     }
 
