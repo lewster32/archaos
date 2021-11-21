@@ -1,30 +1,16 @@
 import "phaser";
-
-import "../assets/spritesheets/classicunits.json";
+import { spells } from "../assets/data/classicspells.json";
+import { units } from "../assets/data/classicunits.json";
+import "../assets/plugins/rexcolorreplacepipelineplugin.min.js";
 import "../assets/spritesheets/board.json";
+import "../assets/spritesheets/classicunits.json";
 import "../assets/spritesheets/cursors.json";
 import "../assets/spritesheets/effects.json";
-
-import "../assets/plugins/rexcolorreplacepipelineplugin.min.js";
-
-import { units } from "../assets/data/classicunits.json";
-import { spells } from "../assets/data/classicspells.json";
-
 import { Board } from "./gameobjects/board";
+import { SpellConfig } from "./gameobjects/configs/spellconfig";
+import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Wizard } from "./gameobjects/wizard";
-import { Piece } from "./gameobjects/piece";
-import { BoardState } from "./gameobjects/enums/boardstate";
-import { UnitDirection } from "./gameobjects/enums/unitdirection";
-import { UnitType } from "./gameobjects/enums/unittype";
-import { UnitStatus } from "./gameobjects/enums/unitstatus";
-import { SpellConfig } from "./gameobjects/configs/spellconfig";
-import { Spell } from "./gameobjects/spell";
-import { BoardPhase } from "./gameobjects/enums/boardphase";
-import { EffectType } from "./gameobjects/effectemitter";
-import { WizardSprite } from "./gameobjects/wizardsprite";
-import { PieceConfig } from "./gameobjects/configs/piececonfig";
-import { IUnitProperties } from "./gameobjects/interfaces/unitproperties";
 
 export class GameScene extends Phaser.Scene {
     constructor() {

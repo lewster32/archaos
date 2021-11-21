@@ -1,15 +1,15 @@
 import { units } from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { PieceConfig } from "./configs/piececonfig";
+import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
-import { UnitType } from "./enums/unittype";
+import { Colour } from "./enums/colour";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
+import { UnitType } from "./enums/unittype";
 import { IUnitProperties } from "./interfaces/unitproperties";
 import { Player } from "./player";
-import { Colour } from "./enums/colour";
-import { EffectType } from "./effectemitter";
 
 enum PieceState {
     Idle,

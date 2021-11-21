@@ -1,11 +1,11 @@
+import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { BoardLayer } from "./enums/boardlayer";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
-import { Piece } from "./piece";
-import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { WizCode } from "./interfaces/wizcode";
+import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
 
 export class Wizard extends Piece {

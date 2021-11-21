@@ -1,10 +1,8 @@
-import { WizCode } from "./interfaces/wizcode";
 import {
-    searchColors,
-    replaceColors,
-    replaceSkin,
-    hatYFix,
+    hatYFix, replaceColors,
+    replaceSkin, searchColors
 } from "../../assets/spritesheets/wizards.json";
+import { WizCode } from "./interfaces/wizcode";
 
 export class WizardSprite extends Phaser.GameObjects.Sprite {
     private _wizCode: WizCode;

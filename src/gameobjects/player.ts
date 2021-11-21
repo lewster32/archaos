@@ -14,13 +14,7 @@ export class Player extends Model {
     private _defeated: boolean;
 
     static PLAYER_COLOURS: number[] = [
-        0x0000ff,
-        0xff0000,
-        0xff00ff,
-        0x00ff00,
-        0x00ffff,
-        0xffff00,
-        0x000000,
+        0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0x000000,
         0xff5500,
     ];
 
@@ -43,7 +37,7 @@ export class Player extends Model {
         this._colour = colour;
     }
 
-    get name(): string  {
+    get name(): string {
         return this._name || `Player ${this.id}`;
     }
 
@@ -62,10 +56,10 @@ export class Player extends Model {
     async defeat(): Promise<void> {
         this._defeated = true;
         this.board.logger.log(`Game over for ${this.name}`);
-        this.board.getPiecesByOwner(this).forEach(piece => {
+        this.board.getPiecesByOwner(this).forEach((piece) => {
             setTimeout(() => {
-                piece.destroy()
-            }, 500 + (Math.random() * 1000));
+                piece.destroy();
+            }, 500 + Math.random() * 1000);
         });
     }
 
@@ -83,7 +77,7 @@ export class Player extends Model {
             this._selectedSpell = spell;
             return this._selectedSpell;
         }
-        throw new Error("This player does not have that spell")
+        throw new Error("This player does not have that spell");
     }
 
     async useSpell(): Promise<Spell | null> {
@@ -91,8 +85,7 @@ export class Player extends Model {
             if (this._selectedSpell.castTimes <= 0) {
                 this.discardSpell();
                 return null;
-            }
-            else {
+            } else {
                 const spell: Spell = this._selectedSpell;
                 return spell;
             }

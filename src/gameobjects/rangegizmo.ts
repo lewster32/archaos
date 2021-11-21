@@ -1,4 +1,3 @@
-import { resolveComponent } from "@vue/runtime-core";
 import { Board } from "./board";
 import { Cursor } from "./cursor";
 import { BoardLayer } from "./enums/boardlayer";
