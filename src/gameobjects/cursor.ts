@@ -107,6 +107,7 @@ export class Cursor {
                 break;
             case ActionType.Move:
                 if (selectedPiece) {
+                    this._board.moveGizmo.showPath(this._position);
                     const neighbours: Piece[] =
                         this._board.getAdjacentPiecesAtPosition(
                             this._position,
@@ -176,17 +177,6 @@ export class Cursor {
         const selected: Piece | null = this._board.selected;
 
         if (selected && selected.moved) {
-            /*
-            if (
-                selected
-                    .getNeighbours()
-                    .some((neighbour: Piece) =>
-                        selected.canEngagePiece(neighbour)
-                    )
-            ) {
-                selected.engaged = true;
-            }
-            */
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
             } else if (!selected.canAttack && !selected.canRangedAttack) {
@@ -242,6 +232,38 @@ export class Cursor {
         point.y = Math.round(ay);
 
         return new Phaser.Geom.Point(point.x, point.y);
+    }
+
+    static getCursorAngle(a:number = 0):CursorType {
+        switch (a)
+        {
+            case 0:
+            case 8:
+                return CursorType.DownRight;
+                break;
+            case 1:
+                return CursorType.Down;
+                break;
+            case 2:
+                return CursorType.DownLeft;
+                break;
+            case 3:
+                return CursorType.Left;
+                break;
+            case 4:
+                return CursorType.UpLeft;
+                break;
+            case 5:
+                return CursorType.Up;
+                break;
+            case 6:
+                return CursorType.UpRight;
+                break;
+            case 7:
+                return CursorType.Right;
+                break;
+        }
+        return CursorType.Idle;
     }
 
     static getMovementDirectionType(

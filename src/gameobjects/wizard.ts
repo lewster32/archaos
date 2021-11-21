@@ -50,6 +50,10 @@ export class Wizard extends Piece {
     async kill(): Promise<void> {
         this.destroy();
         await this.owner?.defeat();
+        setTimeout(async () => {
+            await this.board.checkWinCondition();
+        }, 500);
+        
     }
 
     createSprite(): Phaser.GameObjects.Sprite {

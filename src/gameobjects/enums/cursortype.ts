@@ -21,5 +21,10 @@ export enum CursorType {
     Down = "down",
     DownLeft = "down-left",
     Left = "left",
-    UpLeft = "up-left"
+    UpLeft = "up-left",
+
+    RangeMove = "range-move",
+    RangeCast = "range-cast",
+    RangeMoveWarning = "range-move-warning",
+
 }

@@ -23,6 +23,8 @@ import { Spell } from "./gameobjects/spell";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
 import { EffectType } from "./gameobjects/effectemitter";
 import { WizardSprite } from "./gameobjects/wizardsprite";
+import { PieceConfig } from "./gameobjects/configs/piececonfig";
+import { IUnitProperties } from "./gameobjects/interfaces/unitproperties";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -92,7 +94,7 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        this.testGame();
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -131,6 +133,43 @@ export class GameScene extends Phaser.Scene {
             lineOfSight: spell.lineOfSight,
         };
     }
+
+    getPieceProperties(name: string): any {
+        let key = "";
+        for (let [k, piece] of Object.entries(units)) {
+            if (piece.name.toLowerCase() === name.toLowerCase()) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const unit: any = (units as any)[key];
+
+        return {
+            type: UnitType.Creature,
+            properties: {
+                id: key,
+                name: unit.name,
+                movement: unit.properties.mov,
+                combat: unit.properties.com,
+                rangedCombat: unit.properties.rcm,
+                range: unit.properties.rng,
+                defense: unit.properties.def,
+                maneuverability: unit.properties.mnv,
+                magicResistance: unit.properties.res,
+                attackType: unit.attackType || "attacked",
+                rangedType: unit.rangedType || "shot",
+                status: unit.status || [],
+            },
+            shadowScale: unit.shadowScale,
+            offsetY: unit.offY,
+        }
+    }
+
 
     testGame(): void {
         const board: Board = new Board(this, 1, 13, 13);
@@ -284,7 +323,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 5, 5);
+        const board: Board = new Board(this, 1, 11, 11);
 
         const player: Player = board.addPlayer({
             name: "Gandalf",
@@ -304,12 +343,40 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 1,
+            y: 3,
             wizCode: "0600000000",
         });
 
-        board.addSpell(player, this.getSpellProperties("green dragon"));
-        board.addSpell(player2, this.getSpellProperties("red dragon"));
+        board.addSpell(player, this.getSpellProperties("horse"));
+        board.addSpell(player2, this.getSpellProperties("gooey blob"));
+
+        board.addPiece({
+            ...this.getPieceProperties("eagle"),
+            owner: player,
+            x: 5,
+            y: 5
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("eagle"),
+            owner: player2,
+            x: 3,
+            y: 3
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("eagle"),
+            owner: player2,
+            x: 3,
+            y: 7
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("skeleton"),
+            owner: player2,
+            x: 6,
+            y: 5
+        });
 
         // Test effect
         /**
@@ -328,7 +395,6 @@ export class GameScene extends Phaser.Scene {
 
         setTimeout(() => {
             board.startGame();
-
         }, 1000);
     }
 

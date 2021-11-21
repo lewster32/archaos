@@ -16,6 +16,8 @@ import { UnitType } from "./enums/unittype";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
 import { EffectEmitter, EffectType } from "./effectemitter";
+import { MoveGizmo, Path } from "./movegizmo";
+import { UnitStatus } from "./enums/unitstatus";
 
 type SimplePoint = { x: number; y: number };
 
@@ -52,6 +54,7 @@ export class Board extends Model {
     private _state: BoardState;
     private _balance: number;
     private _cursor: Cursor;
+    private _moveGizmo: MoveGizmo;
     private _pieces: Map<number, Piece>;
     private _selected: Piece | null;
 
@@ -78,7 +81,8 @@ export class Board extends Model {
         this._height = height;
 
         this.createFloor();
-
+        this._layers.set(BoardLayer.FloorCursors, this.scene.add.layer());
+        this._layers.set(BoardLayer.PathCursors, this.scene.add.layer());
         this._layers.set(BoardLayer.Shadows, this.scene.add.layer());
         this._layers.set(BoardLayer.Pieces, this.scene.add.layer());
 
@@ -101,6 +105,8 @@ export class Board extends Model {
         this._balance = 0;
 
         this._cursor = new Cursor(this);
+        this._moveGizmo = new MoveGizmo(this);
+
         this._selected = null;
         this._currentPlayer = null;
 
@@ -158,6 +164,10 @@ export class Board extends Model {
 
     get cursor(): Cursor {
         return this._cursor;
+    }
+
+    get moveGizmo(): MoveGizmo {
+        return this._moveGizmo;
     }
 
     get rules(): Rules {
@@ -232,20 +242,25 @@ export class Board extends Model {
             const firstEngagingPiece: Piece | null = this._selected.getFirstEngagingPiece();
 
             if (firstEngagingPiece != null) {
-                if (this._selected.engaged || Phaser.Math.RND.integerInRange(1, 9) > this._selected.properties.maneuverability) {
+                if (this._selected.engaged || Phaser.Math.RND.integerInRange(1, firstEngagingPiece.properties.maneuverability) > this._selected.properties.maneuverability) {
                     await this._selected.engage(firstEngagingPiece);
                 }
                 else {
                     this.logger.log(
                         `${this._selected.name} disengaged from ${firstEngagingPiece.name}`, Colour.Green
                     );
+                    await this.moveGizmo.generate(this._selected);
                 }
+            }
+            else {
+                await this.moveGizmo.generate(this._selected);
             }
         }
     }
 
     deselectPiece(): void {
         this._selected = null;
+        this.moveGizmo.reset();
 
         setTimeout(async () => {
             if (
@@ -305,10 +320,35 @@ export class Board extends Model {
         );
     }
 
+    async movePath(piece: Piece, path:Path) {
+        if (!path?.nodes?.length) {
+            return;
+        }
+        await piece.moveTo(path.nodes.shift().pos, Piece.DEFAULT_STEP_MOVE_DURATION);
+        if (path.nodes.length > 0) {
+            await this.movePath(piece, path);
+        }
+    }
+
     async movePiece(id: number, position: Phaser.Geom.Point): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
-            await piece.moveTo(position);
+            const path:Path = this.moveGizmo.getPathTo(position);
+            this.moveGizmo.reset();
+            if (piece.hasStatus(UnitStatus.Flying) || Board.distance(piece.position, position) <= 1.5) {
+                await piece.moveTo(position);    
+            }
+            else {
+                if (path && path.nodes?.length > 1) {
+                    // Remove first step, as that's the piece's current position
+                    path.nodes.shift(); 
+                    await this.movePath(piece, path);    
+                }
+                else {
+                    throw new Error(`No path to ${position.x}, ${position.y}`);
+                }
+            }
+
             piece.moved = true;
             if (piece.currentRider) {
                 piece.currentRider.moved = true;
@@ -548,16 +588,23 @@ export class Board extends Model {
         await this.nextPlayer();
     }
 
+    async checkWinCondition(): Promise<boolean> {
+        if (this.players.filter((player) => !player.defeated).length < 2) {
+            this.state = BoardState.View;
+            this.logger.log(`Game over!`, Colour.Yellow);
+            return true;
+        }
+        return false;
+    }
+
     async nextPlayer(): Promise<void> {
         this._currentPlayerIndex =
             (this._currentPlayerIndex + 1) % this._players.size;
         this.deselectPlayer();
 
-        if (this.players.filter((player) => !player.defeated).length < 2) {
-            this.state = BoardState.View;
-            this.logger.log(`Game over!`, Colour.Yellow);
+        if (await this.checkWinCondition()) {
             return;
-        }
+        };
 
         if (this._currentPlayerIndex === 0) {
             await this.newTurn();
@@ -600,7 +647,10 @@ export class Board extends Model {
         }
 
         if (this._phase === BoardPhase.Casting) {
-            this.selectWizard(this.currentPlayer!);
+            await this.selectWizard(this.currentPlayer!);
+            if (this.selected && this.currentPlayer?.selectedSpell) {
+                await this.moveGizmo.generateSimpleRange(this.selected.position, this.currentPlayer?.selectedSpell.range);
+            }
         }
 
         if (

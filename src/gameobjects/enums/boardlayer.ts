@@ -4,6 +4,7 @@ export enum BoardLayer {
     FloorDecorations,
     Shadows,
     FloorCursors,
+    PathCursors,
     Pieces,
     Effects
 }

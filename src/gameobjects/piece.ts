@@ -13,9 +13,11 @@ import { BoardState } from "./enums/boardstate";
 import { BoardPhase } from "./enums/boardphase";
 import { Colour } from "./enums/colour";
 import { EffectType } from "./effectemitter";
+import { Path } from "./movegizmo";
 
 export class Piece extends Entity {
     static DEFAULT_MOVE_DURATION: number = 750;
+    static DEFAULT_STEP_MOVE_DURATION: number = 300;
     static DEFAULT_HIGHLIGHT_DURATION: number = 600;
     static DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
@@ -300,7 +302,7 @@ export class Piece extends Entity {
         }
     }
 
-    async moveTo(point: Phaser.Geom.Point) {
+    async moveTo(point: Phaser.Geom.Point, stepDuration?: number) {
         this.updateDirection(this.position, point);
         this.position = point;
         if (this.currentRider) {
@@ -313,7 +315,7 @@ export class Piece extends Entity {
         ) {
             await this.board.dismountPiece(this.id);
         }
-        await this.updatePosition();
+        await this.updatePosition(stepDuration);
     }
 
     hasStatus(status: UnitStatus): boolean {
@@ -323,8 +325,7 @@ export class Piece extends Entity {
     inMovementRange(point: Phaser.Geom.Point): boolean {
         if (
             Phaser.Geom.Point.Equals(this.position, point) ||
-            Board.distance(this.position, point) >
-                this.properties.movement + 0.5
+            !this.board.moveGizmo.getPathTo(point)
         ) {
             return false;
         }
@@ -414,9 +415,6 @@ export class Piece extends Entity {
             piece.dead ||
             this.attacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
-            (piece.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.AttackUndead)) ||
             !this.inAttackRange(piece.position)
         ) {
             return false;
@@ -446,9 +444,6 @@ export class Piece extends Entity {
             piece.dead ||
             this.rangedAttacked ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
-            (piece.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.AttackUndead)) ||
             !this.inRangedAttackRange(piece.position)
         ) {
             return false;
@@ -519,8 +514,18 @@ export class Piece extends Entity {
         );
     }
 
-    async attack(piece: Piece): Promise<void> {
+    async attack(piece: Piece): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
+            if (piece.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.AttackUndead)) {
+                    this.board.logger.log(
+                        `${this.name} cannot attack the undead`,
+                        Colour.Cyan
+                    );
+                    return false;
+            }
+
             this.updateDirection(this.position, piece.position);
             this.attacked = true;
             this.moved = true;
@@ -549,12 +554,23 @@ export class Piece extends Entity {
                 ) {
                     await this.board.movePiece(this.id, piece.position);
                 }
+                return true;
             }
         }
+        return false;
     }
 
-    async rangedAttack(piece: Piece): Promise<void> {
+    async rangedAttack(piece: Piece): Promise<boolean> {
         if (this.canRangedAttackPiece(piece)) {
+            if (piece.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.Undead) &&
+                !this.hasStatus(UnitStatus.AttackUndead)) {
+                    this.board.logger.log(
+                        `${this.name} cannot attack the undead`,
+                        Colour.Cyan
+                    );
+                    return false;
+            }
             this.updateDirection(this.position, piece.position);
 
             let beamEffectType: EffectType = EffectType.ArrowBeam;
@@ -593,8 +609,10 @@ export class Piece extends Entity {
             if (attackRoll > defenseRoll) {
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                return true;
             }
         }
+        return false;
     }
 
     async kill(): Promise<void> {
