@@ -187,6 +187,10 @@ export class Board extends Model {
     async newTurn(): Promise<void> {
         this._selected = null;
 
+        if (this.state === BoardState.GameOver) {
+            return;
+        }
+
         if (
             this.phase === BoardPhase.Idle ||
             this.phase === BoardPhase.Moving
@@ -618,8 +622,11 @@ export class Board extends Model {
     }
 
     async checkWinCondition(): Promise<boolean> {
+        if (this.state === BoardState.GameOver) {
+            return true;
+        }
         if (this.players.filter((player) => !player.defeated).length < 2) {
-            this.state = BoardState.View;
+            this.state = BoardState.GameOver;
             this.logger.log(`Game over!`, Colour.Yellow);
             return true;
         }
@@ -627,13 +634,13 @@ export class Board extends Model {
     }
 
     async nextPlayer(): Promise<void> {
+        if (this.state == BoardState.GameOver || await this.checkWinCondition()) {
+            return;
+        }
+
         this._currentPlayerIndex =
             (this._currentPlayerIndex + 1) % this._players.size;
         this.deselectPlayer();
-
-        if (await this.checkWinCondition()) {
-            return;
-        }
 
         if (this._currentPlayerIndex === 0) {
             await this.newTurn();
@@ -796,6 +803,18 @@ export class Board extends Model {
         );
 
         return screenPos;
+    }
+
+    roll(attack: number, defense: number): boolean {
+        // return false;
+        const attackRoll: number = Phaser.Math.Between(0, attack);
+        const defenseRoll: number = Phaser.Math.Between(0, defense);
+        return attackRoll > defenseRoll;
+    }
+
+    rollChance(defense: number): boolean {
+        // return true;
+        return Phaser.Math.RND.frac() > defense;
     }
 
     static distance(a: Phaser.Geom.Point, b: Phaser.Geom.Point): number {

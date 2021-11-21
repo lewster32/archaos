@@ -8,6 +8,7 @@ import "../assets/spritesheets/cursors.json";
 import "../assets/spritesheets/effects.json";
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
+import { EffectType } from "./gameobjects/effectemitter";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Wizard } from "./gameobjects/wizard";
@@ -101,7 +102,27 @@ export class GameScene extends Phaser.Scene {
             frameRate: 10,
         });
 
-        this.testGame();
+        this.anims.create({
+            key: "magicbolt",
+            frames: this.anims.generateFrameNames("effects", {
+                prefix: "magicbolt",
+                start: 1,
+                end: 2,
+            }),
+            frameRate: 10,
+        });
+
+        this.anims.create({
+            key: "lightning",
+            frames: this.anims.generateFrameNames("effects", {
+                prefix: "lightning",
+                start: 1,
+                end: 2,
+            }),
+            frameRate: 5,
+        });
+
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -138,6 +159,7 @@ export class GameScene extends Phaser.Scene {
             range: spell.range,
             damage: spell.damage,
             lineOfSight: spell.lineOfSight,
+            projectile: spell.projectile
         };
     }
 
@@ -343,20 +365,24 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2),
-            y: board.height - 2,
+            y: board.height - 4,
             wizCode: "0003030000",
         });
 
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 1,
+            y: 3,
             wizCode: "0600000000",
         });
 
-        // board.addSpell(player, this.getSpellProperties("elf"));
-        // board.addSpell(player, this.getSpellProperties("centaur"));
-        // board.addSpell(player, this.getSpellProperties("manticore"));
+        board.addSpell(player, this.getSpellProperties("lightning"));
+        board.addSpell(player, this.getSpellProperties("magic bolt"));
+
+        board.addSpell(player2, this.getSpellProperties("lightning"));
+        board.addSpell(player2, this.getSpellProperties("magic bolt"));
+
+        /*
 
         board.addPiece({
             ...this.getPieceProperties("elf"),
@@ -382,19 +408,21 @@ export class GameScene extends Phaser.Scene {
         board.addPiece({
             ...this.getPieceProperties("ghost"),
             owner: player2,
-            x: 6,
-            y: 5
+            x: 5,
+            y: 6
         });
+
+        */
 
         // Test effect
         /**
         setTimeout(async () => {
             console.time("Start cast");
-            await board.playEffect(EffectType.DragonFireBeam,
+            await board.playEffect(EffectType.LightningBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.DragonFireHit,
+            await board.playEffect(EffectType.LightningHit,
                 board.pieces[1].sprite.getCenter()
             );
             console.timeEnd("Start cast");

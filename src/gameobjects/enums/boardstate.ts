@@ -6,5 +6,6 @@ export enum BoardState {
     Move,
     Attack,
     RangedAttack,
-    Dismount
+    Dismount,
+    GameOver
 }

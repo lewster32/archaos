@@ -537,18 +537,12 @@ export class Piece extends Entity {
             this.updateDirection(this.position, piece.position);
             this.attacked = true;
             this.moved = true;
-            const attackRoll: number = Phaser.Math.Between(
-                0,
-                this.properties.combat
-            );
-            const defenseRoll: number = Phaser.Math.Between(
-                0,
-                piece.properties.defense
-            );
+
+            const rollSuccess: boolean = this.board.roll(this.properties.combat, piece.properties.defense);
 
             this.board.logger.log(`${this.name} ${this.properties.attackType} ${piece.name}`);
 
-            if (attackRoll > defenseRoll) {
+            if (rollSuccess) {
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 if (
@@ -603,18 +597,12 @@ export class Piece extends Entity {
             this.rangedAttacked = true;
             this.attacked = true;
             this.moved = true;
-            const attackRoll: number = Phaser.Math.Between(
-                0,
-                this.properties.rangedCombat
-            );
-            const defenseRoll: number = Phaser.Math.Between(
-                0,
-                piece.properties.defense
-            );
+
+            const rollSuccess: boolean = this.board.roll(this.properties.rangedCombat, piece.properties.defense);
 
             this.board.logger.log(`${this.name} ${this.properties.rangedType} ${piece.name}`)
 
-            if (attackRoll > defenseRoll) {
+            if (rollSuccess) {
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 return true;

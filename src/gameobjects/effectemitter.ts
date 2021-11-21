@@ -111,6 +111,70 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.MagicBoltBeam:
+                path = new Phaser.Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -2, max: 2 },
+                    y: { min: -5, max: 2 },
+                    frame: "magicbolt1",
+                    quantity: 2,
+                    speedX: { min: -10, max: 10 },
+                    scale: { start: 1, end: 0 },
+                    lifespan: 100,
+                    tint: [0xffffff, 0x9955ff],
+                    emitZone: { type: "edge", source: path, quantity: 160 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.MagicBoltHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "magicbolt1",
+                    speedX: { min: -80, max: 80 },
+                    speedY: { min: -10, max: -150 },
+                    scale: { start: 1, end: 0 },
+                    gravityY: 160,
+                    lifespan: 500,
+                    tint: [0xffffff, 0x9955ff],
+                    particleClass: EffectParticle,
+                };
+            case EffectType.LightningBeam:
+                path = new Phaser.Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -5, max: 5 },
+                    y: { min: -5, max: 5 },
+                    angle: { min: 0, max: 180 },
+                    scale: { min: 0.1, max: 1, start: 1, end: 0 },
+                    quantity: 4,
+                    frame: "lightning1",
+                    speedY: { min: -50, max: 50 },
+                    speedX: { min: -50, max: 50 },
+                    lifespan: 300,
+                    tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
+                    blendMode: Phaser.BlendModes.ADD,
+                    emitZone: { type: "edge", source: path, quantity: 40 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.LightningHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "lightning1",
+                    angle: { min: 0, max: 180 },
+                    speedX: { min: -120, max: 120 },
+                    speedY: { min: -50, max: 50 },
+                    scale: { start: 1, end: 0 },
+                    lifespan: 1000,
+                    tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
             case EffectType.ArrowBeam:
                 path = new Phaser.Curves.Path(
                     startPosition.x,
@@ -158,6 +222,12 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             case EffectType.DragonFireBeam:
             case EffectType.DragonFireHit:
                 return this.manager.scene.anims.get("dragonfire");
+            case EffectType.MagicBoltBeam:
+            case EffectType.MagicBoltHit:
+                return this.manager.scene.anims.get("magicbolt");
+            case EffectType.LightningBeam:
+            case EffectType.LightningHit:
+                return this.manager.scene.anims.get("lightning");
             default:
                 return this.manager.scene.anims.get("sparkle");
         }
@@ -166,6 +236,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
     private playEffect(resolve: Function) {
         let duration: number = 500;
         switch (this._type) {
+            case EffectType.MagicBoltBeam:
             case EffectType.WizardCasting:
             case EffectType.WizardCastFail:
                 duration = 500;
@@ -173,15 +244,28 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             case EffectType.WizardCastBeam:
                 duration = 300;
                 break;
+            case EffectType.LightningHit:
+            case EffectType.MagicBoltHit:
             case EffectType.SummonPiece:
                 duration = 250;
                 break;
+            case EffectType.LightningBeam:
             case EffectType.ArrowBeam:
             case EffectType.ArrowHit:
                 duration = 150;
                 break;
-
         }
+
+        switch (this._type) {
+            case EffectType.MagicBoltHit:
+            case EffectType.ArrowHit:
+                this.manager.scene.cameras.main.shake(150, 0.005, true);
+                break;
+            case EffectType.LightningHit:
+                this.manager.scene.cameras.main.shake(400, 0.015, true);
+                break;
+        }
+
         this.manager.scene.tweens.addCounter({
             from: 0,
             to: 1,
@@ -192,7 +276,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 resolve();
                 setTimeout(() => {
                     this.manager.removeEmitter(this);
-                }, duration);
+                }, duration * 2);
             },
         });
     }
@@ -243,5 +327,9 @@ export enum EffectType {
     ArrowHit,
     DragonFireBeam,
     DragonFireHit,
+    MagicBoltBeam,
+    MagicBoltHit,
+    LightningBeam,
+    LightningHit,
     SummonPiece
 }

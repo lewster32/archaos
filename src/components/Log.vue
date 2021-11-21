@@ -61,13 +61,16 @@ export default {
         bottom: 0;
         margin: 1em;
         height: 17.5vh;
-        min-height: 50%;
+        min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
         &--minimised {
             min-height: 2.5em;
             height: 2.5em;
+            .game-log__item:not(:first-child) {
+                display: none;
+            }
         }
-        &__scroll {            
+        &__scroll {      
             height: 100%;
             overflow-y: scroll;
             margin-bottom: 1em;

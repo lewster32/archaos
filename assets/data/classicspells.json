@@ -221,15 +221,17 @@
             "name": "Wall"
         },
         "magic-bolt": {
+            "balance": 0,
             "chance": 0.6,
             "castOnEnemyUnit": true,
             "lineOfSight": true,
             "range": 6,
-            "projectile": "fireball",
+            "projectile": "magicbolt",
             "damage": 3,
             "name": "Magic Bolt"
         },
         "lightning": {
+            "balance": 0,
             "chance": 0.4,
             "castOnEnemyUnit": true,
             "lineOfSight": true,

@@ -4,8 +4,8 @@
 			"image": "effects.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 24,
-				"h": 20
+				"w": 33,
+				"h": 31
 			},
 			"scale": 1,
 			"frames": [
@@ -31,45 +31,45 @@
 					}
 				},
 				{
-					"filename": "sparkle2",
+					"filename": "lightning1",
 					"rotated": false,
 					"trimmed": false,
 					"sourceSize": {
-						"w": 5,
-						"h": 5
+						"w": 11,
+						"h": 12
 					},
 					"spriteSourceSize": {
 						"x": 0,
 						"y": 0,
-						"w": 5,
-						"h": 5
+						"w": 11,
+						"h": 12
 					},
 					"frame": {
 						"x": 1,
 						"y": 14,
-						"w": 5,
-						"h": 5
+						"w": 11,
+						"h": 12
 					}
 				},
 				{
-					"filename": "sparkle3",
+					"filename": "sparkle1",
 					"rotated": false,
-					"trimmed": false,
+					"trimmed": true,
 					"sourceSize": {
 						"w": 5,
 						"h": 5
 					},
 					"spriteSourceSize": {
-						"x": 0,
-						"y": 0,
-						"w": 5,
-						"h": 5
+						"x": 1,
+						"y": 1,
+						"w": 3,
+						"h": 3
 					},
 					"frame": {
-						"x": 7,
-						"y": 14,
-						"w": 5,
-						"h": 5
+						"x": 1,
+						"y": 27,
+						"w": 3,
+						"h": 3
 					}
 				},
 				{
@@ -94,6 +94,27 @@
 					}
 				},
 				{
+					"filename": "lightning2",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 9,
+						"h": 10
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 9,
+						"h": 10
+					},
+					"frame": {
+						"x": 13,
+						"y": 12,
+						"w": 9,
+						"h": 10
+					}
+				},
+				{
 					"filename": "dragonfire1",
 					"rotated": false,
 					"trimmed": false,
@@ -109,30 +130,93 @@
 					},
 					"frame": {
 						"x": 13,
-						"y": 12,
+						"y": 23,
 						"w": 6,
 						"h": 6
 					}
 				},
 				{
-					"filename": "sparkle1",
+					"filename": "sparkle2",
 					"rotated": false,
-					"trimmed": true,
+					"trimmed": false,
 					"sourceSize": {
 						"w": 5,
 						"h": 5
 					},
 					"spriteSourceSize": {
-						"x": 1,
-						"y": 1,
-						"w": 3,
-						"h": 3
+						"x": 0,
+						"y": 0,
+						"w": 5,
+						"h": 5
 					},
 					"frame": {
 						"x": 20,
-						"y": 12,
-						"w": 3,
-						"h": 3
+						"y": 23,
+						"w": 5,
+						"h": 5
+					}
+				},
+				{
+					"filename": "magicbolt2",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 9,
+						"h": 9
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 9,
+						"h": 9
+					},
+					"frame": {
+						"x": 23,
+						"y": 1,
+						"w": 9,
+						"h": 9
+					}
+				},
+				{
+					"filename": "magicbolt1",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 7,
+						"h": 9
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 7,
+						"h": 9
+					},
+					"frame": {
+						"x": 23,
+						"y": 11,
+						"w": 7,
+						"h": 9
+					}
+				},
+				{
+					"filename": "sparkle3",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 5,
+						"h": 5
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 5,
+						"h": 5
+					},
+					"frame": {
+						"x": 26,
+						"y": 21,
+						"w": 5,
+						"h": 5
 					}
 				}
 			]
@@ -141,6 +225,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:361971e868fcf958f90c70e6e6b61c8a:e187d947c78ff798464030615f1dc7c2:05d3c1256da5d10ff4f36ef2966c3322$"
+		"smartupdate": "$TexturePacker:SmartUpdate:f2089a3038735f4b3241935ab7c9b3a9:d52c478751984ba234151ac6750f5cc9:05d3c1256da5d10ff4f36ef2966c3322$"
 	}
 }

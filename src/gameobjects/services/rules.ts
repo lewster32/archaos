@@ -65,6 +65,9 @@ export class Rules {
                     ) {
                         return ActionType.Cast;
                     }
+                    else if (selectedSpell.type === SpellType.Attack && currentAliveHoveredPiece) {
+                        return ActionType.Cast;
+                    }
                 }
                 return ActionType.Invalid;
             }
@@ -182,6 +185,7 @@ export class Rules {
                     await board.currentPlayer.useSpell();
                 if (casted) {
                     board.state = BoardState.Idle;
+                    board.logger.log(`${board.currentPlayer.name} casts '${casted.name}'`);
                     await casted.cast(
                         board.currentPlayer,
                         board.selected,
@@ -191,10 +195,7 @@ export class Rules {
                     board.state = BoardState.CastSpell;
                     if (casted?.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
-                        if (!casted.failed) {
-                            board.logger.log(`${board.currentPlayer.name} casts '${casted.name}'`);
-                        }
-                        else {
+                        if (casted.failed) {
                             board.logger.log(`Spell failed`, Colour.Magenta);
                         }
                         board.selected.turnOver = true;

@@ -34,6 +34,10 @@ UnitStats;
                         >{{ chancePercent(spell.chance) }}%</span
                     >
                 </p>
+                <p v-if="spell.damage" class="spell-stats__item">
+                    <span class="spell-stats__label">Magic damage:</span>
+                    <span class="spell-stats__value">{{ spell.damage }}</span>
+                </p>
                 <p v-if="spell.range > 1.5" class="spell-stats__item">
                     <span class="spell-stats__label">Casting range:</span>
                     <span class="spell-stats__value">{{ spell.range }}</span>

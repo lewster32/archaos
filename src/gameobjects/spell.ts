@@ -71,6 +71,10 @@ export class Spell extends Model {
         return this._properties.range || 1.5;
     }
 
+    get damage(): number {
+        return this._properties.damage || 0;
+    }
+
     get allowIllusion(): boolean {
         return typeof this._properties.allowIllusion == "undefined"
             ? true
@@ -123,16 +127,13 @@ export class Spell extends Model {
         _targets: Piece[],
     ): Promise<Piece | boolean | null> {
         const castPoint: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
-        const castRoll: number = Phaser.Math.RND.frac();
+
+        const castRollSuccess: boolean = this._board.rollChance(this.chance);
 
         // Prevent failure on subsequent cast of multiple-cast spells
-        if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
+        if (this._castTimes === this._totalCastTimes && !castRollSuccess) {
             return await this.castFail(owner, castingPiece);
         }
-        await this._board.playEffect(
-            EffectType.WizardCasting,
-            castingPiece.sprite.getCenter()
-        );
         if (this._castTimes === this._totalCastTimes) {
             // TODO: Check how this shift compares to the real game
             this._board.balanceShift += (this.balance * 0.05);
@@ -141,6 +142,8 @@ export class Spell extends Model {
         switch (this._type) {
             case SpellType.Summon:
                 return await this.castSummon(owner, castingPiece, castPoint);
+            case SpellType.Attack:
+                return await this.castAttack(owner, castingPiece, _targets);
         }
         return null;
     }
@@ -155,8 +158,57 @@ export class Spell extends Model {
         return null;
     }
 
+    async castAttack(owner: Player, castingPiece: Piece, targets: Piece[]): Promise<boolean> {
+        if (targets.length === 0) {
+            throw new Error("No targets for attack spell");
+        }
+        const target: Piece = targets[0];
+        let beamEffect: EffectType = null;
+        let hitEffect: EffectType = null;
+
+        switch (this._properties.projectile) {
+            case "lightning":
+                beamEffect = EffectType.LightningBeam;
+                hitEffect = EffectType.LightningHit;
+                break;
+            case "magicbolt":
+                beamEffect = EffectType.MagicBoltBeam;
+                hitEffect = EffectType.MagicBoltHit;
+                break;
+        }
+
+        if (beamEffect) {
+            await this._board.playEffect(beamEffect,
+                castingPiece.sprite.getCenter(),
+                target.sprite.getCenter()
+            );
+        }
+
+        const rollSuccess: boolean = this._board.roll(this._properties.damage, target.properties.magicResistance);
+
+        if (rollSuccess) {
+            await target.kill();
+        }
+
+        if (hitEffect) {
+            await this._board.playEffect(hitEffect, target.sprite.getCenter());
+            if (rollSuccess) {
+                this._board.logger.log(
+                    `${target.name} was defeated by ${owner.name}'s ${this.name}`
+                );
+            }
+        }
+
+        return true;
+    }
+
     async castSummon(owner: Player, castingPiece: Piece, point: Phaser.Geom.Point): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
+
+        await this._board.playEffect(
+            EffectType.WizardCasting,
+            castingPiece.sprite.getCenter()
+        );
 
         await this._board.playEffect(
             EffectType.WizardCastBeam,

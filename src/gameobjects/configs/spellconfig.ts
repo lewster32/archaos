@@ -13,4 +13,6 @@ export interface SpellConfig {
     range?: number;
     damage?: number;
     lineOfSight?: boolean;
+
+    projectile?: string;
 }
