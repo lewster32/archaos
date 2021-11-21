@@ -3,6 +3,7 @@ import { PieceConfig } from "./configs/piececonfig";
 import { SpellConfig } from "./configs/spellconfig";
 import { EffectType } from "./effectemitter";
 import { SpellType } from "./enums/spelltype";
+import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { Model } from "./model";
@@ -167,11 +168,11 @@ export class Spell extends Model {
         let hitEffect: EffectType = null;
 
         switch (this._properties.projectile) {
-            case "lightning":
+            case UnitRangedProjectileType.Lightning:
                 beamEffect = EffectType.LightningBeam;
                 hitEffect = EffectType.LightningHit;
                 break;
-            case "magicbolt":
+            case UnitRangedProjectileType.MagicBolt:
                 beamEffect = EffectType.MagicBoltBeam;
                 hitEffect = EffectType.MagicBoltHit;
                 break;
