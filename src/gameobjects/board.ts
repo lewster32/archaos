@@ -53,6 +53,7 @@ export class Board extends Model {
 
     private _state: BoardState;
     private _balance: number;
+    private _balanceShift: number;
     private _cursor: Cursor;
     private _moveGizmo: RangeGizmo;
     private _pieces: Map<number, Piece>;
@@ -87,8 +88,9 @@ export class Board extends Model {
         this._layers.set(BoardLayer.Pieces, this.scene.add.layer());
 
         this._scene.game.scale.resize(
-            (this._width * Board.DEFAULT_CELLSIZE * 2) + Board.DEFAULT_CELLSIZE * 2, 
-            (this._height * Board.DEFAULT_CELLSIZE) + Board.DEFAULT_CELLSIZE
+            this._width * Board.DEFAULT_CELLSIZE * 2 +
+                Board.DEFAULT_CELLSIZE * 2,
+            this._height * Board.DEFAULT_CELLSIZE + Board.DEFAULT_CELLSIZE
         );
 
         this._scene.cameras.main.setBounds(
@@ -103,6 +105,7 @@ export class Board extends Model {
         this._state = BoardState.Idle;
         this._phase = BoardPhase.Idle;
         this._balance = 0;
+        this._balanceShift = 0;
 
         this._cursor = new Cursor(this);
         this._moveGizmo = new RangeGizmo(this);
@@ -122,7 +125,7 @@ export class Board extends Model {
 
         this.createEffects();
 
-        window['currentBoard'] = this;
+        window["currentBoard"] = this;
     }
 
     /* #region State */
@@ -158,8 +161,12 @@ export class Board extends Model {
         return this._balance;
     }
 
-    set balance(balance: number) {
-        this._balance = balance;
+    get balanceShift(): number {
+        return this._balanceShift;
+    }
+
+    set balanceShift(balance: number) {
+        this._balanceShift = balance;
     }
 
     get cursor(): Cursor {
@@ -189,6 +196,16 @@ export class Board extends Model {
                 piece.reset();
             });
             this._logger.log(`New turn`, Colour.Green);
+            if (this._balanceShift !== 0) {
+                this._balance += this._balanceShift;
+                this._logger.log(
+                    `World balance shifts towards ${
+                        this._balanceShift < 0 ? "Chaos" : "Law"
+                    } by ${Math.abs(this._balanceShift)}`,
+                    this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan
+                );
+                this._balanceShift = 0;
+            }
             this.phase = BoardPhase.Spellbook;
             this.state = BoardState.SelectSpell;
         } else if (this.phase === BoardPhase.Spellbook) {
@@ -239,20 +256,26 @@ export class Board extends Model {
         this._selected = this.getPiece(id);
 
         if (this.phase === BoardPhase.Moving) {
-            const firstEngagingPiece: Piece | null = this._selected.getFirstEngagingPiece();
+            const firstEngagingPiece: Piece | null =
+                this._selected.getFirstEngagingPiece();
 
             if (firstEngagingPiece != null) {
-                if (this._selected.engaged || Phaser.Math.RND.integerInRange(1, firstEngagingPiece.properties.maneuverability) > this._selected.properties.maneuverability) {
+                if (
+                    this._selected.engaged ||
+                    Phaser.Math.RND.integerInRange(
+                        1,
+                        firstEngagingPiece.properties.maneuverability
+                    ) > this._selected.properties.maneuverability
+                ) {
                     await this._selected.engage(firstEngagingPiece);
-                }
-                else {
+                } else {
                     this.logger.log(
-                        `${this._selected.name} disengaged from ${firstEngagingPiece.name}`, Colour.Green
+                        `${this._selected.name} disengaged from ${firstEngagingPiece.name}`,
+                        Colour.Green
                     );
                     await this.moveGizmo.generate(this._selected);
                 }
-            }
-            else {
+            } else {
                 await this.moveGizmo.generate(this._selected);
             }
         }
@@ -320,11 +343,14 @@ export class Board extends Model {
         );
     }
 
-    async movePath(piece: Piece, path:Path) {
+    async movePath(piece: Piece, path: Path) {
         if (!path?.nodes?.length) {
             return;
         }
-        await piece.moveTo(path.nodes.shift().pos, Piece.DEFAULT_STEP_MOVE_DURATION);
+        await piece.moveTo(
+            path.nodes.shift().pos,
+            Piece.DEFAULT_STEP_MOVE_DURATION
+        );
         if (path.nodes.length > 0) {
             await this.movePath(piece, path);
         }
@@ -333,18 +359,19 @@ export class Board extends Model {
     async movePiece(id: number, position: Phaser.Geom.Point): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
-            const path:Path = this.moveGizmo.getPathTo(position);
+            const path: Path = this.moveGizmo.getPathTo(position);
             this.moveGizmo.reset();
-            if (piece.hasStatus(UnitStatus.Flying) || Board.distance(piece.position, position) <= 1.5) {
-                await piece.moveTo(position);    
-            }
-            else {
+            if (
+                piece.hasStatus(UnitStatus.Flying) ||
+                Board.distance(piece.position, position) <= 1.5
+            ) {
+                await piece.moveTo(position);
+            } else {
                 if (path && path.nodes?.length > 1) {
                     // Remove first step, as that's the piece's current position
-                    path.nodes.shift(); 
-                    await this.movePath(piece, path);    
-                }
-                else {
+                    path.nodes.shift();
+                    await this.movePath(piece, path);
+                } else {
                     throw new Error(`No path to ${position.x}, ${position.y}`);
                 }
             }
@@ -354,7 +381,8 @@ export class Board extends Model {
                 piece.currentRider.moved = true;
             }
 
-            const firstEngagingPiece:Piece | null = piece.getFirstEngagingPiece();
+            const firstEngagingPiece: Piece | null =
+                piece.getFirstEngagingPiece();
 
             if (firstEngagingPiece) {
                 await piece.engage(firstEngagingPiece);
@@ -527,15 +555,17 @@ export class Board extends Model {
                             this.logger.log(
                                 `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                             );
-                        }
-                        else {
+                        } else {
                             this.logger.log(
-                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`, Colour.Magenta
+                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
+                                Colour.Magenta
                             );
                         }
                         break;
                     case BoardPhase.Moving:
-                        this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
+                        this.logger.log(
+                            `${this.currentPlayer?.name}'s turn to move`
+                        );
                         break;
                 }
 
@@ -604,17 +634,15 @@ export class Board extends Model {
 
         if (await this.checkWinCondition()) {
             return;
-        };
+        }
 
         if (this._currentPlayerIndex === 0) {
             await this.newTurn();
         }
 
-
         await this.selectPlayer(
             Array.from(this._players.keys())[this._currentPlayerIndex]
         );
-
 
         if (this.currentPlayer?.defeated) {
             return await this.nextPlayer();
@@ -649,7 +677,10 @@ export class Board extends Model {
         if (this._phase === BoardPhase.Casting) {
             await this.selectWizard(this.currentPlayer!);
             if (this.selected && this.currentPlayer?.selectedSpell) {
-                await this.moveGizmo.generateSimpleRange(this.selected.position, this.currentPlayer?.selectedSpell.range);
+                await this.moveGizmo.generateSimpleRange(
+                    this.selected.position,
+                    this.currentPlayer?.selectedSpell.range
+                );
             }
         }
 
@@ -660,7 +691,7 @@ export class Board extends Model {
         ) {
             return await this.nextPlayer();
         }
-        
+
         setTimeout(() => {
             this.cursor.update(true);
         }, 100);
@@ -698,7 +729,11 @@ export class Board extends Model {
         this._layers.set(BoardLayer.Floor, floorLayer);
     }
 
-    async playEffect(type: EffectType, startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point, endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point): Promise<void> {
+    async playEffect(
+        type: EffectType,
+        startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
+        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point
+    ): Promise<void> {
         return new Promise((resolve) => {
             this._particles.addEmitter(
                 new EffectEmitter(
@@ -714,18 +749,6 @@ export class Board extends Model {
 
     createEffects() {
         const effectsLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
-
-        this.scene.anims.create({
-            key: "sparkle",
-            frames: this.scene.anims.generateFrameNames("effects", { prefix: "sparkle", start: 1, end: 3 }),
-            frameRate: 10
-        });
-
-        this.scene.anims.create({
-            key: "dragonfire",
-            frames: this.scene.anims.generateFrameNames("effects", { prefix: "dragonfire", start: 1, end: 3 }),
-            frameRate: 10
-        });
 
         this._particles = this.scene.add.particles("effects");
 

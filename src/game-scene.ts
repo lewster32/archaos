@@ -94,7 +94,28 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        this.testPieces();
+
+        this.anims.create({
+            key: "sparkle",
+            frames: this.anims.generateFrameNames("effects", {
+                prefix: "sparkle",
+                start: 1,
+                end: 3,
+            }),
+            frameRate: 10,
+        });
+
+        this.anims.create({
+            key: "dragonfire",
+            frames: this.anims.generateFrameNames("effects", {
+                prefix: "dragonfire",
+                start: 1,
+                end: 3,
+            }),
+            frameRate: 10,
+        });
+
+        this.testGame();
     }
 
     getRandomSpell(): any {
@@ -233,7 +254,7 @@ export class GameScene extends Phaser.Scene {
         }
         */
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 15; i++) {
             board.addSpell(player, this.getRandomSpell());
             board.addSpell(player2, this.getRandomSpell());
             // board.addSpell(player3, this.getRandomSpell());

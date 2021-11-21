@@ -47,6 +47,9 @@ export class Spell extends Model {
     }
 
     get chance(): number {
+        if (this.balance === 0) {
+            return this._properties.chance;
+        }
         let balanceOffset = this._board.balance;
         if (this.balance < 0) {
             balanceOffset *= -1;
@@ -125,13 +128,17 @@ export class Spell extends Model {
         const castRoll: number = Phaser.Math.RND.frac();
 
         // Prevent failure on subsequent cast of multiple-cast spells
-        if (this._castTimes === this._totalCastTimes && castRoll > this.chance) {
+        if (castRoll > this.chance) {
             return await this.castFail(owner, castingPiece);
         }
         await this._board.playEffect(
             EffectType.WizardCasting,
             castingPiece.sprite.getCenter()
         );
+        if (this._castTimes === this._totalCastTimes) {
+            // TODO: Check how this shift compares to the real game
+            this._board.balanceShift += (this.balance * 0.05);
+        }
         this._castTimes--;
         switch (this._type) {
             case SpellType.Summon:
