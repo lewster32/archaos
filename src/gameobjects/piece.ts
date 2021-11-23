@@ -39,6 +39,7 @@ export class Piece extends Entity {
     protected _attacked: boolean;
     protected _rangedAttacked: boolean;
     protected _engaged: boolean;
+    protected _illusion: boolean;
 
     protected _state: PieceState;
 
@@ -85,6 +86,8 @@ export class Piece extends Entity {
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
+
+        this._illusion = !!config.illusion;
 
         setTimeout(() => {
             this.initSprites();
@@ -216,6 +219,10 @@ export class Piece extends Entity {
 
     set engaged(engaged: boolean) {
         this._engaged = engaged;
+    }
+
+    get illusion(): boolean {
+        return this._illusion;
     }
 
     get properties(): IUnitProperties {

@@ -127,6 +127,9 @@ export class GameScene extends Phaser.Scene {
 
     getRandomSpell(): any {
         const spellNames: string[] = Object.values(spells).map((spell: any) => spell.name);
+
+        // Remove Disbelieve from random pool
+        spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
         
         return this.getSpellProperties(spellNames[Math.floor(Math.random() * spellNames.length)]);
     }
@@ -149,6 +152,7 @@ export class GameScene extends Phaser.Scene {
         return {
             id: key,
             name: spell.name,
+            description: spell.description,
             chance: spell.chance,
             balance: spell.balance,
             unitId: spell.unitId,
@@ -159,7 +163,8 @@ export class GameScene extends Phaser.Scene {
             range: spell.range,
             damage: spell.damage,
             lineOfSight: spell.lineOfSight,
-            projectile: spell.projectile
+            projectile: spell.projectile,
+            persist: spell.persist
         };
     }
 
@@ -268,6 +273,9 @@ export class GameScene extends Phaser.Scene {
             // board.addSpell(player3, this.getRandomSpell());
             // board.addSpell(player4, this.getRandomSpell());
         }
+
+        board.addSpell(player, this.getSpellProperties("disbelieve"));
+        board.addSpell(player2, this.getSpellProperties("disbelieve"));
 
         // board.addSpell(player, this.getSpellProperties("vampire"));
         // board.addSpell(player, this.getSpellProperties("wall"));

@@ -3,6 +3,7 @@ export interface SpellConfig {
     chance: number;
     balance: number;
     name: string;
+    description?: string;
 
     unitId?: string;
     allowIllusion?: boolean;
@@ -15,4 +16,5 @@ export interface SpellConfig {
     lineOfSight?: boolean;
 
     projectile?: string;
+    persist?: boolean;
 }

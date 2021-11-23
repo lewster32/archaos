@@ -59,6 +59,9 @@ UnitStats;
                         spell.castTimes
                     }}</span>
                 </p>
+                <div v-if="spell.description">
+                    <p class="spellinfo__description">{{ spell.description }}</p>
+                </div>
                 <div v-if="spell.unitProperties">
                     <UnitStats :unit="spell.unitProperties" />
                 </div>
@@ -150,7 +153,7 @@ export default {
         flex: 1 1 auto;
     }
     &__inner {
-        min-width: 340px;
+        min-width: 360px;
         max-width: 480px;
         display: flex;
         justify-content: center;
@@ -164,6 +167,10 @@ export default {
         z-index: 100;
         right: 2em;
         top: 2em;
+    }
+    &__description {
+        margin: .5em 0;
+        font-style: italic;
     }
 }
 

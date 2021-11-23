@@ -4,6 +4,22 @@ SpellInfo;
 </script>
 
 <template>
+    <div class="modal" v-if="illusionPrompt">
+        <div class="callout">
+            <p>Cast {{ currentSpell.name }} as illusion?</p>
+            <div class="callout__buttons">
+                <button class="spellinfo__select button button--green button--important" @click="selectIllusion(true)">
+                    Yes
+                </button>
+                <button class="spellinfo__select button button--red button--important" @click="selectIllusion(false)">
+                    No
+                </button>
+                <button class="spellinfo__select button" @click="closeIllusion()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
     <div class="spellbook" v-if="show">
         <button class="spellbook__toggle button button--small" @click="toggle()">
             {{ minimised ? "&lt;" : "&gt;" }}
@@ -45,7 +61,7 @@ SpellInfo;
                 Skip selection
             </button>
         </div>
-        <SpellInfo :spell="currentSpell" @close="closeInfo()" @select="select(currentSpell)" />
+        <SpellInfo v-if="!illusionPrompt" :spell="currentSpell" @close="closeInfo()" @select="select(currentSpell)" />
     </div>
 </template>
 
@@ -63,6 +79,7 @@ export default {
         return {
             minimised: true as boolean,
             currentSpell: null as any,
+            illusionPrompt: false as boolean
         };
     },
     computed: {
@@ -83,9 +100,25 @@ export default {
         },
     },
     methods: {
-        select(spell: Spell) {
-            this.$emit("select", spell);
+        selectIllusion(illusion: boolean) {
+            this.illusionPrompt = false;
+            this.currentSpell.illusion = !!illusion;
+            this.$emit("select", this.currentSpell);
             this.closeInfo();
+        },
+        closeIllusion() {
+            this.illusionPrompt = false;
+            this.closeInfo();
+        },
+        select(spell: Spell) {
+            this.currentSpell = spell;
+            if (spell.allowIllusion) {
+                this.illusionPrompt = true;
+            }
+            else {
+                this.$emit("select", spell);
+                this.closeInfo();
+            }
         },
         info(spell: Spell) {
             this.currentSpell = spell;
@@ -97,7 +130,10 @@ export default {
         },
         spellsByChance() {
             return (this.data as any)?.spells.sort((a: Spell, b: Spell) => {
-                return b.chance - a.chance;
+                if (b.chance != a.chance) {
+                    return b.chance - a.chance;
+                }
+                return a.name.localeCompare(b.name);
             });
         },
         getImageUrl(spell: Spell) {

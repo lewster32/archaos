@@ -96,7 +96,12 @@ export class Player extends Model {
     async discardSpell(): Promise<Spell | null> {
         if (this._selectedSpell) {
             const spell: Spell = this._selectedSpell;
-            this._spells.delete(this._selectedSpell.id);
+            if (!spell.persist) {
+                this._spells.delete(this._selectedSpell.id);
+            }
+            else {
+                spell.resetCastTimes();
+            }
             this._selectedSpell = null;
             return spell;
         }

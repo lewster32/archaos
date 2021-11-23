@@ -18,8 +18,14 @@ export class Spell extends Model {
     private _totalCastTimes: number;
     private _castTimes: number;
     private _failed: boolean;
+    private _illusion: boolean;
 
-    constructor(board: Board, id: number, config: SpellConfig) {
+    constructor(
+        board: Board,
+        id: number,
+        config: SpellConfig,
+        illusion?: boolean
+    ) {
         super(id);
         this._board = board;
 
@@ -35,6 +41,7 @@ export class Spell extends Model {
         this._castTimes = config.castTimes || 1;
         this._totalCastTimes = this._castTimes;
         this._failed = false;
+        this._illusion = !!illusion;
     }
 
     get spellId(): string {
@@ -76,10 +83,24 @@ export class Spell extends Model {
         return this._properties.damage || 0;
     }
 
+    get illusion() {
+        return this._illusion;
+    }
+
+    set illusion(state: boolean) {
+        this._illusion = state;
+    }
+
+    get persist(): boolean {
+        return this._properties.persist || false;
+    }
+
     get allowIllusion(): boolean {
-        return typeof this._properties.allowIllusion == "undefined"
-            ? true
-            : this._properties.allowIllusion;
+        return (
+            (typeof this._properties.allowIllusion === "undefined" ||
+                this._properties.allowIllusion === true) &&
+            this.type === SpellType.Summon
+        );
     }
 
     get unitId(): string {
@@ -96,6 +117,23 @@ export class Spell extends Model {
 
     get failed(): boolean {
         return this._failed;
+    }
+
+    get description(): string {
+        if (this._properties.description) {
+            return this._properties.description;
+        }
+        if (this._type === SpellType.Summon) {
+            return `Summon a ${this.name}`;
+        }
+        if (this._type === SpellType.Attack) {
+            return `Attack with ${this.name}`;
+        }
+        return `Cast ${this.name}`;
+    }
+
+    resetCastTimes(): void {
+        this._castTimes = this._totalCastTimes;
     }
 
     inCastingRange(
@@ -125,11 +163,11 @@ export class Spell extends Model {
         owner: Player,
         castingPiece: Piece,
         point: Phaser.Geom.Point,
-        _targets: Piece[],
+        _targets: Piece[]
     ): Promise<Piece | boolean | null> {
         const castPoint: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
 
-        const castRollSuccess: boolean = this._board.rollChance(this.chance);
+        const castRollSuccess: boolean = this.illusion || this._board.rollChance(this.chance);
 
         // Prevent failure on subsequent cast of multiple-cast spells
         if (this._castTimes === this._totalCastTimes && !castRollSuccess) {
@@ -137,7 +175,7 @@ export class Spell extends Model {
         }
         if (this._castTimes === this._totalCastTimes) {
             // TODO: Check how this shift compares to the real game
-            this._board.balanceShift += (this.balance * 0.05);
+            this._board.balanceShift += this.balance * 0.05;
         }
         this._castTimes--;
         switch (this._type) {
@@ -149,7 +187,7 @@ export class Spell extends Model {
         return null;
     }
 
-    async castFail(owner: Player, castingPiece:Piece): Promise<null> {
+    async castFail(owner: Player, castingPiece: Piece): Promise<null> {
         this._failed = true;
         this._castTimes = 0;
         await this._board.playEffect(
@@ -159,7 +197,11 @@ export class Spell extends Model {
         return null;
     }
 
-    async castAttack(owner: Player, castingPiece: Piece, targets: Piece[]): Promise<boolean> {
+    async castAttack(
+        owner: Player,
+        castingPiece: Piece,
+        targets: Piece[]
+    ): Promise<boolean> {
         if (targets.length === 0) {
             throw new Error("No targets for attack spell");
         }
@@ -179,13 +221,17 @@ export class Spell extends Model {
         }
 
         if (beamEffect) {
-            await this._board.playEffect(beamEffect,
+            await this._board.playEffect(
+                beamEffect,
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter()
             );
         }
 
-        const rollSuccess: boolean = this._board.roll(this._properties.damage, target.properties.magicResistance);
+        const rollSuccess: boolean = this._board.roll(
+            this._properties.damage,
+            target.properties.magicResistance
+        );
 
         if (rollSuccess) {
             await target.kill();
@@ -203,7 +249,11 @@ export class Spell extends Model {
         return true;
     }
 
-    async castSummon(owner: Player, castingPiece: Piece, point: Phaser.Geom.Point): Promise<Piece> {
+    async castSummon(
+        owner: Player,
+        castingPiece: Piece,
+        point: Phaser.Geom.Point
+    ): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
         await this._board.playEffect(
@@ -243,6 +293,7 @@ export class Spell extends Model {
             shadowScale: unit.shadowScale,
             offsetY: unit.offY,
             owner: owner,
+            illusion: !!this._illusion,
         });
 
         newPiece.turnOver = true;

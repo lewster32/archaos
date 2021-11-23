@@ -13,6 +13,7 @@ export interface PieceConfig extends UnitConfig {
     properties?: IUnitProperties;
     shadowScale?: number;
     offsetY?: number;
+    illusion?: boolean;
 }
 
 export interface WizardConfig extends UnitConfig {

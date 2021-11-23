@@ -245,6 +245,18 @@
             "projectile": "lightning",
             "damage": 6,
             "name": "Lightning"
+        },
+        "disbelieve": {
+            "balance": 0,
+            "chance": 1,
+            "castOnEnemyUnit": true,
+            "castOnWizard": false,
+            "lineOfSight": false,
+            "range": 100,
+            "projectile": "disbelieve",
+            "name": "Disbelieve",
+            "persist": true,
+            "description": "Dismiss any illusionary creature. Always succeeds, and always available."
         }
     }
 }
