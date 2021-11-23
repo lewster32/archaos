@@ -90,6 +90,12 @@
             "unitId": "14",
             "name": "Manticore"
         },
+        "bat": {
+            "chance": 0.8,
+            "balance": -1,
+            "unitId": "15",
+            "name": "Bat"
+        },
         "green-dragon": {
             "chance": 0.1,
             "balance": -1,

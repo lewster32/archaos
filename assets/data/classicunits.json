@@ -263,8 +263,7 @@
             "status": ["flying"],
             "name": "Green Dragon",
             "animFrames": [0, 1, 2, 1],
-            "animSpeed": 8,
-            "offY": 1
+            "animSpeed": 8
         },
         "17": {
             "attackType": "attacked",
@@ -282,8 +281,7 @@
             "status": ["flying"],
             "name": "Red Dragon",
             "animFrames": [0, 1, 2, 1],
-            "animSpeed": 8,
-            "offY": 2
+            "animSpeed": 8
         },
         "18": {
             "attackType": "attacked",

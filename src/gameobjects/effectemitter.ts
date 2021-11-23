@@ -74,7 +74,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     gravityY: 60,
                     speedX: { min: -10, max: 10 },
                     lifespan: 400,
-                    alpha: { start: 1, end: 0 },
+                    scale: { start: 1, end: 0 },
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
                     blendMode: Phaser.BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
@@ -210,7 +210,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedY: { min: -10, max: -100 },
                     lifespan: 400,
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
-                    alpha: { start: 1, end: 0 },
+                    scale: { start: 1, end: 0 },
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };

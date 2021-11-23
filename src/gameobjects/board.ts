@@ -806,15 +806,14 @@ export class Board extends Model {
     }
 
     roll(attack: number, defense: number): boolean {
-        // return false;
         const attackRoll: number = Phaser.Math.Between(0, attack);
         const defenseRoll: number = Phaser.Math.Between(0, defense);
         return attackRoll > defenseRoll;
     }
 
-    rollChance(defense: number): boolean {
-        // return true;
-        return Phaser.Math.RND.frac() > defense;
+    rollChance(attack: number): boolean {
+        const defenseRoll: number = Phaser.Math.RND.frac();
+        return attack > defenseRoll;
     }
 
     static distance(a: Phaser.Geom.Point, b: Phaser.Geom.Point): number {

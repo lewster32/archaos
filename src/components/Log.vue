@@ -64,8 +64,10 @@ export default {
         min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
         &--minimised {
-            min-height: 2.5em;
-            height: 2.5em;
+            // min-height: 2.5em;
+            // height: 2.5em;
+            height: auto;
+            min-height: 0;
             .game-log__item:not(:first-child) {
                 display: none;
             }

@@ -122,7 +122,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getRandomSpell(): any {
@@ -376,34 +376,36 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
+        /**/
         board.addSpell(player, this.getSpellProperties("lightning"));
         board.addSpell(player, this.getSpellProperties("magic bolt"));
 
         board.addSpell(player2, this.getSpellProperties("lightning"));
         board.addSpell(player2, this.getSpellProperties("magic bolt"));
-
-        /*
+        /**/
 
         board.addPiece({
-            ...this.getPieceProperties("elf"),
+            ...this.getPieceProperties("red dragon"),
             owner: player,
             x: 4,
             y: 5
         });
 
         board.addPiece({
-            ...this.getPieceProperties("centaur"),
+            ...this.getPieceProperties("green dragon"),
             owner: player,
             x: 4,
             y: 3
         });
 
         board.addPiece({
-            ...this.getPieceProperties("manticore"),
+            ...this.getPieceProperties("golden dragon"),
             owner: player,
             x: 4,
             y: 7
         });
+
+        /*
 
         board.addPiece({
             ...this.getPieceProperties("ghost"),

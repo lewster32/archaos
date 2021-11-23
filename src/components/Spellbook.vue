@@ -135,12 +135,12 @@ export default {
         z-index: 2;
     }
     &__inner {
-        width: 360px;
+        max-width: 360px;
         display: flex;
         flex-direction: column;
-        transition: width 0.25s, opacity 0.25s;
+        transition: max-width 0.25s, opacity 0.25s;
         &--minimised {
-            width: 0;
+            max-width: 0;
             opacity: 0;
         }
     }
@@ -161,7 +161,7 @@ export default {
         flex: 1 1 auto;
         overflow-y: scroll;
         margin-bottom: 1em;
-        padding-right: .5em;
+        // padding-right: .5em;
         &::-webkit-scrollbar {
             width: 0.5em;
         }

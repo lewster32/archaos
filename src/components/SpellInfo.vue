@@ -22,7 +22,7 @@ UnitStats;
                     }}</span>
                 </p>
                 <p class="spell-stats__item">
-                    <span class="spell-stats__label">Casting chance:</span>
+                    <span class="spell-stats__label">Chance:</span>
                     <span
                         :style="`color: var(--spell-chance-colour-${chanceRounded(
                             spell.chance
@@ -35,11 +35,11 @@ UnitStats;
                     >
                 </p>
                 <p v-if="spell.damage" class="spell-stats__item">
-                    <span class="spell-stats__label">Magic damage:</span>
+                    <span class="spell-stats__label">Damage:</span>
                     <span class="spell-stats__value">{{ spell.damage }}</span>
                 </p>
                 <p v-if="spell.range > 1.5" class="spell-stats__item">
-                    <span class="spell-stats__label">Casting range:</span>
+                    <span class="spell-stats__label">Range:</span>
                     <span class="spell-stats__value">{{ spell.range }}</span>
                 </p>
                 <p class="spell-stats__item">
@@ -137,7 +137,7 @@ export default {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 3;
+    z-index: 51;
     padding: 1em;
     &__image {
         width: 96px;
@@ -150,7 +150,7 @@ export default {
         flex: 1 1 auto;
     }
     &__inner {
-        min-width: 400px;
+        min-width: 340px;
         max-width: 480px;
         display: flex;
         justify-content: center;
@@ -176,7 +176,7 @@ export default {
     }
     &__label {
         color: var(--color-cyan);
-        flex: 0 0 8em;
+        flex: 0 0 10ch;
     }
     &__value {
         flex: 1 1 auto;
