@@ -6,7 +6,7 @@ SpellInfo;
 <template>
     <div class="modal" v-if="illusionPrompt">
         <div class="callout">
-            <p>Cast {{ currentSpell.name }} as illusion?</p>
+            <p class="callout__title">Cast {{ currentSpell.name }} as illusion?</p>
             <div class="callout__buttons">
                 <button class="spellinfo__select button button--green button--important" @click="selectIllusion(true)">
                     Yes

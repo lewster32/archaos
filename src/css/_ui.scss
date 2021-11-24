@@ -26,6 +26,11 @@
             flex: 1 1 auto;
         }
     }
+
+    &__title {
+        font-size: 2em;
+        text-align: center;
+    }
 }
 
 .modal {

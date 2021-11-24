@@ -93,7 +93,7 @@ export class Rules {
                                 } else if (
                                     selectedSpell.properties.id ===
                                         "disbelieve" &&
-                                    !currentAliveHoveredPiece?.canDisbelieve
+                                    !hoveredPieces?.find((p: Piece) => p.canDisbelieve)
                                 ) {
                                     return ActionType.Invalid;
                                 }

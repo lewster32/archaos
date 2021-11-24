@@ -345,20 +345,19 @@ export class Spell extends Model {
         targets: Piece[]
     ): Promise<boolean> {
         if (this.properties.id === "disbelieve") {
-            const target: Piece = targets[0];
+            const target: Piece = targets.find((p: Piece) => p.canDisbelieve);
+            if (!target) {
+                return false;
+            }
             await this._board.playEffect(
                 EffectType.DisbelieveBeam,
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter()
             );
             if (target.illusion) {
-                target.destroy();
+                await target.kill();
                 this._board.logger.log(
                     `Disbelieve succeeded on illusionary ${target.name}`
-                );
-                await this._board.playEffect(
-                    EffectType.DisbelieveHit,
-                    target.sprite.getCenter()
                 );
                 await Board.delay(1000);
             }

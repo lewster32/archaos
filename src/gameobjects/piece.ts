@@ -395,6 +395,7 @@ export class Piece extends Entity {
 
     get canDisbelieve(): boolean {
         return this.type === UnitType.Creature &&
+            !this.hasStatus(UnitStatus.Wizard) &&
             !this.hasStatus(UnitStatus.Structure) &&
             !this.hasStatus(UnitStatus.Spreads) &&
             !this.hasStatus(UnitStatus.Tree);
@@ -634,7 +635,14 @@ export class Piece extends Entity {
         }
         this.owner = null;
         this._dead = true;
-        if (this.hasStatus(UnitStatus.NoCorpse)) {
+        if (this.illusion) {
+            await this.board.playEffect(
+                EffectType.DisbelieveHit,
+                this.sprite.getCenter()
+            );
+            this.destroy();
+        }
+        else if (this.hasStatus(UnitStatus.NoCorpse)) {
             this.destroy();
         }
         if (!this._sprite) {
@@ -694,7 +702,7 @@ export class Piece extends Entity {
     }
 
     protected playAnim() {
-        if (!this._sprite) {
+        if (!this._sprite || !this._sprite.anims) {
             return;
         }
         this._sprite.anims.stop();
