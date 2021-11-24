@@ -214,6 +214,38 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.DisbelieveBeam:
+                path = new Phaser.Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -4, max: 4 },
+                    y: { min: -4, max: 4 },
+                    frame: "sparkle1",
+                    gravityY: 60,
+                    quantity: 2,
+                    speedX: { min: -10, max: 10 },
+                    lifespan: 400,
+                    scale: { start: 2, end: .5 },
+                    blendMode: Phaser.BlendModes.ADD,
+                    emitZone: { type: "edge", source: path, quantity: 20 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.DisbelieveHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "sparkle1",
+                    quantity: 2,
+                    speedX: { min: -80, max: 80 },
+                    speedY: { min: -10, max: -150 },
+                    scale: { start: 2, end: 0 },
+                    gravityY: 260,
+                    lifespan: 500,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
         }
     }
 
@@ -238,10 +270,12 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
         switch (this._type) {
             case EffectType.MagicBoltBeam:
             case EffectType.WizardCasting:
+            case EffectType.DisbelieveHit:
             case EffectType.WizardCastFail:
                 duration = 500;
                 break;
             case EffectType.WizardCastBeam:
+            case EffectType.DisbelieveBeam:
                 duration = 300;
                 break;
             case EffectType.LightningHit:
@@ -331,5 +365,7 @@ export enum EffectType {
     MagicBoltHit,
     LightningBeam,
     LightningHit,
-    SummonPiece
+    SummonPiece,
+    DisbelieveBeam,
+    DisbelieveHit,
 }

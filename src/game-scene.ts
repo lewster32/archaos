@@ -162,6 +162,8 @@ export class GameScene extends Phaser.Scene {
             castTimes: spell.castTimes,
             range: spell.range,
             damage: spell.damage,
+            castOnEnemyUnit: spell.castOnEnemyUnit,
+            castOnWizard: spell.castOnWizard,
             lineOfSight: spell.lineOfSight,
             projectile: spell.projectile,
             persist: spell.persist
@@ -428,11 +430,11 @@ export class GameScene extends Phaser.Scene {
         /**
         setTimeout(async () => {
             console.time("Start cast");
-            await board.playEffect(EffectType.LightningBeam,
+            await board.playEffect(EffectType.DisbelieveBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.LightningHit,
+            await board.playEffect(EffectType.DisbelieveHit,
                 board.pieces[1].sprite.getCenter()
             );
             console.timeEnd("Start cast");

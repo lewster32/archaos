@@ -5,6 +5,7 @@ import { Colour } from "../enums/colour";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
 import { SpellType } from "../enums/spelltype";
+import { UnitStatus } from "../enums/unitstatus";
 import { Piece } from "../piece";
 import { Spell } from "../spell";
 
@@ -59,14 +60,62 @@ export class Rules {
                     ) &&
                     selectedSpell.canCastAtPosition(board.cursor.position)
                 ) {
-                    if (
-                        selectedSpell.type === SpellType.Summon &&
-                        !currentAliveHoveredPiece
-                    ) {
-                        return ActionType.Cast;
-                    }
-                    else if (selectedSpell.type === SpellType.Attack && currentAliveHoveredPiece) {
-                        return ActionType.Cast;
+                    switch (selectedSpell.type) {
+                        case SpellType.Summon:
+                            if (!currentAliveHoveredPiece) {
+                                return ActionType.Cast;
+                            }
+                            break;
+                        case SpellType.Attack:
+                            if (
+                                currentAliveHoveredPiece &&
+                                !currentAliveHoveredPiece.hasStatus(
+                                    UnitStatus.Invulnerable
+                                )
+                            ) {
+                                return ActionType.Cast;
+                            }
+                            break;
+                        case SpellType.Misc:
+                            if (
+                                selectedSpell.properties.castOnEnemyUnit &&
+                                currentAliveHoveredPiece &&
+                                currentAliveHoveredPiece.owner !==
+                                    board.currentPlayer
+                            ) {
+                                if (
+                                    !selectedSpell.properties.castOnWizard &&
+                                    currentAliveHoveredPiece.hasStatus(
+                                        UnitStatus.Wizard
+                                    )
+                                ) {
+                                    return ActionType.Invalid;
+                                } else if (
+                                    selectedSpell.properties.id ===
+                                        "disbelieve" &&
+                                    !currentAliveHoveredPiece?.canDisbelieve
+                                ) {
+                                    return ActionType.Invalid;
+                                }
+                                return ActionType.Cast;
+                            }
+                            if (
+                                selectedSpell.properties.castOnFriendlyUnit &&
+                                currentAliveHoveredPiece &&
+                                currentAliveHoveredPiece.owner ===
+                                    board.currentPlayer
+                            ) {
+                                if (
+                                    !selectedSpell.properties.castOnWizard &&
+                                    currentAliveHoveredPiece.hasStatus(
+                                        UnitStatus.Wizard
+                                    )
+                                ) {
+                                    return ActionType.Invalid;
+                                }
+                                return ActionType.Cast;
+                            }
+                            break;
                     }
                 }
                 return ActionType.Invalid;
@@ -185,7 +234,9 @@ export class Rules {
                     await board.currentPlayer.useSpell();
                 if (casted) {
                     board.state = BoardState.Idle;
-                    board.logger.log(`${board.currentPlayer.name} casts '${casted.name}'`);
+                    board.logger.log(
+                        `${board.currentPlayer.name} casts '${casted.name}'`
+                    );
                     await casted.cast(
                         board.currentPlayer,
                         board.selected,
@@ -201,9 +252,10 @@ export class Rules {
                         board.selected.turnOver = true;
                         board.deselectPlayer();
                         return ActionType.None;
-                    }
-                    else {
-                        board.logger.log(`${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`);
+                    } else {
+                        board.logger.log(
+                            `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
+                        );
                     }
                     return ActionType.Cast;
                 }
@@ -226,7 +278,9 @@ export class Rules {
                         EventType.PieceInfo,
                         currentAliveHoveredPiece.currentRider
                     );
-                    await board.selectPiece(currentAliveHoveredPiece.currentRider.id);
+                    await board.selectPiece(
+                        currentAliveHoveredPiece.currentRider.id
+                    );
                     board.state = BoardState.Dismount;
                     return ActionType.Dismount;
                 } else if (
@@ -321,7 +375,9 @@ export class Rules {
                 const wasted: Spell | null =
                     await board.currentPlayer.discardSpell();
                 if (wasted) {
-                    board.logger.log(`Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`);
+                    board.logger.log(
+                        `Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`
+                    );
                 }
                 if (board.selected) {
                     board.selected.turnOver = true;

@@ -2,6 +2,7 @@ import { Board } from "./board";
 import { PieceConfig } from "./configs/piececonfig";
 import { SpellConfig } from "./configs/spellconfig";
 import { EffectType } from "./effectemitter";
+import { Colour } from "./enums/colour";
 import { SpellType } from "./enums/spelltype";
 import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
 import { UnitStatus } from "./enums/unitstatus";
@@ -105,6 +106,10 @@ export class Spell extends Model {
 
     get unitId(): string {
         return this._properties.unitId || "";
+    }
+
+    get properties(): SpellConfig {
+        return this._properties;
     }
 
     get unitProperties(): PieceConfig {
@@ -213,6 +218,8 @@ export class Spell extends Model {
                 return await this.castSummon(owner, castingPiece, castPoint);
             case SpellType.Attack:
                 return await this.castAttack(owner, castingPiece, _targets);
+            case SpellType.Misc:
+                return await this.castMisc(owner, castingPiece, castPoint, _targets);
         }
         return null;
     }
@@ -329,5 +336,42 @@ export class Spell extends Model {
         newPiece.turnOver = true;
 
         return newPiece;
+    }
+
+    async castMisc(
+        owner: Player,
+        castingPiece: Piece,
+        point: Phaser.Geom.Point,
+        targets: Piece[]
+    ): Promise<boolean> {
+        if (this.properties.id === "disbelieve") {
+            const target: Piece = targets[0];
+            await this._board.playEffect(
+                EffectType.DisbelieveBeam,
+                castingPiece.sprite.getCenter(),
+                target.sprite.getCenter()
+            );
+            if (target.illusion) {
+                target.destroy();
+                this._board.logger.log(
+                    `Disbelieve succeeded on illusionary ${target.name}`
+                );
+                await this._board.playEffect(
+                    EffectType.DisbelieveHit,
+                    target.sprite.getCenter()
+                );
+                await Board.delay(1000);
+            }
+            else {
+                this._board.logger.log(
+                    `Disbelieve failed on non-illusionary ${target.name}`,
+                    Colour.Magenta
+                );
+                await Board.delay(2000);
+            }
+            return true;
+        }
+
+        return false;
     }
 }

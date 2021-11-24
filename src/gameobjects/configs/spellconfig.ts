@@ -17,4 +17,8 @@ export interface SpellConfig {
 
     projectile?: string;
     persist?: boolean;
+
+    castOnEnemyUnit?: boolean;
+    castOnFriendlyUnit?: boolean;
+    castOnWizard?: boolean;
 }

@@ -393,6 +393,13 @@ export class Piece extends Entity {
         return true;
     }
 
+    get canDisbelieve(): boolean {
+        return this.type === UnitType.Creature &&
+            !this.hasStatus(UnitStatus.Structure) &&
+            !this.hasStatus(UnitStatus.Spreads) &&
+            !this.hasStatus(UnitStatus.Tree);
+    }
+
     get canAttack(): boolean {
         const neighbours: Piece[] = this.getNeighbours();
 

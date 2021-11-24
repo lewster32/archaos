@@ -34,7 +34,8 @@ export class Board extends Model {
     static DEFAULT_WIDTH: number = 13;
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
-
+    
+    static DEFAULT_DELAY: number = 1000;
     static END_TURN_DELAY: number = 1000;
 
     static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
@@ -843,6 +844,14 @@ export class Board extends Model {
             point.x + point.y / 2,
             point.y - point.x / 2
         );
+    }
+
+    static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, time);
+        });
     }
 
     /* #endregion */
