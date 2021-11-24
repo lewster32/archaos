@@ -123,13 +123,43 @@ export class Spell extends Model {
         if (this._properties.description) {
             return this._properties.description;
         }
+        let description: string = "";
         if (this._type === SpellType.Summon) {
-            return `Summon a ${this.name}`;
+            description += ` Summon a ${this.name}.`;
+            const unitConfig: any = Piece.getUnitConfig(this.unitId);
+            if (unitConfig?.status?.includes("undead")) {
+                description += ` Undead units cannot usually be attacked by the living.`;
+            }
+            if (unitConfig?.status?.includes("mount")) {
+                if (unitConfig?.status?.includes("struct")) {
+                    description += ` Can be occupied by the owning wizard.`;
+                }
+                else {  
+                    description += ` Can be ridden by the owning wizard.`;
+                }
+            }
+            if (unitConfig?.status?.includes("expires")) {
+                description += ` Has a random chance to expire each turn.`;
+            }
         }
         if (this._type === SpellType.Attack) {
-            return `Attack with ${this.name}`;
+            description += ` Attack with ${this.name}.`;
         }
-        return `Cast ${this.name}`;
+        if (this.chance < 0.3) {
+            if (this.balance < 0) {
+                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting until the world is more chaotic.</span>`;   
+            }
+            else if (this.balance > 0) {
+                description += `<br /><span class='c-cyan'>Unlikely to succeed in casting until the world is more lawful.</span>`;   
+            }
+            else {
+                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting.</span>`;   
+            }
+        }
+        if (description) {
+            return description.trim();
+        }
+        return `Cast ${this.name}.`;
     }
 
     resetCastTimes(): void {

@@ -60,7 +60,7 @@ UnitStats;
                     }}</span>
                 </p>
                 <div v-if="spell.description">
-                    <p class="spellinfo__description">{{ spell.description }}</p>
+                    <p class="spellinfo__description" v-html="spell.description"></p>
                 </div>
                 <div v-if="spell.unitProperties">
                     <UnitStats :unit="spell.unitProperties" />
@@ -170,7 +170,7 @@ export default {
     }
     &__description {
         margin: .5em 0;
-        font-style: italic;
+        line-height: 1.4;
     }
 }
 

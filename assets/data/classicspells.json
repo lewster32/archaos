@@ -172,7 +172,8 @@
             "castTimes": 6,
             "allowIllusion": false,
             "unitId": "21",
-            "name": "Magic Wood"
+            "name": "Magic Wood",
+            "description": "Plants six trees which can be hidden in by wizards. Randomly expires and grants a new spell if a wizard is currently occupying."
         },
         "shadow-wood": {
             "chance": 0.4,
@@ -183,7 +184,8 @@
             "castTimes": 6,
             "allowIllusion": false,
             "unitId": "22",
-            "name": "Shadow Wood"
+            "name": "Shadow Wood",
+            "description": "Plants six trees which can attack adjacent creatures and wizards."
         },
         "magic-fire": {
             "chance": 0.8,
@@ -192,7 +194,8 @@
             "range": 6,
             "allowIllusion": false,
             "unitId": "23",
-            "name": "Magic Fire"
+            "name": "Magic Fire",
+            "description": "Slowly and randomly spreads around the map, destroying creatures and wizards."
         },
         "gooey-blob": {
             "chance": 0.9,
@@ -201,7 +204,8 @@
             "range": 6,
             "allowIllusion": false,
             "unitId": "24",
-            "name": "Gooey Blob"
+            "name": "Gooey Blob",
+            "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Wizards are defeated if engulfed."
         },
         "magic-castle": {
             "chance": 0.5,
@@ -224,7 +228,8 @@
             "castTimes": 4,
             "range": 4,
             "unitId": "27",
-            "name": "Wall"
+            "name": "Wall",
+            "description": "Builds four walls which cannot be attacked or passed by land-based units."
         },
         "magic-bolt": {
             "balance": 0,
