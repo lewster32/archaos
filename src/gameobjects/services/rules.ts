@@ -2,6 +2,7 @@ import { Board } from "../board";
 import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
 import { Colour } from "../enums/colour";
+import { CursorType } from "../enums/cursortype";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
 import { SpellType } from "../enums/spelltype";
@@ -258,6 +259,15 @@ export class Rules {
                         board.logger.log(
                             `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
                         );
+                        if (casted.lineOfSight) {
+                            await board.moveGizmo.generateSimpleRange(
+                                board.selected.position,
+                                board.currentPlayer?.selectedSpell.range,
+                                CursorType.RangeCast,
+                                true,
+                                true
+                            );
+                        }
                     }
                     return ActionType.Cast;
                 }

@@ -205,9 +205,11 @@ export class RangeGizmo {
         position: Phaser.Geom.Point,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
-        lineOfSight?: boolean
+        lineOfSight?: boolean,
+        force?: boolean
     ): Promise<void> {
         if (
+            !force &&
             Phaser.Geom.Point.Equals(position, this.lastSimplePosition) &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
@@ -265,8 +267,8 @@ export class RangeGizmo {
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(
+                duration: force ? 0 : RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: force ? 0 : this._board.scene.tweens.stagger(
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "first",
