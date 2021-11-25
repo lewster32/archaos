@@ -364,7 +364,7 @@ export class Piece extends Entity {
     inRangedAttackRange(point: Phaser.Geom.Point): boolean {
         if (
             Board.distance(this.position, point) >
-            this.properties.range + 0.5
+            this.properties.range
         ) {
             return false;
         }
