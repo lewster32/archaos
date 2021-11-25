@@ -257,7 +257,7 @@
             "castOnEnemyUnit": true,
             "castOnWizard": false,
             "lineOfSight": false,
-            "range": 100,
+            "range": -1,
             "projectile": "disbelieve",
             "name": "Disbelieve",
             "persist": true,

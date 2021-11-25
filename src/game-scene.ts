@@ -206,159 +206,43 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-
     testGame(): void {
         const board: Board = new Board(this, 1, 13, 13);
 
-        const player: Player = board.addPlayer({
+        const p1: Player = board.addPlayer({
             name: "Gandalf",
         });
 
-        const player2: Player = board.addPlayer({
+        const p2: Player = board.addPlayer({
             name: "Merlin",
         });
 
-        /*
-        const player3: Player = board.addPlayer({
+
+        const p3: Player = board.addPlayer({
             name: "Glinda",
         });
 
-        const player4: Player = board.addPlayer({
+        const p4: Player = board.addPlayer({
             name: "Morgana",
         });
-        */
 
-        board.addWizard({
-            owner: player,
-            x: Math.floor(board.width / 2),
-            y: board.height - 2,
-            wizCode: Wizard.randomWizCode(),
-        });
+        board.createWizards();
 
-        board.addWizard({
-            owner: player2,
-            x: Math.floor(board.width / 2),
-            y: 1,
-            wizCode: Wizard.randomWizCode(),
-        });
-
-        /*
-
-        board.addWizard({
-            owner: player3,
-            x: 0,
-            y: Math.floor(board.height / 2),
-            wizCode: "0307070000",
-        });
-
-        board.addWizard({
-            owner: player4,
-            x: board.width - 1,
-            y: Math.floor(board.height / 2),
-            wizCode: "0205050000",
-        });
-
-        */
-
-        /*
-        for (let [key, spell] of Object.entries(spells)) {
-            board.addSpell(player, this.getSpellProperties(spell.name));
-            board.addSpell(player2, this.getSpellProperties(spell.name));
-            board.addSpell(player3, this.getSpellProperties(spell.name));
-            board.addSpell(player4, this.getSpellProperties(spell.name));
-        }
-        */
-
-        for (let i = 0; i < 15; i++) {
-            board.addSpell(player, this.getRandomSpell());
-            board.addSpell(player2, this.getRandomSpell());
-            // board.addSpell(player3, this.getRandomSpell());
-            // board.addSpell(player4, this.getRandomSpell());
+        for (let i = 0; i < 12; i++) {
+            board.players.forEach((player: Player) => {
+                board.addSpell(player, this.getRandomSpell());
+            });
         }
 
-        board.addSpell(player, this.getSpellProperties("disbelieve"));
-        board.addSpell(player2, this.getSpellProperties("disbelieve"));
-
-        // board.addSpell(player, this.getSpellProperties("vampire"));
-        // board.addSpell(player, this.getSpellProperties("wall"));
+        board.players.forEach((player: Player) => {
+            board.addSpell(player, this.getSpellProperties("disbelieve"));
+        });
 
         setTimeout(() => {
             board.startGame();
         }, 1000);
 
-        /*
-
-        for (let i = 0; i < 2; i++) {
-
-            const randomEmptySpace: Phaser.Geom.Point = board.getRandomEmptySpace();
-
-            board.addWizard({
-                owner: player,
-                x: randomEmptySpace.x,
-                y: randomEmptySpace.y,
-                wizCode: Wizard.randomWizCode()
-            })
-        }
-
-
-        for (let i = 0; i < 1; i++) {
-            for (let [key, unit] of Object.entries(units) as [string, any]) {
-                if ((unit.status as any).includes(UnitStatus.Wizard)) {
-                    continue;
-                }
-
-                const randomEmptySpace: Phaser.Geom.Point =
-                    board.getRandomEmptySpace();
-
-                const piece: Piece = board.addPiece({
-                    type: UnitType.Creature,
-                    x: randomEmptySpace.x,
-                    y: randomEmptySpace.y,
-                    properties: {
-                        id: key,
-                        name: unit.name,
-                        movement: unit.properties.mov,
-                        combat: unit.properties.com,
-                        rangedCombat: unit.properties.rcm,
-                        range: unit.properties.rng,
-                        defense: unit.properties.def,
-                        maneuverability: unit.properties.mnv,
-                        magicResistance: unit.properties.res,
-                        attackDescription: unit.attackType || "attacked",
-                        rangedDescription: unit.rangedDescription || "shot",
-                        status: unit.status || [],
-                    },
-                    shadowScale: unit.shadowScale,
-                    offsetY: unit.offY,
-                    owner: player
-                });
-
-                piece.direction =
-                    Math.random() > 0.5
-                        ? UnitDirection.Left
-                        : UnitDirection.Right;
-            }
-        }
-
-        board.state = BoardState.MovePieces;
-        board.selectPlayer(player.id);
-
-
-
-        setInterval(async () => {
-            const piece: Piece = board.getPiece(
-                Math.floor(Math.random() * board.pieces.length)
-            )!;
-
-            const randomEmptySpace: Phaser.Geom.Point =
-                board.getRandomEmptySpace();
-
-            await piece.moveTo(
-                new Phaser.Geom.Point(randomEmptySpace.x, randomEmptySpace.y)
-            );
-        }, Piece.DEFAULT_MOVE_DURATION);
-
-        */
+ 
     }
 
     testPieces(): void {

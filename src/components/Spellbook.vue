@@ -111,6 +111,10 @@ export default {
             this.closeInfo();
         },
         select(spell: Spell) {
+            if (!spell) {
+                this.$emit("select", null);
+                this.closeInfo();                
+            }
             this.currentSpell = spell;
             if (spell.allowIllusion) {
                 this.illusionPrompt = true;

@@ -34,7 +34,7 @@ export class Board extends Model {
     static DEFAULT_WIDTH: number = 13;
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
-    
+
     static DEFAULT_DELAY: number = 1000;
     static END_TURN_DELAY: number = 1000;
 
@@ -237,6 +237,82 @@ export class Board extends Model {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
         return piece;
+    }
+
+    createWizards(): void {
+        if (
+            this.state !== BoardState.Idle ||
+            this.phase !== BoardPhase.Idle ||
+            this.pieces.filter((piece: Piece) =>
+                piece.hasStatus(UnitStatus.Wizard)
+            ).length > 0
+        ) {
+            throw new Error(
+                "Cannot create wizards - game not in initialising state"
+            );
+        }
+        switch (this.players.length) {
+            case 2:
+                this.addWizard({
+                    owner: this.players[0],
+                    x: Math.floor(this.width / 2),
+                    y: this.height - 2,
+                    wizCode: this.players[0].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[1],
+                    x: Math.floor(this.width / 2),
+                    y: 1,
+                    wizCode: this.players[1].wizcode,
+                });
+                break;
+            case 3:
+                this.addWizard({
+                    owner: this.players[0],
+                    x: this.width - 2,
+                    y: this.height - 2,
+                    wizCode: this.players[0].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[1],
+                    x: this.width - 2,
+                    y: 1,
+                    wizCode: this.players[1].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[2],
+                    x: 1,
+                    y: Math.floor(this.height / 2),
+                    wizCode: this.players[2].wizcode,
+                });
+                break;
+            case 4:
+                this.addWizard({
+                    owner: this.players[0],
+                    x: this.width - 2,
+                    y: this.height - 2,
+                    wizCode: this.players[0].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[1],
+                    x: this.width - 2,
+                    y: 1,
+                    wizCode: this.players[1].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[2],
+                    x: 1,
+                    y: 1,
+                    wizCode: this.players[2].wizcode,
+                });
+                this.addWizard({
+                    owner: this.players[3],
+                    x: 1,
+                    y: this.height - 2,
+                    wizCode: this.players[3].wizcode,
+                });
+                break;
+        }
     }
 
     addWizard(config: WizardConfig): Wizard {
@@ -635,7 +711,10 @@ export class Board extends Model {
     }
 
     async nextPlayer(): Promise<void> {
-        if (this.state == BoardState.GameOver || await this.checkWinCondition()) {
+        if (
+            this.state == BoardState.GameOver ||
+            (await this.checkWinCondition())
+        ) {
             return;
         }
 
@@ -683,7 +762,7 @@ export class Board extends Model {
 
         if (this._phase === BoardPhase.Casting) {
             await this.selectWizard(this.currentPlayer!);
-            if (this.selected && this.currentPlayer?.selectedSpell) {
+            if (this.selected && this.currentPlayer?.selectedSpell?.range > 0) {
                 await this.moveGizmo.generateSimpleRange(
                     this.selected.position,
                     this.currentPlayer?.selectedSpell.range

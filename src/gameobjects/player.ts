@@ -2,11 +2,13 @@ import { Board } from "./board";
 import { PlayerConfig } from "./configs/playerconfig";
 import { Model } from "./model";
 import { Spell } from "./spell";
+import { Wizard } from "./wizard";
 
 export class Player extends Model {
     private _name?: string;
     private _board: Board;
     private _colour: number | null;
+    private _wizcode: string;
 
     private _spells: Map<number, Spell>;
 
@@ -27,6 +29,7 @@ export class Player extends Model {
         this._spells = new Map();
         this._selectedSpell = null;
         this._defeated = false;
+        this._wizcode = "";
     }
 
     get colour(): number | null {
@@ -51,6 +54,13 @@ export class Player extends Model {
 
     get defeated(): boolean {
         return this._defeated;
+    }
+
+    get wizcode(): string {
+        if (!this._wizcode) {
+            return Wizard.randomWizCode()
+        }
+        return this._wizcode;
     }
 
     async defeat(): Promise<void> {

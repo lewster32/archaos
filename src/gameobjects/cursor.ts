@@ -179,15 +179,16 @@ export class Cursor {
         if (selected && selected.moved) {
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
-            }
-            else {
+            } else {
                 if (selected.canAttack) {
                     return;
-                }
-                else if (selected.canRangedAttack) {
-                    await this._board.moveGizmo.generateSimpleRange(this._board.selected.position, this._board.selected.properties.range, CursorType.RangeRangedAttack);
-                }
-                else {
+                } else if (selected.canRangedAttack) {
+                    await this._board.moveGizmo.generateSimpleRange(
+                        this._board.selected.position,
+                        this._board.selected.properties.range,
+                        CursorType.RangeRangedAttack
+                    );
+                } else {
                     selected.turnOver = true;
                     this._board.deselectPiece();
                 }
@@ -243,9 +244,8 @@ export class Cursor {
         return new Phaser.Geom.Point(point.x, point.y);
     }
 
-    static getCursorAngle(a:number = 0):CursorType {
-        switch (a)
-        {
+    static getCursorAngle(a: number = 0): CursorType {
+        switch (a) {
             case 0:
             case 8:
                 return CursorType.DownRight;

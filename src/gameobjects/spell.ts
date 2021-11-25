@@ -175,6 +175,9 @@ export class Spell extends Model {
         casterPosition: Phaser.Geom.Point,
         point: Phaser.Geom.Point
     ): boolean {
+        if (this.range < 0) {
+            return true;
+        }
         if (Board.distance(casterPosition, point) > this.range) {
             return false;
         }
