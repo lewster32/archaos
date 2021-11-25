@@ -186,7 +186,8 @@ export class Cursor {
                     await this._board.moveGizmo.generateSimpleRange(
                         this._board.selected.position,
                         this._board.selected.properties.range,
-                        CursorType.RangeRangedAttack
+                        CursorType.RangeRangedAttack,
+                        true
                     );
                 } else {
                     selected.turnOver = true;

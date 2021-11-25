@@ -68,10 +68,19 @@ export class Piece extends Entity {
             status: [] as UnitStatus[],
         };
 
-        this._direction =
-            this.position.x - this.position.y > 0
-                ? UnitDirection.Left
-                : UnitDirection.Right;
+        let directionOffset: number = this.position.x - this.position.y;
+        if (directionOffset === 0) {
+            directionOffset = (this.position.x + this.position.y) - ((this.board.width / 2) + (this.board.height / 2));
+        }
+        if (directionOffset > 0) {
+            this._direction = UnitDirection.Left;
+        }
+        else if (directionOffset < 0) {
+            this._direction = UnitDirection.Right;
+        }
+        else {
+            this._direction = Phaser.Math.RND.pick([UnitDirection.Left, UnitDirection.Right]);
+        }
 
         this._dead = false;
         this._moved = false;

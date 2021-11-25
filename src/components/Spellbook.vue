@@ -113,7 +113,8 @@ export default {
         select(spell: Spell) {
             if (!spell) {
                 this.$emit("select", null);
-                this.closeInfo();                
+                this.closeInfo();
+                return;            
             }
             this.currentSpell = spell;
             if (spell.allowIllusion) {

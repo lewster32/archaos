@@ -58,7 +58,8 @@ export class Rules {
                         board.selected.position,
                         board.cursor.position
                     ) &&
-                    selectedSpell.canCastAtPosition(board.cursor.position)
+                    selectedSpell.canCastAtPosition(board.cursor.position) &&
+                    (!selectedSpell.lineOfSight || (selectedSpell.lineOfSight && board.hasLineOfSight(board.selected.position, board.cursor.position)))
                 ) {
                     switch (selectedSpell.type) {
                         case SpellType.Summon:
@@ -139,7 +140,8 @@ export class Rules {
                     if (
                         selectedPiece.canRangedAttackPiece(
                             currentAliveHoveredPiece
-                        )
+                        ) && 
+                        board.hasLineOfSight(board.selected.position, board.cursor.position)
                     ) {
                         return ActionType.RangedAttack;
                     }

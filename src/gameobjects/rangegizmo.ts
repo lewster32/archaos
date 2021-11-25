@@ -122,12 +122,15 @@ export class RangeGizmo {
             targets: this._rangeLayer.getChildren(),
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
             alpha: 0,
-            delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
-                from: "last",
-            }),
+            delay: this._board.scene.tweens.stagger(
+                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                {
+                    from: "last",
+                }
+            ),
             onComplete: () => {
                 this._rangeLayer.removeAll();
-            }
+            },
         });
         this._pathLayer.removeAll();
         return this;
@@ -177,9 +180,12 @@ export class RangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
-                    from: "first",
-                }),
+                delay: this._board.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    }
+                ),
                 onComplete: () => {
                     resolve();
                 },
@@ -187,17 +193,32 @@ export class RangeGizmo {
         });
     }
 
-    private lastSimplePosition: Phaser.Geom.Point = new Phaser.Geom.Point(-1, -1);
+    private lastSimplePosition: Phaser.Geom.Point = new Phaser.Geom.Point(
+        -1,
+        -1
+    );
     private lastDistance: number = -1;
     private lastCursor: CursorType;
+    private lastLoS: boolean;
 
-    public async generateSimpleRange(position: Phaser.Geom.Point, distance: number, cursor: CursorType = CursorType.RangeCast): Promise<void> {
-        if (Phaser.Geom.Point.Equals(position, this.lastSimplePosition) && distance === this.lastDistance && cursor === this.lastCursor) {
+    public async generateSimpleRange(
+        position: Phaser.Geom.Point,
+        distance: number,
+        cursor: CursorType = CursorType.RangeCast,
+        lineOfSight?: boolean
+    ): Promise<void> {
+        if (
+            Phaser.Geom.Point.Equals(position, this.lastSimplePosition) &&
+            distance === this.lastDistance &&
+            cursor === this.lastCursor &&
+            lineOfSight === this.lastLoS
+        ) {
             return;
         }
         this.lastSimplePosition = Phaser.Geom.Point.Clone(position);
         this.lastDistance = distance;
         this.lastCursor = cursor;
+        this.lastLoS = lineOfSight;
 
         const startPosition = Phaser.Geom.Point.Clone(position);
         this._rangeLayer.removeAll();
@@ -205,17 +226,33 @@ export class RangeGizmo {
         return new Promise((resolve: Function) => {
             for (let yy: number = 0; yy < this._board.height; yy++) {
                 for (let xx: number = 0; xx < this._board.width; xx++) {
-                    const currentDistance: number = Board.distance(startPosition, new Phaser.Geom.Point(xx, yy));
+                    const currentDistance: number = Board.distance(
+                        startPosition,
+                        new Phaser.Geom.Point(xx, yy)
+                    );
                     if (currentDistance > distance) {
                         continue;
                     }
-                    const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(new Phaser.Geom.Point(xx, yy));
-                    const cursorImage: Phaser.GameObjects.Image = this._board.scene.add.image(
-                        isoPosition.x,
-                        isoPosition.y,
-                        "cursors",
-                        cursor
-                    );
+                    if (
+                        lineOfSight &&
+                        !this._board.hasLineOfSight(
+                            startPosition,
+                            new Phaser.Geom.Point(xx, yy)
+                        )
+                    ) {
+                        continue;
+                    }
+                    const isoPosition: Phaser.Geom.Point =
+                        this._board.getIsoPosition(
+                            new Phaser.Geom.Point(xx, yy)
+                        );
+                    const cursorImage: Phaser.GameObjects.Image =
+                        this._board.scene.add.image(
+                            isoPosition.x,
+                            isoPosition.y,
+                            "cursors",
+                            cursor
+                        );
                     cursorImage.setOrigin(0.5, 0.5);
                     cursorImage.setAlpha(0);
                     cursorImage.setDepth(currentDistance);
@@ -229,9 +266,12 @@ export class RangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
-                    from: "first",
-                }),
+                delay: this._board.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    }
+                ),
                 onComplete: () => {
                     resolve();
                 },
@@ -274,9 +314,12 @@ export class RangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
-                    from: "first",
-                }),
+                delay: this._board.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    }
+                ),
                 onComplete: () => {
                     resolve();
                 },

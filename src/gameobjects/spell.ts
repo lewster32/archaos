@@ -104,6 +104,10 @@ export class Spell extends Model {
         );
     }
 
+    get lineOfSight(): boolean {
+        return this._properties.lineOfSight || false;
+    }
+
     get unitId(): string {
         return this._properties.unitId || "";
     }

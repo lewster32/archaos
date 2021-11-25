@@ -7,6 +7,7 @@ import { BoardLayer } from "./enums/boardlayer";
 import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
+import { CursorType } from "./enums/cursortype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { Model } from "./model";
@@ -423,6 +424,14 @@ export class Board extends Model {
         );
     }
 
+    isBlocker(point: Phaser.Geom.Point): boolean {
+        const pieces: Piece[] = this.getPiecesAtPosition(point);
+        if (!pieces?.length) {
+            return false;
+        }
+        return pieces.some((piece) => !piece.hasStatus(UnitStatus.Transparent));
+    }
+
     async movePath(piece: Piece, path: Path) {
         if (!path?.nodes?.length) {
             return;
@@ -765,7 +774,9 @@ export class Board extends Model {
             if (this.selected && this.currentPlayer?.selectedSpell?.range > 0) {
                 await this.moveGizmo.generateSimpleRange(
                     this.selected.position,
-                    this.currentPlayer?.selectedSpell.range
+                    this.currentPlayer?.selectedSpell.range,
+                    CursorType.RangeCast,
+                    this.currentPlayer?.selectedSpell.lineOfSight
                 );
             }
         }
@@ -894,6 +905,68 @@ export class Board extends Model {
     rollChance(attack: number): boolean {
         const defenseRoll: number = Phaser.Math.RND.frac();
         return attack > defenseRoll;
+    }
+
+    hasLineOfSight(
+        startPosition: Phaser.Geom.Point | Phaser.Math.Vector2,
+        endPosition: Phaser.Geom.Point | Phaser.Math.Vector2
+    ): boolean {
+        let xDiff: number = endPosition.x - startPosition.x;
+        let yDiff: number = endPosition.y - startPosition.y;
+
+        let xDir: number, yDir: number;
+
+        let a: number = 1;
+
+        let xVal: number, yVal: number;
+
+        let numChecks: number;
+
+        xDir = xDiff < 0 ? -1 : 1;
+        yDir = yDiff < 0 ? -1 : 1;
+
+        if (xDiff === 0 || yDiff === 0) {
+            if (yDiff === 0) {
+                for (a = 1; a < Math.abs(xDiff); a++) {
+                    xVal = a * xDir + startPosition.x;
+                    if (
+                        this.isBlocker(
+                            new Phaser.Geom.Point(xVal, startPosition.y)
+                        )
+                    ) {
+                        return false;
+                    }
+                }
+            } else {
+                for (a = 1; a < Math.abs(yDiff); a++) {
+                    yVal = a * yDir + startPosition.y;
+                    if (
+                        this.isBlocker(
+                            new Phaser.Geom.Point(startPosition.x, yVal)
+                        )
+                    ) {
+                        return false;
+                    }
+                }
+            }
+        } else {
+            numChecks =
+                Math.abs(xDiff) > Math.abs(yDiff)
+                    ? Math.abs(xDiff)
+                    : Math.abs(yDiff);
+            let yInc = yDiff / numChecks,
+                xInc = xDiff / numChecks;
+
+            for (a = 1; a < numChecks; a++) {
+                xVal = startPosition.x + Math.round(xInc * a);
+                yVal = startPosition.y + Math.round(yInc * a);
+                if (this.isBlocker(new Phaser.Geom.Point(xVal, yVal))) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     static distance(a: Phaser.Geom.Point, b: Phaser.Geom.Point): number {

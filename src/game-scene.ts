@@ -258,8 +258,8 @@ export class GameScene extends Phaser.Scene {
 
         board.addWizard({
             owner: player,
-            x: Math.floor(board.width / 2),
-            y: board.height - 4,
+            x: Math.floor(board.width / 2) - 2,
+            y: board.height - 3,
             wizCode: "0003030000",
         });
 
@@ -279,7 +279,7 @@ export class GameScene extends Phaser.Scene {
         /**/
 
         board.addPiece({
-            ...this.getPieceProperties("red dragon"),
+            ...this.getPieceProperties("spectre"),
             owner: player,
             x: 4,
             y: 5
