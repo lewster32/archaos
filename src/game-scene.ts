@@ -1,11 +1,22 @@
 import "phaser";
+
+import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
+
 import { spells } from "../assets/data/classicspells.json";
 import { units } from "../assets/data/classicunits.json";
-import "../assets/plugins/rexcolorreplacepipelineplugin.min.js";
-import "../assets/spritesheets/board.json";
-import "../assets/spritesheets/classicunits.json";
-import "../assets/spritesheets/cursors.json";
-import "../assets/spritesheets/effects.json";
+
+import boardAtlas from "../assets/spritesheets/board.png";
+import boardJson from "../assets/spritesheets/board.json?url";
+import classicunitsAtlas from "../assets/spritesheets/classicunits.png";
+import classicunitsJson from "../assets/spritesheets/classicunits.json?url";
+import cursorsAtlas from "../assets/spritesheets/cursors.png";
+import cursorsJson from "../assets/spritesheets/cursors.json?url";
+import effectsAtlas from "../assets/spritesheets/effects.png";
+import effectsJson from "../assets/spritesheets/effects.json?url";
+
+import wizardsSheet from "../assets/spritesheets/wizards.png";
+import hatsSheet from "../assets/spritesheets/hats.png";
+
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { EffectType } from "./gameobjects/effectemitter";
@@ -21,43 +32,43 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.multiatlas(
+        this.load.atlas(
             "classicunits",
-            "assets/spritesheets/classicunits.json",
-            "assets/spritesheets"
+            classicunitsAtlas,
+            classicunitsJson
         );
 
-        this.load.multiatlas(
+        this.load.atlas(
             "board",
-            "assets/spritesheets/board.json",
-            "assets/spritesheets"
+            boardAtlas,
+            boardJson
         );
 
-        this.load.multiatlas(
+        this.load.atlas(
             "cursors",
-            "assets/spritesheets/cursors.json",
-            "assets/spritesheets"
+            cursorsAtlas,
+            cursorsJson
         );
 
-        this.load.multiatlas(
+        this.load.atlas(
             "effects",
-            "assets/spritesheets/effects.json",
-            "assets/spritesheets"
+            effectsAtlas,
+            effectsJson
         );
 
-        this.load.spritesheet("wizards", "assets/spritesheets/wizards.png", {
+        this.load.spritesheet("wizards", wizardsSheet, {
             frameWidth: 18,
             frameHeight: 18,
         });
 
-        this.load.spritesheet("hats", "assets/spritesheets/hats.png", {
+        this.load.spritesheet("hats", hatsSheet, {
             frameWidth: 14,
             frameHeight: 14,
         });
 
         this.load.plugin(
             "rexcolorreplacepipelineplugin",
-            "assets/plugins/rexcolorreplacepipelineplugin.min.js",
+            rexcolorreplacepipelineplugin,
             true
         );
     }
