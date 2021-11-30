@@ -44,7 +44,7 @@ export class Rules {
 
         const currentAliveHoveredPiece: Piece | null =
             hoveredPieces.find(
-                (piece: Piece) => !piece.dead && !piece.currentMount
+                (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
             ) || null;
 
         const selectedPiece: Piece | null = board.selected;
@@ -228,6 +228,11 @@ export class Rules {
             }
         }
         if (actionType === ActionType.Cast) {
+            const currentAliveHoveredPiece: Piece | null =
+            hoveredPieces.find(
+                (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
+            ) || null;
+
             if (
                 board.currentPlayer &&
                 board.selected &&
@@ -244,7 +249,7 @@ export class Rules {
                         board.currentPlayer,
                         board.selected,
                         board.cursor.position,
-                        hoveredPieces
+                        [currentAliveHoveredPiece]
                     );
                     board.state = BoardState.CastSpell;
                     if (casted?.castTimes <= 0) {
@@ -278,7 +283,7 @@ export class Rules {
             if (hoveredPieces.length > 0) {
                 const currentAliveHoveredPiece: Piece | null =
                     hoveredPieces.find(
-                        (piece: Piece) => !piece.dead && !piece.currentMount
+                        (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
                     ) || null;
 
                 if (
@@ -329,7 +334,7 @@ export class Rules {
         if (hoveredPieces.length > 0) {
             const currentAliveHoveredPiece: Piece | null =
                 hoveredPieces.find(
-                    (piece: Piece) => !piece.dead && !piece.currentMount
+                    (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
                 ) || null;
 
             if (!currentAliveHoveredPiece) {

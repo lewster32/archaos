@@ -80,7 +80,7 @@ export class Player extends Model {
                     return new Promise((resolve, reject) => {
                         setTimeout(async () => {
                             await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
-                            piece.destroy();
+                            await piece.destroy();
                             resolve(0);
                         }, 250 + Math.random() * 1750);
                     })

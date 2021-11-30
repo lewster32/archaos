@@ -219,6 +219,10 @@ export class Board extends Model {
             this.phase = BoardPhase.Casting;
             this.state = BoardState.CastSpell;
         } else if (this.phase === BoardPhase.Casting) {
+            this.phase = BoardPhase.Spreading;
+            this.state = BoardState.Idle;
+            await this.doSpread();
+        } else if (this.phase === BoardPhase.Spreading) {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
         }
@@ -236,7 +240,7 @@ export class Board extends Model {
         return this._selected;
     }
 
-    addPiece(config: PieceConfig): Piece {
+    async addPiece(config: PieceConfig): Promise<Piece> {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
         return piece;
@@ -392,6 +396,25 @@ export class Board extends Model {
 
     removePiece(id: number): void {
         this._pieces.delete(id);
+    }
+
+    getAdjacentPoints(point: Phaser.Geom.Point): Phaser.Geom.Point[] {
+        const points: Phaser.Geom.Point[] = [];
+
+        for (let x: number = point.x - 1; x <= point.x + 1; x++) {
+            for (let y: number = point.y - 1; y <= point.y + 1; y++) {
+                if (
+                    // Not the origin
+                    (x !== point.x || y !== point.y) &&
+                    // Not off the board
+                    x >= 0 && y >= 0 && x < this.width && y < this.height
+                ) {
+                    points.push(new Phaser.Geom.Point(x, y));
+                }
+            }
+        }
+
+        return points;
     }
 
     getAdjacentPiecesAtPosition(
@@ -560,6 +583,21 @@ export class Board extends Model {
         return null;
     }
 
+    async doSpread(): Promise<void> {
+        const previousPlayer: Player = this._currentPlayer;
+        this._currentPlayer = null;
+        this.updateBackgroundColour();
+
+        const spreadPieces: Piece[] = this.pieces.filter((piece) =>
+            piece.hasStatus(UnitStatus.Spreads)
+        );
+        for (const piece of spreadPieces) {
+            await piece.spread();
+        }
+        this._currentPlayer = previousPlayer;
+        await this.newTurn();
+    }
+
     /* #endregion */
 
     /* #region Players */
@@ -583,11 +621,9 @@ export class Board extends Model {
         let spell: Spell;
         if (config.unitId) {
             spell = new SummonSpell(this, this._idCounter++, config);
-        }
-        else if (config.damage) {
+        } else if (config.damage) {
             spell = new AttackSpell(this, this._idCounter++, config);
-        }
-        else {
+        } else {
             spell = new Spell(this, this._idCounter++, config);
         }
         player.addSpell(spell);
@@ -599,6 +635,42 @@ export class Board extends Model {
             return this._players.get(id)!;
         }
         return null;
+    }
+
+    private async updateBackgroundColour(): Promise<void> {
+        return new Promise((resolve) => {
+            if (this._currentPlayer?.colour) {
+                document.body.style.setProperty(
+                    "--bg-colour",
+                    `${
+                        Phaser.Display.Color.ValueToColor(
+                            this._currentPlayer.colour
+                        ).rgba
+                    }`
+                );
+                this.getLayer(BoardLayer.Floor)
+                    .getChildren()
+                    .forEach((child) => {
+                        const tintColour: Phaser.Display.Color =
+                            Phaser.Display.Color.ValueToColor(
+                                this._currentPlayer!.colour!
+                            );
+                        (child as Phaser.GameObjects.Sprite).setTint(
+                            tintColour.brighten(80).color
+                        );
+                    });
+            } else {
+                this.getLayer(BoardLayer.Floor)
+                .getChildren()
+                .forEach((child) => {
+                    (child as Phaser.GameObjects.Sprite).clearTint();
+                });
+                document.body.style.removeProperty("--bg-colour");
+            } 
+            setTimeout(() => {
+                resolve();
+            }, 100);
+        });
     }
 
     async selectPlayer(id: number): Promise<void> {
@@ -618,29 +690,7 @@ export class Board extends Model {
 
         return new Promise<void>((resolve) => {
             setTimeout(async () => {
-                if (this._currentPlayer?.colour) {
-                    document.body.style.setProperty(
-                        "--bg-colour",
-                        `${
-                            Phaser.Display.Color.ValueToColor(
-                                this._currentPlayer.colour
-                            ).rgba
-                        }`
-                    );
-                    this.getLayer(BoardLayer.Floor)
-                        .getChildren()
-                        .forEach((child) => {
-                            const tintColour: Phaser.Display.Color =
-                                Phaser.Display.Color.ValueToColor(
-                                    this._currentPlayer!.colour!
-                                );
-                            (child as Phaser.GameObjects.Sprite).setTint(
-                                tintColour.brighten(80).color
-                            );
-                        });
-                } else {
-                    document.body.style.removeProperty("--bg-colour");
-                }
+                await this.updateBackgroundColour();
 
                 let previousVal = 0;
 
@@ -841,7 +891,7 @@ export class Board extends Model {
         type: EffectType,
         startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
         endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        target?: Piece,
+        target?: Piece
     ): Promise<void> {
         return new Promise((resolve) => {
             this._particles.addEmitter(

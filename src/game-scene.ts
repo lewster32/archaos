@@ -133,7 +133,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getRandomSpell(): any {
@@ -271,18 +271,18 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2) - 2,
-            y: board.height - 3,
+            y: board.height - 1,
             wizCode: "0003030000",
         });
 
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 3,
+            y: 1,
             wizCode: "0600000000",
         });
 
-        /**/
+        /**
         board.addSpell(player, this.getSpellProperties("justice"));
         board.addSpell(player, this.getSpellProperties("dark power"));
 
@@ -290,25 +290,48 @@ export class GameScene extends Phaser.Scene {
         board.addSpell(player2, this.getSpellProperties("vengeance"));
         /**/
 
+        /*
         board.addPiece({
-            ...this.getPieceProperties("crocodile"),
+            ...this.getPieceProperties("magic fire"),
             owner: player,
             x: 4,
             y: 5
         });
+        */
 
         board.addPiece({
-            ...this.getPieceProperties("crocodile"),
+            ...this.getPieceProperties("magic fire"),
             owner: player,
             x: 4,
             y: 3
         });
 
         board.addPiece({
-            ...this.getPieceProperties("crocodile"),
+            ...this.getPieceProperties("giant"),
             owner: player2,
             x: 4,
-            y: 7
+            y: 4
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("giant"),
+            owner: player2,
+            x: 4,
+            y: 2
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("giant"),
+            owner: player2,
+            x: 3,
+            y: 3
+        });
+
+        board.addPiece({
+            ...this.getPieceProperties("giant"),
+            owner: player2,
+            x: 5,
+            y: 3
         });
 
         /*

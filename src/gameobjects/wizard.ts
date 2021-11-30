@@ -50,7 +50,7 @@ export class Wizard extends Piece {
 
     async kill(): Promise<void> {
         await this.board.playEffect(EffectType.WizardDefeated, this.sprite.getCenter(), null, this);
-        this.destroy();
+        await this.destroy();
         await this.owner?.defeat();
         setTimeout(async () => {
             await this.board.checkWinCondition();

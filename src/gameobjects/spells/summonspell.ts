@@ -91,7 +91,7 @@ export class SummonSpell extends Spell {
             this._board.getIsoPosition(point)
         );
 
-        const newPiece: Piece = this._board.addPiece({
+        const newPiece: Piece = await this._board.addPiece({
             type: UnitType.Creature,
             x: point.x,
             y: point.y,
