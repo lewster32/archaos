@@ -136,11 +136,15 @@ export default {
 
 <style lang="scss" scoped>
 
+:host {
+    position: relative;
+    z-index: 51;
+}
+
 .spellinfo {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 51;
     padding: 1em;
     &__image {
         width: 96px;

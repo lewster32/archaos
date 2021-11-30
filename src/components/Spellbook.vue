@@ -170,7 +170,7 @@ export default {
     right: 0;
     top: 0;
     bottom: 0;
-    z-index: 1;
+    z-index: 3;
     padding: 1em;
     display: flex;
     justify-content: right;
@@ -181,10 +181,12 @@ export default {
         max-width: 360px;
         display: flex;
         flex-direction: column;
-        transition: max-width 0.25s, opacity 0.25s;
+        transition: max-width 0.25s, opacity 0.25s, padding 0.25s;
         &--minimised {
             max-width: 0;
             opacity: 0;
+            padding-left: 0;
+            padding-right: 0;
         }
     }
     &__title {

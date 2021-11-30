@@ -1,6 +1,7 @@
 <script setup>
 import Spellbook from "./Spellbook.vue";
 import Log from "./Log.vue";
+import Minimap from './Minimap.vue';
 </script>
 
 <template>
@@ -8,10 +9,12 @@ import Log from "./Log.vue";
     <div class="placeholder" v-else>Loading...</div>
     <Spellbook :data="spellbook.data" @select="spellSelect" />
     <Log :logs="logs" />
+    <Minimap :pieces="pieces" :board="board" />
 </template>
 
 <script>
 export default {
+  components: { Minimap },
     methods: {
         spellSelect(spell) {
             if (this.spellbook?.onSelect) {
@@ -41,6 +44,11 @@ export default {
                 spells: [],
             },
             logs: [],
+            board: {
+                width: 0,
+                height: 0
+            },
+            pieces: []
         };
     },
     async mounted() {
@@ -68,6 +76,11 @@ export default {
             this.eventEmitter.on("spellbook-close", () => {
                 this.spellbook.data = null;
                 this.spellbook.onSelect = null;
+            });
+
+            this.eventEmitter.on("board-update", (data) => {
+                this.pieces = data.pieces;
+                this.board = data.board;
             });
         });
     },

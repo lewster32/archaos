@@ -219,7 +219,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testGame(): void {
-        const board: Board = new Board(this, 1, 13, 13);
+        const board: Board = new Board(this, 1, 15, 15);
 
         const p1: Player = board.addPlayer({
             name: "Gandalf",

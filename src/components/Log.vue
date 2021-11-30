@@ -63,6 +63,7 @@ export default {
         height: 17.5vh;
         min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
+        z-index: 1;
         &--minimised {
             // min-height: 2.5em;
             // height: 2.5em;

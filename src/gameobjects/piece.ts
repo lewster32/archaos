@@ -861,6 +861,7 @@ export class Piece extends Entity {
             this._sprite.depth -= 1;
             this.playAnim();
         }
+        this.board.emitBoardUpdateEvent();
     }
 
     async mount(piece: Piece): Promise<void> {
@@ -907,6 +908,7 @@ export class Piece extends Entity {
             this._shadow.destroy();
         }
         this.board.removePiece(this.id);
+        this.board.emitBoardUpdateEvent();
     }
 
     protected playAnim() {

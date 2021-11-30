@@ -226,6 +226,7 @@ export class Board extends Model {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
         }
+        this.emitBoardUpdateEvent();
     }
 
     /* #endregion */
@@ -240,9 +241,28 @@ export class Board extends Model {
         return this._selected;
     }
 
+    private _emitTimeout: any;
+
+    emitBoardUpdateEvent(): void {
+        if (this._emitTimeout) {
+            clearTimeout(this._emitTimeout);
+        }
+        this._emitTimeout = setTimeout(() => {
+            this.scene.game.events.emit("board-update", {
+                pieces: this.pieces,
+                board: {
+                    width: this._width,
+                    height: this._height
+                }
+            });
+        }, 500);
+
+    }
+
     async addPiece(config: PieceConfig): Promise<Piece> {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
+        this.emitBoardUpdateEvent();
         return piece;
     }
 
@@ -325,6 +345,7 @@ export class Board extends Model {
     addWizard(config: WizardConfig): Wizard {
         const wizard: Wizard = new Wizard(this, this._idCounter++, config);
         this._pieces.set(wizard.id, wizard);
+        this.emitBoardUpdateEvent();
         return wizard;
     }
 
@@ -504,6 +525,7 @@ export class Board extends Model {
 
             setTimeout(() => {
                 this.cursor.update(true);
+                this.emitBoardUpdateEvent();
             }, 100);
 
             return piece;
@@ -563,6 +585,7 @@ export class Board extends Model {
         }
         if (mountingPiece && mountedPiece) {
             await mountingPiece.mount(mountedPiece);
+            this.emitBoardUpdateEvent();
             return mountingPiece;
         }
         return null;
@@ -578,6 +601,7 @@ export class Board extends Model {
         }
         if (dismountingPiece) {
             await dismountingPiece.dismount();
+            this.emitBoardUpdateEvent();
             return dismountingPiece;
         }
         return null;
@@ -595,6 +619,7 @@ export class Board extends Model {
             await piece.spread();
         }
         this._currentPlayer = previousPlayer;
+        this.emitBoardUpdateEvent();
         await this.newTurn();
     }
 
