@@ -180,6 +180,10 @@ export class Piece extends Entity {
         return this._sprite!;
     }
 
+    get shadow(): Phaser.GameObjects.Image {
+        return this._shadow!;
+    }
+
     get moved(): boolean {
         if (this.properties.movement === 0 || this._engaged) {
             return true;

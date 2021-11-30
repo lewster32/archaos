@@ -133,7 +133,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testGame();
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -175,6 +175,7 @@ export class GameScene extends Phaser.Scene {
             damage: spell.damage,
             castOnEnemyUnit: spell.castOnEnemyUnit,
             castOnWizard: spell.castOnWizard,
+            destroyWizardCreatures: spell.destroyWizardCreatures,
             lineOfSight: spell.lineOfSight,
             projectile: spell.projectile,
             persist: spell.persist
@@ -282,30 +283,30 @@ export class GameScene extends Phaser.Scene {
         });
 
         /**/
-        board.addSpell(player, this.getSpellProperties("lightning"));
-        board.addSpell(player, this.getSpellProperties("magic bolt"));
+        board.addSpell(player, this.getSpellProperties("justice"));
+        board.addSpell(player, this.getSpellProperties("dark power"));
 
-        board.addSpell(player2, this.getSpellProperties("lightning"));
-        board.addSpell(player2, this.getSpellProperties("magic bolt"));
+        board.addSpell(player2, this.getSpellProperties("decree"));
+        board.addSpell(player2, this.getSpellProperties("vengeance"));
         /**/
 
         board.addPiece({
-            ...this.getPieceProperties("spectre"),
+            ...this.getPieceProperties("crocodile"),
             owner: player,
             x: 4,
             y: 5
         });
 
         board.addPiece({
-            ...this.getPieceProperties("green dragon"),
+            ...this.getPieceProperties("crocodile"),
             owner: player,
             x: 4,
             y: 3
         });
 
         board.addPiece({
-            ...this.getPieceProperties("golden dragon"),
-            owner: player,
+            ...this.getPieceProperties("crocodile"),
+            owner: player2,
             x: 4,
             y: 7
         });
@@ -324,15 +325,17 @@ export class GameScene extends Phaser.Scene {
         // Test effect
         /**
         setTimeout(async () => {
-            console.time("Start cast");
-            await board.playEffect(EffectType.DisbelieveBeam,
+            console.time("Effect");
+            await board.playEffect(EffectType.DragonFireBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.DisbelieveHit,
-                board.pieces[1].sprite.getCenter()
+            await board.playEffect(EffectType.WizardDefeated,
+                board.pieces[1].sprite.getCenter(),
+                null,
+                board.pieces[1]
             );
-            console.timeEnd("Start cast");
+            console.timeEnd("Effect");
         }, 100);
         /**/
 

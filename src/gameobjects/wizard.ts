@@ -1,6 +1,7 @@
 import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { PieceConfig, WizardConfig } from "./configs/piececonfig";
+import { EffectType } from "./effectemitter";
 import { BoardLayer } from "./enums/boardlayer";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
@@ -48,6 +49,7 @@ export class Wizard extends Piece {
     }
 
     async kill(): Promise<void> {
+        await this.board.playEffect(EffectType.WizardDefeated, this.sprite.getCenter(), null, this);
         this.destroy();
         await this.owner?.defeat();
         setTimeout(async () => {

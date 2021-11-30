@@ -1,8 +1,11 @@
+import { Piece } from "./piece";
+
 export class EffectEmitter extends Phaser.GameObjects.Particles
     .ParticleEmitter {
     private _anim: Phaser.Animations.Animation;
     private _startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
     private _endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
+    private _target: Piece | null;
     private _type: EffectType;
 
     get anim() {
@@ -13,21 +16,27 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
         type: EffectType,
         startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
         endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point | null,
+        target: Piece | null,
         resolve: Function
     ) {
-        super(manager, EffectEmitter.getConfig(type, startPosition, endPosition));
+        super(
+            manager,
+            EffectEmitter.getConfig(type, startPosition, endPosition, target)
+        );
         this._type = type;
         this._anim = this.getAnim();
 
         this._startPosition = startPosition;
         this._endPosition = endPosition;
+        this._target = target;
         this.playEffect(resolve);
     }
 
     private static getConfig(
         type: EffectType,
         startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point
+        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point,
+        target?: Piece
     ): any {
         let path: Phaser.Curves.Path;
         switch (type) {
@@ -125,7 +134,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     scale: { start: 1, end: 0 },
                     lifespan: 100,
                     tint: [0xffffff, 0x9955ff],
-                    emitZone: { type: "edge", source: path, quantity: 160 },
+                    emitZone: { type: "edge", source: path, quantity: 120 },
                     particleClass: EffectParticle,
                 };
             case EffectType.MagicBoltHit:
@@ -170,7 +179,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedX: { min: -120, max: 120 },
                     speedY: { min: -50, max: 50 },
                     scale: { start: 1, end: 0 },
-                    lifespan: 1000,
+                    lifespan: 400,
                     tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
@@ -185,7 +194,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     quantity: 5,
                     lifespan: 50,
                     blendMode: Phaser.BlendModes.ADD,
-                    emitZone: { type: "edge", source: path, quantity: 120 },
+                    emitZone: { type: "edge", source: path, quantity: 80 },
                 };
             case EffectType.ArrowHit:
                 return {
@@ -227,7 +236,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     quantity: 2,
                     speedX: { min: -10, max: 10 },
                     lifespan: 400,
-                    scale: { start: 2, end: .5 },
+                    scale: { start: 2, end: 0.5 },
                     blendMode: Phaser.BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 20 },
                     particleClass: EffectParticle,
@@ -246,6 +255,50 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.DarkPowerHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "sparkle1",
+                    quantity: 2,
+                    speedX: { min: -80, max: 80 },
+                    speedY: { min: -10, max: -80 },
+                    scale: { start: 2, end: 0 },
+                    tint: [0xff0000, 0x0000ff, 0xff00ff],
+                    gravityY: 160,
+                    lifespan: 500,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
+            case EffectType.JusticeHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "sparkle1",
+                    quantity: 2,
+                    speedX: { min: -80, max: 80 },
+                    speedY: { min: -10, max: -80 },
+                    scale: { start: 2, end: 0 },
+                    tint: [0x0000ff, 0x00ffff, 0x0077ff],
+                    gravityY: 160,
+                    lifespan: 500,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
+            case EffectType.WizardDefeated:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "magicbolt1",
+                    quantity: 2,
+                    speed: { min: 10, max: 180 },
+                    angle: { start: 0, end: 360, steps: 8 },
+                    scale: { start: 3, end: 0 },
+                    tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff],
+                    lifespan: 400,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
         }
     }
 
@@ -256,6 +309,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 return this.manager.scene.anims.get("dragonfire");
             case EffectType.MagicBoltBeam:
             case EffectType.MagicBoltHit:
+            case EffectType.WizardDefeated:
                 return this.manager.scene.anims.get("magicbolt");
             case EffectType.LightningBeam:
             case EffectType.LightningHit:
@@ -265,9 +319,134 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
         }
     }
 
+    private async playTargetEffect(duration: number = 300): Promise<void> {
+        const target = this._target;
+        if (!target) {
+            return;
+        }
+        switch (this._type) {
+            case EffectType.LightningHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 5,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        if (Math.round(tween.getValue()) % 2 === 0) {
+                            target.sprite.setTintFill(0xffffff);
+                        } else {
+                            target.sprite.setTintFill(0x0000ff);
+                        }
+                    },
+                    onComplete: () => {
+                        target.sprite.clearTint();
+                    },
+                });
+                break;
+            case EffectType.DragonFireHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 10,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        target.sprite.setTintFill(
+                            [0xff0000, 0xff7700, 0x000000][
+                                Math.floor(tween.getValue()) % 3
+                            ]
+                        );
+                    },
+                    onComplete: () => {
+                        target.sprite.clearTint();
+                    },
+                });
+                break;
+            case EffectType.DarkPowerHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 10,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        target.sprite.setTintFill(
+                            [0xff0000, 0x0000ff, 0xff00ff][
+                                Math.floor(tween.getValue()) % 3
+                            ]
+                        );
+                    },
+                    onComplete: () => {
+                        target.sprite.clearTint();
+                    },
+                });
+                break;
+            case EffectType.JusticeHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 10,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        target.sprite.setTintFill(
+                            [0x0000ff, 0x00ffff, 0x0077ff][
+                                Math.floor(tween.getValue()) % 3
+                            ]
+                        );
+                    },
+                    onComplete: () => {
+                        target.sprite.clearTint();
+                    },
+                });
+                break;
+            case EffectType.DisbelieveHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 255,
+                    duration: duration / 2,
+                    onUpdate: (tween) => {
+                        const value: number = Math.floor(tween.getValue());
+
+                        target.sprite.setTintFill(
+                            Phaser.Display.Color.GetColor(value, value, value)
+                        );
+                    },
+                });
+                this.manager.scene.tweens.add({
+                    targets: [target.sprite, target.shadow],
+                    duration: duration,
+                    delay: duration / 2,
+                    alpha: { from: 1, to: 0 },
+                });
+                break;
+            case EffectType.WizardDefeated:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 64,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        const value: number = Math.floor(tween.getValue()) % 5;
+
+                        if (value === 0) {
+                            target.sprite.setTintFill(
+                                Phaser.Math.RND.pick([0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff])
+                            );
+                        }
+                    },
+                });
+                this.manager.scene.tweens.add({
+                    targets: [target.sprite, target.shadow],
+                    duration: duration / 2,
+                    delay: duration / 2,
+                    alpha: { from: 1, to: 0 },
+                });
+                break;
+        }
+    }
+
     private playEffect(resolve: Function) {
         let duration: number = 500;
         switch (this._type) {
+            case EffectType.WizardDefeated:
+                duration = 3000;
+                break;
+            case EffectType.JusticeHit:
+                duration = 1000;
+                break;
             case EffectType.MagicBoltBeam:
             case EffectType.WizardCasting:
             case EffectType.DisbelieveHit:
@@ -296,8 +475,12 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 this.manager.scene.cameras.main.shake(150, 0.005, true);
                 break;
             case EffectType.LightningHit:
-                this.manager.scene.cameras.main.shake(400, 0.015, true);
+                this.manager.scene.cameras.main.shake(300, 0.0125, true);
                 break;
+        }
+
+        if (this._target) {
+            this.playTargetEffect(duration);
         }
 
         this.manager.scene.tweens.addCounter({
@@ -368,4 +551,6 @@ export enum EffectType {
     SummonPiece,
     DisbelieveBeam,
     DisbelieveHit,
+    DarkPowerHit,
+    JusticeHit
 }

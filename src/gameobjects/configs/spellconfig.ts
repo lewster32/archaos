@@ -21,4 +21,5 @@ export interface SpellConfig {
     castOnEnemyUnit?: boolean;
     castOnFriendlyUnit?: boolean;
     castOnWizard?: boolean;
+    destroyWizardCreatures?: boolean;
 }

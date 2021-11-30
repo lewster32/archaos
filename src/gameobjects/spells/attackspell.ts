@@ -35,6 +35,12 @@ export class AttackSpell extends Spell {
                 beamEffect = EffectType.MagicBoltBeam;
                 hitEffect = EffectType.MagicBoltHit;
                 break;
+            case UnitRangedProjectileType.Justice:
+                hitEffect = EffectType.JusticeHit;
+                break;
+            case UnitRangedProjectileType.DarkPower:
+                hitEffect = EffectType.DarkPowerHit;
+                break;
         }
 
         if (beamEffect) {
@@ -53,20 +59,16 @@ export class AttackSpell extends Spell {
         let targetKilled: boolean = false;
 
         if (hitEffect) {
-            await this._board.playEffect(hitEffect, target.sprite.getCenter());
+            await this._board.playEffect(hitEffect, target.sprite.getCenter(), null, target);
         }
 
         if (rollSuccess) {
             if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
+                await target.owner.destroyCreations();
                 this._board.logger.log(
                     `${target.owner.name}'s creations were dispelled by ${this.name}`
                 );
-                this._board.getPiecesByOwner(target.owner).forEach(async (piece: Piece) => {
-                    if (!piece.hasStatus(UnitStatus.Wizard)) {
-                        await this._board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter());
-                        piece.destroy();
-                    }
-                });
+                await Board.delay(1000);
             }
             else {
                 await target.kill();

@@ -17,6 +17,8 @@ import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
 import { Spell } from "./spell";
+import { AttackSpell } from "./spells/attackspell";
+import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
 
 type SimplePoint = { x: number; y: number };
@@ -578,7 +580,16 @@ export class Board extends Model {
     }
 
     addSpell(player: Player, config: SpellConfig): Spell {
-        const spell: Spell = new Spell(this, this._idCounter++, config);
+        let spell: Spell;
+        if (config.unitId) {
+            spell = new SummonSpell(this, this._idCounter++, config);
+        }
+        else if (config.damage) {
+            spell = new AttackSpell(this, this._idCounter++, config);
+        }
+        else {
+            spell = new Spell(this, this._idCounter++, config);
+        }
         player.addSpell(spell);
         return spell;
     }
@@ -829,7 +840,8 @@ export class Board extends Model {
     async playEffect(
         type: EffectType,
         startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point
+        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point,
+        target?: Piece,
     ): Promise<void> {
         return new Promise((resolve) => {
             this._particles.addEmitter(
@@ -838,6 +850,7 @@ export class Board extends Model {
                     type,
                     startPosition,
                     endPosition,
+                    target,
                     resolve
                 )
             );

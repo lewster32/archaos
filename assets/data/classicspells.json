@@ -262,6 +262,56 @@
             "name": "Disbelieve",
             "persist": true,
             "description": "Dismiss any illusionary creature. Always succeeds, and always available."
+        },
+        "vengeance": {
+            "balance": -1,
+            "chance": 0.8,
+            "castOnEnemyUnit": true,
+            "castOnWizard": true,
+            "destroyWizardCreatures": true,
+            "lineOfSight": false,
+            "name": "Vengeance",
+            "projectile": "darkpower",
+            "range": -1,
+            "damage": 10
+        },
+        "decree": {
+            "balance": 1,
+            "chance": 0.8,
+            "castOnEnemyUnit": true,
+            "castOnWizard": true,
+            "destroyWizardCreatures": true,
+            "lineOfSight": false,
+            "name": "Decree",
+            "projectile": "justice",
+            "range": -1,
+            "damage": 10
+        },
+        "dark-power": {
+            "balance": -2,
+            "chance": 0.5,
+            "castOnEnemyUnit": true,
+            "castOnWizard": true,
+            "destroyWizardCreatures": true,
+            "lineOfSight": false,
+            "name": "Dark Power",
+            "projectile": "darkpower",
+            "range": -1,
+            "damage": 10,
+            "castTimes": 3
+        },
+        "justice": {
+            "balance": 2,
+            "chance": 0.5,
+            "castOnEnemyUnit": true,
+            "castOnWizard": true,
+            "destroyWizardCreatures": true,
+            "lineOfSight": false,
+            "name": "Justice",
+            "projectile": "justice",
+            "range": -1,
+            "damage": 10,
+            "castTimes": 3
         }
     }
 }

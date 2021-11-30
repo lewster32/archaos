@@ -1,6 +1,9 @@
 import { Board } from "./board";
 import { PlayerConfig } from "./configs/playerconfig";
+import { EffectType } from "./effectemitter";
+import { UnitStatus } from "./enums/unitstatus";
 import { Model } from "./model";
+import { Piece } from "./piece";
 import { Spell } from "./spell";
 import { Wizard } from "./wizard";
 
@@ -66,10 +69,23 @@ export class Player extends Model {
     async defeat(): Promise<void> {
         this._defeated = true;
         this.board.logger.log(`Game over for ${this.name}`);
-        this.board.getPiecesByOwner(this).forEach((piece) => {
+        await this.destroyCreations();
+    }
+
+    async destroyCreations(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.board.getPiecesByOwner(this).forEach((piece: Piece) => {
+                if (piece.hasStatus(UnitStatus.Wizard)) {
+                    return;
+                }
+                setTimeout(async () => {
+                    await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
+                    piece.destroy();
+                }, 250 + Math.random() * 1750);
+            });
             setTimeout(() => {
-                piece.destroy();
-            }, 500 + Math.random() * 1000);
+                resolve();
+            }, 2000);
         });
     }
 

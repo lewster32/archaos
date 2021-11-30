@@ -3,4 +3,7 @@ export enum UnitRangedProjectileType {
     DragonFire = "dragonfire",
     MagicBolt = "magicbolt",
     Lightning = "lightning",
+    DarkPower = "darkpower",
+    Justice = "justice"
+
 }
