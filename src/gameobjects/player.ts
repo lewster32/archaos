@@ -72,21 +72,19 @@ export class Player extends Model {
         await this.destroyCreations();
     }
 
-    async destroyCreations(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.board.getPiecesByOwner(this).forEach((piece: Piece) => {
-                if (piece.hasStatus(UnitStatus.Wizard)) {
-                    return;
-                }
-                setTimeout(async () => {
-                    await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
-                    piece.destroy();
-                }, 250 + Math.random() * 1750);
-            });
-            setTimeout(() => {
-                resolve();
-            }, 2000);
-        });
+    async destroyCreations(): Promise<any[]> {
+        return Promise.all(
+            this.board.getPiecesByOwner(this)
+                .filter(p => !p.hasStatus(UnitStatus.Wizard))
+                .map((piece: Piece) => {
+                    return new Promise((resolve, reject) => {
+                        setTimeout(async () => {
+                            await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
+                            piece.destroy();
+                            resolve(0);
+                        }, 250 + Math.random() * 1750);
+                    })
+                }));
     }
 
     addSpell(spell: Spell) {

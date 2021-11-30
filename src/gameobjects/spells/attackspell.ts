@@ -88,6 +88,10 @@ export class AttackSpell extends Spell {
     get description(): string {
         let description = ` Attack with ${this.name}.`;
 
+        if (this.properties.destroyWizardCreatures) {
+            description += " If successfully cast on a wizard, it will destroy their creations.";
+        }
+
         return (description + " " + super.description).trim();
     }
 }

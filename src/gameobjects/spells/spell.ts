@@ -110,7 +110,7 @@ export class Spell extends Model {
         if (description) {
             return description.trim();
         }
-        return `Cast ${this.name}.`;
+        return "";
     }
 
     resetCastTimes(): void {
