@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
+import { Piece } from "../gameobjects/piece";
 UnitStatus;
+
+import type { CSSProperties } from 'vue'
+
+declare module 'vue' {
+  interface CSSProperties {
+    // limited to custom properties:
+    [k: `--${string}`]: string
+  }
+}
+
 </script>
 
 <template>
@@ -9,23 +20,24 @@ UnitStatus;
             &times;
         </button>
         <div class="minimap__inner callout">
-            <div class="minimap__map map" :style="{
-                    '--board-width': board.width + 'px',
-                    '--board-height': board.height + 'px',
-                    '--map-scale': scale
-                }">
-                <div class="map__piece" :class="{'map__piece--wizard': piece.hasStatus(UnitStatus.Wizard)}" v-for="piece in pieces" :key="piece.id" :style="{
-                    '--piece-x': piece.position.x + 'px',
-                    '--piece-y': piece.position.y + 'px',
-                    '--piece-color': hexColour(piece.owner.colour)
-                }"></div>
+            <div class="minimap__map map" :style="boardStyles">
+                <div
+                    class="map__piece"
+                    :class="{
+                        'map__piece--wizard': piece.hasStatus(
+                            UnitStatus.Wizard
+                        ),
+                    }"
+                    v-for="piece in pieces"
+                    :key="piece.id"
+                    :style="getPieceStyles(piece)"
+                ></div>
             </div>
         </div>
     </div>
 </template>
 
 <script lang="ts">
-
 export default {
     props: {
         pieces: Array as any,
@@ -34,18 +46,34 @@ export default {
     data() {
         return {
             show: true,
-            scale: 4
+            scale: 4,
         };
     },
-    computed: {},
+    computed: {
+        boardStyles(): CSSProperties {
+            return {
+                "--board-width": this.board.width + "px",
+                "--board-height": this.board.height + "px",
+                "--map-scale": this.scale,
+            };
+        },
+    },
     watch: {},
     methods: {
         close() {
-            this.show = false
+            this.show = false;
         },
         hexColour(colourNum: number) {
-            const colour: Phaser.Display.Color = Phaser.Display.Color.ValueToColor(colourNum)
+            const colour: Phaser.Display.Color =
+                Phaser.Display.Color.ValueToColor(colourNum);
             return `${colour.rgba}`;
+        },
+        getPieceStyles(piece: Piece): CSSProperties {
+            return {
+                "--piece-x": piece.position.x + "px",
+                "--piece-y": piece.position.y + "px",
+                "--piece-color": this.hexColour(piece.owner.colour),
+            };
         },
     },
     async mounted() {},
@@ -54,7 +82,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
 :host {
     position: relative;
     z-index: 1;
@@ -83,7 +110,7 @@ export default {
     position: relative;
     width: calc(var(--board-width) * var(--map-scale));
     height: calc(var(--board-height) * var(--map-scale));
-    transition: all .25s;
+    transition: all 0.25s;
     &__piece {
         position: absolute;
         z-index: 1;
@@ -92,13 +119,12 @@ export default {
         top: calc(var(--piece-y) * var(--map-scale));
         width: calc(1px * var(--map-scale));
         height: calc(1px * var(--map-scale));
-        transition: all .25s;
-        transform: scale(.75);
+        transition: all 0.25s;
+        transform: scale(0.75);
         &--wizard {
             z-index: 2;
             transform: scale(1);
         }
     }
 }
-
 </style>
