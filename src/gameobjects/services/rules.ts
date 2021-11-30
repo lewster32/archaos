@@ -8,7 +8,7 @@ import { InputType } from "../enums/inputtype";
 import { SpellType } from "../enums/spelltype";
 import { UnitStatus } from "../enums/unitstatus";
 import { Piece } from "../piece";
-import { Spell } from "../spell";
+import { Spell } from "../spells/spell";
 
 export class Rules {
     private static instance: Rules;

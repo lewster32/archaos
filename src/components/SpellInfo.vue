@@ -80,7 +80,7 @@ UnitStats;
 
 <script lang="ts">
 import { PropType } from "@vue/runtime-core";
-import { Spell } from "../gameobjects/spell";
+import { Spell } from "../gameobjects/spells/spell";
 import { SpellType } from "../gameobjects/enums/spelltype";
 export default {
     props: {

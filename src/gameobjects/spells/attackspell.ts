@@ -6,7 +6,7 @@ import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitStatus } from "../enums/unitstatus";
 import { Piece } from "../piece";
 import { Player } from "../player";
-import { Spell } from "../spell";
+import { Spell } from "./spell";
 
 export class AttackSpell extends Spell {
     constructor(board: Board, id: number, config: SpellConfig) {

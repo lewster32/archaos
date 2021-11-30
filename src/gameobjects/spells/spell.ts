@@ -1,15 +1,15 @@
-import { Board } from "./board";
-import { PieceConfig } from "./configs/piececonfig";
-import { SpellConfig } from "./configs/spellconfig";
-import { EffectType } from "./effectemitter";
-import { Colour } from "./enums/colour";
-import { SpellType } from "./enums/spelltype";
-import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
-import { UnitStatus } from "./enums/unitstatus";
-import { UnitType } from "./enums/unittype";
-import { Model } from "./model";
-import { Piece } from "./piece";
-import { Player } from "./player";
+import { Board } from "../board";
+import { PieceConfig } from "../configs/piececonfig";
+import { SpellConfig } from "../configs/spellconfig";
+import { EffectType } from "../effectemitter";
+import { Colour } from "../enums/colour";
+import { SpellType } from "../enums/spelltype";
+import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
+import { UnitStatus } from "../enums/unitstatus";
+import { UnitType } from "../enums/unittype";
+import { Model } from "../model";
+import { Piece } from "../piece";
+import { Player } from "../player";
 
 export class Spell extends Model {
     protected _board: Board;

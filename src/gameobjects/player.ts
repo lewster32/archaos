@@ -4,7 +4,7 @@ import { EffectType } from "./effectemitter";
 import { UnitStatus } from "./enums/unitstatus";
 import { Model } from "./model";
 import { Piece } from "./piece";
-import { Spell } from "./spell";
+import { Spell } from "./spells/spell";
 import { Wizard } from "./wizard";
 
 export class Player extends Model {

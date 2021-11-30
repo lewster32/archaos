@@ -66,7 +66,9 @@ SpellInfo;
 </template>
 
 <script lang="ts">
-import { Spell } from "../gameobjects/spell";
+import { Spell } from "../gameobjects/spells/spell";
+import { SpellType } from '../gameobjects/enums/spelltype';
+import { SummonSpell } from '../gameobjects/spells/summonspell';
 
 export default {
     $refs: {
@@ -117,7 +119,7 @@ export default {
                 return;            
             }
             this.currentSpell = spell;
-            if (spell.allowIllusion) {
+            if (spell.type === SpellType.Summon && (spell as SummonSpell).allowIllusion) {
                 this.illusionPrompt = true;
             }
             else {

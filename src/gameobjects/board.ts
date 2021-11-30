@@ -16,7 +16,7 @@ import { Player } from "./player";
 import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
-import { Spell } from "./spell";
+import { Spell } from "./spells/spell";
 import { AttackSpell } from "./spells/attackspell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";

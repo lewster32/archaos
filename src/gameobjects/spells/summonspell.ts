@@ -6,7 +6,7 @@ import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { Piece } from "../piece";
 import { Player } from "../player";
-import { Spell } from "../spell";
+import { Spell } from "./spell";
 
 export class SummonSpell extends Spell {
 
