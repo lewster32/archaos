@@ -176,3 +176,21 @@ button {
 .game-log__item {
     @extend %text-shadow;
 }
+
+[title] {
+    cursor: help;
+    &::after {
+        content: '?';
+        margin-left: .25em;
+        font-size: .5em;
+        vertical-align: top;
+        background-color: var(--color-cyan);
+        color: #000;
+        border-radius: 9999px;
+        text-align: center;
+        padding: 0 .25em;
+    }
+    &:hover::after {
+        background-color: var(--color-white);
+    }
+}

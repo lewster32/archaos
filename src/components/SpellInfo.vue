@@ -30,7 +30,7 @@ UnitStats;
                         class="spell-stats__Value"
                         :title="`This has a ${chancePercent(
                             spell.chance
-                        )}% chance of casting`"
+                        )}% chance of casting.`"
                         >{{ chancePercent(spell.chance) }}%</span
                     >
                 </p>
@@ -50,6 +50,7 @@ UnitStats;
                             'balance-lawful': spell.balance > 0,
                             'balance-chaotic': spell.balance < 0,
                         }"
+                        :title="`${friendlyBalance(spell.balance)}`"
                         >{{ balance(spell) }}</span
                     >
                 </p>
@@ -127,6 +128,16 @@ export default {
         },
         select() {
             this.$emit("select");
+        },
+        friendlyBalance(balance: number) {
+            let amount: string = Math.abs(balance) > 1 ? "highly" : "slightly";
+
+            if (balance > 0) {
+                return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
+            } else if (balance < 0) {
+                return `Casting shifts world balance ${amount} towards chaos. Becomes easier to cast if world is chaotic.`;
+            }
+            return "Casting does not affect world balance. Balance of world has no effect on spell's casting chance.";
         },
     },
     async mounted() {},

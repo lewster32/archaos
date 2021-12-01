@@ -38,6 +38,11 @@ SpellInfo;
                     >
                         <img class="spell__image" :src="getImageUrl(spell)" />
                         <span class="spell__name">{{ spell.name }}</span>
+                        <span :title="`${friendlyBalance(spell.balance)}`" class="spell__balance" :class="{
+                            'balance-lawful': spell.balance > 0,
+                            'balance-chaotic': spell.balance < 0,
+                        }"
+                        >{{ balance(spell) }}</span>
                         <span
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
                                 spell.chance
@@ -45,7 +50,7 @@ SpellInfo;
                             class="spell__chance"
                             :title="`This has a ${chancePercent(
                                 spell.chance
-                            )}% chance of casting`"
+                            )}% chance of casting.`"
                             >{{ chancePercent(spell.chance) }}%</span
                         >
                         <button class="spell__info button" @click="info(spell)">
@@ -158,6 +163,31 @@ export default {
                 this.closeInfo();
             }
         },
+        balance(spell: Spell) {
+            if (spell.balance > 0) {
+                return `${new Array(spell.balance)
+                    .fill("^")
+                    .join("")}`;
+            } else if (spell.balance < 0) {
+                return `${new Array(
+                    Math.abs(spell.balance)
+                )
+                    .fill("*")
+                    .join("")}`;
+            }
+            return "-";
+        },
+        friendlyBalance(balance: number) {
+            let amount: string = Math.abs(balance) > 1 ? "highly" : "slightly";
+
+            if (balance > 0) {
+                return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
+            } else if (balance < 0) {
+                return `Casting shifts world balance ${amount} towards chaos. Becomes easier to cast if world is chaotic.`;
+            }
+            return "Casting does not affect world balance. Balance of world has no effect on spell's casting chance.";
+        },
+
     },
     async mounted() {},
     destroyed() {},
@@ -178,7 +208,6 @@ export default {
         z-index: 2;
     }
     &__inner {
-        max-width: 360px;
         display: flex;
         flex-direction: column;
         transition: max-width 0.25s, opacity 0.25s, padding 0.25s;
@@ -235,6 +264,14 @@ export default {
     }
 }
 .spell {
+    @media screen and (max-width: 600px) {
+        &__balance {
+            display: none;
+        }
+        [title]::after {
+            display: none;
+        }
+    }
     display: flex;
     align-items: center;
 
@@ -264,6 +301,9 @@ export default {
     }
     &__name {
         flex: 1 1 auto;
+    }
+    &__balance {
+        flex: 0 1 auto;
     }
     &__select {
 

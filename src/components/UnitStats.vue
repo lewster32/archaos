@@ -142,6 +142,16 @@ export default {
             url("../../assets/images/ui/stat-bg.png");
         background-size: 36px;
         user-select: none;
+        &[title] {
+            position: relative;
+            &::after {
+                position: absolute;
+                top: 0;
+                right: -.5em;
+                height: 1em;
+                line-height: 1em;
+            }
+        }
         span {
             opacity: var(--stat-number-opacity, 1);
         }

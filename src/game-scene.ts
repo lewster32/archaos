@@ -134,7 +134,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getRandomSpell(): any {
