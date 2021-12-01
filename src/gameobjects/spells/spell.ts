@@ -72,7 +72,7 @@ export class Spell extends Model {
     }
 
     get range(): number {
-        return this._properties.range || 1.5;
+        return this._properties.range ?? 1.5;
     }
 
     get persist(): boolean {
@@ -141,6 +141,9 @@ export class Spell extends Model {
         if (this.range < 0) {
             return true;
         }
+        if (this.range === 0) {
+            return Phaser.Geom.Point.Equals(this._castingPiece.position, point);
+        }
         if (!this._castingPiece) {
             console.error("Spell has no casting piece");
             return false;
@@ -195,12 +198,26 @@ export class Spell extends Model {
         if (!this.canCastAtPosition(target, showReason)) {
             return null;
         }
-
         // Only find actively targetable pieces
         const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
             return !piece.currentMount && !piece.engulfed;
         });
         const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
+
+
+        if (this._properties.target === SpellTarget.Self) {
+            const wizard: Piece = targetPieces.find((piece: Piece) => piece.type === UnitType.Wizard);
+            if (!wizard) {
+                if (showReason) {
+                    this._board.logger.log(
+                        `${this.name} can only be cast on your own wizard`,
+                        Colour.Magenta
+                    );
+                }
+                return null;
+            }
+            return wizard;
+        }
 
         // Corpse spells (e.g., raise dead)
         if (this._properties.target === SpellTarget.Corpse) {
@@ -405,7 +422,7 @@ export class Spell extends Model {
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter()
             );
-            if (rollSuccess) {
+            if (rollSuccess && !target.illusion) {
                 await this._board.playEffect(
                     EffectType.SubversionHit,
                     target.sprite.getCenter(),
@@ -423,6 +440,38 @@ export class Spell extends Model {
                     Colour.Magenta
                 );
             }
+            await Board.delay(1000);
+            return true;
+        }
+
+        if (this.properties.target === SpellTarget.Self) {
+            const target: Piece = targets.find((p: Piece) => p.type === UnitType.Wizard && p.owner === this.owner);
+            if (!target) {
+                return false;
+            }
+
+            await this._board.playEffect(
+                EffectType.WizardCasting,
+                target.sprite.getCenter(),
+                null,
+                target
+            );
+
+            if (this.properties.id === "shadow-form") {
+                if (!target.addStatus(UnitStatus.ShadowForm)) {
+                    this._board.logger.log(
+                        `${target.name} already has ${this.name} - this spell has no effect`,
+                        Colour.Magenta
+                    );
+                    await Board.delay(1000);
+                    return true; 
+                };
+            }
+
+            this._board.logger.log(
+                `${target.name} successfully cast ${this.name}`
+            );
+
             await Board.delay(1000);
             return true;
         }

@@ -134,7 +134,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testGame();
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -284,8 +284,10 @@ export class GameScene extends Phaser.Scene {
         });
 
         /**/
-        board.addSpell(player, this.getSpellProperties("subversion"));
-        board.addSpell(player, this.getSpellProperties("subversion"));
+        board.addSpell(player, this.getSpellProperties("king cobra"));
+        board.addSpell(player, this.getSpellProperties("magic castle"));
+        board.addSpell(player, this.getSpellProperties("green dragon"));
+        board.addSpell(player, this.getSpellProperties("shadow form"));
 
         // board.addSpell(player2, this.getSpellProperties("gooey blob"));
         // board.addSpell(player2, this.getSpellProperties("magic fire"));

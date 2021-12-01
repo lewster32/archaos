@@ -21,7 +21,7 @@ export class Wizard extends Piece {
             range: 0,
             defense: 3,
             maneuverability: 3,
-            magicResistance: 3,
+            magicResistance: 6,
             attackType: "hit",
             rangedType: "shot",
             status: [UnitStatus.Wizard],

@@ -233,7 +233,7 @@
         },
         "magic-bolt": {
             "balance": 0,
-            "chance": 0.6,
+            "chance": 1,
             "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
@@ -241,11 +241,12 @@
             "range": 6,
             "projectile": "magicbolt",
             "damage": 3,
-            "name": "Magic Bolt"
+            "name": "Magic Bolt",
+            "description": "Fires a moderately powerful magical bolt."
         },
         "lightning": {
             "balance": 0,
-            "chance": 0.4,
+            "chance": 1,
             "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
@@ -253,7 +254,8 @@
             "range": 4,
             "projectile": "lightning",
             "damage": 6,
-            "name": "Lightning"
+            "name": "Lightning",
+            "description": "Fires a powerful lightning bolt."
         },
         "disbelieve": {
             "balance": 0,
@@ -341,7 +343,16 @@
             "name": "Subversion",
             "projectile": "subversion",
             "range": 7,
-            "description": "Takes control of an enemy unit by the caster. Subversion chance is rolled against enemy unit's magic resistance."
+            "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion."
+        },
+        "shadow-form": {
+            "balance": 0,
+            "chance": 0.7,
+            "target": "self",
+            "name": "Shadow Form",
+            "projectile": "shadowform",
+            "range": 0,
+            "description": "Increases the caster's defense and movement range. If the caster physically attacks another unit, the effect is lost."
         }
     }
 }

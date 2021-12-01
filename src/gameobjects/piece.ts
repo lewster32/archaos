@@ -65,19 +65,21 @@ export class Piece extends Entity {
         this._unitId = config.properties.id;
 
         this._owner = config.owner ?? null;
-        this._properties = config.properties ?? {
-            id: "",
-            name: "Unnamed Unit",
-            movement: 1,
-            combat: 3,
-            rangedCombat: 0,
-            range: 0,
-            defense: 3,
-            maneuverability: 3,
-            magicResistance: 3,
-            attackType: "hit",
-            rangedType: "shot",
-            status: [] as UnitStatus[],
+        this._properties = {
+            ...(config.properties ?? {
+                id: "",
+                name: "Unnamed Unit",
+                movement: 1,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defense: 3,
+                maneuverability: 3,
+                magicResistance: 3,
+                attackType: "hit",
+                rangedType: "shot",
+                status: [] as UnitStatus[],
+            }),
         };
 
         let directionOffset: number = this.position.x - this.position.y;
@@ -134,7 +136,6 @@ export class Piece extends Entity {
         );
     }
 
-
     private _highlighted: boolean = false;
 
     get highlighted(): boolean {
@@ -163,18 +164,24 @@ export class Piece extends Entity {
 
         if (state) {
             if (this._raisedDead) {
-                this._sprite.setTint(Phaser.Display.Color.ValueToColor(Piece.RAISED_DEAD_TINT).darken(Piece.MOVED_DARKEN_AMOUNT).color);
-            }
-            else {
-                this._sprite.setTint(Phaser.Display.Color.ValueToColor(0xffffff).darken(Piece.MOVED_DARKEN_AMOUNT).color);
+                this._sprite.setTint(
+                    Phaser.Display.Color.ValueToColor(
+                        Piece.RAISED_DEAD_TINT
+                    ).darken(Piece.MOVED_DARKEN_AMOUNT).color
+                );
+            } else {
+                this._sprite.setTint(
+                    Phaser.Display.Color.ValueToColor(0xffffff).darken(
+                        Piece.MOVED_DARKEN_AMOUNT
+                    ).color
+                );
             }
             this.highlighted = false;
         } else {
             if (this._raisedDead) {
                 this._sprite.setTint(Piece.RAISED_DEAD_TINT);
-            }
-            else {
-                this._sprite?.setTint(this.defaultTint)
+            } else {
+                this._sprite?.setTint(this.defaultTint);
             }
         }
     }
@@ -475,8 +482,7 @@ export class Piece extends Entity {
                     await spreadPieces
                         .find((piece) => piece.hasStatus(UnitStatus.Wizard))!
                         .kill();
-                }
-                else if (this.hasStatus(UnitStatus.Engulfs)) {
+                } else if (this.hasStatus(UnitStatus.Engulfs)) {
                     spreadPieces[0].engulfed = true;
                 } else {
                     await Promise.all(
@@ -486,10 +492,15 @@ export class Piece extends Entity {
                             );
                             switch (this.properties.attackType) {
                                 case UnitAttackType.Burned:
-                                    await this.board.playEffect(EffectType.DragonFireHit, piece.sprite.getCenter(), null, piece);
+                                    await this.board.playEffect(
+                                        EffectType.DragonFireHit,
+                                        piece.sprite.getCenter(),
+                                        null,
+                                        piece
+                                    );
                                     break;
                             }
-                            return await piece.destroy()
+                            return await piece.destroy();
                         })
                     );
                 }
@@ -513,7 +524,7 @@ export class Piece extends Entity {
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
                     rangedType: unit.rangedType || "shot",
-                    status: [...unit.status || []],
+                    status: [...(unit.status || [])],
                 },
                 shadowScale: unit.shadowScale,
                 offsetY: unit.offY,
@@ -522,10 +533,13 @@ export class Piece extends Entity {
             });
 
             if (spreadPieces.length) {
-                if (newPiece.hasStatus(UnitStatus.Engulfs) && !spreadPieces[0].dead && !spreadPieces[0].hasStatus(UnitStatus.Wizard)) {
+                if (
+                    newPiece.hasStatus(UnitStatus.Engulfs) &&
+                    !spreadPieces[0].dead &&
+                    !spreadPieces[0].hasStatus(UnitStatus.Wizard)
+                ) {
                     newPiece.currentEngulfed = spreadPieces[0];
-                }
-                else {
+                } else {
                     await Board.delay(Piece.DEFAULT_MOVE_DURATION);
                 }
             }
@@ -546,11 +560,44 @@ export class Piece extends Entity {
         this.addStatus(UnitStatus.Undead);
     }
 
-    private addStatus(status: UnitStatus) {
+    addStatus(status: UnitStatus): boolean {
         if (!this.hasStatus(status)) {
             this._properties.status.push(status);
+            switch (status) {
+                case UnitStatus.ShadowForm:
+                    this.properties.movement = 3;
+                    this.properties.defense = Math.min(
+                        this.properties.defense + 3,
+                        9
+                    );
+                    this.sprite.setAlpha(0.4);
+                    break;
+            }
+            return true;
         }
-    }   
+        return false;
+    }
+
+    removeStatus(status: UnitStatus): boolean {
+        if (this.hasStatus(status)) {
+            this._properties.status = this._properties.status.filter(
+                (s) => s !== status
+            );
+            switch (status) {
+                case UnitStatus.ShadowForm:
+                    this.properties.movement = 1;
+                    this.properties.defense = Math.max(
+                        this.properties.defense - 3,
+                        1
+                    );
+                    this.sprite.setAlpha(1);
+                    break;
+            }
+            return true;
+        }
+
+        return false;
+    }
 
     hasStatus(status: UnitStatus): boolean {
         return this._properties.status.indexOf(status) !== -1;
@@ -788,7 +835,7 @@ export class Piece extends Entity {
     }
 
     async attack(piece: Piece): Promise<boolean> {
-        if (this.canAttackPiece(piece)) {            
+        if (this.canAttackPiece(piece)) {
             if (
                 piece.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.Undead) &&
@@ -815,6 +862,9 @@ export class Piece extends Entity {
             );
 
             if (rollSuccess) {
+                if (this.hasStatus(UnitStatus.ShadowForm)) {
+                    this.removeStatus(UnitStatus.ShadowForm);
+                }
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 if (
@@ -887,6 +937,9 @@ export class Piece extends Entity {
             );
 
             if (rollSuccess) {
+                if (this.hasStatus(UnitStatus.ShadowForm)) {
+                    this.removeStatus(UnitStatus.ShadowForm);
+                }
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 return true;
@@ -914,7 +967,10 @@ export class Piece extends Entity {
                 this.sprite.getCenter()
             );
             await this.destroy();
-        } else if (this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
+        } else if (
+            this.hasStatus(UnitStatus.NoCorpse) ||
+            this.hasStatus(UnitStatus.Undead)
+        ) {
             await this.destroy();
         }
         if (!this._sprite) {

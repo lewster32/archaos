@@ -13,5 +13,6 @@ export enum UnitStatus {
     Undead = "undead",
     Wizard = "wizard",
     NoCorpse = "noCorpse",
-    AttackUndead = "attackUndead"
+    AttackUndead = "attackUndead",
+    ShadowForm = "shadowForm",
 }
