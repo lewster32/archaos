@@ -72,7 +72,7 @@ export default {
             return {
                 "--piece-x": piece.position.x + "px",
                 "--piece-y": piece.position.y + "px",
-                "--piece-color": this.hexColour(piece.owner.colour),
+                "--piece-color": this.hexColour(piece.owner?.colour ?? 0x444444),
             };
         },
     },

@@ -234,6 +234,7 @@
         "magic-bolt": {
             "balance": 0,
             "chance": 0.6,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "lineOfSight": true,
             "range": 6,
@@ -244,6 +245,7 @@
         "lightning": {
             "balance": 0,
             "chance": 0.4,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "lineOfSight": true,
             "range": 4,
@@ -254,6 +256,7 @@
         "disbelieve": {
             "balance": 0,
             "chance": 1,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": false,
             "lineOfSight": false,
@@ -266,6 +269,7 @@
         "vengeance": {
             "balance": -1,
             "chance": 0.8,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
             "destroyWizardCreatures": true,
@@ -278,6 +282,7 @@
         "decree": {
             "balance": 1,
             "chance": 0.8,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
             "destroyWizardCreatures": true,
@@ -290,6 +295,7 @@
         "dark-power": {
             "balance": -2,
             "chance": 0.5,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
             "destroyWizardCreatures": true,
@@ -303,6 +309,7 @@
         "justice": {
             "balance": 2,
             "chance": 0.5,
+            "target": "piece",
             "castOnEnemyUnit": true,
             "castOnWizard": true,
             "destroyWizardCreatures": true,

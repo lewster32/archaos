@@ -13,6 +13,7 @@ export class Player extends Model {
     private _colour: number | null;
     private _wizcode: string;
 
+    private _castingPiece: Piece | null;
     private _spells: Map<number, Spell>;
 
     private _selectedSpell: Spell | null;
@@ -66,6 +67,14 @@ export class Player extends Model {
         return this._wizcode;
     }
 
+    get castingPiece(): Piece | null {
+        return this._castingPiece;
+    }
+    
+    set castingPiece(piece: Piece | null) {
+        this._castingPiece = piece;
+    }
+
     async defeat(): Promise<void> {
         this._defeated = true;
         this.board.logger.log(`Game over for ${this.name}`);
@@ -88,6 +97,7 @@ export class Player extends Model {
     }
 
     addSpell(spell: Spell) {
+        spell.owner = this;
         this._spells.set(spell.id, spell);
     }
 

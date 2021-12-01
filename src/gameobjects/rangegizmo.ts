@@ -65,7 +65,8 @@ export class RangeGizmo {
                 }
                 if (
                     this._board.getPiecesAtPosition(
-                        new Phaser.Geom.Point(xx, yy)
+                        new Phaser.Geom.Point(xx, yy),
+                        (piece: Piece) => !piece.dead
                     ).length > 0
                 ) {
                     node.warning = true;

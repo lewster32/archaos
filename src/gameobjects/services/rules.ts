@@ -54,73 +54,9 @@ export class Rules {
                 board.currentPlayer?.selectedSpell;
 
             if (selectedSpell && selectedSpell.castTimes > 0) {
-                if (
-                    selectedSpell.inCastingRange(
-                        board.selected.position,
-                        board.cursor.position
-                    ) &&
-                    selectedSpell.canCastAtPosition(board.cursor.position) &&
-                    (!selectedSpell.lineOfSight || (selectedSpell.lineOfSight && board.hasLineOfSight(board.selected.position, board.cursor.position)))
-                ) {
-                    switch (selectedSpell.type) {
-                        case SpellType.Summon:
-                            if (!currentAliveHoveredPiece) {
-                                return ActionType.Cast;
-                            }
-                            break;
-                        case SpellType.Attack:
-                            if (
-                                currentAliveHoveredPiece &&
-                                !currentAliveHoveredPiece.hasStatus(
-                                    UnitStatus.Invulnerable
-                                )
-                            ) {
-                                return ActionType.Cast;
-                            }
-                            break;
-                        case SpellType.Misc:
-                            if (
-                                selectedSpell.properties.castOnEnemyUnit &&
-                                currentAliveHoveredPiece &&
-                                currentAliveHoveredPiece.owner !==
-                                    board.currentPlayer
-                            ) {
-                                if (
-                                    !selectedSpell.properties.castOnWizard &&
-                                    currentAliveHoveredPiece.hasStatus(
-                                        UnitStatus.Wizard
-                                    )
-                                ) {
-                                    return ActionType.Invalid;
-                                } else if (
-                                    selectedSpell.properties.id ===
-                                        "disbelieve" &&
-                                    !hoveredPieces?.find((p: Piece) => p.canDisbelieve)
-                                ) {
-                                    return ActionType.Invalid;
-                                }
-                                return ActionType.Cast;
-                            }
-                            if (
-                                selectedSpell.properties.castOnFriendlyUnit &&
-                                currentAliveHoveredPiece &&
-                                currentAliveHoveredPiece.owner ===
-                                    board.currentPlayer
-                            ) {
-                                if (
-                                    !selectedSpell.properties.castOnWizard &&
-                                    currentAliveHoveredPiece.hasStatus(
-                                        UnitStatus.Wizard
-                                    )
-                                ) {
-                                    return ActionType.Invalid;
-                                }
-                                return ActionType.Cast;
-                            }
-                            break;
-                    }
-                }
-                return ActionType.Invalid;
+                const spellTarget: Phaser.Geom.Point | Piece | null = selectedSpell.isValidTarget(board.cursor.position);
+
+                return spellTarget ? ActionType.Cast : ActionType.Invalid;
             }
             return ActionType.Idle;
         }
@@ -227,17 +163,18 @@ export class Rules {
                 return ActionType.Info;
             }
         }
-        if (actionType === ActionType.Cast) {
-            const currentAliveHoveredPiece: Piece | null =
-            hoveredPieces.find(
-                (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
-            ) || null;
-
+        if (actionType === ActionType.Cast || actionType === ActionType.Invalid) {
             if (
                 board.currentPlayer &&
                 board.selected &&
                 board.currentPlayer.selectedSpell
             ) {
+                const currentTarget: Piece | Phaser.Geom.Point | null = board.currentPlayer.selectedSpell.isValidTarget(
+                    board.cursor.position, true
+                );
+                if (currentTarget == null) {
+                    return ActionType.Invalid;
+                }
                 const casted: Spell | null =
                     await board.currentPlayer.useSpell();
                 if (casted) {
@@ -248,8 +185,7 @@ export class Rules {
                     await casted.cast(
                         board.currentPlayer,
                         board.selected,
-                        board.cursor.position,
-                        [currentAliveHoveredPiece]
+                        currentTarget
                     );
                     board.state = BoardState.CastSpell;
                     if (casted?.castTimes <= 0) {

@@ -2,6 +2,8 @@ import { Board } from "../board";
 import { PieceConfig } from "../configs/piececonfig";
 import { SpellConfig } from "../configs/spellconfig";
 import { EffectType } from "../effectemitter";
+import { Colour } from "../enums/colour";
+import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { Piece } from "../piece";
@@ -66,6 +68,41 @@ export class SummonSpell extends Spell {
 
     protected roll(): boolean {
         return this.illusion || this._board.rollChance(this.chance)
+    }
+
+    isValidTarget(target: Phaser.Geom.Point, showReason?: boolean): Phaser.Geom.Point | null {
+        if (!this.inCastingRange(target)) {
+            if (showReason) {
+                this._board.logger.log(
+                    `${this.name} target is out of range`,
+                    Colour.Magenta
+                );
+            }
+            return null;
+        }
+        if (!this.canCastAtPosition(target, showReason)) {
+            return null;
+        }
+
+        const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
+            return !piece.currentMount && !piece.engulfed && !piece.dead;
+        });
+
+        // Summon spells
+        if (this._properties.target === SpellTarget.Empty) {
+            if (targetPieces.length > 0) {
+                if (showReason) {
+                    this._board.logger.log(
+                        `${this.name} must be cast in an empty position`,
+                        Colour.Magenta
+                    );
+                }
+                return null;
+            }
+            return target;
+        }
+
+        return null;
     }
 
     async doCast(

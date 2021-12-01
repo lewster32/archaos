@@ -23,6 +23,7 @@ import { EffectType } from "./gameobjects/effectemitter";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Wizard } from "./gameobjects/wizard";
+import { SpellTarget } from "./gameobjects/enums/spelltarget";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -133,7 +134,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testGame();
+        this.testPieces();
     }
 
     getRandomSpell(): any {
@@ -178,7 +179,8 @@ export class GameScene extends Phaser.Scene {
             destroyWizardCreatures: spell.destroyWizardCreatures,
             lineOfSight: spell.lineOfSight,
             projectile: spell.projectile,
-            persist: spell.persist
+            persist: spell.persist,
+            target: spell.target || SpellTarget.Empty
         };
     }
 
@@ -282,12 +284,12 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        /**
-        board.addSpell(player, this.getSpellProperties("justice"));
-        board.addSpell(player, this.getSpellProperties("dark power"));
+        /**/
+        board.addSpell(player, this.getSpellProperties("orc"));
+        board.addSpell(player, this.getSpellProperties("disbelieve"));
 
-        board.addSpell(player2, this.getSpellProperties("decree"));
-        board.addSpell(player2, this.getSpellProperties("vengeance"));
+        board.addSpell(player2, this.getSpellProperties("orc"));
+        board.addSpell(player2, this.getSpellProperties("disbelieve"));
         /**/
 
         /*
@@ -301,7 +303,7 @@ export class GameScene extends Phaser.Scene {
 
         board.addPiece({
             ...this.getPieceProperties("magic fire"),
-            owner: player,
+            owner: player2,
             x: 4,
             y: 3
         });
@@ -314,18 +316,21 @@ export class GameScene extends Phaser.Scene {
         });
 
         board.addPiece({
-            ...this.getPieceProperties("giant"),
+            ...this.getPieceProperties("horse"),
             owner: player2,
             x: 4,
             y: 2
         });
 
-        board.addPiece({
-            ...this.getPieceProperties("giant"),
-            owner: player2,
-            x: 3,
-            y: 3
-        });
+        setTimeout(async () => {
+            (await board.addPiece({
+                ...this.getPieceProperties("giant"),
+                owner: player2,
+                x: 4,
+                y: 1
+            })).kill();
+        },0);
+
 
         board.addPiece({
             ...this.getPieceProperties("giant"),

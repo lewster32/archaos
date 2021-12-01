@@ -60,8 +60,8 @@ export class Piece extends Entity {
         this._type = config.type;
         this._unitId = config.properties.id;
 
-        this._owner = config.owner || null;
-        this._properties = config.properties || {
+        this._owner = config.owner ?? null;
+        this._properties = config.properties ?? {
             id: "",
             name: "Unnamed Unit",
             movement: 1,

@@ -1,3 +1,5 @@
+import { SpellTarget } from "../enums/spelltarget";
+
 export interface SpellConfig {
     id: string;
     chance: number;
@@ -22,4 +24,6 @@ export interface SpellConfig {
     castOnFriendlyUnit?: boolean;
     castOnWizard?: boolean;
     destroyWizardCreatures?: boolean;
+
+    target?: SpellTarget;
 }

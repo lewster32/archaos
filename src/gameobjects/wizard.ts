@@ -38,6 +38,12 @@ export class Wizard extends Piece {
         this._wizCode = Wizard.parseWizCode(
             config.wizCode || Wizard.randomWizCode()
         );
+        if (this.owner) {
+            this.owner.castingPiece = this;
+        }
+        else {
+            throw new Error("Wizard must have an owner");
+        }
     }
 
     get name(): string {
