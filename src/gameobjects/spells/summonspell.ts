@@ -120,12 +120,8 @@ export class SummonSpell extends Spell {
         await this._board.playEffect(
             EffectType.WizardCastBeam,
             castingPiece.sprite.getCenter(),
-            this._board.getIsoPosition(point)
-        );
-
-        await this._board.playEffect(
-            EffectType.SummonPiece,
-            this._board.getIsoPosition(point)
+            this._board.getIsoPosition(point),
+            castingPiece
         );
 
         const newPiece: Piece = await this._board.addPiece({
@@ -151,6 +147,14 @@ export class SummonSpell extends Spell {
             owner: owner,
             illusion: !!this._illusion,
         });
+
+
+        await this._board.playEffect(
+            EffectType.SummonPiece,
+            this._board.getIsoPosition(point),
+            null,
+            newPiece
+        );
 
         newPiece.turnOver = true;
 

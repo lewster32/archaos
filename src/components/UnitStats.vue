@@ -64,7 +64,7 @@
         </div>
         <div class="unit-stats__status unit-statuses">
             <span class="unit-statuses__item c-yellow" v-if="canFly">Flying</span>
-            <span class="unit-statuses__item c-light-blue" v-if="isUndead">Undead</span>
+            <span class="unit-statuses__item c-lightblue" v-if="isUndead">Undead</span>
             <span class="unit-statuses__item c-brown" v-if="isMount">Mountable</span>
             <span class="unit-statuses__item c-green" v-if="canSpread">Spreads</span>
             <span class="unit-statuses__item c-cyan" v-if="isInvulnerable">Invulnerable</span>

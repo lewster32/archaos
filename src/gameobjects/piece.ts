@@ -27,6 +27,9 @@ export class Piece extends Entity {
     static DEFAULT_HIGHLIGHT_DURATION: number = 600;
     static DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
+    static RAISED_DEAD_TINT: number = 0xb0d9ff;
+    static MOVED_DARKEN_AMOUNT: number = 25;
+
     protected _unitId: string;
 
     protected _type: UnitType;
@@ -39,6 +42,7 @@ export class Piece extends Entity {
     protected _direction: UnitDirection;
 
     protected _dead: boolean;
+    protected _raisedDead: boolean;
     protected _engulfed: boolean;
     protected _moved: boolean;
     protected _attacked: boolean;
@@ -130,6 +134,7 @@ export class Piece extends Entity {
         );
     }
 
+
     private _highlighted: boolean = false;
 
     get highlighted(): boolean {
@@ -149,14 +154,28 @@ export class Piece extends Entity {
         this._ownerHighlightTween.pause().seek(0);
     }
 
+    get defaultTint(): number {
+        return this.raisedDead ? Piece.RAISED_DEAD_TINT : 0xffffff;
+    }
+
     set turnOver(state: boolean) {
         this.moved = this.attacked = this.rangedAttacked = state;
 
         if (state) {
-            this._sprite?.setTint(0x7f7f7f);
+            if (this._raisedDead) {
+                this._sprite.setTint(Phaser.Display.Color.ValueToColor(Piece.RAISED_DEAD_TINT).darken(Piece.MOVED_DARKEN_AMOUNT).color);
+            }
+            else {
+                this._sprite.setTint(Phaser.Display.Color.ValueToColor(0xffffff).darken(Piece.MOVED_DARKEN_AMOUNT).color);
+            }
             this.highlighted = false;
         } else {
-            this._sprite?.clearTint();
+            if (this._raisedDead) {
+                this._sprite.setTint(Piece.RAISED_DEAD_TINT);
+            }
+            else {
+                this._sprite?.setTint(this.defaultTint)
+            }
         }
     }
 
@@ -276,6 +295,17 @@ export class Piece extends Entity {
         return this._illusion;
     }
 
+    get raisedDead(): boolean {
+        return this._raisedDead;
+    }
+
+    set raisedDead(raisedDead: boolean) {
+        this._raisedDead = raisedDead;
+        if (raisedDead) {
+            this.sprite.setTint(Piece.RAISED_DEAD_TINT);
+        }
+    }
+
     get properties(): IUnitProperties {
         return this._properties;
     }
@@ -385,8 +415,13 @@ export class Piece extends Entity {
     }
 
     async spread(): Promise<void> {
-        const spreadAction: SpreadAction = Phaser.Math.RND.weightedPick([
+        const spreadAction: SpreadAction = Phaser.Math.RND.pick([
             SpreadAction.Spread,
+            SpreadAction.Spread,
+            SpreadAction.Spread,
+            SpreadAction.Spread,
+            SpreadAction.Spread,
+            SpreadAction.None,
             SpreadAction.None,
             SpreadAction.Shrink,
         ]);
@@ -441,7 +476,7 @@ export class Piece extends Entity {
                         .find((piece) => piece.hasStatus(UnitStatus.Wizard))!
                         .kill();
                 }
-                if (this.hasStatus(UnitStatus.Engulfs)) {
+                else if (this.hasStatus(UnitStatus.Engulfs)) {
                     spreadPieces[0].engulfed = true;
                 } else {
                     await Promise.all(
@@ -478,7 +513,7 @@ export class Piece extends Entity {
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
                     rangedType: unit.rangedType || "shot",
-                    status: unit.status || [],
+                    status: [...unit.status || []],
                 },
                 shadowScale: unit.shadowScale,
                 offsetY: unit.offY,
@@ -487,7 +522,7 @@ export class Piece extends Entity {
             });
 
             if (spreadPieces.length) {
-                if (newPiece.hasStatus(UnitStatus.Engulfs)) {
+                if (newPiece.hasStatus(UnitStatus.Engulfs) && !spreadPieces[0].dead && !spreadPieces[0].hasStatus(UnitStatus.Wizard)) {
                     newPiece.currentEngulfed = spreadPieces[0];
                 }
                 else {
@@ -496,6 +531,26 @@ export class Piece extends Entity {
             }
         }
     }
+
+    async raiseDead(owner: Player): Promise<void> {
+        if (!this.dead) {
+            throw new Error("Cannot raise a piece that is not dead");
+        }
+        this._owner = owner;
+        this._dead = false;
+        this.raisedDead = true;
+        if (this.sprite) {
+            this.sprite.setVisible(true);
+            this.playAnim();
+        }
+        this.addStatus(UnitStatus.Undead);
+    }
+
+    private addStatus(status: UnitStatus) {
+        if (!this.hasStatus(status)) {
+            this._properties.status.push(status);
+        }
+    }   
 
     hasStatus(status: UnitStatus): boolean {
         return this._properties.status.indexOf(status) !== -1;
@@ -722,7 +777,7 @@ export class Piece extends Entity {
     }
 
     async attack(piece: Piece): Promise<boolean> {
-        if (this.canAttackPiece(piece)) {
+        if (this.canAttackPiece(piece)) {            
             if (
                 piece.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.Undead) &&
@@ -796,12 +851,15 @@ export class Piece extends Entity {
             await this.board.playEffect(
                 beamEffectType,
                 this.sprite.getCenter(),
-                piece.sprite.getCenter()
+                piece.sprite.getCenter(),
+                piece
             );
 
             await this.board.playEffect(
                 hitEffectType,
-                piece.sprite.getCenter()
+                piece.sprite.getCenter(),
+                null,
+                piece
             );
 
             this.rangedAttacked = true;
@@ -845,7 +903,7 @@ export class Piece extends Entity {
                 this.sprite.getCenter()
             );
             await this.destroy();
-        } else if (this.hasStatus(UnitStatus.NoCorpse)) {
+        } else if (this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
             await this.destroy();
         }
         if (!this._sprite) {

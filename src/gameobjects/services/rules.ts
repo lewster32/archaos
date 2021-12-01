@@ -188,7 +188,7 @@ export class Rules {
                         currentTarget
                     );
                     board.state = BoardState.CastSpell;
-                    if (casted?.castTimes <= 0) {
+                    if (casted.castTimes <= 0) {
                         await board.currentPlayer.discardSpell();
                         if (casted.failed) {
                             board.logger.log(`Spell failed`, Colour.Magenta);
@@ -322,6 +322,10 @@ export class Rules {
         _hoveredPieces: Piece[]
     ): Promise<ActionType> {
         const selectedPiece: Piece | null = board.selected;
+
+        if (board.state === BoardState.Idle) {
+            return ActionType.None;
+        }
 
         if (board.state === BoardState.CastSpell) {
             if (board.currentPlayer && board.currentPlayer.selectedSpell) {

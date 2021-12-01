@@ -39,9 +39,9 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
         target?: Piece
     ): any {
         let path: Phaser.Curves.Path;
+        let circleSize: number = 10
         switch (type) {
             case EffectType.WizardCasting:
-                const circleSize: number = 10;
                 path = new Phaser.Curves.Path(
                     startPosition.x + circleSize,
                     startPosition.y
@@ -299,6 +299,39 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.RaiseDeadBeam:
+                path = new Phaser.Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -4, max: 4 },
+                    y: { min: -4, max: 4 },
+                    frame: "magicbolt1",
+                    gravityY: -100,
+                    quantity: 4,
+                    speedX: { min: -20, max: 20 },
+                    lifespan: 400,
+                    scale: { start: 0, end: 1 },
+                    tint: [0x66ffff, 0x6666ff],
+                    blendMode: Phaser.BlendModes.ADD,
+                    emitZone: { type: "edge", source: path, quantity: 40 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.RaiseDeadHit:
+                return {
+                    frame: "magicbolt1",
+                    quantity: 1,
+                    x: { min: startPosition.x - 2, max: startPosition.x + 2 },
+                    y: { min: startPosition.y - 2, max: startPosition.y + 7 },
+                    speed: { min: 10, max: 50 },
+                    scale: { start: 0, end: 2 },
+                    tint: [0x66ffff, 0x6666ff],
+                    gravityY: -560,
+                    lifespan: 200,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
         }
     }
 
@@ -310,6 +343,8 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             case EffectType.MagicBoltBeam:
             case EffectType.MagicBoltHit:
             case EffectType.WizardDefeated:
+            case EffectType.RaiseDeadBeam:
+            case EffectType.RaiseDeadHit:
                 return this.manager.scene.anims.get("magicbolt");
             case EffectType.LightningBeam:
             case EffectType.LightningHit:
@@ -338,7 +373,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                         }
                     },
                     onComplete: () => {
-                        target.sprite.clearTint();
+                        target.sprite.setTint(target.defaultTint)
                     },
                 });
                 break;
@@ -355,7 +390,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                         );
                     },
                     onComplete: () => {
-                        target.sprite.clearTint();
+                        target.sprite.setTint(target.defaultTint)
                     },
                 });
                 break;
@@ -372,7 +407,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                         );
                     },
                     onComplete: () => {
-                        target.sprite.clearTint();
+                        target.sprite.setTint(target.defaultTint)
                     },
                 });
                 break;
@@ -389,7 +424,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                         );
                     },
                     onComplete: () => {
-                        target.sprite.clearTint();
+                        target.sprite.setTint(target.defaultTint)
                     },
                 });
                 break;
@@ -445,6 +480,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 duration = 3000;
                 break;
             case EffectType.JusticeHit:
+            case EffectType.RaiseDeadHit:
                 duration = 1000;
                 break;
             case EffectType.MagicBoltBeam:
@@ -455,6 +491,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 break;
             case EffectType.WizardCastBeam:
             case EffectType.DisbelieveBeam:
+            case EffectType.RaiseDeadBeam:
                 duration = 300;
                 break;
             case EffectType.LightningHit:
@@ -552,5 +589,7 @@ export enum EffectType {
     DisbelieveBeam,
     DisbelieveHit,
     DarkPowerHit,
-    JusticeHit
+    JusticeHit,
+    RaiseDeadBeam,
+    RaiseDeadHit
 }

@@ -47,7 +47,8 @@ export class AttackSpell extends Spell {
             await this._board.playEffect(
                 beamEffect,
                 castingPiece.sprite.getCenter(),
-                target.sprite.getCenter()
+                target.sprite.getCenter(),
+                target
             );
         }
 

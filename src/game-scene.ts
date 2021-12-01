@@ -134,7 +134,7 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getRandomSpell(): any {
@@ -213,7 +213,7 @@ export class GameScene extends Phaser.Scene {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                status: unit.status || [],
+                status: [...unit.status || []],
             },
             shadowScale: unit.shadowScale,
             offsetY: unit.offY,
@@ -221,7 +221,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testGame(): void {
-        const board: Board = new Board(this, 1, 15, 15);
+        const board: Board = new Board(this, 1, 13, 13);
 
         const p1: Player = board.addPlayer({
             name: "Gandalf",
@@ -230,7 +230,6 @@ export class GameScene extends Phaser.Scene {
         const p2: Player = board.addPlayer({
             name: "Merlin",
         });
-
 
         const p3: Player = board.addPlayer({
             name: "Glinda",
@@ -285,11 +284,11 @@ export class GameScene extends Phaser.Scene {
         });
 
         /**/
-        board.addSpell(player, this.getSpellProperties("orc"));
         board.addSpell(player, this.getSpellProperties("disbelieve"));
+        board.addSpell(player, this.getSpellProperties("raise dead"));
 
-        board.addSpell(player2, this.getSpellProperties("orc"));
-        board.addSpell(player2, this.getSpellProperties("disbelieve"));
+        // board.addSpell(player2, this.getSpellProperties("gooey blob"));
+        // board.addSpell(player2, this.getSpellProperties("magic fire"));
         /**/
 
         /*
@@ -301,19 +300,23 @@ export class GameScene extends Phaser.Scene {
         });
         */
 
+        /*
         board.addPiece({
             ...this.getPieceProperties("magic fire"),
             owner: player2,
             x: 4,
             y: 3
         });
+        */
 
         board.addPiece({
             ...this.getPieceProperties("giant"),
             owner: player2,
             x: 4,
-            y: 4
+            y: 6
         });
+
+        /*
 
         board.addPiece({
             ...this.getPieceProperties("horse"),
@@ -321,23 +324,26 @@ export class GameScene extends Phaser.Scene {
             x: 4,
             y: 2
         });
+        */
 
         setTimeout(async () => {
             (await board.addPiece({
-                ...this.getPieceProperties("giant"),
-                owner: player2,
+                ...this.getPieceProperties("red dragon"),
+                owner: player,
                 x: 4,
-                y: 1
-            })).kill();
+                y: 7
+            }));
         },0);
 
 
+        /*
         board.addPiece({
             ...this.getPieceProperties("giant"),
             owner: player2,
             x: 5,
             y: 3
         });
+        */
 
         /*
 
@@ -351,14 +357,14 @@ export class GameScene extends Phaser.Scene {
         */
 
         // Test effect
-        /**
+        /**/
         setTimeout(async () => {
             console.time("Effect");
             await board.playEffect(EffectType.DragonFireBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.WizardDefeated,
+            await board.playEffect(EffectType.DragonFireHit,
                 board.pieces[1].sprite.getCenter(),
                 null,
                 board.pieces[1]

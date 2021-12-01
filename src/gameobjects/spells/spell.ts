@@ -334,7 +334,8 @@ export class Spell extends Model {
             await this._board.playEffect(
                 EffectType.DisbelieveBeam,
                 castingPiece.sprite.getCenter(),
-                target.sprite.getCenter()
+                target.sprite.getCenter(),
+                target
             );
             if (target.illusion) {
                 await target.kill();
@@ -348,8 +349,34 @@ export class Spell extends Model {
                     `Disbelieve failed on non-illusionary ${target.name}`,
                     Colour.Magenta
                 );
-                await Board.delay(2000);
+                await Board.delay(1000);
             }
+            return true;
+        }
+
+        if (this.properties.id === "raise-dead") {
+            const target: Piece = targets.find((p: Piece) => p.dead);
+            if (!target) {
+                return false;
+            }
+            await this._board.playEffect(
+                EffectType.RaiseDeadBeam,
+                castingPiece.sprite.getCenter(),
+                target.sprite.getCenter()
+            );
+            await this._board.playEffect(
+                EffectType.RaiseDeadHit,
+                target.sprite.getCenter(),
+                null,
+                target
+            );
+            await target.raiseDead(this.owner);
+            this._board.logger.log(
+                `${target.name} was reanimated and now belongs to ${owner.name}`,
+                Colour.LightBlue
+            );
+                
+            await Board.delay(1000);
             return true;
         }
 
@@ -361,7 +388,9 @@ export class Spell extends Model {
         this._castTimes = 0;
         await this._board.playEffect(
             EffectType.WizardCastFail,
-            castingPiece.sprite.getCenter()
+            castingPiece.sprite.getCenter(),
+            null,
+            castingPiece
         );
         return null;
     }

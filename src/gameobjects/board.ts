@@ -26,6 +26,7 @@ type SimplePoint = { x: number; y: number };
 export class Board extends Model {
     static NEW_TURN_HIGHLIGHT_DURATION: number = 700;
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
+    static SPREAD_ITERATIONS: number = 2;
 
     private _scene: Phaser.Scene;
     private _width: number;
@@ -40,6 +41,7 @@ export class Board extends Model {
 
     static DEFAULT_DELAY: number = 1000;
     static END_TURN_DELAY: number = 1000;
+    static SPREAD_DELAY: number = 250;
 
     static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
@@ -395,6 +397,7 @@ export class Board extends Model {
 
         setTimeout(async () => {
             if (
+                (this.phase === BoardPhase.Casting) ||
                 this.getPiecesByOwner(this.currentPlayer!).every(
                     (piece) => piece.turnOver
                 )
@@ -612,11 +615,14 @@ export class Board extends Model {
         this._currentPlayer = null;
         this.updateBackgroundColour();
 
-        const spreadPieces: Piece[] = this.pieces.filter((piece) =>
-            piece.hasStatus(UnitStatus.Spreads)
-        );
-        for (const piece of spreadPieces) {
-            await piece.spread();
+        for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
+            const spreadPieces: Piece[] = this.pieces.filter((piece) =>
+                piece.hasStatus(UnitStatus.Spreads)
+            );
+            for (const piece of spreadPieces) {
+                await piece.spread();
+            }
+            await Board.delay(Board.SPREAD_DELAY);
         }
         this._currentPlayer = previousPlayer;
         this.emitBoardUpdateEvent();
@@ -759,7 +765,7 @@ export class Board extends Model {
                                           this._currentPlayer?.colour ||
                                               0xffffff
                                       )
-                                    : target.clearTint();
+                                    : target.setTint(piece.defaultTint);
                             });
                         }
                     },
@@ -767,7 +773,7 @@ export class Board extends Model {
                         units.forEach((piece: Piece) => {
                             const target: Phaser.GameObjects.Sprite =
                                 piece.sprite;
-                            target.clearTint();
+                            target.setTint(piece.defaultTint)
                             piece.turnOver = false;
                             piece.highlighted = true;
                         });
