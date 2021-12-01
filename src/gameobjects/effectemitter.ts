@@ -332,6 +332,39 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.SubversionBeam:
+                path = new Phaser.Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -2, max: 2 },
+                    y: { min: -2, max: 2 },
+                    frame: "sparkle1",
+                    gravityY: 50,
+                    quantity: 2,
+                    speedX: { min: -20, max: 20 },
+                    lifespan: 600,
+                    scale: { start: 2, end: 0 },
+                    tint: [0xff00ff, 0x00ffff],
+                    blendMode: Phaser.BlendModes.ADD,
+                    emitZone: { type: "edge", source: path, quantity: 90 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.SubversionHit:
+                return {
+                    frame: "sparkle1",
+                    quantity: 1,
+                    x: { min: startPosition.x - 2, max: startPosition.x + 2 },
+                    y: { min: startPosition.y - 2, max: startPosition.y + 7 },
+                    speed: { min: 10, max: 50 },
+                    scale: { start: 4, end: 0 },
+                    tint: [0xff00ff, 0x00ffff],
+                    gravityY: -100,
+                    lifespan: 400,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
         }
     }
 
@@ -481,9 +514,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                 break;
             case EffectType.JusticeHit:
             case EffectType.RaiseDeadHit:
+            case EffectType.SubversionHit:
                 duration = 1000;
                 break;
             case EffectType.MagicBoltBeam:
+            case EffectType.SubversionBeam:
             case EffectType.WizardCasting:
             case EffectType.DisbelieveHit:
             case EffectType.WizardCastFail:
@@ -591,5 +626,7 @@ export enum EffectType {
     DarkPowerHit,
     JusticeHit,
     RaiseDeadBeam,
-    RaiseDeadHit
+    RaiseDeadHit,
+    SubversionBeam,
+    SubversionHit
 }

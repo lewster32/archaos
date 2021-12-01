@@ -633,6 +633,17 @@ export class Piece extends Entity {
         );
     }
 
+    get canBeSubverted(): boolean {
+        return (
+            this.type === UnitType.Creature &&
+            !this.hasStatus(UnitStatus.Wizard) &&
+            !this.hasStatus(UnitStatus.Spreads) &&
+            !this.hasStatus(UnitStatus.Structure) &&
+            !this.hasStatus(UnitStatus.Tree) &&
+            !this.hasStatus(UnitStatus.Invulnerable)
+        );
+    }
+
     get canAttack(): boolean {
         const neighbours: Piece[] = this.getNeighbours();
 

@@ -991,8 +991,9 @@ export class Board extends Model {
     }
 
     roll(attack: number, defense: number): boolean {
-        const attackRoll: number = Phaser.Math.Between(0, attack);
-        const defenseRoll: number = Phaser.Math.Between(0, defense);
+        const attackRoll: number = Phaser.Math.Between(0, 10 + attack);
+        const defenseRoll: number = Phaser.Math.Between(0, 10 + defense);
+        console.log("Rolling attack: " + attackRoll + " vs " + defenseRoll);
         return attackRoll > defenseRoll;
     }
 

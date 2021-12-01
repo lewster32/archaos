@@ -259,7 +259,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 11, 11);
+        const board: Board = new Board(this, 1, 9, 9);
 
         const player: Player = board.addPlayer({
             name: "Gandalf",
@@ -279,13 +279,13 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 1,
+            y: 5,
             wizCode: "0600000000",
         });
 
         /**/
-        board.addSpell(player, this.getSpellProperties("disbelieve"));
-        board.addSpell(player, this.getSpellProperties("raise dead"));
+        board.addSpell(player, this.getSpellProperties("subversion"));
+        board.addSpell(player, this.getSpellProperties("subversion"));
 
         // board.addSpell(player2, this.getSpellProperties("gooey blob"));
         // board.addSpell(player2, this.getSpellProperties("magic fire"));
@@ -312,7 +312,7 @@ export class GameScene extends Phaser.Scene {
         board.addPiece({
             ...this.getPieceProperties("giant"),
             owner: player2,
-            x: 4,
+            x: 5,
             y: 6
         });
 
@@ -328,7 +328,7 @@ export class GameScene extends Phaser.Scene {
 
         setTimeout(async () => {
             (await board.addPiece({
-                ...this.getPieceProperties("red dragon"),
+                ...this.getPieceProperties("orc"),
                 owner: player,
                 x: 4,
                 y: 7
@@ -357,14 +357,14 @@ export class GameScene extends Phaser.Scene {
         */
 
         // Test effect
-        /**/
+        /**
         setTimeout(async () => {
             console.time("Effect");
-            await board.playEffect(EffectType.DragonFireBeam,
+            await board.playEffect(EffectType.SubversionBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.DragonFireHit,
+            await board.playEffect(EffectType.SubversionHit,
                 board.pieces[1].sprite.getCenter(),
                 null,
                 board.pieces[1]

@@ -263,7 +263,19 @@ export class Spell extends Model {
                     }
                     return disbelievableTarget;
                 }
-
+                if (this.properties.id === "subversion") {
+                    const subversionTarget: Piece = targetEnemyLivingPiece.canBeSubverted ? targetEnemyLivingPiece : null;
+                    if (!subversionTarget) {
+                        if (showReason) {
+                            this._board.logger.log(
+                                `${this.name} cannot be cast on this unit`,
+                                Colour.Magenta
+                            );
+                        }
+                        return null;
+                    }
+                    return subversionTarget;
+                }
                 if (this.properties.damage > 0 && targetEnemyLivingPiece?.hasStatus(UnitStatus.Invulnerable)) {
                     if (showReason) {
                         this._board.logger.log(
@@ -376,6 +388,41 @@ export class Spell extends Model {
                 Colour.LightBlue
             );
                 
+            await Board.delay(1000);
+            return true;
+        }
+
+        if (this.properties.id === "subversion") {
+            const target: Piece = targets.find((p: Piece) => p.owner !== this.owner);
+            if (!target) {
+                return false;
+            }
+
+            const rollSuccess: boolean = this._board.roll(10, target.properties.magicResistance);
+
+            await this._board.playEffect(
+                EffectType.SubversionBeam,
+                castingPiece.sprite.getCenter(),
+                target.sprite.getCenter()
+            );
+            if (rollSuccess) {
+                await this._board.playEffect(
+                    EffectType.SubversionHit,
+                    target.sprite.getCenter(),
+                    null,
+                    target
+                );
+                target.owner = this.owner;
+                this._board.logger.log(
+                    `${target.name} was subverted and now belongs to ${owner.name}`
+                );
+            }
+            else {
+                this._board.logger.log(
+                    `${target.name} resisted ${this.name}`,
+                    Colour.Magenta
+                );
+            }
             await Board.delay(1000);
             return true;
         }

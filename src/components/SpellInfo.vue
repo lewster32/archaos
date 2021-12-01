@@ -30,7 +30,7 @@ UnitStats;
                         class="spell-stats__Value"
                         :title="`This has a ${chancePercent(
                             spell.chance
-                        )}% chance of successfully casting`"
+                        )}% chance of casting`"
                         >{{ chancePercent(spell.chance) }}%</span
                     >
                 </p>

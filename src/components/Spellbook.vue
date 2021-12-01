@@ -45,7 +45,7 @@ SpellInfo;
                             class="spell__chance"
                             :title="`This has a ${chancePercent(
                                 spell.chance
-                            )}% chance of successfully casting`"
+                            )}% chance of casting`"
                             >{{ chancePercent(spell.chance) }}%</span
                         >
                         <button class="spell__info button" @click="info(spell)">

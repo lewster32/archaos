@@ -330,6 +330,18 @@
             "projectile": "raisedead",
             "name": "Raise Dead",
             "description": "Reanimates the corpse of a creature, making it undead, and puts it under the control of the caster."
+        },
+        "subversion": {
+            "balance": 0,
+            "chance": 1,
+            "target": "piece",
+            "castOnEnemyUnit": true,
+            "castOnWizard": false,
+            "lineOfSight": true,
+            "name": "Subversion",
+            "projectile": "subversion",
+            "range": 7,
+            "description": "Takes control of an enemy unit by the caster. Subversion chance is rolled against enemy unit's magic resistance."
         }
     }
 }
