@@ -515,11 +515,13 @@ export class Board extends Model {
     }
 
     isBlocker(point: Phaser.Geom.Point): boolean {
-        const pieces: Piece[] = this.getPiecesAtPosition(point);
+        const pieces: Piece[] = this.getPiecesAtPosition(point, (piece) => {
+            return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead
+        });
         if (!pieces?.length) {
             return false;
         }
-        return pieces.some((piece) => !piece.hasStatus(UnitStatus.Transparent));
+        return true;
     }
 
     async movePath(piece: Piece, path: Path) {
