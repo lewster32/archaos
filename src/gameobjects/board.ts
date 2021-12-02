@@ -412,18 +412,20 @@ export class Board extends Model {
     }
 
     async deselectPiece(): Promise<void> {
-        const previousSelected: Piece = this._selected;
-        this._selected = null;
+        if (this.phase === BoardPhase.Moving) {
+            const previousSelected: Piece = this._selected;
+            this._selected = null;
 
-        if (previousSelected.currentRider?.canSelect) {
-            await this.selectPiece(previousSelected.currentRider.id);
-            await this.cursor.action(InputType.None);
-            return;
-        }
-        else if (previousSelected.currentMount?.canSelect) {
-            await this.selectPiece(previousSelected.currentMount.id);
-            await this.cursor.action(InputType.None);
-            return;
+            if (previousSelected.currentRider?.canSelect) {
+                await this.selectPiece(previousSelected.currentRider.id);
+                await this.cursor.action(InputType.None);
+                return;
+            }
+            else if (previousSelected.currentMount?.canSelect) {
+                await this.selectPiece(previousSelected.currentMount.id);
+                await this.cursor.action(InputType.None);
+                return;
+            }
         }
 
         await this.moveGizmo.reset();
