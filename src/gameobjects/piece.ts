@@ -825,8 +825,8 @@ export class Piece extends Entity {
             !this.moved &&
             this.hasStatus(UnitStatus.Wizard) &&
             !piece.currentRider &&
-            (piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
-            piece.hasStatus(UnitStatus.MountAny)
+            ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
+            piece.hasStatus(UnitStatus.MountAny))
         ) {
             return true;
         }
