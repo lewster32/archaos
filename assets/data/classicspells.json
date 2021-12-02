@@ -353,6 +353,54 @@
             "projectile": "shadowform",
             "range": 0,
             "description": "Increases the caster's defense and movement range. If the caster physically attacks another unit, the effect is lost."
+        },
+        "magic-knife": {
+            "balance": 1,
+            "chance": 0.7,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Knife",
+            "description": "Moderately increases the caster's combat rating, and allows the caster to attack the undead."
+        },
+        "magic-sword": {
+            "balance": 1,
+            "chance": 0.4,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Sword",
+            "description": "Greatly increases the caster's combat rating, and allows the caster to attack the undead."
+        },
+        "magic-shield": {
+            "balance": 1,
+            "chance": 0.7,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Shield",
+            "description": "Moderately increases the caster's defense rating."
+        },
+        "magic-armour": {
+            "balance": 1,
+            "chance": 0.4,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Armour",
+            "description": "Greatly increases the caster's defense rating."
+        },
+        "magic-bow": {
+            "balance": 1,
+            "chance": 0.5,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Bow",
+            "description": "Allows the caster to make long ranged attacks, and to attack the undead."
+        },
+        "magic-wings": {
+            "balance": 0,
+            "chance": 0.5,
+            "target": "self",
+            "range": 0,
+            "name": "Magic Wings",
+            "description": "Allows the caster to fly over long distances."
         }
     }
 }

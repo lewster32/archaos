@@ -14,5 +14,12 @@ export enum UnitStatus {
     Wizard = "wizard",
     NoCorpse = "noCorpse",
     AttackUndead = "attackUndead",
+    // Wizard-specific buffs
     ShadowForm = "shadowForm",
+    MagicWings = "magicWings",
+    MagicShield = "magicShield",
+    MagicArmour = "magicArmour",
+    MagicSword = "magicSword",
+    MagicBow = "magicBow",
+    MagicKnife = "magicKnife",
 }

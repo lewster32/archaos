@@ -24,6 +24,7 @@ export class RangeGizmo {
     }
 
     public async generate(unit: Piece): Promise<void> {
+        await this.reset();
         this._validNodes = [];
         this._paths = new Map();
         this._piece = unit;
@@ -32,19 +33,19 @@ export class RangeGizmo {
 
         this._rect.left = Math.max(
             0,
-            unit.position.x - unit.properties.movement
+            unit.position.x - unit.stats.movement
         );
         this._rect.right = Math.min(
             this._board.width - 1,
-            unit.position.x + unit.properties.movement
+            unit.position.x + unit.stats.movement
         );
         this._rect.top = Math.max(
             0,
-            unit.position.y - unit.properties.movement
+            unit.position.y - unit.stats.movement
         );
         this._rect.bottom = Math.min(
             this._board.height - 1,
-            unit.position.y + unit.properties.movement
+            unit.position.y + unit.stats.movement
         );
 
         for (let xx: number = this._rect.left; xx <= this._rect.right; xx++) {
@@ -58,7 +59,7 @@ export class RangeGizmo {
                     node.flying = true;
                     if (
                         Board.distance(node.pos, this._piece.position) >
-                        this._piece.properties.movement + 0.5
+                        this._piece.stats.movement + 0.5
                     ) {
                         node.traversable = false;
                     }
@@ -101,7 +102,7 @@ export class RangeGizmo {
             }
         }
 
-        if (this._piece.properties.movement > 1) {
+        if (this._piece.stats.movement > 1) {
             this._validNodes = this._validNodes.sort((n1: Node, n2: Node) =>
                 Board.distance(this._piece.position, n1.pos) <
                 Board.distance(this._piece.position, n2.pos)
@@ -117,24 +118,32 @@ export class RangeGizmo {
         }
     }
 
-    public reset(): RangeGizmo {
-        this._piece = null;
-        this._board.scene.tweens.add({
-            targets: this._rangeLayer.getChildren(),
-            duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-            alpha: 0,
-            delay: this._board.scene.tweens.stagger(
-                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                {
-                    from: "last",
-                }
-            ),
-            onComplete: () => {
-                this._rangeLayer.removeAll();
-            },
+    public async reset(): Promise<RangeGizmo> {
+        if (this._rangeLayer.length === 0 && this._pathLayer.length === 0) {
+            return this;
+        }
+        return new Promise((resolve: Function) => {
+            this._piece = null;
+            this._board.scene.tweens.add({
+                targets: this._rangeLayer.getChildren(),
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                alpha: 0,
+                delay: this._board.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "last",
+                    }
+                ),
+                onComplete: () => {
+                    this._rangeLayer.removeAll();
+                    this._pathLayer.removeAll();
+                    setTimeout(() => {
+                        resolve(this);
+                    }, 50);
+                },
+            });
+            
         });
-        this._pathLayer.removeAll();
-        return this;
     }
 
     private async generatePaths(): Promise<void> {
@@ -148,7 +157,7 @@ export class RangeGizmo {
                     if (!path?.nodes?.length) {
                         return;
                     }
-                    if (path?.cost > this._piece.properties.movement + 1) {
+                    if (path?.cost > this._piece.stats.movement + 1) {
                         node.traversable = false;
                     } else {
                         node.path = path;
@@ -218,6 +227,8 @@ export class RangeGizmo {
         ) {
             return;
         }
+        await this.reset();
+
         this.lastSimplePosition = Phaser.Geom.Point.Clone(position);
         this.lastDistance = distance;
         this.lastCursor = cursor;
@@ -377,7 +388,7 @@ export class RangeGizmo {
         }
         const path: Path = this.getPathTo(toPt);
 
-        if (!path || path.nodes.length <= 1) {
+        if (!path || !path.nodes || path.nodes.length <= 1) {
             return;
         }
 

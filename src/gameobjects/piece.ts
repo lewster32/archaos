@@ -5,12 +5,13 @@ import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
 import { Colour } from "./enums/colour";
+import { CursorType } from "./enums/cursortype";
 import { SpreadAction } from "./enums/spreadaction";
 import { UnitAttackType } from "./enums/unitattacktype";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
-import { IUnitProperties } from "./interfaces/unitproperties";
+import { IUnitProperties, IUnitStats } from "./interfaces/unitproperties";
 import { Player } from "./player";
 
 enum PieceState {
@@ -38,6 +39,7 @@ export class Piece extends Entity {
     protected _shadowScale: number;
     protected _shadow?: Phaser.GameObjects.Image;
     protected _sprite?: Phaser.GameObjects.Sprite;
+    protected _effects: Map<UnitStatus, Phaser.GameObjects.Sprite>;
     protected _offsetY: number;
     protected _direction: UnitDirection;
 
@@ -82,6 +84,8 @@ export class Piece extends Entity {
             }),
         };
 
+        this._properties.status = [...this.properties.status ?? []];
+
         let directionOffset: number = this.position.x - this.position.y;
         if (directionOffset === 0) {
             directionOffset =
@@ -117,9 +121,11 @@ export class Piece extends Entity {
 
         this._illusion = !!config.illusion;
 
+        this._effects = new Map();
+
         setTimeout(() => {
             this.initSprites();
-        }, Math.random() * 20);
+        }, Math.random() * 10);
     }
 
     protected initSprites() {
@@ -203,8 +209,10 @@ export class Piece extends Entity {
     }
 
     set direction(direction: UnitDirection) {
-        this._direction = direction;
-        this.playAnim();
+        if (direction != this._direction) {
+            this._direction = direction;
+            this.playAnim();
+        }
     }
 
     get dead(): boolean {
@@ -224,7 +232,7 @@ export class Piece extends Entity {
     }
 
     get moved(): boolean {
-        if (this.properties.movement === 0 || this._engaged) {
+        if (this.stats.movement === 0 || this._engaged) {
             return true;
         }
         return this._moved;
@@ -233,35 +241,58 @@ export class Piece extends Entity {
     set moved(moved: boolean) {
         this._moved = moved;
         if (this.currentRider) {
-            this.currentRider.moved = moved;
+            if (this.currentRider.moved !== moved) {
+                this.currentRider.moved = moved;
+            }
         }
     }
 
     get attacked(): boolean {
-        if (this.properties.combat === 0) {
+        if (this.stats.combat === 0) {
             return true;
         }
         return this._attacked;
     }
 
     set attacked(attacked: boolean) {
+        this._moved = attacked;
         this._attacked = attacked;
         if (this.currentRider) {
-            this.currentRider.attacked = attacked;
+            if (this.currentRider.moved !== attacked) {
+                this.currentRider.moved = attacked;
+            }
+            if (this.currentRider.attacked !== attacked) {
+                this.currentRider.attacked = attacked;
+            }
         }
     }
 
     get rangedAttacked(): boolean {
-        if (this.properties.rangedCombat === 0 || this.properties.range === 0) {
+        if (this.stats.rangedCombat === 0 || this.stats.range === 0) {
             return true;
         }
         return this._rangedAttacked;
     }
 
     set rangedAttacked(rangedAttacked: boolean) {
+        this._moved = rangedAttacked;
+        this._attacked = rangedAttacked;
         this._rangedAttacked = rangedAttacked;
         if (this.currentRider) {
-            this.currentRider.turnOver = true;
+            if (this.currentRider.moved !== rangedAttacked) {
+                this.currentRider.moved = rangedAttacked;
+            }
+            if (this.currentRider.attacked !== rangedAttacked) {
+                this.currentRider.attacked = rangedAttacked;
+            }
+        }
+        if (this.currentMount) {
+            if (this.currentMount.moved !== rangedAttacked) {
+                this.currentMount.moved = rangedAttacked;
+            }
+            if (this.currentMount.attacked !== rangedAttacked) {
+                this.currentMount.attacked = rangedAttacked;
+            }
         }
     }
 
@@ -313,6 +344,42 @@ export class Piece extends Entity {
         }
     }
 
+    get stats(): IUnitStats {
+        const stats: IUnitStats = {
+            movement: this._properties.movement,
+            combat: this._properties.combat,
+            rangedCombat: this._properties.rangedCombat,
+            range: this._properties.range,
+            defense: this._properties.defense,
+            maneuverability: this._properties.maneuverability,
+            magicResistance: this._properties.magicResistance
+        };
+        if (this.hasStatus(UnitStatus.ShadowForm)) {
+            stats.movement = 3;
+            stats.defense = Math.min(stats.defense + 3,9);
+        }
+        if (this.hasStatus(UnitStatus.MagicSword)) {
+            stats.combat = Math.min(stats.combat + 6,9);
+        }
+        else if (this.hasStatus(UnitStatus.MagicKnife)) {
+            stats.combat = Math.min(stats.combat + 3,9);
+        }
+        if (this.hasStatus(UnitStatus.MagicArmour)) {
+            stats.defense = Math.min(stats.defense + 6,9);
+        }
+        else if (this.hasStatus(UnitStatus.MagicShield)) {
+            stats.defense = Math.min(stats.defense + 3,9);
+        }
+        if (this.hasStatus(UnitStatus.MagicBow)) {
+            stats.rangedCombat = 3;
+            stats.range = 6;
+        }
+        if (this.hasStatus(UnitStatus.MagicWings)) {
+            stats.movement = 6;
+        }
+        return stats;
+    }
+
     get properties(): IUnitProperties {
         return this._properties;
     }
@@ -336,7 +403,7 @@ export class Piece extends Entity {
         this._currentMount = mount;
 
         this.board.scene.tweens.add({
-            targets: [this._sprite, this._shadow],
+            targets: [this._sprite, this._shadow, ...this._effects.values()],
             alpha: mount != null ? 0 : 1,
             duration: Piece.DEFAULT_MOVE_DURATION / 2,
         });
@@ -359,7 +426,7 @@ export class Piece extends Entity {
             );
 
             this.board.scene.tweens.add({
-                targets: this._sprite,
+                targets: [this._sprite],
                 displayOriginY: "+" + Board.DEFAULT_CELLSIZE,
                 duration: duration / 2,
                 yoyo: true,
@@ -563,16 +630,6 @@ export class Piece extends Entity {
     addStatus(status: UnitStatus): boolean {
         if (!this.hasStatus(status)) {
             this._properties.status.push(status);
-            switch (status) {
-                case UnitStatus.ShadowForm:
-                    this.properties.movement = 3;
-                    this.properties.defense = Math.min(
-                        this.properties.defense + 3,
-                        9
-                    );
-                    this.sprite.setAlpha(0.4);
-                    break;
-            }
             return true;
         }
         return false;
@@ -583,19 +640,8 @@ export class Piece extends Entity {
             this._properties.status = this._properties.status.filter(
                 (s) => s !== status
             );
-            switch (status) {
-                case UnitStatus.ShadowForm:
-                    this.properties.movement = 1;
-                    this.properties.defense = Math.max(
-                        this.properties.defense - 3,
-                        1
-                    );
-                    this.sprite.setAlpha(1);
-                    break;
-            }
             return true;
         }
-
         return false;
     }
 
@@ -628,7 +674,7 @@ export class Piece extends Entity {
     }
 
     inRangedAttackRange(point: Phaser.Geom.Point): boolean {
-        if (Board.distance(this.position, point) > this.properties.range) {
+        if (Board.distance(this.position, point) > this.stats.range) {
             return false;
         }
         return true;
@@ -642,7 +688,7 @@ export class Piece extends Entity {
             (this.hasStatus(UnitStatus.Mount) ||
                 this.hasStatus(UnitStatus.MountAny)) &&
             this.currentRider &&
-            !this.currentRider.moved
+            !this.currentRider.turnOver
         ) {
             return true;
         }
@@ -650,9 +696,9 @@ export class Piece extends Entity {
             this.dead ||
             this.turnOver ||
             this.hasStatus(UnitStatus.Structure) ||
-            (this.properties.combat === 0 &&
-                this.properties.rangedCombat === 0 &&
-                this.properties.movement === 0)
+            (this.stats.combat === 0 &&
+                this.stats.rangedCombat === 0 &&
+                this.stats.movement === 0)
         ) {
             return false;
         }
@@ -698,7 +744,7 @@ export class Piece extends Entity {
             this._dead ||
             this.engulfed ||
             this.attacked ||
-            this.properties.combat === 0 ||
+            this.stats.combat === 0 ||
             neighbours.length === 0 ||
             neighbours.filter((neighbour: Piece) =>
                 this.canAttackPiece(neighbour)
@@ -713,7 +759,7 @@ export class Piece extends Entity {
         if (
             this._dead ||
             this.engulfed ||
-            this.properties.movement === 0 ||
+            this.stats.movement === 0 ||
             this.hasStatus(UnitStatus.Structure) ||
             this.hasStatus(UnitStatus.Tree)
         ) {
@@ -743,7 +789,7 @@ export class Piece extends Entity {
             this._dead ||
             this.engulfed ||
             this.rangedAttacked ||
-            this.properties.rangedCombat === 0 ||
+            this.stats.rangedCombat === 0 ||
             this.board.pieces.filter((piece: Piece) =>
                 this.canRangedAttackPiece(piece)
             ).length === 0
@@ -761,6 +807,7 @@ export class Piece extends Entity {
             this.engulfed ||
             piece.dead ||
             this.rangedAttacked ||
+            !this.moved ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
             !this.inRangedAttackRange(piece.position)
         ) {
@@ -777,9 +824,9 @@ export class Piece extends Entity {
             !piece.dead &&
             !this.moved &&
             this.hasStatus(UnitStatus.Wizard) &&
-            ((piece.hasStatus(UnitStatus.Mount) &&
-                piece.owner === this.owner) ||
-                (piece.hasStatus(UnitStatus.MountAny) && !piece.currentRider))
+            !piece.currentRider &&
+            (piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
+            piece.hasStatus(UnitStatus.MountAny)
         ) {
             return true;
         }
@@ -792,8 +839,8 @@ export class Piece extends Entity {
             this._dead ||
             this.engulfed ||
             piece.dead ||
-            this.properties.maneuverability === 0 ||
-            piece.properties.maneuverability === 0 ||
+            this.stats.maneuverability === 0 ||
+            piece.stats.maneuverability === 0 ||
             this.owner === piece.owner
         ) {
             return false;
@@ -853,18 +900,19 @@ export class Piece extends Entity {
             this.moved = true;
 
             const rollSuccess: boolean = this.board.roll(
-                this.properties.combat,
-                piece.properties.defense
+                this.stats.combat,
+                piece.stats.defense
             );
 
             this.board.logger.log(
                 `${this.name} ${this.properties.attackType} ${piece.name}`
             );
 
+            if (this.hasStatus(UnitStatus.ShadowForm)) {
+                this.removeStatus(UnitStatus.ShadowForm);
+            }
+
             if (rollSuccess) {
-                if (this.hasStatus(UnitStatus.ShadowForm)) {
-                    this.removeStatus(UnitStatus.ShadowForm);
-                }
                 await piece.kill();
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 if (
@@ -928,8 +976,8 @@ export class Piece extends Entity {
             this.moved = true;
 
             const rollSuccess: boolean = this.board.roll(
-                this.properties.rangedCombat,
-                piece.properties.defense
+                this.stats.rangedCombat,
+                piece.stats.defense
             );
 
             this.board.logger.log(
@@ -991,19 +1039,13 @@ export class Piece extends Entity {
 
     async mount(piece: Piece): Promise<void> {
         if (this.canMountPiece(piece)) {
-            this.turnOver = true;
-            this.currentMount = piece;
-
-            piece.currentRider = this;
+            this.moved = true;
+            this.attacked = true;
             piece.moved = true;
 
-            if (piece.canAttack || piece.canRangedAttack) {
-                await this.board.selectPiece(piece.id);
-                this.board.cursor.update(true);
-            } else {
-                piece.turnOver = true;
-            }
-            this.board.logger.log(`${this.name} mounted ${piece.name}`);
+            this.currentMount = piece;
+            piece.currentRider = this;
+            
             await this.board.movePiece(this.id, piece.position);
         }
     }
@@ -1032,6 +1074,10 @@ export class Piece extends Entity {
         if (this._shadow) {
             this._shadow.destroy();
         }
+        this._effects.forEach((sprite) => {
+            sprite.destroy();
+        });
+
         this.board.removePiece(this.id);
         this.board.emitBoardUpdateEvent();
     }
@@ -1043,13 +1089,14 @@ export class Piece extends Entity {
         this._sprite.anims.stop();
         if (this._dead) {
             this._sprite.setFrame(this._properties.id + `_${this.direction}_d`);
-        } else {
-            this._sprite.anims.playAfterDelay(
-                this._properties.id + `_${this.direction}`,
-                Math.random() * 400
-            );
-            this._sprite.anims.setProgress(Math.random());
+            return;
         }
+
+        this._sprite.anims.playAfterDelay(
+            this._properties.id + `_${this.direction}`,
+            Math.random() * 400
+        );
+        this._sprite.anims.setProgress(Math.random());
     }
 
     protected createShadow(): Phaser.GameObjects.Image | null {

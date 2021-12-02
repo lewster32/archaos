@@ -1,4 +1,5 @@
 import { Board } from "../board";
+import { Cursor } from "../cursor";
 import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
 import { Colour } from "../enums/colour";
@@ -152,6 +153,47 @@ export class Rules {
         );
     }
 
+    public async doCastSpell(board: Board, spell: Spell, currentTarget: Piece | Phaser.Geom.Point | null): Promise<boolean> {
+        const casted: Spell | null =
+        await board.currentPlayer.useSpell();
+        if (casted) {
+            board.state = BoardState.Idle;
+            board.logger.log(
+                `${board.currentPlayer.name} casts '${casted.name}'`
+            );
+            await casted.cast(
+                board.currentPlayer,
+                board.selected,
+                currentTarget
+            );
+            board.state = BoardState.CastSpell;
+            if (casted.castTimes <= 0) {
+                await board.currentPlayer.discardSpell();
+                if (casted.failed) {
+                    board.logger.log(`Spell failed`, Colour.Magenta);
+                }
+                board.selected.turnOver = true;
+                board.deselectPlayer();
+                return false;
+            } else {
+                board.logger.log(
+                    `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
+                );
+                if (casted.lineOfSight) {
+                    await board.moveGizmo.generateSimpleRange(
+                        board.selected.position,
+                        board.currentPlayer?.selectedSpell.range,
+                        CursorType.RangeCast,
+                        true,
+                        true
+                    );
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     private async processClick(
         board: Board,
         actionType: ActionType,
@@ -175,41 +217,7 @@ export class Rules {
                 if (currentTarget == null) {
                     return ActionType.Invalid;
                 }
-                const casted: Spell | null =
-                    await board.currentPlayer.useSpell();
-                if (casted) {
-                    board.state = BoardState.Idle;
-                    board.logger.log(
-                        `${board.currentPlayer.name} casts '${casted.name}'`
-                    );
-                    await casted.cast(
-                        board.currentPlayer,
-                        board.selected,
-                        currentTarget
-                    );
-                    board.state = BoardState.CastSpell;
-                    if (casted.castTimes <= 0) {
-                        await board.currentPlayer.discardSpell();
-                        if (casted.failed) {
-                            board.logger.log(`Spell failed`, Colour.Magenta);
-                        }
-                        board.selected.turnOver = true;
-                        board.deselectPlayer();
-                        return ActionType.None;
-                    } else {
-                        board.logger.log(
-                            `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
-                        );
-                        if (casted.lineOfSight) {
-                            await board.moveGizmo.generateSimpleRange(
-                                board.selected.position,
-                                board.currentPlayer?.selectedSpell.range,
-                                CursorType.RangeCast,
-                                true,
-                                true
-                            );
-                        }
-                    }
+                if (await this.doCastSpell(board, board.currentPlayer.selectedSpell, currentTarget)) {
                     return ActionType.Cast;
                 }
             }
@@ -223,9 +231,7 @@ export class Rules {
                     ) || null;
 
                 if (
-                    currentAliveHoveredPiece &&
-                    currentAliveHoveredPiece.currentRider &&
-                    currentAliveHoveredPiece.currentRider.canSelect
+                    currentAliveHoveredPiece?.currentRider?.canSelect
                 ) {
                     this.dispatchEvent(
                         EventType.PieceInfo,
@@ -233,6 +239,10 @@ export class Rules {
                     );
                     await board.selectPiece(
                         currentAliveHoveredPiece.currentRider.id
+                    );
+                    board.logger.log(
+                        `Dismount ${currentAliveHoveredPiece.currentRider.name}? (${Cursor.CANCEL_KEY} to cancel)`,
+                        Colour.Yellow
                     );
                     board.state = BoardState.Dismount;
                     return ActionType.Dismount;
@@ -279,7 +289,7 @@ export class Rules {
 
             if (actionType === ActionType.Mount) {
                 if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
-                    board.mountPiece(
+                    await board.mountPiece(
                         selectedPiece.id,
                         currentAliveHoveredPiece.id
                     );
@@ -356,6 +366,10 @@ export class Rules {
             if (selectedPiece.currentRider) {
                 selectedPiece.currentRider.moved = true;
             }
+            board.logger.log(
+                `Dismount cancelled`,
+                Colour.Magenta
+            );
             if (
                 selectedPiece.currentMount &&
                 selectedPiece.currentMount.canSelect
@@ -382,10 +396,10 @@ export class Rules {
             }
             if (!selectedPiece.canSelect) {
                 selectedPiece.turnOver = true;
-                board.deselectPiece();
+                await board.deselectPiece();
             }
         } else {
-            board.deselectPiece();
+            await board.deselectPiece();
         }
 
         return ActionType.None;

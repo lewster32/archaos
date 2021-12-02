@@ -211,6 +211,7 @@ export default {
         display: flex;
         flex-direction: column;
         transition: max-width 0.25s, opacity 0.25s, padding 0.25s;
+        max-width: 500px;
         &--minimised {
             max-width: 0;
             opacity: 0;

@@ -1,29 +1,23 @@
 import "phaser";
-
-import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
-
 import { spells } from "../assets/data/classicspells.json";
 import { units } from "../assets/data/classicunits.json";
-
-import boardAtlas from "../assets/spritesheets/board.png";
+import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
-import classicunitsAtlas from "../assets/spritesheets/classicunits.png";
+import boardAtlas from "../assets/spritesheets/board.png";
 import classicunitsJson from "../assets/spritesheets/classicunits.json?url";
-import cursorsAtlas from "../assets/spritesheets/cursors.png";
+import classicunitsAtlas from "../assets/spritesheets/classicunits.png";
 import cursorsJson from "../assets/spritesheets/cursors.json?url";
-import effectsAtlas from "../assets/spritesheets/effects.png";
+import cursorsAtlas from "../assets/spritesheets/cursors.png";
 import effectsJson from "../assets/spritesheets/effects.json?url";
-
-import wizardsSheet from "../assets/spritesheets/wizards.png";
+import effectsAtlas from "../assets/spritesheets/effects.png";
 import hatsSheet from "../assets/spritesheets/hats.png";
-
+import wizardsSheet from "../assets/spritesheets/wizards.png";
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
-import { EffectType } from "./gameobjects/effectemitter";
+import { SpellTarget } from "./gameobjects/enums/spelltarget";
+import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
-import { Wizard } from "./gameobjects/wizard";
-import { SpellTarget } from "./gameobjects/enums/spelltarget";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -33,29 +27,13 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.load.atlas(
-            "classicunits",
-            classicunitsAtlas,
-            classicunitsJson
-        );
+        this.load.atlas("classicunits", classicunitsAtlas, classicunitsJson);
 
-        this.load.atlas(
-            "board",
-            boardAtlas,
-            boardJson
-        );
+        this.load.atlas("board", boardAtlas, boardJson);
 
-        this.load.atlas(
-            "cursors",
-            cursorsAtlas,
-            cursorsJson
-        );
+        this.load.atlas("cursors", cursorsAtlas, cursorsJson);
 
-        this.load.atlas(
-            "effects",
-            effectsAtlas,
-            effectsJson
-        );
+        this.load.atlas("effects", effectsAtlas, effectsJson);
 
         this.load.spritesheet("wizards", wizardsSheet, {
             frameWidth: 18,
@@ -92,7 +70,6 @@ export class GameScene extends Phaser.Scene {
                 });
             }
         }
-
 
         this.anims.create({
             key: "sparkle",
@@ -134,16 +111,38 @@ export class GameScene extends Phaser.Scene {
             frameRate: 5,
         });
 
+        [
+            "magicbow",
+            "magicknife",
+            "magicsword",
+            "magicshield",
+            "magicwings",
+        ].forEach((key: string) => {
+            this.anims.create({
+                key: key,
+                frames: this.anims.generateFrameNames("effects", {
+                    prefix: key,
+                    start: 1,
+                    end: 4,
+                }),
+                frameRate: 5,
+            });
+        });
+
         this.testGame();
     }
 
     getRandomSpell(): any {
-        const spellNames: string[] = Object.values(spells).map((spell: any) => spell.name);
+        const spellNames: string[] = Object.values(spells).map(
+            (spell: any) => spell.name
+        );
 
         // Remove Disbelieve from random pool
         spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
-        
-        return this.getSpellProperties(spellNames[Math.floor(Math.random() * spellNames.length)]);
+
+        return this.getSpellProperties(
+            spellNames[Math.floor(Math.random() * spellNames.length)]
+        );
     }
 
     getSpellProperties(name: string): any {
@@ -180,7 +179,7 @@ export class GameScene extends Phaser.Scene {
             lineOfSight: spell.lineOfSight,
             projectile: spell.projectile,
             persist: spell.persist,
-            target: spell.target || SpellTarget.Empty
+            target: spell.target || SpellTarget.Empty,
         };
     }
 
@@ -213,11 +212,11 @@ export class GameScene extends Phaser.Scene {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                status: [...unit.status || []],
+                status: [...(unit.status || [])],
             },
             shadowScale: unit.shadowScale,
             offsetY: unit.offY,
-        }
+        };
     }
 
     testGame(): void {
@@ -254,12 +253,10 @@ export class GameScene extends Phaser.Scene {
         setTimeout(() => {
             board.startGame();
         }, 1000);
-
- 
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 9, 9);
+        const board: Board = new Board(this, 1, 11, 11);
 
         const player: Player = board.addPlayer({
             name: "Gandalf",
@@ -268,6 +265,34 @@ export class GameScene extends Phaser.Scene {
         const player2: Player = board.addPlayer({
             name: "Merlin",
         });
+
+        /*
+        const wizards = [];
+
+        for (let i = 0; i < 16; i++) {
+            wizards.push(board.addWizard({
+                owner: player,
+                x: 0,
+                y: i,
+                wizCode: `${i.toString(16).padStart(2, "0")}00000000`,
+            }));
+
+            wizards.push(board.addWizard({
+                owner: player2,
+                x: board.width - 1,
+                y: i,
+                wizCode: `${i.toString(16).padStart(2, "0")}03030000`,
+            }));
+        }
+
+        
+        setTimeout(() => {
+            wizards.forEach((wizard: Wizard) => {
+                wizard.addStatus(UnitStatus.MagicBow);
+                wizard.addStatus(UnitStatus.MagicWings);
+            });
+        }, 500);
+        */
 
         board.addWizard({
             owner: player,
@@ -279,28 +304,41 @@ export class GameScene extends Phaser.Scene {
         board.addWizard({
             owner: player2,
             x: Math.floor(board.width / 2),
-            y: 5,
+            y: 7,
             wizCode: "0600000000",
         });
 
-        /**/
-        board.addSpell(player, this.getSpellProperties("king cobra"));
-        board.addSpell(player, this.getSpellProperties("magic castle"));
-        board.addSpell(player, this.getSpellProperties("green dragon"));
+        /**
+        board.addSpell(player, this.getSpellProperties("magic wings"));
+        board.addSpell(player, this.getSpellProperties("magic shield"));
+        board.addSpell(player, this.getSpellProperties("magic knife"));
+        board.addSpell(player, this.getSpellProperties("magic sword"));
+        board.addSpell(player, this.getSpellProperties("magic bow"));
         board.addSpell(player, this.getSpellProperties("shadow form"));
+        /**/
+        /**/
+
+        setTimeout(() => {
+            player.castingPiece.addStatus(UnitStatus.MagicBow);
+        }, 1000);
+
+        /*
+        setTimeout(() => { 
+            // player.castingPiece.removeStatus(UnitStatus.MagicShield);
+        }, 3000);
 
         // board.addSpell(player2, this.getSpellProperties("gooey blob"));
         // board.addSpell(player2, this.getSpellProperties("magic fire"));
         /**/
 
-        /*
+        
         board.addPiece({
-            ...this.getPieceProperties("magic fire"),
+            ...this.getPieceProperties("centaur"),
             owner: player,
             x: 4,
-            y: 5
+            y: 9
         });
-        */
+        /**/
 
         /*
         board.addPiece({
@@ -311,6 +349,7 @@ export class GameScene extends Phaser.Scene {
         });
         */
 
+        /**
         board.addPiece({
             ...this.getPieceProperties("giant"),
             owner: player2,
@@ -318,7 +357,6 @@ export class GameScene extends Phaser.Scene {
             y: 6
         });
 
-        /*
 
         board.addPiece({
             ...this.getPieceProperties("horse"),
@@ -326,7 +364,6 @@ export class GameScene extends Phaser.Scene {
             x: 4,
             y: 2
         });
-        */
 
         setTimeout(async () => {
             (await board.addPiece({
@@ -337,6 +374,7 @@ export class GameScene extends Phaser.Scene {
             }));
         },0);
 
+        /**/
 
         /*
         board.addPiece({

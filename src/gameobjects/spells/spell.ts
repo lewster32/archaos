@@ -32,7 +32,12 @@ export class Spell extends Model {
         super(id);
         this._board = board;
 
-        this._type = SpellType.Misc;
+        if (config?.target === SpellTarget.Self) {
+            this._type = SpellType.Buff;
+        }
+        else {
+            this._type = SpellType.Misc;
+        }
 
         this._properties = config;
         this._castTimes = config.castTimes || 1;
@@ -415,7 +420,7 @@ export class Spell extends Model {
                 return false;
             }
 
-            const rollSuccess: boolean = this._board.roll(10, target.properties.magicResistance);
+            const rollSuccess: boolean = this._board.roll(10, target.stats.magicResistance);
 
             await this._board.playEffect(
                 EffectType.SubversionBeam,
@@ -457,15 +462,25 @@ export class Spell extends Model {
                 target
             );
 
-            if (this.properties.id === "shadow-form") {
-                if (!target.addStatus(UnitStatus.ShadowForm)) {
+            const statusMap: { [key: string]: UnitStatus } = {
+                "shadow-form": UnitStatus.ShadowForm,
+                "magic-knife": UnitStatus.MagicKnife,
+                "magic-sword": UnitStatus.MagicSword,
+                "magic-shield": UnitStatus.MagicShield,
+                "magic-armour": UnitStatus.MagicArmour,
+                "magic-bow": UnitStatus.MagicBow,
+                "magic-wings": UnitStatus.MagicWings,
+            };
+
+            if (this.properties.id in statusMap) {
+                if (!target.addStatus(statusMap[this.properties.id])) {
                     this._board.logger.log(
                         `${target.name} already has ${this.name} - this spell has no effect`,
                         Colour.Magenta
                     );
                     await Board.delay(1000);
                     return true; 
-                };
+                }
             }
 
             this._board.logger.log(

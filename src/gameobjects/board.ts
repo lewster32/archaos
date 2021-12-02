@@ -20,11 +20,17 @@ import { Spell } from "./spells/spell";
 import { AttackSpell } from "./spells/attackspell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
+import { SpellType } from "./enums/spelltype";
+import { InputType } from "./enums/inputtype";
 
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
-    static NEW_TURN_HIGHLIGHT_DURATION: number = 700;
+    static CHEAT_FORCE_HIT: boolean | null = null;
+    static CHEAT_FORCE_CAST: boolean | null = null;
+    static CHEAT_SHORT_DELAY: boolean = false;
+
+    static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY ? 10 : 700;
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
     static SPREAD_ITERATIONS: number = 2;
 
@@ -39,9 +45,9 @@ export class Board extends Model {
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
 
-    static DEFAULT_DELAY: number = 1000;
-    static END_TURN_DELAY: number = 1000;
-    static SPREAD_DELAY: number = 250;
+    static DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1000;
+    static END_TURN_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1500;
+    static SPREAD_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 250;
 
     static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
@@ -210,16 +216,21 @@ export class Board extends Model {
                 this._logger.log(
                     `World balance shifts towards ${
                         this._balanceShift < 0 ? "Chaos" : "Law"
-                    } by ${Math.abs(this._balanceShift)}`,
+                    } by ${parseFloat(
+                        Math.abs(this._balanceShift).toFixed(2)
+                    )}`,
                     this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan
                 );
                 this._balanceShift = 0;
+                await Board.delay(Board.DEFAULT_DELAY);
             }
             this.phase = BoardPhase.Spellbook;
             this.state = BoardState.SelectSpell;
+            await Board.delay(Board.END_TURN_DELAY);
         } else if (this.phase === BoardPhase.Spellbook) {
             this.phase = BoardPhase.Casting;
             this.state = BoardState.CastSpell;
+            await Board.delay(Board.END_TURN_DELAY);
         } else if (this.phase === BoardPhase.Casting) {
             this.phase = BoardPhase.Spreading;
             this.state = BoardState.Idle;
@@ -227,6 +238,7 @@ export class Board extends Model {
         } else if (this.phase === BoardPhase.Spreading) {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
+            await Board.delay(Board.END_TURN_DELAY);
         }
         this.emitBoardUpdateEvent();
     }
@@ -254,11 +266,10 @@ export class Board extends Model {
                 pieces: this.pieces,
                 board: {
                     width: this._width,
-                    height: this._height
-                }
+                    height: this._height,
+                },
             });
         }, 500);
-
     }
 
     async addPiece(config: PieceConfig): Promise<Piece> {
@@ -366,6 +377,11 @@ export class Board extends Model {
         this._selected = this.getPiece(id);
 
         if (this.phase === BoardPhase.Moving) {
+            if (this._selected.currentMount) {
+                await this.moveGizmo.generate(this._selected);
+                return;
+            }
+            
             const firstEngagingPiece: Piece | null =
                 this._selected.getFirstEngagingPiece();
 
@@ -374,8 +390,8 @@ export class Board extends Model {
                     this._selected.engaged ||
                     Phaser.Math.RND.integerInRange(
                         1,
-                        firstEngagingPiece.properties.maneuverability
-                    ) > this._selected.properties.maneuverability
+                        firstEngagingPiece.stats.maneuverability
+                    ) > this._selected.stats.maneuverability
                 ) {
                     await this._selected.engage(firstEngagingPiece);
                 } else {
@@ -383,28 +399,48 @@ export class Board extends Model {
                         `${this._selected.name} disengaged from ${firstEngagingPiece.name}`,
                         Colour.Green
                     );
-                    await this.moveGizmo.generate(this._selected);
+                    if (!this._selected.moved) {
+                        await this.moveGizmo.generate(this._selected);
+                    }
                 }
             } else {
-                await this.moveGizmo.generate(this._selected);
+                if (!this._selected.moved) {
+                    await this.moveGizmo.generate(this._selected);
+                }
             }
         }
     }
 
-    deselectPiece(): void {
+    async deselectPiece(): Promise<void> {
+        const previousSelected: Piece = this._selected;
         this._selected = null;
-        this.moveGizmo.reset();
 
-        setTimeout(async () => {
-            if (
-                (this.phase === BoardPhase.Casting) ||
-                this.getPiecesByOwner(this.currentPlayer!).every(
-                    (piece) => piece.turnOver
-                )
-            ) {
-                await this.nextPlayer();
-            }
-        }, Board.END_TURN_DELAY);
+        if (previousSelected.currentRider?.canSelect) {
+            await this.selectPiece(previousSelected.currentRider.id);
+            await this.cursor.action(InputType.None);
+            return;
+        }
+        else if (previousSelected.currentMount?.canSelect) {
+            await this.selectPiece(previousSelected.currentMount.id);
+            await this.cursor.action(InputType.None);
+            return;
+        }
+
+        await this.moveGizmo.reset();
+
+        return new Promise((resolve) => {
+            setTimeout(async () => {
+                if (
+                    this.phase === BoardPhase.Casting ||
+                    this.getPiecesByOwner(this.currentPlayer!).every(
+                        (piece) => piece.turnOver
+                    )
+                ) {
+                    await this.nextPlayer();
+                }
+                resolve();
+            }, Board.END_TURN_DELAY);
+        });
     }
 
     async selectWizard(player: Player): Promise<Wizard | null> {
@@ -431,7 +467,10 @@ export class Board extends Model {
                     // Not the origin
                     (x !== point.x || y !== point.y) &&
                     // Not off the board
-                    x >= 0 && y >= 0 && x < this.width && y < this.height
+                    x >= 0 &&
+                    y >= 0 &&
+                    x < this.width &&
+                    y < this.height
                 ) {
                     points.push(new Phaser.Geom.Point(x, y));
                 }
@@ -498,7 +537,6 @@ export class Board extends Model {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
             const path: Path = this.moveGizmo.getPathTo(position);
-            this.moveGizmo.reset();
             if (
                 piece.hasStatus(UnitStatus.Flying) ||
                 Board.distance(piece.position, position) <= 1.5
@@ -515,9 +553,6 @@ export class Board extends Model {
             }
 
             piece.moved = true;
-            if (piece.currentRider) {
-                piece.currentRider.moved = true;
-            }
 
             const firstEngagingPiece: Piece | null =
                 piece.getFirstEngagingPiece();
@@ -525,6 +560,8 @@ export class Board extends Model {
             if (firstEngagingPiece) {
                 await piece.engage(firstEngagingPiece);
             }
+
+            await this.moveGizmo.reset();
 
             setTimeout(() => {
                 this.cursor.update(true);
@@ -550,6 +587,7 @@ export class Board extends Model {
         }
         if (attackingPiece && defendingPiece) {
             await attackingPiece.attack(defendingPiece);
+            await this.moveGizmo.reset();
             return attackingPiece;
         }
         return null;
@@ -569,6 +607,7 @@ export class Board extends Model {
         }
         if (attackingPiece && defendingPiece) {
             await attackingPiece.rangedAttack(defendingPiece);
+            await this.moveGizmo.reset();
             return attackingPiece;
         }
         return null;
@@ -578,6 +617,7 @@ export class Board extends Model {
         mountingPieceId: number,
         mountedPieceId: number
     ): Promise<Piece | null> {
+        await this.moveGizmo.reset();
         const mountingPiece: Piece | null = this.getPiece(mountingPieceId);
         const mountedPiece: Piece | null = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
@@ -692,12 +732,12 @@ export class Board extends Model {
                     });
             } else {
                 this.getLayer(BoardLayer.Floor)
-                .getChildren()
-                .forEach((child) => {
-                    (child as Phaser.GameObjects.Sprite).clearTint();
-                });
+                    .getChildren()
+                    .forEach((child) => {
+                        (child as Phaser.GameObjects.Sprite).clearTint();
+                    });
                 document.body.style.removeProperty("--bg-colour");
-            } 
+            }
             setTimeout(() => {
                 resolve();
             }, 100);
@@ -773,7 +813,7 @@ export class Board extends Model {
                         units.forEach((piece: Piece) => {
                             const target: Phaser.GameObjects.Sprite =
                                 piece.sprite;
-                            target.setTint(piece.defaultTint)
+                            target.setTint(piece.defaultTint);
                             piece.turnOver = false;
                             piece.highlighted = true;
                         });
@@ -863,13 +903,23 @@ export class Board extends Model {
 
         if (this._phase === BoardPhase.Casting) {
             await this.selectWizard(this.currentPlayer!);
-            if (this.selected && this.currentPlayer?.selectedSpell?.range > 0) {
-                await this.moveGizmo.generateSimpleRange(
-                    this.selected.position,
-                    this.currentPlayer?.selectedSpell.range,
-                    CursorType.RangeCast,
-                    this.currentPlayer?.selectedSpell.lineOfSight
-                );
+
+            if (this.selected) {
+                if (this.currentPlayer?.selectedSpell?.range === 0) {
+                    await this.rules.doCastSpell(
+                        this,
+                        this.currentPlayer.selectedSpell,
+                        this.currentPlayer.castingPiece
+                    );
+                    return await this.nextPlayer();
+                } else if (this.currentPlayer?.selectedSpell?.range > 0) {
+                    await this.moveGizmo.generateSimpleRange(
+                        this.selected.position,
+                        this.currentPlayer?.selectedSpell.range,
+                        CursorType.RangeCast,
+                        this.currentPlayer?.selectedSpell.lineOfSight
+                    );
+                }
             }
         }
 
@@ -991,6 +1041,9 @@ export class Board extends Model {
     }
 
     roll(attack: number, defense: number): boolean {
+        if (Board.CHEAT_FORCE_HIT !== null) {
+            return Board.CHEAT_FORCE_HIT;
+        }
         const attackRoll: number = Phaser.Math.Between(0, 10 + attack);
         const defenseRoll: number = Phaser.Math.Between(0, 10 + defense);
         console.log("Rolling attack: " + attackRoll + " vs " + defenseRoll);
@@ -998,6 +1051,9 @@ export class Board extends Model {
     }
 
     rollChance(attack: number): boolean {
+        if (Board.CHEAT_FORCE_CAST !== null) {
+            return Board.CHEAT_FORCE_CAST;
+        }
         const defenseRoll: number = Phaser.Math.RND.frac();
         return attack > defenseRoll;
     }

@@ -2,6 +2,7 @@ import { Board } from "./board";
 import { ActionType } from "./enums/actiontype";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
+import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
@@ -12,6 +13,8 @@ export class Cursor {
     private _image: Phaser.GameObjects.Image;
     private _board: Board;
     private _type: CursorType;
+
+    static CANCEL_KEY: string = "Escape";
 
     static OFFSET: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
 
@@ -36,7 +39,7 @@ export class Cursor {
         this._board.scene.input.keyboard.on(
             "keyup",
             async (event: KeyboardEvent) => {
-                if (event.key === "Escape") {
+                if (event.key === Cursor.CANCEL_KEY) {
                     await this.action(InputType.Cancel);
                 }
             }
@@ -183,15 +186,19 @@ export class Cursor {
                 if (selected.canAttack) {
                     return;
                 } else if (selected.canRangedAttack) {
+                    this._board.logger.log(
+                        `${selected.name}'s turn to ranged attack`,
+                        Colour.Yellow
+                    );
                     await this._board.moveGizmo.generateSimpleRange(
                         this._board.selected.position,
-                        this._board.selected.properties.range,
+                        this._board.selected.stats.range,
                         CursorType.RangeRangedAttack,
                         true
                     );
                 } else {
                     selected.turnOver = true;
-                    this._board.deselectPiece();
+                    await this._board.deselectPiece();
                 }
             }
         }
