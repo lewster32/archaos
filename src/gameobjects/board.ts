@@ -590,8 +590,10 @@ export class Board extends Model {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
         if (attackingPiece && defendingPiece) {
-            await attackingPiece.attack(defendingPiece);
-            await this.moveGizmo.reset();
+            const attackResult: boolean = await attackingPiece.attack(defendingPiece);
+            if (attackResult) {
+                await this.moveGizmo.reset();
+            }
             return attackingPiece;
         }
         return null;
@@ -610,8 +612,10 @@ export class Board extends Model {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
         if (attackingPiece && defendingPiece) {
-            await attackingPiece.rangedAttack(defendingPiece);
-            await this.moveGizmo.reset();
+            const attackResult: boolean = await attackingPiece.rangedAttack(defendingPiece);
+            if (attackResult) {
+                await this.moveGizmo.reset();
+            }
             return attackingPiece;
         }
         return null;
