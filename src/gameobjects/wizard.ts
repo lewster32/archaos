@@ -59,7 +59,7 @@ export class Wizard extends Piece {
         this._effects.forEach((sprite, status) => {
             sprite.x =
                 this._sprite.x +
-                effectOffsets[status].x[this._wizCode.wiz] *
+                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                     (this._direction === UnitDirection.Left ? -1 : 1);
             sprite.setFlipX(
                 this._direction === UnitDirection.Left ? true : false
@@ -91,11 +91,11 @@ export class Wizard extends Piece {
                     targets: [sprite],
                     x:
                         isoPosition.x +
-                        effectOffsets[status].x[this._wizCode.wiz] *
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                             (this._direction === UnitDirection.Left ? -1 : 1),
                     y:
                         isoPosition.y +
-                        effectOffsets[status].y[this._wizCode.wiz],
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     duration: duration,
                     ease: Phaser.Math.Easing.Cubic.InOut,
                 });
@@ -155,6 +155,7 @@ export class Wizard extends Piece {
             const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
                 this.position
             );
+            let sprite:Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
             switch (status) {
                 // Visual effects
                 case UnitStatus.ShadowForm:
@@ -165,18 +166,18 @@ export class Wizard extends Piece {
                 case UnitStatus.MagicBow:
                 case UnitStatus.MagicShield:
                 case UnitStatus.MagicWings:
-                    const sprite: Phaser.GameObjects.Sprite =
+                    sprite =
                         this.board.scene.add.sprite(
                             isoPosition.x +
-                                effectOffsets[status].x[this._wizCode.wiz] *
+                                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                                     (this._direction === UnitDirection.Left
                                         ? -1
                                         : 1),
                             isoPosition.y +
-                                effectOffsets[status].y[this._wizCode.wiz],
+                                (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                             "effects"
-                        );
-                    sprite.anims.play({
+                        ) ;
+                    (sprite as Phaser.GameObjects.Sprite).anims.play({
                         key: status.toLowerCase(),
                         repeat: -1,
                     });
@@ -188,9 +189,35 @@ export class Wizard extends Piece {
                     this.board.getLayer(BoardLayer.Pieces).add(sprite);
                     this._effects.set(status, sprite);
                     this.updateDepth();
-                    if (this.currentMount) {
-                        sprite.setAlpha(0);
-                    }
+                    break;
+                case UnitStatus.MagicArmour:
+                    sprite = this.board.scene.add.image(
+                        isoPosition.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left
+                                ? -1
+                                : 1),
+                    isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                        "magic-armour",
+                        this._wizCode.wiz
+                    );
+                    sprite.setOrigin(0.5, 0.6);
+                    sprite.setFlipX(
+                        this._direction === UnitDirection.Left ? true : false
+                    );
+                    this.board.getLayer(BoardLayer.Pieces).add(sprite);
+                    this._effects.set(status, sprite);
+                    sprite['_effectTween'] = this.board.scene.tweens.add({
+                        targets: [sprite],
+                        duration: 500,
+                        yoyo: true,
+                        ease: "Stepped",
+                        easeParams: [3],
+                        alpha: {from: 0, to: 1},
+                        loop: -1
+                    });
+                    this.updateDepth();
                     break;
             }
 
@@ -216,6 +243,12 @@ export class Wizard extends Piece {
                 this.removeStatus(UnitStatus.MagicKnife);
             }
 
+            if (this.currentMount) {
+                this._effects.forEach((sprite, status) => {
+                    sprite.setAlpha(0);
+                });
+            }
+
             return true;
         }
         return false;
@@ -234,8 +267,12 @@ export class Wizard extends Piece {
                 case UnitStatus.MagicBow:
                 case UnitStatus.MagicShield:
                 case UnitStatus.MagicWings:
+                case UnitStatus.MagicArmour:
                     if (this._effects.has(status)) {
-                        this._effects.get(status)!.destroy();
+                        const sprite = this._effects.get(status)!.destroy();
+                        if (sprite['_effectTween']) {
+                            sprite['_effectTween'].stop().destroy();
+                        }
                         this._effects.delete(status);
                     }
                     break;

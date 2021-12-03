@@ -12,6 +12,7 @@ import effectsJson from "../assets/spritesheets/effects.json?url";
 import effectsAtlas from "../assets/spritesheets/effects.png";
 import hatsSheet from "../assets/spritesheets/hats.png";
 import wizardsSheet from "../assets/spritesheets/wizards.png";
+import magicArmourSheet from "../assets/spritesheets/magic-armour.png";
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { EffectType } from "./gameobjects/effectemitter";
@@ -39,6 +40,11 @@ export class GameScene extends Phaser.Scene {
         this.load.atlas("effects", effectsAtlas, effectsJson);
 
         this.load.spritesheet("wizards", wizardsSheet, {
+            frameWidth: 18,
+            frameHeight: 18,
+        });
+
+        this.load.spritesheet("magic-armour", magicArmourSheet, {
             frameWidth: 18,
             frameHeight: 18,
         });
@@ -132,7 +138,7 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getPieceProperties(name: string): any {
@@ -218,7 +224,7 @@ export class GameScene extends Phaser.Scene {
             name: "Merlin",
         });
 
-        /** *
+        /** */
         const wizards = [];
 
         for (let i = 0; i < 8; i++) {
@@ -250,10 +256,11 @@ export class GameScene extends Phaser.Scene {
         }
 
         
-        /**
+        /**/
         setTimeout(() => {
             wizards.forEach((wizard: Wizard) => {
                 setTimeout(() => {
+                    /*
                     if (Math.random() > 0.7) {
                         wizard.addStatus(UnitStatus.MagicBow);
                         wizard.addStatus(UnitStatus.MagicWings);
@@ -264,7 +271,9 @@ export class GameScene extends Phaser.Scene {
                     } else {
                         wizard.addStatus(UnitStatus.MagicSword);
                     }
-                }, Math.random() * 500);
+                    */
+                    wizard.addStatus(UnitStatus.MagicArmour);
+                }, Math.random() * 1000);
 
             });
         }, 500);
@@ -293,16 +302,18 @@ export class GameScene extends Phaser.Scene {
         /**/
         /**/
 
-        /*
-        setTimeout(() => {
-            player.castingPiece.addStatus(UnitStatus.MagicBow);
-        }, 1000);
-        */
-
         /**/
+        setTimeout(() => {
+            player2.castingPiece.addStatus(UnitStatus.MagicArmour);
+            player2.castingPiece.addStatus(UnitStatus.MagicSword);
+            player2.castingPiece.addStatus(UnitStatus.MagicWings);
+        }, 1000);
+        /**/
+
+        /**
         setTimeout(() => { 
-            player.castingPiece.addStatus(UnitStatus.ShadowForm);
-        }, 3000);
+            player.castingPiece.removeStatus(UnitStatus.MagicArmour);
+        }, 4000);
         /**/
         
         /**

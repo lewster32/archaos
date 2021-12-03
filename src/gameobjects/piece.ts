@@ -39,7 +39,7 @@ export class Piece extends Entity {
     protected _shadowScale: number;
     protected _shadow?: Phaser.GameObjects.Image;
     protected _sprite?: Phaser.GameObjects.Sprite;
-    protected _effects: Map<UnitStatus, Phaser.GameObjects.Sprite>;
+    protected _effects: Map<UnitStatus, Phaser.GameObjects.Sprite | Phaser.GameObjects.Image>;
     protected _offsetY: number;
     protected _direction: UnitDirection;
 
