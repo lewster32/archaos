@@ -688,6 +688,7 @@ export class Piece extends Entity {
             (this.hasStatus(UnitStatus.Mount) ||
                 this.hasStatus(UnitStatus.MountAny)) &&
             this.currentRider &&
+            this.currentRider.owner === this.board.currentPlayer &&
             !this.currentRider.turnOver
         ) {
             return true;
@@ -862,6 +863,7 @@ export class Piece extends Entity {
         return new Promise((resolve: Function) => {
             if (this.canEngagePiece(piece)) {
                 this.engaged = true;
+                this.attacked = false;
                 piece.engaged = true;
             }
             this.board.logger.log(
@@ -1045,6 +1047,8 @@ export class Piece extends Entity {
 
             this.currentMount = piece;
             piece.currentRider = this;
+
+            piece.createShaders(true, this.owner);
             
             await this.board.movePiece(this.id, piece.position);
         }
@@ -1059,6 +1063,7 @@ export class Piece extends Entity {
             this.board.logger.log(
                 `${this.name} dismounted ${this.currentMount.name}`
             );
+            this.currentMount.createShaders(true);
             this.currentMount = null;
         }
     }
@@ -1166,17 +1171,20 @@ export class Piece extends Entity {
         return this._sprite;
     }
 
-    protected createShaders(): void {
-        if (this._ownerHighlightTween) {
+    protected createShaders(forceUpdate?: boolean, tempOwner?: Player): void {
+        if (!forceUpdate && this._ownerHighlightTween) {
             return;
         }
+
+        this._ownerHighlightTween?.destroy?.();
+
         const startColor: Phaser.Display.Color = new Phaser.Display.Color(
             0,
             0,
             0
         );
         const endColor: Phaser.Display.Color =
-            Phaser.Display.Color.ValueToColor(this.owner?.colour || 0);
+            Phaser.Display.Color.ValueToColor(tempOwner?.colour ?? this.owner?.colour ?? 0);
 
         const postFxPlugin: any = this.board.scene.game.plugins.get(
             "rexcolorreplacepipelineplugin"
