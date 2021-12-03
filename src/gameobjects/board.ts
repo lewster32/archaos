@@ -26,9 +26,9 @@ import { InputType } from "./enums/inputtype";
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
-    static CHEAT_FORCE_HIT: boolean | null = false;
-    static CHEAT_FORCE_CAST: boolean | null = true;
-    static CHEAT_SHORT_DELAY: boolean = true;
+    static CHEAT_FORCE_HIT: boolean | null = null;
+    static CHEAT_FORCE_CAST: boolean | null = null;
+    static CHEAT_SHORT_DELAY: boolean = false;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10
@@ -47,7 +47,7 @@ export class Board extends Model {
     static DEFAULT_HEIGHT: number = 13;
     static DEFAULT_CELLSIZE: number = 14;
 
-    static DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1000;
+    static DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 750;
     static END_TURN_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1500;
     static SPREAD_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 250;
 
@@ -399,12 +399,16 @@ export class Board extends Model {
             if (firstEngagingPiece != null) {
                 if (
                     this._selected.engaged ||
+                    this.roll(firstEngagingPiece.stats.maneuverability, this._selected.stats.maneuverability)
+                    /*
                     Phaser.Math.RND.integerInRange(
                         1,
                         firstEngagingPiece.stats.maneuverability
                     ) > this._selected.stats.maneuverability
+                    */
                 ) {
                     await this._selected.engage(firstEngagingPiece);
+                    await this.moveGizmo.reset();
                 } else {
                     this.logger.log(
                         `${this._selected.name} disengaged from ${firstEngagingPiece.name}`,
@@ -758,6 +762,9 @@ export class Board extends Model {
     }
 
     addSpell(player: Player, config: SpellConfig): Spell {
+        if (!config || !player) {
+            throw new Error("No player or config provided");
+        }
         let spell: Spell;
         if (config.unitId) {
             spell = new SummonSpell(this, this._idCounter++, config);

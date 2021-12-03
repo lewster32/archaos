@@ -130,7 +130,7 @@ export default {
             this.$emit("select");
         },
         friendlyBalance(balance: number) {
-            let amount: string = Math.abs(balance) > 1 ? "highly" : "slightly";
+            let amount: string = ["slightly", "moderately", "highly", "greatly"][Math.min(Math.abs(balance) - 1, 3)];
 
             if (balance > 0) {
                 return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;

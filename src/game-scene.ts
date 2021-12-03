@@ -132,7 +132,7 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.testPieces();
+        this.testGame();
     }
 
     getPieceProperties(name: string): any {
@@ -286,9 +286,10 @@ export class GameScene extends Phaser.Scene {
         });
 
         /**/
-        board.addSpell(player, Spell.getSpellProperties("magic wood"));
-        board.addSpell(player, Spell.getSpellProperties("dark citadel"));
-        board.addSpell(player, Spell.getSpellProperties("magic castle"));
+        board.addSpell(player, Spell.getSpellProperties("law 1"));
+        board.addSpell(player, Spell.getSpellProperties("law 2"));
+        board.addSpell(player, Spell.getSpellProperties("chaos 1"));
+        board.addSpell(player, Spell.getSpellProperties("chaos 2"));
         /**/
         /**/
 
@@ -308,12 +309,12 @@ export class GameScene extends Phaser.Scene {
         board.addSpell(player2, Spell.getSpellProperties("dark citadel"));
         /**/
 
-        /*
+        /**/
         board.addPiece({
             ...this.getPieceProperties("centaur"),
             owner: player,
-            x: 4,
-            y: 9
+            x: 2,
+            y: 6
         });
         /**/
 

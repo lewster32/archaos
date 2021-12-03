@@ -165,20 +165,14 @@ export default {
         },
         balance(spell: Spell) {
             if (spell.balance > 0) {
-                return `${new Array(spell.balance)
-                    .fill("^")
-                    .join("")}`;
+                return '^';
             } else if (spell.balance < 0) {
-                return `${new Array(
-                    Math.abs(spell.balance)
-                )
-                    .fill("*")
-                    .join("")}`;
+                return `*`;
             }
             return "-";
         },
         friendlyBalance(balance: number) {
-            let amount: string = Math.abs(balance) > 1 ? "highly" : "slightly";
+            let amount: string = ["slightly", "moderately", "highly", "greatly"][Math.min(Math.abs(balance) - 1, 3)];
 
             if (balance > 0) {
                 return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
@@ -187,7 +181,6 @@ export default {
             }
             return "Casting does not affect world balance. Balance of world has no effect on spell's casting chance.";
         },
-
     },
     async mounted() {},
     destroyed() {},

@@ -401,6 +401,38 @@
             "range": 0,
             "name": "Magic Wings",
             "description": "Allows the caster to fly over long distances."
+        },
+        "law-1": {
+            "balance": 2,
+            "chance": 0.8,
+            "target": "self",
+            "range": 0,
+            "name": "Law 1",
+            "description": "Makes the world moderately more lawful."
+        },
+        "law-2": {
+            "balance": 4,
+            "chance": 0.6,
+            "target": "self",
+            "range": 0,
+            "name": "Law 2",
+            "description": "Makes the world greatly more lawful."
+        },
+        "chaos-1": {
+            "balance": -2,
+            "chance": 0.8,
+            "target": "self",
+            "range": 0,
+            "name": "Chaos 1",
+            "description": "Makes the world moderately more chaotic."
+        },
+        "chaos-2": {
+            "balance": -4,
+            "chance": 0.6,
+            "target": "self",
+            "range": 0,
+            "name": "Chaos 2",
+            "description": "Makes the world greatly more chaotic."
         }
     }
 }
