@@ -1,28 +1,47 @@
 <script setup>
 import Spellbook from "./Spellbook.vue";
 import Log from "./Log.vue";
-import Minimap from './Minimap.vue';
+import Minimap from "./Minimap.vue";
 </script>
 
 <template>
-    <div :id="containerId" v-if="downloaded" />
+    <div
+        class="container"
+        :id="containerId"
+        v-if="downloaded"
+        :class="{ 'container--nudge': spellbookOpen }"
+        ref="container"
+    />
     <div class="placeholder" v-else>Loading...</div>
-    <Spellbook :data="spellbook.data" @select="spellSelect" />
+    <Spellbook :data="spellbook" @select="spellSelect" />
     <Log :logs="logs" />
     <Minimap :pieces="pieces" :board="board" />
     <div class="big-buttons">
-        <button :class="{'big-button--hide': !canCancel}" @click="cancel()" class="big-button big-button--cancel" title="Cancel" />
-        <button :class="{'big-button--hide': !canEndTurn}" @click="endTurn()" class="big-button big-button--skip" title="End Turn" />
+        <button
+            :class="{ 'big-button--hide': !canCancel }"
+            @click="cancel()"
+            class="big-button big-button--cancel"
+            title="Cancel"
+        />
+        <button
+            :class="{ 'big-button--hide': !canEndTurn }"
+            @click="endTurn()"
+            class="big-button big-button--skip"
+            title="End Turn"
+        />
     </div>
 </template>
 
 <script>
 export default {
-  components: { Minimap },
+    components: { Minimap, Spellbook, Log },
+    $refs: {
+        container: HTMLDivElement,
+    },
     methods: {
         spellSelect(spell) {
             if (this.spellbook?.onSelect) {
-               this.spellbook.onSelect(spell);
+                this.spellbook.onSelect(spell);
             }
         },
         cancel() {
@@ -30,7 +49,17 @@ export default {
         },
         endTurn() {
             this.eventEmitter.emit("end-turn");
-        }
+        },
+        updateBounds() {
+            setTimeout(() => {
+                this.gameInstance.scale.updateBounds();
+            }, 250);
+        },
+    },
+    computed: {
+        spellbookOpen() {
+            return this.spellbook.show && !this.spellbook.minimised;
+        },
     },
     data() {
         return {
@@ -42,15 +71,16 @@ export default {
             canEndTurn: false,
             spellbook: {
                 show: false,
+                minimised: false,
                 caster: "",
                 spells: [],
             },
             logs: [],
             board: {
                 width: 0,
-                height: 0
+                height: 0,
             },
-            pieces: []
+            pieces: [],
         };
     },
     async mounted() {
@@ -58,6 +88,12 @@ export default {
 
         this.downloaded = true;
         this.$nextTick(() => {
+            this.$refs.container?.addEventListener("transitionend", () => {
+                setTimeout(() => {
+                    this.gameInstance.scale.updateBounds();
+                }, 10);
+            });
+
             this.gameInstance = game.launch(this.containerId);
             this.eventEmitter = this.gameInstance.events;
 
@@ -66,17 +102,21 @@ export default {
                     message: log.message,
                     id: this.logs.length,
                     timestamp: new Date(),
-                    colour: log.colour
+                    colour: log.colour,
                 });
             });
 
             this.eventEmitter.on("spellbook-open", (event) => {
-                this.spellbook.data = event.data;
+                this.spellbook.show = true;
+                this.spellbook.spells = event.data.spells;
+                this.spellbook.caster = event.data.caster;
                 this.spellbook.onSelect = event.callback;
             });
 
             this.eventEmitter.on("spellbook-close", () => {
-                this.spellbook.data = null;
+                this.spellbook.show = false;
+                this.spellbook.spells = null;
+                this.spellbook.caster = null;
                 this.spellbook.onSelect = null;
             });
 
@@ -85,12 +125,12 @@ export default {
                 this.board = data.board;
             });
 
-            this.eventEmitter.on("cancel-available", (data) => {
-                this.canCancel = data;
+            this.eventEmitter.on("cancel-available", (state) => {
+                this.canCancel = state;
             });
 
-            this.eventEmitter.on("end-turn-available", (data) => {
-                this.canEndTurn = data;
+            this.eventEmitter.on("end-turn-available", (state) => {
+                this.canEndTurn = state;
             });
         });
     },
@@ -136,10 +176,17 @@ export default {
         filter: brightness(0.8);
     }
     &--cancel {
-        background-image: url('../../assets/images/ui/cancel.png');
+        background-image: url("../../assets/images/ui/cancel.png");
     }
     &--skip {
-        background-image: url('../../assets/images/ui/end-turn.png');
+        background-image: url("../../assets/images/ui/end-turn.png");
+    }
+}
+
+.container {
+    transition: margin-right 0.5s 0.25s ease-in-out;
+    &--nudge {
+        margin-right: 350px;
     }
 }
 </style>

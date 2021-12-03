@@ -28,7 +28,7 @@ SpellInfo;
             class="spellbook__inner callout"
             :class="{ 'spellbook__inner--minimised': minimised }"
         >
-            <h1 class="spellbook__title">{{ data?.caster }}'s spells</h1>
+            <h1 class="spellbook__title">{{ data.caster }}'s spells</h1>
             <div class="spellbook__scroll" ref="scroll">
                 <ul class="spellbook__list spell-list">
                     <li
@@ -84,20 +84,22 @@ export default {
     },
     data() {
         return {
-            minimised: true as boolean,
             currentSpell: null as any,
             illusionPrompt: false as boolean
         };
     },
     computed: {
         show(): boolean {
-            return this.data != null;
+            return this.data.show;
         },
+        minimised(): boolean {
+            return this.data.minimised;
+        }
     },
     watch: {
         data(oldData, newData) {
-            if (oldData != newData) {
-                this.minimised = false;
+            if (oldData?.spells != newData?.spells) {
+                this.data.minimised = false;
                 this.$nextTick(() => {
                     if (this.$refs.scroll) {
                         (this.$refs.scroll as HTMLDivElement).scrollTop = 0;
@@ -141,7 +143,7 @@ export default {
             this.minimised = false;
         },
         spellsByChance() {
-            return (this.data as any)?.spells.sort((a: Spell, b: Spell) => {
+            return this.data.spells.sort((a: Spell, b: Spell) => {
                 if (b.chance != a.chance) {
                     return b.chance - a.chance;
                 }
@@ -158,7 +160,7 @@ export default {
             return Math.floor(chance * 10) * 10;
         },
         toggle() {
-            this.minimised = !this.minimised;
+            this.data.minimised = !this.data.minimised;
             if (this.currentSpell) {
                 this.closeInfo();
             }
