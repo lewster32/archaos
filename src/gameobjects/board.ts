@@ -594,7 +594,7 @@ export class Board extends Model {
 
             piece.moved = true;
 
-            if (!piece.currentMount) {
+            if (!piece.currentMount && !piece.engaged) {
                 const firstEngagingPiece: Piece | null =
                     piece.getFirstEngagingPiece();
 
