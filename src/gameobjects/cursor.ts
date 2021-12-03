@@ -45,6 +45,10 @@ export class Cursor {
             }
         );
 
+        this._board.scene.game.events.on("cancel", async () => {
+            await this.action(InputType.Cancel);
+        });
+
         setTimeout(async () => {
             await this.update(true);
         }, 0);

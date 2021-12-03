@@ -10,6 +10,10 @@ import Minimap from './Minimap.vue';
     <Spellbook :data="spellbook.data" @select="spellSelect" />
     <Log :logs="logs" />
     <Minimap :pieces="pieces" :board="board" />
+    <div class="big-buttons">
+        <button :class="{'big-button--hide': !canCancel}" @click="cancel()" class="big-button big-button--cancel" title="Cancel" />
+        <button :class="{'big-button--hide': !canEndTurn}" @click="endTurn()" class="big-button big-button--skip" title="End Turn" />
+    </div>
 </template>
 
 <script>
@@ -18,19 +22,15 @@ export default {
     methods: {
         spellSelect(spell) {
             if (this.spellbook?.onSelect) {
-              /*
-                if (spell) {
-                    window.confirm(
-                        `Are you sure you want to cast ${spell.name}?`
-                    ) && this.spellbook.onSelect(spell);
-                } else {
-                    window.confirm(`Are you sure you want to skip casting?`) &&
-                        this.spellbook.onSelect(null);
-                }
-                */
                this.spellbook.onSelect(spell);
             }
         },
+        cancel() {
+            this.eventEmitter.emit("cancel");
+        },
+        endTurn() {
+            this.eventEmitter.emit("end-turn");
+        }
     },
     data() {
         return {
@@ -38,6 +38,8 @@ export default {
             gameInstance: null,
             containerId: "game-container",
             eventEmitter: null,
+            canCancel: false,
+            canEndTurn: false,
             spellbook: {
                 show: false,
                 caster: "",
@@ -82,6 +84,14 @@ export default {
                 this.pieces = data.pieces;
                 this.board = data.board;
             });
+
+            this.eventEmitter.on("cancel-available", (data) => {
+                this.canCancel = data;
+            });
+
+            this.eventEmitter.on("end-turn-available", (data) => {
+                this.canEndTurn = data;
+            });
         });
     },
     destroyed() {
@@ -91,4 +101,45 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.big-buttons {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    padding: 1em;
+    z-index: 100;
+}
+
+.big-button {
+    display: block;
+    border: 0;
+    background: transparent;
+    &::after {
+        display: none;
+    }
+    width: 80px;
+    height: 80px;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    background-size: contain;
+    image-rendering: pixelated;
+    cursor: pointer;
+    transition: transform 0.2s 0.2s ease-in-out, opacity 0.2s 0.2s;
+    transform: translateX(0);
+    opacity: 1;
+    &--hide {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    &:hover {
+        transform: translateY(2px);
+        filter: brightness(0.8);
+    }
+    &--cancel {
+        background-image: url('../../assets/images/ui/cancel.png');
+    }
+    &--skip {
+        background-image: url('../../assets/images/ui/end-turn.png');
+    }
+}
 </style>

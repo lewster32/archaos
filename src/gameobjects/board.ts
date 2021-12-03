@@ -129,6 +129,10 @@ export class Board extends Model {
         this._rules = Rules.getInstance();
         this._logger = Logger.getInstance(this.scene.game.events);
 
+        this.scene.game.events.on("end-turn", async () => {
+            await this.nextPlayer();
+        });
+
         this.createEffects();
 
         window["currentBoard"] = this;
@@ -142,6 +146,23 @@ export class Board extends Model {
 
     set state(state: BoardState) {
         this._state = state;
+        console.log(`Board state: ${BoardState[state]}`);
+        switch (state) {
+            case BoardState.Idle:
+            case BoardState.GameOver:
+            case BoardState.View:
+                this.scene.game.events.emit("cancel-available", false);
+                this.scene.game.events.emit("end-turn-available", false);
+                break;
+            case BoardState.Move:
+            case BoardState.SelectSpell:
+                this.scene.game.events.emit("end-turn-available", true);
+                break;
+            default:
+                this.scene.game.events.emit("cancel-available", true);
+                this.scene.game.events.emit("end-turn-available", false);
+                break;
+        }
     }
 
     get phase(): BoardPhase {
@@ -393,12 +414,6 @@ export class Board extends Model {
                 if (
                     this._selected.engaged ||
                     this.roll(firstEngagingPiece.stats.maneuverability, this._selected.stats.maneuverability)
-                    /*
-                    Phaser.Math.RND.integerInRange(
-                        1,
-                        firstEngagingPiece.stats.maneuverability
-                    ) > this._selected.stats.maneuverability
-                    */
                 ) {
                     await this._selected.engage(firstEngagingPiece);
                     await this.moveGizmo.reset();
@@ -417,6 +432,15 @@ export class Board extends Model {
                 }
             }
         }
+
+        switch (this.state) {
+            case BoardState.Move:
+            case BoardState.Dismount:
+            case BoardState.Attack:
+            case BoardState.RangedAttack:
+                this.scene.game.events.emit("cancel-available", true);
+                break;
+        }
     }
 
     async deselectPiece(): Promise<void> {
@@ -434,7 +458,7 @@ export class Board extends Model {
                 return;
             }
         }
-
+        this.scene.game.events.emit("cancel-available", false);
         await this.moveGizmo.reset();
 
         return new Promise((resolve) => {
@@ -899,6 +923,8 @@ export class Board extends Model {
 
     deselectPlayer(): void {
         this._currentPlayer = null;
+        this.moveGizmo.reset();
+        this._selected = null;
     }
 
     async startGame(): Promise<void> {

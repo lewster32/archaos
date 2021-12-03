@@ -174,6 +174,7 @@ export class Rules {
                 }
                 board.selected.turnOver = true;
                 board.deselectPlayer();
+                await board.idleDelay(Board.DEFAULT_DELAY);
                 return false;
             } else {
                 board.logger.log(
@@ -220,8 +221,11 @@ export class Rules {
                 if (await this.doCastSpell(board, board.currentPlayer.selectedSpell, currentTarget)) {
                     return ActionType.Cast;
                 }
+                else {
+                    await board.nextPlayer();
+                }
             }
-            return ActionType.None;
+            return ActionType.Cancel;
         }
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
@@ -350,13 +354,15 @@ export class Rules {
                     board.selected.turnOver = true;
                 }
                 board.deselectPlayer();
+                await board.idleDelay(Board.DEFAULT_DELAY);
+                await board.nextPlayer();
             }
-            return ActionType.None;
+            return ActionType.Cancel
         }
 
         if (!selectedPiece) {
-            board.nextPlayer();
-            return ActionType.None;
+            await board.nextPlayer();
+            return ActionType.Cancel;
         }
 
         if (board.state === BoardState.Dismount) {
