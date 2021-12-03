@@ -1048,11 +1048,9 @@ export class Piece extends Entity {
             piece.moved = true;
 
             this.currentMount = piece;
-            piece.currentRider = this;
-
-            piece.createShaders(true, this.owner);
-            
+            piece.currentRider = this;            
             await this.board.movePiece(this.id, piece.position);
+            piece.createShaders(true, this.owner);
         }
     }
 
@@ -1178,7 +1176,8 @@ export class Piece extends Entity {
             return;
         }
 
-        this._ownerHighlightTween?.destroy?.();
+        this.highlighted = false;
+        this._ownerHighlightTween?.stop?.().destroy?.();
 
         const startColor: Phaser.Display.Color = new Phaser.Display.Color(
             0,

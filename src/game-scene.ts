@@ -132,7 +132,7 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.testGame();
+        this.testPieces();
     }
 
     getPieceProperties(name: string): any {
@@ -285,7 +285,7 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        /**/
+        /**
         board.addSpell(player, Spell.getSpellProperties("law 1"));
         board.addSpell(player, Spell.getSpellProperties("law 2"));
         board.addSpell(player, Spell.getSpellProperties("chaos 1"));
@@ -299,12 +299,13 @@ export class GameScene extends Phaser.Scene {
         }, 1000);
         */
 
-        /*
+        /**/
         setTimeout(() => { 
-            // player.castingPiece.removeStatus(UnitStatus.MagicShield);
+            player.castingPiece.addStatus(UnitStatus.ShadowForm);
         }, 3000);
-        */
+        /**/
         
+        /**
         board.addSpell(player2, Spell.getSpellProperties("magic castle"));
         board.addSpell(player2, Spell.getSpellProperties("dark citadel"));
         /**/
@@ -314,7 +315,7 @@ export class GameScene extends Phaser.Scene {
             ...this.getPieceProperties("centaur"),
             owner: player,
             x: 2,
-            y: 6
+            y: 4
         });
         /**/
 

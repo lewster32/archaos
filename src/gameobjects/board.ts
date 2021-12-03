@@ -28,7 +28,7 @@ type SimplePoint = { x: number; y: number };
 export class Board extends Model {
     static CHEAT_FORCE_HIT: boolean | null = null;
     static CHEAT_FORCE_CAST: boolean | null = null;
-    static CHEAT_SHORT_DELAY: boolean = false;
+    static CHEAT_SHORT_DELAY: boolean = true;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10
@@ -231,10 +231,10 @@ export class Board extends Model {
                 this._balance += this._balanceShift;
                 this._logger.log(
                     `World balance shifts towards ${
-                        this._balanceShift < 0 ? "Chaos" : "Law"
-                    } by ${parseFloat(
-                        Math.abs(this._balanceShift).toFixed(2)
-                    )}`,
+                        this._balanceShift < 0 ? "chaos" : "law"
+                    } by ${parseInt(
+                        Math.abs(this._balanceShift * 100).toFixed(2), 10
+                    )}%`,
                     this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan
                 );
                 this._balanceShift = 0;
@@ -459,15 +459,20 @@ export class Board extends Model {
             }
         }
         this.scene.game.events.emit("cancel-available", false);
+
+        const turnOver: boolean = this.getPiecesByOwner(this.currentPlayer!).every(
+            (piece) => piece.turnOver
+        ) || this.phase === BoardPhase.Casting;
+
+        if (turnOver) {
+            this.deselectPlayer();
+        }
         await this.moveGizmo.reset();
 
         return new Promise((resolve) => {
             setTimeout(async () => {
                 if (
-                    this.phase === BoardPhase.Casting ||
-                    this.getPiecesByOwner(this.currentPlayer!).every(
-                        (piece) => piece.turnOver
-                    )
+                    turnOver
                 ) {
                     await this.nextPlayer();
                 }
@@ -838,6 +843,8 @@ export class Board extends Model {
     }
 
     async selectPlayer(id: number): Promise<void> {
+        const oldState: BoardState = this.state;
+        
         this.pieces.forEach((piece: Piece) => {
             piece.highlighted = false;
         });
@@ -925,6 +932,7 @@ export class Board extends Model {
         this._currentPlayer = null;
         this.moveGizmo.reset();
         this._selected = null;
+        this.scene.game.events.emit("end-turn-available", false);
     }
 
     async startGame(): Promise<void> {

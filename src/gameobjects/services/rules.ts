@@ -45,7 +45,8 @@ export class Rules {
 
         const currentAliveHoveredPiece: Piece | null =
             hoveredPieces.find(
-                (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
+                (piece: Piece) =>
+                    !piece.dead && !piece.currentMount && !piece.engulfed
             ) || null;
 
         const selectedPiece: Piece | null = board.selected;
@@ -55,7 +56,8 @@ export class Rules {
                 board.currentPlayer?.selectedSpell;
 
             if (selectedSpell && selectedSpell.castTimes > 0) {
-                const spellTarget: Phaser.Geom.Point | Piece | null = selectedSpell.isValidTarget(board.cursor.position);
+                const spellTarget: Phaser.Geom.Point | Piece | null =
+                    selectedSpell.isValidTarget(board.cursor.position);
 
                 return spellTarget ? ActionType.Cast : ActionType.Invalid;
             }
@@ -67,19 +69,32 @@ export class Rules {
         ) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
-                    if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
+                    if (
+                        selectedPiece.canMountPiece(currentAliveHoveredPiece) &&
+                        selectedPiece
+                            .getNeighbours()
+                            .includes(currentAliveHoveredPiece)
+                    ) {
                         return ActionType.Mount;
                     }
                     if (
-                        selectedPiece.canAttackPiece(currentAliveHoveredPiece)
+                        selectedPiece.canAttackPiece(
+                            currentAliveHoveredPiece
+                        ) &&
+                        selectedPiece
+                            .getNeighbours()
+                            .includes(currentAliveHoveredPiece)
                     ) {
                         return ActionType.Attack;
                     }
                     if (
                         selectedPiece.canRangedAttackPiece(
                             currentAliveHoveredPiece
-                        ) && 
-                        board.hasLineOfSight(board.selected.position, board.cursor.position)
+                        ) &&
+                        board.hasLineOfSight(
+                            board.selected.position,
+                            board.cursor.position
+                        )
                     ) {
                         return ActionType.RangedAttack;
                     }
@@ -153,9 +168,12 @@ export class Rules {
         );
     }
 
-    public async doCastSpell(board: Board, spell: Spell, currentTarget: Piece | Phaser.Geom.Point | null): Promise<boolean> {
-        const casted: Spell | null =
-        await board.currentPlayer.useSpell();
+    public async doCastSpell(
+        board: Board,
+        spell: Spell,
+        currentTarget: Piece | Phaser.Geom.Point | null
+    ): Promise<boolean> {
+        const casted: Spell | null = await board.currentPlayer.useSpell();
         if (casted) {
             board.state = BoardState.Idle;
             board.logger.log(
@@ -206,22 +224,32 @@ export class Rules {
                 return ActionType.Info;
             }
         }
-        if (actionType === ActionType.Cast || actionType === ActionType.Invalid) {
+        if (
+            actionType === ActionType.Cast ||
+            actionType === ActionType.Invalid
+        ) {
             if (
                 board.currentPlayer &&
                 board.selected &&
                 board.currentPlayer.selectedSpell
             ) {
-                const currentTarget: Piece | Phaser.Geom.Point | null = board.currentPlayer.selectedSpell.isValidTarget(
-                    board.cursor.position, true
-                );
+                const currentTarget: Piece | Phaser.Geom.Point | null =
+                    board.currentPlayer.selectedSpell.isValidTarget(
+                        board.cursor.position,
+                        true
+                    );
                 if (currentTarget == null) {
                     return ActionType.Invalid;
                 }
-                if (await this.doCastSpell(board, board.currentPlayer.selectedSpell, currentTarget)) {
+                if (
+                    await this.doCastSpell(
+                        board,
+                        board.currentPlayer.selectedSpell,
+                        currentTarget
+                    )
+                ) {
                     return ActionType.Cast;
-                }
-                else {
+                } else {
                     await board.nextPlayer();
                 }
             }
@@ -231,12 +259,13 @@ export class Rules {
             if (hoveredPieces.length > 0) {
                 const currentAliveHoveredPiece: Piece | null =
                     hoveredPieces.find(
-                        (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
+                        (piece: Piece) =>
+                            !piece.dead &&
+                            !piece.currentMount &&
+                            !piece.engulfed
                     ) || null;
 
-                if (
-                    currentAliveHoveredPiece?.currentRider?.canSelect
-                ) {
+                if (currentAliveHoveredPiece?.currentRider?.canSelect) {
                     this.dispatchEvent(
                         EventType.PieceInfo,
                         currentAliveHoveredPiece.currentRider
@@ -284,7 +313,8 @@ export class Rules {
         if (hoveredPieces.length > 0) {
             const currentAliveHoveredPiece: Piece | null =
                 hoveredPieces.find(
-                    (piece: Piece) => !piece.dead && !piece.currentMount && !piece.engulfed
+                    (piece: Piece) =>
+                        !piece.dead && !piece.currentMount && !piece.engulfed
                 ) || null;
 
             if (!currentAliveHoveredPiece) {
@@ -357,7 +387,7 @@ export class Rules {
                 await board.idleDelay(Board.DEFAULT_DELAY);
                 await board.nextPlayer();
             }
-            return ActionType.Cancel
+            return ActionType.Cancel;
         }
 
         if (!selectedPiece) {
@@ -372,10 +402,7 @@ export class Rules {
             if (selectedPiece.currentRider) {
                 selectedPiece.currentRider.moved = true;
             }
-            board.logger.log(
-                `Dismount cancelled`,
-                Colour.Magenta
-            );
+            board.logger.log(`Dismount cancelled`, Colour.Magenta);
             if (
                 selectedPiece.currentMount &&
                 selectedPiece.currentMount.canSelect
