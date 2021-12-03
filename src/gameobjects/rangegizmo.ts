@@ -118,15 +118,22 @@ export class RangeGizmo {
         }
     }
 
-    public async reset(): Promise<RangeGizmo> {
+    public async reset(force?: boolean): Promise<RangeGizmo> {
         if (this._rangeLayer.length === 0 && this._pathLayer.length === 0) {
             return this;
         }
         return new Promise((resolve: Function) => {
             this._piece = null;
+            if (force) {
+                this._rangeLayer.removeAll()
+                this._pathLayer.removeAll();
+                resolve(this);
+                return;
+            }
+
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
-                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                duration: force ? 0 : RangeGizmo.GIZMO_REVEAL_DURATION,
                 alpha: 0,
                 delay: this._board.scene.tweens.stagger(
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
@@ -227,7 +234,7 @@ export class RangeGizmo {
         ) {
             return;
         }
-        await this.reset();
+        await this.reset(force);
 
         this.lastSimplePosition = Phaser.Geom.Point.Clone(position);
         this.lastDistance = distance;
@@ -268,7 +275,9 @@ export class RangeGizmo {
                             cursor
                         );
                     cursorImage.setOrigin(0.5, 0.5);
-                    cursorImage.setAlpha(0);
+                    if (!force) {
+                        cursorImage.setAlpha(0);
+                    }
                     cursorImage.setDepth(currentDistance);
                     this._rangeLayer.add(cursorImage);
                 }
@@ -276,11 +285,15 @@ export class RangeGizmo {
 
             this._rangeLayer.sort("depth");
 
+            if (force) {
+                resolve();
+                return;
+            }
             this._board.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: force ? 0 : RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: force ? 0 : this._board.scene.tweens.stagger(
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._board.scene.tweens.stagger(
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "first",

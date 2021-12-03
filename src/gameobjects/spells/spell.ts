@@ -93,6 +93,10 @@ export class Spell extends Model {
         return this._properties;
     }
 
+    get totalCastTimes(): number {
+        return this._totalCastTimes;
+    }
+
     get castTimes(): number {
         return this._castTimes;
     }

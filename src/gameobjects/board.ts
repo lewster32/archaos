@@ -26,7 +26,7 @@ import { InputType } from "./enums/inputtype";
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
-    static CHEAT_FORCE_HIT: boolean | null = null;
+    static CHEAT_FORCE_HIT: boolean | null = false;
     static CHEAT_FORCE_CAST: boolean | null = true;
     static CHEAT_SHORT_DELAY: boolean = true;
 
@@ -568,11 +568,16 @@ export class Board extends Model {
 
             piece.moved = true;
 
-            const firstEngagingPiece: Piece | null =
-                piece.getFirstEngagingPiece();
+            if (!piece.currentMount) {
+                const firstEngagingPiece: Piece | null =
+                    piece.getFirstEngagingPiece();
 
-            if (firstEngagingPiece) {
-                await piece.engage(firstEngagingPiece);
+                if (firstEngagingPiece) {
+                    await piece.engage(firstEngagingPiece);
+                }
+                else {
+                    piece.attacked = true;
+                }
             }
             else {
                 piece.attacked = true;
@@ -971,19 +976,20 @@ export class Board extends Model {
             await this.selectWizard(this.currentPlayer!);
 
             if (this.selected) {
-                if (this.currentPlayer?.selectedSpell?.range === 0) {
+                const spell: Spell = this.currentPlayer?.selectedSpell;
+                if (spell?.range === 0) {
                     await this.rules.doCastSpell(
                         this,
-                        this.currentPlayer.selectedSpell,
+                        spell,
                         this.currentPlayer.castingPiece
                     );
                     return await this.nextPlayer();
-                } else if (this.currentPlayer?.selectedSpell?.range > 0) {
+                } else if (spell?.range > 0) {
                     await this.moveGizmo.generateSimpleRange(
                         this.selected.position,
-                        this.currentPlayer?.selectedSpell.range,
+                        spell.range,
                         CursorType.RangeCast,
-                        this.currentPlayer?.selectedSpell.lineOfSight
+                        spell.lineOfSight
                     );
                 }
             }

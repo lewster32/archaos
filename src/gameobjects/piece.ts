@@ -842,6 +842,8 @@ export class Piece extends Entity {
             piece.dead ||
             this.stats.maneuverability === 0 ||
             piece.stats.maneuverability === 0 ||
+            this.currentMount ||
+            piece.currentMount ||
             this.owner === piece.owner
         ) {
             return false;
