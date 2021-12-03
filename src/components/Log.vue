@@ -59,7 +59,7 @@ export default {
         left: 0;
         right: 0;
         bottom: 0;
-        margin: 1em;
+        margin: 0 1em;
         height: 17.5vh;
         min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
@@ -72,12 +72,16 @@ export default {
             .game-log__item:not(:first-child) {
                 display: none;
             }
+            .game-log__scroll {
+                padding-bottom: 0;
+            }
         }
         &__scroll {      
             height: 100%;
             overflow-y: scroll;
             margin-bottom: 1em;
             padding-right: .5em;
+            padding-bottom: 1em;
             &::-webkit-scrollbar {
                 width: 0.5em;
             }
