@@ -69,7 +69,7 @@ export class AttackSpell extends Spell {
                 this._board.logger.log(
                     `${target.owner.name}'s creations were dispelled by ${this.name}`
                 );
-                await Board.delay(1000);
+                await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
             else {
                 await target.kill();

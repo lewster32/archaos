@@ -381,14 +381,14 @@ export class Spell extends Model {
                 this._board.logger.log(
                     `Disbelieve succeeded on illusionary ${target.name}`
                 );
-                await Board.delay(1000);
+                await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
             else {
                 this._board.logger.log(
                     `Disbelieve failed on non-illusionary ${target.name}`,
                     Colour.Magenta
                 );
-                await Board.delay(1000);
+                await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
             return true;
         }
@@ -415,7 +415,7 @@ export class Spell extends Model {
                 Colour.LightBlue
             );
                 
-            await Board.delay(1000);
+            await this._board.idleDelay(Board.DEFAULT_DELAY);
             return true;
         }
 
@@ -450,7 +450,7 @@ export class Spell extends Model {
                     Colour.Magenta
                 );
             }
-            await Board.delay(1000);
+            await this._board.idleDelay(Board.DEFAULT_DELAY);
             return true;
         }
 
@@ -483,7 +483,7 @@ export class Spell extends Model {
                         `${target.name} already has ${this.name} - this spell has no effect`,
                         Colour.Magenta
                     );
-                    await Board.delay(1000);
+                    await this._board.idleDelay(Board.DEFAULT_DELAY);
                     return true; 
                 }
             }
@@ -492,7 +492,7 @@ export class Spell extends Model {
                 `${target.name} successfully cast ${this.name}`
             );
 
-            await Board.delay(1000);
+            await this._board.idleDelay(Board.DEFAULT_DELAY);
             return true;
         }
 

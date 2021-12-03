@@ -607,7 +607,7 @@ export class Piece extends Entity {
                 ) {
                     newPiece.currentEngulfed = spreadPieces[0];
                 } else {
-                    await Board.delay(Piece.DEFAULT_MOVE_DURATION);
+                    await this.board.idleDelay(Piece.DEFAULT_MOVE_DURATION);
                 }
             }
         }

@@ -169,11 +169,15 @@ export class Cursor {
     async action(input: InputType) {
         const intendedAction: ActionType = await this.update(true);
 
-        await this._board.rules.processAction(
+        const actionState: ActionType = await this._board.rules.processAction(
             this._board,
             intendedAction,
             input
         );
+
+        if (actionState === ActionType.None) {
+            return;
+        }
 
         this.update(true);
 

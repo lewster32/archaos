@@ -129,13 +129,6 @@ export class Board extends Model {
         this._rules = Rules.getInstance();
         this._logger = Logger.getInstance(this.scene.game.events);
 
-        let spaceKey = this.scene.input.keyboard.addKey(
-            Phaser.Input.Keyboard.KeyCodes.SPACE
-        );
-        spaceKey.on("up", () => {
-            this.nextPlayer();
-        });
-
         this.createEffects();
 
         window["currentBoard"] = this;
@@ -224,15 +217,15 @@ export class Board extends Model {
                     this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan
                 );
                 this._balanceShift = 0;
-                await Board.delay(Board.DEFAULT_DELAY);
+                await this.idleDelay(Board.DEFAULT_DELAY);
             }
             this.phase = BoardPhase.Spellbook;
             this.state = BoardState.SelectSpell;
-            await Board.delay(Board.END_TURN_DELAY);
+            await this.idleDelay(Board.END_TURN_DELAY);
         } else if (this.phase === BoardPhase.Spellbook) {
             this.phase = BoardPhase.Casting;
             this.state = BoardState.CastSpell;
-            await Board.delay(Board.END_TURN_DELAY);
+            await this.idleDelay(Board.END_TURN_DELAY);
         } else if (this.phase === BoardPhase.Casting) {
             this.phase = BoardPhase.Spreading;
             this.state = BoardState.Idle;
@@ -249,7 +242,7 @@ export class Board extends Model {
         } else if (this.phase === BoardPhase.Spreading) {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
-            await Board.delay(Board.END_TURN_DELAY);
+            await this.idleDelay(Board.END_TURN_DELAY);
         }
         this.emitBoardUpdateEvent();
     }
@@ -693,7 +686,7 @@ export class Board extends Model {
                 await piece.spread();
             }
             this.emitBoardUpdateEvent();
-            await Board.delay(Board.SPREAD_DELAY);
+            await this.idleDelay(Board.SPREAD_DELAY);
         }
     }
 
@@ -735,7 +728,7 @@ export class Board extends Model {
                     `${piece.name} has expired and gifted ${owner.name} a new spell`,
                     Colour.Cyan
                 );
-                await Board.delay(Board.DEFAULT_DELAY);
+                await this.idleDelay(Board.DEFAULT_DELAY);
             }
         }
         this.emitBoardUpdateEvent();
@@ -835,8 +828,6 @@ export class Board extends Model {
             (piece: Piece) => piece.owner === this._currentPlayer || piece.currentRider?.owner === this._currentPlayer
         );
 
-        console.log(units);
-
         return new Promise<void>((resolve) => {
             setTimeout(async () => {
                 await this.updateBackgroundColour();
@@ -901,6 +892,7 @@ export class Board extends Model {
                     },
                     duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
                 });
+                await this.idleDelay(Board.NEW_TURN_HIGHLIGHT_DURATION);
             });
         });
     }
@@ -1226,6 +1218,13 @@ export class Board extends Model {
             point.x + point.y / 2,
             point.y - point.x / 2
         );
+    }
+
+    async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
+        const oldState: BoardState = this.state;
+        this.state = BoardState.Idle;
+        await Board.delay(time);
+        this.state = oldState;
     }
 
     static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
