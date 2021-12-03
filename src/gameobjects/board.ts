@@ -27,10 +27,12 @@ type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
     static CHEAT_FORCE_HIT: boolean | null = null;
-    static CHEAT_FORCE_CAST: boolean | null = null;
+    static CHEAT_FORCE_CAST: boolean | null = true;
     static CHEAT_SHORT_DELAY: boolean = false;
 
-    static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY ? 10 : 700;
+    static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
+        ? 10
+        : 700;
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
     static SPREAD_ITERATIONS: number = 2;
 
@@ -234,7 +236,16 @@ export class Board extends Model {
         } else if (this.phase === BoardPhase.Casting) {
             this.phase = BoardPhase.Spreading;
             this.state = BoardState.Idle;
+
+            const previousPlayer: Player = this._currentPlayer;
+            this._currentPlayer = null;
+            this.updateBackgroundColour();
+
             await this.doSpread();
+            await this.doExpire();
+
+            this._currentPlayer = previousPlayer;
+            this.emitBoardUpdateEvent();
         } else if (this.phase === BoardPhase.Spreading) {
             this.phase = BoardPhase.Moving;
             this.state = BoardState.Move;
@@ -381,7 +392,7 @@ export class Board extends Model {
                 await this.moveGizmo.generate(this._selected);
                 return;
             }
-            
+
             const firstEngagingPiece: Piece | null =
                 this._selected.getFirstEngagingPiece();
 
@@ -420,8 +431,7 @@ export class Board extends Model {
                 await this.selectPiece(previousSelected.currentRider.id);
                 await this.cursor.action(InputType.None);
                 return;
-            }
-            else if (previousSelected.currentMount?.canSelect) {
+            } else if (previousSelected.currentMount?.canSelect) {
                 await this.selectPiece(previousSelected.currentMount.id);
                 await this.cursor.action(InputType.None);
                 return;
@@ -516,7 +526,7 @@ export class Board extends Model {
 
     isBlocker(point: Phaser.Geom.Point): boolean {
         const pieces: Piece[] = this.getPiecesAtPosition(point, (piece) => {
-            return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead
+            return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead;
         });
         if (!pieces?.length) {
             return false;
@@ -590,7 +600,9 @@ export class Board extends Model {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
         if (attackingPiece && defendingPiece) {
-            const attackResult: boolean = await attackingPiece.attack(defendingPiece);
+            const attackResult: boolean = await attackingPiece.attack(
+                defendingPiece
+            );
             if (attackResult) {
                 await this.moveGizmo.reset();
             }
@@ -612,7 +624,9 @@ export class Board extends Model {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
         if (attackingPiece && defendingPiece) {
-            const attackResult: boolean = await attackingPiece.rangedAttack(defendingPiece);
+            const attackResult: boolean = await attackingPiece.rangedAttack(
+                defendingPiece
+            );
             if (attackResult) {
                 await this.moveGizmo.reset();
             }
@@ -659,10 +673,6 @@ export class Board extends Model {
     }
 
     async doSpread(): Promise<void> {
-        const previousPlayer: Player = this._currentPlayer;
-        this._currentPlayer = null;
-        this.updateBackgroundColour();
-
         for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
             const spreadPieces: Piece[] = this.pieces.filter((piece) =>
                 piece.hasStatus(UnitStatus.Spreads)
@@ -670,9 +680,52 @@ export class Board extends Model {
             for (const piece of spreadPieces) {
                 await piece.spread();
             }
+            this.emitBoardUpdateEvent();
             await Board.delay(Board.SPREAD_DELAY);
         }
-        this._currentPlayer = previousPlayer;
+    }
+
+    async doExpire(): Promise<void> {
+        const expirePieces: Piece[] = this.pieces.filter((piece: Piece) =>
+            piece.hasStatus(UnitStatus.Expires)
+        );
+
+        for (const piece of expirePieces) {
+            if (piece.hasStatus(UnitStatus.Structure)) {
+                if (this.roll(2, 10)) {
+                    await this.playEffect(
+                        EffectType.DisbelieveHit,
+                        piece.sprite.getCenter(),
+                        null,
+                        piece
+                    );
+                    await piece.kill();
+                    this.logger.log(
+                        `${piece.name} has expired`,
+                        Colour.Magenta
+                    );
+                }
+            } else if (
+                piece.hasStatus(UnitStatus.ExpiresGivesSpell) &&
+                piece.currentRider &&
+                this.roll(4, 10)
+            ) {
+                await this.playEffect(
+                    EffectType.GiveSpell,
+                    piece.sprite.getCenter(),
+                    null,
+                    piece
+                );
+                const owner:Player = piece.currentRider.owner;
+                this.addSpell(piece.currentRider.owner, Spell.getRandomSpell());
+                await piece.kill();
+                this.logger.log(
+                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
+                    Colour.Cyan
+                );
+                await Board.delay(Board.DEFAULT_DELAY);
+            }
+        }
         this.emitBoardUpdateEvent();
         await this.newTurn();
     }

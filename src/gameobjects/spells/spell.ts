@@ -1,3 +1,4 @@
+import { spells } from "../../../assets/data/classicspells.json";
 import { Board } from "../board";
 import { PieceConfig } from "../configs/piececonfig";
 import { SpellConfig } from "../configs/spellconfig";
@@ -352,7 +353,7 @@ export class Spell extends Model {
         }
         if (this._castTimes === this._totalCastTimes) {
             // TODO: Check how this shift compares to the real game
-            this._board.balanceShift += this.balance * 0.05;
+            this._board.balanceShift += this.balance * 0.025;
         }
         this._castTimes--;
 
@@ -504,5 +505,56 @@ export class Spell extends Model {
             castingPiece
         );
         return null;
+    }
+
+    static getRandomSpell(): any {
+        const spellNames: string[] = Object.values(spells).map(
+            (spell: any) => spell.name
+        );
+
+        // Remove Disbelieve from random pool
+        spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
+
+        return Spell.getSpellProperties(
+            spellNames[Math.floor(Math.random() * spellNames.length)]
+        );
+    }
+
+    static getSpellProperties(name: string): any {
+        let key = "";
+        for (let [k, spell] of Object.entries(spells)) {
+            if (spell.name.toLowerCase() === name.toLowerCase()) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const spell: SpellConfig = (spells as any)[key];
+
+        return {
+            id: key,
+            name: spell.name,
+            description: spell.description,
+            chance: spell.chance,
+            balance: spell.balance,
+            unitId: spell.unitId,
+            allowIllusion: spell.allowIllusion,
+            autoPlace: spell.autoPlace,
+            tree: spell.tree,
+            castTimes: spell.castTimes,
+            range: spell.range,
+            damage: spell.damage,
+            castOnEnemyUnit: spell.castOnEnemyUnit,
+            castOnWizard: spell.castOnWizard,
+            destroyWizardCreatures: spell.destroyWizardCreatures,
+            lineOfSight: spell.lineOfSight,
+            projectile: spell.projectile,
+            persist: spell.persist,
+            target: spell.target || SpellTarget.Empty,
+        };
     }
 }

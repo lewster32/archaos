@@ -344,7 +344,7 @@
                 "mnv": 0,
                 "res": 9
             },
-            "status": ["mountAny", "tree", "expires", "expiresGiveSpell", "noCorpse"],
+            "status": ["mountAny", "tree", "expires", "expiresGivesSpell", "noCorpse"],
             "name": "Magic Wood",
             "animFrames": [0, 1, 2, 1],
             "animSpeed": 4

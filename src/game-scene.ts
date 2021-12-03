@@ -14,10 +14,13 @@ import hatsSheet from "../assets/spritesheets/hats.png";
 import wizardsSheet from "../assets/spritesheets/wizards.png";
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
+import { EffectType } from "./gameobjects/effectemitter";
 import { SpellTarget } from "./gameobjects/enums/spelltarget";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
+import { Spell } from "./gameobjects/spells/spell";
+import { Wizard } from "./gameobjects/wizard";
 
 export class GameScene extends Phaser.Scene {
     constructor() {
@@ -129,58 +132,7 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.testGame();
-    }
-
-    getRandomSpell(): any {
-        const spellNames: string[] = Object.values(spells).map(
-            (spell: any) => spell.name
-        );
-
-        // Remove Disbelieve from random pool
-        spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
-
-        return this.getSpellProperties(
-            spellNames[Math.floor(Math.random() * spellNames.length)]
-        );
-    }
-
-    getSpellProperties(name: string): any {
-        let key = "";
-        for (let [k, spell] of Object.entries(spells)) {
-            if (spell.name.toLowerCase() === name.toLowerCase()) {
-                key = k;
-                break;
-            }
-        }
-
-        if (!key) {
-            return;
-        }
-
-        const spell: SpellConfig = (spells as any)[key];
-
-        return {
-            id: key,
-            name: spell.name,
-            description: spell.description,
-            chance: spell.chance,
-            balance: spell.balance,
-            unitId: spell.unitId,
-            allowIllusion: spell.allowIllusion,
-            autoPlace: spell.autoPlace,
-            tree: spell.tree,
-            castTimes: spell.castTimes,
-            range: spell.range,
-            damage: spell.damage,
-            castOnEnemyUnit: spell.castOnEnemyUnit,
-            castOnWizard: spell.castOnWizard,
-            destroyWizardCreatures: spell.destroyWizardCreatures,
-            lineOfSight: spell.lineOfSight,
-            projectile: spell.projectile,
-            persist: spell.persist,
-            target: spell.target || SpellTarget.Empty,
-        };
+        this.testPieces();
     }
 
     getPieceProperties(name: string): any {
@@ -242,12 +194,12 @@ export class GameScene extends Phaser.Scene {
 
         for (let i = 0; i < 12; i++) {
             board.players.forEach((player: Player) => {
-                board.addSpell(player, this.getRandomSpell());
+                board.addSpell(player, Spell.getRandomSpell());
             });
         }
 
         board.players.forEach((player: Player) => {
-            board.addSpell(player, this.getSpellProperties("disbelieve"));
+            board.addSpell(player, Spell.getSpellProperties("disbelieve"));
         });
 
         setTimeout(() => {
@@ -256,7 +208,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 11, 11);
+        const board: Board = new Board(this, 1, 8, 8);
 
         const player: Player = board.addPlayer({
             name: "Gandalf",
@@ -266,34 +218,59 @@ export class GameScene extends Phaser.Scene {
             name: "Merlin",
         });
 
-        /*
+        /** *
         const wizards = [];
 
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 8; i++) {
             wizards.push(board.addWizard({
                 owner: player,
                 x: 0,
                 y: i,
-                wizCode: `${i.toString(16).padStart(2, "0")}00000000`,
+                wizCode: `${i.toString(16).padStart(2, "0")}03030000`,
+            }));
+            wizards.push(board.addWizard({
+                owner: player,
+                x: 1,
+                y: i,
+                wizCode: `${(15 - i).toString(16).padStart(2, "0")}03030000`,
             }));
 
             wizards.push(board.addWizard({
                 owner: player2,
                 x: board.width - 1,
                 y: i,
-                wizCode: `${i.toString(16).padStart(2, "0")}03030000`,
+                wizCode: `${i.toString(16).padStart(2, "0")}00000000`,
+            }));
+            wizards.push(board.addWizard({
+                owner: player2,
+                x: board.width - 2,
+                y: i,
+                wizCode: `${(15 - i).toString(16).padStart(2, "0")}00000000`,
             }));
         }
 
         
+        /**
         setTimeout(() => {
             wizards.forEach((wizard: Wizard) => {
-                wizard.addStatus(UnitStatus.MagicBow);
-                wizard.addStatus(UnitStatus.MagicWings);
+                setTimeout(() => {
+                    if (Math.random() > 0.7) {
+                        wizard.addStatus(UnitStatus.MagicBow);
+                        wizard.addStatus(UnitStatus.MagicWings);
+                    } else if (Math.random() > 0.7) {
+                        wizard.addStatus(UnitStatus.MagicKnife);
+                    } else if (Math.random() > 0.7) {
+                        wizard.addStatus(UnitStatus.MagicShield);
+                    } else {
+                        wizard.addStatus(UnitStatus.MagicSword);
+                    }
+                }, Math.random() * 500);
+
             });
         }, 500);
-        */
+        /**/
 
+        /**/
         board.addWizard({
             owner: player,
             x: Math.floor(board.width / 2) - 2,
@@ -308,30 +285,30 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        /**
-        board.addSpell(player, this.getSpellProperties("magic wings"));
-        board.addSpell(player, this.getSpellProperties("magic shield"));
-        board.addSpell(player, this.getSpellProperties("magic knife"));
-        board.addSpell(player, this.getSpellProperties("magic sword"));
-        board.addSpell(player, this.getSpellProperties("magic bow"));
-        board.addSpell(player, this.getSpellProperties("shadow form"));
+        /**/
+        board.addSpell(player, Spell.getSpellProperties("magic wood"));
+        board.addSpell(player, Spell.getSpellProperties("dark citadel"));
+        board.addSpell(player, Spell.getSpellProperties("magic castle"));
         /**/
         /**/
 
+        /*
         setTimeout(() => {
             player.castingPiece.addStatus(UnitStatus.MagicBow);
         }, 1000);
+        */
 
         /*
         setTimeout(() => { 
             // player.castingPiece.removeStatus(UnitStatus.MagicShield);
         }, 3000);
-
-        // board.addSpell(player2, this.getSpellProperties("gooey blob"));
-        // board.addSpell(player2, this.getSpellProperties("magic fire"));
+        */
+        
+        board.addSpell(player2, Spell.getSpellProperties("magic castle"));
+        board.addSpell(player2, Spell.getSpellProperties("dark citadel"));
         /**/
 
-        
+        /*
         board.addPiece({
             ...this.getPieceProperties("centaur"),
             owner: player,
@@ -404,7 +381,7 @@ export class GameScene extends Phaser.Scene {
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.SubversionHit,
+            await board.playEffect(EffectType.GiveSpell,
                 board.pieces[1].sprite.getCenter(),
                 null,
                 board.pieces[1]

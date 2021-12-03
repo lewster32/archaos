@@ -365,6 +365,21 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     blendMode: Phaser.BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.GiveSpell:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "sparkle1",
+                    quantity: 1,
+                    speedX: { min: -80, max: 80 },
+                    speedY: { min: -10, max: -150 },
+                    scale: { start: 1.5, end: .5 },
+                    gravityY: 260,
+                    lifespan: 250,
+                    blendMode: Phaser.BlendModes.ADD,
+                    particleClass: EffectParticle,
+                    tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff]
+                };
         }
     }
 
@@ -515,6 +530,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             case EffectType.JusticeHit:
             case EffectType.RaiseDeadHit:
             case EffectType.SubversionHit:
+            case EffectType.GiveSpell:
                 duration = 1000;
                 break;
             case EffectType.MagicBoltBeam:
@@ -628,5 +644,6 @@ export enum EffectType {
     RaiseDeadBeam,
     RaiseDeadHit,
     SubversionBeam,
-    SubversionHit
+    SubversionHit,
+    GiveSpell
 }
