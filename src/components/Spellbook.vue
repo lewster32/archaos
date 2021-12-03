@@ -21,8 +21,11 @@ SpellInfo;
         </div>
     </div>
     <div class="spellbook" v-if="show">
-        <button class="spellbook__toggle button button--small" @click="toggle()">
-            {{ minimised ? "&lt;" : "&gt;" }}
+        <button v-if="minimised" class="spellbook__toggle spellbook__toggle--closed button button--green" @click="toggle()" title="Open spellbook">
+            <img class="spellbook-icon" src="../../assets/images/ui/spellbook.png" alt="Spellbook" />
+        </button>
+        <button v-if="!minimised" class="spellbook__toggle button button--small" @click="toggle()">
+            &gt;
         </button>
         <div
             class="spellbook__inner callout"
@@ -99,7 +102,7 @@ export default {
     watch: {
         data(oldData, newData) {
             if (oldData?.spells != newData?.spells) {
-                this.data.minimised = false;
+                this.data.minimised = true;
                 this.$nextTick(() => {
                     if (this.$refs.scroll) {
                         (this.$refs.scroll as HTMLDivElement).scrollTop = 0;
@@ -120,6 +123,7 @@ export default {
             this.closeInfo();
         },
         select(spell: Spell) {
+            this.data.minimised = true;
             if (!spell) {
                 this.$emit("select", null);
                 this.closeInfo();
@@ -257,8 +261,15 @@ export default {
         left: 2px;
         top: 2em;
         z-index: 50;
+        &--closed {
+            left: -2em;
+        }
+        &::after {
+            display: none;
+        }
     }
 }
+
 .spell {
     @media screen and (max-width: 600px) {
         &__balance {
@@ -283,7 +294,6 @@ export default {
         border-image-source: url('../../assets/images/ui/callout-selected.png');
     }
 
-
     + .spell {
         margin-top: 0.5em;
     }
@@ -307,5 +317,12 @@ export default {
     &__info {
 
     }
+}
+
+.spellbook-icon {
+    display: block;
+    width: 38px;
+    height: 38px;
+    image-rendering: pixelated;
 }
 </style>

@@ -28,7 +28,7 @@ type SimplePoint = { x: number; y: number };
 export class Board extends Model {
     static CHEAT_FORCE_HIT: boolean | null = null;
     static CHEAT_FORCE_CAST: boolean | null = null;
-    static CHEAT_SHORT_DELAY: boolean = true;
+    static CHEAT_SHORT_DELAY: boolean = false;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10

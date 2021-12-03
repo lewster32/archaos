@@ -18,16 +18,16 @@ import Minimap from "./Minimap.vue";
     <Minimap :pieces="pieces" :board="board" />
     <div class="big-buttons">
         <button
-            :class="{ 'big-button--hide': !canCancel }"
-            @click="cancel()"
-            class="big-button big-button--cancel"
-            title="Cancel"
-        />
-        <button
             :class="{ 'big-button--hide': !canEndTurn }"
             @click="endTurn()"
             class="big-button big-button--skip"
             title="End Turn"
+        />
+        <button
+            :class="{ 'big-button--hide': !canCancel }"
+            @click="cancel()"
+            class="big-button big-button--cancel"
+            title="Cancel"
         />
     </div>
 </template>
@@ -71,7 +71,7 @@ export default {
             canEndTurn: false,
             spellbook: {
                 show: false,
-                minimised: false,
+                minimised: true,
                 caster: "",
                 spells: [],
             },
@@ -143,15 +143,13 @@ export default {
 <style lang="scss" scoped>
 .big-buttons {
     position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 0;
+    top: 0;
+    left: 6em;
     padding: 1em;
     z-index: 100;
 }
 
 .big-button {
-    display: block;
     border: 0;
     background: transparent;
     &::after {
@@ -165,14 +163,15 @@ export default {
     image-rendering: pixelated;
     cursor: pointer;
     transition: transform 0.2s 0.2s ease-in-out, opacity 0.2s 0.2s;
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
+    position: relative;
     &--hide {
-        transform: translateX(-100%);
+        transform: translateY(-100%);
         opacity: 0;
     }
     &:hover {
-        transform: translateY(2px);
+        top: 2px;
         filter: brightness(0.8);
     }
     &--cancel {
@@ -184,7 +183,7 @@ export default {
 }
 
 .container {
-    transition: margin-right 0.5s 0.25s ease-in-out;
+    transition: margin-right 1s ease-in-out;
     &--nudge {
         margin-right: 350px;
     }
