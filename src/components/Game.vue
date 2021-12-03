@@ -146,7 +146,7 @@ export default {
     top: 0;
     left: 6em;
     padding: 1em;
-    z-index: 100;
+    z-index: 2;
 }
 
 .big-button {

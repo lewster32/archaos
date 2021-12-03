@@ -262,6 +262,7 @@ export default {
         top: 2em;
         z-index: 50;
         &--closed {
+            top: 1.5em;
             left: -2em;
         }
         &::after {
