@@ -28,7 +28,7 @@ type SimplePoint = { x: number; y: number };
 export class Board extends Model {
     static CHEAT_FORCE_HIT: boolean | null = null;
     static CHEAT_FORCE_CAST: boolean | null = true;
-    static CHEAT_SHORT_DELAY: boolean = false;
+    static CHEAT_SHORT_DELAY: boolean = true;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10
@@ -574,6 +574,9 @@ export class Board extends Model {
             if (firstEngagingPiece) {
                 await piece.engage(firstEngagingPiece);
             }
+            else {
+                piece.attacked = true;
+            }
 
             await this.moveGizmo.reset();
 
@@ -817,8 +820,10 @@ export class Board extends Model {
         }
 
         const units: Piece[] = this.pieces.filter(
-            (piece: Piece) => piece.owner === this._currentPlayer
+            (piece: Piece) => piece.owner === this._currentPlayer || piece.currentRider?.owner === this._currentPlayer
         );
+
+        console.log(units);
 
         return new Promise<void>((resolve) => {
             setTimeout(async () => {
