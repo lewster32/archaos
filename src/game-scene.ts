@@ -224,7 +224,7 @@ export class GameScene extends Phaser.Scene {
             name: "Merlin",
         });
 
-        /** */
+        /** *
         const wizards = [];
 
         for (let i = 0; i < 8; i++) {
@@ -256,11 +256,10 @@ export class GameScene extends Phaser.Scene {
         }
 
         
-        /**/
+        /**
         setTimeout(() => {
             wizards.forEach((wizard: Wizard) => {
                 setTimeout(() => {
-                    /*
                     if (Math.random() > 0.7) {
                         wizard.addStatus(UnitStatus.MagicBow);
                         wizard.addStatus(UnitStatus.MagicWings);
@@ -271,7 +270,6 @@ export class GameScene extends Phaser.Scene {
                     } else {
                         wizard.addStatus(UnitStatus.MagicSword);
                     }
-                    */
                     wizard.addStatus(UnitStatus.MagicArmour);
                 }, Math.random() * 1000);
 
@@ -304,10 +302,12 @@ export class GameScene extends Phaser.Scene {
 
         /**/
         setTimeout(() => {
-            player2.castingPiece.addStatus(UnitStatus.MagicArmour);
-            player2.castingPiece.addStatus(UnitStatus.MagicSword);
-            player2.castingPiece.addStatus(UnitStatus.MagicWings);
+            player2.castingPiece.addStatus(UnitStatus.MagicShield);
         }, 1000);
+
+        setTimeout(() => {
+            player2.castingPiece.addStatus(UnitStatus.MagicArmour);
+        }, 2000);
         /**/
 
         /**

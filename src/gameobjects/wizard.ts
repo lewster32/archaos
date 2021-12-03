@@ -269,9 +269,12 @@ export class Wizard extends Piece {
                 case UnitStatus.MagicWings:
                 case UnitStatus.MagicArmour:
                     if (this._effects.has(status)) {
-                        const sprite = this._effects.get(status)!.destroy();
-                        if (sprite['_effectTween']) {
-                            sprite['_effectTween'].stop().destroy();
+                        const sprite = this._effects.get(status);
+                        if (sprite) {
+                            if (sprite['_effectTween']) {
+                                sprite['_effectTween'].stop().destroy();
+                            }
+                            sprite.destroy();
                         }
                         this._effects.delete(status);
                     }
