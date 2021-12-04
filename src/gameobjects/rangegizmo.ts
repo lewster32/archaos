@@ -70,7 +70,7 @@ export class RangeGizmo {
                         (piece: Piece) => !piece.dead
                     ).length > 0
                 ) {
-                    node.warning = true;
+                    node.traversable = false;
                 }
                 this._validNodes.push(node);
             }
@@ -564,8 +564,8 @@ export class RangeGizmo {
     }
 
     public static buildPath(destinationNode: Node, startNode: Node): Path {
-        const path: Node[] = [];
-        const angles: number[] = [];
+        let angles: number[] = [];
+        let path: Node[] = [];
         let node: Node = destinationNode;
         let cost: number = 0;
         path.push(node);
@@ -576,6 +576,16 @@ export class RangeGizmo {
             path.unshift(node);
         }
         angles.unshift(this.getAngle(startNode.pos, destinationNode.pos));
+
+        for (let n: number = 0; n < path.length; n++) {
+            if (path[n].warning === true) {
+                path.slice(n + 1, path.length).forEach(node => { node.traversable = false });
+                path = path.slice(0, n);
+                angles = angles.slice(0, n);
+                break;
+            }
+        }
+
         return new Path(path, angles, cost);
     }
 
