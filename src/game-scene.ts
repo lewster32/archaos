@@ -24,6 +24,7 @@ import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
+import { UnitStatus } from "./gameobjects/enums/unitstatus";
 
 export class GameScene extends Phaser.Scene {
     board: Board;
@@ -65,9 +66,11 @@ export class GameScene extends Phaser.Scene {
         );
 
         this.load.audioSprite("classicsounds", classicSoundsJson, [
-            classicSoundsAc3, classicSoundsM4a, classicSoundsMp3, classicSoundsOgg
-            ]
-        );
+            classicSoundsAc3,
+            classicSoundsM4a,
+            classicSoundsMp3,
+            classicSoundsOgg,
+        ]);
     }
 
     create(): void {
@@ -147,23 +150,26 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.game.events.on("start-game", (data) => { 
+        this.game.events.on("start-game", (data) => {
             this.startGame(data);
             // this.testPieces();
         });
-
-        // this.testGame();
     }
 
     startGame(data: any): void {
         if (this.board) {
             this.board.destroy();
         }
-        this.board = new Board(this, 1, data?.board?.width, data?.board?.height);
+        this.board = new Board(
+            this,
+            1,
+            data?.board?.width,
+            data?.board?.height
+        );
 
         for (let player of data?.players) {
             this.board.addPlayer({
-                name: player
+                name: player,
             });
         }
 
@@ -178,7 +184,6 @@ export class GameScene extends Phaser.Scene {
         this.board.players.forEach((player: Player) => {
             this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
         });
-
 
         setTimeout(() => {
             this.board.startGame();
@@ -296,15 +301,15 @@ export class GameScene extends Phaser.Scene {
         this.board.addWizard({
             owner: player2,
             x: Math.floor(this.board.width / 2),
-            y: 7,
+            y: 2,
             wizCode: "0600000000",
         });
 
-        /**/
+        /**
         this.board.addSpell(player, Spell.getSpellProperties("turmoil"));
-        // board.addSpell(player, Spell.getSpellProperties("lightning"));
-        // board.addSpell(player, Spell.getSpellProperties("vengeance"));
-        //board.addSpell(player, Spell.getSpellProperties("dark power"));
+        this.board.addSpell(player, Spell.getSpellProperties("lightning"));
+        this.board.addSpell(player, Spell.getSpellProperties("vengeance"));
+        this.board.addSpell(player, Spell.getSpellProperties("dark power"));
         /**/
         /**/
 
@@ -318,12 +323,13 @@ export class GameScene extends Phaser.Scene {
         }, 2000);
         /**/
 
-        /**
-        setTimeout(() => { 
-            player.castingPiece.removeStatus(UnitStatus.MagicArmour);
-        }, 4000);
         /**/
-        
+        setTimeout(() => {
+            // player.castingPiece.addStatus(UnitStatus.ShadowForm);
+            // player.castingPiece.properties.movement = 12;
+        }, 1);
+        /**/
+
         /**
         board.addSpell(player2, Spell.getSpellProperties("magic castle"));
         board.addSpell(player2, Spell.getSpellProperties("dark citadel"));
@@ -331,10 +337,16 @@ export class GameScene extends Phaser.Scene {
 
         /**/
         this.board.addPiece({
-            ...Piece.getPieceProperties("vampire"),
+            ...Piece.getPieceProperties("wall"),
+            owner: player,
+            x: 1,
+            y: 6,
+        });
+        this.board.addPiece({
+            ...Piece.getPieceProperties("wall"),
             owner: player,
             x: 2,
-            y: 6
+            y: 6,
         });
         /**/
 
@@ -351,26 +363,32 @@ export class GameScene extends Phaser.Scene {
         this.board.addPiece({
             ...Piece.getPieceProperties("giant"),
             owner: player2,
-            x: 5,
-            y: 6
+            x: 3,
+            y: 6,
         });
 
+        this.board.addPiece({
+            ...Piece.getPieceProperties("giant"),
+            owner: player2,
+            x: 6,
+            y: 7,
+        });
 
         this.board.addPiece({
             ...Piece.getPieceProperties("horse"),
             owner: player2,
             x: 4,
-            y: 2
+            y: 5,
         });
 
         setTimeout(async () => {
-            (await this.board.addPiece({
-                ...Piece.getPieceProperties("orc"),
+            await this.board.addPiece({
+                ...Piece.getPieceProperties("wall"),
                 owner: player,
                 x: 1,
-                y: 7
-            }));
-        },0);
+                y: 7,
+            });
+        }, 0);
 
         /**/
 
