@@ -153,7 +153,7 @@ export class Board extends Model {
             return;
         }
         this._state = state;
-        console.log(`Board state: ${BoardState[state]}`);
+        // console.log(`Board state: ${BoardState[state]}`);
         switch (state) {
             case BoardState.Idle:
             case BoardState.GameOver:

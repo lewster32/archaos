@@ -153,7 +153,7 @@ export class Wizard extends Piece {
 
     addStatus(status: UnitStatus): boolean {
         if (super.addStatus(status)) {
-            console.log(`${this.name} gained ${status}`);
+            // console.log(`${this.name} gained ${status}`);
             const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
                 this.position
             );
@@ -258,7 +258,7 @@ export class Wizard extends Piece {
 
     removeStatus(status: UnitStatus): boolean {
         if (super.removeStatus(status)) {
-            console.log(`${this.name} lost ${status}`);
+            // console.log(`${this.name} lost ${status}`);
             switch (status) {
                 // Visual effects
                 case UnitStatus.ShadowForm:
