@@ -9,7 +9,10 @@ import Minimap from "./Minimap.vue";
         class="container"
         :id="containerId"
         v-if="downloaded"
-        :class="{ 'container--nudge': spellbookOpen, 'container--disabled': !gameStarted }"
+        :class="{
+            'container--nudge': spellbookOpen,
+            'container--disabled': !gameStarted,
+        }"
         ref="container"
     />
     <div class="placeholder" v-else>Loading...</div>
@@ -27,9 +30,24 @@ import Minimap from "./Minimap.vue";
                     <option value="4">4 Players</option>
                 </select>
             </div>
-            <div class="callout__row" v-for="(name, index) in setup.players.slice(0, setup.playerCount)" :key="name" style="margin-left: 1em">
-                <label :for="`player${index}`">Player {{ index + 1 }}'s name:</label>
-                <input v-model="setup.players[index].name" type="text" :id="`player${index}`" maxlength="20"/>
+            <div
+                class="callout__row"
+                v-for="(name, index) in setup.players.slice(
+                    0,
+                    setup.playerCount
+                )"
+                :key="name"
+                style="margin-left: 1em"
+            >
+                <label :for="`player${index}`"
+                    >Player {{ index + 1 }}'s name:</label
+                >
+                <input
+                    v-model="setup.players[index].name"
+                    type="text"
+                    :id="`player${index}`"
+                    maxlength="20"
+                />
             </div>
             <div class="callout__row">
                 <label for="boardsize">Board size:</label>
@@ -41,10 +59,21 @@ import Minimap from "./Minimap.vue";
             </div>
             <div class="callout__row">
                 <label for="spellcount">Spell count:</label>
-                <input type="number" v-model="setup.spellCount" min="5" max="25" id="spellcount" />
+                <input
+                    type="number"
+                    v-model="setup.spellCount"
+                    min="5"
+                    max="25"
+                    id="spellcount"
+                />
             </div>
             <div class="callout__row">
-                <button class="button button--green start-game" @click="startGame()">Start Game</button>
+                <button
+                    class="button button--green start-game"
+                    @click="startGame()"
+                >
+                    Start Game
+                </button>
             </div>
         </div>
     </div>
@@ -84,21 +113,24 @@ export default {
         },
         startGame() {
             if (window.localStorage) {
-                window.localStorage.setItem("setup", JSON.stringify(this.setup));
+                window.localStorage.setItem(
+                    "setup",
+                    JSON.stringify(this.setup)
+                );
             }
 
             this.eventEmitter.emit("start-game", {
-                players: this.setup.players.slice(0, Math.abs(this.setup.playerCount) || 2).map(
-                    (player) => player.name
-                ),
+                players: this.setup.players
+                    .slice(0, Math.abs(this.setup.playerCount) || 2)
+                    .map((player) => player.name),
                 board: {
                     width: Math.abs(this.setup.boardSize) || 13,
                     height: Math.abs(this.setup.boardSize) || 13,
                 },
-                spellCount: Math.abs(this.setup.spellCount) || 15
+                spellCount: Math.abs(this.setup.spellCount) || 15,
             });
             this.gameStarted = true;
-        }
+        },
     },
     computed: {
         spellbookOpen() {
@@ -127,7 +159,7 @@ export default {
             gameStarted: false,
             gameOver: false,
             pieces: [],
-            setup: null
+            setup: null,
         };
     },
     async mounted() {
@@ -145,16 +177,21 @@ export default {
                 playerCount: 2,
                 boardSize: 13,
                 spellCount: 15,
-                players: [{
-                    name: "Gandalf", 
-                }, {
-                    name: "Glinda",
-                }, {
-                    name: "Merlin",
-                }, {
-                    name: "Morgana"
-                }]
-            }
+                players: [
+                    {
+                        name: "Gandalf",
+                    },
+                    {
+                        name: "Glinda",
+                    },
+                    {
+                        name: "Merlin",
+                    },
+                    {
+                        name: "Morgana",
+                    },
+                ],
+            };
         }
 
         this.downloaded = true;
@@ -271,6 +308,14 @@ export default {
 .menu {
     position: fixed;
     text-align: center;
+}
+
+@media (max-height: 580px) {
+    .menu {
+        display: flex;
+        gap: 1em;
+        align-items: center;
+    }
 }
 
 .logo {
