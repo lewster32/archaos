@@ -1,0 +1,160 @@
+{
+  "resources": [
+    "chaossounds.ogg",
+    "chaossounds.m4a",
+    "chaossounds.mp3",
+    "chaossounds.ac3"
+  ],
+  "spritemap": {
+    "attackonly": {
+      "start": 0,
+      "end": 0.9,
+      "loop": false
+    },
+    "blob1": {
+      "start": 2,
+      "end": 2.026621315192744,
+      "loop": false
+    },
+    "blob2": {
+      "start": 4,
+      "end": 4.018321995464853,
+      "loop": false
+    },
+    "bowfire6": {
+      "start": 6,
+      "end": 6.514648526077098,
+      "loop": false
+    },
+    "bowhit": {
+      "start": 8,
+      "end": 8.3740589569161,
+      "loop": false
+    },
+    "bowselecta": {
+      "start": 10,
+      "end": 11.058140589569161,
+      "loop": false
+    },
+    "cancel": {
+      "start": 13,
+      "end": 13.108934240362812,
+      "loop": false
+    },
+    "castloop08": {
+      "start": 15,
+      "end": 15.643219954648526,
+      "loop": false
+    },
+    "chaoskeypress2": {
+      "start": 17,
+      "end": 17.040589569160996,
+      "loop": false
+    },
+    "deadwizard1": {
+      "start": 19,
+      "end": 19.96204081632653,
+      "loop": false
+    },
+    "deadwizard2": {
+      "start": 21,
+      "end": 22.46172335600907,
+      "loop": false
+    },
+    "disbelieve": {
+      "start": 24,
+      "end": 24.746575963718822,
+      "loop": false
+    },
+    "dragonfire6": {
+      "start": 26,
+      "end": 26.727755102040817,
+      "loop": false
+    },
+    "dragonfireexplosion": {
+      "start": 28,
+      "end": 29.078321995464854,
+      "loop": false
+    },
+    "endturn": {
+      "start": 31,
+      "end": 31.55641723356009,
+      "loop": false
+    },
+    "engaged": {
+      "start": 33,
+      "end": 33.30485260770975,
+      "loop": false
+    },
+    "fly": {
+      "start": 35,
+      "end": 35.33111111111111,
+      "loop": false
+    },
+    "justice": {
+      "start": 37,
+      "end": 39.37800453514739,
+      "loop": false
+    },
+    "justicesuccessful": {
+      "start": 41,
+      "end": 42.85727891156463,
+      "loop": false
+    },
+    "keypress": {
+      "start": 44,
+      "end": 44.09453514739229,
+      "loop": false
+    },
+    "killcreature": {
+      "start": 46,
+      "end": 46.42861678004535,
+      "loop": false
+    },
+    "lightning4": {
+      "start": 48,
+      "end": 48.340816326530614,
+      "loop": false
+    },
+    "lightningexplode": {
+      "start": 50,
+      "end": 50.37587301587302,
+      "loop": false
+    },
+    "magicbolt6": {
+      "start": 52,
+      "end": 52.59766439909297,
+      "loop": false
+    },
+    "magicboltexplode": {
+      "start": 54,
+      "end": 54.37428571428571,
+      "loop": false
+    },
+    "move": {
+      "start": 56,
+      "end": 56.07097505668934,
+      "loop": false
+    },
+    "screenactive": {
+      "start": 58,
+      "end": 58.14834467120181,
+      "loop": false
+    },
+    "select": {
+      "start": 60,
+      "end": 60.30575963718821,
+      "loop": false
+    },
+    "spelleffect": {
+      "start": 62,
+      "end": 62.427573696145124,
+      "loop": false
+    },
+    "undead": {
+      "start": 64,
+      "end": 64.56480725623582,
+      "loop": false
+    }
+  }
+}

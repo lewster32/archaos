@@ -26,8 +26,8 @@ import { InputType } from "./enums/inputtype";
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
-    static CHEAT_FORCE_HIT: boolean | null = null;
-    static CHEAT_FORCE_CAST: boolean | null = null;
+    static CHEAT_FORCE_HIT: boolean | null = true;
+    static CHEAT_FORCE_CAST: boolean | null = true;
     static CHEAT_SHORT_DELAY: boolean = false;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
@@ -80,6 +80,7 @@ export class Board extends Model {
 
     private _rules: Rules;
     private _logger: Logger;
+    private _sound: Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
 
     constructor(
         scene: Phaser.Scene,
@@ -135,6 +136,8 @@ export class Board extends Model {
 
         this.createEffects();
 
+        this._sound = this.scene.sound.addAudioSprite("classicsounds");
+
         window["currentBoard"] = this;
     }
 
@@ -145,6 +148,9 @@ export class Board extends Model {
     }
 
     set state(state: BoardState) {
+        if (this._state === BoardState.GameOver) {
+            return;
+        }
         this._state = state;
         console.log(`Board state: ${BoardState[state]}`);
         switch (state) {
@@ -564,6 +570,7 @@ export class Board extends Model {
         if (!path?.nodes?.length) {
             return;
         }
+        this.sound.play("move");
         await piece.moveTo(
             path.nodes.shift().pos,
             Piece.DEFAULT_STEP_MOVE_DURATION
@@ -577,10 +584,12 @@ export class Board extends Model {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
             const path: Path = this.moveGizmo.getPathTo(position);
+            const isFlying:boolean = piece.hasStatus(UnitStatus.Flying);
             if (
-                piece.hasStatus(UnitStatus.Flying) ||
+                isFlying ||
                 Board.distance(piece.position, position) <= 1.5
             ) {
+                this.sound.play(isFlying ? "fly" : "move");
                 await piece.moveTo(position);
             } else {
                 if (path && path.nodes?.length > 1) {
@@ -611,10 +620,8 @@ export class Board extends Model {
 
             await this.moveGizmo.reset();
 
-            setTimeout(() => {
-                this.cursor.update(true);
-                this.emitBoardUpdateEvent();
-            }, 100);
+            await this.cursor.update(true);
+            this.emitBoardUpdateEvent();
 
             return piece;
         }
@@ -633,10 +640,13 @@ export class Board extends Model {
         if (!defendingPiece) {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
+        const oldState: BoardState = this.state;
+        this.state = BoardState.Busy;
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean = await attackingPiece.attack(
                 defendingPiece
             );
+            this.state = oldState;
             if (attackResult) {
                 await this.moveGizmo.reset();
             }
@@ -657,10 +667,13 @@ export class Board extends Model {
         if (!defendingPiece) {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
+        const oldState: BoardState = this.state;
+        this.state = BoardState.Busy;
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean = await attackingPiece.rangedAttack(
                 defendingPiece
             );
+            this.state = oldState;
             if (attackResult) {
                 await this.moveGizmo.reset();
             }
@@ -683,6 +696,7 @@ export class Board extends Model {
             throw new Error(`Could not find piece with ID ${mountedPieceId}`);
         }
         if (mountingPiece && mountedPiece) {
+            this.sound.play("move");
             await mountingPiece.mount(mountedPiece);
             this.emitBoardUpdateEvent();
             return mountingPiece;
@@ -699,6 +713,7 @@ export class Board extends Model {
             );
         }
         if (dismountingPiece) {
+            this.sound.play("move");
             await dismountingPiece.dismount();
             this.emitBoardUpdateEvent();
             return dismountingPiece;
@@ -734,6 +749,7 @@ export class Board extends Model {
                         piece
                     );
                     await piece.kill();
+                    this.sound.play("disbelieve");
                     this.logger.log(
                         `${piece.name} has expired`,
                         Colour.Magenta
@@ -867,16 +883,19 @@ export class Board extends Model {
 
                 switch (this.phase) {
                     case BoardPhase.Spellbook:
+                        this.sound.play("endturn");
                         this.logger.log(
                             `${this.currentPlayer?.name}'s turn to select a spell`
                         );
                         break;
                     case BoardPhase.Casting:
                         if (this.currentPlayer?.selectedSpell) {
+                            this.sound.play("endturn");
                             this.logger.log(
                                 `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                             );
                         } else {
+                            this.sound.play("cancel");
                             this.logger.log(
                                 `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
                                 Colour.Magenta
@@ -884,6 +903,7 @@ export class Board extends Model {
                         }
                         break;
                     case BoardPhase.Moving:
+                        this.sound.play("endturn");
                         this.logger.log(
                             `${this.currentPlayer?.name}'s turn to move`
                         );
@@ -1109,6 +1129,10 @@ export class Board extends Model {
         return this._scene;
     }
 
+    get sound(): Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound {
+        return this._sound;
+    }
+
     get width(): number {
         return this._width;
     }
@@ -1257,6 +1281,13 @@ export class Board extends Model {
     async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Idle;
+        await Board.delay(time);
+        this.state = oldState;
+    }
+
+    async busyDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
+        const oldState: BoardState = this.state;
+        this.state = BoardState.Busy;
         await Board.delay(time);
         this.state = oldState;
     }

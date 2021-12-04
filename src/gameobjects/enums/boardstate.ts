@@ -1,4 +1,5 @@
 export enum BoardState {
+    Busy,
     Idle,
     View,
     SelectSpell,

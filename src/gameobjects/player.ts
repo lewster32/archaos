@@ -78,7 +78,9 @@ export class Player extends Model {
     async defeat(): Promise<void> {
         this._defeated = true;
         this.board.logger.log(`Game over for ${this.name}`);
+        this.board.sound.play("deadwizard2");
         await this.destroyCreations();
+        await this.board.idleDelay(Board.DEFAULT_DELAY);
     }
 
     async destroyCreations(): Promise<any[]> {

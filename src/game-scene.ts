@@ -13,6 +13,12 @@ import effectsAtlas from "../assets/spritesheets/effects.png";
 import hatsSheet from "../assets/spritesheets/hats.png";
 import wizardsSheet from "../assets/spritesheets/wizards.png";
 import magicArmourSheet from "../assets/spritesheets/magic-armour.png";
+import classicSoundsJson from "../assets/sounds/chaossounds.json?url";
+import classicSoundsAc3 from "../assets/sounds/chaossounds.ac3?url";
+import classicSoundsM4a from "../assets/sounds/chaossounds.m4a?url";
+import classicSoundsMp3 from "../assets/sounds/chaossounds.mp3?url";
+import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
+
 import { Board } from "./gameobjects/board";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { EffectType } from "./gameobjects/effectemitter";
@@ -58,6 +64,11 @@ export class GameScene extends Phaser.Scene {
             "rexcolorreplacepipelineplugin",
             rexcolorreplacepipelineplugin,
             true
+        );
+
+        this.load.audioSprite("classicsounds", classicSoundsJson, [
+            classicSoundsAc3, classicSoundsM4a, classicSoundsMp3, classicSoundsOgg
+            ]
         );
     }
 
@@ -293,14 +304,14 @@ export class GameScene extends Phaser.Scene {
         });
 
         /**
-        board.addSpell(player, Spell.getSpellProperties("law 1"));
-        board.addSpell(player, Spell.getSpellProperties("law 2"));
-        board.addSpell(player, Spell.getSpellProperties("chaos 1"));
-        board.addSpell(player, Spell.getSpellProperties("chaos 2"));
+        board.addSpell(player, Spell.getSpellProperties("magic bolt"));
+        board.addSpell(player, Spell.getSpellProperties("lightning"));
+        board.addSpell(player, Spell.getSpellProperties("vengeance"));
+        board.addSpell(player, Spell.getSpellProperties("dark power"));
         /**/
         /**/
 
-        /**/
+        /**
         setTimeout(() => {
             player2.castingPiece.addStatus(UnitStatus.MagicShield);
         }, 1000);
@@ -323,10 +334,10 @@ export class GameScene extends Phaser.Scene {
 
         /**/
         board.addPiece({
-            ...this.getPieceProperties("centaur"),
+            ...this.getPieceProperties("vampire"),
             owner: player,
             x: 2,
-            y: 4
+            y: 6
         });
         /**/
 
@@ -339,7 +350,7 @@ export class GameScene extends Phaser.Scene {
         });
         */
 
-        /**
+        /**/
         board.addPiece({
             ...this.getPieceProperties("giant"),
             owner: player2,
@@ -359,7 +370,7 @@ export class GameScene extends Phaser.Scene {
             (await board.addPiece({
                 ...this.getPieceProperties("orc"),
                 owner: player,
-                x: 4,
+                x: 1,
                 y: 7
             }));
         },0);
@@ -390,11 +401,11 @@ export class GameScene extends Phaser.Scene {
         /**
         setTimeout(async () => {
             console.time("Effect");
-            await board.playEffect(EffectType.SubversionBeam,
+            await board.playEffect(EffectType.ArrowBeam,
                 board.pieces[0].sprite.getCenter(),
                 board.pieces[1].sprite.getCenter()
             );
-            await board.playEffect(EffectType.GiveSpell,
+            await board.playEffect(EffectType.ArrowHit,
                 board.pieces[1].sprite.getCenter(),
                 null,
                 board.pieces[1]

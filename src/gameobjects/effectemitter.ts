@@ -1,3 +1,4 @@
+import { Board } from "./board";
 import { Piece } from "./piece";
 
 export class EffectEmitter extends Phaser.GameObjects.Particles
@@ -39,7 +40,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
         target?: Piece
     ): any {
         let path: Phaser.Curves.Path;
-        let circleSize: number = 10
+        let circleSize: number = 10;
         switch (type) {
             case EffectType.WizardCasting:
                 path = new Phaser.Curves.Path(
@@ -207,7 +208,20 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     gravityY: 1000,
                     lifespan: 250,
                     blendMode: Phaser.BlendModes.ADD,
-                    alpha: { start: 1, end: 0 },
+                    scale: { start: 1.5, end: 0 },
+                };
+            case EffectType.AttackHit:
+                return {
+                    frame: "sparkle2",
+                    frequency: 15,
+                    x: { min: startPosition.x - 2, max: startPosition.x + 2 },
+                    y: { min: startPosition.y - 2, max: startPosition.y + 8 },
+                    speedX: { min: -120, max: 120 },
+                    speedY: { min: -80, max: -180 },
+                    gravityY: 500,
+                    lifespan: 250,
+                    blendMode: Phaser.BlendModes.ADD,
+                    scale: { start: 2, end: 0 },
                 };
             case EffectType.SummonPiece:
                 return {
@@ -408,6 +422,24 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             return;
         }
         switch (this._type) {
+            case EffectType.ArrowHit:
+            case EffectType.AttackHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 4,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        if (Math.round(tween.getValue()) % 2 === 0) {
+                            target.sprite.setTintFill(0xffffff);
+                        } else {
+                            target.sprite.setTint(target.defaultTint)
+                        }
+                    },
+                    onComplete: () => {
+                        target.sprite.setTint(target.defaultTint)
+                    },
+                });
+                break;
             case EffectType.LightningHit:
                 this.manager.scene.tweens.addCounter({
                     from: 0,
@@ -522,20 +554,21 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
     }
 
     private playEffect(resolve: Function) {
-        let duration: number = 500;
+        let duration: number = 400;
         switch (this._type) {
-            case EffectType.WizardDefeated:
-                duration = 3000;
-                break;
             case EffectType.JusticeHit:
+            case EffectType.DarkPowerHit:
+                duration = 2000;
+                break;
+            case EffectType.WizardDefeated:
             case EffectType.RaiseDeadHit:
             case EffectType.SubversionHit:
             case EffectType.GiveSpell:
+            case EffectType.DragonFireHit:
                 duration = 1000;
                 break;
             case EffectType.MagicBoltBeam:
             case EffectType.SubversionBeam:
-            case EffectType.WizardCasting:
             case EffectType.DisbelieveHit:
             case EffectType.WizardCastFail:
                 duration = 500;
@@ -548,6 +581,8 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             case EffectType.LightningHit:
             case EffectType.MagicBoltHit:
             case EffectType.SummonPiece:
+            case EffectType.WizardCasting:
+            case EffectType.AttackHit:
                 duration = 250;
                 break;
             case EffectType.LightningBeam:
@@ -575,7 +610,6 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
             from: 0,
             to: 1,
             duration: duration,
-            onUpdate: (tween) => {},
             onComplete: () => {
                 this.stop();
                 resolve();
@@ -645,5 +679,6 @@ export enum EffectType {
     RaiseDeadHit,
     SubversionBeam,
     SubversionHit,
-    GiveSpell
+    GiveSpell,
+    AttackHit
 }

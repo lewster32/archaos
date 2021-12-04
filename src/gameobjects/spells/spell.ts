@@ -370,6 +370,7 @@ export class Spell extends Model {
             if (!target) {
                 return false;
             }
+            this._board.sound.play("castloop08");
             await this._board.playEffect(
                 EffectType.DisbelieveBeam,
                 castingPiece.sprite.getCenter(),
@@ -377,6 +378,7 @@ export class Spell extends Model {
                 target
             );
             if (target.illusion) {
+                this._board.sound.play("disbelieve");
                 await target.kill();
                 this._board.logger.log(
                     `Disbelieve succeeded on illusionary ${target.name}`
@@ -398,11 +400,13 @@ export class Spell extends Model {
             if (!target) {
                 return false;
             }
+            this._board.sound.play("castloop08");
             await this._board.playEffect(
                 EffectType.RaiseDeadBeam,
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter()
             );
+            this._board.sound.play("spelleffect");
             await this._board.playEffect(
                 EffectType.RaiseDeadHit,
                 target.sprite.getCenter(),
@@ -427,12 +431,14 @@ export class Spell extends Model {
 
             const rollSuccess: boolean = this._board.roll(10, target.stats.magicResistance);
 
+            this._board.sound.play("castloop08");
             await this._board.playEffect(
                 EffectType.SubversionBeam,
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter()
             );
             if (rollSuccess && !target.illusion) {
+                this._board.sound.play("spelleffect");
                 await this._board.playEffect(
                     EffectType.SubversionHit,
                     target.sprite.getCenter(),
@@ -460,6 +466,7 @@ export class Spell extends Model {
                 return false;
             }
 
+            this._board.sound.play("spelleffect");
             await this._board.playEffect(
                 EffectType.WizardCasting,
                 target.sprite.getCenter(),
@@ -487,7 +494,6 @@ export class Spell extends Model {
                     return true; 
                 }
             }
-
             this._board.logger.log(
                 `${target.name} successfully cast ${this.name}`
             );

@@ -136,6 +136,7 @@ export class Wizard extends Piece {
     }
 
     async kill(): Promise<void> {
+        this.board.sound.play("deadwizard1");
         await this.board.playEffect(
             EffectType.WizardDefeated,
             this.sprite.getCenter(),
@@ -144,6 +145,7 @@ export class Wizard extends Piece {
         );
         await this.destroy();
         await this.owner?.defeat();
+        this.board.sound.play("disbelieve");
         setTimeout(async () => {
             await this.board.checkWinCondition();
         }, 500);

@@ -516,7 +516,6 @@ export class Piece extends Entity {
                     },
                 });
             });
-
             await this.destroy();
         }
         if (spreadAction === SpreadAction.Spread) {
@@ -598,6 +597,8 @@ export class Piece extends Entity {
                 owner: this.owner,
                 illusion: !!this._illusion,
             });
+
+            this.board.sound.play(`blob${Phaser.Math.RND.integerInRange(1, 2)}`);
 
             if (spreadPieces.length) {
                 if (
@@ -862,19 +863,20 @@ export class Piece extends Entity {
     }
 
     async engage(piece: Piece) {
-        return new Promise((resolve: Function) => {
+        return new Promise(async (resolve: Function) => {
             if (this.canEngagePiece(piece)) {
                 this.engaged = true;
                 this.attacked = false;
                 piece.engaged = true;
             }
+            this.board.sound.play("engaged");
             this.board.logger.log(
                 `${this.name} is engaged with ${piece.name}`,
                 Colour.Yellow
             );
             setTimeout(() => {
                 resolve();
-            }, 500);
+            }, Board.DEFAULT_DELAY);
         });
     }
 
@@ -892,6 +894,7 @@ export class Piece extends Entity {
                 !this.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.AttackUndead)
             ) {
+                this.board.sound.play("undead");
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan
@@ -908,17 +911,21 @@ export class Piece extends Entity {
                 piece.stats.defense
             );
 
+            this.board.sound.play("attackonly");
             this.board.logger.log(
                 `${this.name} ${this.properties.attackType} ${piece.name}`
             );
+            await this.board.playEffect(EffectType.AttackHit, piece.sprite.getCenter(), null, piece);
+            await Board.delay(Board.DEFAULT_DELAY);
 
             if (this.hasStatus(UnitStatus.ShadowForm)) {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
 
             if (rollSuccess) {
-                await piece.kill();
+                this.board.sound.play("killcreature");
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                await piece.kill();
                 if (
                     this.board.getPiecesAtPosition(
                         piece.position,
@@ -943,6 +950,7 @@ export class Piece extends Entity {
                 !this.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.AttackUndead)
             ) {
+                this.board.sound.play("undead");
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan
@@ -961,6 +969,7 @@ export class Piece extends Entity {
                     break;
             }
 
+            this.board.sound.play(beamEffectType === EffectType.DragonFireBeam ? "dragonfire6" : "bowfire6");
             await this.board.playEffect(
                 beamEffectType,
                 this.sprite.getCenter(),
@@ -968,6 +977,7 @@ export class Piece extends Entity {
                 piece
             );
 
+            this.board.sound.play(beamEffectType === EffectType.DragonFireBeam ? "dragonfireexplosion" : "bowhit");
             await this.board.playEffect(
                 hitEffectType,
                 piece.sprite.getCenter(),
@@ -992,8 +1002,9 @@ export class Piece extends Entity {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
-                await piece.kill();
+                this.board.sound.play("killcreature");
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                await piece.kill();
                 return true;
             }
         }
@@ -1035,7 +1046,7 @@ export class Piece extends Entity {
         ) {
             this._sprite.visible = false;
         } else {
-            this._sprite.depth -= 1;
+            this._sprite.setDepth(this._sprite.depth - 1);
             this.playAnim();
         }
         this.board.emitBoardUpdateEvent();

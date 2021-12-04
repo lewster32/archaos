@@ -112,6 +112,7 @@ export class SummonSpell extends Spell {
     ): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
+        this._board.sound.play("castloop08");
         await this._board.playEffect(
             EffectType.WizardCasting,
             castingPiece.sprite.getCenter()
@@ -148,7 +149,7 @@ export class SummonSpell extends Spell {
             illusion: !!this._illusion,
         });
 
-
+        this._board.sound.play("spelleffect");
         await this._board.playEffect(
             EffectType.SummonPiece,
             this._board.getIsoPosition(point),

@@ -25,22 +25,34 @@ export class AttackSpell extends Spell {
         const target: Piece = targets[0];
         let beamEffect: EffectType = null;
         let hitEffect: EffectType = null;
+        let beamSound: string = null;
+        let hitSound: string = null;
 
         switch (this._properties.projectile) {
             case UnitRangedProjectileType.Lightning:
                 beamEffect = EffectType.LightningBeam;
                 hitEffect = EffectType.LightningHit;
+                beamSound = "lightning4";
+                hitSound = "lightningexplode";
                 break;
             case UnitRangedProjectileType.MagicBolt:
                 beamEffect = EffectType.MagicBoltBeam;
                 hitEffect = EffectType.MagicBoltHit;
+                beamSound = "magicbolt6";
+                hitSound = "magicboltexplode";
                 break;
             case UnitRangedProjectileType.Justice:
                 hitEffect = EffectType.JusticeHit;
+                hitSound = "justice";
                 break;
             case UnitRangedProjectileType.DarkPower:
                 hitEffect = EffectType.DarkPowerHit;
+                hitSound = "justice";
                 break;
+        }
+
+        if (beamSound) {
+            this._board.sound.play(beamSound);
         }
 
         if (beamEffect) {
@@ -59,12 +71,16 @@ export class AttackSpell extends Spell {
 
         let targetKilled: boolean = false;
 
+        if (hitSound) {
+            this._board.sound.play(hitSound);
+        }
         if (hitEffect) {
             await this._board.playEffect(hitEffect, target.sprite.getCenter(), null, target);
         }
 
         if (rollSuccess) {
             if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
+                this._board.sound.play("justicesuccessful");
                 await target.owner.destroyCreations();
                 this._board.logger.log(
                     `${target.owner.name}'s creations were dispelled by ${this.name}`
@@ -72,6 +88,7 @@ export class AttackSpell extends Spell {
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
             else {
+                this._board.sound.play("killcreature");
                 await target.kill();
                 targetKilled = true;
             }

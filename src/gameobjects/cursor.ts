@@ -59,6 +59,10 @@ export class Cursor {
     }
 
     async update(force?: boolean): Promise<ActionType> {
+        if (this._board.state === BoardState.Busy) {
+            return ActionType.None;
+        }
+
         const pointer: Phaser.Input.Pointer =
             this._board.scene.input.activePointer;
 
@@ -170,7 +174,11 @@ export class Cursor {
         return allowedAction;
     }
 
-    async action(input: InputType) {
+    async action(input: InputType): Promise<void> {
+        if (this._board.state === BoardState.Busy) {
+            return;
+        }
+
         const intendedAction: ActionType = await this.update(true);
 
         const actionState: ActionType = await this._board.rules.processAction(
@@ -194,6 +202,7 @@ export class Cursor {
                 if (selected.canAttack) {
                     return;
                 } else if (selected.canRangedAttack) {
+                    this._board.sound.play("bowselecta");
                     this._board.logger.log(
                         `${selected.name}'s turn to ranged attack`,
                         Colour.Yellow

@@ -287,6 +287,7 @@ export class Rules {
                         EventType.PieceInfo,
                         currentAliveHoveredPiece
                     );
+                    board.sound.play("select");
                     await board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {
@@ -370,6 +371,8 @@ export class Rules {
         if (board.state === BoardState.Idle) {
             return ActionType.None;
         }
+
+        board.sound.play("cancel");
 
         if (board.state === BoardState.CastSpell) {
             if (board.currentPlayer && board.currentPlayer.selectedSpell) {
