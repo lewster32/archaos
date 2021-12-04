@@ -138,6 +138,7 @@ export class Piece extends Entity {
         return (
             (this.moved && !this.canAttack && !this.canRangedAttack) ||
             this.dead ||
+            this.engulfed ||
             (this.moved && this.attacked && this.rangedAttacked)
         );
     }
