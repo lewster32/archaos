@@ -156,6 +156,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     startGame(data: any): void {
+        if (this.board) {
+            this.board.destroy();
+        }
         this.board = new Board(this, 1, data?.board?.width, data?.board?.height);
 
         for (let player of data?.players) {

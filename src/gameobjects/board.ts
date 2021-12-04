@@ -1345,5 +1345,20 @@ export class Board extends Model {
         return point;
     }
 
+    destroy() {
+        this.pieces?.forEach((piece: Piece) => {
+            piece.destroy();
+        });
+
+        this._layers?.forEach((layer: Phaser.GameObjects.Layer) => {
+            layer.destroy();
+        });
+
+        this._particles?.destroy();
+
+        this._sound.destroy();
+
+    }
+
     /* #endregion */
 }
