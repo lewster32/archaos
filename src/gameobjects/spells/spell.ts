@@ -479,7 +479,7 @@ export class Spell extends Model {
             );
 
             if (this.properties.id === "turmoil") {
-                for (const piece of this._board.pieces.filter((p: Piece) => !p.dead)) {
+                for (const piece of this._board.pieces.filter((p: Piece) => !p.dead && !p.currentMount && !p.engulfed)) {
                     const randomEmptySpace: Phaser.Geom.Point = this._board.getRandomEmptySpace();
                     if (randomEmptySpace) {
                         this._board.sound.play("spelleffect");
