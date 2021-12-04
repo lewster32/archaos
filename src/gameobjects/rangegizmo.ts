@@ -500,7 +500,10 @@ export class RangeGizmo {
                     testNode.g = g;
                     testNode.h = h;
                     testNode.parentNode = currentNode;
-                    openNodes.push(testNode);
+                    if (currentNode.warning != true) {
+                        openNodes.push(testNode);
+                    }
+                    
                 }
             }
             closedNodes.push(currentNode);
@@ -577,6 +580,7 @@ export class RangeGizmo {
         }
         angles.unshift(this.getAngle(startNode.pos, destinationNode.pos));
 
+        /*
         for (let n: number = 0; n < path.length; n++) {
             if (path[n].warning === true) {
                 path.slice(n + 1, path.length).forEach(node => { node.traversable = false });
@@ -585,6 +589,7 @@ export class RangeGizmo {
                 break;
             }
         }
+        */
 
         return new Path(path, angles, cost);
     }
