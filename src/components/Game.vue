@@ -19,7 +19,29 @@ import Minimap from "./Minimap.vue";
     <div class="menu" v-if="!gameStarted">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
         <div class="callout__inner">
-            <button class="button button--green start-game" @click="startGame()">Start Game</button>
+            <div class="callout__row">
+                <label for="playercount">Number of players:</label>
+                <select v-model="setup.playerCount" id="playercount">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players</option>
+                </select>
+            </div>
+            <div class="callout__row">
+                <label for="boardsize">Board size:</label>
+                <select v-model="setup.boardSize" id="boardsize">
+                    <option value="9">Small Board</option>
+                    <option value="13">Medium Board</option>
+                    <option value="17">Large Board</option>
+                </select>
+            </div>
+            <div class="callout__row">
+                <label for="spellcount">Spell count:</label>
+                <input type="number" v-model="setup.spellCount" min="5" max="25" id="spellcount" />
+            </div>
+            <div class="callout__row">
+                <button class="button button--green start-game" @click="startGame()">Start Game</button>
+            </div>
         </div>
     </div>
     <div class="big-buttons">
@@ -58,12 +80,12 @@ export default {
         },
         startGame() {
             this.eventEmitter.emit("start-game", {
-                players: ["Gandalf", "Merlin"],
+                players: ["Gandalf", "Glinda", "Merlin", "Morgana"].slice(0, Math.abs(this.setup.playerCount) || 2),
                 board: {
-                    width: 13,
-                    height: 13,
+                    width: Math.abs(this.setup.boardSize) || 13,
+                    height: Math.abs(this.setup.boardSize) || 13,
                 },
-                spellCount: 15
+                spellCount: Math.abs(this.setup.spellCount) || 15
             });
             this.gameStarted = true;
         }
@@ -95,6 +117,11 @@ export default {
             gameStarted: false,
             gameOver: false,
             pieces: [],
+            setup: {
+                playerCount: 2,
+                boardSize: 13,
+                spellCount: 15
+            }
         };
     },
     async mounted() {

@@ -166,7 +166,7 @@ export class GameScene extends Phaser.Scene {
 
         this.board.createWizards();
 
-        for (let i = 0; i < data?.spellCount ?? 12; i++) {
+        for (let i = 0; i < (data?.spellCount ?? 12) - 1; i++) {
             this.board.players.forEach((player: Player) => {
                 this.board.addSpell(player, Spell.getRandomSpell());
             });

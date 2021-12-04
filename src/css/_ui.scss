@@ -31,6 +31,16 @@
         font-size: 2em;
         text-align: center;
     }
+
+    &__row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin: .5em 0;
+        > * {
+            flex: 1 1 auto;
+        }
+    }
 }
 
 .modal {
@@ -57,5 +67,30 @@
         bottom: 0;
         z-index: 1;
         background: rgba(0,0,0,.5);
+    }
+}
+
+label {
+    text-align: left;
+    color: var(--color-cyan);
+}
+
+label, select, input {
+    padding: .5em;
+    font-size: 1em;
+}
+
+input {
+    padding-left: .75em;
+}
+
+select, input {
+    text-align: left;
+    border: 0;
+    background: black;
+    color: currentColor;
+    border: 2px solid transparent;
+    &:hover {
+        border-color: var(--color-cyan);
     }
 }

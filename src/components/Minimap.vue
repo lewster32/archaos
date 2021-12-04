@@ -46,7 +46,6 @@ export default {
     data() {
         return {
             show: true,
-            scale: 4,
         };
     },
     computed: {
@@ -57,6 +56,9 @@ export default {
                 "--map-scale": this.scale,
             };
         },
+        scale(): number {
+            return (15 / this.board.width) * 3.75;
+        }
     },
     watch: {},
     methods: {
