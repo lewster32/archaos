@@ -9,22 +9,28 @@ import Minimap from "./Minimap.vue";
         class="container"
         :id="containerId"
         v-if="downloaded"
-        :class="{ 'container--nudge': spellbookOpen }"
+        :class="{ 'container--nudge': spellbookOpen, 'container--disabled': !gameStarted }"
         ref="container"
     />
     <div class="placeholder" v-else>Loading...</div>
-    <Spellbook :data="spellbook" @select="spellSelect" />
+    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted" />
     <Log :logs="logs" />
-    <Minimap :pieces="pieces" :board="board" />
+    <Minimap :pieces="pieces" :board="board" v-if="gameStarted" />
+    <div class="menu" v-if="!gameStarted">
+        <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
+        <div class="callout__inner">
+            <button class="button button--green start-game" @click="startGame()">Start Game</button>
+        </div>
+    </div>
     <div class="big-buttons">
         <button
-            :class="{ 'big-button--hide': !canEndTurn }"
+            :class="{ 'big-button--hide': !gameStarted || !canEndTurn }"
             @click="endTurn()"
             class="big-button big-button--skip"
             title="End Turn"
         />
         <button
-            :class="{ 'big-button--hide': !canCancel }"
+            :class="{ 'big-button--hide': !gameStarted || !canCancel }"
             @click="cancel()"
             class="big-button big-button--cancel"
             title="Cancel"
@@ -50,11 +56,17 @@ export default {
         endTurn() {
             this.eventEmitter.emit("end-turn");
         },
-        updateBounds() {
-            setTimeout(() => {
-                this.gameInstance.scale.updateBounds();
-            }, 250);
-        },
+        startGame() {
+            this.eventEmitter.emit("start-game", {
+                players: ["Gandalf", "Merlin"],
+                board: {
+                    width: 13,
+                    height: 13,
+                },
+                spellCount: 15
+            });
+            this.gameStarted = true;
+        }
     },
     computed: {
         spellbookOpen() {
@@ -80,6 +92,8 @@ export default {
                 width: 0,
                 height: 0,
             },
+            gameStarted: false,
+            gameOver: false,
             pieces: [],
         };
     },
@@ -132,6 +146,10 @@ export default {
             this.eventEmitter.on("end-turn-available", (state) => {
                 this.canEndTurn = state;
             });
+
+            this.eventEmitter.on("game-over", () => {
+                this.gameStarted = false;
+            });
         });
     },
     destroyed() {
@@ -183,9 +201,24 @@ export default {
 }
 
 .container {
-    transition: margin-right 1s ease-in-out;
+    transition: margin-right 1s ease-in-out, filter 0.5s;
     &--nudge {
         margin-right: 350px;
     }
+    &--disabled {
+        filter: brightness(0.25);
+        pointer-events: none;
+    }
+}
+
+.menu {
+    position: fixed;
+    text-align: center;
+}
+
+.logo {
+    width: 156 * 2px;
+    height: 87 * 2px;
+    image-rendering: pixelated;
 }
 </style>

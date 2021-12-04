@@ -1270,7 +1270,43 @@ export class Piece extends Entity {
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
-            status: unit.status || [],
+            status: [...(unit.status || [])],
+        };
+    }
+
+    static getPieceProperties(name: string): any {
+        let key = "";
+        for (let [k, piece] of Object.entries(units)) {
+            if (piece.name.toLowerCase() === name.toLowerCase()) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!key) {
+            return;
+        }
+
+        const unit: any = (units as any)[key];
+
+        return {
+            type: UnitType.Creature,
+            properties: {
+                id: key,
+                name: unit.name,
+                movement: unit.properties.mov,
+                combat: unit.properties.com,
+                rangedCombat: unit.properties.rcm,
+                range: unit.properties.rng,
+                defense: unit.properties.def,
+                maneuverability: unit.properties.mnv,
+                magicResistance: unit.properties.res,
+                attackType: unit.attackType || "attacked",
+                rangedType: unit.rangedType || "shot",
+                status: [...(unit.status || [])],
+            },
+            shadowScale: unit.shadowScale,
+            offsetY: unit.offY,
         };
     }
 }

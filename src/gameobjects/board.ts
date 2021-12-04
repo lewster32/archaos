@@ -138,6 +138,8 @@ export class Board extends Model {
 
         this._sound = this.scene.sound.addAudioSprite("classicsounds");
 
+        this._sound.play("screenactive");
+
         window["currentBoard"] = this;
     }
 
@@ -970,6 +972,7 @@ export class Board extends Model {
         if (this.players.filter((player) => !player.defeated).length < 2) {
             this.state = BoardState.GameOver;
             this.logger.log(`Game over!`, Colour.Yellow);
+            this.scene.game.events.emit("game-over");
             return true;
         }
         return false;

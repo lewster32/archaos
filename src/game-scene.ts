@@ -20,16 +20,14 @@ import classicSoundsMp3 from "../assets/sounds/chaossounds.mp3?url";
 import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
 
 import { Board } from "./gameobjects/board";
-import { SpellConfig } from "./gameobjects/configs/spellconfig";
-import { EffectType } from "./gameobjects/effectemitter";
-import { SpellTarget } from "./gameobjects/enums/spelltarget";
-import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Spell } from "./gameobjects/spells/spell";
-import { Wizard } from "./gameobjects/wizard";
+import { Piece } from "./gameobjects/piece";
 
 export class GameScene extends Phaser.Scene {
+    board: Board;
+
     constructor() {
         super({
             key: "GameScene",
@@ -149,89 +147,85 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.testGame();
+        this.game.events.on("start-game", (data) => { 
+            this.startGame(data);
+            console.log("Started");
+        });
+
+        // this.testGame();
     }
 
-    getPieceProperties(name: string): any {
-        let key = "";
-        for (let [k, piece] of Object.entries(units)) {
-            if (piece.name.toLowerCase() === name.toLowerCase()) {
-                key = k;
-                break;
-            }
-        }
+    startGame(data: any): void {
+        this.board = new Board(this, 1, data?.board?.width, data?.board?.height);
 
-        if (!key) {
-            return;
-        }
-
-        const unit: any = (units as any)[key];
-
-        return {
-            type: UnitType.Creature,
-            properties: {
-                id: key,
-                name: unit.name,
-                movement: unit.properties.mov,
-                combat: unit.properties.com,
-                rangedCombat: unit.properties.rcm,
-                range: unit.properties.rng,
-                defense: unit.properties.def,
-                maneuverability: unit.properties.mnv,
-                magicResistance: unit.properties.res,
-                attackType: unit.attackType || "attacked",
-                rangedType: unit.rangedType || "shot",
-                status: [...(unit.status || [])],
-            },
-            shadowScale: unit.shadowScale,
-            offsetY: unit.offY,
-        };
-    }
-
-    testGame(): void {
-        const board: Board = new Board(this, 1, 13, 13);
-
-        const p1: Player = board.addPlayer({
-            name: "Gandalf",
-        });
-
-        const p2: Player = board.addPlayer({
-            name: "Merlin",
-        });
-
-        const p3: Player = board.addPlayer({
-            name: "Glinda",
-        });
-
-        const p4: Player = board.addPlayer({
-            name: "Morgana",
-        });
-
-        board.createWizards();
-
-        for (let i = 0; i < 12; i++) {
-            board.players.forEach((player: Player) => {
-                board.addSpell(player, Spell.getRandomSpell());
+        for (let player of data?.players) {
+            this.board.addPlayer({
+                name: player
             });
         }
 
-        board.players.forEach((player: Player) => {
-            board.addSpell(player, Spell.getSpellProperties("disbelieve"));
+        this.board.createWizards();
+
+        for (let i = 0; i < data?.spellCount ?? 12; i++) {
+            this.board.players.forEach((player: Player) => {
+                this.board.addSpell(player, Spell.getRandomSpell());
+            });
+        }
+
+        this.board.players.forEach((player: Player) => {
+            this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
+        });
+
+
+        setTimeout(() => {
+            this.board.startGame();
+        }, Board.DEFAULT_DELAY);
+    }
+
+    testGame(): void {
+        this.board = new Board(this, 1, 13, 13);
+
+        const p1: Player = this.board.addPlayer({
+            name: "Gandalf",
+        });
+
+        const p2: Player = this.board.addPlayer({
+            name: "Merlin",
+        });
+
+        const p3: Player = this.board.addPlayer({
+            name: "Glinda",
+        });
+
+        const p4: Player = this.board.addPlayer({
+            name: "Morgana",
+        });
+
+        this.board.createWizards();
+
+        for (let i = 0; i < 12; i++) {
+            this.board.players.forEach((player: Player) => {
+                this.board.addSpell(player, Spell.getRandomSpell());
+            });
+        }
+
+        this.board.players.forEach((player: Player) => {
+            this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
         });
 
         setTimeout(() => {
-            board.startGame();
+            this.board.startGame();
         }, 1000);
     }
 
     testPieces(): void {
-        const board: Board = new Board(this, 1, 8, 8);
+        this.board = new Board(this, 1, 8, 8);
 
-        const player: Player = board.addPlayer({
+        const player: Player = this.board.addPlayer({
             name: "Gandalf",
         });
 
-        const player2: Player = board.addPlayer({
+        const player2: Player = this.board.addPlayer({
             name: "Merlin",
         });
 
@@ -289,16 +283,16 @@ export class GameScene extends Phaser.Scene {
         /**/
 
         /**/
-        board.addWizard({
+        this.board.addWizard({
             owner: player,
-            x: Math.floor(board.width / 2) - 2,
-            y: board.height - 1,
+            x: Math.floor(this.board.width / 2) - 2,
+            y: this.board.height - 1,
             wizCode: "0003030000",
         });
 
-        board.addWizard({
+        this.board.addWizard({
             owner: player2,
-            x: Math.floor(board.width / 2),
+            x: Math.floor(this.board.width / 2),
             y: 7,
             wizCode: "0600000000",
         });
@@ -333,8 +327,8 @@ export class GameScene extends Phaser.Scene {
         /**/
 
         /**/
-        board.addPiece({
-            ...this.getPieceProperties("vampire"),
+        this.board.addPiece({
+            ...Piece.getPieceProperties("vampire"),
             owner: player,
             x: 2,
             y: 6
@@ -343,7 +337,7 @@ export class GameScene extends Phaser.Scene {
 
         /*
         board.addPiece({
-            ...this.getPieceProperties("magic fire"),
+            ...Piece.getPieceProperties("magic fire"),
             owner: player2,
             x: 4,
             y: 3
@@ -351,24 +345,24 @@ export class GameScene extends Phaser.Scene {
         */
 
         /**/
-        board.addPiece({
-            ...this.getPieceProperties("giant"),
+        this.board.addPiece({
+            ...Piece.getPieceProperties("giant"),
             owner: player2,
             x: 5,
             y: 6
         });
 
 
-        board.addPiece({
-            ...this.getPieceProperties("horse"),
+        this.board.addPiece({
+            ...Piece.getPieceProperties("horse"),
             owner: player2,
             x: 4,
             y: 2
         });
 
         setTimeout(async () => {
-            (await board.addPiece({
-                ...this.getPieceProperties("orc"),
+            (await this.board.addPiece({
+                ...Piece.getPieceProperties("orc"),
                 owner: player,
                 x: 1,
                 y: 7
@@ -379,7 +373,7 @@ export class GameScene extends Phaser.Scene {
 
         /*
         board.addPiece({
-            ...this.getPieceProperties("giant"),
+            ...Piece.getPieceProperties("giant"),
             owner: player2,
             x: 5,
             y: 3
@@ -389,7 +383,7 @@ export class GameScene extends Phaser.Scene {
         /*
 
         board.addPiece({
-            ...this.getPieceProperties("ghost"),
+            ...Piece.getPieceProperties("ghost"),
             owner: player2,
             x: 5,
             y: 6
@@ -415,7 +409,7 @@ export class GameScene extends Phaser.Scene {
         /**/
 
         setTimeout(() => {
-            board.startGame();
+            this.board.startGame();
         }, 1000);
     }
 
