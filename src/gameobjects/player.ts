@@ -26,7 +26,10 @@ export class Player extends Model {
 
     constructor(board: Board, id: number, config: PlayerConfig) {
         super(id);
-        this._name = config.name;
+        if (!config) {
+            throw new Error("Player must be given a config");
+        }
+        this._name = config.name || "Player " + id;
         this._board = board;
         this._colour = null;
 

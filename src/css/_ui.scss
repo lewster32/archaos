@@ -72,7 +72,6 @@
 
 label {
     text-align: left;
-    color: var(--color-cyan);
 }
 
 label, select, input {
@@ -87,10 +86,10 @@ input {
 select, input {
     text-align: left;
     border: 0;
-    background: black;
-    color: currentColor;
+    color: var(--color-yellow);
+    background: #222;
     border: 2px solid transparent;
     &:hover {
-        border-color: var(--color-cyan);
+        border-color: var(--color-yellow);
     }
 }

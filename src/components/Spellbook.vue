@@ -6,25 +6,58 @@ SpellInfo;
 <template>
     <div class="modal" v-if="illusionPrompt">
         <div class="callout">
-            <p class="callout__title">Cast {{ currentSpell.name }} as illusion?</p>
+            <p class="callout__title">
+                Cast {{ currentSpell.name }} as illusion?
+            </p>
             <div class="callout__buttons">
-                <button class="spellinfo__select button button--green button--important" @click="selectIllusion(true)">
+                <button
+                    class="
+                        spellinfo__select
+                        button button--green button--important
+                    "
+                    @click="selectIllusion(true)"
+                >
                     Yes
                 </button>
-                <button class="spellinfo__select button button--red button--important" @click="selectIllusion(false)">
+                <button
+                    class="
+                        spellinfo__select
+                        button button--red button--important
+                    "
+                    @click="selectIllusion(false)"
+                >
                     No
                 </button>
-                <button class="spellinfo__select button" @click="closeIllusion()">
+                <button
+                    class="spellinfo__select button"
+                    @click="closeIllusion()"
+                >
                     Cancel
                 </button>
             </div>
         </div>
     </div>
     <div class="spellbook" v-if="show">
-        <button v-if="minimised" class="spellbook__toggle spellbook__toggle--closed button button--green" @click="toggle()" title="Open spellbook">
-            <img class="spellbook-icon" src="../../assets/images/ui/spellbook.png" alt="Spellbook" />
+        <button
+            v-if="minimised"
+            class="
+                spellbook__toggle spellbook__toggle--closed
+                button button--green
+            "
+            @click="toggle()"
+            title="Open spellbook"
+        >
+            <img
+                class="spellbook-icon"
+                src="../../assets/images/ui/spellbook.png"
+                alt="Spellbook"
+            />
         </button>
-        <button v-if="!minimised" class="spellbook__toggle button button--small" @click="toggle()">
+        <button
+            v-if="!minimised"
+            class="spellbook__toggle button button--small"
+            @click="toggle()"
+        >
             &gt;
         </button>
         <div
@@ -41,11 +74,15 @@ SpellInfo;
                     >
                         <img class="spell__image" :src="getImageUrl(spell)" />
                         <span class="spell__name">{{ spell.name }}</span>
-                        <span :title="`${friendlyBalance(spell.balance)}`" class="spell__balance" :class="{
-                            'balance-lawful': spell.balance > 0,
-                            'balance-chaotic': spell.balance < 0,
-                        }"
-                        >{{ balance(spell) }}</span>
+                        <span
+                            :title="`${friendlyBalance(spell.balance)}`"
+                            class="spell__balance"
+                            :class="{
+                                'balance-lawful': spell.balance > 0,
+                                'balance-chaotic': spell.balance < 0,
+                            }"
+                            >{{ balance(spell) }}</span
+                        >
                         <span
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
                                 spell.chance
@@ -59,24 +96,38 @@ SpellInfo;
                         <button class="spell__info button" @click="info(spell)">
                             i
                         </button>
-                        <button class="spell__select button button--green button--important" @click="select(spell)">
+                        <button
+                            class="
+                                spell__select
+                                button button--green button--important
+                            "
+                            @click="select(spell)"
+                        >
                             Select
                         </button>
                     </li>
                 </ul>
             </div>
-            <button class="spellbook__skip button button--red" @click="select(null)">
+            <button
+                class="spellbook__skip button button--red"
+                @click="select(null)"
+            >
                 Skip selection
             </button>
         </div>
-        <SpellInfo v-if="!illusionPrompt" :spell="currentSpell" @close="closeInfo()" @select="select(currentSpell)" />
+        <SpellInfo
+            v-if="!illusionPrompt"
+            :spell="currentSpell"
+            @close="closeInfo()"
+            @select="select(currentSpell)"
+        />
     </div>
 </template>
 
 <script lang="ts">
 import { Spell } from "../gameobjects/spells/spell";
-import { SpellType } from '../gameobjects/enums/spelltype';
-import { SummonSpell } from '../gameobjects/spells/summonspell';
+import { SpellType } from "../gameobjects/enums/spelltype";
+import { SummonSpell } from "../gameobjects/spells/summonspell";
 
 export default {
     $refs: {
@@ -88,7 +139,7 @@ export default {
     data() {
         return {
             currentSpell: null as any,
-            illusionPrompt: false as boolean
+            illusionPrompt: false as boolean,
         };
     },
     computed: {
@@ -97,7 +148,7 @@ export default {
         },
         minimised(): boolean {
             return this.data.minimised;
-        }
+        },
     },
     watch: {
         data(oldData, newData) {
@@ -127,13 +178,15 @@ export default {
             if (!spell) {
                 this.$emit("select", null);
                 this.closeInfo();
-                return;            
+                return;
             }
             this.currentSpell = spell;
-            if (spell.type === SpellType.Summon && (spell as SummonSpell).allowIllusion) {
+            if (
+                spell.type === SpellType.Summon &&
+                (spell as SummonSpell).allowIllusion
+            ) {
                 this.illusionPrompt = true;
-            }
-            else {
+            } else {
                 this.$emit("select", spell);
                 this.closeInfo();
             }
@@ -171,14 +224,19 @@ export default {
         },
         balance(spell: Spell) {
             if (spell.balance > 0) {
-                return '^';
+                return "^";
             } else if (spell.balance < 0) {
                 return `*`;
             }
             return "-";
         },
         friendlyBalance(balance: number) {
-            let amount: string = ["slightly", "moderately", "highly", "greatly"][Math.min(Math.abs(balance) - 1, 3)];
+            let amount: string = [
+                "slightly",
+                "moderately",
+                "highly",
+                "greatly",
+            ][Math.min(Math.abs(balance) - 1, 3)];
 
             if (balance > 0) {
                 return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
@@ -230,7 +288,6 @@ export default {
     &__scroll {
         border-top: 2px solid var(--color-black);
         border-bottom: 2px solid var(--color-black);
-        
 
         flex: 1 1 auto;
         overflow-y: scroll;
@@ -240,7 +297,7 @@ export default {
             width: 0.5em;
         }
         &::-webkit-scrollbar-track {
-            background: rgba(0,0,0,.25);
+            background: rgba(0, 0, 0, 0.25);
         }
         &::-webkit-scrollbar-thumb {
             background: #666;
@@ -254,7 +311,6 @@ export default {
         flex-direction: column;
     }
     &__skip {
-
     }
     &__toggle {
         position: absolute;
@@ -289,10 +345,10 @@ export default {
     border-image-width: 6px;
     border-image-slice: 3 fill;
     border-image-repeat: repeat;
-    border-image-source: url('../../assets/images/ui/callout-disabled.png');
+    border-image-source: url("../../assets/images/ui/callout-disabled.png");
 
     &:hover {
-        border-image-source: url('../../assets/images/ui/callout-selected.png');
+        border-image-source: url("../../assets/images/ui/callout-selected.png");
     }
 
     + .spell {
@@ -313,10 +369,8 @@ export default {
         flex: 0 1 auto;
     }
     &__select {
-
     }
     &__info {
-
     }
 }
 
