@@ -18,7 +18,7 @@ import Minimap from "./Minimap.vue";
     <Minimap :pieces="pieces" :board="board" v-if="gameStarted" />
     <div class="menu" v-if="!gameStarted">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
-        <div class="callout__inner">
+        <div class="callout__inner" v-if="setup">
             <div class="callout__row">
                 <label for="playercount">Number of players:</label>
                 <select v-model="setup.playerCount" id="playercount">
@@ -27,7 +27,7 @@ import Minimap from "./Minimap.vue";
                     <option value="4">4 Players</option>
                 </select>
             </div>
-            <div class="callout__row" v-for="(name, index) in setup.players.slice(0, this.setup.playerCount)" :key="name" style="margin-left: 1em">
+            <div class="callout__row" v-for="(name, index) in setup.players.slice(0, setup.playerCount)" :key="name" style="margin-left: 1em">
                 <label :for="`player${index}`">Player {{ index + 1 }}'s name:</label>
                 <input v-model="setup.players[index].name" type="text" :id="`player${index}`" maxlength="20"/>
             </div>
@@ -127,7 +127,21 @@ export default {
             gameStarted: false,
             gameOver: false,
             pieces: [],
-            setup: {
+            setup: null
+        };
+    },
+    async mounted() {
+        const game = await import("../game/game");
+
+        if (window.localStorage) {
+            const setup = window.localStorage.getItem("setup");
+            if (setup) {
+                this.setup = JSON.parse(setup);
+            }
+        }
+
+        if (!this.setup) {
+            this.setup = {
                 playerCount: 2,
                 boardSize: 13,
                 spellCount: 15,
@@ -140,17 +154,6 @@ export default {
                 }, {
                     name: "Morgana"
                 }]
-            }
-        };
-    },
-    async mounted() {
-        const game = await import("../game/game");
-
-        if (window.localStorage) {
-            const setup = window.localStorage.getItem("setup");
-
-            if (setup) {
-                this.setup = JSON.parse(setup);
             }
         }
 
