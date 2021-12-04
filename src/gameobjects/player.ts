@@ -90,6 +90,7 @@ export class Player extends Model {
                 .map((piece: Piece) => {
                     return new Promise((resolve, reject) => {
                         setTimeout(async () => {
+                            this.board.sound.play("disbelieve");
                             await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
                             await piece.destroy();
                             resolve(0);

@@ -80,10 +80,7 @@ export class Rules {
                     if (
                         selectedPiece.canAttackPiece(
                             currentAliveHoveredPiece
-                        ) &&
-                        selectedPiece
-                            .getNeighbours()
-                            .includes(currentAliveHoveredPiece)
+                        )
                     ) {
                         return ActionType.Attack;
                     }

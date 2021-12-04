@@ -8,6 +8,7 @@ import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
+import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { Model } from "./model";
@@ -16,18 +17,16 @@ import { Player } from "./player";
 import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
-import { Spell } from "./spells/spell";
 import { AttackSpell } from "./spells/attackspell";
+import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
-import { SpellType } from "./enums/spelltype";
-import { InputType } from "./enums/inputtype";
 
 type SimplePoint = { x: number; y: number };
 
 export class Board extends Model {
-    static CHEAT_FORCE_HIT: boolean | null = true;
-    static CHEAT_FORCE_CAST: boolean | null = true;
+    static CHEAT_FORCE_HIT: boolean | null = null;
+    static CHEAT_FORCE_CAST: boolean | null = null;
     static CHEAT_SHORT_DELAY: boolean = false;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
@@ -241,7 +240,8 @@ export class Board extends Model {
                     `World balance shifts towards ${
                         this._balanceShift < 0 ? "chaos" : "law"
                     } by ${parseInt(
-                        Math.abs(this._balanceShift * 100).toFixed(2), 10
+                        Math.abs(this._balanceShift * 100).toFixed(2),
+                        10
                     )}%`,
                     this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan
                 );
@@ -421,7 +421,10 @@ export class Board extends Model {
             if (firstEngagingPiece != null) {
                 if (
                     this._selected.engaged ||
-                    this.roll(firstEngagingPiece.stats.maneuverability, this._selected.stats.maneuverability)
+                    this.roll(
+                        firstEngagingPiece.stats.maneuverability,
+                        this._selected.stats.maneuverability
+                    )
                 ) {
                     await this._selected.engage(firstEngagingPiece);
                     await this.moveGizmo.reset();
@@ -468,9 +471,10 @@ export class Board extends Model {
         }
         this.scene.game.events.emit("cancel-available", false);
 
-        const turnOver: boolean = this.getPiecesByOwner(this.currentPlayer!).every(
-            (piece) => piece.turnOver
-        ) || this.phase === BoardPhase.Casting;
+        const turnOver: boolean =
+            this.getPiecesByOwner(this.currentPlayer!).every(
+                (piece) => piece.turnOver
+            ) || this.phase === BoardPhase.Casting;
 
         if (turnOver) {
             this.deselectPlayer();
@@ -479,9 +483,7 @@ export class Board extends Model {
 
         return new Promise((resolve) => {
             setTimeout(async () => {
-                if (
-                    turnOver
-                ) {
+                if (turnOver) {
                     await this.nextPlayer();
                 }
                 resolve();
@@ -586,11 +588,8 @@ export class Board extends Model {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
             const path: Path = this.moveGizmo.getPathTo(position);
-            const isFlying:boolean = piece.hasStatus(UnitStatus.Flying);
-            if (
-                isFlying ||
-                Board.distance(piece.position, position) <= 1.5
-            ) {
+            const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
+            if (isFlying || Board.distance(piece.position, position) <= 1.5) {
                 this.sound.play(isFlying ? "fly" : "move");
                 await piece.moveTo(position);
             } else {
@@ -611,12 +610,10 @@ export class Board extends Model {
 
                 if (firstEngagingPiece) {
                     await piece.engage(firstEngagingPiece);
-                }
-                else {
+                } else {
                     piece.attacked = true;
                 }
-            }
-            else {
+            } else {
                 piece.attacked = true;
             }
 
@@ -768,8 +765,11 @@ export class Board extends Model {
                     null,
                     piece
                 );
-                const owner:Player = piece.currentRider.owner;
-                this.addSpell(piece.currentRider.owner, Spell.getRandomSpell());
+                const owner: Player = piece.currentRider.owner;
+                this.addSpell(
+                    piece.currentRider.owner,
+                    Spell.getRandomSpell(true)
+                );
                 await piece.kill();
                 this.logger.log(
                     `${piece.name} has expired and gifted ${owner.name} a new spell`,
@@ -862,7 +862,7 @@ export class Board extends Model {
 
     async selectPlayer(id: number): Promise<void> {
         const oldState: BoardState = this.state;
-        
+
         this.pieces.forEach((piece: Piece) => {
             piece.highlighted = false;
         });
@@ -874,7 +874,9 @@ export class Board extends Model {
         }
 
         const units: Piece[] = this.pieces.filter(
-            (piece: Piece) => piece.owner === this._currentPlayer || piece.currentRider?.owner === this._currentPlayer
+            (piece: Piece) =>
+                piece.owner === this._currentPlayer ||
+                piece.currentRider?.owner === this._currentPlayer
         );
 
         return new Promise<void>((resolve) => {
@@ -969,9 +971,19 @@ export class Board extends Model {
         if (this.state === BoardState.GameOver) {
             return true;
         }
-        if (this.players.filter((player) => !player.defeated).length < 2) {
+        const undefeated: Player[] = this.players.filter(
+            (player) => !player.defeated
+        );
+        if (undefeated?.length < 2) {
             this.state = BoardState.GameOver;
-            this.logger.log(`Game over!`, Colour.Yellow);
+            if (undefeated.length === 1) {
+                this.logger.log(
+                    `Game over! ${undefeated[0].name} wins!`,
+                    Colour.Yellow
+                );
+            } else if (undefeated.length < 1) {
+                this.logger.log(`Game over!`, Colour.Yellow);
+            }
             this.scene.game.events.emit("game-over");
             return true;
         }
@@ -1307,14 +1319,27 @@ export class Board extends Model {
 
     /* #region Dev helpers */
 
+    private _emptySpaceIterations: number = 5;
+
     getRandomEmptySpace(): Phaser.Geom.Point {
         const x: number = Math.floor(Math.random() * this.width);
         const y: number = Math.floor(Math.random() * this.height);
 
         const point: Phaser.Geom.Point = new Phaser.Geom.Point(x, y);
 
-        if (this.getPiecesAtPosition(point).length > 0) {
-            return this.getRandomEmptySpace();
+        if (
+            this.getPiecesAtPosition(point, (piece: Piece) => !piece.dead)
+                .length > 0
+        ) {
+            this._emptySpaceIterations--;
+            if (this._emptySpaceIterations > 0) {
+                return this.getRandomEmptySpace();
+            }
+        }
+
+        if (this._emptySpaceIterations <= 0) {
+            this._emptySpaceIterations = 5;
+            return null;
         }
 
         return point;

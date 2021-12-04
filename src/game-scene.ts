@@ -149,7 +149,7 @@ export class GameScene extends Phaser.Scene {
 
         this.game.events.on("start-game", (data) => { 
             this.startGame(data);
-            console.log("Started");
+            // this.testPieces();
         });
 
         // this.testGame();
@@ -297,11 +297,11 @@ export class GameScene extends Phaser.Scene {
             wizCode: "0600000000",
         });
 
-        /**
-        board.addSpell(player, Spell.getSpellProperties("magic bolt"));
-        board.addSpell(player, Spell.getSpellProperties("lightning"));
-        board.addSpell(player, Spell.getSpellProperties("vengeance"));
-        board.addSpell(player, Spell.getSpellProperties("dark power"));
+        /**/
+        this.board.addSpell(player, Spell.getSpellProperties("turmoil"));
+        // board.addSpell(player, Spell.getSpellProperties("lightning"));
+        // board.addSpell(player, Spell.getSpellProperties("vengeance"));
+        //board.addSpell(player, Spell.getSpellProperties("dark power"));
         /**/
         /**/
 

@@ -31,9 +31,13 @@ export class Spell extends Model {
         config: SpellConfig,
     ) {
         super(id);
+
+        if (!config) {
+            throw new Error("No spell config provided");
+        }
         this._board = board;
 
-        if (config?.target === SpellTarget.Self) {
+        if (config.target === SpellTarget.Self && config.id !== "turmoil") {
             this._type = SpellType.Buff;
         }
         else {
@@ -474,24 +478,43 @@ export class Spell extends Model {
                 target
             );
 
-            const statusMap: { [key: string]: UnitStatus } = {
-                "shadow-form": UnitStatus.ShadowForm,
-                "magic-knife": UnitStatus.MagicKnife,
-                "magic-sword": UnitStatus.MagicSword,
-                "magic-shield": UnitStatus.MagicShield,
-                "magic-armour": UnitStatus.MagicArmour,
-                "magic-bow": UnitStatus.MagicBow,
-                "magic-wings": UnitStatus.MagicWings,
-            };
+            if (this.properties.id === "turmoil") {
+                for (const piece of this._board.pieces.filter((p: Piece) => !p.dead)) {
+                    const randomEmptySpace: Phaser.Geom.Point = this._board.getRandomEmptySpace();
+                    if (randomEmptySpace) {
+                        this._board.sound.play("spelleffect");
+                        const oldPiecePos: Phaser.Math.Vector2 = piece.sprite.getCenter().clone();
+                        const newPiecePos: Phaser.Geom.Point = this._board.getIsoPosition(randomEmptySpace)
+                        piece.moveTo(randomEmptySpace, 200);
+                        await this._board.playEffect(
+                            EffectType.WizardCastBeam,
+                            oldPiecePos,
+                            newPiecePos,
+                            piece
+                        );
+                    }
+                }
+            }
+            else {
+                const statusMap: { [key: string]: UnitStatus } = {
+                    "shadow-form": UnitStatus.ShadowForm,
+                    "magic-knife": UnitStatus.MagicKnife,
+                    "magic-sword": UnitStatus.MagicSword,
+                    "magic-shield": UnitStatus.MagicShield,
+                    "magic-armour": UnitStatus.MagicArmour,
+                    "magic-bow": UnitStatus.MagicBow,
+                    "magic-wings": UnitStatus.MagicWings,
+                };
 
-            if (this.properties.id in statusMap) {
-                if (!target.addStatus(statusMap[this.properties.id])) {
-                    this._board.logger.log(
-                        `${target.name} already has ${this.name} - this spell has no effect`,
-                        Colour.Magenta
-                    );
-                    await this._board.idleDelay(Board.DEFAULT_DELAY);
-                    return true; 
+                if (this.properties.id in statusMap) {
+                    if (!target.addStatus(statusMap[this.properties.id])) {
+                        this._board.logger.log(
+                            `${target.name} already has ${this.name} - this spell has no effect`,
+                            Colour.Magenta
+                        );
+                        await this._board.idleDelay(Board.DEFAULT_DELAY);
+                        return true; 
+                    }
                 }
             }
             this._board.logger.log(
@@ -517,13 +540,18 @@ export class Spell extends Model {
         return null;
     }
 
-    static getRandomSpell(): any {
+    static getRandomSpell(gifted?: boolean): any {
         const spellNames: string[] = Object.values(spells).map(
             (spell: any) => spell.name
         );
 
         // Remove Disbelieve from random pool
         spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
+
+        // Remove Turmoil unless spell was gifted
+        if (!gifted) {
+            spellNames.splice(spellNames.indexOf("Turmoil"), 1);
+        }
 
         return Spell.getSpellProperties(
             spellNames[Math.floor(Math.random() * spellNames.length)]

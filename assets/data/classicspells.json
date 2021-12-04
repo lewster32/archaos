@@ -433,6 +433,14 @@
             "range": 0,
             "name": "Chaos 2",
             "description": "Makes the world greatly more chaotic."
+        },
+        "turmoil": {
+            "balance": -1,
+            "chance": 0.5,
+            "target": "self",
+            "range": 0,
+            "name": "Turmoil",
+            "description": "Randomly moves pieces around the board."
         }
     }
 }
