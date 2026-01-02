@@ -10,10 +10,8 @@ This iteration has taken just over a month from start to beta, and I'm pretty ha
 
 ## Installing and building
 
-*NB: I've not tried this outside of my Windows 10 environment yet*
-
 Requirements:
-- NodeJS (I'm using 14.15.1 at time of writing)
+- NodeJS (I'm using 24.12.0 at time of writing)
 
 You should be able to clone this repo to a local directory, and then just run `npm i` from the directory to install dependencies. Starting up a live development server is as simple as running `npm start` and to build, `npm run build` should do the job.
 
