@@ -1,9 +1,3 @@
-<script setup>
-import Spellbook from "./Spellbook.vue";
-import Log from "./Log.vue";
-import Minimap from "./Minimap.vue";
-</script>
-
 <template>
     <div
         class="container"
@@ -36,7 +30,7 @@ import Minimap from "./Minimap.vue";
                     0,
                     setup.playerCount
                 )"
-                :key="name"
+                :key="name.name"
                 style="margin-left: 1em"
             >
                 <label :for="`player${index}`"
@@ -93,165 +87,262 @@ import Minimap from "./Minimap.vue";
     </div>
 </template>
 
-<script>
-export default {
-    components: { Minimap, Spellbook, Log },
-    $refs: {
-        container: HTMLDivElement,
-    },
-    methods: {
-        spellSelect(spell) {
-            if (this.spellbook?.onSelect) {
-                this.spellbook.onSelect(spell);
-            }
-        },
-        cancel() {
-            this.eventEmitter.emit("cancel");
-        },
-        endTurn() {
-            this.eventEmitter.emit("end-turn");
-        },
-        startGame() {
-            if (window.localStorage) {
-                window.localStorage.setItem(
-                    "setup",
-                    JSON.stringify(this.setup)
-                );
-            }
+<script setup lang="ts">
+// Components
+import Spellbook from "./Spellbook.vue";
+import Log from "./Log.vue";
+import Minimap from "./Minimap.vue";
 
-            this.eventEmitter.emit("start-game", {
-                players: this.setup.players
-                    .slice(0, Math.abs(this.setup.playerCount) || 2)
-                    .map((player) => player.name),
-                board: {
-                    width: Math.abs(this.setup.boardSize) || 13,
-                    height: Math.abs(this.setup.boardSize) || 13,
-                },
-                spellCount: Math.abs(this.setup.spellCount) || 15,
-            });
-            this.gameStarted = true;
-        },
-    },
-    computed: {
-        spellbookOpen() {
-            return this.spellbook.show && !this.spellbook.minimised;
-        },
-    },
-    data() {
-        return {
-            downloaded: false,
-            gameInstance: null,
-            containerId: "game-container",
-            eventEmitter: null,
-            canCancel: false,
-            canEndTurn: false,
-            spellbook: {
-                show: false,
-                minimised: true,
-                caster: "",
-                spells: [],
-            },
-            logs: [],
-            board: {
-                width: 0,
-                height: 0,
-            },
-            gameStarted: false,
-            gameOver: false,
-            pieces: [],
-            setup: null,
-        };
-    },
-    async mounted() {
-        const game = await import("../game/game");
+// Phaser game launcher
+import { launch } from "../game/game";
 
-        if (window.localStorage) {
-            const setup = window.localStorage.getItem("setup");
-            if (setup) {
-                this.setup = JSON.parse(setup);
-            }
-        }
+// Vue and types
+import type { Ref } from "vue";
+import type { Game, Events } from "phaser";
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
+import type { Spell } from "../gameobjects/spells/spell";
+import type {
+    SpellbookData,
+    LogEntry,
+    Box,
+    SetupData,
+} from "../gameobjects/interfaces/ui";
 
-        if (!this.setup) {
-            this.setup = {
-                playerCount: 2,
-                boardSize: 13,
-                spellCount: 15,
-                players: [
-                    {
-                        name: "Gandalf",
-                    },
-                    {
-                        name: "Glinda",
-                    },
-                    {
-                        name: "Merlin",
-                    },
-                    {
-                        name: "Morgana",
-                    },
-                ],
-            };
-        }
+/**
+ * Game component - contains the Phaser game instance and UI components.
+ */
+const container: Ref<HTMLDivElement | null> = ref(null);
 
-        this.downloaded = true;
-        this.$nextTick(() => {
-            this.$refs.container?.addEventListener("transitionend", () => {
-                setTimeout(() => {
-                    this.gameInstance.scale.updateBounds();
-                }, 10);
-            });
+/**
+ * Whether the game assets have been downloaded and are ready to display.
+ */
+const downloaded: Ref<boolean> = ref(false);
 
-            this.gameInstance = game.launch(this.containerId);
-            this.eventEmitter = this.gameInstance.events;
+/**
+ * The Phaser game instance.
+ */
+const gameInstance: Ref<Game | null> = ref(null);
 
-            this.eventEmitter.on("log", (log) => {
-                this.logs.push({
-                    message: log.message,
-                    id: this.logs.length,
-                    timestamp: new Date(),
-                    colour: log.colour,
-                });
-            });
+/**
+ * The ID of the container element for the Phaser game.
+ */
+const containerId: Ref<string> = ref("game-container");
 
-            this.eventEmitter.on("spellbook-open", (event) => {
-                this.spellbook.show = true;
-                this.spellbook.spells = event.data.spells;
-                this.spellbook.caster = event.data.caster;
-                this.spellbook.onSelect = event.callback;
-            });
+/**
+ * The event emitter for game events.
+ */
+const eventEmitter: Ref<Events.EventEmitter | null> = ref(null);
 
-            this.eventEmitter.on("spellbook-close", () => {
-                this.spellbook.show = false;
-                this.spellbook.spells = null;
-                this.spellbook.caster = null;
-                this.spellbook.onSelect = null;
-            });
+/**
+ * Whether the cancel action is currently available.
+ */
+const canCancel: Ref<boolean> = ref(false);
 
-            this.eventEmitter.on("board-update", (data) => {
-                this.pieces = data.pieces;
-                this.board = data.board;
-            });
+/**
+ * Whether the end turn action is currently available.
+ */
+const canEndTurn: Ref<boolean> = ref(false);
 
-            this.eventEmitter.on("cancel-available", (state) => {
-                this.canCancel = state;
-            });
+/**
+ * The spellbook UI data.
+ */
+const spellbook: Ref<SpellbookData> = ref({
+    show: false,
+    minimised: true,
+    caster: null,
+    spells: null,
+    onSelect: null,
+});
 
-            this.eventEmitter.on("end-turn-available", (state) => {
-                this.canEndTurn = state;
-            });
+/**
+ * The game log entries.
+ */
+const logs: Ref<LogEntry[]> = ref([]);
 
-            this.eventEmitter.on("game-over", () => {
-                this.gameStarted = false;
-            });
-        });
-    },
-    destroyed() {
-        this.gameInstance.destroy(false);
-    },
+/**
+ * The game board dimensions.
+ */
+const board: Ref<Box> = ref({ width: 0, height: 0 });
+
+/**
+ * Whether the game has started (true) or is in setup/menu mode (false).
+ */
+const gameStarted: Ref<boolean> = ref(false);
+
+/**
+ * Whether the game is over.
+ */
+const gameOver: Ref<boolean> = ref(false);
+
+/**
+ * The pieces on the game board. Used for the minimap.
+ */
+const pieces: Ref<any[]> = ref([]);
+
+/**
+ * The game setup data.
+ */
+const setup: Ref<SetupData | null> = ref(null);
+
+/**
+ * Handler for selecting a spell from the spellbook.
+ * 
+ * @param spell The spell that was selected.
+ */
+const spellSelect: (spell: Spell) => void = (spell: Spell) => {
+    spellbook.value?.onSelect?.(spell);
 };
-</script>
 
+/**
+ * Handler for the cancel button.
+ */
+const cancel: () => void = () => {
+    eventEmitter.value?.emit("cancel");
+};
+
+/**
+ * Handler for the end turn button.
+ */
+const endTurn: () => void = () => {
+    eventEmitter.value?.emit("end-turn");
+};
+
+/**
+ * Starts the game with the current setup data.
+ */
+const startGame: () => void = () => {
+    // Save setup to local storage for next time
+    window.localStorage?.setItem("setup", JSON.stringify(setup.value));
+
+    // Emit start game event with the setup data
+    eventEmitter.value?.emit("start-game", {
+        players: setup.value!.players
+            .slice(0, Math.abs(setup.value!.playerCount) || 2)
+            .map((player) => player.name),
+        board: {
+            width: Math.abs(setup.value!.boardSize) || 13,
+            height: Math.abs(setup.value!.boardSize) || 13,
+        },
+        spellCount: Math.abs(setup.value!.spellCount) || 15,
+    });
+
+    // Mark the game as started
+    gameStarted.value = true;
+};
+
+/**
+ * Whether the spellbook is currently open (visible and not minimised).
+ */
+const spellbookOpen = computed(() => {
+    return spellbook.value.show && !spellbook.value.minimised;
+});
+
+/**
+ * Lifecycle hook - on component mount, initialise the game.
+ */
+onMounted(async () => {
+    // Load setup from local storage if available
+    if (window.localStorage) {
+        const setupData = window.localStorage.getItem("setup");
+        if (setupData) {
+            setup.value = JSON.parse(setupData);
+        }
+    }
+
+    // If there's no setup data, use defaults
+    if (!setup.value) {
+        setup.value = {
+            playerCount: 2,
+            boardSize: 13,
+            spellCount: 15,
+            players: [
+                {
+                    name: "Gandalf",
+                },
+                {
+                    name: "Glinda",
+                },
+                {
+                    name: "Merlin",
+                },
+                {
+                    name: "Morgana",
+                },
+            ],
+        };
+    }
+
+    // Mark as downloaded
+    downloaded.value = true;
+
+    // Wait for render before proceeding
+    await nextTick();
+
+    // Launch the game
+    container.value?.addEventListener("transitionend", () => {
+        setTimeout(() => {
+            gameInstance.value!.scale.updateBounds();
+        }, 10);
+    });
+
+    gameInstance.value = launch(containerId.value);
+    eventEmitter.value = gameInstance.value.events;
+
+    // Listen for logs
+    eventEmitter.value.on("log", (log: any) => {
+        logs.value.push({
+            message: log.message,
+            id: logs.value.length,
+            timestamp: new Date(),
+            colour: log.colour,
+        });
+    });
+
+    // Listen for spellbook open/close events
+    eventEmitter.value.on("spellbook-open", (event: any) => {
+        spellbook.value.show = true;
+        spellbook.value.spells = event.data.spells;
+        spellbook.value.caster = event.data.caster;
+        spellbook.value.onSelect = event.callback;
+    });
+
+    eventEmitter.value.on("spellbook-close", () => {
+        spellbook.value.show = false;
+        spellbook.value.spells = null;
+        spellbook.value.caster = null;
+        spellbook.value.onSelect = null;
+    });
+
+    // Listen for board updates
+    eventEmitter.value.on("board-update", (data: any) => {
+        pieces.value = data.pieces;
+        board.value = data.board;
+    });
+
+    // Listen for action availability updates
+    eventEmitter.value.on("cancel-available", (state: boolean) => {
+        canCancel.value = state;
+    });
+
+    eventEmitter.value.on("end-turn-available", (state: boolean) => {
+        canEndTurn.value = state;
+    });
+
+    // GAME OVER YEAHHHH
+    eventEmitter.value.on("game-over", () => {
+        gameStarted.value = false;
+    });
+});
+
+onUnmounted(() => {
+    // Clean up event listeners
+    eventEmitter.value?.removeAllListeners();
+
+    // Destroy the Phaser game instance, leaving the canvas in place
+    gameInstance.value?.destroy(false);
+});
+
+</script>
 <style lang="scss" scoped>
 .big-buttons {
     position: fixed;
