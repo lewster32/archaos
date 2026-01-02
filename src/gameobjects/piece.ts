@@ -1,18 +1,19 @@
 import { units } from "../../assets/data/classicunits.json";
 import { Board } from "./board";
-import { PieceConfig } from "./configs/piececonfig";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
 import { Colour } from "./enums/colour";
-import { CursorType } from "./enums/cursortype";
 import { SpreadAction } from "./enums/spreadaction";
 import { UnitAttackType } from "./enums/unitattacktype";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
-import { IUnitProperties, IUnitStats } from "./interfaces/unitproperties";
-import { Player } from "./player";
+import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";
+import type { Player } from "./player";
+import type { IUnitProperties, IUnitStats } from "./interfaces/unitproperties";
+import type { PieceConfig } from "./configs/piececonfig";
+import type { Types } from "phaser";
 
 enum PieceState {
     Idle,
@@ -22,24 +23,27 @@ enum PieceState {
     TurnOver,
 }
 
+/**
+ * A game piece on the board. This can be a creature, wizard, structure, etc.
+ */
 export class Piece extends Entity {
-    static DEFAULT_MOVE_DURATION: number = 750;
-    static DEFAULT_STEP_MOVE_DURATION: number = 300;
-    static DEFAULT_HIGHLIGHT_DURATION: number = 600;
-    static DEFAULT_HIGHLIGHT_STEPS: number = 5;
+    static readonly DEFAULT_MOVE_DURATION: number = 750;
+    static readonly DEFAULT_STEP_MOVE_DURATION: number = 300;
+    static readonly DEFAULT_HIGHLIGHT_DURATION: number = 600;
+    static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
-    static RAISED_DEAD_TINT: number = 0xb0d9ff;
-    static MOVED_DARKEN_AMOUNT: number = 25;
+    static readonly RAISED_DEAD_TINT: number = 0xb0d9ff;
+    static readonly MOVED_DARKEN_AMOUNT: number = 25;
 
-    protected _unitId: string;
+    protected readonly _unitId: string;
 
     protected _type: UnitType;
     protected _owner: Player | null;
     protected _properties: IUnitProperties;
     protected _shadowScale: number;
-    protected _shadow?: Phaser.GameObjects.Image;
-    protected _sprite?: Phaser.GameObjects.Sprite;
-    protected _effects: Map<UnitStatus, Phaser.GameObjects.Sprite | Phaser.GameObjects.Image>;
+    protected _shadow?: GameObjects.Image;
+    protected _sprite?: GameObjects.Sprite;
+    protected _effects: Map<UnitStatus, GameObjects.Sprite | GameObjects.Image>;
     protected _offsetY: number;
     protected _direction: UnitDirection;
 
@@ -59,7 +63,7 @@ export class Piece extends Entity {
 
     public currentEngulfed: Piece | null = null;
 
-    protected _ownerHighlightTween: Phaser.Tweens.Tween;
+    protected _ownerHighlightTween: Tweens.Tween;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board, id, config.x, config.y);
@@ -98,7 +102,7 @@ export class Piece extends Entity {
         } else if (directionOffset < 0) {
             this._direction = UnitDirection.Right;
         } else {
-            this._direction = Phaser.Math.RND.pick([
+            this._direction = PMath.RND.pick([
                 UnitDirection.Left,
                 UnitDirection.Right,
             ]);
@@ -172,13 +176,13 @@ export class Piece extends Entity {
         if (state) {
             if (this._raisedDead) {
                 this._sprite.setTint(
-                    Phaser.Display.Color.ValueToColor(
+                    Display.Color.ValueToColor(
                         Piece.RAISED_DEAD_TINT
                     ).darken(Piece.MOVED_DARKEN_AMOUNT).color
                 );
             } else {
                 this._sprite.setTint(
-                    Phaser.Display.Color.ValueToColor(0xffffff).darken(
+                    Display.Color.ValueToColor(0xffffff).darken(
                         Piece.MOVED_DARKEN_AMOUNT
                     ).color
                 );
@@ -224,11 +228,11 @@ export class Piece extends Entity {
         return this._properties?.name || "Unnamed Unit";
     }
 
-    get sprite(): Phaser.GameObjects.Sprite {
+    get sprite(): GameObjects.Sprite {
         return this._sprite!;
     }
 
-    get shadow(): Phaser.GameObjects.Image {
+    get shadow(): GameObjects.Image {
         return this._shadow!;
     }
 
@@ -422,7 +426,7 @@ export class Piece extends Entity {
                 return;
             }
 
-            const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
+            const isoPosition: Geom.Point = this.board.getIsoPosition(
                 this.position
             );
 
@@ -439,7 +443,7 @@ export class Piece extends Entity {
                 y: isoPosition.y - this._offsetY,
                 duration: duration,
                 onUpdateScope: this,
-                ease: Phaser.Math.Easing.Cubic.InOut,
+                ease: PMath.Easing.Cubic.InOut,
                 onUpdate: () => {
                     this.updateDepth();
                 },
@@ -461,8 +465,8 @@ export class Piece extends Entity {
     }
 
     protected updateDirection(
-        fromPoint: Phaser.Geom.Point,
-        toPoint: Phaser.Geom.Point
+        fromPoint: Geom.Point,
+        toPoint: Geom.Point
     ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
@@ -473,7 +477,7 @@ export class Piece extends Entity {
         }
     }
 
-    async moveTo(point: Phaser.Geom.Point, stepDuration?: number) {
+    async moveTo(point: Geom.Point, stepDuration?: number) {
         this.updateDirection(this.position, point);
         this.position = point;
         if (this.currentRider) {
@@ -482,7 +486,7 @@ export class Piece extends Entity {
         }
         if (
             this.currentMount &&
-            !Phaser.Geom.Point.Equals(this.currentMount.position, this.position)
+            !Geom.Point.Equals(this.currentMount.position, this.position)
         ) {
             await this.board.dismountPiece(this.id);
         }
@@ -490,7 +494,7 @@ export class Piece extends Entity {
     }
 
     async spread(): Promise<void> {
-        const spreadAction: SpreadAction = Phaser.Math.RND.pick([
+        const spreadAction: SpreadAction = PMath.RND.pick([
             SpreadAction.Spread,
             SpreadAction.Spread,
             SpreadAction.Spread,
@@ -520,10 +524,10 @@ export class Piece extends Entity {
             await this.destroy();
         }
         if (spreadAction === SpreadAction.Spread) {
-            const adjacentPoints: Phaser.Geom.Point[] =
+            const adjacentPoints: Geom.Point[] =
                 this.board.getAdjacentPoints(this.position);
-            const spreadPoint: Phaser.Geom.Point =
-                Phaser.Math.RND.pick(adjacentPoints);
+            const spreadPoint: Geom.Point =
+                PMath.RND.pick(adjacentPoints);
             const spreadPieces: Piece[] = this.board.getPiecesAtPosition(
                 spreadPoint,
                 (piece: Piece) => !piece.dead
@@ -599,7 +603,7 @@ export class Piece extends Entity {
                 illusion: !!this._illusion,
             });
 
-            this.board.sound.play(`blob${Phaser.Math.RND.integerInRange(1, 2)}`);
+            this.board.sound.play(`blob${PMath.RND.integerInRange(1, 2)}`);
 
             if (spreadPieces.length) {
                 if (
@@ -648,20 +652,25 @@ export class Piece extends Entity {
     }
 
     hasStatus(status: UnitStatus): boolean {
-        return this._properties.status.indexOf(status) !== -1;
+        return this._properties.status.includes(status);
     }
 
-    inMovementRange(point: Phaser.Geom.Point): boolean {
-        if (
-            Phaser.Geom.Point.Equals(this.position, point) ||
-            !this.board.moveGizmo.getPathTo(point)
-        ) {
+    inMovementRange(point: Geom.Point): boolean {
+        // Cannot move to the same point
+        if (Geom.Point.Equals(this.position, point)) {
+            return false;
+        }
+        // Flying units can move anywhere within their movement stat
+        if (this.hasStatus(UnitStatus.Flying) && Board.distance(this.position, point) <= this.stats.movement) {
+            return true;
+        }
+        if (!this.board.moveGizmo.getPathTo(point)) {
             return false;
         }
         return true;
     }
 
-    inAttackRange(point: Phaser.Geom.Point): boolean {
+    inAttackRange(point: Geom.Point): boolean {
         if (
             !this.moved &&
             this.hasStatus(UnitStatus.Flying) &&
@@ -675,7 +684,7 @@ export class Piece extends Entity {
         return true;
     }
 
-    inRangedAttackRange(point: Phaser.Geom.Point): boolean {
+    inRangedAttackRange(point: Geom.Point): boolean {
         if (Board.distance(this.position, point) > this.stats.range) {
             return false;
         }
@@ -919,6 +928,7 @@ export class Piece extends Entity {
             await this.board.playEffect(EffectType.AttackHit, piece.sprite.getCenter(), null, piece);
             await Board.delay(Board.DEFAULT_DELAY);
 
+            // Shadow Form is lost on attacking
             if (this.hasStatus(UnitStatus.ShadowForm)) {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
@@ -1116,11 +1126,11 @@ export class Piece extends Entity {
         this._sprite.anims.setProgress(Math.random());
     }
 
-    protected createShadow(): Phaser.GameObjects.Image | null {
+    protected createShadow(): GameObjects.Image | null {
         if (this.hasStatus(UnitStatus.Transparent)) {
             return null;
         }
-        const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
+        const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
 
@@ -1148,12 +1158,12 @@ export class Piece extends Entity {
         }
     }
 
-    protected createSprite(): Phaser.GameObjects.Sprite {
+    protected createSprite(): GameObjects.Sprite {
         if (this._sprite) {
             return this._sprite;
         }
 
-        const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
+        const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
 
@@ -1191,13 +1201,13 @@ export class Piece extends Entity {
         this.highlighted = false;
         this._ownerHighlightTween?.stop?.().destroy?.();
 
-        const startColor: Phaser.Display.Color = new Phaser.Display.Color(
+        const startColor: Display.Color = new Display.Color(
             0,
             0,
             0
         );
-        const endColor: Phaser.Display.Color =
-            Phaser.Display.Color.ValueToColor(tempOwner?.colour ?? this.owner?.colour ?? 0);
+        const endColor: Display.Color =
+            Display.Color.ValueToColor(tempOwner?.colour ?? this.owner?.colour ?? 0);
 
         const postFxPlugin: any = this.board.scene.game.plugins.get(
             "rexcolorreplacepipelineplugin"
@@ -1207,11 +1217,11 @@ export class Piece extends Entity {
             epsilon: 0,
         });
 
-        const tweenColours: Phaser.Types.Display.ColorObject[] = new Array(
+        const tweenColours: Types.Display.ColorObject[] = new Array(
             Piece.DEFAULT_HIGHLIGHT_STEPS
         );
         for (let i = 0; i < Piece.DEFAULT_HIGHLIGHT_STEPS; i++) {
-            tweenColours[i] = Phaser.Display.Color.Interpolate.ColorWithColor(
+            tweenColours[i] = Display.Color.Interpolate.ColorWithColor(
                 startColor,
                 endColor,
                 Piece.DEFAULT_HIGHLIGHT_STEPS - 1,
@@ -1226,10 +1236,10 @@ export class Piece extends Entity {
             repeat: -1,
             yoyo: true,
             onUpdate: (tween) => {
-                const newColor: Phaser.Types.Display.ColorObject =
+                const newColor: Types.Display.ColorObject =
                     tweenColours[Math.round(tween.getValue())];
 
-                postFxPipeline.newColor = Phaser.Display.Color.GetColor(
+                postFxPipeline.newColor = Display.Color.GetColor(
                     newColor.r,
                     newColor.g,
                     newColor.b

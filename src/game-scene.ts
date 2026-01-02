@@ -24,7 +24,8 @@ import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
-import { UnitStatus } from "./gameobjects/enums/unitstatus";
+import { Wizard } from "./gameobjects/wizard";
+import { BoardPhase } from "./gameobjects/enums/boardphase";
 
 export class GameScene extends Phaser.Scene {
     board: Board;
@@ -154,6 +155,11 @@ export class GameScene extends Phaser.Scene {
             this.startGame(data);
             // this.testPieces();
         });
+
+        this.game.events.on("start-scenario", (scenarioData) => {
+            console.log("Starting scenario with data:", scenarioData);
+            this.startScenario(scenarioData);
+        });
     }
 
     startGame(data: any): void {
@@ -187,6 +193,72 @@ export class GameScene extends Phaser.Scene {
 
         setTimeout(() => {
             this.board.startGame();
+        }, Board.DEFAULT_DELAY);
+    }
+
+    startScenario(scenarioData: any): void {
+        if (this.board) {
+            this.board.destroy();
+        }
+        this.board = new Board(
+            this,
+            1,
+            scenarioData.board.width,
+            scenarioData.board.height
+        );
+        if (!scenarioData.players?.length) {
+            throw new Error("Scenario data must include players array");
+        }
+        for (let player of scenarioData.players) {
+            const currentPlayer: Player = this.board.addPlayer({
+                name: player.name,
+            })
+            if (player.spells?.length) {
+                for (let spellName of player.spells) {
+                    this.board.addSpell(
+                        currentPlayer,
+                        Spell.getSpellProperties(spellName)
+                    );
+                }
+            }
+            if (player.pieces?.length) {
+                for (let pieceData of player.pieces) {
+                    if (pieceData.type.toLowerCase() === "wizard") {
+                        this.board.addWizard({
+                            owner: currentPlayer,
+                            x: pieceData.position.x,
+                            y: pieceData.position.y,
+                            wizCode: pieceData.wizCode || Wizard.randomWizCode(),
+                        });                        
+                    }
+                    else {
+                        const pieceProperties = Piece.getPieceProperties(pieceData.type);
+                        this.board.addPiece({
+                            ...pieceProperties,
+                            owner: currentPlayer,
+                            x: pieceData.position.x,
+                            y: pieceData.position.y,
+                            unitType: pieceProperties.unitType || UnitType.Creature
+                        });
+                    }
+                }
+            }
+        }
+
+        // Every player gets the Disbelieve spell regardless
+        this.board.players.forEach((player: Player) => {
+            this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
+        });
+
+        setTimeout(async () => {
+            let phase: BoardPhase = BoardPhase.Idle;
+            if (scenarioData.phase.toLowerCase() == "moving") {
+                phase = BoardPhase.Spreading;
+            }
+            await this.board.resumeGame(
+                scenarioData.currentPlayerIndex || 0,
+                phase
+            );
         }, Board.DEFAULT_DELAY);
     }
 

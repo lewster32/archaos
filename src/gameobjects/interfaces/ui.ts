@@ -1,7 +1,13 @@
+/**
+ * Interfaces for communication back and forth between the Phaser game logic and
+ * the Vue UI components. This may be broken out further in future if needed.
+ */
+
 import type { Spell } from "../../gameobjects/spells/spell"
+import type { Piece } from "../piece";
 
 /**
- * Data structure for the spellbook UI component.
+ * Spellbook UI component data.
  */
 export interface SpellbookData {
     show: boolean;
@@ -12,7 +18,7 @@ export interface SpellbookData {
 }
 
 /**
- * Data structure for a log entry in the game log.
+ * Log entries.
  */
 export interface LogEntry {
     message: string;
@@ -34,11 +40,35 @@ export interface SetupPlayer {
 }
 
 /**
- * Data structure for game setup information.
+ * Game setup information.
  */
 export interface SetupData {
     playerCount: number;
     boardSize: number;
     spellCount: number;
     players: SetupPlayer[];
+}
+
+/**
+ * Board update events.
+ */
+export interface BoardUpdateEventData {
+    pieces: Piece[];
+    board: Box;
+}
+
+/**
+ * Spellbook open events.
+ */
+export interface SpellbookOpenEventData {
+    data: SpellbookEventData;
+    callback: (spell: Spell) => void;
+}
+
+/**
+ * Spellbook event data.
+ */
+export interface SpellbookEventData {
+    caster: string;
+    spells: Spell[];
 }

@@ -11,6 +11,7 @@ import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
+import { BoardUpdateEventData, SpellbookOpenEventData } from "./interfaces/ui";
 import { Model } from "./model";
 import { Piece } from "./piece";
 import { Player } from "./player";
@@ -21,13 +22,25 @@ import { AttackSpell } from "./spells/attackspell";
 import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
+import { Display, Geom, GameObjects, Sound, Scene, Math as PMath } from "phaser";
 
+/**
+ * Simple point type without all the baggage of Phaser's `Geom.Point`.
+ */
 type SimplePoint = { x: number; y: number };
 
+/**
+ * The main game board. This is where the magic (literally) happens.
+ * 
+ * @param scene The Phaser scene the board will be present in.
+ * @param id The unique ID of this board.
+ * @param width The width of the board in cells.
+ * @param height The height of the board in cells.
+ */
 export class Board extends Model {
     static CHEAT_FORCE_HIT: boolean | null = null;
-    static CHEAT_FORCE_CAST: boolean | null = null;
-    static CHEAT_SHORT_DELAY: boolean = false;
+    static CHEAT_FORCE_CAST: boolean | null = true;
+    static CHEAT_SHORT_DELAY: boolean = true;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10
@@ -35,12 +48,12 @@ export class Board extends Model {
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
     static SPREAD_ITERATIONS: number = 2;
 
-    private _scene: Phaser.Scene;
+    private _scene: Scene;
     private _width: number;
     private _height: number;
 
-    private _layers: Map<BoardLayer, Phaser.GameObjects.Layer>;
-    private _particles: Phaser.GameObjects.Particles.ParticleEmitterManager;
+    private _layers: Map<BoardLayer, GameObjects.Layer>;
+    private _particles: GameObjects.Particles.ParticleEmitterManager;
 
     static DEFAULT_WIDTH: number = 13;
     static DEFAULT_HEIGHT: number = 13;
@@ -79,10 +92,10 @@ export class Board extends Model {
 
     private _rules: Rules;
     private _logger: Logger;
-    private _sound: Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound;
+    private _sound: Sound.BaseSound;
 
     constructor(
-        scene: Phaser.Scene,
+        scene: Scene,
         id: number,
         width: number = Board.DEFAULT_WIDTH,
         height: number = Board.DEFAULT_HEIGHT
@@ -113,8 +126,8 @@ export class Board extends Model {
             this._scene.game.scale.height as number
         );
 
-        this._pieces = new Map();
-        this._players = new Map();
+        this._pieces = new Map<number, Piece>();
+        this._players = new Map<number, Player>();
         this._state = BoardState.Idle;
         this._phase = BoardPhase.Idle;
         this._balance = 0;
@@ -295,7 +308,7 @@ export class Board extends Model {
             clearTimeout(this._emitTimeout);
         }
         this._emitTimeout = setTimeout(() => {
-            this.scene.game.events.emit("board-update", {
+            this.scene.game.events.emit("board-update", <BoardUpdateEventData> {
                 pieces: this.pieces,
                 board: {
                     width: this._width,
@@ -316,9 +329,9 @@ export class Board extends Model {
         if (
             this.state !== BoardState.Idle ||
             this.phase !== BoardPhase.Idle ||
-            this.pieces.filter((piece: Piece) =>
+            this.pieces.some((piece: Piece) =>
                 piece.hasStatus(UnitStatus.Wizard)
-            ).length > 0
+            )
         ) {
             throw new Error(
                 "Cannot create wizards - game not in initialising state"
@@ -506,8 +519,8 @@ export class Board extends Model {
         this._pieces.delete(id);
     }
 
-    getAdjacentPoints(point: Phaser.Geom.Point): Phaser.Geom.Point[] {
-        const points: Phaser.Geom.Point[] = [];
+    getAdjacentPoints(point: Geom.Point): Geom.Point[] {
+        const points: Geom.Point[] = [];
 
         for (let x: number = point.x - 1; x <= point.x + 1; x++) {
             for (let y: number = point.y - 1; y <= point.y + 1; y++) {
@@ -520,7 +533,7 @@ export class Board extends Model {
                     x < this.width &&
                     y < this.height
                 ) {
-                    points.push(new Phaser.Geom.Point(x, y));
+                    points.push(new Geom.Point(x, y));
                 }
             }
         }
@@ -529,14 +542,14 @@ export class Board extends Model {
     }
 
     getAdjacentPiecesAtPosition(
-        point: Phaser.Geom.Point,
+        point: Geom.Point,
         filter?: Function
     ): Piece[] {
         let neighbours: Piece[] = [];
-        const position: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
+        const position: Geom.Point = Geom.Point.Clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
             const directionNeighbours: Piece[] = this.getPiecesAtPosition(
-                new Phaser.Geom.Point(
+                new Geom.Point(
                     position.x + direction.x,
                     position.y + direction.y
                 ),
@@ -549,18 +562,18 @@ export class Board extends Model {
         return neighbours;
     }
 
-    getPiecesAtPosition(point: Phaser.Geom.Point, filter?: Function): Piece[] {
+    getPiecesAtPosition(point: Geom.Point, filter?: Function): Piece[] {
         return Array.from(
             this.pieces.filter((piece) => {
                 return (
-                    Phaser.Geom.Point.Equals(piece.position, point) &&
+                    Geom.Point.Equals(piece.position, point) &&
                     (filter ? filter(piece) : true)
                 );
             })
         );
     }
 
-    isBlocker(point: Phaser.Geom.Point): boolean {
+    isBlocker(point: Geom.Point): boolean {
         const pieces: Piece[] = this.getPiecesAtPosition(point, (piece) => {
             return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead;
         });
@@ -584,7 +597,7 @@ export class Board extends Model {
         }
     }
 
-    async movePiece(id: number, position: Phaser.Geom.Point): Promise<Piece> {
+    async movePiece(id: number, position: Geom.Point): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (piece) {
             const path: Path = this.moveGizmo.getPathTo(position);
@@ -830,7 +843,7 @@ export class Board extends Model {
                 document.body.style.setProperty(
                     "--bg-colour",
                     `${
-                        Phaser.Display.Color.ValueToColor(
+                        Display.Color.ValueToColor(
                             this._currentPlayer.colour
                         ).rgba
                     }`
@@ -838,11 +851,11 @@ export class Board extends Model {
                 this.getLayer(BoardLayer.Floor)
                     .getChildren()
                     .forEach((child) => {
-                        const tintColour: Phaser.Display.Color =
-                            Phaser.Display.Color.ValueToColor(
+                        const tintColour: Display.Color =
+                            Display.Color.ValueToColor(
                                 this._currentPlayer!.colour!
                             );
-                        (child as Phaser.GameObjects.Sprite).setTint(
+                        (child as GameObjects.Sprite).setTint(
                             tintColour.brighten(80).color
                         );
                     });
@@ -850,7 +863,7 @@ export class Board extends Model {
                 this.getLayer(BoardLayer.Floor)
                     .getChildren()
                     .forEach((child) => {
-                        (child as Phaser.GameObjects.Sprite).clearTint();
+                        (child as GameObjects.Sprite).clearTint();
                     });
                 document.body.style.removeProperty("--bg-colour");
             }
@@ -922,7 +935,7 @@ export class Board extends Model {
                         if (currentVal !== previousVal) {
                             previousVal = currentVal;
                             units.forEach((piece: Piece) => {
-                                const target: Phaser.GameObjects.Sprite =
+                                const target: GameObjects.Sprite =
                                     piece.sprite;
                                 currentVal === 0
                                     ? target.setTintFill(
@@ -935,7 +948,7 @@ export class Board extends Model {
                     },
                     onComplete: () => {
                         units.forEach((piece: Piece) => {
-                            const target: Phaser.GameObjects.Sprite =
+                            const target: GameObjects.Sprite =
                                 piece.sprite;
                             target.setTint(piece.defaultTint);
                             piece.turnOver = false;
@@ -965,6 +978,15 @@ export class Board extends Model {
         this.state = BoardState.Idle;
         this.phase = BoardPhase.Idle;
         await this.nextPlayer();
+    }
+
+    async resumeGame(playerIndex: number, phase: BoardPhase): Promise<void> {
+        this._currentPlayerIndex = playerIndex - 1;
+        this._currentPlayer = null;
+        this.state = BoardState.Idle;
+        this.phase = phase || BoardPhase.Idle;
+        console.log(`Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`);
+        this.nextPlayer();
     }
 
     async checkWinCondition(): Promise<boolean> {
@@ -1016,7 +1038,7 @@ export class Board extends Model {
 
         if (this.phase === BoardPhase.Spellbook) {
             if (this.currentPlayer?.spells?.length) {
-                this.scene.game.events.emit("spellbook-open", {
+                this.scene.game.events.emit("spellbook-open", <SpellbookOpenEventData>{ 
                     data: {
                         caster: this.currentPlayer?.name,
                         spells: this.currentPlayer?.spells,
@@ -1081,15 +1103,15 @@ export class Board extends Model {
     /* #region Initialisation */
 
     createFloor() {
-        const floorLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
+        const floorLayer: GameObjects.Layer = this.scene.add.layer();
 
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
-                const isoPos: Phaser.Geom.Point = this.getIsoPosition(
-                    new Phaser.Geom.Point(x, y)
+                const isoPos: Geom.Point = this.getIsoPosition(
+                    new Geom.Point(x, y)
                 );
 
-                const tile: Phaser.GameObjects.Image = this.scene.add.image(
+                const tile: GameObjects.Image = this.scene.add.image(
                     isoPos.x,
                     isoPos.y,
                     "board",
@@ -1110,8 +1132,8 @@ export class Board extends Model {
 
     async playEffect(
         type: EffectType,
-        startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point,
+        startPosition: PMath.Vector2 | Geom.Point,
+        endPosition?: PMath.Vector2 | Geom.Point,
         target?: Piece
     ): Promise<void> {
         return new Promise((resolve) => {
@@ -1129,7 +1151,7 @@ export class Board extends Model {
     }
 
     createEffects() {
-        const effectsLayer: Phaser.GameObjects.Layer = this.scene.add.layer();
+        const effectsLayer: GameObjects.Layer = this.scene.add.layer();
 
         this._particles = this.scene.add.particles("effects");
 
@@ -1140,11 +1162,11 @@ export class Board extends Model {
 
     /* #region Utils */
 
-    get scene(): Phaser.Scene {
+    get scene(): Scene {
         return this._scene;
     }
 
-    get sound(): Phaser.Sound.WebAudioSound | Phaser.Sound.HTML5AudioSound {
+    get sound(): Sound.BaseSound {
         return this._sound;
     }
 
@@ -1156,27 +1178,27 @@ export class Board extends Model {
         return this._height;
     }
 
-    getLayer(layer: BoardLayer): Phaser.GameObjects.Layer {
+    getLayer(layer: BoardLayer): GameObjects.Layer {
         return this._layers.get(layer)!;
     }
 
-    getIsoPosition(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        const newPoint: Phaser.Geom.Point = Phaser.Geom.Point.Clone(point);
+    getIsoPosition(point: Geom.Point): Geom.Point {
+        const newPoint: Geom.Point = Geom.Point.Clone(point);
 
         newPoint.x *= Board.DEFAULT_CELLSIZE;
         newPoint.y *= Board.DEFAULT_CELLSIZE;
 
-        const isoPos: Phaser.Geom.Point = Board.toIsometric(newPoint);
+        const isoPos: Geom.Point = Board.toIsometric(newPoint);
 
         isoPos.y += Board.DEFAULT_CELLSIZE / 2;
 
         return isoPos;
     }
 
-    getScreenPosition(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        const isoPos: Phaser.Geom.Point = this.getIsoPosition(point);
+    getScreenPosition(point: Geom.Point): Geom.Point {
+        const isoPos: Geom.Point = this.getIsoPosition(point);
 
-        const screenPos: Phaser.Geom.Point = new Phaser.Geom.Point(
+        const screenPos: Geom.Point = new Geom.Point(
             isoPos.x + this.scene.cameras.main.scrollX,
             isoPos.y + this.scene.cameras.main.scrollY
         );
@@ -1188,8 +1210,8 @@ export class Board extends Model {
         if (Board.CHEAT_FORCE_HIT !== null) {
             return Board.CHEAT_FORCE_HIT;
         }
-        const attackRoll: number = Phaser.Math.Between(0, 10 + attack);
-        const defenseRoll: number = Phaser.Math.Between(0, 10 + defense);
+        const attackRoll: number = PMath.Between(0, 10 + attack);
+        const defenseRoll: number = PMath.Between(0, 10 + defense);
         console.log("Rolling attack: " + attackRoll + " vs " + defenseRoll);
         return attackRoll > defenseRoll;
     }
@@ -1198,13 +1220,13 @@ export class Board extends Model {
         if (Board.CHEAT_FORCE_CAST !== null) {
             return Board.CHEAT_FORCE_CAST;
         }
-        const defenseRoll: number = Phaser.Math.RND.frac();
+        const defenseRoll: number = PMath.RND.frac();
         return attack > defenseRoll;
     }
 
     hasLineOfSight(
-        startPosition: Phaser.Geom.Point | Phaser.Math.Vector2,
-        endPosition: Phaser.Geom.Point | Phaser.Math.Vector2
+        startPosition: Geom.Point | PMath.Vector2,
+        endPosition: Geom.Point | PMath.Vector2
     ): boolean {
         let xDiff: number = endPosition.x - startPosition.x;
         let yDiff: number = endPosition.y - startPosition.y;
@@ -1226,7 +1248,7 @@ export class Board extends Model {
                     xVal = a * xDir + startPosition.x;
                     if (
                         this.isBlocker(
-                            new Phaser.Geom.Point(xVal, startPosition.y)
+                            new Geom.Point(xVal, startPosition.y)
                         )
                     ) {
                         return false;
@@ -1237,7 +1259,7 @@ export class Board extends Model {
                     yVal = a * yDir + startPosition.y;
                     if (
                         this.isBlocker(
-                            new Phaser.Geom.Point(startPosition.x, yVal)
+                            new Geom.Point(startPosition.x, yVal)
                         )
                     ) {
                         return false;
@@ -1255,7 +1277,7 @@ export class Board extends Model {
             for (a = 1; a < numChecks; a++) {
                 xVal = startPosition.x + Math.round(xInc * a);
                 yVal = startPosition.y + Math.round(yInc * a);
-                if (this.isBlocker(new Phaser.Geom.Point(xVal, yVal))) {
+                if (this.isBlocker(new Geom.Point(xVal, yVal))) {
                     return false;
                 }
             }
@@ -1264,11 +1286,11 @@ export class Board extends Model {
         return true;
     }
 
-    static distance(a: Phaser.Geom.Point, b: Phaser.Geom.Point): number {
-        if (Phaser.Geom.Point.Equals(a, b)) {
+    static distance(a: Geom.Point, b: Geom.Point): number {
+        if (Geom.Point.Equals(a, b)) {
             return 0;
         }
-        const difference: Phaser.Geom.Point = new Phaser.Geom.Point(
+        const difference: Geom.Point = new Geom.Point(
             Math.abs(a.x - b.x),
             Math.abs(a.y - b.y)
         );
@@ -1279,15 +1301,15 @@ export class Board extends Model {
         );
     }
 
-    static toIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        return new Phaser.Geom.Point(
+    static toIsometric(point: Geom.Point): Geom.Point {
+        return new Geom.Point(
             point.x - point.y,
             (point.x + point.y) / 2
         );
     }
 
-    static fromIsometric(point: Phaser.Geom.Point): Phaser.Geom.Point {
-        return new Phaser.Geom.Point(
+    static fromIsometric(point: Geom.Point): Geom.Point {
+        return new Geom.Point(
             point.x + point.y / 2,
             point.y - point.x / 2
         );
@@ -1321,11 +1343,11 @@ export class Board extends Model {
 
     private _emptySpaceIterations: number = 5;
 
-    getRandomEmptySpace(): Phaser.Geom.Point {
+    getRandomEmptySpace(): Geom.Point {
         const x: number = Math.floor(Math.random() * this.width);
         const y: number = Math.floor(Math.random() * this.height);
 
-        const point: Phaser.Geom.Point = new Phaser.Geom.Point(x, y);
+        const point: Geom.Point = new Geom.Point(x, y);
 
         if (
             this.getPiecesAtPosition(point, (piece: Piece) => !piece.dead)
@@ -1350,7 +1372,7 @@ export class Board extends Model {
             piece.destroy();
         });
 
-        this._layers?.forEach((layer: Phaser.GameObjects.Layer) => {
+        this._layers?.forEach((layer: GameObjects.Layer) => {
             layer.destroy();
         });
 

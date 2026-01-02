@@ -64,7 +64,7 @@
             <div class="callout__row">
                 <button
                     class="button button--green start-game"
-                    @click="startGame()"
+                    @click="startGame(true)"
                 >
                     Start Game
                 </button>
@@ -97,15 +97,17 @@ import Minimap from "./Minimap.vue";
 import { launch } from "../game/game";
 
 // Vue and types
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import type { Ref } from "vue";
 import type { Game, Events } from "phaser";
-import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import type { Spell } from "../gameobjects/spells/spell";
 import type {
     SpellbookData,
     LogEntry,
     Box,
     SetupData,
+    BoardUpdateEventData,
+    SpellbookOpenEventData,
 } from "../gameobjects/interfaces/ui";
 
 /**
@@ -210,9 +212,11 @@ const endTurn: () => void = () => {
 /**
  * Starts the game with the current setup data.
  */
-const startGame: () => void = () => {
+const startGame: (save: boolean) => void = (save: boolean) => {
     // Save setup to local storage for next time
-    window.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    if (save) {
+        globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    }
 
     // Emit start game event with the setup data
     eventEmitter.value?.emit("start-game", {
@@ -289,7 +293,7 @@ onMounted(async () => {
     eventEmitter.value = gameInstance.value.events;
 
     // Listen for logs
-    eventEmitter.value.on("log", (log: any) => {
+    eventEmitter.value.on("log", (log: LogEntry) => {
         logs.value.push({
             message: log.message,
             id: logs.value.length,
@@ -299,7 +303,7 @@ onMounted(async () => {
     });
 
     // Listen for spellbook open/close events
-    eventEmitter.value.on("spellbook-open", (event: any) => {
+    eventEmitter.value.on("spellbook-open", (event: SpellbookOpenEventData) => {
         spellbook.value.show = true;
         spellbook.value.spells = event.data.spells;
         spellbook.value.caster = event.data.caster;
@@ -314,7 +318,7 @@ onMounted(async () => {
     });
 
     // Listen for board updates
-    eventEmitter.value.on("board-update", (data: any) => {
+    eventEmitter.value.on("board-update", (data: BoardUpdateEventData) => {
         pieces.value = data.pieces;
         board.value = data.board;
     });
@@ -329,9 +333,33 @@ onMounted(async () => {
     });
 
     // GAME OVER YEAHHHH
-    eventEmitter.value.on("game-over", () => {
+    eventEmitter.value.on("game-over", (): void => {
+        gameOver.value = true;
         gameStarted.value = false;
     });
+
+    // Check for query params to auto-start a game scenario
+    const urlParams = new URLSearchParams(globalThis.location.search);
+    const scenario = urlParams.get("scenario");
+
+    if (scenario) {
+        console.log(`Auto-starting scenario: ${scenario}`);
+        const scenarioResponse = await fetch(
+            `/assets/scenarios/${scenario.toLowerCase().trim()}.json`
+        );
+        if (scenarioResponse.ok) {
+            const scenarioData = await scenarioResponse.json();
+            setTimeout(() => {
+                eventEmitter.value?.emit("start-scenario", scenarioData);
+                // Mark the game as started
+                gameStarted.value = true;
+            }, 500);
+        } else {
+            console.error(
+                `Failed to load scenario data for scenario: ${scenario}`
+            );
+        }
+    }
 });
 
 onUnmounted(() => {

@@ -1,0 +1,55 @@
+{
+    "name": "Test Scenario",
+    "description": "A scenario for testing purposes.",
+    "board": {
+        "width": 5,
+        "height": 5
+    },
+    "players": [
+        {
+            "id": 1,
+            "name": "Player 1",
+            "pieces": [
+                {
+                    "type": "Wizard",
+                    "position": { "x": 2, "y": 0 }
+                },
+                {
+                    "type": "Eagle",
+                    "position": { "x": 1, "y": 1 }
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Player 2",
+            "pieces": [
+                {
+                    "type": "Wizard",
+                    "position": { "x": 2, "y": 4}
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 0, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 1, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 2, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 3, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 4, "y": 2 }
+                }
+            ]
+        }
+    ],
+    "phase": "Moving"
+}

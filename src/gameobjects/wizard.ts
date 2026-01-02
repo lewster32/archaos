@@ -12,9 +12,19 @@ import { UnitType } from "./enums/unittype";
 import { WizCode } from "./interfaces/wizcode";
 import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
+import { Math as PMath, Geom, GameObjects, BlendModes } from "phaser";
 
+/**
+ * A wizard piece on the game board, controlled by a player. Wizards can cast
+ * spells and have unique appearances defined by their WizCode. If a wizard
+ * dies, their player is defeated and anything currently owned by them on the
+ * board will be removed from play.
+ */
 export class Wizard extends Piece {
-    static DEFAULT_WIZARD_CONFIG: PieceConfig = {
+    /**
+     * Default wizard configuration.
+     */
+    static readonly DEFAULT_WIZARD_CONFIG: PieceConfig = {
         x: 0,
         y: 0,
         type: UnitType.Wizard,
@@ -32,8 +42,29 @@ export class Wizard extends Piece {
         },
     };
 
+    /**
+     * Magical weapon statuses.
+     */
+    static readonly MAGIC_WEAPONS: UnitStatus[] = [
+        UnitStatus.MagicKnife,
+        UnitStatus.MagicSword,
+        UnitStatus.MagicBow,
+    ];
+
+    /**
+     * The WizCode for this wizard. Defines their appearance in a compact
+     * sharable string form.
+     */
     private _wizCode: WizCode;
 
+    /**
+     * Create a new Wizard instance with the given configuration. The config is
+     * merged atop the default wizard config so it can be partial.
+     * 
+     * @param board The board this wizard belongs to.
+     * @param id The unique identifier for this wizard.
+     * @param config The configuration for this wizard.
+     */
     constructor(board: Board, id: number, config: WizardConfig) {
         super(board, id, {
             ...Wizard.DEFAULT_WIZARD_CONFIG,
@@ -49,10 +80,20 @@ export class Wizard extends Piece {
         }
     }
 
+    /**
+     * Get the name of this wizard. This should typically be the name of the
+     * player that owns them.
+     */
     get name(): string {
         return this.owner?.name || "Unnamed Wizard";
     }
 
+    /**
+     * Set the direction of this wizard. Some extra logic is needed to flip
+     * effect sprites as well.
+     * 
+     * @param direction The new direction.
+     */
     set direction(direction: UnitDirection) {
         super.direction = direction;
 
@@ -67,18 +108,28 @@ export class Wizard extends Piece {
         });
     }
 
+    /**
+     * Update the position of this wizard's sprite on screen to match its
+     * logical position on the board.
+     * 
+     * @param duration The duration of the move animation in milliseconds.
+     * @returns A promise that resolves when the animation is complete.
+     */
     async updatePosition(
         duration: number = Piece.DEFAULT_MOVE_DURATION
     ): Promise<void> {
         return new Promise((resolve) => {
+            // No sprite, nothing to animate. Just how much punishment did you
+            // take last round to lose your sprite exactly?
             if (!this._sprite) {
                 return;
             }
 
-            const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
+            const isoPosition: Geom.Point = this.board.getIsoPosition(
                 this.position
             );
 
+            // Animate the wizard and its effects together.
             this.board.scene.tweens.add({
                 targets: [this._sprite, ...this._effects.values()],
                 displayOriginY: "+" + Board.DEFAULT_CELLSIZE,
@@ -97,7 +148,7 @@ export class Wizard extends Piece {
                         isoPosition.y +
                         (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     duration: duration,
-                    ease: Phaser.Math.Easing.Cubic.InOut,
+                    ease: PMath.Easing.Cubic.InOut,
                 });
             });
 
@@ -107,7 +158,7 @@ export class Wizard extends Piece {
                 y: isoPosition.y - this._offsetY,
                 duration: duration,
                 onUpdateScope: this,
-                ease: Phaser.Math.Easing.Cubic.InOut,
+                ease: PMath.Easing.Cubic.InOut,
                 onUpdate: () => {
                     this.updateDepth();
                 },
@@ -120,13 +171,26 @@ export class Wizard extends Piece {
         });
     }
 
+    /**
+     * Set the wizard's visual direction (i.e., left or right). Wizards don't
+     * have idle animations, just a single static frame per direction. Yes, that
+     * includes when they're holding items like magic knife and sword. I decided
+     * that it was better that the wizard's sprite didn't change like it did in
+     * the original game, and instead just added the appropriate item(s) to
+     * their body.
+     */
     playAnim() {
         this._sprite?.setFrame(`${this._wizCode.code}_${this._direction}`);
     }
 
+    /**
+     * Update the rendering depth of this wizard and its effects on the board.
+     */
     protected updateDepth() {
         super.updateDepth();
         this._effects.forEach((sprite, status) => {
+            // Magic wings go below the wizard, all other effects go above.
+            // TODO: Make this defined by the effect itself?
             if (status === UnitStatus.MagicWings) {
                 sprite.setDepth(this.sprite.depth - 1);
             } else {
@@ -135,7 +199,13 @@ export class Wizard extends Piece {
         });
     }
 
+    /**
+     * Oh dear, underestimated that King Cobra again, didn't you. Time to kill
+     * the wizard off in a dramatisation of the iconic original Chaos wizard
+     * death sequence.
+     */
     async kill(): Promise<void> {
+        // WOBWOBWOBWOBWOBWOB
         this.board.sound.play("deadwizard1");
         await this.board.playEffect(
             EffectType.WizardDefeated,
@@ -145,171 +215,233 @@ export class Wizard extends Piece {
         );
         await this.destroy();
         await this.owner?.defeat();
+        // PCHOWWW
         this.board.sound.play("disbelieve");
         setTimeout(async () => {
+            // One down - has anyone won yet?
             await this.board.checkWinCondition();
         }, 500);
     }
 
+    /**
+     * Add a status to this wizard, applying any visual effects as needed.
+     * 
+     * @param status The status to add.
+     * @returns True if the status was added, false if it was already present.
+     */
     addStatus(status: UnitStatus): boolean {
-        if (super.addStatus(status)) {
-            // console.log(`${this.name} gained ${status}`);
-            const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
-                this.position
-            );
-            let sprite:Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
-            switch (status) {
-                // Visual effects
-                case UnitStatus.ShadowForm:
-                    this.sprite.setAlpha(0.4);
-                    break;
-                case UnitStatus.MagicKnife:
-                case UnitStatus.MagicSword:
-                case UnitStatus.MagicBow:
-                case UnitStatus.MagicShield:
-                case UnitStatus.MagicWings:
-                    sprite =
-                        this.board.scene.add.sprite(
-                            isoPosition.x +
-                                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
-                                    (this._direction === UnitDirection.Left
-                                        ? -1
-                                        : 1),
-                            isoPosition.y +
-                                (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
-                            "effects"
-                        ) ;
-                    (sprite as Phaser.GameObjects.Sprite).anims.play({
-                        key: status.toLowerCase(),
-                        repeat: -1,
-                    });
-                    sprite.setOrigin(0.5, 0.5);
-                    sprite.setFlipX(
-                        this._direction === UnitDirection.Left ? true : false
-                    );
-                    sprite.setBlendMode(Phaser.BlendModes.ADD);
-                    this.board.getLayer(BoardLayer.Pieces).add(sprite);
-                    this._effects.set(status, sprite);
-                    this.updateDepth();
-                    break;
-                case UnitStatus.MagicArmour:
-                    sprite = this.board.scene.add.image(
+        if (!super.addStatus(status)) {
+            return false;
+        }
+        // console.log(`${this.name} gained ${status}`);
+        const isoPosition: Geom.Point = this.board.getIsoPosition(
+            this.position
+        );
+        let sprite:GameObjects.Sprite | GameObjects.Image;
+        switch (status) {
+            // Visual effects
+            case UnitStatus.ShadowForm:
+                // Make the wizard semi-transparent
+                this.sprite.setAlpha(0.4);
+                break;
+            case UnitStatus.MagicKnife:
+            case UnitStatus.MagicSword:
+            case UnitStatus.MagicBow:
+            case UnitStatus.MagicShield:
+            case UnitStatus.MagicWings:
+                // Add an animated effect sprite at the appropriate offset. This
+                // is a change to how the original game worked, which just 
+                // replaced the wizard sprite entirely. This way multiple
+                // effects can be shown at once and the wizard's appearance
+                // remains consistent.
+                sprite =
+                    this.board.scene.add.sprite(
                         isoPosition.x +
-                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
-                            (this._direction === UnitDirection.Left
-                                ? -1
-                                : 1),
-                    isoPosition.y +
-                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
-                        "magic-armour",
-                        this._wizCode.wiz
-                    );
-                    sprite.setOrigin(0.5, 0.6);
-                    sprite.setFlipX(
-                        this._direction === UnitDirection.Left ? true : false
-                    );
-                    this.board.getLayer(BoardLayer.Pieces).add(sprite);
-                    this._effects.set(status, sprite);
-                    sprite['_effectTween'] = this.board.scene.tweens.add({
-                        targets: [sprite],
-                        duration: 500,
-                        yoyo: true,
-                        ease: "Stepped",
-                        easeParams: [3],
-                        alpha: {from: 0, to: 1},
-                        loop: -1
-                    });
-                    this.updateDepth();
-                    break;
-            }
-
-            if (status === UnitStatus.MagicWings) {
-                this.addStatus(UnitStatus.Flying);
-            }
-
-            if ([UnitStatus.MagicKnife, UnitStatus.MagicSword, UnitStatus.MagicBow].includes(status)) {
-                this.addStatus(UnitStatus.AttackUndead);
-            }
-
-            if (status === UnitStatus.MagicShield) {
-                this.removeStatus(UnitStatus.MagicArmour);
-            }
-            else if (status === UnitStatus.MagicArmour) {
-                this.removeStatus(UnitStatus.MagicShield);
-            }
-
-            if (status === UnitStatus.MagicKnife) {
-                this.removeStatus(UnitStatus.MagicSword);
-            }
-            else if (status === UnitStatus.MagicSword) {
-                this.removeStatus(UnitStatus.MagicKnife);
-            }
-
-            if (this.currentMount) {
-                this._effects.forEach((sprite, status) => {
-                    sprite.setAlpha(0);
+                            (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                                (this._direction === UnitDirection.Left
+                                    ? -1
+                                    : 1),
+                        isoPosition.y +
+                            (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                        "effects"
+                    ) ;
+                (sprite as GameObjects.Sprite).anims.play({
+                    key: status.toLowerCase(),
+                    repeat: -1,
                 });
-            }
-
-            return true;
+                sprite.setOrigin(0.5, 0.5);
+                sprite.setFlipX(
+                    this._direction === UnitDirection.Left ? true : false
+                );
+                sprite.setBlendMode(BlendModes.ADD);
+                this.board.getLayer(BoardLayer.Pieces).add(sprite);
+                this._effects.set(status, sprite);
+                this.updateDepth();
+                break;
+            case UnitStatus.MagicArmour:
+                // Similar to the other magic effects, but this one is a static
+                // image that overlays the whole wizard and pulses in and out
+                // via a tween.
+                sprite = this.board.scene.add.image(
+                    isoPosition.x +
+                    (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                        (this._direction === UnitDirection.Left
+                            ? -1
+                            : 1),
+                isoPosition.y +
+                    (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    "magic-armour",
+                    this._wizCode.wiz
+                );
+                sprite.setOrigin(0.5, 0.6);
+                sprite.setFlipX(
+                    this._direction === UnitDirection.Left ? true : false
+                );
+                this.board.getLayer(BoardLayer.Pieces).add(sprite);
+                this._effects.set(status, sprite);
+                sprite['_effectTween'] = this.board.scene.tweens.add({
+                    targets: [sprite],
+                    duration: 500,
+                    yoyo: true,
+                    ease: "Stepped",
+                    easeParams: [3],
+                    alpha: {from: 0, to: 1},
+                    loop: -1
+                });
+                this.updateDepth();
+                break;
         }
-        return false;
+
+        // We fly now.
+        if (status === UnitStatus.MagicWings) {
+            this.addStatus(UnitStatus.Flying);
+        }
+
+        // Any magical weapon lets us attack the undead.
+        if (Wizard.MAGIC_WEAPONS.includes(status)) {
+            this.addStatus(UnitStatus.AttackUndead);
+        }
+
+        // Mutually exclusive statuses - can't have a shield and armour at once,
+        // nor knife and sword.
+        if (status === UnitStatus.MagicShield) {
+            this.removeStatus(UnitStatus.MagicArmour);
+        }
+        else if (status === UnitStatus.MagicArmour) {
+            this.removeStatus(UnitStatus.MagicShield);
+        }
+        if (status === UnitStatus.MagicKnife) {
+            this.removeStatus(UnitStatus.MagicSword);
+        }
+        else if (status === UnitStatus.MagicSword) {
+            this.removeStatus(UnitStatus.MagicKnife);
+        }
+
+        // If we're mounted, hide all effects so we don't have a horse with
+        // wings. Or worse, a Pegasus with two sets of wings.
+        if (this.currentMount) {
+            this._effects.forEach((sprite, status) => {
+                sprite.setVisible(false);
+            });
+        }
+
+        return true;
     }
 
+    /**
+     * Remove a status from this wizard, removing any visual effects as needed.
+     * Comparatively few things will remove a wizard's statuses - the main being
+     * attacking with Shadow Form causing it to be lost, or the use of a
+     * mutually exclusive spell (e.g., Magic Shield vs Magic Armour). Still, we
+     * need to handle it properly anyway.
+     * 
+     * @param status The status to remove.
+     * @returns True if the status was removed, false if it was not present.
+     */
     removeStatus(status: UnitStatus): boolean {
-        if (super.removeStatus(status)) {
-            // console.log(`${this.name} lost ${status}`);
-            switch (status) {
-                // Visual effects
-                case UnitStatus.ShadowForm:
-                    this.sprite.setAlpha(1);
-                    break;
-                case UnitStatus.MagicKnife:
-                case UnitStatus.MagicSword:
-                case UnitStatus.MagicBow:
-                case UnitStatus.MagicShield:
-                case UnitStatus.MagicWings:
-                case UnitStatus.MagicArmour:
-                    if (this._effects.has(status)) {
-                        const sprite = this._effects.get(status);
-                        if (sprite) {
-                            if (sprite['_effectTween']) {
-                                sprite['_effectTween'].stop().destroy();
-                            }
-                            sprite.destroy();
+        if (!super.removeStatus(status)) {
+            return false;
+        }
+        // console.log(`${this.name} lost ${status}`);
+        switch (status) {
+            // Visual effects
+            case UnitStatus.ShadowForm:
+                this.sprite.setAlpha(1);
+                break;
+            case UnitStatus.MagicKnife:
+            case UnitStatus.MagicSword:
+            case UnitStatus.MagicBow:
+            case UnitStatus.MagicShield:
+            case UnitStatus.MagicWings:
+            case UnitStatus.MagicArmour:
+                if (this._effects.has(status)) {
+                    const sprite = this._effects.get(status);
+                    if (sprite) {
+                        if (sprite['_effectTween']) {
+                            sprite['_effectTween'].stop().destroy();
                         }
-                        this._effects.delete(status);
+                        sprite.destroy();
                     }
-                    break;
-            }
-
-            if (status === UnitStatus.MagicWings) {
-                this.removeStatus(UnitStatus.Flying);
-            }
-
-            if ([UnitStatus.MagicKnife, UnitStatus.MagicSword, UnitStatus.MagicBow].includes(status)) {
-                this.removeStatus(status);
-                if (
-                    !this.hasStatus(UnitStatus.MagicKnife) &&
-                    !this.hasStatus(UnitStatus.MagicSword) &&
-                    !this.hasStatus(UnitStatus.MagicBow)
-                ) {
-                    this.removeStatus(UnitStatus.AttackUndead);
+                    this._effects.delete(status);
                 }
-            }
-            
-            return true;
+                break;
         }
 
-        return false;
+        // We stop flying now.
+        if (status === UnitStatus.MagicWings) {
+            this.removeStatus(UnitStatus.Flying);
+        }
+
+        // Losing all magical weapons means we can no longer attack the
+        // undead.
+        if (Wizard.MAGIC_WEAPONS.includes(status)) {
+            this.removeStatus(status);
+            if (
+                Wizard.MAGIC_WEAPONS.some(s => this.hasStatus(s)) === false
+            ) {
+                this.removeStatus(UnitStatus.AttackUndead);
+            }
+        }
+        
+        return true;
     }
 
-    createSprite(): Phaser.GameObjects.Sprite {
+    /**
+     * Mount this wizard onto a piece, hiding any effects while mounted.
+     * @param piece The piece to mount.
+     */
+    async mount(piece: Piece): Promise<void> {
+        await super.mount(piece);
+
+        // Hide all effects while mounted.
+        this._effects.forEach((sprite, status) => {
+            sprite.setVisible(false);
+        });
+    }
+
+    /**
+     * Dismount this wizard from its current mount, showing any effects again.
+     */
+    async dismount(): Promise<void> {
+        await super.dismount();
+
+        // Show all effects again.
+        this._effects.forEach((sprite, status) => {
+            sprite.setVisible(true);
+        });
+    }
+
+    /**
+     * Create the sprite for this wizard on the board.
+     * 
+     * @returns The created Phaser sprite.
+     */
+    createSprite(): GameObjects.Sprite {
         if (this._sprite) {
             return this._sprite;
         }
 
-        const isoPosition: Phaser.Geom.Point = this.board.getIsoPosition(
+        const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
 
@@ -331,41 +463,62 @@ export class Wizard extends Piece {
         return this._sprite;
     }
 
+    /**
+     * Parse a WizCode string into its components. Any out-of-bounds values are
+     * clamped to the maximum allowed for that component at time of writing,
+     * allowing for forwards compatibility.
+     * 
+     * @param wizCode The WizCode string to parse.
+     * @returns The parsed wizard configuration object.
+     */
     static parseWizCode(wizCode: string): WizCode {
-        if (/[0-9a-f]{10}/i.test(wizCode) === false) {
+        if (!wizCode || !wizCode.trim()) {
+            throw new Error("WizCode cannot be empty");
+        }
+
+        // Normalise
+        wizCode = wizCode.toLowerCase().trim();
+
+        // Sense check the WizCode format; it should be exactly 10 hex digits.
+        if (!/[0-9a-f]{10}/.test(wizCode)) {
             throw new Error("Invalid WizCode");
         }
 
         return {
             code: wizCode,
-            wiz: Math.min(parseInt(wizCode.substr(0, 2), 16), wizcodes.max.wiz),
-            pri: Math.min(parseInt(wizCode.substr(2, 2), 16), wizcodes.max.pri),
-            sec: Math.min(parseInt(wizCode.substr(4, 2), 16), wizcodes.max.sec),
+            wiz: Math.min(parseInt(wizCode.slice(0, 2), 16), wizcodes.max.wiz),
+            pri: Math.min(parseInt(wizCode.slice(2, 4), 16), wizcodes.max.pri),
+            sec: Math.min(parseInt(wizCode.slice(4, 6), 16), wizcodes.max.sec),
             skin: Math.min(
-                parseInt(wizCode.substr(6, 2), 16),
+                parseInt(wizCode.slice(6, 8), 16),
                 wizcodes.max.skin
             ),
-            hat: Math.min(parseInt(wizCode.substr(8, 2), 16), wizcodes.max.hat),
+            hat: Math.min(parseInt(wizCode.slice(8, 10), 16), wizcodes.max.hat),
         };
     }
 
-    static randomWizCode(): string {
+    /**
+     * YOLO WizCode generator. Because some people are not very discerning.
+     * 
+     * @returns A random WizCode string.
+     */
+    public static randomWizCode(): string {
         return [
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.wiz)
+            PMath.RND.integerInRange(0, wizcodes.max.wiz)
                 .toString(16)
                 .padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.pri)
+            PMath.RND.integerInRange(0, wizcodes.max.pri)
                 .toString(16)
                 .padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.sec)
+            PMath.RND.integerInRange(0, wizcodes.max.sec)
                 .toString(16)
                 .padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.skin)
+            PMath.RND.integerInRange(0, wizcodes.max.skin)
                 .toString(16)
                 .padStart(2, "0"),
-            Phaser.Math.RND.integerInRange(0, wizcodes.max.hat)
+            PMath.RND.integerInRange(0, wizcodes.max.hat)
                 .toString(16)
                 .padStart(2, "0"),
-        ].join("");
+        ].join("").toLowerCase();
     }
 }
