@@ -33,13 +33,77 @@ export interface SetupPlayer {
 }
 
 /**
- * Game setup information.
+ * Game setup information captured from the menu.
  */
 export interface SetupData {
     playerCount: number;
     boardSize: number;
     spellCount: number;
     players: SetupPlayer[];
+}
+
+/**
+ * Game setup data sent from the UI to the game logic.
+ */
+export interface GameSetupData {
+    players: string[];
+    board: Box;
+    spellCount: number;
+}
+
+/**
+ * Game scenario data for starting a predefined scenario.
+ */
+export interface GameScenarioData {
+    name: string;
+    description?: string;
+    board: Box;
+    players: GameScenarioPlayer[];
+    cheats?: GameScenarioCheats;
+    phase?: string,
+    currentPlayerIndex?: number,
+}
+
+/**
+ * Game scenario player data.
+ */
+export interface GameScenarioPlayer {
+    id: number;
+    name: string;
+    position: { x: number; y: number };
+    wizCode?: string; // A random code will be generated if empty.
+    pieces?: GameScenarioPiece[];
+    spells?: string[]; // A simple list of spell names for now.
+}
+
+/**
+ * Game scenario piece data.
+ */
+export interface GameScenarioPiece {
+    type: string; // The piece's name, e.g. 'Golden Dragon'
+    position: { x: number; y: number };
+}
+
+/**
+ * Game scenario cheats data.
+ */
+export interface GameScenarioCheats {
+    /**
+     * Force all attacks to hit (true), miss (false), or normal (null).
+     */
+    forceHit?: boolean | null;
+
+    /**
+     * Force all spells to cast successfully (true), fail (false), or normal
+     * (null).
+     */
+    forceCast?: boolean | null;
+
+    /**
+     * Use short animation delays for actions (true), normal delays (false or
+     * null). Useful during testing and debugging.
+     */
+    shortDelay?: boolean | null;
 }
 
 /**

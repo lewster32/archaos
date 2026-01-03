@@ -11,6 +11,9 @@ import { Piece } from "../piece";
 import type { SpellConfig } from "../configs/spellconfig";
 import type { Player } from "../player";
 
+/**
+ * A spell that can be cast by a player's wizard.
+ */
 export class Spell extends Model {
     protected _board: Board;
     protected _type: SpellType;
@@ -56,6 +59,13 @@ export class Spell extends Model {
         return this._properties.name;
     }
 
+    /**
+     * The normalised chance of successfully casting this spell based on the
+     * current balance of the game world. Clamped between 0.1 and 1 to prevent
+     * situations where a spell is impossible to cast.
+     * 
+     * @return The chance of successfully casting this spell
+     */
     get chance(): number {
         if (this.balance === 0) {
             return this._properties.chance;
@@ -71,46 +81,89 @@ export class Spell extends Model {
         );
     }
 
+    /**
+     * The type of this spell.
+     */
     get type(): SpellType {
         return this._type;
     }
 
+    /**
+     * The balance alignment of this spell with negative being chaotic and
+     * positive being lawful.
+     */
     get balance(): number {
         return this._properties.balance;
     }
 
+    /**
+     * The range at which this spell can be cast. A range of 0 means it can
+     * only be cast on the casting wizard themselves. A range of -1 means it can
+     * be cast anywhere on the board. The default range is 1.5, which allows
+     * casting on any of the adjacent tiles, i.e. the default behaviour for
+     * summon spells.
+     */
     get range(): number {
         return this._properties.range ?? 1.5;
     }
 
+    /**
+     * If this is true, the spell will not be removed from the caster's spell
+     * list after being cast. The out-of-the-box example of this is the
+     * 'Disbelieve' spell.
+     */
     get persist(): boolean {
         return this._properties.persist || false;
     }
 
+    /**
+     * If this is true, the spell requires line of sight to the target in order
+     * to be cast.
+     */
     get lineOfSight(): boolean {
         return this._properties.lineOfSight || false;
     }
 
+    /**
+     * The raw properties of this spell from the JSON data.
+     */
     get properties(): SpellConfig {
         return this._properties;
     }
 
+    /**
+     * The total number of times this spell can be cast before it is used up.
+     * This is for multi-cast spells like 'Magic Wood' etc.
+     */
     get totalCastTimes(): number {
         return this._totalCastTimes;
     }
 
+    /**
+     * How many times this spell can still be cast. This decrements each time
+     * the spell is cast.
+     */
     get castTimes(): number {
         return this._castTimes;
     }
 
+    /**
+     * Whether the last casting attempt of this spell failed.
+     */
     get failed(): boolean {
         return this._failed;
     }
 
+    /**
+     * The player who owns this spell.
+     */
     get owner(): Player {
         return this._owner;
     }
 
+    /**
+     * Set the owner of this spell.
+     */
     set owner(owner: Player) {
         this._owner = owner;
         if (this._owner.castingPiece) {
@@ -121,6 +174,10 @@ export class Spell extends Model {
         }
     }
 
+    /**
+     * A description of this spell. If there's a low chance of casting success,
+     * this will include a note about that.
+     */
     get description(): string {
         if (this._properties.description) {
             return this._properties.description;
@@ -143,10 +200,19 @@ export class Spell extends Model {
         return "";
     }
 
+    /**
+     * Reset the cast times of this spell back to the total allowed.
+     */
     resetCastTimes(): void {
         this._castTimes = this._totalCastTimes;
     }
 
+    /**
+     * Check if a point is within casting range of the casting piece.
+     * 
+     * @param point The point to check
+     * @returns Whether the point is within casting range
+     */
     protected inCastingRange(
         point: Phaser.Geom.Point
     ): boolean {
@@ -169,6 +235,13 @@ export class Spell extends Model {
         return true;
     }
 
+    /**
+     * Check if the spell can be cast at the given position.
+     * 
+     * @param point The position to check
+     * @param showReason Whether to log the reason if the spell cannot be cast
+     * @returns Whether the spell can be cast at the given position
+     */
     protected canCastAtPosition(point: Phaser.Geom.Point, showReason?: boolean): boolean {
         if (this.lineOfSight && !this._board.hasLineOfSight(this._castingPiece.position, point)) {
             if (showReason) {
@@ -197,6 +270,13 @@ export class Spell extends Model {
         return true;
     }
 
+    /**
+     * Validate the target for this spell.
+     * 
+     * @param target The target point to validate
+     * @param showReason Whether to log the reason if the target is invalid
+     * @returns The valid target point or piece, or null if invalid
+     */
     isValidTarget(target: Phaser.Geom.Point, showReason?: boolean): Phaser.Geom.Point | Piece | null {
         if (!this.inCastingRange(target)) {
             if (showReason) {
@@ -249,7 +329,7 @@ export class Spell extends Model {
         if (!targetLivingPiece) {
             if (showReason) {
                 this._board.logger.log(
-                    `${this.name} must be cast on a unit`,
+                    `${this.name} cannot be cast on a corpse`,
                     Colour.Magenta
                 );
             }
@@ -335,10 +415,23 @@ export class Spell extends Model {
         return null;
     }
 
+    /**
+     * Roll to determine if the spell casting is successful.
+     * 
+     * @returns Whether the spell casting is successful
+     */
     protected roll(): boolean {
         return this._board.rollChance(this.chance);
     }
 
+    /**
+     * Cast this spell.
+     * 
+     * @param owner The player casting the spell
+     * @param castingPiece The piece casting the spell
+     * @param target The target point or piece of the spell
+     * @returns The result of the spell cast
+     */
     async cast(
         owner: Player,
         castingPiece: Piece,
@@ -353,9 +446,12 @@ export class Spell extends Model {
             castPoint = Phaser.Geom.Point.Clone(target.position);
         }
 
-        // Prevent failure on subsequent cast of multiple-cast spells
+        // We only want to check for failure on the first cast of multi-cast
+        // spells - if a player succeeds then they get to cast all remaining
+        // times.
         if (this._castTimes === this._totalCastTimes && !this.roll()) {
-            return await this.castFail(owner, castingPiece);
+            await this.castFail(owner, castingPiece);
+            return null;
         }
         if (this._castTimes === this._totalCastTimes) {
             // TODO: Check how this shift compares to the real game
@@ -366,6 +462,15 @@ export class Spell extends Model {
         return await this.doCast(owner, castingPiece, castPoint, [castPiece]);
     }
 
+    /**
+     * The actual implementation of the spell casting logic.
+     * 
+     * @param owner The player casting the spell
+     * @param castingPiece The piece casting the spell
+     * @param point The target point of the spell
+     * @param targets The target pieces of the spell
+     * @returns The result of the spell cast
+     */
     async doCast(owner: Player, castingPiece: Piece, point?: Phaser.Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         if (this.properties.id === "disbelieve") {
             const target: Piece = targets.find((p: Piece) => p.canDisbelieve);
@@ -526,7 +631,14 @@ export class Spell extends Model {
         return false;
     }
 
-    async castFail(owner: Player, castingPiece: Piece): Promise<null> {
+    /**
+     * Oh noes, the spell casting has failed.
+     * 
+     * @param owner The player casting the spell
+     * @param castingPiece The piece casting the spell
+     * @returns The result of the failed spell cast
+     */
+    async castFail(owner: Player, castingPiece: Piece): Promise<void> {
         this._failed = true;
         this._castTimes = 0;
         await this._board.playEffect(
@@ -535,18 +647,25 @@ export class Spell extends Model {
             null,
             castingPiece
         );
-        return null;
     }
 
+    /**
+     * Get a random spell configuration.
+     * 
+     * @param gifted Whether the spell is being gifted (allows certain spells)
+     * @returns A random spell configuration
+     */
     static getRandomSpell(gifted?: boolean): any {
         const spellNames: string[] = Object.values(spells).map(
             (spell: any) => spell.name
         );
 
+        
         // Remove Disbelieve from random pool
         spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
 
-        // Remove Turmoil unless spell was gifted
+        // TODO: 'Giftable' should be a flag on the spell data itself, and not
+        // hardcoded here.
         if (!gifted) {
             spellNames.splice(spellNames.indexOf("Turmoil"), 1);
         }
@@ -556,6 +675,14 @@ export class Spell extends Model {
         );
     }
 
+    /**
+     * Get the spell properties for a given spell name.
+     * 
+     * TODO: Give this an interface.
+     * 
+     * @param name The name of the spell
+     * @returns The properties of the spell
+     */
     static getSpellProperties(name: string): any {
         let key = "";
         for (let [k, spell] of Object.entries(spells)) {

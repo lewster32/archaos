@@ -9,7 +9,7 @@ export enum UnitStatus {
     Spreads = "spread", // Can spread to adjacent tiles
     Structure = "struct", // Is a structure (cannot move)
     Transparent = "trans", // Does not block line of sight
-    Tree = "tree", // Is a tree (unnecessary?)
+    Tree = "tree", // Is a tree (used to prevent trees from being cast on adjacent tiles to other trees)
     Undead = "undead", // Is undead
     Wizard = "wizard", // Can cast spells
     NoCorpse = "noCorpse", // Does not leave a corpse when killed

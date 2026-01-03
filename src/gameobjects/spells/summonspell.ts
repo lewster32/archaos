@@ -11,6 +11,9 @@ import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";
 
+/**
+ * A spell that summons a unit onto the board.
+ */
 export class SummonSpell extends Spell {
 
     protected _illusion: boolean;

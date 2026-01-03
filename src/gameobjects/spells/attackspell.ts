@@ -8,6 +8,9 @@ import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 
+/**
+ * A spell that attacks one or more target pieces.
+ */
 export class AttackSpell extends Spell {
     constructor(board: Board, id: number, config: SpellConfig) {
         super(board, id, config);

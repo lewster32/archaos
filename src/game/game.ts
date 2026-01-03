@@ -4,7 +4,7 @@ import { GameScene } from '../game-scene';
 export const launch = (containerId: string) => {
     return new Phaser.Game({
         title: "Archaos",
-        version: "0.0.1",
+        version: "0.1.0",
         width: 400,
         height: 220,
         type: Phaser.AUTO,

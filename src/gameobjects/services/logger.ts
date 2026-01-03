@@ -1,11 +1,14 @@
-import { Colour } from "../enums/colour";
+import type { Colour } from "../enums/colour";
 
+/**
+ * Singleton Logger service to log messages throughout the game.
+ */
 export class Logger {
     private readonly _eventEmitter: Phaser.Events.EventEmitter;
     private _currentLogId: number = 0;
     private static instance: Logger;
 
-    constructor(eventEmitter: Phaser.Events.EventEmitter) {
+    protected constructor(eventEmitter: Phaser.Events.EventEmitter) {
         this._eventEmitter = eventEmitter;
     }
 
@@ -26,6 +29,9 @@ export class Logger {
     }
 }
 
+/**
+ * A log entry. 'Nuff said.
+ */
 export interface Log {
     message: string;
     timestamp: Date;

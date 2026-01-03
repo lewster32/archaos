@@ -6,9 +6,22 @@ import { Colour } from "../enums/colour";
 import { CursorType } from "../enums/cursortype";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
-import { Piece } from "../piece";
-import { Spell } from "../spells/spell";
+import type { Piece } from "../piece";
+import type { Spell } from "../spells/spell";
 
+/**
+ * The 'brains' of the game live here. This is the beating heart of the game
+ * logic. We handle two main types of processing:
+ * 
+ * 1. Intent: Given the current board state, what action is the player
+ *    intending to do?
+ * 2. Action: Given the current board state and the intended action,
+ *    perform that action.
+ * 
+ * This separation allows the UI to provide context-sensitive feedback to the
+ * player about what they can do at any given time, and then to execute
+ * those actions in a consistent manner.
+ */
 export class Rules {
     private static instance: Rules;
 
@@ -23,6 +36,13 @@ export class Rules {
         return Rules.instance;
     }
 
+    /**
+     * Given the current board state, what action is the player intending to do?
+     * From this we can decide what they're allowed to do.
+     * 
+     * @param board The game board
+     * @returns The allowed action type
+     */
     async processIntent(board: Board): Promise<ActionType> {
         if (board.state === BoardState.Idle) {
             return ActionType.None;
@@ -115,15 +135,15 @@ export class Rules {
             } else {
                 if (currentAliveHoveredPiece) {
                     if (
-                        currentAliveHoveredPiece.owner !== board.currentPlayer
+                        currentAliveHoveredPiece.owner === board.currentPlayer
                     ) {
-                        return ActionType.Info;
-                    } else {
                         if (currentAliveHoveredPiece.canSelect) {
                             return ActionType.Select;
                         } else {
                             return ActionType.Invalid;
                         }
+                    } else {
+                        return ActionType.Info;
                     }
                 }
                 return ActionType.Idle;
@@ -133,6 +153,15 @@ export class Rules {
         return ActionType.Idle;
     }
 
+    /**
+     * Given the current board state, what action is the player about to
+     * perform?
+     * 
+     * @param board The game board
+     * @param actionType The action type the player is about to perform
+     * @param input The input type (click, cancel, etc)
+     * @returns The resulting action type
+     */
     async processAction(
         board: Board,
         actionType: ActionType,
@@ -157,14 +186,28 @@ export class Rules {
         return ActionType.Idle;
     }
 
+    /**
+     * Dispatch a global event to notify other parts of the system.
+     * 
+     * @param type The event type
+     * @param data The event data
+     */
     private dispatchEvent(type: EventType, data: any) {
-        window.dispatchEvent(
+        globalThis.dispatchEvent(
             new CustomEvent(type, {
                 detail: data,
             })
         );
     }
 
+    /**
+     * Handle the casting of a spell.
+     * 
+     * @param board The game board
+     * @param spell The spell being cast
+     * @param currentTarget The target of the spell (a piece or a board position)
+     * @returns Whether the spell was successfully cast
+     */
     public async doCastSpell(
         board: Board,
         spell: Spell,
@@ -210,6 +253,14 @@ export class Rules {
         return false;
     }
 
+    /**
+     * Handle a click action.
+     * 
+     * @param board The game board
+     * @param actionType The action type the player is about to perform 
+     * @param hoveredPieces The pieces currently being hovered over (plural as several pieces can occupy the same tile, e.g. mounted or engulfed pieces)
+     * @returns The resulting action type
+     */
     private async processClick(
         board: Board,
         actionType: ActionType,
@@ -277,8 +328,7 @@ export class Rules {
                     board.state = BoardState.Dismount;
                     return ActionType.Dismount;
                 } else if (
-                    currentAliveHoveredPiece &&
-                    currentAliveHoveredPiece.canSelect
+                    currentAliveHoveredPiece?.canSelect
                 ) {
                     this.dispatchEvent(
                         EventType.PieceInfo,
@@ -358,6 +408,14 @@ export class Rules {
         return ActionType.None;
     }
 
+    /**
+     * Handle a cancel action.
+     * 
+     * @param board The game board
+     * @param _actionType The action type the player is about to perform
+     * @param _hoveredPieces The pieces currently being hovered over (plural as several pieces can occupy the same tile, e.g. mounted or engulfed pieces)
+     * @returns The resulting action type
+     */
     private async processCancel(
         board: Board,
         _actionType: ActionType,

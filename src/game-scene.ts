@@ -1,5 +1,4 @@
 import "phaser";
-import { spells } from "../assets/data/classicspells.json";
 import { units } from "../assets/data/classicunits.json";
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
@@ -26,6 +25,7 @@ import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
+import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
 
 export class GameScene extends Phaser.Scene {
     board: Board;
@@ -151,18 +151,23 @@ export class GameScene extends Phaser.Scene {
             });
         });
 
-        this.game.events.on("start-game", (data) => {
+        // Start a normal game
+        this.game.events.on("start-game", (data: GameSetupData) => {
             this.startGame(data);
-            // this.testPieces();
         });
 
-        this.game.events.on("start-scenario", (scenarioData) => {
-            console.log("Starting scenario with data:", scenarioData);
+        // Start a scenario (a predefined board state)
+        this.game.events.on("start-scenario", (scenarioData: GameScenarioData) => {
             this.startScenario(scenarioData);
         });
     }
 
-    startGame(data: any): void {
+    /**
+     * Start a new game with the given initialisation data.
+     * 
+     * @param data Initialisation data for the game.
+     */
+    startGame(data: GameSetupData): void {
         if (this.board) {
             this.board.destroy();
         }
@@ -173,7 +178,7 @@ export class GameScene extends Phaser.Scene {
             data?.board?.height
         );
 
-        for (let player of data?.players) {
+        for (let player of data.players) {
             this.board.addPlayer({
                 name: player,
             });
@@ -196,7 +201,12 @@ export class GameScene extends Phaser.Scene {
         }, Board.DEFAULT_DELAY);
     }
 
-    startScenario(scenarioData: any): void {
+    /**
+     * Start a predefined scenario.
+     * 
+     * @param scenarioData Scenario data to load.
+     */
+    startScenario(scenarioData: GameScenarioData): void {
         if (this.board) {
             this.board.destroy();
         }
@@ -264,6 +274,7 @@ export class GameScene extends Phaser.Scene {
         }, Board.DEFAULT_DELAY);
     }
 
+    // Deprecated
     testGame(): void {
         this.board = new Board(this, 1, 13, 13);
 
@@ -300,6 +311,7 @@ export class GameScene extends Phaser.Scene {
         }, 1000);
     }
 
+    // Deprecated
     testPieces(): void {
         this.board = new Board(this, 1, 8, 8);
 
@@ -507,6 +519,4 @@ export class GameScene extends Phaser.Scene {
             this.board.startGame();
         }, 1000);
     }
-
-    update(): void {}
 }

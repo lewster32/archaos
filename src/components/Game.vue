@@ -107,6 +107,8 @@ import type {
     SetupData,
     BoardUpdateEventData,
     SpellbookOpenEventData,
+    GameSetupData,
+    GameScenarioData,
 } from "../gameobjects/interfaces/ui";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 
@@ -228,7 +230,7 @@ const startGame: (save: boolean) => void = (save: boolean) => {
             height: Math.abs(setup.value!.boardSize) || 13,
         },
         spellCount: Math.abs(setup.value!.spellCount) || 15,
-    });
+    } as GameSetupData);
 
     // Mark the game as started
     gameStarted.value = true;
@@ -344,11 +346,11 @@ onMounted(async () => {
 
     if (scenario) {
         console.log(`Auto-starting scenario: ${scenario}`);
-        const scenarioResponse = await fetch(
+        const scenarioResponse: Response = await fetch(
             `/assets/scenarios/${scenario.toLowerCase().trim()}.json`
         );
         if (scenarioResponse.ok) {
-            const scenarioData = await scenarioResponse.json();
+            const scenarioData: GameScenarioData = await scenarioResponse.json();
             gameStarted.value = true;
             setTimeout(() => {
                 eventEmitter.value?.emit("start-scenario", scenarioData);
