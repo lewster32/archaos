@@ -275,7 +275,7 @@ onMounted(async () => {
             ],
         };
     }
-
+    
     // Mark as downloaded
     downloaded.value = true;
 

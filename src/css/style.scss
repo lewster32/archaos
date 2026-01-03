@@ -1,6 +1,6 @@
-@import "reset";
-@import "ui";
-@import "buttons";
+@use "reset";
+@use "ui";
+@use "buttons";
 
 @font-face {
     font-family: "Chaos Sans";
@@ -9,13 +9,6 @@
     font-weight: 500;
     font-style: normal;
     font-display: swap;
-}
-
-%text-shadow {
-    text-shadow: -2px -2px var(--color-black), 2px -2px var(--color-black),
-    2px 2px var(--color-black), -2px 2px var(--color-black),
-    0 -2px var(--color-black), 0 2px var(--color-black),
-    2px 0 var(--color-black), -2px 0 var(--color-black);
 }
 
 html {
@@ -43,6 +36,7 @@ body,
 
 :root {
     --bg-colour: #555;
+    --fg-colour: #eee;
 
     // Speccy colours
     --color-white: #fff;
@@ -70,13 +64,18 @@ body,
     --spell-chance-colour-20: var(--color-magenta);
     --spell-chance-colour-10: var(--color-red);
     --spell-chance-colour-0: var(--color-red);
+
+    --text-shadow: -2px -2px var(--color-black), 2px -2px var(--color-black),
+    2px 2px var(--color-black), -2px 2px var(--color-black),
+    0 -2px var(--color-black), 0 2px var(--color-black),
+    2px 0 var(--color-black), -2px 0 var(--color-black);
 }
 
 body {
     --bg-transition-time: 0.15s;
     background: url("../../assets/images/bg.png") repeat-x 60% 40%;
     background-color: var(--bg-colour, #555);
-    color: #eee;
+    color: var(--fg-colour, #eee);
     margin: 0;
     padding: 0;
     height: 100%;
@@ -174,7 +173,7 @@ button {
 }
 
 .game-log__item {
-    @extend %text-shadow;
+    text-shadow: var(--text-shadow);
 }
 
 [title] {

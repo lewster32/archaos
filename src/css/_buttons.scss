@@ -1,5 +1,5 @@
 .button {
-    @extend %text-shadow;
+    text-shadow: var(--text-shadow);
     padding: 6px;
     line-height: 1.25;
     image-rendering: pixelated;
