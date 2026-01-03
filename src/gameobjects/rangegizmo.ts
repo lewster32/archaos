@@ -57,19 +57,36 @@ export class RangeGizmo {
                 node = new Node(xx, yy);
                 if (this._piece.hasStatus(UnitStatus.Flying)) {
                     node.flying = true;
-                    if (
+                    // If mounted, can only dismount to adjacent tiles
+                    if (this._piece.currentMount) {
+                        if (
+                            Board.distance(
+                                node.pos, this._piece.position
+                            ) > 1.5
+                        ) {
+                            node.traversable = false;
+                        }
+                    }
+                    else if (
                         Board.distance(node.pos, this._piece.position) >
                         this._piece.stats.movement + 0.5
                     ) {
                         node.traversable = false;
                     }
                 }
+                const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
+                    new Phaser.Geom.Point(xx, yy),
+                    (piece: Piece) => !piece.dead
+                );
                 if (
-                    this._board.getPiecesAtPosition(
-                        new Phaser.Geom.Point(xx, yy),
-                        (piece: Piece) => !piece.dead
-                    ).length > 0
+                    livePiecesAtPosition.length > 0  
                 ) {
+                    const livePiece:Piece = livePiecesAtPosition[0];
+                    // There's a piece here, if we can mount or attack it, mark
+                    // as terminal - it can be moved to, but no further
+                    if (this._piece.canMountPiece(livePiece) || this._piece.canEngagePiece(livePiece)) {
+                        node.terminal = true;
+                    }
                     node.traversable = false;
                 }
                 this._validNodes.push(node);
@@ -80,14 +97,17 @@ export class RangeGizmo {
             ePt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0),
             wPt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
 
+
         for (const validNode of this._validNodes) {
-            const potentialEnemies: Piece[] = this._board.getPiecesAtPosition(
-                validNode.pos
+            const potentialEnemies: Set<Piece> = new Set(
+                this._board.getAdjacentPiecesAtPosition(
+                    validNode.pos, null, true
+                )
             );
-            if (!potentialEnemies.length) {
+            if (!potentialEnemies.size) {
                 continue;
             }
-            enemy = potentialEnemies[0];
+            enemy = potentialEnemies.values().next().value;
             if (this._piece.canEngagePiece(enemy)) {
                 ePt = Phaser.Geom.Point.Clone(enemy.position);
                 for (let ex: number = ePt.x - 1; ex < ePt.x + 2; ex++) {
@@ -158,7 +178,8 @@ export class RangeGizmo {
 
         return new Promise((resolve: Function) => {
             this._validNodes
-                .filter((node: Node) => node?.traversable)
+                .filter(Boolean)
+                .filter((node: Node) => node.traversable || node.terminal)
                 .forEach((node: Node) => {
                     const path: Path = this.getPathTo(node.pos);
                     if (!path?.nodes?.length) {
@@ -370,7 +391,7 @@ export class RangeGizmo {
         return (
             this._validNodes.find(
                 (node: Node) =>
-                    Phaser.Geom.Point.Equals(node.pos, pt) && node.traversable
+                    Phaser.Geom.Point.Equals(node.pos, pt) && (node.traversable || node.terminal)
             ) || null
         );
     }
@@ -378,7 +399,10 @@ export class RangeGizmo {
     public getPathTo(pt: Phaser.Geom.Point): Path {
         let path: Path, node: Node;
         node = this.getNode(pt);
-        if (!this._piece || !node?.traversable) {
+        if (!this._piece) {
+            return null;
+        }
+        if (!node || (!node.traversable && !node.terminal)) {
             return null;
         }
         if (this._paths.has(pt.x + "," + pt.y)) {
@@ -405,7 +429,12 @@ export class RangeGizmo {
             return;
         }
 
-        for (let n: number = 1; n < path.nodes.length - 1; n++) {
+        // If the original destination was terminal, the path ends one node
+        // before it, so we need to show the path including the last node
+        const destinationNode = this.getNode(toPt);
+        const endIndex = destinationNode?.terminal ? path.nodes.length : path.nodes.length - 1;
+
+        for (let n: number = 1; n < endIndex; n++) {
             const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
                 path.nodes[n].pos
             );
@@ -435,6 +464,30 @@ export class RangeGizmo {
 
         if (firstNode === null || destinationNode === null) {
             return null;
+        }
+
+        // If destination is a terminal node, find path to adjacent safe node
+        // instead
+        if (destinationNode.terminal) {
+            const adjacentNodes = this.findConnectedNodes(destinationNode);
+            let closestAdjacentNode: Node = null;
+            let closestDistance: number = Infinity;
+            
+            for (const adjNode of adjacentNodes) {
+                if (adjNode.traversable && !adjNode.warning) {
+                    const dist = Board.distance(firstNode.pos, adjNode.pos);
+                    if (dist < closestDistance) {
+                        closestDistance = dist;
+                        closestAdjacentNode = adjNode;
+                    }
+                }
+            }
+            
+            if (closestAdjacentNode) {
+                destinationNode = closestAdjacentNode;
+            } else {
+                return null;
+            }
         }
 
         const openNodes: Node[] = [];
@@ -468,9 +521,12 @@ export class RangeGizmo {
 
             for (i = 0; i < l; ++i) {
                 testNode = connectedNodes[i];
-
-                if (testNode == currentNode || !testNode.traversable)
+                
+                // Can't traverse to self or non-traversable nodes (terminal
+                // nodes are non-traversable)
+                if (testNode === currentNode || !testNode.traversable) {
                     continue;
+                }
                 g =
                     currentNode.g +
                     RangeGizmo.diagonalHeuristic(
@@ -516,6 +572,7 @@ export class RangeGizmo {
             });
             currentNode = openNodes.shift();
         }
+
         return RangeGizmo.buildPath(destinationNode, firstNode);
     }
 
@@ -549,7 +606,7 @@ export class RangeGizmo {
         destinationNode: Node,
         cost: number = 1,
         diagonalCost: number = 1.5,
-        warningCost: number = 999
+        warningCost: number = 999,
     ): number {
         const dx: number = Math.abs(node.x - destinationNode.x);
         const dy: number = Math.abs(node.y - destinationNode.y);
@@ -557,7 +614,9 @@ export class RangeGizmo {
         const diag: number = Math.min(dx, dy);
         const straight: number = dx + dy;
 
-        if (node.warning === true) {
+        // If this node is a warning node, add a high cost to discourage pathing
+        // through it unless necessary
+        if (node.warning) {
             return (
                 diagonalCost * diag + cost * (straight - 2 * diag) + warningCost
             );
@@ -579,7 +638,7 @@ export class RangeGizmo {
             path.unshift(node);
         }
         angles.unshift(this.getAngle(startNode.pos, destinationNode.pos));
-
+        
         return new Path(path, angles, cost);
     }
 
@@ -608,9 +667,31 @@ export class Node {
     public f: number;
     public h: number;
     public parentNode: Node;
+
+    /**
+     * Whether this node can be traversed
+     */
     public traversable: boolean = true;
+
+    /**
+     * Whether this node is a warning node (e.g., adjacent to an enemy)
+     */
     public warning: boolean = false;
+
+    /**
+     * Whether this node is a terminal node (e.g., occupied by an attackable
+     * enemy or mountable ally)
+     */
+    public terminal: boolean = false;
+
+    /**
+     * The path to this node
+     */
     public path: Path;
+
+    /**
+     * Whether this node is being traversed by flying movement
+     */
     public flying: boolean = false;
 
     constructor(x: number, y: number) {
@@ -670,5 +751,9 @@ export class Path {
 
     get warning(): boolean {
         return this._nodes.at(-1).warning;
+    }
+
+    get terminal(): boolean {
+        return this._nodes.some((n: Node) => n.terminal);
     }
 }

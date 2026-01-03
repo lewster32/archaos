@@ -362,7 +362,6 @@ export class Wizard extends Piece {
         if (!super.removeStatus(status)) {
             return false;
         }
-        // console.log(`${this.name} lost ${status}`);
         switch (status) {
             // Visual effects
             case UnitStatus.ShadowForm:

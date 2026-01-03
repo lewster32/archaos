@@ -14,12 +14,11 @@
             "pieces": [
                 {
                     "type": "Pegasus",
-                    "position": { "x": 1, "y": 1 }
-                },
-                {
-                    "type": "Horse",
-                    "position": { "x": 1, "y": 0 }
+                    "position": { "x": 1, "y": 2 }
                 }
+            ],
+            "spells": [
+                "Shadow Form"
             ]
         },
         {
@@ -29,29 +28,13 @@
             "wizCode": "0900000900",
             "pieces": [
                 {
-                    "type": "Wall",
-                    "position": { "x": 0, "y": 2 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 1, "y": 2 }
-                },
-                {
-                    "type": "Wall",
+                    "type": "Pegasus",
                     "position": { "x": 2, "y": 2 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 3, "y": 2 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 4, "y": 2 }
                 }
             ]
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": true,
         "forceCast": true,

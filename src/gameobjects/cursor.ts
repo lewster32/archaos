@@ -148,6 +148,9 @@ export class Cursor {
                 }
                 break;
             case ActionType.Mount:
+                if (selectedPiece.stats.movement > 1) {
+                    this._board.moveGizmo.showPath(this._position);
+                }
                 this.type = CursorType.Mount;
                 break;
             case ActionType.Dismount:

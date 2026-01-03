@@ -661,6 +661,12 @@ export class Piece extends Entity {
         if (Geom.Point.Equals(this.position, point)) {
             return false;
         }
+        // Mounted units can only move to adjacent squares
+        if (this.currentMount) {
+            if (Board.distance(this.position, point) > 1.5) {
+                return false;
+            }
+        }
         // Flying units can move anywhere within their movement stat
         if (this.hasStatus(UnitStatus.Flying) && Board.distance(this.position, point) <= this.stats.movement) {
             return true;
@@ -673,9 +679,7 @@ export class Piece extends Entity {
 
     inAttackRange(point: Geom.Point): boolean {
         if (
-            !this.moved &&
-            this.hasStatus(UnitStatus.Flying) &&
-            this.inMovementRange(point)
+            !this.moved && this.inMovementRange(point)
         ) {
             return true;
         }

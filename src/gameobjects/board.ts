@@ -547,11 +547,21 @@ export class Board extends Model implements Box {
         return points;
     }
 
+    /**
+     * Get all pieces adjacent to a given position, optionally filtered.
+     * 
+     * @param point The position to check around.
+     * @param filter A filter function to apply to pieces found.
+     * @param includeCentre Whether to include pieces at the centre point (default: false)
+     * @returns An array of pieces found adjacent to the position.
+     */
     getAdjacentPiecesAtPosition(
         point: Geom.Point,
-        filter?: Function
+        filter?: Function,
+        includeCentre?: boolean
     ): Piece[] {
-        let neighbours: Piece[] = [];
+        // Use a set to avoid duplicates
+        const neighbours: Set<Piece> = new Set();
         const position: Geom.Point = Geom.Point.Clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
             const directionNeighbours: Piece[] = this.getPiecesAtPosition(
@@ -562,12 +572,28 @@ export class Board extends Model implements Box {
                 filter
             );
             if (directionNeighbours) {
-                neighbours = neighbours.concat(directionNeighbours);
+                directionNeighbours.forEach(piece => neighbours.add(piece));
             }
         }
-        return neighbours;
+        if (includeCentre) {
+            const centreNeighbours: Piece[] = this.getPiecesAtPosition(
+                position,
+                filter
+            );
+            if (centreNeighbours) {
+                centreNeighbours.forEach(piece => neighbours.add(piece));
+            }
+        }
+        return Array.from(neighbours);
     }
 
+    /**
+     * Get all pieces at a given position, optionally filtered.
+     * 
+     * @param point The position to check.
+     * @param filter A filter function to apply to pieces found.
+     * @returns An array of pieces found at the position.
+     */
     getPiecesAtPosition(point: Geom.Point, filter?: Function): Piece[] {
         return Array.from(
             this.pieces.filter((piece) => {
@@ -716,14 +742,8 @@ export class Board extends Model implements Box {
         if (mountingPiece && mountedPiece) {
             // If mounting piece is already mounted, dismount first
             if (mountingPiece.currentMount) {
-                mountingPiece.currentMount.currentRider = null;
-                mountingPiece.currentMount.moved = true;
-                mountingPiece.currentMount.turnOver = true;
-                this.logger.log(
-                    `${mountingPiece.name} dismounted ${mountingPiece.currentMount.name}`,
-                    Colour.Yellow
-                );
-                mountingPiece.currentMount = null;
+                await mountingPiece.dismount();
+                mountingPiece.moved = false;
             }
             this.sound.play("move");
             await mountingPiece.mount(mountedPiece);

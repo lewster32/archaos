@@ -6,6 +6,7 @@ import { Colour } from "../enums/colour";
 import { CursorType } from "../enums/cursortype";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
+import { UnitStatus } from "../enums/unitstatus";
 import type { Piece } from "../piece";
 import type { Spell } from "../spells/spell";
 
@@ -91,9 +92,7 @@ export class Rules {
                 if (currentAliveHoveredPiece) {
                     if (
                         selectedPiece.canMountPiece(currentAliveHoveredPiece) &&
-                        selectedPiece
-                            .getNeighbours()
-                            .includes(currentAliveHoveredPiece)
+                        selectedPiece.inMovementRange(currentAliveHoveredPiece.position)
                     ) {
                         return ActionType.Mount;
                     }
@@ -371,6 +370,20 @@ export class Rules {
 
             if (actionType === ActionType.Mount) {
                 if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
+                    // If we're not flying and we're more than 1 tile away, we
+                    // need to move first
+                    if (
+                        !selectedPiece.hasStatus(UnitStatus.Flying) &&
+                        selectedPiece.inMovementRange(
+                            currentAliveHoveredPiece.position
+                        )
+                    ) {
+                        await board.movePiece(
+                            selectedPiece.id,
+                            currentAliveHoveredPiece.position
+                        );
+                        selectedPiece.moved = false;
+                    }
                     await board.mountPiece(
                         selectedPiece.id,
                         currentAliveHoveredPiece.id
