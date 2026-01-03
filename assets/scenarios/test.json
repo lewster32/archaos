@@ -13,8 +13,12 @@
             "wizCode": "0003030900",
             "pieces": [
                 {
-                    "type": "Dire Wolf",
+                    "type": "Pegasus",
                     "position": { "x": 1, "y": 1 }
+                },
+                {
+                    "type": "Horse",
+                    "position": { "x": 1, "y": 0 }
                 }
             ]
         },

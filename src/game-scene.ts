@@ -252,9 +252,11 @@ export class GameScene extends Phaser.Scene {
         }
 
         // Every player gets the Disbelieve spell regardless
+        /*
         this.board.players.forEach((player: Player) => {
             this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
         });
+        */
 
         if (scenarioData.cheats) {
             Board.CHEAT_FORCE_HIT = scenarioData.cheats.forceHit ?? null;

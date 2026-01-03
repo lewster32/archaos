@@ -26,6 +26,7 @@ export class Logger {
             timestamp: new Date(),
             colour
         });
+        console.log(`${message}`);
     }
 }
 

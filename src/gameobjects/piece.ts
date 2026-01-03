@@ -1073,6 +1073,9 @@ export class Piece extends Entity {
             this.currentMount = piece;
             piece.currentRider = this;            
             await this.board.movePiece(this.id, piece.position);
+            this.board.logger.log(
+                `${this.name} mounted ${piece.name}`
+            );
             piece.createShaders(true, this.owner);
         }
     }

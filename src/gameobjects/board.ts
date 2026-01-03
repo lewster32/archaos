@@ -42,9 +42,9 @@ export class Board extends Model implements Box {
     public static CHEAT_FORCE_CAST: boolean | null = null;
     public static CHEAT_SHORT_DELAY: boolean = false;
 
-    static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
-        ? 10
-        : 700;
+    static get NEW_TURN_HIGHLIGHT_DURATION(): number {
+        return Board.CHEAT_SHORT_DELAY ? 10 : 700;
+    }
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
     static SPREAD_ITERATIONS: number = 2;
 
@@ -59,9 +59,15 @@ export class Board extends Model implements Box {
     static readonly DEFAULT_HEIGHT: number = 13;
     static readonly DEFAULT_CELLSIZE: number = 14;
 
-    static readonly DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 750;
-    static readonly END_TURN_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1500;
-    static readonly SPREAD_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 250;
+    static get DEFAULT_DELAY(): number {
+        return Board.CHEAT_SHORT_DELAY ? 10 : 750;
+    }
+    static get END_TURN_DELAY(): number {
+        return Board.CHEAT_SHORT_DELAY ? 10 : 1500;
+    }
+    static get SPREAD_DELAY(): number {
+        return Board.CHEAT_SHORT_DELAY ? 10 : 250;
+    }
 
     static readonly NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
@@ -708,6 +714,17 @@ export class Board extends Model implements Box {
             throw new Error(`Could not find piece with ID ${mountedPieceId}`);
         }
         if (mountingPiece && mountedPiece) {
+            // If mounting piece is already mounted, dismount first
+            if (mountingPiece.currentMount) {
+                mountingPiece.currentMount.currentRider = null;
+                mountingPiece.currentMount.moved = true;
+                mountingPiece.currentMount.turnOver = true;
+                this.logger.log(
+                    `${mountingPiece.name} dismounted ${mountingPiece.currentMount.name}`,
+                    Colour.Yellow
+                );
+                mountingPiece.currentMount = null;
+            }
             this.sound.play("move");
             await mountingPiece.mount(mountedPiece);
             this.emitBoardUpdateEvent();
