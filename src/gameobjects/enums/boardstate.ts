@@ -1,12 +1,12 @@
 export enum BoardState {
-    Busy,
-    Idle,
-    View,
-    SelectSpell,
-    CastSpell,
-    Move,
-    Attack,
-    RangedAttack,
-    Dismount,
-    GameOver
+    Busy = "busy",
+    Idle = "idle",
+    View = "view",
+    SelectSpell = "select-spell",
+    CastSpell = "cast-spell",
+    Move = "move",
+    Attack = "attack",
+    RangedAttack = "ranged-attack",
+    Dismount = "dismount",
+    GameOver = "game-over"
 }

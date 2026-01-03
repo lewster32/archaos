@@ -18,16 +18,6 @@ export interface SpellbookData {
 }
 
 /**
- * Log entries.
- */
-export interface LogEntry {
-    message: string;
-    id: number;
-    timestamp: Date;
-    colour?: string;
-}
-
-/**
  * Generic rectangle with no position.
  */
 export interface Box {
@@ -35,6 +25,9 @@ export interface Box {
     height: number;
 }
 
+/**
+ * Player setup information.
+ */
 export interface SetupPlayer {
     name: string;
 }
@@ -62,7 +55,7 @@ export interface BoardUpdateEventData {
  */
 export interface SpellbookOpenEventData {
     data: SpellbookEventData;
-    callback: (spell: Spell) => void;
+    callback:  (spell: Spell) => Promise<void>;
 }
 
 /**
@@ -71,4 +64,40 @@ export interface SpellbookOpenEventData {
 export interface SpellbookEventData {
     caster: string;
     spells: Spell[];
+}
+
+/**
+ * Unit statistics for display in the UI.
+ */
+export interface UnitStats {
+    id: string;
+    name: string;
+    movement: number;
+    combat: number;
+    rangedCombat: number;
+    range: number;
+    defense: number;
+    maneuverability: number;
+    magicResistance: number;
+    attackType: string;
+    rangedType: string;
+    status: string[];
+}
+
+/**
+ * Unit configuration for display in the UI.
+ */
+export interface UnitConfig {
+    attackType: string;
+    properties: {
+        mov: number;
+        com: number;
+        rcm: number;
+        rng: number;
+        def: number;
+        mnv: number;
+        res: number;
+    };
+    status: string[];
+    name: string;
 }

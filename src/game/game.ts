@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GameScene } from '../game-scene';
 
-function launch(containerId: string) {
+export const launch = (containerId: string) => {
     return new Phaser.Game({
         title: "Archaos",
         version: "0.0.1",
@@ -32,6 +32,3 @@ function launch(containerId: string) {
         },
     })
 }
-
-export default launch;
-export { launch }

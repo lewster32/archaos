@@ -1,15 +1,10 @@
-<script setup lang="ts">
-import UnitStats from "./UnitStats.vue";
-UnitStats;
-</script>
-
 <template>
     <div class="spellinfo" v-if="show">
         <button class="spellinfo__close button button--small" @click="close()">
             &times;
         </button>
         <div class="spellinfo__inner callout">
-            <img class="spellinfo__image" :src="getImageUrl(spell)" />
+            <img class="spellinfo__image" :src="getImageUrl(spell)" :alt="spell.name" />
             <div class="spellinfo__stats spell-stats">
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Name:</span>
@@ -34,9 +29,9 @@ UnitStats;
                         >{{ chancePercent(spell.chance) }}%</span
                     >
                 </p>
-                <p v-if="spell.damage" class="spell-stats__item">
+                <p v-if="spell.type == SpellType.Attack && (spell as AttackSpell).damage" class="spell-stats__item">
                     <span class="spell-stats__label">Damage:</span>
-                    <span class="spell-stats__value">{{ spell.damage }}</span>
+                    <span class="spell-stats__value">{{ (spell as AttackSpell).damage }}</span>
                 </p>
                 <p v-if="spell.range > 1.5" class="spell-stats__item">
                     <span class="spell-stats__label">Range:</span>
@@ -63,8 +58,8 @@ UnitStats;
                 <div v-if="spell.description">
                     <p class="spellinfo__description" v-html="spell.description"></p>
                 </div>
-                <div v-if="spell.unitProperties">
-                    <UnitStats :unit="spell.unitProperties" />
+                <div v-if="spell.type === SpellType.Summon && (spell as SummonSpell).unitProperties">
+                    <UnitStats :unit="(spell as SummonSpell).unitProperties" />
                 </div>
                 <div class="callout__buttons">
                     <button class="spellinfo__select button button--green button--important" @click="select()">
@@ -79,72 +74,66 @@ UnitStats;
     </div>
 </template>
 
-<script lang="ts">
-import { PropType } from "@vue/runtime-core";
-import { Spell } from "../gameobjects/spells/spell";
+<script setup lang="ts">
+import UnitStats from "./UnitStats.vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
-export default {
-    props: {
-        spell: Object as any,
-    },
-    data() {
-        return {};
-    },
-    computed: {
-        show(): boolean {
-            return this.spell != null;
-        },
-    },
-    watch: {},
-    methods: {
-        getImageUrl(spell: Spell) {
-            return `/images/spells/classicspells/${spell.spellId}.png`;
-        },
-        chancePercent(chance: number) {
-            return Math.round(chance * 100);
-        },
-        chanceRounded(chance: number) {
-            return Math.floor(chance * 10) * 10;
-        },
-        close() {
-            this.$emit("close");
-        },
-        spellType(spell: Spell) {
-            return SpellType[spell.type];
-        },
-        balance(spell: Spell) {
-            if (spell.balance > 0) {
-                return `Law ${spell.balance} (${new Array(spell.balance)
-                    .fill("^")
-                    .join("")})`;
-            } else if (spell.balance < 0) {
-                return `Chaos ${Math.abs(spell.balance)} (${new Array(
-                    Math.abs(spell.balance)
-                )
-                    .fill("*")
-                    .join("")})`;
-            }
-            return "Neutral";
-        },
-        select() {
-            this.$emit("select");
-        },
-        friendlyBalance(balance: number) {
-            let amount: string = ["slightly", "moderately", "highly", "greatly"][Math.min(Math.abs(balance) - 1, 3)];
+import { computed } from "vue";
+import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import type { Spell } from "../gameobjects/spells/spell";
+import type { AttackSpell } from "../gameobjects/spells/attackspell";
+import type { SummonSpell } from "../gameobjects/spells/summonspell";
+import type { Ref } from "vue";
 
-            if (balance > 0) {
-                return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
-            } else if (balance < 0) {
-                return `Casting shifts world balance ${amount} towards chaos. Becomes easier to cast if world is chaotic.`;
-            }
-            return "Casting does not affect world balance. Balance of world has no effect on spell's casting chance.";
-        },
-    },
-    async mounted() {},
-    destroyed() {},
+const props = defineProps<{
+    spell: Spell;
+}>();
+
+const emit = defineEmits<{
+    (e: "close"): void;
+    (e: "select"): void;
+}>();
+
+/**
+ * Whether to show the spell info view or not.
+ */
+const show: Ref<boolean> = computed(() => {
+    return props.spell != null;
+});
+
+/**
+ * Gets the image URL for a spell.
+ * 
+ * @param spell The spell to get the image URL for.
+ */
+const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
+    return `/images/spells/classicspells/${spell.spellId}.png`;
+};
+
+/**
+ * Closes the spell info view.
+ */
+const close: () => void = () => {
+    emit("close");
+};
+
+/**
+ * Gets the friendly name of a spell's type.
+ * 
+ * @param spell The spell to get the type name for.
+ * @returns The friendly type name.
+ */
+const spellType: (spell: Spell) => string = (spell: Spell) => {
+    return Object.keys(SpellType)
+        .find((key => SpellType[key as keyof typeof SpellType] === spell.type)) ?? "Unknown";
+};
+
+/**
+ * Emits the select event, indicating the user wants to select this spell.
+ */
+const select: () => void = () => {
+    emit("select");
 };
 </script>
-
 <style lang="scss" scoped>
 
 :host {

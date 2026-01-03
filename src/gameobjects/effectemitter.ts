@@ -1,14 +1,18 @@
 import { Board } from "./board";
 import { Piece } from "./piece";
 
+/**
+ * Essentially a big hardcoded class full of fireworks and sparkles driven by
+ * tweens and particle emitters. A lot of this should be modularised and maybe
+ * able to be driven by JSON configuration instead to allow for modding.
+ */
 export class EffectEmitter extends Phaser.GameObjects.Particles
     .ParticleEmitter {
-    private _anim: Phaser.Animations.Animation;
-    private _startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
-    private _endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
-    private _target: Piece | null;
-    private _type: EffectType;
-
+    private readonly _anim: Phaser.Animations.Animation;
+    private readonly _startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
+    private readonly _endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
+    private readonly _target: Piece | null;
+    private readonly _type: EffectType;
     get anim() {
         return this._anim;
     }
@@ -625,7 +629,7 @@ class EffectParticle extends Phaser.GameObjects.Particles.Particle {
     private _frameTime: number;
     private _frameIndex: number;
 
-    private _anim: Phaser.Animations.Animation;
+    private readonly _anim: Phaser.Animations.Animation;
 
     constructor(emitter: EffectEmitter) {
         super(emitter);
@@ -659,9 +663,9 @@ class EffectParticle extends Phaser.GameObjects.Particles.Particle {
 
 export enum EffectType {
     WizardCasting,
-    WizardCastFail,
+    WizardCastFail, // It happens to the best of us
     WizardCastBeam,
-    WizardDefeated,
+    WizardDefeated, // WOBWOBWOBWOBWOB
     ArrowBeam,
     ArrowHit,
     DragonFireBeam,

@@ -103,12 +103,12 @@ import type { Game, Events } from "phaser";
 import type { Spell } from "../gameobjects/spells/spell";
 import type {
     SpellbookData,
-    LogEntry,
     Box,
     SetupData,
     BoardUpdateEventData,
     SpellbookOpenEventData,
 } from "../gameobjects/interfaces/ui";
+import type { Log as LogEntry } from "../gameobjects/services/logger";
 
 /**
  * Game component - contains the Phaser game instance and UI components.
@@ -246,8 +246,8 @@ const spellbookOpen = computed(() => {
  */
 onMounted(async () => {
     // Load setup from local storage if available
-    if (window.localStorage) {
-        const setupData = window.localStorage.getItem("setup");
+    if (globalThis.localStorage) {
+        const setupData = globalThis.localStorage.getItem("setup");
         if (setupData) {
             setup.value = JSON.parse(setupData);
         }
@@ -349,10 +349,10 @@ onMounted(async () => {
         );
         if (scenarioResponse.ok) {
             const scenarioData = await scenarioResponse.json();
+            gameStarted.value = true;
             setTimeout(() => {
                 eventEmitter.value?.emit("start-scenario", scenarioData);
                 // Mark the game as started
-                gameStarted.value = true;
             }, 500);
         } else {
             console.error(

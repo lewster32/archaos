@@ -6,6 +6,7 @@ import { Colour } from "../enums/colour";
 import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
+import { UnitConfig } from "../interfaces/ui";
 import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";
@@ -24,7 +25,7 @@ export class SummonSpell extends Spell {
         return this._properties.unitId || "";
     }
 
-    get unitProperties(): PieceConfig {
+    get unitProperties(): UnitConfig {
         return Piece.getUnitConfig(this.unitId);
     }
 

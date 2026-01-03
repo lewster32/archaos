@@ -9,13 +9,11 @@
         {
             "id": 1,
             "name": "Player 1",
+            "position": { "x": 2, "y": 0 },
+            "wizCode": "0003030900",
             "pieces": [
                 {
-                    "type": "Wizard",
-                    "position": { "x": 2, "y": 0 }
-                },
-                {
-                    "type": "Eagle",
+                    "type": "Dire Wolf",
                     "position": { "x": 1, "y": 1 }
                 }
             ]
@@ -23,11 +21,9 @@
         {
             "id": 2,
             "name": "Player 2",
+            "position": { "x": 2, "y": 4 },
+            "wizCode": "0900000900",
             "pieces": [
-                {
-                    "type": "Wizard",
-                    "position": { "x": 2, "y": 4}
-                },
                 {
                     "type": "Wall",
                     "position": { "x": 0, "y": 2 }
@@ -51,5 +47,10 @@
             ]
         }
     ],
-    "phase": "Moving"
+    "phase": "moving",
+    "cheats": {
+        "forceHit": true,
+        "forceCast": true,
+        "shortDelay": true
+    }
 }

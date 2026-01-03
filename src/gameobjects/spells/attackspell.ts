@@ -1,12 +1,12 @@
 import { Board } from "../board";
-import { SpellConfig } from "../configs/spellconfig";
 import { EffectType } from "../effectemitter";
 import { SpellType } from "../enums/spelltype";
 import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitStatus } from "../enums/unitstatus";
-import { Piece } from "../piece";
-import { Player } from "../player";
 import { Spell } from "./spell";
+import type { SpellConfig } from "../configs/spellconfig";
+import type { Piece } from "../piece";
+import type { Player } from "../player";
 
 export class AttackSpell extends Spell {
     constructor(board: Board, id: number, config: SpellConfig) {

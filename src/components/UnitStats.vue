@@ -74,49 +74,50 @@
         </div>
     </div>
 </template>
-<script lang="ts">
-export default {
-    props: {
-        unit: Object as any,
-    },
-    data() {
-        return {};
-    },
-    computed: {
-        canFly() {
-            return this.unit?.status?.indexOf("flying") > -1;
-        },
-        isUndead() {
-            return this.unit?.status?.indexOf("undead") > -1;
-        },
-        isMount() {
-            return this.unit?.status?.indexOf("mount") > -1 || this.unit?.status?.indexOf("mountAny") > -1;
-        },
-        canSpread() {
-            return this.unit?.status?.indexOf("spread") > -1;
-        },
-        isInvulnerable() {
-            return this.unit?.status?.indexOf("invuln") > -1;
-        },
-        isTree() {
-            return this.unit?.status?.indexOf("tree") > -1;
-        },
-        expires() {
-            return this.unit?.status?.indexOf("expires") > -1;
-        },
-        expiresGiveSpell() {
-            return this.unit?.status?.indexOf("expiresGiveSpell") > -1;
-        }
-    },
-    watch: {},
-    methods: {
-        itemNumClass(num: number) {
-            return `unit-properties__item--num-${num}`;
-        },
-    },
-    async mounted() {},
-    destroyed() {},
+<script setup lang="ts">
+import { computed } from "vue";
+import { UnitConfig } from "../gameobjects/interfaces/ui";
+
+const props = defineProps<{
+    unit: UnitConfig | null;
+}>();
+
+const canFly = computed(() => {
+    return props.unit?.status?.includes("flying");
+});
+
+const isUndead = computed(() => {
+    return props.unit?.status?.includes("undead");
+});
+
+const isMount = computed(() => {
+    return props.unit?.status?.includes("mount") || props.unit?.status?.includes("mountAny");
+});
+
+const canSpread = computed(() => {
+    return props.unit?.status?.includes("spread");
+});
+
+const isInvulnerable = computed(() => {
+    return props.unit?.status?.includes("invuln");
+});
+
+const isTree = computed(() => {
+    return props.unit?.status?.includes("tree");
+});
+
+const expires = computed(() => {
+    return props.unit?.status?.includes("expires");
+});
+
+const expiresGiveSpell = computed(() => {
+    return props.unit?.status?.includes("expiresGiveSpell");
+});
+
+const itemNumClass = (num: number) => {
+    return `unit-properties__item--num-${num}`;
 };
+
 </script>
 <style lang="scss" scoped>
 .unit-statuses {
@@ -125,6 +126,18 @@ export default {
             color: var(--color-white);
             content: ", ";
         }
+    }
+}
+
+
+@keyframes flip-numbers {
+    0% {
+        --stat-icon: none;
+        --stat-number-opacity: 1;
+    }
+    50% {
+        --stat-icon: var(--stat-icon);
+        --stat-number-opacity: 0;
     }
 }
 
@@ -187,17 +200,6 @@ export default {
         }
 
         animation: flip-numbers 3s infinite steps(1);
-
-        @keyframes flip-numbers {
-            0% {
-                --stat-icon: none;
-                --stat-number-opacity: 1;
-            }
-            50% {
-                --stat-icon: var(--stat-icon);
-                --stat-number-opacity: 0;
-            }
-        }
     }
 }
 </style>

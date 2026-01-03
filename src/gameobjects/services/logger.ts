@@ -1,7 +1,7 @@
 import { Colour } from "../enums/colour";
 
 export class Logger {
-    private _eventEmitter: Phaser.Events.EventEmitter;
+    private readonly _eventEmitter: Phaser.Events.EventEmitter;
     private _currentLogId: number = 0;
     private static instance: Logger;
 

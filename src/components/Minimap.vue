@@ -1,19 +1,3 @@
-<script setup lang="ts">
-import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
-import { Piece } from "../gameobjects/piece";
-UnitStatus;
-
-import type { CSSProperties } from 'vue'
-
-declare module 'vue' {
-  interface CSSProperties {
-    // limited to custom properties:
-    [k: `--${string}`]: string
-  }
-}
-
-</script>
-
 <template>
     <div class="minimap" v-if="show && board?.width && board?.height">
         <button class="minimap__close button button--small" @click="close()">
@@ -36,53 +20,79 @@ declare module 'vue' {
         </div>
     </div>
 </template>
+<script setup lang="ts">
+declare module 'vue' {
+    interface CSSProperties {
+        [k: `--${string}`]: string
+    }
+}
+import type { CSSProperties } from 'vue'
+import { ref, computed } from "vue";
+import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
+import { Piece } from "../gameobjects/piece";
+import { Display } from "phaser";
 
-<script lang="ts">
-export default {
-    props: {
-        pieces: Array as any,
-        board: Object as any,
-    },
-    data() {
-        return {
-            show: true,
-        };
-    },
-    computed: {
-        boardStyles(): CSSProperties {
-            return {
-                "--board-width": this.board.width + "px",
-                "--board-height": this.board.height + "px",
-                "--map-scale": this.scale,
-            };
-        },
-        scale(): number {
-            return (15 / this.board.width) * 3.75;
-        }
-    },
-    watch: {},
-    methods: {
-        close() {
-            this.show = false;
-        },
-        hexColour(colourNum: number) {
-            const colour: Phaser.Display.Color =
-                Phaser.Display.Color.ValueToColor(colourNum);
-            return `${colour.rgba}`;
-        },
-        getPieceStyles(piece: Piece): CSSProperties {
-            return {
-                "--piece-x": piece.position.x + "px",
-                "--piece-y": piece.position.y + "px",
-                "--piece-color": this.hexColour(piece.owner?.colour ?? 0x444444),
-            };
-        },
-    },
-    async mounted() {},
-    destroyed() {},
+const props = defineProps<{
+    pieces: Piece[];
+    board: { width: number; height: number } | null;
+}>();
+
+/**
+ * Whether to show the minimap or not.
+ */
+const show = ref(true);
+
+/**
+ * The scale of the minimap based on the board size.
+ */
+const scale = computed(() => {
+    return (15 / (props.board?.width ?? 1)) * 3.75;
+});
+
+/**
+ * The styles for the board element.
+ */
+const boardStyles = computed<CSSProperties>(() => {
+    return {
+        "--board-width": (props.board?.width ?? 0) + "px",
+        "--board-height": (props.board?.height ?? 0) + "px",
+        "--map-scale": scale.value.toString(),
+    };
+});
+
+/**
+ * Closes the minimap.
+ */
+const close = () => {
+    show.value = false;
+};
+
+/**
+ * Converts a numeric colour to a hex string.
+ * 
+ * @param colourNum  The numeric colour.
+ * @returns The hex colour string.
+ */
+const hexColour = (colourNum: number) => {
+    const colour: Phaser.Display.Color =
+        Display.Color.ValueToColor(colourNum);
+    return `${colour.rgba}`;
+};
+
+/**
+ * Gets the styles for a piece on the minimap.
+ * 
+ * @param piece The piece to get the styles for.
+ * @returns The CSS styles for the piece.
+ */
+const getPieceStyles = (piece: Piece): CSSProperties => {
+    return {
+        "--piece-x": piece.position.x + "px",
+        "--piece-y": piece.position.y + "px",
+        "--piece-color": hexColour(piece.owner?.colour ?? 0x444444),
+    };
 };
 </script>
-
 <style lang="scss" scoped>
 :host {
     position: relative;

@@ -1,5 +1,5 @@
 <template>
-    <div class="game-log" :class="{'game-log--minimised': minimised || !logs || !logs.length}">
+    <div class="game-log" :class="{'game-log--minimised': isMinimised}">
         <button class="game-log__toggle button button--small" @click="toggle()">
             {{ minimised ? "+" : "-" }}
         </button>
@@ -11,46 +11,73 @@
         </ul>
     </div>
 </template>
-<script lang="ts">
+<script setup lang="ts">
 import { Colour } from '../gameobjects/enums/colour';
 import { Log } from '../gameobjects/services/logger';
-export default {
-    props: {
-        logs: {
-            type: Array,
-            required: true
-        }
-    },
-    data() {
-        return {
-            minimised: true,
-            showTimestamps: false
-        };
-    },
-    computed: {
-        logsSorted() {
-            return this.logs.sort((a: Log, b: Log) => {
-                return b.id - a.id;
-            }).slice(0, 25);
-        }
-    },
-    watch: {},
-    methods: {
-        formatDate(date: Date) {
-            return date.toLocaleString().split(" ")[1];
-        },
-        toggle() {
-            this.minimised = !this.minimised;
-        },
-        getColour(log: Log) {
-            if (log.colour) {
-                return { color: `var(--color-${Colour[log.colour].toLowerCase()})` };
-            }
-            return { color: `var(--color-white)` };
-        }
-    },
-    async mounted() {},
-    destroyed() {},
+import { ref, computed } from 'vue';
+
+const props = defineProps<{
+    logs: Log[];
+}>();
+
+/**
+ * Whether to show timestamps next to each log entry.
+ */
+const showTimestamps = ref(false);
+
+/**
+ * Whether the log is manually minimised by the user or not.
+ */
+const minimised = ref(true);
+
+/**
+ * Whether the log is minimised (either manually or because there are no logs).
+ */
+const isMinimised = computed(() => {
+    return minimised.value || !props.logs || !props.logs.length;
+});
+
+/**
+ * Toggles the minimised state of the log.
+ */
+const toggle = () => {
+    minimised.value = !minimised.value;
+};
+
+/**
+ * The logs sorted in descending order by timestamp, limited to the most recent
+ * 25 entries.
+ */
+const logsSorted = computed(() => {
+    return props.logs
+        .slice()
+        .sort((a: Log, b: Log) => {
+            return b.timestamp.getTime() - a.timestamp.getTime();
+        })
+        .slice(0, 25);
+});
+
+/**
+ * Formats a date to show only the time portion.
+ * 
+ * @param date  The date to format.
+ * @returns The formatted time string.
+ */
+const formatDate = (date: Date) => {
+    return date.toLocaleString().split(" ")[1];
+};
+
+/**
+ * Gets the colour style for a log entry.
+ * 
+ * @param log The log entry.
+ * @returns The colour style object (a CSS custom property).
+ */
+const getColour = (log: Log) => {
+    if (log.colour) {
+        return { color: `var(--color-${Colour[log.colour].toLowerCase()})` };
+    }
+    return { color: `var(--color-white)` };
 };
 </script>
 <style lang="scss" scoped>
@@ -65,8 +92,6 @@ export default {
         transition: min-height 0.25s, height 0.25s;
         z-index: 1;
         &--minimised {
-            // min-height: 2.5em;
-            // height: 2.5em;
             height: auto;
             min-height: 0;
             .game-log__item:not(:first-child) {

@@ -1,8 +1,3 @@
-<script setup lang="ts">
-import SpellInfo from "./SpellInfo.vue";
-SpellInfo;
-</script>
-
 <template>
     <div class="modal" v-if="illusionPrompt">
         <div class="callout">
@@ -72,7 +67,7 @@ SpellInfo;
                         v-for="spell in spellsByChance()"
                         :key="spell.id"
                     >
-                        <img class="spell__image" :src="getImageUrl(spell)" />
+                        <img class="spell__image" :src="getImageUrl(spell)" :alt="spell.name"/>
                         <span class="spell__name">{{ spell.name }}</span>
                         <span
                             :title="`${friendlyBalance(spell.balance)}`"
@@ -123,131 +118,167 @@ SpellInfo;
         />
     </div>
 </template>
-
-<script lang="ts">
-import { Spell } from "../gameobjects/spells/spell";
+<script setup lang="ts">
+import SpellInfo from "./SpellInfo.vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
-import { SummonSpell } from "../gameobjects/spells/summonspell";
+import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import type { Spell } from "../gameobjects/spells/spell";
+import type { SummonSpell } from "../gameobjects/spells/summonspell";
+import type { SpellbookData } from "../gameobjects/interfaces/ui";
+import type { Ref } from "vue";
 
-export default {
-    $refs: {
-        scroll: HTMLDivElement,
-    },
-    props: {
-        data: Object as any,
-    },
-    data() {
-        return {
-            currentSpell: null as any,
-            illusionPrompt: false as boolean,
-        };
-    },
-    computed: {
-        show(): boolean {
-            return this.data.show;
-        },
-        minimised(): boolean {
-            return this.data.minimised;
-        },
-    },
-    watch: {
-        data(oldData, newData) {
-            if (oldData?.spells != newData?.spells) {
-                this.data.minimised = true;
-                this.$nextTick(() => {
-                    if (this.$refs.scroll) {
-                        (this.$refs.scroll as HTMLDivElement).scrollTop = 0;
-                    }
-                });
-            }
-        },
-    },
-    methods: {
-        selectIllusion(illusion: boolean) {
-            this.illusionPrompt = false;
-            this.currentSpell.illusion = !!illusion;
-            this.$emit("select", this.currentSpell);
-            this.closeInfo();
-        },
-        closeIllusion() {
-            this.illusionPrompt = false;
-            this.closeInfo();
-        },
-        select(spell: Spell) {
-            this.data.minimised = true;
-            if (!spell) {
-                this.$emit("select", null);
-                this.closeInfo();
-                return;
-            }
-            this.currentSpell = spell;
-            if (
-                spell.type === SpellType.Summon &&
-                (spell as SummonSpell).allowIllusion
-            ) {
-                this.illusionPrompt = true;
-            } else {
-                this.$emit("select", spell);
-                this.closeInfo();
-            }
-        },
-        info(spell: Spell) {
-            this.currentSpell = spell;
-            this.minimised = true;
-        },
-        closeInfo() {
-            this.currentSpell = null;
-            this.minimised = false;
-        },
-        spellsByChance() {
-            return this.data.spells.sort((a: Spell, b: Spell) => {
-                if (b.chance != a.chance) {
-                    return b.chance - a.chance;
+const props = defineProps<{
+    data: SpellbookData;
+}>();
+
+const emit = defineEmits<(e: "select", spell: Spell | null) => void>();
+
+/**
+ * The scroll element for the spell list.
+ */
+const scroll: Ref<HTMLElement | null> = ref(null);
+
+/**
+ * Whether the illusion prompt is being shown.
+ */
+const illusionPrompt: Ref<boolean> = ref(false);
+
+/**
+ * The currently selected spell for viewing info or selection.
+ */
+const currentSpell: Ref<Spell | null> = ref(null);
+
+/**
+ * Whether to show the spellbook or not.
+ */
+const show: Ref<boolean> = computed(() => {
+    return props.data.show;
+});
+
+/**
+ * Whether the spellbook is minimised or not.
+ */
+const minimised: Ref<boolean> = computed(() => {
+    return props.data.minimised;
+});
+
+/**
+ * Watches for changes to the spells list to reset scroll and minimised state.
+ * This is to ensure that when the spellbook is handed to a new player, it
+ * starts minimised (for privacy in local multiplayer) and scrolled to the top.
+ */
+watch(
+    () => props.data.spells,
+    (newSpells, oldSpells) => {
+        if (newSpells !== oldSpells) {
+            props.data.minimised = true;
+            nextTick(() => {
+                const scrollElement = (scroll.value as HTMLDivElement);
+                if (scrollElement) {
+                    scrollElement.scrollTop = 0;
                 }
-                return a.name.localeCompare(b.name);
             });
-        },
-        getImageUrl(spell: Spell) {
-            return `/images/spells/classicspells/${spell.spellId}.png`;
-        },
-        chancePercent(chance: number) {
-            return Math.round(chance * 100);
-        },
-        chanceRounded(chance: number) {
-            return Math.floor(chance * 10) * 10;
-        },
-        toggle() {
-            this.data.minimised = !this.data.minimised;
-            if (this.currentSpell) {
-                this.closeInfo();
-            }
-        },
-        balance(spell: Spell) {
-            if (spell.balance > 0) {
-                return "^";
-            } else if (spell.balance < 0) {
-                return `*`;
-            }
-            return "-";
-        },
-        friendlyBalance(balance: number) {
-            let amount: string = [
-                "slightly",
-                "moderately",
-                "highly",
-                "greatly",
-            ][Math.min(Math.abs(balance) - 1, 3)];
+        }
+    }
+);
 
-            if (balance > 0) {
-                return `Casting shifts world balance ${amount} towards law. Becomes easier to cast if world is lawful.`;
-            } else if (balance < 0) {
-                return `Casting shifts world balance ${amount} towards chaos. Becomes easier to cast if world is chaotic.`;
-            }
-            return "Casting does not affect world balance. Balance of world has no effect on spell's casting chance.";
-        },
-    },
-    async mounted() {},
-    destroyed() {},
+/**
+ * Selects whether to cast the summon spell as an illusion or not. This sets
+ * the illusion flag on the summon spell before emitting the selection event.
+ * 
+ * @param illusion Whether to cast as an illusion or not.
+ */
+const selectIllusion: (illusion: boolean) => void = (illusion: boolean) => {
+    illusionPrompt.value = false;
+    if (currentSpell.value?.type === SpellType.Summon) {
+        (currentSpell.value as SummonSpell).illusion = Boolean(illusion);
+        emit("select", currentSpell.value);
+    }
+    closeInfo();
+};
+
+/**
+ * Closes the illusion prompt without selecting a spell.
+ */
+const closeIllusion: () => void = () => {
+    illusionPrompt.value = false;
+    closeInfo();
+};
+
+/**
+ * Selects a spell from the spellbook.
+ * 
+ * @param spell The spell to select, or null to skip selection.
+ */
+const select: (spell: Spell | null) => void = (spell: Spell | null) => {
+    props.data.minimised = true;
+    if (!spell) {
+        emit("select", null);
+        closeInfo();
+        return;
+    }
+    currentSpell.value = spell;
+    // If the spell is a summon that allows illusions, show the prompt.
+    if (
+        spell.type === SpellType.Summon &&
+        (spell as SummonSpell).allowIllusion
+    ) {
+        illusionPrompt.value = true;
+    } else {
+        emit("select", spell);
+        closeInfo();
+    }
+};
+
+/**
+ * Shows the spell info for a spell.
+ * 
+ * @param spell The spell to show info for.
+ */
+const info: (spell: Spell) => void = (spell: Spell) => {
+    currentSpell.value = spell;
+    props.data.minimised = true;
+};
+
+/**
+ * Closes the spell info view.
+ */
+const closeInfo: () => void = () => {
+    currentSpell.value = null;
+    props.data.minimised = false;
+};
+
+/**
+ * Gets the spells sorted by casting chance (highest first), then by name.
+ */
+const spellsByChance: () => Spell[] = () => {
+    return props.data.spells.sort((a: Spell, b: Spell) => {
+        if (b.chance != a.chance) {
+            return b.chance - a.chance;
+        }
+        return a.name.localeCompare(b.name);
+    });
+};
+
+/**
+ * Gets the image URL for a spell.
+ * 
+ * @param spell The spell to get the image URL for.
+ * @returns The image URL.
+ */
+const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
+    return `/images/spells/classicspells/${spell.spellId}.png`;
+};
+
+/**
+ * Toggles the minimised state of the spellbook.
+ */
+const toggle: () => void = () => {
+    props.data.minimised = !props.data.minimised;
+    if (currentSpell.value) {
+        closeInfo();
+    }
 };
 </script>
 
@@ -261,9 +292,6 @@ export default {
     padding: 1em;
     display: flex;
     justify-content: right;
-    &__toggle {
-        z-index: 2;
-    }
     &__inner {
         display: flex;
         flex-direction: column;
@@ -292,7 +320,6 @@ export default {
         flex: 1 1 auto;
         overflow-y: scroll;
         margin-bottom: 1em;
-        // padding-right: .5em;
         &::-webkit-scrollbar {
             width: 0.5em;
         }
@@ -309,8 +336,6 @@ export default {
     &__list {
         display: flex;
         flex-direction: column;
-    }
-    &__skip {
     }
     &__toggle {
         position: absolute;
@@ -367,10 +392,6 @@ export default {
     }
     &__balance {
         flex: 0 1 auto;
-    }
-    &__select {
-    }
-    &__info {
     }
 }
 

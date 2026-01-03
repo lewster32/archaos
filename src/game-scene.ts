@@ -213,6 +213,12 @@ export class GameScene extends Phaser.Scene {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
             })
+            this.board.addWizard({
+                owner: currentPlayer,
+                x: player.position.x,
+                y: player.position.y,
+                wizCode: player.wizCode || Wizard.randomWizCode(),
+            });   
             if (player.spells?.length) {
                 for (let spellName of player.spells) {
                     this.board.addSpell(
@@ -223,24 +229,14 @@ export class GameScene extends Phaser.Scene {
             }
             if (player.pieces?.length) {
                 for (let pieceData of player.pieces) {
-                    if (pieceData.type.toLowerCase() === "wizard") {
-                        this.board.addWizard({
-                            owner: currentPlayer,
-                            x: pieceData.position.x,
-                            y: pieceData.position.y,
-                            wizCode: pieceData.wizCode || Wizard.randomWizCode(),
-                        });                        
-                    }
-                    else {
-                        const pieceProperties = Piece.getPieceProperties(pieceData.type);
-                        this.board.addPiece({
-                            ...pieceProperties,
-                            owner: currentPlayer,
-                            x: pieceData.position.x,
-                            y: pieceData.position.y,
-                            unitType: pieceProperties.unitType || UnitType.Creature
-                        });
-                    }
+                    const pieceProperties = Piece.getPieceProperties(pieceData.type);
+                    this.board.addPiece({
+                        ...pieceProperties,
+                        owner: currentPlayer,
+                        x: pieceData.position.x,
+                        y: pieceData.position.y,
+                        unitType: pieceProperties.unitType || UnitType.Creature
+                    });
                 }
             }
         }
@@ -249,6 +245,12 @@ export class GameScene extends Phaser.Scene {
         this.board.players.forEach((player: Player) => {
             this.board.addSpell(player, Spell.getSpellProperties("disbelieve"));
         });
+
+        if (scenarioData.cheats) {
+            Board.CHEAT_FORCE_HIT = scenarioData.cheats.forceHit ?? null;
+            Board.CHEAT_FORCE_CAST = scenarioData.cheats.forceCast ?? null;
+            Board.CHEAT_SHORT_DELAY = scenarioData.cheats.shortDelay ?? Board.CHEAT_SHORT_DELAY;
+        }
 
         setTimeout(async () => {
             let phase: BoardPhase = BoardPhase.Idle;

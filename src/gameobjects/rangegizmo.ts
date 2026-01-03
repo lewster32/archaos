@@ -6,16 +6,16 @@ import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 
 export class RangeGizmo {
-    private static GIZMO_REVEAL_DURATION: number = 50;
-    private static GIZMO_REVEAL_STAGGER_DELAY: number = 5;
+    private static readonly GIZMO_REVEAL_DURATION: number = 50;
+    private static readonly GIZMO_REVEAL_STAGGER_DELAY: number = 5;
 
-    private _board: Board;
-    private _rangeLayer: Phaser.GameObjects.Layer;
-    private _pathLayer: Phaser.GameObjects.Layer;
+    private readonly _board: Board;
+    private readonly _rangeLayer: Phaser.GameObjects.Layer;
+    private readonly _pathLayer: Phaser.GameObjects.Layer;
+    private readonly _rect: Phaser.Geom.Rectangle = new Phaser.Geom.Rectangle();
     private _piece: Piece = null;
     private _validNodes: Node[] = [];
-    private _paths: Map<String, Path>;
-    private _rect: Phaser.Geom.Rectangle = new Phaser.Geom.Rectangle();
+    private _paths: Map<string, Path>;
 
     constructor(board: Board) {
         this._board = board;
@@ -80,9 +80,9 @@ export class RangeGizmo {
             ePt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0),
             wPt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
 
-        for (let e: number = 0; e < this._validNodes.length; e++) {
+        for (const validNode of this._validNodes) {
             const potentialEnemies: Piece[] = this._board.getPiecesAtPosition(
-                this._validNodes[e].pos
+                validNode.pos
             );
             if (!potentialEnemies.length) {
                 continue;
@@ -103,7 +103,7 @@ export class RangeGizmo {
         }
 
         if (this._piece.stats.movement > 1) {
-            this._validNodes = this._validNodes.sort((n1: Node, n2: Node) =>
+            this._validNodes.toSorted((n1: Node, n2: Node) =>
                 Board.distance(this._piece.position, n1.pos) <
                 Board.distance(this._piece.position, n2.pos)
                     ? -1
@@ -111,10 +111,10 @@ export class RangeGizmo {
             );
         }
 
-        if (!this._piece.hasStatus(UnitStatus.Flying)) {
-            await this.generatePaths();
-        } else {
+        if (this._piece.hasStatus(UnitStatus.Flying)) {
             await this.generateRange();
+        } else {
+            await this.generatePaths();
         }
     }
 
@@ -158,7 +158,7 @@ export class RangeGizmo {
 
         return new Promise((resolve: Function) => {
             this._validNodes
-                .filter((node: Node) => node && node.traversable)
+                .filter((node: Node) => node?.traversable)
                 .forEach((node: Node) => {
                     const path: Path = this.getPathTo(node.pos);
                     if (!path?.nodes?.length) {
@@ -401,7 +401,7 @@ export class RangeGizmo {
         }
         const path: Path = this.getPathTo(toPt);
 
-        if (!path || !path.nodes || path.nodes.length <= 1) {
+        if (!path?.nodes?.length) {
             return;
         }
 
@@ -424,12 +424,12 @@ export class RangeGizmo {
 
     public findPath(fromPt: Phaser.Geom.Point, toPt: Phaser.Geom.Point): Path {
         let firstNode: Node, destinationNode: Node;
-        for (var n: number = 0; n < this._validNodes.length; n++) {
-            if (Phaser.Geom.Point.Equals(this._validNodes[n].pos, fromPt)) {
-                firstNode = this._validNodes[n];
+        for (const node of this._validNodes) {
+            if (Phaser.Geom.Point.Equals(node.pos, fromPt)) {
+                firstNode = node;
             }
-            if (Phaser.Geom.Point.Equals(this._validNodes[n].pos, toPt)) {
-                destinationNode = this._validNodes[n];
+            if (Phaser.Geom.Point.Equals(node.pos, toPt)) {
+                destinationNode = node;
             }
         }
 
@@ -447,7 +447,7 @@ export class RangeGizmo {
         let i: number;
 
         let connectedNodes: Node[];
-        let travelCost: number = 1.0;
+        let travelCost: number = 1;
 
         let g: number;
         let h: number;
@@ -469,7 +469,7 @@ export class RangeGizmo {
             for (i = 0; i < l; ++i) {
                 testNode = connectedNodes[i];
 
-                if (testNode == currentNode || testNode.traversable == false)
+                if (testNode == currentNode || !testNode.traversable)
                     continue;
                 g =
                     currentNode.g +
@@ -500,7 +500,7 @@ export class RangeGizmo {
                     testNode.g = g;
                     testNode.h = h;
                     testNode.parentNode = currentNode;
-                    if (currentNode.warning != true) {
+                    if (!currentNode.warning) {
                         openNodes.push(testNode);
                     }
                     
@@ -514,31 +514,31 @@ export class RangeGizmo {
             openNodes.sort(function (n1: Node, n2: Node): number {
                 return n1.f < n2.f ? -1 : 1;
             });
-            currentNode = openNodes.shift() as Node;
+            currentNode = openNodes.shift();
         }
         return RangeGizmo.buildPath(destinationNode, firstNode);
     }
 
     public findConnectedNodes(node: Node): Node[] {
-        var output: Node[] = [];
+        const output: Node[] = [];
 
-        for (var n: number = 0; n < this._validNodes.length; n++) {
+        for (const validNode of this._validNodes) {
             if (
-                node.x < this._validNodes[n].x - 1 ||
-                node.x > this._validNodes[n].x + 1
+                node.x < validNode.x - 1 ||
+                node.x > validNode.x + 1
             ) {
                 continue;
             }
             if (
-                node.y < this._validNodes[n].y - 1 ||
-                node.y > this._validNodes[n].y + 1
+                node.y < validNode.y - 1 ||
+                node.y > validNode.y + 1
             ) {
                 continue;
             }
-            if (node === this._validNodes[n]) {
+            if (node === validNode) {
                 continue;
             }
-            output.push(this._validNodes[n]);
+            output.push(validNode);
         }
 
         return output;
@@ -547,15 +547,15 @@ export class RangeGizmo {
     public static diagonalHeuristic(
         node: Node,
         destinationNode: Node,
-        cost: number = 1.0,
+        cost: number = 1,
         diagonalCost: number = 1.5,
         warningCost: number = 999
     ): number {
-        var dx: number = Math.abs(node.x - destinationNode.x);
-        var dy: number = Math.abs(node.y - destinationNode.y);
+        const dx: number = Math.abs(node.x - destinationNode.x);
+        const dy: number = Math.abs(node.y - destinationNode.y);
 
-        var diag: number = Math.min(dx, dy);
-        var straight: number = dx + dy;
+        const diag: number = Math.min(dx, dy);
+        const straight: number = dx + dy;
 
         if (node.warning === true) {
             return (
@@ -580,17 +580,6 @@ export class RangeGizmo {
         }
         angles.unshift(this.getAngle(startNode.pos, destinationNode.pos));
 
-        /*
-        for (let n: number = 0; n < path.length; n++) {
-            if (path[n].warning === true) {
-                path.slice(n + 1, path.length).forEach(node => { node.traversable = false });
-                path = path.slice(0, n);
-                angles = angles.slice(0, n);
-                break;
-            }
-        }
-        */
-
         return new Path(path, angles, cost);
     }
 
@@ -614,7 +603,7 @@ export class RangeGizmo {
 }
 
 export class Node {
-    private _pos: Phaser.Geom.Point = new Phaser.Geom.Point(-1, -1);
+    private readonly _pos: Phaser.Geom.Point = new Phaser.Geom.Point(-1, -1);
     public g: number;
     public f: number;
     public h: number;
@@ -649,9 +638,9 @@ export class Node {
 }
 
 export class Path {
-    private _nodes: Node[];
-    private _angles: number[];
-    private _cost: number;
+    private readonly _nodes: Node[];
+    private readonly _angles: number[];
+    private readonly _cost: number;
 
     constructor(nodes: Node[], angles: number[], cost: number) {
         if (nodes?.length && cost > 0) {
@@ -680,6 +669,6 @@ export class Path {
     }
 
     get warning(): boolean {
-        return this._nodes[this._nodes.length - 1].warning;
+        return this._nodes.at(-1).warning;
     }
 }

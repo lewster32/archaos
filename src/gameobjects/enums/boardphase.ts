@@ -1,7 +1,7 @@
 export enum BoardPhase {
-    Idle = "Idle",
-    Spellbook = "Spellbook",
-    Casting = "Casting",
-    Spreading = "Spreading",
-    Moving = "Moving"
+    Idle = "idle",
+    Spellbook = "spellbook",
+    Casting = "casting",
+    Spreading = "spreading",
+    Moving = "moving"
 }

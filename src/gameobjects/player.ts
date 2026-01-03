@@ -1,11 +1,11 @@
 import { Board } from "./board";
-import { PlayerConfig } from "./configs/playerconfig";
 import { EffectType } from "./effectemitter";
 import { UnitStatus } from "./enums/unitstatus";
 import { Model } from "./model";
-import { Piece } from "./piece";
-import { Spell } from "./spells/spell";
 import { Wizard } from "./wizard";
+import type { PlayerConfig } from "./configs/playerconfig";
+import type { Piece } from "./piece";
+import type { Spell } from "./spells/spell";
 
 export class Player extends Model {
     private _name?: string;

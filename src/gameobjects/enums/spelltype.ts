@@ -1,6 +1,6 @@
 export enum SpellType {
-    Misc,
-    Buff,
-    Summon,
-    Attack,
+    Misc = "misc",
+    Buff = "buff",
+    Summon = "summon",
+    Attack = "attack",
 }

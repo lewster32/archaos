@@ -1,5 +1,5 @@
 export enum UnitType {
-    Static,
-    Wizard,
-    Creature
+    Static, // Structures, trees etc.
+    Wizard, // Wizard units
+    Creature // Normal creatures - everything else basically
 }

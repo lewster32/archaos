@@ -11,7 +11,7 @@ import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
-import { BoardUpdateEventData, SpellbookOpenEventData } from "./interfaces/ui";
+import { BoardUpdateEventData, Box, SpellbookOpenEventData } from "./interfaces/ui";
 import { Model } from "./model";
 import { Piece } from "./piece";
 import { Player } from "./player";
@@ -37,10 +37,10 @@ type SimplePoint = { x: number; y: number };
  * @param width The width of the board in cells.
  * @param height The height of the board in cells.
  */
-export class Board extends Model {
-    static CHEAT_FORCE_HIT: boolean | null = null;
-    static CHEAT_FORCE_CAST: boolean | null = true;
-    static CHEAT_SHORT_DELAY: boolean = true;
+export class Board extends Model implements Box {
+    public static CHEAT_FORCE_HIT: boolean | null = null;
+    public static CHEAT_FORCE_CAST: boolean | null = null;
+    public static CHEAT_SHORT_DELAY: boolean = false;
 
     static NEW_TURN_HIGHLIGHT_DURATION: number = Board.CHEAT_SHORT_DELAY
         ? 10
@@ -48,22 +48,22 @@ export class Board extends Model {
     static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
     static SPREAD_ITERATIONS: number = 2;
 
-    private _scene: Scene;
-    private _width: number;
-    private _height: number;
+    private readonly _scene: Scene;
+    private readonly _width: number;
+    private readonly _height: number;
 
-    private _layers: Map<BoardLayer, GameObjects.Layer>;
+    private readonly _layers: Map<BoardLayer, GameObjects.Layer>;
     private _particles: GameObjects.Particles.ParticleEmitterManager;
 
-    static DEFAULT_WIDTH: number = 13;
-    static DEFAULT_HEIGHT: number = 13;
-    static DEFAULT_CELLSIZE: number = 14;
+    static readonly DEFAULT_WIDTH: number = 13;
+    static readonly DEFAULT_HEIGHT: number = 13;
+    static readonly DEFAULT_CELLSIZE: number = 14;
 
-    static DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 750;
-    static END_TURN_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1500;
-    static SPREAD_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 250;
+    static readonly DEFAULT_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 750;
+    static readonly END_TURN_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 1500;
+    static readonly SPREAD_DELAY: number = Board.CHEAT_SHORT_DELAY ? 10 : 250;
 
-    static NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
+    static readonly NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
         { x: 1, y: 0 },
         { x: 0, y: 1 },
@@ -79,20 +79,20 @@ export class Board extends Model {
     private _state: BoardState;
     private _balance: number;
     private _balanceShift: number;
-    private _cursor: Cursor;
-    private _moveGizmo: RangeGizmo;
-    private _pieces: Map<number, Piece>;
+    private readonly _cursor: Cursor;
+    private readonly _moveGizmo: RangeGizmo;
+    private readonly _pieces: Map<number, Piece>;
     private _selected: Piece | null;
 
-    private _players: Map<number, Player>;
+    private readonly _players: Map<number, Player>;
     private _currentPlayer: Player | null;
     private _currentPlayerIndex: number = -1;
 
     private _idCounter: number = 1;
 
-    private _rules: Rules;
-    private _logger: Logger;
-    private _sound: Sound.BaseSound;
+    private readonly _rules: Rules;
+    private readonly _logger: Logger;
+    private readonly _sound: Sound.BaseSound;
 
     constructor(
         scene: Scene,
@@ -410,7 +410,7 @@ export class Board extends Model {
 
     getPiece(id: number): Piece | null {
         if (this._pieces.has(id)) {
-            return this._pieces.get(id)!;
+            return this._pieces.get(id);
         }
         return null;
     }
@@ -485,7 +485,7 @@ export class Board extends Model {
         this.scene.game.events.emit("cancel-available", false);
 
         const turnOver: boolean =
-            this.getPiecesByOwner(this.currentPlayer!).every(
+            this.getPiecesByOwner(this.currentPlayer).every(
                 (piece) => piece.turnOver
             ) || this.phase === BoardPhase.Casting;
 
@@ -506,10 +506,10 @@ export class Board extends Model {
 
     async selectWizard(player: Player): Promise<Wizard | null> {
         const ownedPieces: Piece[] = this.getPiecesByOwner(player);
-        for (let i: number = 0; i < ownedPieces.length; i++) {
-            if (ownedPieces[i].type === UnitType.Wizard) {
-                await this.selectPiece(ownedPieces[i].id);
-                return ownedPieces[i] as Wizard;
+        for (const piece of ownedPieces) {
+            if (piece.type === UnitType.Wizard) {
+                await this.selectPiece(piece.id);
+                return piece as Wizard;
             }
         }
         throw new Error(`Player '${player.name}' does not own a wizard`);
@@ -832,7 +832,7 @@ export class Board extends Model {
 
     getPlayer(id: number): Player | null {
         if (this._players.has(id)) {
-            return this._players.get(id)!;
+            return this._players.get(id);
         }
         return null;
     }
@@ -853,7 +853,7 @@ export class Board extends Model {
                     .forEach((child) => {
                         const tintColour: Display.Color =
                             Display.Color.ValueToColor(
-                                this._currentPlayer!.colour!
+                                this._currentPlayer.colour
                             );
                         (child as GameObjects.Sprite).setTint(
                             tintColour.brighten(80).color
@@ -874,8 +874,6 @@ export class Board extends Model {
     }
 
     async selectPlayer(id: number): Promise<void> {
-        const oldState: BoardState = this.state;
-
         this.pieces.forEach((piece: Piece) => {
             piece.highlighted = false;
         });
@@ -1063,7 +1061,7 @@ export class Board extends Model {
         }
 
         if (this._phase === BoardPhase.Casting) {
-            await this.selectWizard(this.currentPlayer!);
+            await this.selectWizard(this.currentPlayer);
 
             if (this.selected) {
                 const spell: Spell = this.currentPlayer?.selectedSpell;
@@ -1179,7 +1177,7 @@ export class Board extends Model {
     }
 
     getLayer(layer: BoardLayer): GameObjects.Layer {
-        return this._layers.get(layer)!;
+        return this._layers.get(layer);
     }
 
     getIsoPosition(point: Geom.Point): Geom.Point {
@@ -1267,10 +1265,7 @@ export class Board extends Model {
                 }
             }
         } else {
-            numChecks =
-                Math.abs(xDiff) > Math.abs(yDiff)
-                    ? Math.abs(xDiff)
-                    : Math.abs(yDiff);
+            numChecks = Math.max(Math.abs(xDiff), Math.abs(yDiff));
             let yInc = yDiff / numChecks,
                 xInc = xDiff / numChecks;
 

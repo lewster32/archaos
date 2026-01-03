@@ -14,6 +14,7 @@ import type { Player } from "./player";
 import type { IUnitProperties, IUnitStats } from "./interfaces/unitproperties";
 import type { PieceConfig } from "./configs/piececonfig";
 import type { Types } from "phaser";
+import { UnitConfig, UnitStats } from "./interfaces/ui";
 
 enum PieceState {
     Idle,
@@ -1250,11 +1251,17 @@ export class Piece extends Entity {
         this._ownerHighlightTween.pause();
     }
 
-    static getUnitConfig(id: string): any {
-        return (units as any)[id];
+    /**
+     * Get the raw unit configuration from the units data file by ID.
+     * 
+     * @param id Unit ID
+     * @returns Unit configuration or undefined if not found
+     */
+    static getUnitConfig(id: string): UnitConfig | undefined {
+        return units[id];
     }
 
-    static getUnitPropertiesByName(name: string): any {
+    static getUnitPropertiesByName(name: string): UnitStats | undefined {
         let key = "";
         for (let [k, unit] of Object.entries(units)) {
             if (unit.name.toLowerCase() === name.toLowerCase()) {

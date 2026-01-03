@@ -6,15 +6,15 @@ import { Colour } from "../enums/colour";
 import { CursorType } from "../enums/cursortype";
 import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
-import { SpellType } from "../enums/spelltype";
-import { UnitStatus } from "../enums/unitstatus";
 import { Piece } from "../piece";
 import { Spell } from "../spells/spell";
 
 export class Rules {
     private static instance: Rules;
 
-    constructor() {}
+    protected constructor() {
+        // Singleton
+    }
 
     public static getInstance(): Rules {
         if (!Rules.instance) {
