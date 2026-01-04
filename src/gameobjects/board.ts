@@ -172,7 +172,6 @@ export class Board extends Model implements Box {
             return;
         }
         this._state = state;
-        // console.log(`Board state: ${BoardState[state]}`);
         switch (state) {
             case BoardState.Idle:
             case BoardState.GameOver:
@@ -182,10 +181,14 @@ export class Board extends Model implements Box {
                 break;
             case BoardState.Move:
             case BoardState.SelectSpell:
-                this.scene.game.events.emit("end-turn-available", true);
+                if (!this.currentPlayer?.ai) {
+                    this.scene.game.events.emit("end-turn-available", true);
+                }
                 break;
             default:
-                this.scene.game.events.emit("cancel-available", true);
+                if (!this.currentPlayer?.ai) {
+                    this.scene.game.events.emit("cancel-available", true);
+                }
                 this.scene.game.events.emit("end-turn-available", false);
                 break;
         }
@@ -468,7 +471,9 @@ export class Board extends Model implements Box {
             case BoardState.Dismount:
             case BoardState.Attack:
             case BoardState.RangedAttack:
-                this.scene.game.events.emit("cancel-available", true);
+                if (!this.currentPlayer?.ai) {
+                    this.scene.game.events.emit("cancel-available", true);
+                }
                 break;
         }
     }

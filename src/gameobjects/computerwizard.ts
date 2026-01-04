@@ -41,8 +41,7 @@ export class ComputerWizard {
     async selectSpell(): Promise<boolean> {
         // For now, just pick a random spell from the player's spell list
         let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
-            // Only consider mobile summon spells for now
-            return spell.type === SpellType.Summon;
+            return spell.type === SpellType.Summon || spell.type === SpellType.Buff;
         });
 
         if (spells.length === 0) {
@@ -109,6 +108,14 @@ export class ComputerWizard {
                         summonPt
                     );
                 }
+                return true;
+            }
+            else if (spell.type === SpellType.Buff) {
+                await this._board.rules.doCastSpell(
+                    this._board,
+                    spell,
+                    this._player.castingPiece
+                );
                 return true;
             }
         }

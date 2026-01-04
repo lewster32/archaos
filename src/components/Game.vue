@@ -42,6 +42,12 @@
                     :id="`player${index}`"
                     maxlength="20"
                 />
+                <input
+                    type="checkbox"
+                    v-model="setup.players[index].computerControlled"
+                    title="Computer controlled?"
+                    :id="`aicheckbox${index}`"
+                />
             </div>
             <div class="callout__row">
                 <label for="boardsize">Board size:</label>
@@ -223,8 +229,7 @@ const startGame: (save: boolean) => void = (save: boolean) => {
     // Emit start game event with the setup data
     eventEmitter.value?.emit("start-game", {
         players: setup.value!.players
-            .slice(0, Math.abs(setup.value!.playerCount) || 2)
-            .map((player) => player.name),
+            .slice(0, Math.abs(setup.value!.playerCount) || 2),
         board: {
             width: Math.abs(setup.value!.boardSize) || 13,
             height: Math.abs(setup.value!.boardSize) || 13,

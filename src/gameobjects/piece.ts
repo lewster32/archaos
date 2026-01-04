@@ -318,15 +318,15 @@ export class Piece extends Entity {
                     `${this.name} was engulfed`,
                     Colour.Magenta
                 );
-                this.sprite.setVisible(false);
-                this.shadow.setVisible(false);
+                this.sprite?.setVisible(false);
+                this.shadow?.setVisible(false);
             } else {
                 this.board.logger.log(
                     `${this.name} was released`,
                     Colour.Green
                 );
-                this.sprite.setVisible(true);
-                this.shadow.setVisible(true);
+                this.sprite?.setVisible(true);
+                this.shadow?.setVisible(true);
             }
         });
     }
@@ -860,6 +860,7 @@ export class Piece extends Entity {
             this == piece ||
             this._dead ||
             this.engulfed ||
+            piece.engulfed ||
             piece.dead ||
             this.stats.maneuverability === 0 ||
             piece.stats.maneuverability === 0 ||

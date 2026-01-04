@@ -15,7 +15,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Buff"
             ]
         },
         {
@@ -27,7 +27,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -39,7 +39,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -51,7 +51,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -63,7 +63,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -75,7 +75,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -87,7 +87,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         },
         {
@@ -99,7 +99,7 @@
 
             ],
             "spells": [
-                "*Summon", "Gooey Blob", "Magic Fire"
+                "*Summon", "*Buff"
             ]
         }
     ],

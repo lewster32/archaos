@@ -30,6 +30,7 @@ export interface Box {
  */
 export interface SetupPlayer {
     name: string;
+    computerControlled?: boolean;
 }
 
 /**
@@ -46,9 +47,14 @@ export interface SetupData {
  * Game setup data sent from the UI to the game logic.
  */
 export interface GameSetupData {
-    players: string[];
+    players: GameSetupPlayer[];
     board: Box;
     spellCount: number;
+}
+
+export interface GameSetupPlayer {
+    name: string;
+    computerControlled: boolean;
 }
 
 /**
