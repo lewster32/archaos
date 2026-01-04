@@ -677,6 +677,36 @@ export class Spell extends Model {
     }
 
     /**
+     * Get all spells of a given type.
+     * 
+     * @param type The type of spells to get
+     * @returns The spell configurations of the given type
+     */
+    static getSpellsByType(type: SpellType): string[] {
+        const spellsByType: Set<string> = new Set<string>();
+        for (let [key, spell] of Object.entries(spells)) {
+            const config: SpellConfig = spell as SpellConfig;
+            if (config.unitId && type === SpellType.Summon) {
+                spellsByType.add(spell.name);
+                continue;
+            }
+            if (config.damage && type === SpellType.Attack) {
+                spellsByType.add(spell.name);
+                continue;
+            }
+            if (config.target === SpellTarget.Self && type === SpellType.Buff) {
+                spellsByType.add(spell.name);
+                continue;
+            }
+            // Misc spells are anything that doesn't fit the other types
+            if (type === SpellType.Misc) {
+                spellsByType.add(spell.name);
+            }
+        }
+        return Array.from(spellsByType);
+    }
+
+    /**
      * Get the spell properties for a given spell name.
      * 
      * TODO: Give this an interface.

@@ -16,7 +16,7 @@
 
             ],
             "spells": [
-                "Golden Dragon", "Red Dragon", "Wraith", "Manticore"
+                "*Summon"
             ]
         },
         {
@@ -29,7 +29,7 @@
 
             ],
             "spells": [
-                "Elf", "Green Dragon", "Vampire", "Hydra"
+                "*Summon"
             ]
         }
     ],

@@ -26,6 +26,7 @@ import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
 import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
+import { SpellType } from "./gameobjects/enums/spelltype";
 
 export class GameScene extends Phaser.Scene {
     board: Board;
@@ -232,10 +233,23 @@ export class GameScene extends Phaser.Scene {
             });
             if (player.spells?.length) {
                 for (let spellName of player.spells) {
-                    this.board.addSpell(
-                        currentPlayer,
-                        Spell.getSpellProperties(spellName)
-                    );
+                    // If spell starts with '*', add all of that type
+                    if (spellName.startsWith("*")) {
+                        const spellType: string = spellName.substring(1).toLowerCase();
+                        const spellsToAdd = Spell.getSpellsByType(Object.values(SpellType).includes(spellType as SpellType) ? spellType as SpellType : SpellType.Summon);
+                        console.log(`Adding ${spellsToAdd.length} ${spellType} spells to player ${currentPlayer.name}`);
+                        for (let spell of spellsToAdd) {
+                            this.board.addSpell(
+                                currentPlayer,
+                                Spell.getSpellProperties(spell)
+                            );
+                        }
+                    } else {
+                        this.board.addSpell(
+                            currentPlayer,
+                            Spell.getSpellProperties(spellName)
+                        );
+                    }
                 }
             }
             if (player.pieces?.length) {

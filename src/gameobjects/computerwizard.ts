@@ -6,6 +6,8 @@ import type { SummonSpell } from "./spells/summonspell";
 import { Piece } from "./piece";
 import { Path } from "./rangegizmo";
 import { UnitType } from "./enums/unittype";
+import { UnitStatus } from "./enums/unitstatus";
+import { BoardState } from "./enums/boardstate";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
@@ -84,7 +86,7 @@ export class ComputerWizard {
                 ).filter((pt: Phaser.Geom.Point) => {
                     return summonSpell.isValidTarget(
                         pt,
-                        true
+                        false
                     );
                 });
 
@@ -117,7 +119,6 @@ export class ComputerWizard {
             if (engagedEnemies.length > 0) {
                 const target: Piece = Phaser.Math.RND.pick(engagedEnemies);
                 await this._board.attackPiece(piece.id, target.id);
-                return true;
             }
         }
         else {
@@ -140,7 +141,9 @@ export class ComputerWizard {
             // Try to attack a random target in range
             const rangedTargets: Piece[] = this._board.pieces
                 .filter((p: Piece) => {
-                    return p.owner !== this._player && piece.canRangedAttackPiece(p);
+                    return p.owner !== this._player && // Enemy piece
+                    piece.canRangedAttackPiece(p) && // In ranged attack range
+                    (!p.hasStatus(UnitStatus.Undead) || piece.hasStatus(UnitStatus.AttackUndead) || piece.hasStatus(UnitStatus.Undead)); // Can be attacked
                 }).toSorted((a: Piece, b: Piece) => {
                     // Prefer wizard targets
                     if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
@@ -164,10 +167,13 @@ export class ComputerWizard {
     async moveAllUnits(): Promise<boolean> {
         const pieces: Piece[] = this._board.getPiecesByOwner(this._player)
             .filter((p: Piece) => {
-                return !p.turnOver && !p.moved
+                return !p.moved && p.canMove
             }); 
 
         for (const piece of pieces) {
+            if (this._board.state === BoardState.GameOver) {
+                break;
+            }
             await this.moveUnit(piece);
         }
         return true;
