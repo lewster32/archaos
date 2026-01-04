@@ -743,7 +743,7 @@ export class Board extends Model implements Box {
             // If mounting piece is already mounted, dismount first
             if (mountingPiece.currentMount) {
                 await mountingPiece.dismount();
-                mountingPiece.moved = false;
+                mountingPiece.moved = false
             }
             this.sound.play("move");
             await mountingPiece.mount(mountedPiece);
@@ -996,6 +996,11 @@ export class Board extends Model implements Box {
                     duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
                 });
                 await this.idleDelay(Board.NEW_TURN_HIGHLIGHT_DURATION);
+
+                if (this.currentPlayer?.ai && this.phase === BoardPhase.Moving) {
+                    await this.currentPlayer.ai.moveAllUnits();
+                    this.nextPlayer();
+                }
             });
         });
     }
@@ -1072,7 +1077,13 @@ export class Board extends Model implements Box {
         }
 
         if (this.phase === BoardPhase.Spellbook) {
-            if (this.currentPlayer?.spells?.length) {
+            if (this.currentPlayer?.ai) {
+                if (!await this.currentPlayer.ai.selectSpell()) {
+                    console.log("AI could not select spell, skipping...");
+                }
+                await this.nextPlayer();
+            }
+            else if (this.currentPlayer?.spells?.length) {
                 this.scene.game.events.emit("spellbook-open", <SpellbookOpenEventData>{ 
                     data: {
                         caster: this.currentPlayer?.name,
@@ -1116,6 +1127,12 @@ export class Board extends Model implements Box {
                         CursorType.RangeCast,
                         spell.lineOfSight
                     );
+                    if (this.currentPlayer?.ai) {
+                        if (!await this.currentPlayer.ai.castSpell()) {
+                            console.log("AI could not cast spell, skipping...");
+                        }
+                        return await this.nextPlayer();
+                    }
                 }
             }
         }

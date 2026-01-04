@@ -621,7 +621,8 @@ export class Spell extends Model {
                 }
             }
             this._board.logger.log(
-                `${target.name} successfully cast ${this.name}`
+                `${target.name} successfully cast '${this.name}'`,
+                Colour.Green
             );
 
             await this._board.idleDelay(Board.DEFAULT_DELAY);

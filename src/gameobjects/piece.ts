@@ -754,6 +754,10 @@ export class Piece extends Entity {
         );
     }
 
+    get canBeMagicAttacked(): boolean {
+        return !this.hasStatus(UnitStatus.Invulnerable)
+    }
+
     get canAttack(): boolean {
         const neighbours: Piece[] = this.getNeighbours();
 
@@ -826,7 +830,8 @@ export class Piece extends Entity {
             this.rangedAttacked ||
             !this.moved ||
             piece.hasStatus(UnitStatus.Invulnerable) ||
-            !this.inRangedAttackRange(piece.position)
+            !this.inRangedAttackRange(piece.position) ||
+            !this.board.hasLineOfSight(this.position, piece.position)
         ) {
             return false;
         }

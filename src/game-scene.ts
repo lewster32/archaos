@@ -222,13 +222,14 @@ export class GameScene extends Phaser.Scene {
         for (let player of scenarioData.players) {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
+                computerControlled: player.computerControlled || false,
             })
             this.board.addWizard({
                 owner: currentPlayer,
                 x: player.position.x,
                 y: player.position.y,
-                wizCode: player.wizCode || Wizard.randomWizCode(),
-            });   
+                wizCode: player.wizCode || Wizard.randomWizCode()
+            });
             if (player.spells?.length) {
                 for (let spellName of player.spells) {
                     this.board.addSpell(

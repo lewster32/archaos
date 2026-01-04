@@ -74,6 +74,7 @@ export interface GameScenarioPlayer {
     wizCode?: string; // A random code will be generated if empty.
     pieces?: GameScenarioPiece[];
     spells?: string[]; // A simple list of spell names for now.
+    computerControlled?: boolean;
 }
 
 /**

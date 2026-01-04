@@ -6,18 +6,21 @@ import { Wizard } from "./wizard";
 import type { PlayerConfig } from "./configs/playerconfig";
 import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";
+import { ComputerWizard } from "./computerwizard";
 
 export class Player extends Model {
-    private _name?: string;
-    private _board: Board;
+    private readonly _name?: string;
+    private readonly _board: Board;
+    private readonly _wizcode: string;
+    private readonly _spells: Map<number, Spell>;
+    
     private _colour: number | null;
-    private _wizcode: string;
-
     private _castingPiece: Piece | null;
-    private _spells: Map<number, Spell>;
 
     private _selectedSpell: Spell | null;
     private _defeated: boolean;
+
+    private readonly _ai: ComputerWizard | null;
 
     static PLAYER_COLOURS: number[] = [
         0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0x000000,
@@ -37,6 +40,10 @@ export class Player extends Model {
         this._selectedSpell = null;
         this._defeated = false;
         this._wizcode = "";
+        if (config.computerControlled) {
+            this._ai = new ComputerWizard(board, this);
+            console.log(`${this.name} will be controlled by AI.`);
+        }
     }
 
     get colour(): number | null {
@@ -76,6 +83,10 @@ export class Player extends Model {
     
     set castingPiece(piece: Piece | null) {
         this._castingPiece = piece;
+    }
+    
+    get ai(): ComputerWizard | null {
+        return this._ai;
     }
 
     async defeat(): Promise<void> {

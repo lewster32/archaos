@@ -229,7 +229,9 @@ export class Rules {
                 if (casted.failed) {
                     board.logger.log(`Spell failed`, Colour.Magenta);
                 }
-                board.selected.turnOver = true;
+                if (board.selected) {
+                    board.selected.turnOver = true;
+                }
                 board.deselectPlayer();
                 await board.idleDelay(Board.DEFAULT_DELAY);
                 return false;

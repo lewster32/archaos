@@ -414,6 +414,19 @@ export class RangeGizmo {
         return path || null;
     }
 
+    public getAllValidPaths(): Map<string, Path> {
+        const output: Map<string, Path> = new Map();
+        for (const node of this._validNodes) {
+            if (node.isValid()) {
+                const path: Path = this.getPathTo(node.pos);
+                if (path) {
+                    output.set(node.x + "," + node.y, path);
+                }
+            }
+        }
+        return output;
+    }
+
     public showPath(toPt: Phaser.Geom.Point): void {
         this._pathLayer.removeAll();
         if (
