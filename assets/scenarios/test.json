@@ -2,41 +2,39 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 10,
-        "height": 10
+        "width": 11,
+        "height": 11
     },
     "players": [
         {
             "id": 1,
             "name": "Player 1",
-            "position": { "x": 5, "y": 0 },
-            "wizCode": "0003030900",
+            "position": { "x": 5, "y": 10 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon"
+                "Shadow Wood", "Shadow Wood", "Shadow Wood", "Centaur", "Centaur", "Centaur", "Centaur"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 5, "y": 9 },
-            "wizCode": "0900000900",
+            "position": { "x": 5, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon"
+                "Shadow Wood", "Shadow Wood", "Shadow Wood", "Manticore", "Manticore", "Manticore", "Manticore"
             ]
         }
     ],
     "phase": "casting",
     "cheats": {
         "forceHit": null,
-        "forceCast": null,
-        "shortDelay": false
+        "forceCast": true,
+        "shortDelay": true
     }
 }

@@ -947,6 +947,8 @@ export class Piece extends Entity {
                 this.board.sound.play("killcreature");
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
                 await piece.kill();
+                // If the attacked piece was killed and the attacker can move,
+                // move into the killed piece's position
                 if (
                     this.board.getPiecesAtPosition(
                         piece.position,

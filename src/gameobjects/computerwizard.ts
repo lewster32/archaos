@@ -42,8 +42,7 @@ export class ComputerWizard {
         // For now, just pick a random spell from the player's spell list
         let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
             // Only consider mobile summon spells for now
-            return spell.type === SpellType.Summon &&
-            (spell as SummonSpell).unitProperties.properties.mov > 0;
+            return spell.type === SpellType.Summon;
         });
 
         if (spells.length === 0) {
@@ -78,27 +77,38 @@ export class ComputerWizard {
     async castSpell(): Promise<boolean> {
         const spell: Spell | null = await this._player.useSpell();
         if (spell) {
-            // Find an adjacent empty tile to summon onto
             if (spell.type === SpellType.Summon) {
                 const summonSpell: SummonSpell = spell as SummonSpell;
-                const emptyTiles: Phaser.Geom.Point[] = this._board.getAdjacentPoints(
-                    this._player.castingPiece.position
-                ).filter((pt: Phaser.Geom.Point) => {
-                    return summonSpell.isValidTarget(
-                        pt,
-                        false
-                    );
-                });
+                let summonPt: Phaser.Geom.Point | null = null;
+                while (spell.castTimes > 0) {
+                    // Find a random valid tile on the board to summon onto. We
+                    // do this each time because the casting of a spell can
+                    // change which board tiles are valid (e.g., trees cannot
+                    // be cast adjacent to other trees).
+                    const validTiles: Phaser.Geom.Point[] = [];
+                    for (let xx = 0; xx < this._board.width; xx++) {
+                        for (let yy = 0; yy < this._board.height; yy++) {
+                            const pt: Phaser.Geom.Point = new Phaser.Geom.Point(xx, yy);
+                            if (summonSpell.isValidTarget(
+                                pt,
+                                false
+                            )) {
+                                validTiles.push(pt);
+                            }
+                        }
+                    }
+                    if (validTiles.length === 0) {
+                        return false;
+                    }
+                    summonPt = Phaser.Math.RND.pick(validTiles);
 
-                if (emptyTiles.length === 0) {
-                    return false;
+                
+                    await this._board.rules.doCastSpell(
+                        this._board,
+                        spell,
+                        summonPt
+                    );
                 }
-                const summonPt: Phaser.Geom.Point = Phaser.Math.RND.pick(emptyTiles);
-                await this._board.rules.doCastSpell(
-                    this._board,
-                    spell,
-                    summonPt
-                );
                 return true;
             }
         }
@@ -121,7 +131,20 @@ export class ComputerWizard {
                 await this._board.attackPiece(piece.id, target.id);
             }
         }
-        else {
+        if (!piece.attacked && piece.canAttack) {
+            // Try to attack a random target in range
+            const potentialAttackTargets: Piece[] = this._board.getAdjacentPiecesAtPosition(
+                piece.position,
+                (p: Piece) => {
+                    return p.owner !== this._player && piece.canAttackPiece(p);
+                }
+            );
+            if (potentialAttackTargets.length > 0) {
+                const target: Piece = Phaser.Math.RND.pick(potentialAttackTargets);
+                await this._board.attackPiece(piece.id, target.id);
+            }
+        }
+        if (!piece.moved && piece.canMove) {
             // Move to a random reachable position
             const reachableTiles: Phaser.Geom.Point[] = Array.from(this._board.moveGizmo.getAllValidPaths().values()).map((path: Path) => {
                 return path.nodes.at(-1)!.pos;
@@ -135,9 +158,7 @@ export class ComputerWizard {
                 await this.moveUnit(piece);
             }
         }
-
-        if (piece.canRangedAttack) {
-            await this._board.selectPiece(piece.id);
+        if (!piece.rangedAttacked && piece.canRangedAttack) {
             // Try to attack a random target in range
             const rangedTargets: Piece[] = this._board.pieces
                 .filter((p: Piece) => {
@@ -167,7 +188,7 @@ export class ComputerWizard {
     async moveAllUnits(): Promise<boolean> {
         const pieces: Piece[] = this._board.getPiecesByOwner(this._player)
             .filter((p: Piece) => {
-                return !p.moved && p.canMove
+                return (!p.moved && p.canMove) || (!p.attacked && (p.canAttack || p.canRangedAttack));
             }); 
 
         for (const piece of pieces) {
