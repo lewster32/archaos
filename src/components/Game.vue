@@ -22,6 +22,10 @@
                     <option value="2">2 Players</option>
                     <option value="3">3 Players</option>
                     <option value="4">4 Players</option>
+                    <option value="5">5 Players</option>
+                    <option value="6">6 Players</option>
+                    <option value="7">7 Players</option>
+                    <option value="8">8 Players</option>
                 </select>
             </div>
             <div
@@ -30,42 +34,44 @@
                     0,
                     setup.playerCount
                 )"
-                :key="name.name"
+                :key="index"
                 style="margin-left: 1em"
             >
-                <label :for="`player${index}`"
-                    >Player {{ index + 1 }}'s name:</label
+                <label :for="`player${index}`" style="width:20ch"
+                    >{{ setup.players[index].computerControlled ? 'Computer' : 'Human' }} {{ index + 1 }}'s name:</label
                 >
                 <input
                     v-model="setup.players[index].name"
                     type="text"
                     :id="`player${index}`"
                     maxlength="20"
+                    style="width:23ch"
                 />
-                <input
-                    type="checkbox"
-                    v-model="setup.players[index].computerControlled"
-                    title="Computer controlled?"
-                    :id="`aicheckbox${index}`"
-                />
+                <div style="width:3ch;display:flex;align-items:center;justify-content:flex-end;">
+                    <input
+                        type="checkbox"
+                        v-model="setup.players[index].computerControlled"
+                        title="Computer controlled?"
+                        :id="`aicheckbox${index}`"
+                    />
+                </div>
             </div>
             <div class="callout__row">
                 <label for="boardsize">Board size:</label>
                 <select v-model="setup.boardSize" id="boardsize">
-                    <option value="9">Small Board</option>
+                    <option value="9" :disabled="setup.playerCount > 4">Small Board</option>
                     <option value="13">Medium Board</option>
                     <option value="17">Large Board</option>
                 </select>
             </div>
             <div class="callout__row">
                 <label for="spellcount">Spell count:</label>
-                <input
-                    type="number"
-                    v-model="setup.spellCount"
-                    min="5"
-                    max="25"
-                    id="spellcount"
-                />
+                <select v-model="setup.spellCount" id="spellcount">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                </select>
             </div>
             <div class="callout__row">
                 <button
@@ -103,7 +109,7 @@ import Minimap from "./Minimap.vue";
 import { launch } from "../game/game";
 
 // Vue and types
-import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
 import type { Ref } from "vue";
 import type { Game, Events } from "phaser";
 import type { Spell } from "../gameobjects/spells/spell";
@@ -115,6 +121,7 @@ import type {
     SpellbookOpenEventData,
     GameSetupData,
     GameScenarioData,
+    SetupPlayer,
 } from "../gameobjects/interfaces/ui";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 
@@ -229,12 +236,12 @@ const startGame: (save: boolean) => void = (save: boolean) => {
     // Emit start game event with the setup data
     eventEmitter.value?.emit("start-game", {
         players: setup.value!.players
-            .slice(0, Math.abs(setup.value!.playerCount) || 2),
+            .slice(0, Math.abs(setup.value.playerCount) || 2),
         board: {
-            width: Math.abs(setup.value!.boardSize) || 13,
-            height: Math.abs(setup.value!.boardSize) || 13,
+            width: Math.abs(setup.value.boardSize) || 13,
+            height: Math.abs(setup.value.boardSize) || 13,
         },
-        spellCount: Math.abs(setup.value!.spellCount) || 15,
+        spellCount: Math.abs(setup.value.spellCount) || 15,
     } as GameSetupData);
 
     // Mark the game as started
@@ -247,6 +254,48 @@ const startGame: (save: boolean) => void = (save: boolean) => {
 const spellbookOpen = computed(() => {
     return spellbook.value.show && !spellbook.value.minimised;
 });
+
+const defaultPlayers: SetupPlayer[] = [
+    {
+        name: "Gandalf",
+    },
+    {
+        name: "Glinda",
+        computerControlled: true,
+    },
+    {
+        name: "Merlin",
+        computerControlled: true,
+    },
+    {
+        name: "Morgana",
+        computerControlled: true,
+    },
+    {
+        name: "Rincewind",
+        computerControlled: true,
+    },
+    {
+        name: "Saruman",
+        computerControlled: true,
+    },
+    {
+        name: "Elminster",
+        computerControlled: true,
+    },
+    {
+        name: "Mordenkainen",
+        computerControlled: true,
+    },
+];
+
+watch(
+    () => setup.value?.playerCount,
+    (newCount, oldCount) => {
+        if (setup.value?.boardSize <= 9 && newCount > 4) {
+            setup.value.boardSize = 13;
+        }
+    }, { immediate: true });
 
 /**
  * Lifecycle hook - on component mount, initialise the game.
@@ -266,21 +315,15 @@ onMounted(async () => {
             playerCount: 2,
             boardSize: 13,
             spellCount: 15,
-            players: [
-                {
-                    name: "Gandalf",
-                },
-                {
-                    name: "Glinda",
-                },
-                {
-                    name: "Merlin",
-                },
-                {
-                    name: "Morgana",
-                },
-            ],
+            players: defaultPlayers,
         };
+    }
+
+    // If there are not enough players, add more defaults
+    while (setup.value.players.length < setup.value.playerCount) {
+        setup.value.players.push(
+            defaultPlayers[setup.value.players.length % defaultPlayers.length]
+        );
     }
     
     // Mark as downloaded

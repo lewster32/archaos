@@ -25,6 +25,11 @@ export class Cursor {
     private readonly _board: Board;
 
     /**
+     * Is the cursor enabled?
+     */
+    private _enabled: boolean = true;
+
+    /**
      * Current cursor type.
      */
     private _type: CursorType;
@@ -108,7 +113,7 @@ export class Cursor {
      * @returns A promise that resolves to the type of action allowed at the new cursor position
      */
     async update(force?: boolean): Promise<ActionType> {
-        if (this._board.state === BoardState.Busy) {
+        if (!this._enabled ||this._board.state === BoardState.Busy) {
             return ActionType.None;
         }
 
@@ -232,7 +237,7 @@ export class Cursor {
      * @returns A promise that resolves when the action is complete
      */
     async action(input: InputType): Promise<void> {
-        if (this._board.state === BoardState.Busy) {
+        if (!this._enabled || this._board.state === BoardState.Busy) {
             return;
         }
 
@@ -300,6 +305,20 @@ export class Cursor {
      */
     get type(): CursorType {
         return this._type;
+    }
+
+    /**
+     * Enable or disable the cursor.
+     */
+    set enabled(value: boolean) {
+        this._enabled = value;
+    }
+
+    /**
+     * Check if the cursor is enabled.
+     */
+    get enabled(): boolean {
+        return this._enabled;
     }
 
     /**

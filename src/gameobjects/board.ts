@@ -407,6 +407,125 @@ export class Board extends Model implements Box {
                     wizCode: this.players[3].wizcode,
                 });
                 break;
+            case 5:
+                // Evenly spaced in a pentagon
+                for (let i: number = 0; i < 5; i++) {
+                    const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.5 + this.width / 2 +
+                            (this.width / 2) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + this.height / 2 +
+                            (this.height / 2) * Math.sin(angle)
+                    );
+                    this.addWizard({
+                        owner: this.players[i],
+                        x: x,
+                        y: y,
+                        wizCode: this.players[i].wizcode,
+                    });
+                }
+                break;             
+            case 6:
+                // Evenly spaced in a hexagon
+                for (let i: number = 0; i < 6; i++) {
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.6 + this.width / 2 +
+                            (this.width / 2 + 0.5) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + this.height / 2 +
+                            (this.height / 2 - 0.5) * Math.sin(angle)
+                    );
+                    this.addWizard({
+                        owner: this.players[i],
+                        x: x,
+                        y: y,
+                        wizCode: this.players[i].wizcode,
+                    });
+                }
+                break;
+            case 7:
+                // One in the centre, six in a hexagon around (possibly a bit
+                // more fair in terms of spacing than a heptagon?)
+                this.addWizard({
+                    owner: this.players[0],
+                    x: Math.floor(this.width / 2),
+                    y: Math.floor(this.height / 2),
+                    wizCode: this.players[0].wizcode,
+                });
+
+                for (let i: number = 1; i < 7; i++) {
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.6 + this.width / 2 +
+                            (this.width / 2 + 0.5) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + this.height / 2 +
+                            (this.height / 2 - 0.5) * Math.sin(angle)
+                    );
+                    this.addWizard({
+                        owner: this.players[i],
+                        x: x,
+                        y: y,
+                        wizCode: this.players[i].wizcode,
+                    });
+                }
+                break
+            case 8:
+                // All corners and middles
+                {
+                    let playerIndex: number = 0;
+                    for (let xx of [this.width - 1, Math.floor(this.width / 2), 0]) {
+                        for (let yy of [this.height - 1, Math.floor(this.height / 2), 0]) {
+                            if (xx === Math.floor(this.width / 2) && yy === Math.floor(this.height / 2)) {
+                                continue;
+                            }
+                            this.addWizard({
+                                owner: this.players[playerIndex],
+                                x: xx,
+                                y: yy,
+                                wizCode: this.players[playerIndex].wizcode,
+                            });
+                            playerIndex++;
+                        }
+                    }
+                }
+                break;
+            default:
+                // If more than 8 players, place randomly. First get all of the
+                // tiles as a list, shuffle it, then assign starting positions.
+                // This could be better - perhaps some kind of Poisson-disc
+                // sampling to ensure even distribution, but this will do for
+                // now, since it's not possible from the menu to have more than
+                // 8 players anyway.
+                {
+                    const availablePositions: SimplePoint[] = [];
+                    for (let x: number = 1; x < this.width - 1; x++) {
+                        for (let y: number = 1; y < this.height - 1; y++) {
+                            availablePositions.push({ x: x, y: y });
+                        }
+                    }
+                    // Shuffle available positions.
+                    for (let i = availablePositions.length - 1; i > 0; i--) {
+                        const j = Math.floor(PMath.RND.frac() * (i + 1));
+                        [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                    }
+                    // Assign positions to players.
+                    this.players.forEach((player, index) => {
+                        const pos = availablePositions[index];
+                        this.addWizard({
+                            owner: player,
+                            x: pos.x,
+                            y: pos.y,
+                            wizCode: player.wizcode,
+                        });
+                    });
+                }
+                break;
         }
     }
 
@@ -687,8 +806,10 @@ export class Board extends Model implements Box {
                 piece.attacked = true;
             }
 
-            await this.cursor.update(true);
-            this.emitBoardUpdateEvent();
+            setTimeout(async () => {
+                await this.cursor.update(true);
+                this.emitBoardUpdateEvent();
+            }, 10);
 
             return piece;
         }

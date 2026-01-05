@@ -17,12 +17,12 @@ export class ComputerWizard {
     /**
      * The board the computer wizard is playing on.
      */
-    private _board: Board;
+    private readonly _board: Board;
 
     /**
      * The player this computer wizard is controlling.
      */
-    private _player: Player;
+    private readonly _player: Player;
 
     /**
      * Creates a new ComputerWizard instance.
@@ -39,90 +39,100 @@ export class ComputerWizard {
      * Selects a spell for the computer wizard to cast.
      */
     async selectSpell(): Promise<boolean> {
-        // For now, just pick a random spell from the player's spell list
-        let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
-            return (
-                spell.type === SpellType.Summon || spell.type === SpellType.Buff
-            );
-        });
+        this._board.cursor.enabled = false;
+        try {
+            // For now, just pick a random spell from the player's spell list
+            let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
+                return (
+                    spell.type === SpellType.Summon || spell.type === SpellType.Buff
+                );
+            });
 
-        if (spells.length === 0) {
-            return false;
-        }
-
-        // Rank spells by how likely they are to cast to play conservatively
-        spells.sort((a, b) => {
-            return a.chance > b.chance ? -1 : a.chance < b.chance ? 1 : 0;
-        });
-
-        const pickedSpell: SummonSpell = Phaser.Math.RND.weightedPick(
-            spells
-        ) as SummonSpell;
-
-        // The lower the spell's cast chance, the more likely we are to cast it
-        // as an illusion
-        if (pickedSpell.allowIllusion) {
-            const roll: number = Phaser.Math.RND.realInRange(0.1, 1);
-            if (roll > pickedSpell.chance) {
-                pickedSpell.illusion = true;
-            } else {
-                pickedSpell.illusion = false;
+            if (spells.length === 0) {
+                return false;
             }
-        }
 
-        await this._player.pickSpell(pickedSpell.id);
-        return true;
+            // Rank spells by how likely they are to cast to play conservatively
+            spells.sort((a, b) => {
+                return a.chance > b.chance ? -1 : a.chance < b.chance ? 1 : 0;
+            });
+
+            const pickedSpell: SummonSpell = Phaser.Math.RND.weightedPick(
+                spells
+            ) as SummonSpell;
+
+            // The lower the spell's cast chance, the more likely we are to cast it
+            // as an illusion
+            if (pickedSpell.allowIllusion) {
+                const roll: number = Phaser.Math.RND.realInRange(0.1, 1);
+                if (roll > pickedSpell.chance) {
+                    pickedSpell.illusion = true;
+                } else {
+                    pickedSpell.illusion = false;
+                }
+            }
+
+            await this._player.pickSpell(pickedSpell.id);
+            return true;
+        } finally {
+            this._board.cursor.enabled = true;
+        }
     }
 
     /**
      * Casts the currently selected spell.
      */
     async castSpell(): Promise<boolean> {
-        const spell: Spell | null = await this._player.useSpell();
-        if (spell) {
-            if (spell.type === SpellType.Summon) {
-                const summonSpell: SummonSpell = spell as SummonSpell;
-                let summonPt: Phaser.Geom.Point | null = null;
-                while (spell.castTimes > 0) {
-                    // Find a random valid tile on the board to summon onto. We
-                    // do this each time because the casting of a spell can
-                    // change which board tiles are valid (e.g., trees cannot
-                    // be cast adjacent to other trees).
-                    const validTiles: Phaser.Geom.Point[] = [];
-                    for (let xx = 0; xx < this._board.width; xx++) {
-                        for (let yy = 0; yy < this._board.height; yy++) {
-                            const pt: Phaser.Geom.Point = new Phaser.Geom.Point(
-                                xx,
-                                yy
-                            );
-                            if (summonSpell.isValidTarget(pt, false)) {
-                                validTiles.push(pt);
+        this._board.cursor.enabled = false;
+        try {
+            const spell: Spell | null = await this._player.useSpell();
+            if (spell) {
+                if (spell.type === SpellType.Summon) {
+                    const summonSpell: SummonSpell = spell as SummonSpell;
+                    let summonPt: Phaser.Geom.Point | null = null;
+                    while (spell.castTimes > 0) {
+                        // Find a random valid tile on the board to summon onto. We
+                        // do this each time because the casting of a spell can
+                        // change which board tiles are valid (e.g., trees cannot
+                        // be cast adjacent to other trees).
+                        const validTiles: Phaser.Geom.Point[] = [];
+                        for (let xx = 0; xx < this._board.width; xx++) {
+                            for (let yy = 0; yy < this._board.height; yy++) {
+                                const pt: Phaser.Geom.Point = new Phaser.Geom.Point(
+                                    xx,
+                                    yy
+                                );
+                                if (summonSpell.isValidTarget(pt, false)) {
+                                    validTiles.push(pt);
+                                }
                             }
                         }
-                    }
-                    if (validTiles.length === 0) {
-                        console.debug(`${this._player.name} has no valid tiles to cast ${spell.name}`);
-                        return false;
-                    }
-                    summonPt = Phaser.Math.RND.pick(validTiles);
+                        if (validTiles.length === 0) {
+                            console.debug(`${this._player.name} has no valid tiles to cast ${spell.name}`);
+                            return false;
+                        }
+                        summonPt = Phaser.Math.RND.pick(validTiles);
 
+                        await this._board.rules.doCastSpell(
+                            this._board,
+                            spell,
+                            summonPt
+                        );
+                    }
+                    return true;
+                } else if (spell.type === SpellType.Buff) {
                     await this._board.rules.doCastSpell(
                         this._board,
                         spell,
-                        summonPt
+                        this._player.castingPiece
                     );
+                    return true;
                 }
-                return true;
-            } else if (spell.type === SpellType.Buff) {
-                await this._board.rules.doCastSpell(
-                    this._board,
-                    spell,
-                    this._player.castingPiece
-                );
-                return true;
             }
+            return false;
+        } finally {
+            this._board.cursor.enabled = true;
         }
-        return false;
     }
 
     /**
@@ -300,7 +310,6 @@ export class ComputerWizard {
             console.debug(`${piece.owner.name}'s ${piece.name} cannot ranged attack or has already ranged attacked`);
         }
         
-
         return true;
     }
 
@@ -309,27 +318,32 @@ export class ComputerWizard {
      * and ranged attacking as appropriate.
      */
     async moveAllUnits(): Promise<void> {
-        const pieces: Piece[] = this._board
-            .getPiecesByOwner(this._player)
-            .filter((p: Piece) => {
-                return (
-                    p.currentMount === null && // Not mounted - mounted units move with their mounts
-                    ((!p.moved && p.canMove) || // Is able to move
-                        (!p.attacked && (p.canAttack || p.canRangedAttack))) // Is able to attack
-                );
-            });
+        this._board.cursor.enabled = false;
+        try {
+            const pieces: Piece[] = this._board
+                .getPiecesByOwner(this._player)
+                .filter((p: Piece) => {
+                    return (
+                        p.currentMount === null && // Not mounted - mounted units move with their mounts
+                        ((!p.moved && p.canMove) || // Is able to move
+                            (!p.attacked && (p.canAttack || p.canRangedAttack))) // Is able to attack
+                    );
+                });
 
-        if (pieces.length === 0) {
-            console.debug(`${this._player.name} has no pieces to move`);
-            return;
-        }
-
-        for (const piece of pieces) {
-            if (this._board.state === BoardState.GameOver) {
-                break;
+            if (pieces.length === 0) {
+                console.debug(`${this._player.name} has no pieces to move`);
+                return;
             }
-            await this.moveUnit(piece);
-            piece.turnOver = true;
+
+            for (const piece of pieces) {
+                if (this._board.state === BoardState.GameOver) {
+                    break;
+                }
+                await this.moveUnit(piece);
+                piece.turnOver = true;
+            }
+        } finally {
+            this._board.cursor.enabled = true;
         }
     }
 }
