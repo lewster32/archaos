@@ -94,7 +94,8 @@ export class Player extends Model {
         this.board.logger.log(`Game over for ${this.name}`);
         this.board.sound.play("deadwizard2");
         await this.destroyCreations();
-        await this.board.idleDelay(Board.DEFAULT_DELAY);
+        // Let's really dwell on this for a bit
+        await this.board.idleDelay(Board.END_TURN_DELAY);
     }
 
     async destroyCreations(): Promise<any[]> {
@@ -108,7 +109,7 @@ export class Player extends Model {
                             await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
                             await piece.destroy();
                             resolve(0);
-                        }, 250 + Math.random() * 1750);
+                        }, 250 + Math.random() * 500);
                     })
                 }));
     }

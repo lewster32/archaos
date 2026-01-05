@@ -121,15 +121,15 @@ export class Board extends Model implements Box {
 
         this._scene.game.scale.resize(
             this._width * Board.DEFAULT_CELLSIZE * 2 +
-                Board.DEFAULT_CELLSIZE * 2,
-            this._height * Board.DEFAULT_CELLSIZE + Board.DEFAULT_CELLSIZE
+                Board.DEFAULT_CELLSIZE * 6,
+            this._height * Board.DEFAULT_CELLSIZE + (Board.DEFAULT_CELLSIZE * 6)
         );
 
         this._scene.cameras.main.setBounds(
-            (this._scene.game.scale.width as number) / -2,
-            0,
-            this._scene.game.scale.width as number,
-            this._scene.game.scale.height as number
+            this._scene.game.scale.width / -2,
+            Board.DEFAULT_CELLSIZE * -3,
+            this._scene.game.scale.width,
+            this._scene.game.scale.height
         );
 
         this._pieces = new Map<number, Piece>();
@@ -428,7 +428,17 @@ export class Board extends Model implements Box {
         return this.pieces.filter((piece) => piece.owner === owner);
     }
 
+    /**
+     * Select a piece by its ID. If the piece is already selected, does nothing.
+     * 
+     * @param id The ID of the piece to select.
+     * @returns A promise that resolves when the piece has been selected.
+     */
     async selectPiece(id: number): Promise<void> {
+        if (this._selected?.id === id) {
+            console.warn(`Piece with ID ${id} is already selected`);
+            return;
+        }
         this._selected = this.getPiece(id);
 
         if (this.phase === BoardPhase.Moving) {
@@ -478,7 +488,17 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Deselect the currently selected piece. If no piece is selected, does
+     * nothing.
+     * 
+     * @returns A promise that resolves when the piece has been deselected.
+     */
     async deselectPiece(): Promise<void> {
+        if (!this._selected) {
+            console.warn("No piece selected to deselect");
+            return;
+        }
         if (this.phase === BoardPhase.Moving) {
             const previousSelected: Piece = this._selected;
             this._selected = null;
@@ -651,7 +671,7 @@ export class Board extends Model implements Box {
                     throw new Error(`No path to ${position.x}, ${position.y}`);
                 }
             }
-
+            await this.moveGizmo.reset();
             piece.moved = true;
 
             if (!piece.currentMount && !piece.engaged) {
@@ -666,8 +686,6 @@ export class Board extends Model implements Box {
             } else {
                 piece.attacked = true;
             }
-
-            await this.moveGizmo.reset();
 
             await this.cursor.update(true);
             this.emitBoardUpdateEvent();

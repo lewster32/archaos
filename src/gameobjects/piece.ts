@@ -28,14 +28,46 @@ enum PieceState {
  * A game piece on the board. This can be a creature, wizard, structure, etc.
  */
 export class Piece extends Entity {
+    /**
+     * Duration of move animations (in ms).
+     */
     static readonly DEFAULT_MOVE_DURATION: number = 750;
+
+    /**
+     * Duration of each step when moving in a multi-step move.
+     */
     static readonly DEFAULT_STEP_MOVE_DURATION: number = 300;
+
+    /**
+     * Duration of highlight effect when selecting a piece.
+     */
     static readonly DEFAULT_HIGHLIGHT_DURATION: number = 600;
+
+    /**
+     * The highlight effect isn't a smooth pulse, but a stepped one.
+     */
     static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
+    /**
+     * Tint color to use when rendering a piece raised from the dead.
+     */
     static readonly RAISED_DEAD_TINT: number = 0xb0d9ff;
+
+    /**
+     * Amount to darken the piece's tint when it has moved this turn.
+     */
     static readonly MOVED_DARKEN_AMOUNT: number = 25;
 
+
+    /**
+     * Alpha value to use when rendering a wizard in Shadow Form.
+     */
+    static readonly SHADOW_FORM_ALPHA: number = 0.4;
+
+    /**
+     * The unit ID of this piece, corresponding to the key in the units JSON
+     * file.
+     */
     protected readonly _unitId: string;
 
     protected _type: UnitType;
@@ -59,8 +91,8 @@ export class Piece extends Entity {
 
     protected _state: PieceState;
 
-    protected _currentMount: Piece | null;
-    protected _currentRider: Piece | null;
+    protected _currentMount: Piece | null = null;
+    protected _currentRider: Piece | null = null;
 
     public currentEngulfed: Piece | null = null;
 
@@ -391,6 +423,10 @@ export class Piece extends Entity {
     }
 
     set currentRider(rider: Piece | null) {
+        if (!rider) {
+            this._currentRider = null;
+            return;
+        }
         if (
             !this.hasStatus(UnitStatus.Mount) &&
             !this.hasStatus(UnitStatus.MountAny)
@@ -401,6 +437,9 @@ export class Piece extends Entity {
         this._currentRider = rider;
     }
 
+    /**
+     * Get the current rider of this piece (if any).
+     */
     get currentRider(): Piece | null {
         return this._currentRider;
     }
@@ -408,13 +447,20 @@ export class Piece extends Entity {
     set currentMount(mount: Piece | null) {
         this._currentMount = mount;
 
+        // When if we're dismounting, we need to make the piece visible again,
+        // but if we still have shadow form, we need to keep it semi-transparent
+        const visibleAlpha: number = this.hasStatus(UnitStatus.ShadowForm) ? Piece.SHADOW_FORM_ALPHA : 1;
+
         this.board.scene.tweens.add({
             targets: [this._sprite, this._shadow, ...this._effects.values()],
-            alpha: mount != null ? 0 : 1,
+            alpha: mount ? 0 : visibleAlpha,
             duration: Piece.DEFAULT_MOVE_DURATION / 2,
         });
     }
 
+    /**
+     * Get the piece this piece is mounted on (if any).
+     */
     get currentMount(): Piece | null {
         return this._currentMount;
     }
@@ -1041,6 +1087,11 @@ export class Piece extends Entity {
         }
         if (this.currentRider) {
             await this.currentRider.dismount();
+            // A dismounted rider from a killed mount that didn't take its turn
+            // gets to take the turn instead
+            if (!this.turnOver) {
+                this.currentRider.reset();
+            }
         }
         if (this.currentEngulfed) {
             this.currentEngulfed.engulfed = false;
@@ -1064,46 +1115,48 @@ export class Piece extends Entity {
             return;
         }
         if (
-            !this._sprite.texture.has(
+            this._sprite.texture.has(
                 this._properties.id + `_${this._direction}_d`
             )
         ) {
-            this._sprite.visible = false;
-        } else {
             this._sprite.setDepth(this._sprite.depth - 1);
             this.playAnim();
+        } else {
+            this._sprite.visible = false;
         }
         this.board.emitBoardUpdateEvent();
     }
 
     async mount(piece: Piece): Promise<void> {
-        if (this.canMountPiece(piece)) {
-            this.moved = true;
-            this.attacked = true;
-            piece.moved = true;
-
-            this.currentMount = piece;
-            piece.currentRider = this;            
-            await this.board.movePiece(this.id, piece.position);
-            this.board.logger.log(
-                `${this.name} mounted ${piece.name}`
-            );
-            piece.createShaders(true, this.owner);
+        if (!this.canMountPiece(piece)) {
+            throw new Error(`${this.name} cannot mount ${piece.name}`);
         }
+        this.moved = true;
+        this.attacked = true;
+        piece.moved = true;
+
+        this.currentMount = piece;
+        piece.currentRider = this;            
+        await this.board.movePiece(this.id, piece.position);
+        this.board.logger.log(
+            `${this.name} mounted ${piece.name}`
+        );
+        piece.createShaders(true, this.owner);
     }
 
     async dismount(): Promise<void> {
-        if (this.currentMount) {
-            this.currentMount.currentRider = null;
-
-            this.moved = true;
-            this.currentMount.turnOver = true;
-            this.board.logger.log(
-                `${this.name} dismounted ${this.currentMount.name}`
-            );
-            this.currentMount.createShaders(true);
-            this.currentMount = null;
+        if (!this.currentMount) {
+            throw new Error(`${this.name} is not mounted`);
         }
+        this.currentMount.currentRider = null;
+
+        this.moved = true;
+        this.currentMount.turnOver = true;
+        this.board.logger.log(
+            `${this.name} dismounted ${this.currentMount.name}`
+        );
+        this.currentMount.createShaders(true);
+        this.currentMount = null;
     }
 
     async destroy() {

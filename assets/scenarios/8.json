@@ -107,6 +107,6 @@
     "cheats": {
         "forceHit": null,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

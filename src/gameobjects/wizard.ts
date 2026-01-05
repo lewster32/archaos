@@ -242,7 +242,7 @@ export class Wizard extends Piece {
             // Visual effects
             case UnitStatus.ShadowForm:
                 // Make the wizard semi-transparent
-                this.sprite.setAlpha(0.4);
+                this.sprite.setAlpha(Piece.SHADOW_FORM_ALPHA);
                 break;
             case UnitStatus.MagicKnife:
             case UnitStatus.MagicSword:
@@ -416,12 +416,15 @@ export class Wizard extends Piece {
         this._effects.forEach((sprite, status) => {
             sprite.setVisible(false);
         });
+
+        this._sprite.setVisible(false);
     }
 
     /**
      * Dismount this wizard from its current mount, showing any effects again.
      */
     async dismount(): Promise<void> {
+        this._sprite.setVisible(true);
         await super.dismount();
 
         // Show all effects again.

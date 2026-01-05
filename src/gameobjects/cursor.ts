@@ -9,15 +9,55 @@ import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 
 export class Cursor {
-    private _position: Phaser.Geom.Point;
-    private _image: Phaser.GameObjects.Image;
-    private _board: Board;
+    /**
+     * Current cursor position on the board.
+     */
+    private readonly _position: Phaser.Geom.Point;
+
+    /**
+     * Image representing the cursor.
+     */
+    private readonly _image: Phaser.GameObjects.Image;
+
+    /**
+     * Reference to the board the cursor is on.
+     */
+    private readonly _board: Board;
+
+    /**
+     * Current cursor type.
+     */
     private _type: CursorType;
 
-    static CANCEL_KEY: string = "Escape";
+    /**
+     * Key to use for cancel actions.
+     */
+    static readonly CANCEL_KEY: string = "Escape";
 
-    static OFFSET: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
+    /**
+     * Offset to apply to cursor image position.
+     */
+    static readonly OFFSET: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
 
+    /**
+     * Map of direction vectors to cursor types.
+     */
+    static readonly DIRECTION_MAP: { [key: string]: CursorType } = {
+        "0,1": CursorType.DownLeft,
+        "1,1": CursorType.Down,
+        "1,0": CursorType.DownRight,
+        "1,-1": CursorType.Right,
+        "0,-1": CursorType.UpRight,
+        "-1,-1": CursorType.Up,
+        "-1,0": CursorType.UpLeft,
+        "-1,1": CursorType.Left,
+    };
+
+    /**
+     * Create a new Cursor instance.
+     * 
+     * @param board The board the cursor is associated with
+     */
     constructor(board: Board) {
         this._board = board;
 
@@ -54,10 +94,19 @@ export class Cursor {
         }, 0);
     }
 
+    /**
+     * Get the current cursor position on the board.
+     */
     get position(): Phaser.Geom.Point {
         return this._position;
     }
 
+    /**
+     * Update the cursor position and type based on the current pointer location.
+     * 
+     * @param force Whether to force an update even if the position hasn't changed
+     * @returns A promise that resolves to the type of action allowed at the new cursor position
+     */
     async update(force?: boolean): Promise<ActionType> {
         if (this._board.state === BoardState.Busy) {
             return ActionType.None;
@@ -125,8 +174,7 @@ export class Cursor {
                             (piece: Piece) => piece !== selectedPiece
                         );
                     if (
-                        neighbours &&
-                        neighbours.some((neighbour: Piece) =>
+                        neighbours?.some((neighbour: Piece) =>
                             selectedPiece.canEngagePiece(neighbour)
                         )
                     ) {
@@ -177,6 +225,12 @@ export class Cursor {
         return allowedAction;
     }
 
+    /**
+     * Perform an action based on the current cursor position and input type.
+     * 
+     * @param input The type of input that triggered the action, e.g. click or cancel
+     * @returns A promise that resolves when the action is complete
+     */
     async action(input: InputType): Promise<void> {
         if (this._board.state === BoardState.Busy) {
             return;
@@ -198,13 +252,14 @@ export class Cursor {
 
         const selected: Piece | null = this._board.selected;
 
-        if (selected && selected.moved) {
+        if (selected?.moved) {
             if (selected.currentRider && !selected.currentRider.moved) {
                 this._board.state = BoardState.Dismount;
             } else {
                 if (selected.canAttack) {
                     return;
-                } else if (selected.canRangedAttack) {
+                }
+                if (selected.canRangedAttack) {
                     this._board.sound.play("bowselecta");
                     this._board.logger.log(
                         `${selected.name}'s turn to ranged attack`,
@@ -224,25 +279,31 @@ export class Cursor {
         }
     }
 
+    /**
+     * Set the cursor type and update the image frame.
+     *
+     * @param type The cursor type to set
+     */
     set type(type: CursorType) {
         this._type = type;
         this._image.setFrame(type);
-        switch (this._type) {
-            case CursorType.Idle:
-                this._image.setDepth(this._image.y - 8);
-                break;
-            default:
-                this._image.setDepth(this._image.y + 8);
-                break;
+        if (type === CursorType.Idle) {
+            this._image.setDepth(this._image.y - 8);
+        }
+        else {
+            this._image.setDepth(this._image.y + 8);
         }
     }
 
+    /**
+     * Get the cursor type.
+     */
     get type(): CursorType {
         return this._type;
     }
 
     /**
-     * Make this better :(
+     * Translate the cursor position from screen space to isometric board space.
      *
      * @param vector
      * @returns
@@ -256,9 +317,9 @@ export class Cursor {
         );
 
         point.x -=
-            (this._board.scene.game.scale.width as number) / 2 -
+            this._board.scene.game.scale.width / 2 -
             Board.DEFAULT_CELLSIZE;
-        point.y += Board.DEFAULT_CELLSIZE * 1.5;
+        point.y -= Board.DEFAULT_CELLSIZE * 1.5;
 
         const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
         const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;
@@ -272,37 +333,42 @@ export class Cursor {
         return new Phaser.Geom.Point(point.x, point.y);
     }
 
-    static getCursorAngle(a: number = 0): CursorType {
-        switch (a) {
+    /**
+     * Get the cursor angle type from a direction index.
+     * 
+     * @param angle Direction index (0-8) where 0 is down-right and increases clockwise back to 8
+     * @returns 
+     */
+    static getCursorAngle(angle: number = 0): CursorType {
+        switch (angle) {
             case 0:
             case 8:
                 return CursorType.DownRight;
-                break;
             case 1:
                 return CursorType.Down;
-                break;
             case 2:
                 return CursorType.DownLeft;
-                break;
             case 3:
                 return CursorType.Left;
-                break;
             case 4:
                 return CursorType.UpLeft;
-                break;
             case 5:
                 return CursorType.Up;
-                break;
             case 6:
                 return CursorType.UpRight;
-                break;
             case 7:
                 return CursorType.Right;
-                break;
         }
         return CursorType.Idle;
     }
 
+    /**
+     * Get the movement direction type from two points.
+     * 
+     * @param fromPoint the starting point
+     * @param toPoint the ending point
+     * @returns the cursor type representing the direction
+     */
     static getMovementDirectionType(
         fromPoint: Phaser.Geom.Point,
         toPoint: Phaser.Geom.Point
@@ -310,24 +376,6 @@ export class Cursor {
         const dx: number = Phaser.Math.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = Phaser.Math.Clamp(toPoint.y - fromPoint.y, -1, 1);
 
-        if (dx === 0 && dy === 1) {
-            return CursorType.DownLeft;
-        } else if (dx === 1 && dy === 1) {
-            return CursorType.Down;
-        } else if (dx === 1 && dy === 0) {
-            return CursorType.DownRight;
-        } else if (dx === 1 && dy === -1) {
-            return CursorType.Right;
-        } else if (dx === 0 && dy === -1) {
-            return CursorType.UpRight;
-        } else if (dx === -1 && dy === -1) {
-            return CursorType.Up;
-        } else if (dx === -1 && dy === 0) {
-            return CursorType.UpLeft;
-        } else if (dx === -1 && dy === 1) {
-            return CursorType.Left;
-        } else {
-            return CursorType.Invalid;
-        }
+        return Cursor.DIRECTION_MAP[`${dx},${dy}`] ?? CursorType.Invalid;
     }
 }
