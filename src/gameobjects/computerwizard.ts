@@ -8,6 +8,7 @@ import { Path } from "./rangegizmo";
 import { UnitType } from "./enums/unittype";
 import { UnitStatus } from "./enums/unitstatus";
 import { BoardState } from "./enums/boardstate";
+import { AttackSpell } from "./spells/attackspell";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
@@ -25,14 +26,114 @@ export class ComputerWizard {
     private readonly _player: Player;
 
     /**
+     * A set of piece IDs that are known to not be illusions. This is used to
+     * track which units have been unsuccessfully Disbelieved. There's a small
+     * chance that the computer player may 'forget' this information over time,
+     * or neglect to record it altogether, to simulate imperfect memory.
+     */
+    private readonly _knownNonIllusionPieces: Set<number>;
+
+    /**
+     * The difficulty level of the computer wizard, from 0 (easiest) to 1 (hardest).
+     */
+    private readonly _difficulty: number = 0.5;
+
+    /**
      * Creates a new ComputerWizard instance.
      *
      * @param board a reference to the game board
      * @param player the player this computer wizard is controlling
      */
-    constructor(board: Board, player: Player) {
+    constructor(board: Board, player: Player, difficulty?: number) {
         this._board = board;
         this._player = player;
+        this._difficulty = difficulty ?? 0.5;
+        this._knownNonIllusionPieces = new Set<number>();
+    }
+
+    /**
+     * Given a list of attack spells, finds all valid targets for each spell.
+     * 
+     * @param spells the attack spells to find targets for
+     * @returns a map of attack spells to their valid targets
+     */
+    protected findAttackSpellTargets(spells: AttackSpell[]): Map<AttackSpell, Piece[]> {
+        const targets: Map<AttackSpell, Set<Piece>> = new Map();
+        for (const spell of spells) {
+            for (let piece of this._board.pieces) {
+                if (
+                    piece.owner !== this._player && // Enemy piece
+                    !piece.currentMount && // Not mounted
+                    !piece.dead && // Not dead
+                    spell.isValidTarget(piece.position, false)
+                ) {
+                    if (!targets.has(spell)) {
+                        targets.set(spell, new Set());
+                    }
+                    targets.get(spell).add(piece);
+                }
+            }
+        }
+        // For spells which destroy wizard creatures, filter out any wizard
+        // targets whose owner has no other units to target
+        const justiceSpell: AttackSpell | undefined = spells.find((spell: AttackSpell) => {
+            return spell.properties.destroyWizardCreatures;
+        });
+        if (justiceSpell && targets.has(justiceSpell)) {
+            const filteredTargets: Set<Piece> = new Set(); 
+            for (const piece of targets.get(justiceSpell)) {
+                if (piece.type === UnitType.Wizard) {
+                    const wizardOwner: Player = piece.owner;
+                    const ownerUnits: Piece[] = this._board
+                        .getPiecesByOwner(wizardOwner)
+                        .filter((p: Piece) => {
+                            return p.type !== UnitType.Wizard && !p.dead;
+                        });
+                    if (ownerUnits.length > 0) {
+                        filteredTargets.add(piece);
+                    }
+                }
+            }
+            targets.set(justiceSpell, filteredTargets);
+        }
+
+        // Convert sets to arrays for easier processing later
+        const result: Map<AttackSpell, Piece[]> = new Map();
+        for (const [spell, pieces] of targets.entries()) {
+            result.set(spell, Array.from(pieces));
+        }
+        return result;
+    }
+
+    /**
+     * Causes the computer wizard to forget some of its knowledge about
+     * illusions over time.
+     */
+    private forgetIllusionKnowledge(): void {
+        // Small chance to forget a known non-illusion piece each turn
+        const forgetChance: number = 0.1 * (1 - this._difficulty); // Harder difficulties forget less often
+        for (const pieceId of this._knownNonIllusionPieces) {
+            if (this._board.rollChance(forgetChance)) {
+                this._knownNonIllusionPieces.delete(pieceId);
+                console.debug(`${this._player.name} has forgotten that piece ID ${pieceId} is not an illusion`);
+            }
+        }
+    }
+
+    /**
+     * Remembers that a given piece is not an illusion. Has a chance to fail
+     * based on the computer wizard's difficulty level.
+     * 
+     * @param pieceId the ID of the piece to remember
+     */
+    public rememberNonIllusionPiece(pieceId: number): void {
+        const rememberChance: number = 0.2 * (1 - this._difficulty); // Harder difficulties remember more often
+        if (this._board.rollChance(rememberChance)) {
+            console.debug(`${this._player.name} failed to notice that piece ID ${pieceId} is not an illusion`);
+            return;
+        }
+        console.debug(`${this._player.name} has learned from another player that piece ID ${pieceId} is not an illusion`);
+        this._knownNonIllusionPieces.add(pieceId);
     }
 
     /**
@@ -40,15 +141,66 @@ export class ComputerWizard {
      */
     async selectSpell(): Promise<boolean> {
         this._board.cursor.enabled = false;
+        // Possibly forget some illusion knowledge
+        this.forgetIllusionKnowledge();
         try {
             // For now, just pick a random spell from the player's spell list
             let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
                 return (
-                    spell.type === SpellType.Summon || spell.type === SpellType.Buff
+                    spell.type === SpellType.Summon ||
+                    spell.type === SpellType.Buff ||
+                    spell.type === SpellType.Attack ||
+                    spell.type === SpellType.Disbelieve
                 );
             });
 
-            if (spells.length === 0) {
+            if (!spells.length) {
+                console.debug(`${this._player.name} has no spells to cast`);
+                this._board.sound.play("cancel");
+                return false;
+            }
+
+            // Filter out any attack spells that have no valid targets
+            const attackSpells: AttackSpell[] = spells.filter((spell: Spell) => {
+                return spell.type === SpellType.Attack;
+            }) as AttackSpell[];
+            const attackSpellTargets: Map<AttackSpell, Piece[]> =
+                this.findAttackSpellTargets(attackSpells);
+
+            spells = spells.filter((spell: Spell) => {
+                if (spell.type === SpellType.Attack) {
+                    const attackSpell: AttackSpell = spell as AttackSpell;
+                    return attackSpellTargets.has(attackSpell) &&
+                        attackSpellTargets.get(attackSpell).length > 0;
+                }
+                return true;
+            });
+
+            // Filter out Disbelieve if there are no valid targets
+            const disbelieveSpell: Spell | undefined = spells.find((spell: Spell) => {
+                return spell.type === SpellType.Disbelieve;
+            });
+            if (disbelieveSpell) {
+                const potentialTargets: Piece[] = this._board.pieces
+                    .filter((p: Piece) => {
+                        return (
+                            p.owner !== this._player && // Enemy piece
+                            !p.dead && // Not dead
+                            p.canDisbelieve && // Can be disbelieved
+                            !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
+                        );
+                    });
+                if (potentialTargets.length === 0) {
+                    // No valid targets for Disbelieve, remove it from the list
+                    spells = spells.filter((spell: Spell) => {
+                        return spell.type !== SpellType.Disbelieve;
+                    });
+                }
+            }
+
+            if (!spells.length) {
+                console.debug(`${this._player.name} has no valid spells to cast`);
+                this._board.sound.play("cancel");
                 return false;
             }
 
@@ -74,6 +226,9 @@ export class ComputerWizard {
 
             await this._player.pickSpell(pickedSpell.id);
             return true;
+        } catch (error) {
+            console.error(`Error selecting spell for ${this._player.name}:`, error);
+            return false;
         } finally {
             this._board.cursor.enabled = true;
         }
@@ -86,6 +241,7 @@ export class ComputerWizard {
         this._board.cursor.enabled = false;
         try {
             const spell: Spell | null = await this._player.useSpell();
+            let successfullyCast: boolean = false;
             if (spell) {
                 if (spell.type === SpellType.Summon) {
                     const summonSpell: SummonSpell = spell as SummonSpell;
@@ -107,8 +263,12 @@ export class ComputerWizard {
                                 }
                             }
                         }
-                        if (validTiles.length === 0) {
+                        if (!validTiles.length) {
                             console.debug(`${this._player.name} has no valid tiles to cast ${spell.name}`);
+                            if (successfullyCast) {
+                                this._player.discardSpell();
+                            }
+                            this._board.sound.play("cancel");
                             return false;
                         }
                         summonPt = Phaser.Math.RND.pick(validTiles);
@@ -118,6 +278,7 @@ export class ComputerWizard {
                             spell,
                             summonPt
                         );
+                        successfullyCast = true;
                     }
                     return true;
                 } else if (spell.type === SpellType.Buff) {
@@ -127,8 +288,78 @@ export class ComputerWizard {
                         this._player.castingPiece
                     );
                     return true;
+                } else if (spell.type === SpellType.Attack) {
+                    const attackSpell: AttackSpell = spell as AttackSpell;
+                    console.debug(`${this._player.name} is casting attack spell ${spell.name}`);
+                    while (attackSpell.castTimes > 0) {
+                        const targets: Piece[] = (this.findAttackSpellTargets([attackSpell]).get(attackSpell) || [])
+                            .toSorted((a: Piece, b: Piece) => {
+                            // Prefer wizard targets
+                            if (
+                                a.type === UnitType.Wizard &&
+                                b.type !== UnitType.Wizard
+                            ) {
+                                return -1;
+                            }
+                            if (
+                                a.type !== UnitType.Wizard &&
+                                b.type === UnitType.Wizard
+                            ) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                        if (!targets.length) {
+                            console.debug(`${this._player.name} has no valid targets to cast ${spell.name}`);
+                            if (successfullyCast) {
+                                this._player.discardSpell();
+                            }
+                            this._board.sound.play("cancel");
+                            return false;
+                        }
+                        else {
+                            console.debug(`${this._player.name} has ${targets.length} valid targets to cast ${spell.name}`);
+                        }
+                        const target: Piece = Phaser.Math.RND.weightedPick(targets);
+                        await this._board.rules.doCastSpell(
+                            this._board,
+                            spell,
+                            target
+                        );
+                        successfullyCast = true;
+                    }
+                    return true;
+                } else if (spell.type === SpellType.Disbelieve) {
+                    console.debug(`${this._player.name} is casting Disbelieve`);
+                    const potentialTargets: Piece[] = this._board.pieces
+                        .filter((p: Piece) => {
+                            return (
+                                p.owner !== this._player && // Enemy piece
+                                !p.dead && // Not dead
+                                p.canDisbelieve && // Can be disbelieved
+                                !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
+                            );
+                        });
+
+                    if (!potentialTargets.length) {
+                        console.debug(`${this._player.name} has no valid targets to cast Disbelieve`);
+                        this._board.sound.play("cancel");
+                        return false;
+                    }
+
+                    const target: Piece = Phaser.Math.RND.pick(potentialTargets);
+                    await this._board.rules.doCastSpell(
+                        this._board,
+                        spell,
+                        target
+                    );
+                    return true;
                 }
             }
+            this._board.sound.play("cancel");
+            return false;
+        } catch (error) {
+            console.error(`Error casting spell for ${this._player.name}:`, error);
             return false;
         } finally {
             this._board.cursor.enabled = true;
@@ -171,7 +402,14 @@ export class ComputerWizard {
         else {
             console.debug(`${piece.owner.name}'s ${piece.name} is not engaged`);
         }
-        if (!piece.attacked && piece.canAttack) {
+        // 50/50 chance to run instead of attack if not engaged. If the unit
+        // cannot move (e.g., a Shadow Wood) it has a much higher chance to
+        // attack.
+        const willAttack: boolean = this._board.rollChance(piece.canMove ? 0.5 : 0.1);
+        if (!willAttack) {
+            console.debug(`${piece.owner.name}'s ${piece.name} will skip attacking this turn`);
+        }
+        if (!piece.attacked && piece.canAttack && willAttack) {
             // Try to attack a random hostile target in range
             const potentialAttackTargets: Piece[] = this._board
                 .getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
@@ -240,7 +478,7 @@ export class ComputerWizard {
                     return true;
                 }
                 else {
-                    console.debug(`No friendly mountables found for ${piece.owner.name}'s ${piece.name}`);
+                    console.debug(`No friendly mountables found for ${piece.owner.name}'s ${piece.type}`);
                 }
             }
 
@@ -255,6 +493,7 @@ export class ComputerWizard {
             });
             if (reachableTiles.length === 0) {
                 console.debug(`No reachable tiles for ${piece.owner.name}'s ${piece.name}`);
+                this._board.sound.play("cancel");
                 return false;
             }
             const movePt: Phaser.Geom.Point =
@@ -324,14 +563,16 @@ export class ComputerWizard {
                 .getPiecesByOwner(this._player)
                 .filter((p: Piece) => {
                     return (
-                        p.currentMount === null && // Not mounted - mounted units move with their mounts
-                        ((!p.moved && p.canMove) || // Is able to move
-                            (!p.attacked && (p.canAttack || p.canRangedAttack))) // Is able to attack
+                        !p.currentMount && // Not mounted - mounted units move with their mounts
+                        (
+                            (!p.moved && p.canMove) || // Is able to move
+                            (!p.attacked && (p.canAttack || p.canRangedAttack)) // Is able to attack
+                        ) 
                     );
                 });
 
-            if (pieces.length === 0) {
-                console.debug(`${this._player.name} has no pieces to move`);
+            if (!pieces.length) {
+                console.warn(`${this._player.name} has no pieces to move`);
                 return;
             }
 

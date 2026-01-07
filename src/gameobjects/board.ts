@@ -18,6 +18,7 @@ import { Player } from "./player";
 import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
+import { SoundEffects } from "./soundeffects";
 import { AttackSpell } from "./spells/attackspell";
 import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
@@ -98,7 +99,7 @@ export class Board extends Model implements Box {
 
     private readonly _rules: Rules;
     private readonly _logger: Logger;
-    private readonly _sound: Sound.BaseSound;
+    private readonly _sound: SoundEffects;
 
     constructor(
         scene: Scene,
@@ -154,7 +155,7 @@ export class Board extends Model implements Box {
 
         this.createEffects();
 
-        this._sound = this.scene.sound.addAudioSprite("classicsounds");
+        this._sound = SoundEffects.getInstance(this.scene);
 
         this._sound.play("screenactive");
 
@@ -186,7 +187,7 @@ export class Board extends Model implements Box {
                 }
                 break;
             default:
-                if (!this.currentPlayer?.ai) {
+                if (this.currentPlayer && !this.currentPlayer.ai) {
                     this.scene.game.events.emit("cancel-available", true);
                 }
                 this.scene.game.events.emit("end-turn-available", false);
@@ -559,8 +560,14 @@ export class Board extends Model implements Box {
             return;
         }
         this._selected = this.getPiece(id);
+        if (!this._selected) {
+            throw new Error(`No piece with ID ${id} found to select`);
+        }
 
         if (this.phase === BoardPhase.Moving) {
+            await this.sound.playAsync("select", {
+                delay: 200
+            });
             if (this._selected.currentMount) {
                 await this.moveGizmo.generate(this._selected);
                 return;
@@ -600,7 +607,7 @@ export class Board extends Model implements Box {
             case BoardState.Dismount:
             case BoardState.Attack:
             case BoardState.RangedAttack:
-                if (!this.currentPlayer?.ai) {
+                if (this.currentPlayer && !this.currentPlayer.ai) {
                     this.scene.game.events.emit("cancel-available", true);
                 }
                 break;
@@ -953,6 +960,8 @@ export class Board extends Model implements Box {
                 piece.currentRider &&
                 this.roll(4, 10)
             ) {
+                // TODO: This sound seems to be missing
+                // this.sound.play("giftspell");
                 await this.playEffect(
                     EffectType.GiveSpell,
                     piece.sprite.getCenter(),
@@ -1086,7 +1095,6 @@ export class Board extends Model implements Box {
                         break;
                     case BoardPhase.Casting:
                         if (this.currentPlayer?.selectedSpell) {
-                            this.sound.play("endturn");
                             this.logger.log(
                                 `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                             );
@@ -1133,18 +1141,29 @@ export class Board extends Model implements Box {
                             piece.turnOver = false;
                             piece.highlighted = true;
                         });
-                        setTimeout(() => {
+                        setTimeout(async () => {
+                            if (this.currentPlayer?.ai && this.phase === BoardPhase.Moving) {
+                                await this.currentPlayer.ai.moveAllUnits();
+                                this.nextPlayer();
+                            }
+                            else {
+                                this.cursor.enabled = true;
+                            }
                             resolve();
                         }, 100);
                     },
                     duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
                 });
-                await this.idleDelay(Board.NEW_TURN_HIGHLIGHT_DURATION);
 
-                if (this.currentPlayer?.ai && this.phase === BoardPhase.Moving) {
-                    await this.currentPlayer.ai.moveAllUnits();
-                    this.nextPlayer();
+                // Beep beep beep for casting phase
+                if (this.phase === BoardPhase.Casting) {
+                    await this.sound.playAsync("chaoskeypress2", {
+                        repeat: 3,
+                        delay: 175
+                    });
                 }
+
+                await this.idleDelay(Board.NEW_TURN_HIGHLIGHT_DURATION);
             });
         });
     }
@@ -1277,6 +1296,13 @@ export class Board extends Model implements Box {
                         }
                         return await this.nextPlayer();
                     }
+                } else if (spell?.range === -1) {
+                    if (this.currentPlayer?.ai) {
+                        if (!await this.currentPlayer.ai.castSpell()) {
+                            console.log("AI could not cast spell, skipping...");
+                        }
+                        return await this.nextPlayer();
+                    }
                 }
             }
         }
@@ -1362,7 +1388,7 @@ export class Board extends Model implements Box {
         return this._scene;
     }
 
-    get sound(): Sound.BaseSound {
+    get sound(): SoundEffects {
         return this._sound;
     }
 
@@ -1402,24 +1428,53 @@ export class Board extends Model implements Box {
         return screenPos;
     }
 
+    /**
+     * Roll an attack vs defense check.
+     * 
+     * @param attack the attack value
+     * @param defense the defense value
+     * @returns true if the attack is greater than the defense, false otherwise
+     */
     roll(attack: number, defense: number): boolean {
         if (Board.CHEAT_FORCE_HIT !== null) {
             return Board.CHEAT_FORCE_HIT;
         }
         const attackRoll: number = PMath.Between(0, 10 + attack);
         const defenseRoll: number = PMath.Between(0, 10 + defense);
-        console.log("Rolling attack: " + attackRoll + " vs " + defenseRoll);
+        console.debug(`Rolled ${attackRoll} vs ${defenseRoll}; attack ${
+            attackRoll > defenseRoll ? "succeeds" : "fails"
+        }`);
         return attackRoll > defenseRoll;
     }
 
+    /**
+     * Roll a chance check for spell casting.
+     * 
+     * @param attack the chance value (0 to 1)
+     * @returns true if the chance check succeeds, false otherwise
+     */
     rollChance(attack: number): boolean {
         if (Board.CHEAT_FORCE_CAST !== null) {
             return Board.CHEAT_FORCE_CAST;
         }
         const defenseRoll: number = PMath.RND.frac();
+        if (attack < 0 || attack > 1) {
+            console.warn(`Chance value ${attack} is out of bounds, clamping to 0-1`);
+            attack = Math.max(0, Math.min(1, attack));
+        }
+        console.debug(`Rolled ${attack} vs ${defenseRoll}; chance ${
+            attack > defenseRoll ? "succeeds" : "fails"
+        }`);
         return attack > defenseRoll;
     }
 
+    /**
+     * Check if there is line of sight between two positions on the board.
+     * 
+     * @param startPosition the starting position
+     * @param endPosition the ending position
+     * @returns true if there is line of sight, false otherwise
+     */
     hasLineOfSight(
         startPosition: Geom.Point | PMath.Vector2,
         endPosition: Geom.Point | PMath.Vector2
@@ -1479,13 +1534,20 @@ export class Board extends Model implements Box {
         return true;
     }
 
-    static distance(a: Geom.Point, b: Geom.Point): number {
-        if (Geom.Point.Equals(a, b)) {
+    /**
+     * Calculate distance between two points on the board.
+     * 
+     * @param startPosition the starting position
+     * @param endPosition the ending position
+     * @returns the distance between the two points
+     */
+    static distance(startPosition: Geom.Point, endPosition: Geom.Point): number {
+        if (Geom.Point.Equals(startPosition, endPosition)) {
             return 0;
         }
         const difference: Geom.Point = new Geom.Point(
-            Math.abs(a.x - b.x),
-            Math.abs(a.y - b.y)
+            Math.abs(startPosition.x - endPosition.x),
+            Math.abs(startPosition.y - endPosition.y)
         );
         return (
             Math.max(difference.x, difference.y) -
@@ -1494,6 +1556,12 @@ export class Board extends Model implements Box {
         );
     }
 
+    /**
+     * Convert a point to isometric coordinates.
+     * 
+     * @param point The point to convert.
+     * @returns The converted point.
+     */
     static toIsometric(point: Geom.Point): Geom.Point {
         return new Geom.Point(
             point.x - point.y,
@@ -1501,6 +1569,12 @@ export class Board extends Model implements Box {
         );
     }
 
+    /**
+     * Convert a point from isometric coordinates to cartesian.
+     * 
+     * @param point The point to convert.
+     * @returns The converted point.
+     */
     static fromIsometric(point: Geom.Point): Geom.Point {
         return new Geom.Point(
             point.x + point.y / 2,
@@ -1508,6 +1582,11 @@ export class Board extends Model implements Box {
         );
     }
 
+    /**
+     * Delay the board state to Idle for a given time.
+     * 
+     * @param time The delay time in milliseconds.
+     */
     async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Idle;
@@ -1515,6 +1594,11 @@ export class Board extends Model implements Box {
         this.state = oldState;
     }
 
+    /**
+     * Delay the board state to Busy for a given time.
+     * 
+     * @param time The delay time in milliseconds.
+     */
     async busyDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Busy;
@@ -1522,6 +1606,11 @@ export class Board extends Model implements Box {
         this.state = oldState;
     }
 
+    /**
+     * Delay for a given time.
+     * 
+     * @param time The delay time in milliseconds.
+     */
     static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -1536,30 +1625,40 @@ export class Board extends Model implements Box {
 
     private _emptySpaceIterations: number = 5;
 
+    /**
+     * Get a random empty space on the board.
+     * @returns 
+     */
     getRandomEmptySpace(): Geom.Point {
-        const x: number = Math.floor(Math.random() * this.width);
-        const y: number = Math.floor(Math.random() * this.height);
+        // First find where all the occupied spaces are
+        const occupiedSpaces: Set<string> = new Set();
+        this.pieces
+            .filter((piece: Piece) => !piece.dead)
+            .forEach((piece: Piece) => {
+                occupiedSpaces.add(`${piece.position.x},${piece.position.y}`);
+            });
 
-        const point: Geom.Point = new Geom.Point(x, y);
-
-        if (
-            this.getPiecesAtPosition(point, (piece: Piece) => !piece.dead)
-                .length > 0
-        ) {
-            this._emptySpaceIterations--;
-            if (this._emptySpaceIterations > 0) {
-                return this.getRandomEmptySpace();
+        // Now build a list of all empty spaces
+        const emptySpaces: Geom.Point[] = [];
+        for (let x: number = 0; x < this.width; x++) {
+            for (let y: number = 0; y < this.height; y++) {
+                const key: string = `${x},${y}`;
+                if (!occupiedSpaces.has(key)) {
+                    emptySpaces.push(new Geom.Point(x, y));
+                }
             }
         }
-
-        if (this._emptySpaceIterations <= 0) {
-            this._emptySpaceIterations = 5;
+        if (emptySpaces.length === 0) {
+            console.warn("No empty spaces available on the board!");
             return null;
         }
-
-        return point;
+        // Return a random empty space
+        return PMath.RND.pick(emptySpaces);
     }
 
+    /**
+     * Destroy the board and all its pieces and layers.
+     */
     destroy() {
         this.pieces?.forEach((piece: Piece) => {
             piece.destroy();

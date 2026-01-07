@@ -111,7 +111,7 @@
             </button>
         </div>
         <SpellInfo
-            v-if="!illusionPrompt"
+            v-if="!illusionPrompt && currentSpell"
             :spell="currentSpell"
             @close="closeInfo()"
             @select="select(currentSpell)"

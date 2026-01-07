@@ -8,98 +8,98 @@
     "players": [
         {
             "id": 1,
-            "name": "Player 1",
+            "name": "Gandalf",
             "position": { "x": 0, "y": 10 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 2,
-            "name": "Player 2",
+            "name": "Saruman",
             "position": { "x": 0, "y": 5 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 3,
-            "name": "Player 3",
+            "name": "Radagast",
             "position": { "x": 0, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 4,
-            "name": "Player 4",
+            "name": "Merlin",
             "position": { "x": 5, "y": 10 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 5,
-            "name": "Player 5",
+            "name": "Morgana",
             "position": { "x": 5, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 6,
-            "name": "Player 6",
+            "name": "Dumbledore",
             "position": { "x": 10, "y": 10 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 7,
-            "name": "Player 7",
+            "name": "Voldemort",
             "position": { "x": 10, "y": 5 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         },
         {
             "id": 8,
-            "name": "Player 8",
+            "name": "Grindelwald",
             "position": { "x": 10, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff"
+                "*Summon", "*Buff", "*Attack"
             ]
         }
     ],
@@ -107,6 +107,6 @@
     "cheats": {
         "forceHit": null,
         "forceCast": true,
-        "shortDelay": false
+        "shortDelay": true
     }
 }

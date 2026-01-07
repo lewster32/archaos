@@ -557,6 +557,10 @@ export class Piece extends Entity {
         if (spreadAction === SpreadAction.Shrink) {
             if (this.currentEngulfed) {
                 this.currentEngulfed.engulfed = false;
+                this.board.logger.log(
+                    `${this.currentEngulfed.owner?.name}'s ${this.currentEngulfed.name} was released from ${this.owner?.name}'s ${this.name}`,
+                    Colour.Green
+                );
             }
             await new Promise((resolve, reject) => {
                 this.board.scene.tweens.add({
@@ -597,16 +601,25 @@ export class Piece extends Entity {
                         piece.hasStatus(UnitStatus.Wizard)
                     )
                 ) {
+                    this.board.logger.log(
+                        `${this.owner.name}'s ${this.name} was destroyed by ${spreadPieces[0].owner.name}!`,
+                        Colour.Red
+                    );
                     await spreadPieces
                         .find((piece) => piece.hasStatus(UnitStatus.Wizard))!
                         .kill();
                 } else if (this.hasStatus(UnitStatus.Engulfs)) {
+                    this.board.logger.log(
+                        `${this.owner.name}'s ${this.name} has engulfed ${spreadPieces[0].owner.name}'s ${spreadPieces[0].name}`,
+                        Colour.Yellow
+                    );
                     spreadPieces[0].engulfed = true;
                 } else {
                     await Promise.all(
                         spreadPieces.map(async (piece) => {
                             this.board.logger.log(
-                                `${piece.name} was destroyed by ${this.name}`
+                                `${piece.owner.name}'s ${piece.name} was destroyed by ${this.owner.name}'s ${this.name}`,
+                                Colour.Red
                             );
                             switch (this.properties.attackType) {
                                 case UnitAttackType.Burned:
@@ -648,7 +661,7 @@ export class Piece extends Entity {
                 offsetY: unit.offY,
                 owner: this.owner,
                 illusion: !!this._illusion,
-            });
+            } as PieceConfig);
 
             this.board.sound.play(`blob${PMath.RND.integerInRange(1, 2)}`);
 
@@ -770,52 +783,52 @@ export class Piece extends Entity {
 
     get canDisbelieve(): boolean {
         return (
-            this.type === UnitType.Creature &&
-            !this.hasStatus(UnitStatus.Wizard) &&
-            !this.hasStatus(UnitStatus.Structure) &&
-            !this.hasStatus(UnitStatus.Spreads) &&
-            !this.hasStatus(UnitStatus.Tree)
+            this.type === UnitType.Creature && // Only creatures can be disbelieved
+            !this.hasStatus(UnitStatus.Wizard) && // Cannot disbelieve wizards
+            !this.hasStatus(UnitStatus.Structure) && // Cannot disbelieve structures
+            !this.hasStatus(UnitStatus.Spreads) && // Cannot disbelieve spreading units
+            !this.hasStatus(UnitStatus.Tree) // Cannot disbelieve trees
         );
     }
 
     get canBeSpreadOn(): boolean {
         return (
-            (this.type === UnitType.Creature ||
-                this.type === UnitType.Wizard) &&
-            !this.hasStatus(UnitStatus.Engulfs) &&
-            !this.hasStatus(UnitStatus.Invulnerable) &&
-            !this.hasStatus(UnitStatus.Structure) &&
-            !this.hasStatus(UnitStatus.Tree)
+            (this.type === UnitType.Creature || // Only creatures and wizards can be spread on
+                this.type === UnitType.Wizard) && 
+            !this.hasStatus(UnitStatus.Engulfs) && // Cannot be spread on if it engulfs
+            !this.hasStatus(UnitStatus.Invulnerable) && // Cannot be spread on if invulnerable
+            !this.hasStatus(UnitStatus.Structure) && // Cannot be spread on if a structure
+            !this.hasStatus(UnitStatus.Tree) // Cannot be spread on if a tree
         );
     }
 
     get canBeSubverted(): boolean {
         return (
-            this.type === UnitType.Creature &&
-            !this.hasStatus(UnitStatus.Wizard) &&
-            !this.hasStatus(UnitStatus.Spreads) &&
-            !this.hasStatus(UnitStatus.Structure) &&
-            !this.hasStatus(UnitStatus.Tree) &&
-            !this.hasStatus(UnitStatus.Invulnerable)
+            this.type === UnitType.Creature && // Only creatures can be subverted
+            !this.hasStatus(UnitStatus.Wizard) && // Cannot subvert wizards
+            !this.hasStatus(UnitStatus.Spreads) && // Cannot subvert spreading units
+            !this.hasStatus(UnitStatus.Structure) && // Cannot subvert structures
+            !this.hasStatus(UnitStatus.Tree) && // Cannot subvert trees
+            !this.hasStatus(UnitStatus.Invulnerable) // Cannot subvert invulnerable units
         );
     }
 
     get canBeMagicAttacked(): boolean {
-        return !this.hasStatus(UnitStatus.Invulnerable)
+        return !this.hasStatus(UnitStatus.Invulnerable) // Cannot be magic attacked if invulnerable
     }
 
     get canAttack(): boolean {
         const neighbours: Piece[] = this.getNeighbours();
 
         if (
-            this._dead ||
-            this.engulfed ||
-            this.attacked ||
-            this.stats.combat === 0 ||
-            neighbours.length === 0 ||
+            this._dead || // Cannot attack when dead
+            this.engulfed || // Cannot attack when engulfed
+            this.attacked || // Cannot attack if already attacked
+            this.stats.combat === 0 || // Cannot attack with zero combat
+            neighbours.length === 0 || // No neighbours to attack
             neighbours.filter((neighbour: Piece) =>
                 this.canAttackPiece(neighbour)
-            ).length === 0
+            ).length === 0 // Must be in attack range of at least one neighbour
         ) {
             return false;
         }
@@ -824,11 +837,11 @@ export class Piece extends Entity {
 
     get canMove(): boolean {
         if (
-            this._dead ||
-            this.engulfed ||
-            this.stats.movement === 0 ||
-            this.hasStatus(UnitStatus.Structure) ||
-            this.hasStatus(UnitStatus.Tree)
+            this._dead || // Cannot move when dead
+            this.engulfed || // Cannot move when engulfed
+            this.stats.movement === 0 || // Cannot move with zero movement
+            this.hasStatus(UnitStatus.Structure) || // Cannot move if a structure
+            this.hasStatus(UnitStatus.Tree) // Cannot move if a tree
         ) {
             return false;
         }
@@ -837,14 +850,17 @@ export class Piece extends Entity {
 
     canAttackPiece(piece: Piece): boolean {
         if (
-            this == piece ||
-            this.owner === piece.owner ||
-            this._dead ||
-            this.engulfed ||
-            piece.dead ||
-            this.attacked ||
-            piece.hasStatus(UnitStatus.Invulnerable) ||
-            !this.inAttackRange(piece.position)
+            this == piece || // Cannot attack self
+            this.owner === piece.owner || // Cannot attack own pieces
+            piece == this.currentRider || // Cannot attack mounted rider
+            this._dead || // Cannot attack when dead
+            this.engulfed || // Cannot attack when engulfed
+            this.attacked || // Cannot attack if already attacked
+            piece.dead || // Cannot attack dead pieces
+            piece.engulfed || // Cannot attack engulfed pieces
+            piece.currentMount || // Cannot attack mounted pieces
+            piece.hasStatus(UnitStatus.Invulnerable) || // Cannot attack invulnerable pieces
+            !this.inAttackRange(piece.position) // Must be in attack range
         ) {
             return false;
         }
@@ -853,13 +869,13 @@ export class Piece extends Entity {
 
     get canRangedAttack(): boolean {
         if (
-            this._dead ||
-            this.engulfed ||
-            this.rangedAttacked ||
-            this.stats.rangedCombat === 0 ||
+            this._dead || // Cannot attack when dead
+            this.engulfed || // Cannot attack when engulfed
+            this.rangedAttacked || // Cannot attack if already attacked
+            this.stats.rangedCombat === 0 || // Cannot attack with zero ranged combat
             this.board.pieces.filter((piece: Piece) =>
-                this.canRangedAttackPiece(piece)
-            ).length === 0
+                this.canRangedAttackPiece(piece) 
+            ).length === 0 // Must be in ranged attack range
         ) {
             return false;
         }
@@ -868,16 +884,19 @@ export class Piece extends Entity {
 
     canRangedAttackPiece(piece: Piece): boolean {
         if (
-            this == piece ||
-            piece == this.currentRider ||
-            this._dead ||
-            this.engulfed ||
-            piece.dead ||
-            this.rangedAttacked ||
-            !this.moved ||
-            piece.hasStatus(UnitStatus.Invulnerable) ||
-            !this.inRangedAttackRange(piece.position) ||
-            !this.board.hasLineOfSight(this.position, piece.position)
+            this == piece || // Cannot attack self
+            this.owner === piece.owner || // Cannot attack own pieces
+            piece == this.currentRider || // Cannot attack mounted rider
+            this._dead || // Cannot attack when dead
+            this.engulfed || // Cannot attack when engulfed
+            piece.dead || // Cannot attack dead pieces
+            this.rangedAttacked || // Cannot attack if already attacked
+            piece.engulfed || // Cannot attack engulfed pieces
+            piece.currentMount || // Cannot attack mounted pieces
+            !this.moved || // Must have moved or be in range
+            piece.hasStatus(UnitStatus.Invulnerable) || // Cannot attack invulnerable pieces
+            !this.inRangedAttackRange(piece.position) || // Must be in ranged attack range
+            !this.board.hasLineOfSight(this.position, piece.position) // Must have line of sight
         ) {
             return false;
         }
@@ -886,15 +905,15 @@ export class Piece extends Entity {
 
     canMountPiece(piece: Piece): boolean {
         if (
-            this != piece &&
-            !this._dead &&
-            !this.engulfed &&
-            !piece.dead &&
-            !this.moved &&
-            this.hasStatus(UnitStatus.Wizard) &&
-            !piece.currentRider &&
-            ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) ||
-            piece.hasStatus(UnitStatus.MountAny))
+            this != piece && // Cannot mount self
+            !this._dead && // Cannot mount when dead
+            !this.engulfed && // Cannot mount when engulfed
+            !piece.dead && // Cannot mount dead pieces
+            !this.moved && // Must not have moved
+            this.hasStatus(UnitStatus.Wizard) && // Must be a wizard
+            !piece.currentRider && // Cannot mount already mounted pieces
+            ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) || // Must be mountable by owner
+            piece.hasStatus(UnitStatus.MountAny)) // or mountable by anyone (e.g., Magic Wood)
         ) {
             return true;
         }
@@ -903,16 +922,16 @@ export class Piece extends Entity {
 
     canEngagePiece(piece: Piece): boolean {
         if (
-            this == piece ||
-            this._dead ||
-            this.engulfed ||
-            piece.engulfed ||
-            piece.dead ||
-            this.stats.maneuverability === 0 ||
-            piece.stats.maneuverability === 0 ||
-            this.currentMount ||
-            piece.currentMount ||
-            this.owner === piece.owner
+            this == piece || // Cannot engage self
+            this._dead || // Cannot engage when dead
+            this.engulfed || // Cannot engage when engulfed
+            piece.engulfed || // Cannot engage engulfed pieces
+            piece.dead || // Cannot engage dead pieces
+            this.stats.maneuverability === 0 || // Cannot engage with zero maneuverability
+            piece.stats.maneuverability === 0 || // Cannot engage pieces with zero maneuverability
+            this.currentMount || // Cannot engage when mounted
+            piece.currentMount || // Cannot engage mounted pieces
+            this.owner === piece.owner // Cannot engage own pieces
         ) {
             return false;
         }
@@ -929,21 +948,18 @@ export class Piece extends Entity {
         return null;
     }
 
-    async engage(piece: Piece) {
-        return new Promise(async (resolve: Function) => {
-            if (this.canEngagePiece(piece)) {
-                this.engaged = true;
-                this.attacked = false;
-                piece.engaged = true;
-            }
-            this.board.sound.play("engaged");
-            this.board.logger.log(
-                `${this.name} is engaged with ${piece.name}`,
-                Colour.Yellow
-            );
-            setTimeout(() => {
-                resolve();
-            }, Board.DEFAULT_DELAY);
+    async engage(piece: Piece): Promise<void> {
+        if (this.canEngagePiece(piece)) {
+            this.engaged = true;
+            this.attacked = false;
+            piece.engaged = true;
+        }
+        this.board.logger.log(
+            `${this.name} is engaged with ${piece.name}`,
+            Colour.Yellow
+        );
+        await this.board.sound.playAsync("engaged", {
+            delay: Board.DEFAULT_DELAY
         });
     }
 
@@ -961,11 +977,13 @@ export class Piece extends Entity {
                 !this.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.AttackUndead)
             ) {
-                this.board.sound.play("undead");
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan
                 );
+                await this.board.sound.playAsync("undead", {
+                    delay: Board.DEFAULT_DELAY
+                });
                 return false;
             }
 
@@ -991,8 +1009,10 @@ export class Piece extends Entity {
             }
 
             if (rollSuccess) {
-                this.board.sound.play("killcreature");
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                await this.board.sound.playAsync("killcreature", {
+                    delay: Board.DEFAULT_DELAY
+                });
                 await piece.kill();
                 // If the attacked piece was killed and the attacker can move,
                 // move into the killed piece's position

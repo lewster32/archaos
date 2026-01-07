@@ -83,7 +83,9 @@ export class AttackSpell extends Spell {
 
         if (rollSuccess) {
             if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
-                this._board.sound.play("justicesuccessful");
+                await this._board.sound.playAsync("justicesuccessful", {
+                    delay: Board.DEFAULT_DELAY
+                });
                 await target.owner.destroyCreations();
                 this._board.logger.log(
                     `${target.owner.name}'s creations were dispelled by ${this.name}`

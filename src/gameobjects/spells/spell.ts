@@ -41,6 +41,9 @@ export class Spell extends Model {
         if (config.target === SpellTarget.Self && config.id !== "turmoil") {
             this._type = SpellType.Buff;
         }
+        else if (config.id == "disbelieve") {
+            this._type = SpellType.Disbelieve;
+        }
         else {
             this._type = SpellType.Misc;
         }
@@ -296,7 +299,6 @@ export class Spell extends Model {
         });
         const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
 
-
         if (this._properties.target === SpellTarget.Self) {
             const wizard: Piece = targetPieces.find((piece: Piece) => piece.type === UnitType.Wizard);
             if (!wizard) {
@@ -336,7 +338,7 @@ export class Spell extends Model {
             return null;
         }
         
-        const targetEnemyLivingPiece: Piece = targetLivingPiece.owner !== this._owner ? targetLivingPiece : null;
+        const targetEnemyLivingPiece: Piece = targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
         const targetEnemyWizard: Piece = targetEnemyLivingPiece?.type === UnitType.Wizard ? targetEnemyLivingPiece : null;
 
         if (this._properties.target === SpellTarget.Piece) {
@@ -359,7 +361,7 @@ export class Spell extends Model {
                     }
                     return null;
                 }
-                if (this.properties.id === "disbelieve") {
+                if (this.type === SpellType.Disbelieve) {
                     const disbelievableTarget: Piece = targetEnemyLivingPiece.canDisbelieve ? targetEnemyLivingPiece : null;
                     if (!disbelievableTarget) {
                         if (showReason) {
@@ -472,7 +474,7 @@ export class Spell extends Model {
      * @returns The result of the spell cast
      */
     async doCast(owner: Player, castingPiece: Piece, point?: Phaser.Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
-        if (this.properties.id === "disbelieve") {
+        if (this.type === SpellType.Disbelieve) {
             const target: Piece = targets.find((p: Piece) => p.canDisbelieve);
             if (!target) {
                 return false;
@@ -497,6 +499,12 @@ export class Spell extends Model {
                     `Disbelieve failed on non-illusionary ${target.name}`,
                     Colour.Magenta
                 );
+                // Inform AI players that this piece is not an illusion
+                this._board.players.forEach((player: Player) => {
+                    if (player.ai) {
+                        player.ai.rememberNonIllusionPiece(target.id);
+                    }
+                });
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
             return true;

@@ -10,7 +10,7 @@
         ref="container"
     />
     <div class="placeholder" v-else>Loading...</div>
-    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted" />
+    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted && spellbook" />
     <Log :logs="logs" />
     <Minimap :pieces="pieces" :board="board" v-if="gameStarted" />
     <div class="menu" v-if="!gameStarted">

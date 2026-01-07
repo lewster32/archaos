@@ -335,7 +335,6 @@ export class Rules {
                         EventType.PieceInfo,
                         currentAliveHoveredPiece
                     );
-                    board.sound.play("select");
                     await board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {

@@ -3,4 +3,5 @@ export enum SpellType {
     Buff = "buff",
     Summon = "summon",
     Attack = "attack",
+    Disbelieve = "disbelieve",
 }

@@ -1,0 +1,76 @@
+import { Sound } from "phaser"
+
+/**
+ * Class to manage sound effects in the game. Mostly just a wrapper around
+ * Phaser's sound system, but some effects need a bit more logic.
+ */
+export class SoundEffects {
+    private readonly _sound: Sound.BaseSound;
+
+    private static _instance: SoundEffects;
+
+    protected constructor(scene: Phaser.Scene) {
+        this._sound = scene.sound.addAudioSprite("classicsounds")
+    }
+
+    public static getInstance(scene: Phaser.Scene): SoundEffects {
+        if (!SoundEffects._instance) {
+            SoundEffects._instance = new SoundEffects(scene);
+        }
+        return SoundEffects._instance;
+    }
+
+    /**
+     * Play a sound effect asynchronously.
+     * 
+     * @param effectName the marker name of the effect to play from the audio sprite
+     * @param options options for playing the sound effect
+     */
+    public async playAsync(effectName: string, options?: SoundEffectOptions): Promise<void> {
+        if (!options) {
+            this._sound.play(effectName);
+        }
+        else {
+            const repeat: number = options.repeat ?? 1;
+            const delay: number = options.delay ?? 0;
+
+            for (let i = 0; i < repeat; i++) {
+                this._sound.play(effectName);
+                if (i < repeat) {
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                }
+            }
+        }
+    }
+
+    /**
+     * Play a sound effect.
+     * 
+     * @param effectName the marker name of the effect to play from the audio sprite
+     */
+    public play(effectName: string): void {
+        this._sound.play(effectName);
+    }
+
+    /**
+     * Destroy the sound effects manager and free resources.
+     */
+    public destroy(): void {
+        this._sound.destroy();
+    }
+}
+
+/**
+ * Options for playing a sound effect. Only used with `playAsync`.
+ */
+export interface SoundEffectOptions {
+    /**
+     * Number of times to repeat the sound effect.
+     */
+    repeat?: number;
+
+    /**
+     * Delay between repeats in milliseconds.
+     */
+    delay?: number;
+}
