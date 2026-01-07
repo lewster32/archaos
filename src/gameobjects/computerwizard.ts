@@ -213,8 +213,8 @@ export class ComputerWizard {
                 spells
             ) as SummonSpell;
 
-            // The lower the spell's cast chance, the more likely we are to cast it
-            // as an illusion
+            // The lower the spell's cast chance, the more likely we are to cast
+            // it as an illusion
             if (pickedSpell.allowIllusion) {
                 const roll: number = Phaser.Math.RND.realInRange(0.1, 1);
                 if (roll > pickedSpell.chance) {

@@ -23,7 +23,7 @@ import { AttackSpell } from "./spells/attackspell";
 import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
-import { Display, Geom, GameObjects, Sound, Scene, Math as PMath } from "phaser";
+import { Display, Geom, GameObjects, Scene, Math as PMath } from "phaser";
 
 /**
  * Simple point type without all the baggage of Phaser's `Geom.Point`.
@@ -46,8 +46,8 @@ export class Board extends Model implements Box {
     static get NEW_TURN_HIGHLIGHT_DURATION(): number {
         return Board.CHEAT_SHORT_DELAY ? 10 : 700;
     }
-    static NEW_TURN_HIGHLIGHT_STEPS: number = 7;
-    static SPREAD_ITERATIONS: number = 2;
+    static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
+    static readonly SPREAD_ITERATIONS: number = 2;
 
     private readonly _scene: Scene;
     private readonly _width: number;
@@ -262,7 +262,7 @@ export class Board extends Model implements Box {
                 this._logger.log(
                     `World balance shifts towards ${
                         this._balanceShift < 0 ? "chaos" : "law"
-                    } by ${parseInt(
+                    } by ${Number.parseInt(
                         Math.abs(this._balanceShift * 100).toFixed(2),
                         10
                     )}%`,
@@ -576,7 +576,7 @@ export class Board extends Model implements Box {
             const firstEngagingPiece: Piece | null =
                 this._selected.getFirstEngagingPiece();
 
-            if (firstEngagingPiece != null) {
+            if (firstEngagingPiece) {
                 if (
                     this._selected.engaged ||
                     this.roll(
@@ -595,10 +595,8 @@ export class Board extends Model implements Box {
                         await this.moveGizmo.generate(this._selected);
                     }
                 }
-            } else {
-                if (!this._selected.moved) {
-                    await this.moveGizmo.generate(this._selected);
-                }
+            } else if (!this._selected.moved) {
+                await this.moveGizmo.generate(this._selected);
             }
         }
 
@@ -788,14 +786,12 @@ export class Board extends Model implements Box {
             if (isFlying || Board.distance(piece.position, position) <= 1.5) {
                 this.sound.play(isFlying ? "fly" : "move");
                 await piece.moveTo(position);
+            } else if (path && path.nodes?.length > 1) {
+                // Remove first step, as that's the piece's current position
+                path.nodes.shift();
+                await this.movePath(piece, path);
             } else {
-                if (path && path.nodes?.length > 1) {
-                    // Remove first step, as that's the piece's current position
-                    path.nodes.shift();
-                    await this.movePath(piece, path);
-                } else {
-                    throw new Error(`No path to ${position.x}, ${position.y}`);
-                }
+                throw new Error(`No path to ${position.x}, ${position.y}`);
             }
             await this.moveGizmo.reset();
             piece.moved = true;
@@ -1126,9 +1122,9 @@ export class Board extends Model implements Box {
                                     piece.sprite;
                                 currentVal === 0
                                     ? target.setTintFill(
-                                          this._currentPlayer?.colour ||
-                                              0xffffff
-                                      )
+                                        this._currentPlayer?.colour ||
+                                            0xffffff
+                                    )
                                     : target.setTint(piece.defaultTint);
                             });
                         }
@@ -1623,8 +1619,6 @@ export class Board extends Model implements Box {
 
     /* #region Dev helpers */
 
-    private _emptySpaceIterations: number = 5;
-
     /**
      * Get a random empty space on the board.
      * @returns 
@@ -1667,11 +1661,8 @@ export class Board extends Model implements Box {
         this._layers?.forEach((layer: GameObjects.Layer) => {
             layer.destroy();
         });
-
         this._particles?.destroy();
-
         this._sound.destroy();
-
     }
 
     /* #endregion */

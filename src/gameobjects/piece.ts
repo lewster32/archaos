@@ -1003,7 +1003,7 @@ export class Piece extends Entity {
             await this.board.playEffect(EffectType.AttackHit, piece.sprite.getCenter(), null, piece);
             await Board.delay(Board.DEFAULT_DELAY);
 
-            // Shadow Form is lost on attacking
+            // Shadow Form is lost on attacking, regardless of success
             if (this.hasStatus(UnitStatus.ShadowForm)) {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
