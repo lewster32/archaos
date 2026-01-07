@@ -3,7 +3,18 @@
  * phase of a turn.
  */
 export enum SpreadAction {
+    /**
+     * No action taken.
+     */
     None = "none",
+    
+    /**
+     * Shrink away to nothing.
+     */
     Shrink = "shrink",
+
+    /**
+     * Spread to adjacent tiles.
+     */
     Spread = "spread"
 }

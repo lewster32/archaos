@@ -1,5 +1,19 @@
+/**
+ * Enumeration of unit types
+ */
 export enum UnitType {
-    Static, // Structures, trees etc.
-    Wizard, // Wizard units
-    Creature // Normal creatures - everything else basically
+    /**
+     * Structures, trees etc.
+     */
+    Static,
+
+    /**
+     * Wizard units
+     */
+    Wizard,
+    
+    /**
+     * Normal creatures - everything else basically
+     */
+    Creature
 }

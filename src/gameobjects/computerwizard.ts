@@ -1,14 +1,14 @@
 import { SpellType } from "./enums/spelltype";
-import type { Board } from "./board";
-import type { Player } from "./player";
-import type { Spell } from "./spells/spell";
-import type { SummonSpell } from "./spells/summonspell";
 import { Piece } from "./piece";
 import { Path } from "./rangegizmo";
 import { UnitType } from "./enums/unittype";
 import { UnitStatus } from "./enums/unitstatus";
 import { BoardState } from "./enums/boardstate";
 import { AttackSpell } from "./spells/attackspell";
+import type { Board } from "./board";
+import type { Player } from "./player";
+import type { Spell } from "./spells/spell";
+import type { SummonSpell } from "./spells/summonspell";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player

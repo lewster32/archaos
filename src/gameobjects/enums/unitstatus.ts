@@ -1,26 +1,115 @@
+/**
+ * Enumeration of unit statuses
+ */
 export enum UnitStatus {
-    Engulfs = "engulf", // When spreading, can engulf other units
-    Expires = "expires", // Disappears after a random number of turns
-    ExpiresGivesSpell = "expiresGivesSpell", // Gives spell on expiry
-    Flying = "flying", // Can move over obstacles
-    Invulnerable = "invuln", // Cannot be harmed
-    Mount = "mount", // Mountable by wizards
-    MountAny = "mountAny", // Mountable by any unit - not currently used
-    Spreads = "spread", // Can spread to adjacent tiles
-    Structure = "struct", // Is a structure (cannot move)
-    Transparent = "trans", // Does not block line of sight
-    Tree = "tree", // Is a tree (used to prevent trees from being cast on adjacent tiles to other trees)
-    Undead = "undead", // Is undead
-    Wizard = "wizard", // Can cast spells
-    NoCorpse = "noCorpse", // Does not leave a corpse when killed
-    AttackUndead = "attackUndead", // Can attack undead units
+    /**
+     * When spreading, can engulf other units
+     */
+    Engulfs = "engulf",
+    
+    /**
+     * Disappears after a random number of turns
+     */
+    Expires = "expires",
 
-    // Wizard-specific buffs
-    ShadowForm = "shadowForm", // Improved stats, lost on attack
-    MagicWings = "magicWings", // Can fly
-    MagicShield = "magicShield", // Improved armour
-    MagicArmour = "magicArmour", // Greatly improved armour
-    MagicSword = "magicSword", // Greatly improved melee attack (can attack undead)
-    MagicBow = "magicBow", // Adds long ranged attack (can attack undead)
-    MagicKnife = "magicKnife", // Improved melee attack (can attack undead)
+    /**
+     * Gives spell on expiry
+     */
+    ExpiresGivesSpell = "expiresGivesSpell",
+
+    /**
+     * Can move over obstacles
+     */
+    Flying = "flying",
+
+    /**
+     * Cannot be harmed
+     */
+    Invulnerable = "invuln",
+
+    /**
+     * Mountable by wizards
+     */
+    Mount = "mount",
+
+    /**
+     * Mountable by any unit - not currently used
+     */
+    MountAny = "mountAny",
+
+    /**
+     * Can spread to adjacent tiles
+     */
+    Spreads = "spread",
+
+    /**
+     * Is a structure (cannot move)
+     */
+    Structure = "struct",
+
+    /**
+     * Does not block line of sight
+     */
+    Transparent = "trans",
+
+    /**
+     * Is a tree (used to prevent trees from being cast on adjacent tiles to other trees)
+     */
+    Tree = "tree",
+
+    /**
+     * Is undead
+     */
+    Undead = "undead",
+
+    /**
+     * Can cast spells
+     */
+    Wizard = "wizard",
+
+    /**
+     * Does not leave a corpse when killed
+     */
+    NoCorpse = "noCorpse",
+
+    /**
+     * Can attack undead units
+     */
+    AttackUndead = "attackUndead",
+
+    // Wizard buff statuses
+    /**
+     * Improved stats, lost on attack
+     */
+    ShadowForm = "shadowForm",
+
+    /**
+     * Can fly
+     */
+    MagicWings = "magicWings",
+
+    /**
+     * Improved armour
+     */
+    MagicShield = "magicShield",
+
+    /**
+     * Greatly improved armour
+     */
+    MagicArmour = "magicArmour",
+
+    /**
+     * Greatly improved melee attack (can attack undead)
+     */
+    MagicSword = "magicSword",
+
+    /**
+     * Adds long ranged attack (can attack undead)
+     */
+    MagicBow = "magicBow",
+
+    /**
+     * Improved melee attack (can attack undead)
+     */
+    MagicKnife = "magicKnife",
 }
