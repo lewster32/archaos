@@ -21,11 +21,6 @@
     </div>
 </template>
 <script setup lang="ts">
-declare module 'vue' {
-    interface CSSProperties {
-        [k: `--${string}`]: string
-    }
-}
 import type { CSSProperties } from 'vue'
 import { ref, computed } from "vue";
 import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";

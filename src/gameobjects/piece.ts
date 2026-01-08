@@ -1010,9 +1010,7 @@ export class Piece extends Entity {
 
             if (rollSuccess) {
                 this.board.logger.log(`${this.name} defeated ${piece.name}`);
-                await this.board.sound.playAsync("killcreature", {
-                    delay: Board.DEFAULT_DELAY
-                });
+                this.board.sound.play("killcreature");
                 await piece.kill();
                 // If the attacked piece was killed and the attacker can move,
                 // move into the killed piece's position
@@ -1349,17 +1347,23 @@ export class Piece extends Entity {
         return units[id];
     }
 
-    static getUnitPropertiesByName(name: string): UnitStats | undefined {
+    /**
+     * Get the unit properties by unit name.
+     * 
+     * @param name Unit name
+     * @returns Unit properties or null if not found
+     */
+    static getUnitPropertiesByName(name: string): UnitStats | null {
         let key = "";
         for (let [k, unit] of Object.entries(units)) {
-            if (unit.name.toLowerCase() === name.toLowerCase()) {
+            if (unit.name.toLowerCase().trim() === name.toLowerCase().trim()) {
                 key = k;
                 break;
             }
         }
 
         if (!key) {
-            return;
+            return null;
         }
 
         const unit: any = this.getUnitConfig(key);

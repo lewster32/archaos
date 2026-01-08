@@ -306,6 +306,18 @@ onMounted(async () => {
         const setupData = globalThis.localStorage.getItem("setup");
         if (setupData) {
             setup.value = JSON.parse(setupData);
+            if (setup.value.players?.length === 4) {
+                // Old setup format with 4 players only - expand to default players
+                const existingPlayers = setup.value.players;
+                setup.value.players = [];
+                for (let i = 0; i < defaultPlayers.length; i++) {
+                    if (i < existingPlayers.length) {
+                        setup.value.players.push(existingPlayers[i]);
+                    } else {
+                        setup.value.players.push(defaultPlayers[i]);
+                    }
+                }
+            }
         }
     }
 
