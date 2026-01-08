@@ -164,10 +164,18 @@ export class Board extends Model implements Box {
 
     /* #region State */
 
+    /**
+     * Get the current state of the board. The state is the specific mode the
+     * board is in within a phase, such as moving or casting a spell. It mostly
+     * affects what user inputs are valid.
+     */
     get state(): BoardState {
         return this._state;
     }
 
+    /**
+     * Set the current state of the board.
+     */
     set state(state: BoardState) {
         if (this._state === BoardState.GameOver) {
             return;
@@ -195,10 +203,17 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Get the current phase of the board. The phase is the broader stage of
+     * the game, such as spell selection or movement.
+     */
     get phase(): BoardPhase {
         return this._phase;
     }
 
+    /**
+     * Set the current phase of the board.
+     */
     set phase(phase: BoardPhase) {
         this._phase = phase;
         switch (this._phase) {
@@ -214,34 +229,66 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Get the current world balance. A positive value indicates a shift
+     * towards law, while a negative value indicates a shift towards chaos.
+     */
     get balance(): number {
         return this._balance;
     }
 
+    /**
+     * Get how much the world balance will shift at the end of the turn.
+     */
     get balanceShift(): number {
         return this._balanceShift;
     }
 
+    /**
+     * Set how much the world balance will shift at the end of the turn. This
+     * is reset to 0 at the end of each turn.
+     */
     set balanceShift(balance: number) {
         this._balanceShift = balance;
     }
 
+    /**
+     * Get the cursor for this board.
+     */
     get cursor(): Cursor {
         return this._cursor;
     }
 
+    /**
+     * Get the movement gizmo for this board. This handles things like range
+     * and paths.
+     */
     get moveGizmo(): RangeGizmo {
         return this._moveGizmo;
     }
 
+    /**
+     * Get the rules service for this board. The rules apply most of the logic
+     * of the game.
+     */
     get rules(): Rules {
         return this._rules;
     }
 
+    /**
+     * Get the logger for this board. The logger handles logging alerts to the
+     * game's UI.
+     */
     get logger(): Logger {
         return this._logger;
     }
 
+    /**
+     * Start a new turn on the board. This advances the phase and state as
+     * appropriate.
+     * 
+     * @returns A promise that resolves when the new turn has been fully processed.
+     */
     async newTurn(): Promise<void> {
         this._selected = null;
 
@@ -303,16 +350,29 @@ export class Board extends Model implements Box {
 
     /* #region Pieces */
 
+    /**
+     * Get all pieces on the board.
+     */
     get pieces(): Piece[] {
         return Array.from(this._pieces.values());
     }
 
+    /**
+     * Get the currently selected piece, or null if no piece is selected.
+     */
     get selected(): Piece | null {
         return this._selected;
     }
 
+    /**
+     * Debounce emission of board update events to avoid flooding listeners.
+     */
     private _emitTimeout: any;
 
+    /**
+     * Emit a board update event to notify listeners that the board state has
+     * changed. This is mainly used by the UI, such as the minimap.
+     */
     emitBoardUpdateEvent(): void {
         if (this._emitTimeout) {
             clearTimeout(this._emitTimeout);
@@ -328,6 +388,12 @@ export class Board extends Model implements Box {
         }, 500);
     }
 
+    /**
+     * Add a piece to the board.
+     * 
+     * @param config The configuration for the piece to add.
+     * @returns The newly added piece.
+     */
     async addPiece(config: PieceConfig): Promise<Piece> {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
@@ -335,8 +401,12 @@ export class Board extends Model implements Box {
         return piece;
     }
 
+    /**
+     * Create and place wizards for all players at the start of the game.
+     */
     createWizards(): void {
         if (
+            this.state === BoardState.GameOver ||
             this.state !== BoardState.Idle ||
             this.phase !== BoardPhase.Idle ||
             this.pieces.some((piece: Piece) =>
@@ -348,6 +418,7 @@ export class Board extends Model implements Box {
             );
         }
         switch (this.players.length) {
+            // Face-to-face
             case 2:
                 this.addWizard({
                     owner: this.players[0],
@@ -363,6 +434,7 @@ export class Board extends Model implements Box {
                 });
                 break;
             case 3:
+                // Triangle
                 this.addWizard({
                     owner: this.players[0],
                     x: this.width - 2,
@@ -383,6 +455,7 @@ export class Board extends Model implements Box {
                 });
                 break;
             case 4:
+                // Corners
                 this.addWizard({
                     owner: this.players[0],
                     x: this.width - 2,
@@ -530,6 +603,12 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Add a wizard to the board.
+     * 
+     * @param config The configuration for the wizard to add.
+     * @returns The newly added wizard.
+     */
     addWizard(config: WizardConfig): Wizard {
         const wizard: Wizard = new Wizard(this, this._idCounter++, config);
         this._pieces.set(wizard.id, wizard);
@@ -537,6 +616,12 @@ export class Board extends Model implements Box {
         return wizard;
     }
 
+    /**
+     * Get a piece by its ID.
+     * 
+     * @param id The ID of the piece to get.
+     * @returns The piece with the given ID, or null if no such piece exists.
+     */
     getPiece(id: number): Piece | null {
         if (this._pieces.has(id)) {
             return this._pieces.get(id);
@@ -544,6 +629,13 @@ export class Board extends Model implements Box {
         return null;
     }
 
+    /**
+     * Get all pieces owned by a given player. This includes everything, such as
+     * wizards and non-controllable pieces.
+     * 
+     * @param owner The player who owns the pieces.
+     * @returns An array of pieces owned by the given player.
+     */
     getPiecesByOwner(owner: Player): Piece[] {
         return this.pieces.filter((piece) => piece.owner === owner);
     }
@@ -555,6 +647,9 @@ export class Board extends Model implements Box {
      * @returns A promise that resolves when the piece has been selected.
      */
     async selectPiece(id: number): Promise<void> {
+        if (!id || this.state === BoardState.GameOver) {
+            return;
+        }
         if (this._selected?.id === id) {
             console.warn(`Piece with ID ${id} is already selected`);
             return;
@@ -659,7 +754,16 @@ export class Board extends Model implements Box {
         });
     }
 
+    /**
+     * Select the wizard owned by the given player.
+     * 
+     * @param player The player whose wizard to select.
+     * @returns The selected wizard, or null if no player is given or the game is over.
+     */
     async selectWizard(player: Player): Promise<Wizard | null> {
+        if (!player || this.state === BoardState.GameOver) {
+            return null;
+        }
         const ownedPieces: Piece[] = this.getPiecesByOwner(player);
         for (const piece of ownedPieces) {
             if (piece.type === UnitType.Wizard) {
@@ -670,10 +774,25 @@ export class Board extends Model implements Box {
         throw new Error(`Player '${player.name}' does not own a wizard`);
     }
 
+    /**
+     * Remove a piece from the board by its ID.
+     * 
+     * @param id The ID of the piece to remove.
+     */
     removePiece(id: number): void {
+        if (!id || !this.getPiece(id)) {
+            console.warn(`No piece with ID ${id} found to remove`);
+            return;
+        }
         this._pieces.delete(id);
     }
 
+    /**
+     * Get all adjacent points to a given point. Handles board edges.
+     * 
+     * @param point The point to get adjacent points for.
+     * @returns An array of adjacent points.
+     */
     getAdjacentPoints(point: Geom.Point): Geom.Point[] {
         const points: Geom.Point[] = [];
 
@@ -754,6 +873,12 @@ export class Board extends Model implements Box {
         );
     }
 
+    /**
+     * Check if a given point is a LoS blocker.
+     * 
+     * @param point The point to check.
+     * @returns True if the point is visibly blocked, false otherwise.
+     */
     isBlocker(point: Geom.Point): boolean {
         const pieces: Piece[] = this.getPiecesAtPosition(point, (piece) => {
             return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead;
@@ -764,6 +889,13 @@ export class Board extends Model implements Box {
         return true;
     }
 
+    /**
+     * Recursively move a piece along a given path.
+     * 
+     * @param piece The piece to move.
+     * @param path The path to move along.
+     * @returns A promise that resolves when the piece has finished moving.
+     */
     async movePath(piece: Piece, path: Path) {
         if (!path?.nodes?.length) {
             return;
@@ -778,47 +910,62 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Move a piece to a given position, handling pathfinding and movement
+     * rules.
+     * 
+     * @param id The ID of the piece to move.
+     * @param position The position to move the piece to.
+     * @returns A promise that resolves to the moved piece.
+     */
     async movePiece(id: number, position: Geom.Point): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
-        if (piece) {
-            const path: Path = this.moveGizmo.getPathTo(position);
-            const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
-            if (isFlying || Board.distance(piece.position, position) <= 1.5) {
-                this.sound.play(isFlying ? "fly" : "move");
-                await piece.moveTo(position);
-            } else if (path && path.nodes?.length > 1) {
-                // Remove first step, as that's the piece's current position
-                path.nodes.shift();
-                await this.movePath(piece, path);
-            } else {
-                throw new Error(`No path to ${position.x}, ${position.y}`);
-            }
-            await this.moveGizmo.reset();
-            piece.moved = true;
+        if (!piece) {
+            throw new Error(`Could not find piece with ID ${id}`);
+        }
+        const path: Path = this.moveGizmo.getPathTo(position);
+        const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
+        if (isFlying || Board.distance(piece.position, position) <= 1.5) {
+            this.sound.play(isFlying ? "fly" : "move");
+            await piece.moveTo(position);
+        } else if (path && path.nodes?.length > 1) {
+            // Remove first step, as that's the piece's current position
+            path.nodes.shift();
+            await this.movePath(piece, path);
+        } else {
+            throw new Error(`No path to ${position.x}, ${position.y}`);
+        }
+        await this.moveGizmo.reset();
+        piece.moved = true;
 
-            if (!piece.currentMount && !piece.engaged) {
-                const firstEngagingPiece: Piece | null =
-                    piece.getFirstEngagingPiece();
+        if (!piece.currentMount && !piece.engaged) {
+            const firstEngagingPiece: Piece | null =
+                piece.getFirstEngagingPiece();
 
-                if (firstEngagingPiece) {
-                    await piece.engage(firstEngagingPiece);
-                } else {
-                    piece.attacked = true;
-                }
+            if (firstEngagingPiece) {
+                await piece.engage(firstEngagingPiece);
             } else {
                 piece.attacked = true;
             }
-
-            setTimeout(async () => {
-                await this.cursor.update(true);
-                this.emitBoardUpdateEvent();
-            }, 10);
-
-            return piece;
+        } else {
+            piece.attacked = true;
         }
-        throw new Error(`Could not find piece with ID ${id}`);
+
+        setTimeout(async () => {
+            await this.cursor.update(true);
+            this.emitBoardUpdateEvent();
+        }, 10);
+
+        return piece;
     }
 
+    /**
+     * Perform an attack from one piece to another.
+     * 
+     * @param attackingPieceId The ID of the attacking piece.
+     * @param defendingPieceId The ID of the defending piece.
+     * @returns 
+     */
     async attackPiece(
         attackingPieceId: number,
         defendingPieceId: number
@@ -846,6 +993,13 @@ export class Board extends Model implements Box {
         return null;
     }
 
+    /**
+     * Perform a ranged attack from one piece to another.
+     * 
+     * @param attackingPieceId The ID of the attacking piece.
+     * @param defendingPieceId The ID of the defending piece.
+     * @returns 
+     */
     async rangedAttackPiece(
         attackingPieceId: number,
         defendingPieceId: number
@@ -873,6 +1027,13 @@ export class Board extends Model implements Box {
         return null;
     }
 
+    /**
+     * Mount one piece onto another.
+     * 
+     * @param mountingPieceId The ID of the piece that will mount.
+     * @param mountedPieceId The ID of the piece to be mounted.
+     * @returns The mounting piece, or null if the mount failed.
+     */
     async mountPiece(
         mountingPieceId: number,
         mountedPieceId: number
@@ -900,23 +1061,32 @@ export class Board extends Model implements Box {
         return null;
     }
 
+    /**
+     * Dismount a piece from its current mount. If the piece is not mounted,
+     * throws an error.
+     * 
+     * @param dismountingPieceId The ID of the piece to be dismounted.
+     * @returns The dismounting piece, or null if the dismount failed.
+     */
     async dismountPiece(dismountingPieceId: number): Promise<Piece | null> {
         const dismountingPiece: Piece | null =
             this.getPiece(dismountingPieceId);
         if (!dismountingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${dismountingPieceId}`
-            );
+            console.error(`Could not find piece with ID ${dismountingPieceId}`);
+            return null;
         }
-        if (dismountingPiece) {
-            this.sound.play("move");
-            await dismountingPiece.dismount();
-            this.emitBoardUpdateEvent();
-            return dismountingPiece;
-        }
-        return null;
+        this.sound.play("move");
+        await dismountingPiece.dismount();
+        this.emitBoardUpdateEvent();
+        return dismountingPiece;
     }
 
+    /**
+     * Handle spreading effects on the board - called during the spreading phase
+     * and recursively spreads pieces with the 'spreads' status.
+     * 
+     * @returns A promise that resolves when spreading is complete.
+     */
     async doSpread(): Promise<void> {
         for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
             const spreadPieces: Piece[] = this.pieces.filter((piece) =>
@@ -930,6 +1100,12 @@ export class Board extends Model implements Box {
         }
     }
 
+    /**
+     * Handle expiring effects on the board - called at the end of the turn
+     * to expire pieces with the 'expires' status.
+     * 
+     * @returns A promise that resolves when expiring is complete.
+     */
     async doExpire(): Promise<void> {
         const expirePieces: Piece[] = this.pieces.filter((piece: Piece) =>
             piece.hasStatus(UnitStatus.Expires)
@@ -985,14 +1161,26 @@ export class Board extends Model implements Box {
 
     /* #region Players */
 
+    /**
+     * Get all players in the game.
+     */
     get players(): Player[] {
         return Array.from(this._players.values());
     }
 
+    /**
+     * Get the current player whose turn it is.
+     */
     get currentPlayer(): Player | null {
         return this._currentPlayer;
     }
 
+    /**
+     * Add a new player to the game.
+     * 
+     * @param config The configuration for the player to add.
+     * @returns The newly added player.
+     */
     addPlayer(config: PlayerConfig): Player {
         const player: Player = new Player(this, this._idCounter++, config);
         this._players.set(player.id, player);
@@ -1000,6 +1188,13 @@ export class Board extends Model implements Box {
         return player;
     }
 
+    /**
+     * Add a new spell to a player's spellbook.
+     * 
+     * @param player The player to add the spell to.
+     * @param config The configuration for the spell to add.
+     * @returns The newly added spell.
+     */
     addSpell(player: Player, config: SpellConfig): Spell {
         if (!config || !player) {
             throw new Error("No player or config provided");
@@ -1016,6 +1211,12 @@ export class Board extends Model implements Box {
         return spell;
     }
 
+    /**
+     * Get a player by their ID.
+     * 
+     * @param id The ID of the player to retrieve.
+     * @returns The player with the specified ID, or null if not found.
+     */
     getPlayer(id: number): Player | null {
         if (this._players.has(id)) {
             return this._players.get(id);
@@ -1023,6 +1224,11 @@ export class Board extends Model implements Box {
         return null;
     }
 
+    /**
+     * Update the background colour based on the current player's colour.
+     * 
+     * @returns A promise that resolves when the background colour has been updated.
+     */
     private async updateBackgroundColour(): Promise<void> {
         return new Promise((resolve) => {
             if (this._currentPlayer?.colour) {
@@ -1059,13 +1265,22 @@ export class Board extends Model implements Box {
         });
     }
 
+    /**
+     * Select a player by their ID.
+     * 
+     * @param id The ID of the player to select.
+     * @returns A promise that resolves when the player has been selected.
+     */
     async selectPlayer(id: number): Promise<void> {
+        // De-highlight all pieces
         this.pieces.forEach((piece: Piece) => {
             piece.highlighted = false;
         });
 
+        // Set current player
         this._currentPlayer = this.getPlayer(id);
 
+        // If the current player is defeated, skip their turn
         if (this._currentPlayer.defeated) {
             return;
         }
@@ -1164,13 +1379,23 @@ export class Board extends Model implements Box {
         });
     }
 
+    /**
+     * Deselect the current player.
+     */
     deselectPlayer(): void {
+        if (!this._currentPlayer) {
+            console.warn("No current player to deselect");
+            return;
+        }
         this._currentPlayer = null;
         this.moveGizmo.reset();
         this._selected = null;
         this.scene.game.events.emit("end-turn-available", false);
     }
 
+    /**
+     * Start a new game.
+     */
     async startGame(): Promise<void> {
         this._currentPlayerIndex = -1;
         this._currentPlayer = null;
@@ -1179,6 +1404,12 @@ export class Board extends Model implements Box {
         await this.nextPlayer();
     }
 
+    /**
+     * Resume a scenario.
+     * 
+     * @param playerIndex The index of the player whose turn it is.
+     * @param phase The phase to resume at.
+     */
     async resumeGame(playerIndex: number, phase: BoardPhase): Promise<void> {
         this._currentPlayerIndex = playerIndex - 1;
         this._currentPlayer = null;
@@ -1188,6 +1419,12 @@ export class Board extends Model implements Box {
         this.nextPlayer();
     }
 
+    /**
+     * Check for win conditions. If only one or zero players remain undefeated,
+     * the game is over.
+     * 
+     * @returns True if the game is over, false otherwise.
+     */
     async checkWinCondition(): Promise<boolean> {
         if (this.state === BoardState.GameOver) {
             return true;
@@ -1195,6 +1432,7 @@ export class Board extends Model implements Box {
         const undefeated: Player[] = this.players.filter(
             (player) => !player.defeated
         );
+        // If less than 2 players remain undefeated, the game is over
         if (undefeated?.length < 2) {
             this.state = BoardState.GameOver;
             if (undefeated.length === 1) {
@@ -1203,7 +1441,9 @@ export class Board extends Model implements Box {
                     Colour.Yellow
                 );
             } else if (undefeated.length < 1) {
-                this.logger.log(`Game over!`, Colour.Yellow);
+                // Somehow everyone got murked, likely the blobs or magic fire
+                // got out of control. Game over with no winner.
+                this.logger.log(`Game over! Everybody's dead Dave.`, Colour.Yellow);
             }
             this.scene.game.events.emit("game-over");
             return true;
@@ -1211,6 +1451,9 @@ export class Board extends Model implements Box {
         return false;
     }
 
+    /**
+     * Advance to the next player's turn.
+     */
     async nextPlayer(): Promise<void> {
         if (
             this.state == BoardState.GameOver ||
@@ -1320,6 +1563,9 @@ export class Board extends Model implements Box {
 
     /* #region Initialisation */
 
+    /**
+     * Create the floor layer of the board.
+     */
     createFloor() {
         const floorLayer: GameObjects.Layer = this.scene.add.layer();
 
@@ -1348,6 +1594,15 @@ export class Board extends Model implements Box {
         this._layers.set(BoardLayer.Floor, floorLayer);
     }
 
+    /**
+     * Play a board effect.
+     * 
+     * @param type The type of effect to play.
+     * @param startPosition The starting position of the effect.
+     * @param endPosition The ending position of the effect (if applicable).
+     * @param target The target piece of the effect (if applicable).
+     * @returns A promise that resolves when the effect is complete.
+     */
     async playEffect(
         type: EffectType,
         startPosition: PMath.Vector2 | Geom.Point,
@@ -1368,6 +1623,10 @@ export class Board extends Model implements Box {
         });
     }
 
+    /**
+     * Set up the effects layer. This includes pre-Phaser 3.6 particle system
+     * shenanigans which will need to be refactored eventually.
+     */
     createEffects() {
         const effectsLayer: GameObjects.Layer = this.scene.add.layer();
 
@@ -1380,26 +1639,50 @@ export class Board extends Model implements Box {
 
     /* #region Utils */
 
+    /**
+     * Get the Phaser scene the board is in.
+     */
     get scene(): Scene {
         return this._scene;
     }
 
+    /**
+     * Get the sound effects manager.
+     */
     get sound(): SoundEffects {
         return this._sound;
     }
 
+    /**
+     * Get the width of the board in tiles.
+     */
     get width(): number {
         return this._width;
     }
 
+    /**
+     * Get the height of the board in tiles.
+     */
     get height(): number {
         return this._height;
     }
 
+    /**
+     * Get a specific layer of the board.
+     * 
+     * @param layer The layer to get.
+     * @returns The requested layer.
+     */
     getLayer(layer: BoardLayer): GameObjects.Layer {
         return this._layers.get(layer);
     }
 
+    /**
+     * Convert a point to isometric coordinates.
+     * 
+     * @param point The point to convert.
+     * @returns The isometric coordinates of the point.
+     */
     getIsoPosition(point: Geom.Point): Geom.Point {
         const newPoint: Geom.Point = Geom.Point.Clone(point);
 
@@ -1413,6 +1696,12 @@ export class Board extends Model implements Box {
         return isoPos;
     }
 
+    /**
+     * Get the screen position of a point on the board.
+     * 
+     * @param point The point to get the screen position for.
+     * @returns The screen position of the point.
+     */
     getScreenPosition(point: Geom.Point): Geom.Point {
         const isoPos: Geom.Point = this.getIsoPosition(point);
 

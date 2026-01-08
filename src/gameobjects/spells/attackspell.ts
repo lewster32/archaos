@@ -22,10 +22,15 @@ export class AttackSpell extends Spell {
     }
 
     async doCast(owner: Player, castingPiece: Piece, point?: Phaser.Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
-        if (targets?.length === 0) {
+        if (!targets?.length) {
             throw new Error("No targets for attack spell");
         }
-        const target: Piece = targets[0];
+        // Find the first valid target from the list of potential targets
+        const target: Piece = targets
+            .filter(t => this.isValidTarget(t.position))?.at(0);
+        if (!target) {
+            throw new Error("No valid target for attack spell");
+        }
         let beamEffect: EffectType = null;
         let hitEffect: EffectType = null;
         let beamSound: string = null;

@@ -15,7 +15,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -27,7 +27,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -39,7 +39,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -51,7 +51,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -63,7 +63,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -75,7 +75,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -87,7 +87,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         },
         {
@@ -99,7 +99,7 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack"
+                "*Summon", "*Buff", "*Attack", "*Misc"
             ]
         }
     ],

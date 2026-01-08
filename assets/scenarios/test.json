@@ -2,39 +2,50 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 15,
-        "height": 15
+        "width": 7,
+        "height": 7
     },
     "players": [
         {
             "id": 1,
             "name": "Player 1",
-            "position": { "x": 1, "y": 1 },
+            "position": { "x": 0, "y": 0 },
             "computerControlled": true,
             "pieces": [
-
+                {
+                    "type": "Orc",
+                    "position": { "x": 1, "y": 1 }
+                },
+                {
+                    "type": "Orc",
+                    "position": { "x": 3, "y": 3 }
+                },
+                {
+                    "type": "Orc",
+                    "position": { "x": 5, "y": 5 }
+                }
             ],
             "spells": [
-                "Disbelieve"
+                "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 14, "y": 14 },
+            "position": { "x": 6, "y": 3 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon"
+                "Turmoil", "Turmoil", "Turmoil", "Turmoil", "Turmoil", "Turmoil"
             ]
         }
     ],
     "phase": "casting",
     "cheats": {
-        "forceHit": null,
-        "forceCast": null,
+        "forceHit": true,
+        "forceCast": true,
         "shortDelay": true
     }
 }

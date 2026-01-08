@@ -9,6 +9,7 @@ import type { Board } from "./board";
 import type { Player } from "./player";
 import type { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
+import { SpellTarget } from "./enums/spelltarget";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
@@ -52,57 +53,62 @@ export class ComputerWizard {
     }
 
     /**
-     * Given a list of attack spells, finds all valid targets for each spell.
+     * Given a list of spells, finds all valid targets for each spell.
      * 
-     * @param spells the attack spells to find targets for
-     * @returns a map of attack spells to their valid targets
+     * @param spells the spells to find targets for
      */
-    protected findAttackSpellTargets(spells: AttackSpell[]): Map<AttackSpell, Piece[]> {
-        const targets: Map<AttackSpell, Set<Piece>> = new Map();
+    protected findSpellTargets(spells: Spell[]): Map<Spell, Piece[]> {
+        const targets: Map<Spell, Piece[]> = new Map();
+
+        // Loop over all of the board pieces, and ask each spell if it can
+        // target that piece
         for (const spell of spells) {
             for (let piece of this._board.pieces) {
-                if (
-                    piece.owner !== this._player && // Enemy piece
-                    !piece.currentMount && // Not mounted
-                    !piece.dead && // Not dead
-                    spell.isValidTarget(piece.position, false)
-                ) {
+                if (spell.isValidTarget(piece.position, false)) {
                     if (!targets.has(spell)) {
-                        targets.set(spell, new Set());
+                        targets.set(spell, []);
                     }
-                    targets.get(spell).add(piece);
+                    targets.get(spell).push(piece);
                 }
             }
-        }
-        // For spells which destroy wizard creatures, filter out any wizard
-        // targets whose owner has no other units to target
-        const justiceSpell: AttackSpell | undefined = spells.find((spell: AttackSpell) => {
-            return spell.properties.destroyWizardCreatures;
-        });
-        if (justiceSpell && targets.has(justiceSpell)) {
-            const filteredTargets: Set<Piece> = new Set(); 
-            for (const piece of targets.get(justiceSpell)) {
-                if (piece.type === UnitType.Wizard) {
-                    const wizardOwner: Player = piece.owner;
-                    const ownerUnits: Piece[] = this._board
-                        .getPiecesByOwner(wizardOwner)
-                        .filter((p: Piece) => {
-                            return p.type !== UnitType.Wizard && !p.dead;
-                        });
-                    if (ownerUnits.length > 0) {
-                        filteredTargets.add(piece);
-                    }
-                }
-            }
-            targets.set(justiceSpell, filteredTargets);
         }
 
-        // Convert sets to arrays for easier processing later
-        const result: Map<AttackSpell, Piece[]> = new Map();
-        for (const [spell, pieces] of targets.entries()) {
-            result.set(spell, Array.from(pieces));
+        // For spells which destroy wizard creatures, filter out any wizard
+        // targets whose owner has no other units to target. While they're
+        // technically a valid target, it's not strategically sound to do so.
+        const justiceSpells: Spell[] = spells.filter((spell: Spell) => {
+            return spell.type === SpellType.Attack && spell.properties.destroyWizardCreatures;
+        });
+
+        // No justice spells, nothing to filter
+        if (!justiceSpells.length) {
+            return targets;
         }
-        return result;
+
+        // Filter each justice spell's targets
+        for (const justiceSpell of justiceSpells) {
+            if (targets.has(justiceSpell)) {
+                const filteredTargets: Piece[] = [];
+                for (const piece of targets.get(justiceSpell)) {
+                    if (piece.type === UnitType.Wizard) {
+                        const wizardOwner: Player = piece.owner;
+                        const ownerUnits: Piece[] = this._board
+                            .getPiecesByOwner(wizardOwner)
+                            .filter((p: Piece) => {
+                                return p.type !== UnitType.Wizard && !p.dead;
+                            });
+                        // Only keep this wizard target if its owner has
+                        // non-dead, non-wizard units
+                        if (ownerUnits.length > 0) {
+                            filteredTargets.push(piece);
+                        }
+                    }
+                    targets.set(justiceSpell, filteredTargets);
+                }
+            }
+        }
+
+        return targets;
     }
 
     /**
@@ -145,14 +151,15 @@ export class ComputerWizard {
         this.forgetIllusionKnowledge();
         try {
             // For now, just pick a random spell from the player's spell list
-            let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
-                return (
-                    spell.type === SpellType.Summon ||
-                    spell.type === SpellType.Buff ||
-                    spell.type === SpellType.Attack ||
-                    spell.type === SpellType.Disbelieve
-                );
-            });
+            // let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
+            //     return (
+            //         spell.type === SpellType.Summon ||
+            //         spell.type === SpellType.Buff ||
+            //         spell.type === SpellType.Attack ||
+            //         spell.type === SpellType.Disbelieve
+            //     );
+            // });
+            let spells: Spell[] = this._player.spells;
 
             if (!spells.length) {
                 console.debug(`${this._player.name} has no spells to cast`);
@@ -160,20 +167,12 @@ export class ComputerWizard {
                 return false;
             }
 
-            // Filter out any attack spells that have no valid targets
-            const attackSpells: AttackSpell[] = spells.filter((spell: Spell) => {
-                return spell.type === SpellType.Attack;
-            }) as AttackSpell[];
-            const attackSpellTargets: Map<AttackSpell, Piece[]> =
-                this.findAttackSpellTargets(attackSpells);
-
+            // Filter out any spells that have no valid targets
+            const validSpellsTargets: Map<Spell, Piece[]> = this.findSpellTargets(spells);
             spells = spells.filter((spell: Spell) => {
-                if (spell.type === SpellType.Attack) {
-                    const attackSpell: AttackSpell = spell as AttackSpell;
-                    return attackSpellTargets.has(attackSpell) &&
-                        attackSpellTargets.get(attackSpell).length > 0;
-                }
-                return true;
+                return spell.properties.unitId || // Summon spells are always valid
+                    spell.properties.target === 'self' || // Self-targeting spells are always valid
+                    validSpellsTargets.get(spell)?.length > 0; // Has valid targets
             });
 
             // Filter out Disbelieve if there are no valid targets
@@ -292,7 +291,7 @@ export class ComputerWizard {
                     const attackSpell: AttackSpell = spell as AttackSpell;
                     console.debug(`${this._player.name} is casting attack spell ${spell.name}`);
                     while (attackSpell.castTimes > 0) {
-                        const targets: Piece[] = (this.findAttackSpellTargets([attackSpell]).get(attackSpell) || [])
+                        const targets: Piece[] = (this.findSpellTargets([attackSpell]).get(attackSpell) || [])
                             .toSorted((a: Piece, b: Piece) => {
                             // Prefer wizard targets
                             if (
@@ -309,16 +308,16 @@ export class ComputerWizard {
                             }
                             return 0;
                         });
-                        if (!targets.length) {
+                        if (targets.length) {
+                            console.debug(`${this._player.name} has ${targets.length} valid targets to cast ${spell.name}`);
+                        }
+                        else {
                             console.debug(`${this._player.name} has no valid targets to cast ${spell.name}`);
                             if (successfullyCast) {
                                 this._player.discardSpell();
                             }
                             this._board.sound.play("cancel");
                             return false;
-                        }
-                        else {
-                            console.debug(`${this._player.name} has ${targets.length} valid targets to cast ${spell.name}`);
                         }
                         const target: Piece = Phaser.Math.RND.weightedPick(targets);
                         await this._board.rules.doCastSpell(
@@ -354,6 +353,36 @@ export class ComputerWizard {
                         target
                     );
                     return true;
+                } else if (spell.type === SpellType.Misc) {
+                    if (spell.properties.target === 'self') {
+                        await this._board.rules.doCastSpell(
+                            this._board,
+                            spell,
+                            this._player.castingPiece
+                        );
+                        return true;
+                    }
+                    else if ([SpellTarget.Piece, SpellTarget.Corpse].includes(spell.properties.target)) {
+                        const potentialTargets: Piece[] = this._board.pieces
+                            .filter((p: Piece) => {
+                                return (
+                                    spell.isValidTarget(p.position, false)
+                                );
+                            });
+
+                        if (!potentialTargets.length) {
+                            console.debug(`${this._player.name} has no valid targets to cast ${spell.name}`);
+                            this._board.sound.play("cancel");
+                            return false;
+                        }
+                        const target: Piece = Phaser.Math.RND.pick(potentialTargets);
+                        await this._board.rules.doCastSpell(
+                            this._board,
+                            spell,
+                            target
+                        );
+                        return true;
+                    }
                 }
             }
             this._board.sound.play("cancel");
