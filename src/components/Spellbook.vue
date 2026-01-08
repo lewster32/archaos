@@ -1,4 +1,28 @@
 <template>
+    <div class="modal" v-if="currentSpell && noValidTargets">
+        <div class="callout">
+            <p class="callout__title">
+                No valid targets for {{ currentSpell.name }}!
+            </p>
+            <div class="callout__buttons">
+                <button
+                    class="
+                        spellinfo__select
+                        button button--yellow
+                    "
+                    @click="select(currentSpell, true)"
+                >
+                    {{ ['Select', 'Ignore', 'Confirm', 'YOLO', 'Whatever', 'Lemme at \'em'].at(Math.floor(Math.random() * 6)) }}
+                </button>
+                <button
+                    class="spellinfo__select button button--green button--important"
+                    @click="closeInfo()"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
     <div class="modal" v-if="illusionPrompt">
         <div class="callout">
             <p class="callout__title">
@@ -32,7 +56,7 @@
             </div>
         </div>
     </div>
-    <div class="spellbook" v-if="show">
+    <div class="spellbook" v-if="show && data">
         <button
             v-if="minimised"
             class="
@@ -145,6 +169,11 @@ const scroll: Ref<HTMLElement | null> = ref(null);
 const illusionPrompt: Ref<boolean> = ref(false);
 
 /**
+ * Whether there are no valid targets for the currently selected spell.
+ */
+const noValidTargets: Ref<boolean> = ref(false);
+
+/**
  * The currently selected spell for viewing info or selection.
  */
 const currentSpell: Ref<Spell | null> = ref(null);
@@ -211,7 +240,7 @@ const closeIllusion: () => void = () => {
  * 
  * @param spell The spell to select, or null to skip selection.
  */
-const select: (spell: Spell | null) => void = (spell: Spell | null) => {
+const select: (spell: Spell | null, force?: boolean) => void = (spell: Spell | null, force?: boolean) => {
     props.data.minimised = true;
     if (!spell) {
         emit("select", null);
@@ -219,6 +248,13 @@ const select: (spell: Spell | null) => void = (spell: Spell | null) => {
         return;
     }
     currentSpell.value = spell;
+    // If the spell has no valid targets in range, show warning.
+    if (!force && !spell.hasValidTargetsInRange()) {
+        noValidTargets.value = true;
+        return;
+    }
+    noValidTargets.value = false;
+
     // If the spell is a summon that allows illusions, show the prompt.
     if (
         spell.type === SpellType.Summon &&
@@ -239,13 +275,17 @@ const select: (spell: Spell | null) => void = (spell: Spell | null) => {
 const info: (spell: Spell) => void = (spell: Spell) => {
     currentSpell.value = spell;
     props.data.minimised = true;
+    spell.showRange(true);
 };
 
 /**
  * Closes the spell info view.
  */
 const closeInfo: () => void = () => {
+    currentSpell.value?.showRange(false);
     currentSpell.value = null;
+    noValidTargets.value = false;
+    illusionPrompt.value = false;
     props.data.minimised = false;
 };
 

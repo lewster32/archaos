@@ -327,6 +327,56 @@ export class RangeGizmo {
         });
     }
 
+    public async showSimpleRange(
+        position: Phaser.Geom.Point,
+        distance: number,
+        cursor: CursorType = CursorType.RangeCast,
+        lineOfSight?: boolean,
+    ): Promise<void> {
+        await this.generateSimpleRange(
+            position,
+            distance,
+            cursor,
+            lineOfSight,
+            true
+        );
+        
+        this._rangeLayer.getChildren().forEach((child: Phaser.GameObjects.Image) => {
+            child.setAlpha(0);
+        });
+
+        this._board.scene.tweens.add({
+            targets: this._rangeLayer.getChildren(),
+            alpha: 1,
+            duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+            delay: this._board.scene.tweens.stagger(
+                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                {
+                    from: "first",
+                }
+            )
+        });
+    }
+
+    public async hideSimpleRange(): Promise<void> {
+        // If no range to hide, return
+        if (this._rangeLayer.length === 0) {
+            return;
+        }
+        
+        this._board.scene.tweens.add({
+            targets: this._rangeLayer.getChildren(),
+            duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+            alpha: 0,
+            delay: this._board.scene.tweens.stagger(
+                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                {
+                    from: "last",
+                }
+            ),
+        });
+    }
+
     private async generateRange(): Promise<void> {
         this._rangeLayer.removeAll();
 

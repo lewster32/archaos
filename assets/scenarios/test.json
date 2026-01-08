@@ -10,15 +10,23 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
-            "computerControlled": true,
+            "computerControlled": false,
+            "pieces": [
+
+            ],
+            "spells": [
+                "Magic Bolt", "Raise Dead", "Lightning", "Orc"
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Player 2",
+            "position": { "x": 6, "y": 3 },
+            "computerControlled": false,
             "pieces": [
                 {
                     "type": "Orc",
-                    "position": { "x": 1, "y": 1 }
-                },
-                {
-                    "type": "Orc",
-                    "position": { "x": 3, "y": 3 }
+                    "position": { "x": 2, "y": 1 }
                 },
                 {
                     "type": "Orc",
@@ -26,19 +34,7 @@
                 }
             ],
             "spells": [
-                "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc", "Orc"
-            ]
-        },
-        {
-            "id": 2,
-            "name": "Player 2",
-            "position": { "x": 6, "y": 3 },
-            "computerControlled": true,
-            "pieces": [
-
-            ],
-            "spells": [
-                "Turmoil", "Turmoil", "Turmoil", "Turmoil", "Turmoil", "Turmoil"
+                "Magic Bolt", "Raise Dead", "Lightning", "Orc"
             ]
         }
     ],

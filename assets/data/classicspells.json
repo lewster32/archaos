@@ -329,6 +329,7 @@
             "balance": -1,
             "chance": 0.5,
             "range": 5,
+            "lineOfSight": true,
             "target": "corpse",
             "projectile": "raisedead",
             "name": "Raise Dead",

@@ -69,6 +69,11 @@ body,
     2px 2px var(--color-black), -2px 2px var(--color-black),
     0 -2px var(--color-black), 0 2px var(--color-black),
     2px 0 var(--color-black), -2px 0 var(--color-black);
+
+    --text-shadow-inverted: -2px -2px var(--color-white), 2px -2px var(--color-white),
+    2px 2px var(--color-white), -2px 2px var(--color-white),
+    0 -2px var(--color-white), 0 2px var(--color-white),
+    2px 0 var(--color-white), -2px 0 var(--color-white);
 }
 
 body {

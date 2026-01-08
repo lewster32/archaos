@@ -40,7 +40,7 @@
 
     &--yellow {
         color: var(--color-black);
-        text-shadow: none !important;
+        text-shadow: var(--text-shadow-inverted);
         border-image-source: url("../../assets/images/ui/button-yellow.png");
         &:hover {
             border-image-source: url("../../assets/images/ui/button-yellow.png");

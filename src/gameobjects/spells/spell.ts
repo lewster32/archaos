@@ -10,6 +10,7 @@ import { Model } from "../model";
 import { Piece } from "../piece";
 import type { SpellConfig } from "../configs/spellconfig";
 import type { Player } from "../player";
+import { CursorType } from "../enums/cursortype";
 
 /**
  * A spell that can be cast by a player's wizard.
@@ -656,6 +657,46 @@ export class Spell extends Model {
             null,
             castingPiece
         );
+    }
+
+    /**
+     * Show the range of this spell on the board.
+     */
+    async showRange(show: boolean): Promise<void> {
+        if (show) {
+            this._board.moveGizmo.showSimpleRange(
+                this._castingPiece.position,
+                this.range,
+                CursorType.RangeCast,
+                this.lineOfSight
+            );
+            return;
+        }
+        this._board.moveGizmo.reset();
+    }
+
+    /**
+     * Check if there are any valid targets in range for this spell.
+     * 
+     * @returns True if there are valid targets in range, false otherwise
+     */
+    public hasValidTargetsInRange(): boolean {
+        // If range is 0 we can always target self
+        if (this.range === 0) {
+            return true;
+        }
+        if (this.type === SpellType.Buff || this.type === SpellType.Summon) {
+            // Buffs and summons can always be cast in range
+            return true;
+        }
+        // Any other range requires checking all pieces on the board for valid
+        // targets
+        for (let piece of this._board.pieces) {
+            if (this.isValidTarget(piece.position)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
