@@ -331,10 +331,17 @@ export class Spell extends Model {
         // Living target spells (e.g., disbelieve, magic bolt etc.)
         if (!targetLivingPiece) {
             if (showReason) {
-                this._board.logger.log(
-                    `${this.name} cannot be cast on a corpse`,
-                    Colour.Magenta
-                );
+                if (targetPieces.filter((p: Piece) => p.dead).length === 0) {
+                    this._board.logger.log(
+                        `${this.name} cannot be cast on empty ground`,
+                        Colour.Magenta
+                    );
+                } else {
+                    this._board.logger.log(
+                        `${this.name} cannot be cast on a corpse`,
+                        Colour.Magenta
+                    );
+                }
             }
             return null;
         }

@@ -87,6 +87,17 @@ export class Cursor {
                 if (event.key === Cursor.CANCEL_KEY) {
                     await this.action(InputType.Cancel);
                 }
+                else {
+                    // Bind 1-8 keys to highlight owned units
+                    const keyNumber: number = Number.parseInt(event.key, 10);
+                    if (
+                        !Number.isNaN(keyNumber) &&
+                        keyNumber >= 1 &&
+                        keyNumber <= 8
+                    ) {
+                        this._board.highlightOwnedUnitsForPlayerIndex(keyNumber - 1);
+                    }
+                }
             }
         );
 

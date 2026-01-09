@@ -44,6 +44,16 @@ export class Piece extends Entity {
     static readonly DEFAULT_HIGHLIGHT_DURATION: number = 600;
 
     /**
+     * Duration of each step in the highlight effect when selecting a piece.
+     */
+    static readonly DEFAULT_FLASH_HIGHLIGHT_STEPS: number = 3;
+
+    /**
+     * Duration of flash highlight effect when highlighting a piece.
+     */
+    static readonly DEFAULT_FLASH_HIGHLIGHT_DURATION: number = 100;
+
+    /**
      * The highlight effect isn't a smooth pulse, but a stepped one.
      */
     static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
@@ -197,6 +207,24 @@ export class Piece extends Entity {
         }
         this._highlighted = false;
         this._ownerHighlightTween.pause().seek(0);
+    }
+
+    /**
+     * Flash a highlight effect on this piece. This is typically called by the
+     * player pressing a number key from 1 to 8 to highlight their units.
+     */
+    async flashHighlight(): Promise<void> {
+        if (!this._sprite) {
+            return;
+        }
+        for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
+            this._sprite.setTintFill(0xffffff);
+            await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
+            this._sprite.setTintFill(this.owner?.colour ?? 0x000000);
+            await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
+        }
+        this._sprite.clearTint();
+        this._sprite.setTint(this.defaultTint);
     }
 
     get defaultTint(): number {

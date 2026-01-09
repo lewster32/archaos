@@ -42,6 +42,6 @@
     "cheats": {
         "forceHit": true,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

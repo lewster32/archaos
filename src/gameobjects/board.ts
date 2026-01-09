@@ -1380,13 +1380,39 @@ export class Board extends Model implements Box {
     }
 
     /**
+     * Highlight all units owned by the player at the given index.
+     * 
+     * @param playerIndex The index of the player whose units to highlight.
+     * @param silent Whether to suppress logging output (default: false).
+     */
+    async highlightOwnedUnitsForPlayerIndex(playerIndex: number, silent?: boolean): Promise<void> {
+        const playerId: number = Array.from(this._players.keys())[playerIndex];
+        const player: Player | null = this.getPlayer(playerId);
+        if (!player) {
+            return;
+        }
+        const units: Piece[] = this.pieces.filter(
+            (piece: Piece) =>
+                piece.owner === player ||
+                piece.currentRider?.owner === player
+        );
+        if (!silent) {
+            this.logger.log(
+                `Highlighting ${player.name}'s units`,
+                Colour.Yellow
+            );
+        }
+        await Promise.all(
+            units.map(async (piece: Piece) => {
+                await piece.flashHighlight();
+            })
+        );
+    }
+
+    /**
      * Deselect the current player.
      */
     deselectPlayer(): void {
-        if (!this._currentPlayer) {
-            console.warn("No current player to deselect");
-            return;
-        }
         this._currentPlayer = null;
         this.moveGizmo.reset();
         this._selected = null;
