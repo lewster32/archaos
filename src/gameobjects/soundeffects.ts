@@ -27,19 +27,23 @@ export class SoundEffects {
      * @param options options for playing the sound effect
      */
     public async playAsync(effectName: string, options?: SoundEffectOptions): Promise<void> {
-        if (!options) {
-            this._sound.play(effectName);
-        }
-        else {
-            const repeat: number = options.repeat ?? 1;
-            const delay: number = options.delay ?? 0;
-
-            for (let i = 0; i < repeat; i++) {
+        try {
+            if (!options) {
                 this._sound.play(effectName);
-                if (i < repeat) {
-                    await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+            else {
+                const repeat: number = options.repeat ?? 1;
+                const delay: number = options.delay ?? 0;
+
+                for (let i = 0; i < repeat; i++) {
+                    this._sound.play(effectName);
+                    if (i < repeat) {
+                        await new Promise((resolve) => setTimeout(resolve, delay));
+                    }
                 }
             }
+        } catch (e) {
+            console.error(`Error playing sound effect '${effectName}':`, e);
         }
     }
 
@@ -49,7 +53,11 @@ export class SoundEffects {
      * @param effectName the marker name of the effect to play from the audio sprite
      */
     public play(effectName: string): void {
-        this._sound.play(effectName);
+        try {
+            this._sound.play(effectName);
+        } catch (e) {
+            console.error(`Error playing sound effect '${effectName}':`, e);
+        }
     }
 
     /**

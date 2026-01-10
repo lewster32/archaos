@@ -1981,7 +1981,7 @@ export class Board extends Model implements Box {
             layer.destroy();
         });
         this._particles?.destroy();
-        this._sound.destroy();
+        // this._sound.destroy();
     }
 
     /* #endregion */
