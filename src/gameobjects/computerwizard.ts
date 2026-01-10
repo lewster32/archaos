@@ -5,7 +5,7 @@ import { UnitType } from "./enums/unittype";
 import { UnitStatus } from "./enums/unitstatus";
 import { BoardState } from "./enums/boardstate";
 import { AttackSpell } from "./spells/attackspell";
-import type { Board } from "./board";
+import { Board } from "./board";
 import type { Player } from "./player";
 import type { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
@@ -404,6 +404,7 @@ export class ComputerWizard {
      */
     async moveUnit(piece: Piece): Promise<boolean> {
         await this._board.selectPiece(piece.id);
+        await Board.delay(Board.DEFAULT_DELAY / 4);
 
         if (piece.engaged) {
             console.debug(`${piece.owner.name}'s ${piece.name} is engaged`);
@@ -501,9 +502,10 @@ export class ComputerWizard {
                         Phaser.Math.RND.pick(friendlyMountables);
                     console.debug(`${piece.owner.name}'s ${piece.name} mounts friendly piece ${mountable.name}`);
                     await this._board.mountPiece(piece.id, mountable.id);
-                    // Select the mountable in case it can still do something
-                    // (typically, a ranged attack after being mounted)
-                    await this._board.selectPiece(mountable.id);
+                    // Select the mountable if it can ranged attack
+                    if (mountable.canRangedAttack && !mountable.rangedAttacked) {
+                        await this._board.selectPiece(mountable.id);
+                    }
                     return true;
                 }
                 else {

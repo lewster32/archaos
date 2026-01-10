@@ -660,9 +660,7 @@ export class Board extends Model implements Box {
         }
 
         if (this.phase === BoardPhase.Moving) {
-            await this.sound.playAsync("select", {
-                delay: 200
-            });
+            this.sound.play("select");
             if (this._selected.currentMount) {
                 await this.moveGizmo.generate(this._selected);
                 return;
@@ -1280,6 +1278,11 @@ export class Board extends Model implements Box {
         // Set current player
         this._currentPlayer = this.getPlayer(id);
 
+        if (!this._currentPlayer) {
+            console.trace("No current player to select");
+            return;
+        }
+
         // If the current player is defeated, skip their turn
         if (this._currentPlayer.defeated) {
             return;
@@ -1291,91 +1294,79 @@ export class Board extends Model implements Box {
                 piece.currentRider?.owner === this._currentPlayer
         );
 
-        return new Promise<void>((resolve) => {
-            setTimeout(async () => {
-                await this.updateBackgroundColour();
 
-                let previousVal = 0;
+        await this.updateBackgroundColour();
 
-                switch (this.phase) {
-                    case BoardPhase.Spellbook:
-                        this.sound.play("endturn");
-                        this.logger.log(
-                            `${this.currentPlayer?.name}'s turn to select a spell`
-                        );
-                        break;
-                    case BoardPhase.Casting:
-                        if (this.currentPlayer?.selectedSpell) {
-                            this.logger.log(
-                                `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
-                            );
-                        } else {
-                            this.sound.play("cancel");
-                            this.logger.log(
-                                `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
-                                Colour.Magenta
-                            );
-                        }
-                        break;
-                    case BoardPhase.Moving:
-                        this.sound.play("endturn");
-                        this.logger.log(
-                            `${this.currentPlayer?.name}'s turn to move`
-                        );
-                        break;
+        let previousVal = 0;
+
+        switch (this.phase) {
+            case BoardPhase.Spellbook:
+                this.sound.play("endturn");
+                this.logger.log(
+                    `${this.currentPlayer?.name}'s turn to select a spell`
+                );
+                break;
+            case BoardPhase.Casting:
+                if (this.currentPlayer?.selectedSpell) {
+                    this.logger.log(
+                        `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
+                    );
+                } else {
+                    this.sound.play("cancel");
+                    this.logger.log(
+                        `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
+                        Colour.Magenta
+                    );
                 }
+                break;
+            case BoardPhase.Moving:
+                this.sound.play("endturn");
+                this.logger.log(
+                    `${this.currentPlayer?.name}'s turn to move`
+                );
+                break;
+        }
 
-                this.scene.tweens.addCounter({
-                    from: 0,
-                    to: Board.NEW_TURN_HIGHLIGHT_STEPS,
-                    onUpdate: (tween) => {
-                        const currentVal = Math.round(tween.getValue()) % 2;
-                        if (currentVal !== previousVal) {
-                            previousVal = currentVal;
-                            units.forEach((piece: Piece) => {
-                                const target: GameObjects.Sprite =
-                                    piece.sprite;
-                                currentVal === 0
-                                    ? target.setTintFill(
-                                        this._currentPlayer?.colour ||
-                                            0xffffff
-                                    )
-                                    : target.setTint(piece.defaultTint);
-                            });
-                        }
-                    },
-                    onComplete: () => {
+        return new Promise<void>((resolve) => {
+            this.scene.tweens.addCounter({
+                from: 0,
+                to: Board.NEW_TURN_HIGHLIGHT_STEPS,
+                onUpdate: (tween) => {
+                    const currentVal = Math.round(tween.getValue()) % 2;
+                    if (currentVal !== previousVal) {
+                        previousVal = currentVal;
                         units.forEach((piece: Piece) => {
                             const target: GameObjects.Sprite =
                                 piece.sprite;
-                            target.setTint(piece.defaultTint);
-                            piece.turnOver = false;
-                            piece.highlighted = true;
+                            currentVal === 0
+                                ? target.setTintFill(
+                                    this._currentPlayer?.colour ||
+                                        0xffffff
+                                )
+                                : target.setTint(piece.defaultTint);
                         });
-                        setTimeout(async () => {
-                            if (this.currentPlayer?.ai && this.phase === BoardPhase.Moving) {
-                                await this.currentPlayer.ai.moveAllUnits();
-                                this.nextPlayer();
-                            }
-                            else {
-                                this.cursor.enabled = true;
-                            }
-                            resolve();
-                        }, 100);
-                    },
-                    duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
-                });
-
-                // Beep beep beep for casting phase
-                if (this.phase === BoardPhase.Casting) {
-                    await this.sound.playAsync("chaoskeypress2", {
-                        repeat: 3,
-                        delay: 175
+                    }
+                },
+                onComplete: () => {
+                    units.forEach((piece: Piece) => {
+                        const target: GameObjects.Sprite =
+                            piece.sprite;
+                        target.setTint(piece.defaultTint);
+                        piece.turnOver = false;
+                        piece.highlighted = true;
                     });
-                }
-
-                await this.idleDelay(Board.NEW_TURN_HIGHLIGHT_DURATION);
+                    resolve();
+                },
+                duration: Board.NEW_TURN_HIGHLIGHT_DURATION,
             });
+
+            // Beep beep beep for casting phase
+            if (this.phase === BoardPhase.Casting) {
+                this.sound.playAsync("chaoskeypress2", {
+                    repeat: 3,
+                    delay: 175
+                });
+            }
         });
     }
 
@@ -1481,110 +1472,123 @@ export class Board extends Model implements Box {
      * Advance to the next player's turn.
      */
     async nextPlayer(): Promise<void> {
-        if (
-            this.state == BoardState.GameOver ||
-            (await this.checkWinCondition())
-        ) {
-            return;
-        }
+        while (true) {
+            if (
+                this.state == BoardState.GameOver ||
+                (await this.checkWinCondition())
+            ) {
+                return;
+            }
 
-        this._currentPlayerIndex =
-            (this._currentPlayerIndex + 1) % this._players.size;
-        this.deselectPlayer();
+            this._currentPlayerIndex =
+                (this._currentPlayerIndex + 1) % this._players.size;
+            this.deselectPlayer();
 
-        if (this._currentPlayerIndex === 0) {
-            await this.newTurn();
-        }
+            if (this._currentPlayerIndex === 0) {
+                await this.newTurn();
+            }
 
-        await this.selectPlayer(
-            Array.from(this._players.keys())[this._currentPlayerIndex]
-        );
+            await this.selectPlayer(
+                Array.from(this._players.keys())[this._currentPlayerIndex]
+            );
 
-        if (this.currentPlayer?.defeated) {
-            return await this.nextPlayer();
-        }
+            // Skip defeated players
+            if (this.currentPlayer?.defeated) {
+                continue;
+            }
 
-        if (this.phase === BoardPhase.Spellbook) {
-            if (this.currentPlayer?.ai) {
-                if (!await this.currentPlayer.ai.selectSpell()) {
-                    console.log("AI could not select spell, skipping...");
+            // Handle spellbook phase
+            if (this.phase === BoardPhase.Spellbook) {
+                if (this.currentPlayer?.ai) {
+                    if (!await this.currentPlayer.ai.selectSpell()) {
+                        console.log("AI could not select spell, skipping...");
+                    }
+                    continue;
                 }
-                await this.nextPlayer();
+                else if (this.currentPlayer?.spells?.length) {
+                    return new Promise<void>((resolve) => {
+                        this.scene.game.events.emit("spellbook-open", <SpellbookOpenEventData>{ 
+                            data: {
+                                caster: this.currentPlayer?.name,
+                                spells: this.currentPlayer?.spells,
+                            },
+                            callback: async (spell: Spell | null) => {
+                                if (spell) {
+                                    this.currentPlayer?.pickSpell(spell.id);
+                                }
+                                this.scene.game.events.emit("spellbook-close");
+                                resolve();
+                                await this.nextPlayer();
+                            },
+                        });
+                    });
+                }
+            } else {
+                this.scene.game.events.emit("spellbook-close");
             }
-            else if (this.currentPlayer?.spells?.length) {
-                this.scene.game.events.emit("spellbook-open", <SpellbookOpenEventData>{ 
-                    data: {
-                        caster: this.currentPlayer?.name,
-                        spells: this.currentPlayer?.spells,
-                    },
-                    callback: async (spell: Spell | null) => {
-                        if (spell) {
-                            this.currentPlayer?.pickSpell(spell.id);
-                        }
-                        this.scene.game.events.emit("spellbook-close");
-                        await this.nextPlayer();
-                    },
-                });
-            }
-        } else {
-            this.scene.game.events.emit("spellbook-close");
-        }
 
-        if (this._phase === BoardPhase.Spellbook) {
-            if (this.currentPlayer?.spells.length === 0) {
-                await this.nextPlayer();
-            }
-        }
-
-        if (this._phase === BoardPhase.Casting) {
-            await this.selectWizard(this.currentPlayer);
-
-            if (this.selected) {
-                const spell: Spell = this.currentPlayer?.selectedSpell;
-                if (spell?.range === 0) {
-                    await this.rules.doCastSpell(
-                        this,
-                        spell,
-                        this.currentPlayer.castingPiece
-                    );
-                    return await this.nextPlayer();
-                } else if (spell?.range > 0) {
-                    await this.moveGizmo.generateSimpleRange(
-                        this.selected.position,
-                        spell.range,
-                        CursorType.RangeCast,
-                        spell.lineOfSight
-                    );
-                    if (this.currentPlayer?.ai) {
-                        if (!await this.currentPlayer.ai.castSpell()) {
-                            console.log("AI could not cast spell, skipping...");
-                        }
-                        return await this.nextPlayer();
-                    }
-                } else if (spell?.range === -1) {
-                    if (this.currentPlayer?.ai) {
-                        if (!await this.currentPlayer.ai.castSpell()) {
-                            console.log("AI could not cast spell, skipping...");
-                        }
-                        return await this.nextPlayer();
-                    }
+            // Skip if no spells available in spellbook phase
+            if (this._phase === BoardPhase.Spellbook) {
+                if (this.currentPlayer?.spells.length === 0) {
+                    continue;
                 }
             }
-        }
 
-        if (
-            this._phase === BoardPhase.Casting &&
-            this.currentPlayer &&
-            !this.currentPlayer.selectedSpell
-        ) {
-            return await this.nextPlayer();
-        }
+            // Handle casting phase
+            if (this._phase === BoardPhase.Casting) {
+                await this.selectWizard(this.currentPlayer);
 
+                if (this.selected) {
+                    const spell: Spell = this.currentPlayer?.selectedSpell;
+                    if (spell?.range === 0) {
+                        await this.rules.doCastSpell(
+                            this,
+                            spell,
+                            this.currentPlayer.castingPiece
+                        );
+                        continue;
+                    } else if (spell?.range > 0) {
+                        await this.moveGizmo.generateSimpleRange(
+                            this.selected.position,
+                            spell.range,
+                            CursorType.RangeCast,
+                            spell.lineOfSight
+                        );
+                        if (this.currentPlayer?.ai) {
+                            if (!await this.currentPlayer.ai.castSpell()) {
+                                console.log("AI could not cast spell, skipping...");
+                            }
+                            continue;
+                        }
+                    } else if (spell?.range === -1) {
+                        if (this.currentPlayer?.ai) {
+                            if (!await this.currentPlayer.ai.castSpell()) {
+                                console.log("AI could not cast spell, skipping...");
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                // Skip if no spell selected in casting phase
+                if (!this.currentPlayer?.selectedSpell) {
+                    continue;
+                }
+            }
+
+            if (this.phase === BoardPhase.Moving && this.currentPlayer?.ai) {
+                await this.currentPlayer.ai.moveAllUnits();
+                await this.nextPlayer();
+            }
+
+            // Exit loop - player's turn is ready
+            break;
+        }
+        // Update cursor after a short delay to allow any UI changes to settle
         setTimeout(() => {
             this.cursor.update(true);
         }, 100);
     }
-
     /* #endregion */
 
     /* #region Initialisation */

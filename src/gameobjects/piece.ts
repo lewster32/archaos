@@ -833,6 +833,8 @@ export class Piece extends Entity {
     get canBeSubverted(): boolean {
         return (
             this.type === UnitType.Creature && // Only creatures can be subverted
+            !this.currentRider && // Cannot subvert a unit with an active rider
+            !this.currentMount && // Cannot subvert a mounted unit
             !this.hasStatus(UnitStatus.Wizard) && // Cannot subvert wizards
             !this.hasStatus(UnitStatus.Spreads) && // Cannot subvert spreading units
             !this.hasStatus(UnitStatus.Structure) && // Cannot subvert structures
@@ -1066,7 +1068,9 @@ export class Piece extends Entity {
                 !this.hasStatus(UnitStatus.Undead) &&
                 !this.hasStatus(UnitStatus.AttackUndead)
             ) {
-                this.board.sound.play("undead");
+                await this.board.sound.playAsync("undead", {
+                    delay: Board.DEFAULT_DELAY
+                });
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan
@@ -1114,6 +1118,8 @@ export class Piece extends Entity {
                 `${this.name} ${this.properties.rangedType} ${piece.name}`
             );
 
+            await Board.delay(Board.DEFAULT_DELAY / 2);
+
             if (rollSuccess) {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
                     this.removeStatus(UnitStatus.ShadowForm);
@@ -1157,6 +1163,7 @@ export class Piece extends Entity {
         ) {
             await this.destroy();
         }
+        this.board.sound.play("killcreature");
         if (!this._sprite) {
             return;
         }

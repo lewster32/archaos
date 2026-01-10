@@ -275,6 +275,10 @@ export class Cursor {
                 if (selected.canAttack) {
                     return;
                 }
+                // TODO: This is problematic - if the unit successfully attacks
+                // and kills the target, we have to wait for the move before we 
+                // can check for ranged attack. This logic doesn't belong in
+                // the cursor class.
                 if (selected.canRangedAttack) {
                     this._board.sound.play("bowselecta");
                     this._board.logger.log(
