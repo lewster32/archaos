@@ -23,7 +23,7 @@ import { AttackSpell } from "./spells/attackspell";
 import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
 import { Wizard } from "./wizard";
-import { Display, Geom, GameObjects, Scene, Math as PMath } from "phaser";
+import { Display, Geom, GameObjects, Scene, Math as PMath, Cameras } from "phaser";
 
 /**
  * Simple point type without all the baggage of Phaser's `Geom.Point`.
@@ -1294,7 +1294,6 @@ export class Board extends Model implements Box {
                 piece.currentRider?.owner === this._currentPlayer
         );
 
-
         await this.updateBackgroundColour();
 
         let previousVal = 0;
@@ -1305,12 +1304,14 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to select a spell`
                 );
+                this.centreOnPieces([this.currentPlayer.castingPiece]);
                 break;
             case BoardPhase.Casting:
                 if (this.currentPlayer?.selectedSpell) {
                     this.logger.log(
                         `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                     );
+                    this.centreOnPieces([this.currentPlayer.castingPiece]);
                 } else {
                     this.sound.play("cancel");
                     this.logger.log(
@@ -1324,6 +1325,7 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to move`
                 );
+                this.centreOnPieces(units);
                 break;
         }
 
@@ -1399,6 +1401,37 @@ export class Board extends Model implements Box {
             })
         );
     }
+
+    /**
+     * Centre the camera on a given piece.
+     * 
+     * @param piece The piece to centre the camera on.
+     * @returns A promise that resolves when the camera has centred.
+     */
+    async centreOnPieces(pieces: Piece[]): Promise<void> {
+        if (!pieces?.length) {
+            return;
+        }
+
+        // Get the centroid of all pieces
+        const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
+        const avgX: number = pieces.reduce((sum, piece) => sum + piece.position.x, 0) / pieces.length;
+        const avgY: number = pieces.reduce((sum, piece) => sum + piece.position.y, 0) / pieces.length;
+        const targetPosition: Geom.Point = this.getScreenPosition(new Geom.Point(avgX, avgY));
+        console.log(`Centring camera on pieces at ${targetPosition.x}, ${targetPosition.y}`);
+
+        return new Promise<void>((resolve) => {
+            this.scene.tweens.add({
+                targets: camera,
+                x: -targetPosition.x - (camera.width / 2),
+                duration: Board.DEFAULT_DELAY,
+                ease: "Power2",
+                onComplete: () => {
+                    resolve();
+                }
+            });
+        });
+    }            
 
     /**
      * Deselect the current player.

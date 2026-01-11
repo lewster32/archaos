@@ -482,28 +482,23 @@ export class ComputerWizard {
             console.debug(`${piece.owner.name}'s ${piece.name} cannot attack or has already attacked`);
         }
         if (!piece.moved && piece.canMove) {
-            // Special case: if this is a wizard and there are friendly
-            // mountables nearby, try to move onto one
+            // Special case: if this is a wizard and there are mountable units
+            // adjacent, mount one of them
             if (piece.type === UnitType.Wizard && piece.currentMount == null) {
-                const friendlyMountables: Piece[] =
+                const mountablePieces: Piece[] =
                     this._board.getAdjacentPiecesAtPosition(
                         piece.position,
                         (p: Piece) => {
-                            return (
-                                p.owner === this._player && // Friendly piece
-                                (p.hasStatus(UnitStatus.Mount) || p.hasStatus(UnitStatus.MountAny)) &&
-                                p.currentRider == null && // Is currently riderless
-                                !p.currentMount // Not already itself mounted (cue infinite stack of horses)
-                            ); 
+                            return piece.canMountPiece(p); // Can mount the piece
                         }
                     );
-                if (friendlyMountables.length > 0) {
+                if (mountablePieces.length > 0) {
                     const mountable: Piece =
-                        Phaser.Math.RND.pick(friendlyMountables);
-                    console.debug(`${piece.owner.name}'s ${piece.name} mounts friendly piece ${mountable.name}`);
+                        Phaser.Math.RND.pick(mountablePieces);
+                    console.debug(`${piece.owner.name}'s ${piece.name} mounts ${mountable.owner.name}'s ${mountable.name}`);
                     await this._board.mountPiece(piece.id, mountable.id);
-                    // Select the mountable if it can ranged attack
-                    if (mountable.canRangedAttack && !mountable.rangedAttacked) {
+                    // Select the mountable if it can attack or ranged attack
+                    if ((mountable.canAttack && !mountable.attacked) || (mountable.canRangedAttack && !mountable.rangedAttacked)) {
                         await this._board.selectPiece(mountable.id);
                     }
                     return true;

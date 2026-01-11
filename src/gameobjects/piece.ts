@@ -961,7 +961,9 @@ export class Piece extends Entity {
             piece.stats.maneuverability === 0 || // Cannot engage pieces with zero maneuverability
             this.currentMount || // Cannot engage when mounted
             piece.currentMount || // Cannot engage mounted pieces
-            this.owner === piece.owner // Cannot engage own pieces
+            this.owner === piece.owner || // Cannot engage own pieces
+            this.hasStatus(UnitStatus.ShadowForm) || // Units with Shadow Form do not engage
+            piece.hasStatus(UnitStatus.ShadowForm) // Units with Shadow Form cannot be engaged
         ) {
             return false;
         }

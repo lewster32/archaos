@@ -355,6 +355,8 @@ export class Cursor {
             Board.DEFAULT_CELLSIZE;
         point.y -= Board.DEFAULT_CELLSIZE * 1.5;
 
+        point.x -= this._board.scene.cameras.main.x;
+
         const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
         const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;
 

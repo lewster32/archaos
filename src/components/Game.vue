@@ -489,6 +489,7 @@ onUnmounted(() => {
 .menu {
     position: fixed;
     text-align: center;
+    margin-inline: 1em;
 }
 
 @media (max-height: 580px) {
@@ -504,4 +505,12 @@ onUnmounted(() => {
     height: 87 * 2px;
     image-rendering: pixelated;
 }
+
+input[type="checkbox"] {
+    width: 2rem;
+    height: 2rem;
+    accent-color: var(--color-yellow);
+    cursor: pointer;
+}
+
 </style>
