@@ -285,7 +285,7 @@ export class Cursor {
                         `${selected.name}'s turn to ranged attack`,
                         Colour.Yellow
                     );
-                    await this._board.moveGizmo.generateSimpleRange(
+                    await this._board.moveGizmo.showSimpleRange(
                         this._board.selected.position,
                         this._board.selected.stats.range,
                         CursorType.RangeRangedAttack,

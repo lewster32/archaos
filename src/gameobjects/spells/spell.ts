@@ -1,4 +1,5 @@
-import { spells } from "../../../assets/data/classicspells.json";
+import spellJsonData from "../../../assets/data/classicspells.json";
+
 import { Board } from "../board";
 import { EffectType } from "../effectemitter";
 import { Colour } from "../enums/colour";
@@ -8,25 +9,69 @@ import { UnitStatus } from "../enums/unitstatus";
 import { UnitType } from "../enums/unittype";
 import { Model } from "../model";
 import { Piece } from "../piece";
+
 import type { SpellConfig } from "../configs/spellconfig";
 import type { Player } from "../player";
+
 import { CursorType } from "../enums/cursortype";
+import { Math as PMath, Geom } from "phaser";
+
+/**
+ * The spell data imported from JSON.
+ */
+const spells: { [key: string]: SpellConfig } = spellJsonData as any;
 
 /**
  * A spell that can be cast by a player's wizard.
  */
 export class Spell extends Model {
+    /**
+     * A reference to the game board.
+     */
     protected _board: Board;
+
+    /**
+     * The type of this spell.
+     */
     protected _type: SpellType;
 
+    /**
+     * The piece that is casting this spell.
+     */
     protected _castingPiece: Piece;
+
+    /**
+     * The raw properties of this spell.
+     */
     protected _properties: SpellConfig;
+
+    /**
+     * The total number of times this spell can be cast in a turn.
+     */
     protected _totalCastTimes: number;
+
+    /**
+     * The number of times this spell can still be cast.
+     */
     protected _castTimes: number;
+
+    /**
+     * Whether the last casting attempt of this spell failed.
+     */
     protected _failed: boolean;
 
+    /**
+     * The player who owns this spell.
+     */
     protected _owner: Player;
 
+    /**
+     * Create a new spell.
+     * 
+     * @param board The game board
+     * @param id The unique ID of this spell
+     * @param config The configuration of this spell
+     */
     constructor(
         board: Board,
         id: number,
@@ -39,6 +84,7 @@ export class Spell extends Model {
         }
         this._board = board;
 
+        // Derive spell type from properties
         if (config.target === SpellTarget.Self && config.id !== "turmoil") {
             this._type = SpellType.Buff;
         }
@@ -55,10 +101,16 @@ export class Spell extends Model {
         this._failed = false;
     }
 
+    /**
+     * The unique ID of this spell.
+     */
     get spellId(): string {
         return this._properties.id;
     }
 
+    /**
+     * The name of this spell.
+     */
     get name(): string {
         return this._properties.name;
     }
@@ -78,7 +130,7 @@ export class Spell extends Model {
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return Phaser.Math.Clamp(
+        return PMath.Clamp(
             this._properties.chance + balanceOffset,
             0.1,
             1
@@ -218,19 +270,19 @@ export class Spell extends Model {
      * @returns Whether the point is within casting range
      */
     protected inCastingRange(
-        point: Phaser.Geom.Point
+        point: Geom.Point
     ): boolean {
         if (this.range < 0) {
             return true;
         }
         if (this.range === 0) {
-            return Phaser.Geom.Point.Equals(this._castingPiece.position, point);
+            return Geom.Point.Equals(this._castingPiece.position, point);
         }
         if (!this._castingPiece) {
             console.error("Spell has no casting piece");
             return false;
         }
-        const casterPosition: Phaser.Geom.Point = Phaser.Geom.Point.Clone(
+        const casterPosition: Geom.Point = Geom.Point.Clone(
             this._castingPiece.position
         );
         if (Board.distance(casterPosition, point) > this.range) {
@@ -246,7 +298,7 @@ export class Spell extends Model {
      * @param showReason Whether to log the reason if the spell cannot be cast
      * @returns Whether the spell can be cast at the given position
      */
-    protected canCastAtPosition(point: Phaser.Geom.Point, showReason?: boolean): boolean {
+    protected canCastAtPosition(point: Geom.Point, showReason?: boolean): boolean {
         if (this.lineOfSight && !this._board.hasLineOfSight(this._castingPiece.position, point)) {
             if (showReason) {
                 this._board.logger.log(
@@ -281,7 +333,7 @@ export class Spell extends Model {
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    isValidTarget(target: Phaser.Geom.Point, showReason?: boolean): Phaser.Geom.Point | Piece | null {
+    isValidTarget(target: Geom.Point, showReason?: boolean): Geom.Point | Piece | null {
         if (!this.inCastingRange(target)) {
             if (showReason) {
                 this._board.logger.log(
@@ -445,15 +497,15 @@ export class Spell extends Model {
     async cast(
         owner: Player,
         castingPiece: Piece,
-        target?: Phaser.Geom.Point | Piece,
+        target?: Geom.Point | Piece,
     ): Promise<Piece | boolean | null> {
-        let castPoint: Phaser.Geom.Point;
+        let castPoint: Geom.Point;
         let castPiece: Piece;
-        if (target instanceof Phaser.Geom.Point) {
-            castPoint = Phaser.Geom.Point.Clone(target);
+        if (target instanceof Geom.Point) {
+            castPoint = Geom.Point.Clone(target);
         } else if (target instanceof Piece) {
             castPiece = target;
-            castPoint = Phaser.Geom.Point.Clone(target.position);
+            castPoint = Geom.Point.Clone(target.position);
         }
 
         // We only want to check for failure on the first cast of multi-cast
@@ -481,7 +533,7 @@ export class Spell extends Model {
      * @param targets The target pieces of the spell
      * @returns The result of the spell cast
      */
-    async doCast(owner: Player, castingPiece: Piece, point?: Phaser.Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         if (this.type === SpellType.Disbelieve) {
             const target: Piece = targets.find((p: Piece) => p.canDisbelieve);
             if (!target) {
@@ -599,11 +651,11 @@ export class Spell extends Model {
 
             if (this.properties.id === "turmoil") {
                 for (const piece of this._board.pieces.filter((p: Piece) => !p.dead && !p.currentMount && !p.engulfed)) {
-                    const randomEmptySpace: Phaser.Geom.Point = this._board.getRandomEmptySpace();
+                    const randomEmptySpace: Geom.Point = this._board.getRandomEmptySpace();
                     if (randomEmptySpace) {
                         this._board.sound.play("spelleffect");
-                        const oldPiecePos: Phaser.Math.Vector2 = piece.sprite.getCenter().clone();
-                        const newPiecePos: Phaser.Geom.Point = this._board.getIsoPosition(randomEmptySpace)
+                        const oldPiecePos: PMath.Vector2 = piece.sprite.getCenter().clone();
+                        const newPiecePos: Geom.Point = this._board.getIsoPosition(randomEmptySpace)
                         piece.moveTo(randomEmptySpace, 200);
                         await this._board.playEffect(
                             EffectType.WizardCastBeam,
@@ -713,23 +765,24 @@ export class Spell extends Model {
      * @returns A random spell configuration
      */
     static getRandomSpell(gifted?: boolean): any {
-        const spellNames: string[] = Object.values(spells).map(
-            (spell: any) => spell.name
-        );
+        const spellNames: string[] = Object.values(spells)
+            .filter((spell:SpellConfig) => {
+                // Exclude persistent spells like Disbelieve
+                if (spell.persist) {
+                    return false;
+                }
+                // All other spells are allowed if gifted
+                if (gifted) {
+                    return true;
+                }
+                // Exclude gift-only spells if not gifted
+                return !spell.giftOnly;
+            })
+            .map(
+                (spell: SpellConfig) => spell.name
+            );
 
-        
-        // Remove Disbelieve from random pool
-        spellNames.splice(spellNames.indexOf("Disbelieve"), 1);
-
-        // TODO: 'Giftable' should be a flag on the spell data itself, and not
-        // hardcoded here.
-        if (!gifted) {
-            spellNames.splice(spellNames.indexOf("Turmoil"), 1);
-        }
-
-        return Spell.getSpellProperties(
-            spellNames[Math.floor(Math.random() * spellNames.length)]
-        );
+        return Spell.getSpellProperties(PMath.RND.pick(spellNames));
     }
 
     /**
@@ -740,17 +793,16 @@ export class Spell extends Model {
      */
     static getSpellsByType(type: SpellType): string[] {
         const spellsByType: Set<string> = new Set<string>();
-        for (let [key, spell] of Object.entries(spells)) {
-            const config: SpellConfig = spell as SpellConfig;
-            if (config.unitId && type === SpellType.Summon) {
+        for (let spell of Object.values(spells)) {
+            if (spell.unitId && type === SpellType.Summon) {
                 spellsByType.add(spell.name);
                 continue;
             }
-            if (config.damage && type === SpellType.Attack) {
+            if (spell.damage && type === SpellType.Attack) {
                 spellsByType.add(spell.name);
                 continue;
             }
-            if (config.target === SpellTarget.Self && type === SpellType.Buff) {
+            if (spell.target === SpellTarget.Self && type === SpellType.Buff) {
                 spellsByType.add(spell.name);
                 continue;
             }
@@ -764,8 +816,6 @@ export class Spell extends Model {
 
     /**
      * Get the spell properties for a given spell name.
-     * 
-     * TODO: Give this an interface.
      * 
      * @param name The name of the spell
      * @returns The properties of the spell
@@ -805,6 +855,6 @@ export class Spell extends Model {
             projectile: spell.projectile,
             persist: spell.persist,
             target: spell.target || SpellTarget.Empty,
-        };
+        }
     }
 }

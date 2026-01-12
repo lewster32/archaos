@@ -1,7 +1,7 @@
 import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitStatus } from "../enums/unitstatus";
 
-export interface IUnitProperties extends IUnitStats {
+export interface UnitProperties extends IUnitStats {
     id?: string;
     name?: string;
 

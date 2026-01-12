@@ -1,6 +1,6 @@
 {
     "name": "archaos-vite",
-    "version": "0.0.1",
+    "version": "0.2.0",
     "scripts": {
         "start": "vite",
         "build": "vue-tsc --noEmit && vite build",

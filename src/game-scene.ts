@@ -1,5 +1,5 @@
 import "phaser";
-import { units } from "../assets/data/classicunits.json";
+import units from "../assets/data/classicunits.json";
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
 import boardAtlas from "../assets/spritesheets/board.png";

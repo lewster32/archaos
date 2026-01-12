@@ -1,5 +1,4 @@
 import { Board } from "../board";
-import { PieceConfig } from "../configs/piececonfig";
 import { SpellConfig } from "../configs/spellconfig";
 import { EffectType } from "../effectemitter";
 import { Colour } from "../enums/colour";

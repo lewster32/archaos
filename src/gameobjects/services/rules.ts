@@ -240,11 +240,10 @@ export class Rules {
                     `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
                 );
                 if (casted.lineOfSight) {
-                    await board.moveGizmo.generateSimpleRange(
+                    await board.moveGizmo.showSimpleRange(
                         board.selected.position,
                         board.currentPlayer?.selectedSpell.range,
                         CursorType.RangeCast,
-                        true,
                         true
                     );
                 }

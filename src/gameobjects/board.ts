@@ -1304,14 +1304,14 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to select a spell`
                 );
-                this.centreOnPieces([this.currentPlayer.castingPiece]);
+                // this.centreOnPieces([this.currentPlayer.castingPiece]);
                 break;
             case BoardPhase.Casting:
                 if (this.currentPlayer?.selectedSpell) {
                     this.logger.log(
                         `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                     );
-                    this.centreOnPieces([this.currentPlayer.castingPiece]);
+                    // this.centreOnPieces([this.currentPlayer.castingPiece]);
                 } else {
                     this.sound.play("cancel");
                     this.logger.log(
@@ -1325,7 +1325,7 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to move`
                 );
-                this.centreOnPieces(units);
+                // this.centreOnPieces(units);
                 break;
         }
 
@@ -1581,7 +1581,7 @@ export class Board extends Model implements Box {
                         );
                         continue;
                     } else if (spell?.range > 0) {
-                        await this.moveGizmo.generateSimpleRange(
+                        await this.moveGizmo.showSimpleRange(
                             this.selected.position,
                             spell.range,
                             CursorType.RangeCast,

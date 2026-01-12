@@ -1,4 +1,4 @@
-import { units } from "../../assets/data/classicunits.json";
+import units from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
@@ -11,7 +11,7 @@ import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";
 import type { Player } from "./player";
-import type { IUnitProperties, IUnitStats } from "./interfaces/unitproperties";
+import type { UnitProperties, IUnitStats } from "./interfaces/unitproperties";
 import type { PieceConfig } from "./configs/piececonfig";
 import type { Types } from "phaser";
 import { UnitConfig, UnitStats } from "./interfaces/ui";
@@ -82,7 +82,7 @@ export class Piece extends Entity {
 
     protected _type: UnitType;
     protected _owner: Player | null;
-    protected _properties: IUnitProperties;
+    protected _properties: UnitProperties;
     protected _shadowScale: number;
     protected _shadow?: GameObjects.Image;
     protected _sprite?: GameObjects.Sprite;
@@ -446,7 +446,7 @@ export class Piece extends Entity {
         return stats;
     }
 
-    get properties(): IUnitProperties {
+    get properties(): UnitProperties {
         return this._properties;
     }
 

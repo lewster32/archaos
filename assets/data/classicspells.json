@@ -1,448 +1,477 @@
 {
-    "spells": {
-        "king-cobra": {
-            "chance": 0.9,
-            "balance": 1,
-            "unitId": "2",
-            "name": "King Cobra"
-        },
-        "dire-wolf": {
-            "chance": 0.9,
-            "balance": -1,
-            "unitId": "3",
-            "name": "Dire Wolf"
-        },
-        "goblin": {
-            "chance": 0.9,
-            "balance": -1,
-            "unitId": "28",
-            "name": "Goblin"
-        },
-        "crocodile": {
-            "chance": 0.8,
-            "balance": 0,
-            "unitId": "4",
-            "name": "Crocodile"
-        },
-        "faun": { "chance": 0.8, "balance": -1, "unitId": "5", "name": "Faun" },
-        "lion": { "chance": 0.6, "balance": 1, "unitId": "6", "name": "Lion" },
-        "elf": { "chance": 0.7, "balance": 2, "unitId": "7", "name": "Elf" },
-        "orc": { "chance": 1, "balance": -1, "unitId": "8", "name": "Orc" },
-        "bear": { "chance": 0.6, "balance": 1, "unitId": "9", "name": "Bear" },
-        "gorilla": {
-            "chance": 0.7,
-            "balance": 0,
-            "unitId": "a",
-            "name": "Gorilla"
-        },
-        "ogre": { "chance": 0.7, "balance": -1, "unitId": "b", "name": "Ogre" },
-        "hydra": {
-            "chance": 0.5,
-            "balance": -1,
-            "unitId": "c",
-            "name": "Hydra"
-        },
-        "giant-rat": {
-            "chance": 1,
-            "balance": 0,
-            "unitId": "d",
-            "name": "Giant Rat"
-        },
-        "giant": {
-            "chance": 0.4,
-            "balance": 1,
-            "unitId": "e",
-            "name": "Giant"
-        },
-        "horse": {
-            "chance": 0.9,
-            "balance": 1,
-            "unitId": "f",
-            "name": "Horse"
-        },
-        "unicorn": {
-            "chance": 0.6,
-            "balance": 2,
-            "unitId": "10",
-            "name": "Unicorn"
-        },
-        "centaur": {
-            "chance": 0.7,
-            "balance": 1,
-            "unitId": "11",
-            "name": "Centaur"
-        },
-        "pegasus": {
-            "chance": 0.6,
-            "balance": 2,
-            "unitId": "12",
-            "name": "Pegasus"
-        },
-        "gryphon": {
-            "chance": 0.6,
-            "balance": 1,
-            "unitId": "13",
-            "name": "Gryphon"
-        },
-        "manticore": {
-            "chance": 0.4,
-            "balance": -1,
-            "unitId": "14",
-            "name": "Manticore"
-        },
-        "bat": {
-            "chance": 0.8,
-            "balance": -1,
-            "unitId": "15",
-            "name": "Bat"
-        },
-        "green-dragon": {
-            "chance": 0.1,
-            "balance": -1,
-            "unitId": "16",
-            "name": "Green Dragon"
-        },
-        "red-dragon": {
-            "chance": 0.1,
-            "balance": -2,
-            "unitId": "17",
-            "name": "Red Dragon"
-        },
-        "golden-dragon": {
-            "chance": 0.1,
-            "balance": 2,
-            "unitId": "18",
-            "name": "Golden Dragon"
-        },
-        "harpy": {
-            "chance": 0.6,
-            "balance": -1,
-            "unitId": "19",
-            "name": "Harpy"
-        },
-        "eagle": {
-            "chance": 0.7,
-            "balance": 1,
-            "unitId": "1a",
-            "name": "Eagle"
-        },
-        "vampire": {
-            "chance": 0.2,
-            "balance": -2,
-            "unitId": "1b",
-            "name": "Vampire"
-        },
-        "ghost": {
-            "chance": 0.5,
-            "balance": -1,
-            "unitId": "1c",
-            "name": "Ghost"
-        },
-        "spectre": {
-            "chance": 0.6,
-            "balance": -1,
-            "unitId": "1d",
-            "name": "Spectre"
-        },
-        "wraith": {
-            "chance": 0.5,
-            "balance": -1,
-            "unitId": "1e",
-            "name": "Wraith"
-        },
-        "skeleton": {
-            "chance": 0.7,
-            "balance": -1,
-            "unitId": "1f",
-            "name": "Skeleton"
-        },
-        "zombie": {
-            "chance": 0.8,
-            "balance": -1,
-            "unitId": "20",
-            "name": "Zombie"
-        },
-        "magic-wood": {
-            "chance": 0.8,
-            "autoPlace": true,
-            "tree": true,
-            "lineOfSight": true,
-            "balance": 2,
-            "range": 5,
-            "castTimes": 6,
-            "allowIllusion": false,
-            "unitId": "21",
-            "name": "Magic Wood",
-            "description": "Plants six trees which can be hidden in by wizards. Randomly expires and grants a new spell if a wizard is currently occupying."
-        },
-        "shadow-wood": {
-            "chance": 0.4,
-            "lineOfSight": true,
-            "tree": true,
-            "balance": -2,
-            "range": 5,
-            "castTimes": 6,
-            "allowIllusion": false,
-            "unitId": "22",
-            "name": "Shadow Wood",
-            "description": "Plants six trees which can attack adjacent creatures and wizards."
-        },
-        "magic-fire": {
-            "chance": 0.8,
-            "lineOfSight": true,
-            "balance": -1,
-            "range": 6,
-            "allowIllusion": false,
-            "unitId": "23",
-            "name": "Magic Fire",
-            "description": "Slowly and randomly spreads around the map, destroying creatures and wizards."
-        },
-        "gooey-blob": {
-            "chance": 0.9,
-            "lineOfSight": true,
-            "balance": -1,
-            "range": 6,
-            "allowIllusion": false,
-            "unitId": "24",
-            "name": "Gooey Blob",
-            "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Wizards are defeated if engulfed."
-        },
-        "magic-castle": {
-            "chance": 0.5,
-            "balance": 1,
-            "allowIllusion": false,
-            "unitId": "25",
-            "name": "Magic Castle"
-        },
-        "dark-citadel": {
-            "chance": 0.5,
-            "balance": -1,
-            "allowIllusion": false,
-            "unitId": "26",
-            "name": "Dark Citadel"
-        },
-        "wall": {
-            "chance": 0.8,
-            "lineOfSight": true,
-            "balance": 0,
-            "allowIllusion": false,
-            "castTimes": 4,
-            "range": 4,
-            "unitId": "27",
-            "name": "Wall",
-            "description": "Builds four walls which cannot be attacked or passed by land-based units."
-        },
-        "magic-bolt": {
-            "balance": 0,
-            "chance": 1,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "lineOfSight": true,
-            "range": 6,
-            "projectile": "magicbolt",
-            "damage": 3,
-            "name": "Magic Bolt",
-            "description": "Fires a moderately powerful magical bolt."
-        },
-        "lightning": {
-            "balance": 0,
-            "chance": 1,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "lineOfSight": true,
-            "range": 4,
-            "projectile": "lightning",
-            "damage": 6,
-            "name": "Lightning",
-            "description": "Fires a powerful lightning bolt."
-        },
-        "disbelieve": {
-            "balance": 0,
-            "chance": 1,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": false,
-            "lineOfSight": false,
-            "range": -1,
-            "projectile": "disbelieve",
-            "name": "Disbelieve",
-            "persist": true,
-            "description": "Dismiss any illusionary creature. Always succeeds, and always available."
-        },
-        "vengeance": {
-            "balance": -1,
-            "chance": 0.8,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "destroyWizardCreatures": true,
-            "lineOfSight": false,
-            "name": "Vengeance",
-            "projectile": "darkpower",
-            "range": -1,
-            "damage": 10
-        },
-        "decree": {
-            "balance": 1,
-            "chance": 0.8,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "destroyWizardCreatures": true,
-            "lineOfSight": false,
-            "name": "Decree",
-            "projectile": "justice",
-            "range": -1,
-            "damage": 10
-        },
-        "dark-power": {
-            "balance": -2,
-            "chance": 0.5,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "destroyWizardCreatures": true,
-            "lineOfSight": false,
-            "name": "Dark Power",
-            "projectile": "darkpower",
-            "range": -1,
-            "damage": 10,
-            "castTimes": 3
-        },
-        "justice": {
-            "balance": 2,
-            "chance": 0.5,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": true,
-            "destroyWizardCreatures": true,
-            "lineOfSight": false,
-            "name": "Justice",
-            "projectile": "justice",
-            "range": -1,
-            "damage": 10,
-            "castTimes": 3
-        },
-        "raise-dead": {
-            "balance": -1,
-            "chance": 0.5,
-            "range": 5,
-            "lineOfSight": true,
-            "target": "corpse",
-            "projectile": "raisedead",
-            "name": "Raise Dead",
-            "description": "Reanimates the corpse of a creature, making it undead, and puts it under the control of the caster."
-        },
-        "subversion": {
-            "balance": 0,
-            "chance": 1,
-            "target": "piece",
-            "castOnEnemyUnit": true,
-            "castOnWizard": false,
-            "lineOfSight": true,
-            "name": "Subversion",
-            "projectile": "subversion",
-            "range": 7,
-            "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion."
-        },
-        "shadow-form": {
-            "balance": 0,
-            "chance": 0.7,
-            "target": "self",
-            "name": "Shadow Form",
-            "projectile": "shadowform",
-            "range": 0,
-            "description": "Increases the caster's defense and movement range. If the caster physically attacks another unit, the effect is lost."
-        },
-        "magic-knife": {
-            "balance": 1,
-            "chance": 0.7,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Knife",
-            "description": "Moderately increases the caster's combat rating, and allows the caster to attack the undead."
-        },
-        "magic-sword": {
-            "balance": 1,
-            "chance": 0.4,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Sword",
-            "description": "Greatly increases the caster's combat rating, and allows the caster to attack the undead."
-        },
-        "magic-shield": {
-            "balance": 1,
-            "chance": 0.7,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Shield",
-            "description": "Moderately increases the caster's defense rating."
-        },
-        "magic-armour": {
-            "balance": 1,
-            "chance": 0.4,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Armour",
-            "description": "Greatly increases the caster's defense rating."
-        },
-        "magic-bow": {
-            "balance": 1,
-            "chance": 0.5,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Bow",
-            "description": "Allows the caster to make long ranged attacks, and to attack the undead."
-        },
-        "magic-wings": {
-            "balance": 0,
-            "chance": 0.5,
-            "target": "self",
-            "range": 0,
-            "name": "Magic Wings",
-            "description": "Allows the caster to fly over long distances."
-        },
-        "law-1": {
-            "balance": 2,
-            "chance": 0.8,
-            "target": "self",
-            "range": 0,
-            "name": "Law 1",
-            "description": "Makes the world moderately more lawful."
-        },
-        "law-2": {
-            "balance": 4,
-            "chance": 0.6,
-            "target": "self",
-            "range": 0,
-            "name": "Law 2",
-            "description": "Makes the world greatly more lawful."
-        },
-        "chaos-1": {
-            "balance": -2,
-            "chance": 0.8,
-            "target": "self",
-            "range": 0,
-            "name": "Chaos 1",
-            "description": "Makes the world moderately more chaotic."
-        },
-        "chaos-2": {
-            "balance": -4,
-            "chance": 0.6,
-            "target": "self",
-            "range": 0,
-            "name": "Chaos 2",
-            "description": "Makes the world greatly more chaotic."
-        },
-        "turmoil": {
-            "balance": -1,
-            "chance": 0.5,
-            "target": "self",
-            "range": 0,
-            "name": "Turmoil",
-            "description": "Randomly moves pieces around the board."
-        }
+    "king-cobra": {
+        "chance": 0.9,
+        "balance": 1,
+        "unitId": "2",
+        "name": "King Cobra"
+    },
+    "dire-wolf": {
+        "chance": 0.9,
+        "balance": -1,
+        "unitId": "3",
+        "name": "Dire Wolf"
+    },
+    "goblin": {
+        "chance": 0.9,
+        "balance": -1,
+        "unitId": "28",
+        "name": "Goblin"
+    },
+    "crocodile": {
+        "chance": 0.8,
+        "balance": 0,
+        "unitId": "4",
+        "name": "Crocodile"
+    },
+    "faun": {
+        "chance": 0.8,
+        "balance": -1,
+        "unitId": "5",
+        "name": "Faun"
+    },
+    "lion": {
+        "chance": 0.6,
+        "balance": 1,
+        "unitId": "6",
+        "name": "Lion"
+    },
+    "elf": {
+        "chance": 0.7,
+        "balance": 2,
+        "unitId": "7",
+        "name": "Elf"
+    },
+    "orc": {
+        "chance": 1,
+        "balance": -1,
+        "unitId": "8",
+        "name": "Orc"
+    },
+    "bear": {
+        "chance": 0.6,
+        "balance": 1,
+        "unitId": "9",
+        "name": "Bear"
+    },
+    "gorilla": {
+        "chance": 0.7,
+        "balance": 0,
+        "unitId": "a",
+        "name": "Gorilla"
+    },
+    "ogre": {
+        "chance": 0.7,
+        "balance": -1,
+        "unitId": "b",
+        "name": "Ogre"
+    },
+    "hydra": {
+        "chance": 0.5,
+        "balance": -1,
+        "unitId": "c",
+        "name": "Hydra"
+    },
+    "giant-rat": {
+        "chance": 1,
+        "balance": 0,
+        "unitId": "d",
+        "name": "Giant Rat"
+    },
+    "giant": {
+        "chance": 0.4,
+        "balance": 1,
+        "unitId": "e",
+        "name": "Giant"
+    },
+    "horse": {
+        "chance": 0.9,
+        "balance": 1,
+        "unitId": "f",
+        "name": "Horse"
+    },
+    "unicorn": {
+        "chance": 0.6,
+        "balance": 2,
+        "unitId": "10",
+        "name": "Unicorn"
+    },
+    "centaur": {
+        "chance": 0.7,
+        "balance": 1,
+        "unitId": "11",
+        "name": "Centaur"
+    },
+    "pegasus": {
+        "chance": 0.6,
+        "balance": 2,
+        "unitId": "12",
+        "name": "Pegasus"
+    },
+    "gryphon": {
+        "chance": 0.6,
+        "balance": 1,
+        "unitId": "13",
+        "name": "Gryphon"
+    },
+    "manticore": {
+        "chance": 0.4,
+        "balance": -1,
+        "unitId": "14",
+        "name": "Manticore"
+    },
+    "bat": {
+        "chance": 0.8,
+        "balance": -1,
+        "unitId": "15",
+        "name": "Bat"
+    },
+    "green-dragon": {
+        "chance": 0.1,
+        "balance": -1,
+        "unitId": "16",
+        "name": "Green Dragon"
+    },
+    "red-dragon": {
+        "chance": 0.1,
+        "balance": -2,
+        "unitId": "17",
+        "name": "Red Dragon"
+    },
+    "golden-dragon": {
+        "chance": 0.1,
+        "balance": 2,
+        "unitId": "18",
+        "name": "Golden Dragon"
+    },
+    "harpy": {
+        "chance": 0.6,
+        "balance": -1,
+        "unitId": "19",
+        "name": "Harpy"
+    },
+    "eagle": {
+        "chance": 0.7,
+        "balance": 1,
+        "unitId": "1a",
+        "name": "Eagle"
+    },
+    "vampire": {
+        "chance": 0.2,
+        "balance": -2,
+        "unitId": "1b",
+        "name": "Vampire"
+    },
+    "ghost": {
+        "chance": 0.5,
+        "balance": -1,
+        "unitId": "1c",
+        "name": "Ghost"
+    },
+    "spectre": {
+        "chance": 0.6,
+        "balance": -1,
+        "unitId": "1d",
+        "name": "Spectre"
+    },
+    "wraith": {
+        "chance": 0.5,
+        "balance": -1,
+        "unitId": "1e",
+        "name": "Wraith"
+    },
+    "skeleton": {
+        "chance": 0.7,
+        "balance": -1,
+        "unitId": "1f",
+        "name": "Skeleton"
+    },
+    "zombie": {
+        "chance": 0.8,
+        "balance": -1,
+        "unitId": "20",
+        "name": "Zombie"
+    },
+    "magic-wood": {
+        "chance": 0.8,
+        "autoPlace": true,
+        "tree": true,
+        "lineOfSight": true,
+        "balance": 2,
+        "range": 5,
+        "castTimes": 6,
+        "allowIllusion": false,
+        "unitId": "21",
+        "name": "Magic Wood",
+        "description": "Plants six trees which can be hidden in by wizards. Randomly expires and grants a new spell if a wizard is currently occupying."
+    },
+    "shadow-wood": {
+        "chance": 0.4,
+        "lineOfSight": true,
+        "tree": true,
+        "balance": -2,
+        "range": 5,
+        "castTimes": 6,
+        "allowIllusion": false,
+        "unitId": "22",
+        "name": "Shadow Wood",
+        "description": "Plants six trees which can attack adjacent creatures and wizards."
+    },
+    "magic-fire": {
+        "chance": 0.8,
+        "lineOfSight": true,
+        "balance": -1,
+        "range": 6,
+        "allowIllusion": false,
+        "unitId": "23",
+        "name": "Magic Fire",
+        "description": "Slowly and randomly spreads around the map, destroying creatures and wizards."
+    },
+    "gooey-blob": {
+        "chance": 0.9,
+        "lineOfSight": true,
+        "balance": -1,
+        "range": 6,
+        "allowIllusion": false,
+        "unitId": "24",
+        "name": "Gooey Blob",
+        "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Wizards are defeated if engulfed."
+    },
+    "magic-castle": {
+        "chance": 0.5,
+        "balance": 1,
+        "allowIllusion": false,
+        "unitId": "25",
+        "name": "Magic Castle"
+    },
+    "dark-citadel": {
+        "chance": 0.5,
+        "balance": -1,
+        "allowIllusion": false,
+        "unitId": "26",
+        "name": "Dark Citadel"
+    },
+    "wall": {
+        "chance": 0.8,
+        "lineOfSight": true,
+        "balance": 0,
+        "allowIllusion": false,
+        "castTimes": 4,
+        "range": 4,
+        "unitId": "27",
+        "name": "Wall",
+        "description": "Builds four walls which cannot be attacked or passed by land-based units."
+    },
+    "magic-bolt": {
+        "balance": 0,
+        "chance": 1,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "lineOfSight": true,
+        "range": 6,
+        "projectile": "magicbolt",
+        "damage": 3,
+        "name": "Magic Bolt",
+        "description": "Fires a moderately powerful magical bolt."
+    },
+    "lightning": {
+        "balance": 0,
+        "chance": 1,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "lineOfSight": true,
+        "range": 4,
+        "projectile": "lightning",
+        "damage": 6,
+        "name": "Lightning",
+        "description": "Fires a powerful lightning bolt."
+    },
+    "disbelieve": {
+        "balance": 0,
+        "chance": 1,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": false,
+        "lineOfSight": false,
+        "range": -1,
+        "projectile": "disbelieve",
+        "name": "Disbelieve",
+        "persist": true,
+        "description": "Dismiss any illusionary creature. Always succeeds, and always available."
+    },
+    "vengeance": {
+        "balance": -1,
+        "chance": 0.8,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "destroyWizardCreatures": true,
+        "lineOfSight": false,
+        "name": "Vengeance",
+        "projectile": "darkpower",
+        "range": -1,
+        "damage": 10
+    },
+    "decree": {
+        "balance": 1,
+        "chance": 0.8,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "destroyWizardCreatures": true,
+        "lineOfSight": false,
+        "name": "Decree",
+        "projectile": "justice",
+        "range": -1,
+        "damage": 10
+    },
+    "dark-power": {
+        "balance": -2,
+        "chance": 0.5,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "destroyWizardCreatures": true,
+        "lineOfSight": false,
+        "name": "Dark Power",
+        "projectile": "darkpower",
+        "range": -1,
+        "damage": 10,
+        "castTimes": 3
+    },
+    "justice": {
+        "balance": 2,
+        "chance": 0.5,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": true,
+        "destroyWizardCreatures": true,
+        "lineOfSight": false,
+        "name": "Justice",
+        "projectile": "justice",
+        "range": -1,
+        "damage": 10,
+        "castTimes": 3
+    },
+    "raise-dead": {
+        "balance": -1,
+        "chance": 0.5,
+        "range": 5,
+        "lineOfSight": true,
+        "target": "corpse",
+        "projectile": "raisedead",
+        "name": "Raise Dead",
+        "description": "Reanimates the corpse of a creature, making it undead, and puts it under the control of the caster."
+    },
+    "subversion": {
+        "balance": 0,
+        "chance": 1,
+        "target": "piece",
+        "castOnEnemyUnit": true,
+        "castOnWizard": false,
+        "lineOfSight": true,
+        "name": "Subversion",
+        "projectile": "subversion",
+        "range": 7,
+        "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion."
+    },
+    "shadow-form": {
+        "balance": 0,
+        "chance": 0.7,
+        "target": "self",
+        "name": "Shadow Form",
+        "projectile": "shadowform",
+        "range": 0,
+        "description": "Increases the caster's defense and movement range. If the caster physically attacks another unit, the effect is lost."
+    },
+    "magic-knife": {
+        "balance": 1,
+        "chance": 0.7,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Knife",
+        "description": "Moderately increases the caster's combat rating, and allows the caster to attack the undead."
+    },
+    "magic-sword": {
+        "balance": 1,
+        "chance": 0.4,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Sword",
+        "description": "Greatly increases the caster's combat rating, and allows the caster to attack the undead."
+    },
+    "magic-shield": {
+        "balance": 1,
+        "chance": 0.7,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Shield",
+        "description": "Moderately increases the caster's defense rating."
+    },
+    "magic-armour": {
+        "balance": 1,
+        "chance": 0.4,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Armour",
+        "description": "Greatly increases the caster's defense rating."
+    },
+    "magic-bow": {
+        "balance": 1,
+        "chance": 0.5,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Bow",
+        "description": "Allows the caster to make long ranged attacks, and to attack the undead."
+    },
+    "magic-wings": {
+        "balance": 0,
+        "chance": 0.5,
+        "target": "self",
+        "range": 0,
+        "name": "Magic Wings",
+        "description": "Allows the caster to fly over long distances."
+    },
+    "law-1": {
+        "balance": 2,
+        "chance": 0.8,
+        "target": "self",
+        "range": 0,
+        "name": "Law 1",
+        "description": "Makes the world moderately more lawful."
+    },
+    "law-2": {
+        "balance": 4,
+        "chance": 0.6,
+        "target": "self",
+        "range": 0,
+        "name": "Law 2",
+        "description": "Makes the world greatly more lawful."
+    },
+    "chaos-1": {
+        "balance": -2,
+        "chance": 0.8,
+        "target": "self",
+        "range": 0,
+        "name": "Chaos 1",
+        "description": "Makes the world moderately more chaotic."
+    },
+    "chaos-2": {
+        "balance": -4,
+        "chance": 0.6,
+        "target": "self",
+        "range": 0,
+        "name": "Chaos 2",
+        "description": "Makes the world greatly more chaotic."
+    },
+    "turmoil": {
+        "balance": -1,
+        "chance": 0.5,
+        "target": "self",
+        "range": 0,
+        "name": "Turmoil",
+        "description": "Randomly moves pieces around the board.",
+        "giftOnly": true
     }
 }
