@@ -11,6 +11,8 @@ import type { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
 import { SpellTarget } from "./enums/spelltarget";
 
+import { Geom, Math as PMath } from "phaser";
+
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
@@ -208,14 +210,14 @@ export class ComputerWizard {
                 return a.chance > b.chance ? -1 : a.chance < b.chance ? 1 : 0;
             });
 
-            const pickedSpell: SummonSpell = Phaser.Math.RND.weightedPick(
+            const pickedSpell: SummonSpell = PMath.RND.weightedPick(
                 spells
             ) as SummonSpell;
 
             // The lower the spell's cast chance, the more likely we are to cast
             // it as an illusion
             if (pickedSpell.allowIllusion) {
-                const roll: number = Phaser.Math.RND.realInRange(0.1, 1);
+                const roll: number = PMath.RND.realInRange(0.1, 1);
                 if (roll > pickedSpell.chance) {
                     pickedSpell.illusion = true;
                 } else {
@@ -244,16 +246,16 @@ export class ComputerWizard {
             if (spell) {
                 if (spell.type === SpellType.Summon) {
                     const summonSpell: SummonSpell = spell as SummonSpell;
-                    let summonPt: Phaser.Geom.Point | null = null;
+                    let summonPt: Geom.Point | null = null;
                     while (spell.castTimes > 0) {
                         // Find a random valid tile on the board to summon onto. We
                         // do this each time because the casting of a spell can
                         // change which board tiles are valid (e.g., trees cannot
                         // be cast adjacent to other trees).
-                        const validTiles: Phaser.Geom.Point[] = [];
+                        const validTiles: Geom.Point[] = [];
                         for (let xx = 0; xx < this._board.width; xx++) {
                             for (let yy = 0; yy < this._board.height; yy++) {
-                                const pt: Phaser.Geom.Point = new Phaser.Geom.Point(
+                                const pt: Geom.Point = new Geom.Point(
                                     xx,
                                     yy
                                 );
@@ -270,7 +272,7 @@ export class ComputerWizard {
                             this._board.sound.play("cancel");
                             return false;
                         }
-                        summonPt = Phaser.Math.RND.pick(validTiles);
+                        summonPt = PMath.RND.pick(validTiles);
 
                         await this._board.rules.doCastSpell(
                             this._board,
@@ -319,7 +321,7 @@ export class ComputerWizard {
                             this._board.sound.play("cancel");
                             return false;
                         }
-                        const target: Piece = Phaser.Math.RND.weightedPick(targets);
+                        const target: Piece = PMath.RND.weightedPick(targets);
                         await this._board.rules.doCastSpell(
                             this._board,
                             spell,
@@ -346,7 +348,7 @@ export class ComputerWizard {
                         return false;
                     }
 
-                    const target: Piece = Phaser.Math.RND.pick(potentialTargets);
+                    const target: Piece = PMath.RND.pick(potentialTargets);
                     await this._board.rules.doCastSpell(
                         this._board,
                         spell,
@@ -375,7 +377,7 @@ export class ComputerWizard {
                             this._board.sound.play("cancel");
                             return false;
                         }
-                        const target: Piece = Phaser.Math.RND.pick(potentialTargets);
+                        const target: Piece = PMath.RND.pick(potentialTargets);
                         await this._board.rules.doCastSpell(
                             this._board,
                             spell,
@@ -421,7 +423,7 @@ export class ComputerWizard {
                     }
                 );
             if (engagedEnemies.length > 0) {
-                const target: Piece = Phaser.Math.RND.pick(engagedEnemies);
+                const target: Piece = PMath.RND.pick(engagedEnemies);
                 console.debug(`${piece.owner.name}'s ${piece.name} attacks engaged target ${target.name}`);
                 await this._board.attackPiece(piece.id, target.id);
             }
@@ -468,7 +470,7 @@ export class ComputerWizard {
                     return 0;
                 });
             if (potentialAttackTargets.length > 0) {
-                const target: Piece = Phaser.Math.RND.weightedPick(
+                const target: Piece = PMath.RND.weightedPick(
                     potentialAttackTargets
                 );
                 console.debug(`${piece.owner.name}'s ${piece.name} attacks target ${target.name}`);
@@ -494,7 +496,7 @@ export class ComputerWizard {
                     );
                 if (mountablePieces.length > 0) {
                     const mountable: Piece =
-                        Phaser.Math.RND.pick(mountablePieces);
+                        PMath.RND.pick(mountablePieces);
                     console.debug(`${piece.owner.name}'s ${piece.name} mounts ${mountable.owner.name}'s ${mountable.name}`);
                     await this._board.mountPiece(piece.id, mountable.id);
                     // Select the mountable if it can attack or ranged attack
@@ -509,21 +511,26 @@ export class ComputerWizard {
             }
 
             // Move to a random reachable position
-            const reachableTiles: Phaser.Geom.Point[] = Array.from(
+            const reachableTiles: Geom.Point[] = Array.from(
                 this._board.moveGizmo.getAllValidPaths().values()
             ).map((path: Path) => {
-                return path.nodes.at(-1)!.pos;
-            }).filter((pt: Phaser.Geom.Point) => {
+                // Get the last node in the path
+                return path.nodes?.filter(node => node.traversable).at(-1)?.pos;
+            }).filter((pt: Geom.Point) => {
+                if (!pt) {
+                    return false;
+                }
                 // Ignore tile the piece is currently on
-                return !(pt.x === piece.position.x && pt.y === piece.position.y);
+                // return !(pt.x === piece.position.x && pt.y === piece.position.y);
+                return !Geom.Point.Equals(pt, piece.position);
             });
             if (reachableTiles.length === 0) {
                 console.debug(`No reachable tiles for ${piece.owner.name}'s ${piece.name}`);
                 this._board.sound.play("cancel");
                 return false;
             }
-            const movePt: Phaser.Geom.Point =
-                Phaser.Math.RND.pick(reachableTiles);
+            const movePt: Geom.Point =
+                PMath.RND.pick(reachableTiles);
             console.debug(`${piece.owner.name}'s ${piece.name} moves to (${movePt.x}, ${movePt.y})`);
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
@@ -563,7 +570,7 @@ export class ComputerWizard {
                 });
             if (rangedTargets.length > 0) {
                 const target: Piece =
-                    Phaser.Math.RND.weightedPick(rangedTargets);
+                    PMath.RND.weightedPick(rangedTargets);
                 console.debug(`${piece.owner.name}'s ${piece.name} performs ranged attack on target ${target.name}`);
                 await this._board.rangedAttackPiece(piece.id, target.id);
                 return true;

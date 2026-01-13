@@ -2,18 +2,18 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 15,
-        "height": 15
+        "width": 9,
+        "height": 9
     },
     "players": [
         {
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
-            "computerControlled": false,
+            "computerControlled": true,
             "pieces": [
                 {
-                    "type": "Manticore",
+                    "type": "Ogre",
                     "position": { "x": 7, "y": 7 }
                 }
             ],
@@ -25,7 +25,7 @@
             "id": 2,
             "name": "Player 2",
             "position": { "x": 6, "y": 3 },
-            "computerControlled": false,
+            "computerControlled": true,
             "pieces": [
             ],
             "spells": [
