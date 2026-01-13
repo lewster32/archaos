@@ -91,26 +91,17 @@ export class Rules {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
                     if (
-                        selectedPiece.canMountPiece(currentAliveHoveredPiece) &&
-                        selectedPiece.inMovementRange(currentAliveHoveredPiece.position)
+                        selectedPiece.canMountPiece(currentAliveHoveredPiece)
                     ) {
                         return ActionType.Mount;
                     }
                     if (
-                        selectedPiece.canAttackPiece(
-                            currentAliveHoveredPiece
-                        )
+                        selectedPiece.canAttackPiece(currentAliveHoveredPiece)
                     ) {
                         return ActionType.Attack;
                     }
                     if (
-                        selectedPiece.canRangedAttackPiece(
-                            currentAliveHoveredPiece
-                        ) &&
-                        board.hasLineOfSight(
-                            board.selected.position,
-                            board.cursor.position
-                        )
+                        selectedPiece.canRangedAttackPiece(currentAliveHoveredPiece)
                     ) {
                         return ActionType.RangedAttack;
                     }
@@ -395,6 +386,23 @@ export class Rules {
             }
             if (actionType === ActionType.Attack) {
                 if (selectedPiece.canAttackPiece(currentAliveHoveredPiece)) {
+                    // If we're not flying and we're more than 1 tile away, we
+                    // need to move first
+                    if (
+                        !selectedPiece.hasStatus(UnitStatus.Flying) &&
+                        selectedPiece.inMovementRange(
+                            currentAliveHoveredPiece.position
+                        )
+                    ) {
+                        await board.movePiece(
+                            selectedPiece.id,
+                            currentAliveHoveredPiece.position
+                        );
+                        selectedPiece.moved = false;
+                    }
+                    else {
+                        console.log(`No need to move before attacking`);
+                    }
                     await board.attackPiece(
                         selectedPiece.id,
                         currentAliveHoveredPiece.id

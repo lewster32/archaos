@@ -2,8 +2,8 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 7,
-        "height": 7
+        "width": 15,
+        "height": 15
     },
     "players": [
         {
@@ -12,10 +12,13 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
             "pieces": [
-
+                {
+                    "type": "Manticore",
+                    "position": { "x": 7, "y": 7 }
+                }
             ],
             "spells": [
-                "Magic Bolt", "Raise Dead", "Lightning", "Orc"
+                "Dire Wolf", "Horse", "Dire Wolf", "Horse", "Dire Wolf", "Horse"
             ]
         },
         {
@@ -24,21 +27,13 @@
             "position": { "x": 6, "y": 3 },
             "computerControlled": false,
             "pieces": [
-                {
-                    "type": "Orc",
-                    "position": { "x": 2, "y": 1 }
-                },
-                {
-                    "type": "Orc",
-                    "position": { "x": 5, "y": 5 }
-                }
             ],
             "spells": [
-                "Magic Bolt", "Raise Dead", "Lightning", "Orc"
+                "Dire Wolf", "Horse", "Dire Wolf", "Horse", "Dire Wolf", "Horse"
             ]
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": true,
         "forceCast": true,

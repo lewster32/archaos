@@ -791,7 +791,7 @@ export class Board extends Model implements Box {
      * @param point The point to get adjacent points for.
      * @returns An array of adjacent points.
      */
-    getAdjacentPoints(point: Geom.Point): Geom.Point[] {
+    getAdjacentPoints(point: Geom.Point, includeCentre?: boolean): Geom.Point[] {
         const points: Geom.Point[] = [];
 
         for (let x: number = point.x - 1; x <= point.x + 1; x++) {
@@ -805,11 +805,46 @@ export class Board extends Model implements Box {
                     x < this.width &&
                     y < this.height
                 ) {
+                    if (!includeCentre && x === point.x && y === point.y) {
+                        continue;
+                    }
                     points.push(new Geom.Point(x, y));
                 }
             }
         }
 
+        return points;
+    }
+
+    /**
+     * Get all points within a given range of a point. Handles board edges.
+     * 
+     * @param point The point to get points around.
+     * @param range The range to get points within.
+     * @param includeCentre Whether to include the centre point (default: false)
+     * @param moving Whether to use moving distance (default: false)
+     * @returns An array of points within the given range.
+     */
+    getPointsInRange(point: Geom.Point, range: number, includeCentre?: boolean, rangeType?: RangeType): Geom.Point[] {
+        const points: Geom.Point[] = [];
+        for (let x: number = point.x - range; x <= point.x + range; x++) {
+            for (let y: number = point.y - range; y <= point.y + range; y++) {
+                if (
+                    // Not off the board
+                    x >= 0 &&
+                    y >= 0 &&
+                    x < this.width &&
+                    y < this.height &&
+                    // Within range
+                    Board.distance(point, new Geom.Point(x, y), rangeType) <= range + (rangeType === RangeType.Fly ? 0.5 : 0)
+                ) {
+                    if (!includeCentre && x === point.x && y === point.y) {
+                        continue;
+                    }
+                    points.push(new Geom.Point(x, y));
+                }
+            }
+        }
         return points;
     }
 
@@ -823,7 +858,7 @@ export class Board extends Model implements Box {
      */
     getAdjacentPiecesAtPosition(
         point: Geom.Point,
-        filter?: Function,
+        filter?: (piece: Piece) => boolean,
         includeCentre?: boolean
     ): Piece[] {
         // Use a set to avoid duplicates
@@ -860,9 +895,9 @@ export class Board extends Model implements Box {
      * @param filter A filter function to apply to pieces found.
      * @returns An array of pieces found at the position.
      */
-    getPiecesAtPosition(point: Geom.Point, filter?: Function): Piece[] {
+    getPiecesAtPosition(point: Geom.Point, filter?: (piece: Piece) => boolean): Piece[] {
         return Array.from(
-            this.pieces.filter((piece) => {
+            this.pieces.filter((piece: Piece) => {
                 return (
                     Geom.Point.Equals(piece.position, point) &&
                     (filter ? filter(piece) : true)
@@ -895,7 +930,7 @@ export class Board extends Model implements Box {
      * @returns A promise that resolves when the piece has finished moving.
      */
     async movePath(piece: Piece, path: Path) {
-        if (!path?.nodes?.length) {
+        if (!path?.nodes?.length || path.nodes[0].terminal) {
             return;
         }
         this.sound.play("move");
@@ -921,6 +956,7 @@ export class Board extends Model implements Box {
         if (!piece) {
             throw new Error(`Could not find piece with ID ${id}`);
         }
+        this.cursor.enabled = false;
         const path: Path = this.moveGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
         if (isFlying || Board.distance(piece.position, position) <= 1.5) {
@@ -935,6 +971,7 @@ export class Board extends Model implements Box {
         }
         await this.moveGizmo.reset();
         piece.moved = true;
+        this.cursor.enabled = true;
 
         if (!piece.currentMount && !piece.engaged) {
             const firstEngagingPiece: Piece | null =
@@ -1882,21 +1919,33 @@ export class Board extends Model implements Box {
         return true;
     }
 
+
+
     /**
      * Calculate distance between two points on the board.
      * 
      * @param startPosition the starting position
      * @param endPosition the ending position
+     * @param moving whether the distance is for movement (default: false)
      * @returns the distance between the two points
      */
-    static distance(startPosition: Geom.Point, endPosition: Geom.Point): number {
+    static distance(startPosition: Geom.Point, endPosition: Geom.Point, rangeType: RangeType = RangeType.Fly): number {
         if (Geom.Point.Equals(startPosition, endPosition)) {
             return 0;
         }
+        // Calculate the difference in x and y coordinates
         const difference: Geom.Point = new Geom.Point(
             Math.abs(startPosition.x - endPosition.x),
             Math.abs(startPosition.y - endPosition.y)
         );
+
+        // If on foot, just use max distance, as the pathfinding will handle the
+        // actual movement cost
+        if (rangeType === RangeType.Foot) {
+            return Math.max(difference.x, difference.y);
+        }
+
+        // Otherwise (for ranged attacks), use modified distance calculation
         return (
             Math.max(difference.x, difference.y) -
             Math.min(difference.x, difference.y) +
@@ -2018,4 +2067,24 @@ export class Board extends Model implements Box {
     }
 
     /* #endregion */
+}
+
+/**
+ * Types of range calculations.
+ */
+export enum RangeType {
+    /**
+     * Foot range.
+     */
+    Foot,
+
+    /**
+     * Flying range.
+     */
+    Fly,
+
+    /**
+     * Ranged attack range.
+     */
+    RangedAttack
 }

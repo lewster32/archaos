@@ -221,6 +221,9 @@ export class Cursor {
                 this.type = CursorType.Dismount;
                 break;
             case ActionType.Attack:
+                if (selectedPiece.stats.movement > 1) {
+                    this._board.moveGizmo.showPath(this._position);
+                }
                 this.type = CursorType.Attack;
                 break;
             case ActionType.RangedAttack:

@@ -1,4 +1,4 @@
-import { Board } from "./board";
+import { Board, RangeType } from "./board";
 import { Cursor } from "./cursor";
 import { BoardLayer } from "./enums/boardlayer";
 import { CursorType } from "./enums/cursortype";
@@ -12,7 +12,6 @@ export class RangeGizmo {
     private readonly _board: Board;
     private readonly _rangeLayer: Phaser.GameObjects.Layer;
     private readonly _pathLayer: Phaser.GameObjects.Layer;
-    private readonly _rect: Phaser.Geom.Rectangle = new Phaser.Geom.Rectangle();
     private _piece: Piece = null;
     private _validNodes: Node[] = [];
     private _paths: Map<string, Path>;
@@ -23,119 +22,167 @@ export class RangeGizmo {
         this._pathLayer = board.getLayer(BoardLayer.PathCursors);
     }
 
-    public async generate(unit: Piece): Promise<void> {
-        await this.reset();
-        this._validNodes = [];
-        this._paths = new Map();
-        this._piece = unit;
+    /**
+     * First pass - determine if node is traversable or terminal
+     * 
+     * @param node The node to check
+     * @returns The updated node
+     */
+    protected checkNodeTraversal(node: Node): Node {
+        // If the node is empty, it's traversable
+        const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
+            new Phaser.Geom.Point(node.x, node.y),
+            (piece: Piece) => !piece.dead
+        );
+        if (livePiecesAtPosition.length) {
+            // If one of the pieces here is the piece itself, it's traversable
+            if (livePiecesAtPosition.includes(this._piece)) {
+                node.traversable = true;
+                node.terminal = false;
+                return node;
+            }
 
-        let node: Node;
-
-        this._rect.left = Math.max(
-            0,
-            unit.position.x - unit.stats.movement
-        );
-        this._rect.right = Math.min(
-            this._board.width - 1,
-            unit.position.x + unit.stats.movement
-        );
-        this._rect.top = Math.max(
-            0,
-            unit.position.y - unit.stats.movement
-        );
-        this._rect.bottom = Math.min(
-            this._board.height - 1,
-            unit.position.y + unit.stats.movement
-        );
-
-        for (let xx: number = this._rect.left; xx <= this._rect.right; xx++) {
-            for (
-                let yy: number = this._rect.top;
-                yy <= this._rect.bottom;
-                yy++
-            ) {
-                node = new Node(xx, yy);
-                if (this._piece.hasStatus(UnitStatus.Flying)) {
-                    node.flying = true;
-                    // If mounted, can only dismount to adjacent tiles
-                    if (this._piece.currentMount) {
-                        if (
-                            Board.distance(
-                                node.pos, this._piece.position
-                            ) > 1.5
-                        ) {
-                            node.traversable = false;
-                        }
-                    }
-                    else if (
-                        Board.distance(node.pos, this._piece.position) >
-                        this._piece.stats.movement + 0.5
-                    ) {
-                        node.traversable = false;
-                    }
+            // There's at least one piece here, check if we can mount or attack
+            // any of them - if so, mark as terminal, otherwise not traversable
+            for (const livePiece of livePiecesAtPosition) {
+                if (this._piece.canMountPiece(livePiece) || this._piece.canAttackPiece(livePiece)) {
+                    // If any of the live pieces can be mounted or attacked, mark as
+                    // terminal
+                    node.terminal = true;
                 }
-                const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
-                    new Phaser.Geom.Point(xx, yy),
-                    (piece: Piece) => !piece.dead
-                );
-                if (
-                    livePiecesAtPosition.length > 0  
-                ) {
-                    const livePiece:Piece = livePiecesAtPosition[0];
-                    // There's a piece here, if we can mount or attack it, mark
-                    // as terminal - it can be moved to, but no further
-                    if (this._piece.canMountPiece(livePiece) || this._piece.canEngagePiece(livePiece)) {
-                        node.terminal = true;
-                    }
+                else {
+                    // Otherwise, not traversable
                     node.traversable = false;
                 }
-                this._validNodes.push(node);
             }
         }
+        else {
+            // No pieces here, so it's traversable
+            node.traversable = true;
+            node.terminal = false;
+        }
 
-        let enemy: Piece,
-            ePt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0),
-            wPt: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
+        return node;
+    }
 
+    /**
+     * Generate the range gizmo for the given unit - calculates valid nodes
+     * and paths to them
+     * 
+     * @param unit The unit to generate the range gizmo for
+     * @returns A promise that resolves when generation is complete
+     */
+    public async generate(unit: Piece): Promise<void> {
+        await this.reset();
 
-        for (const validNode of this._validNodes) {
+        // Reset state
+        this._validNodes = [];
+        this._paths = new Map<string, Path>();
+        this._piece = unit;
+
+        // Our set of potentially valid nodes - this is all of the nodes that
+        // could be reached within movement range, before considering obstacles
+        const potentiallyValidNodes: Map<string, Node> = new Map();
+
+        // Get all points in range
+        this._board.getPointsInRange(
+            unit.position,
+            unit.stats.movement,
+            true,
+            unit.hasStatus(UnitStatus.Flying) ? RangeType.Fly : RangeType.Foot
+        )
+        // Create nodes from those points
+        .map((pt: Phaser.Geom.Point) => new Node(pt.x, pt.y))
+        // Filter out non-traversable nodes
+        .filter((node: Node) => {
+            node = this.checkNodeTraversal(node);
+            if (!node.traversable) {
+                return false;
+            }
+            return true;
+        })
+        // Add to potentially valid nodes
+        .forEach((node: Node) => {
+            potentiallyValidNodes.set(node.x + "," + node.y, node);
+        });
+
+        // Now for each potentially valid node, check the warning status of the
+        // node - that is, whether there are any engageable enemy pieces
+        // adjacent to it
+        potentiallyValidNodes.forEach((node: Node) => {
             const potentialEnemies: Set<Piece> = new Set(
-                this._board.getAdjacentPiecesAtPosition(
-                    validNode.pos, null, true
+                this._board.getPiecesAtPosition(
+                    node.pos,
+                    (piece: Piece) => {
+                        return piece.canEngagePiece(this._piece);
+                    }
                 )
             );
             if (!potentialEnemies.size) {
-                continue;
+                return;
             }
-            enemy = potentialEnemies.values().next().value;
-            if (this._piece.canEngagePiece(enemy)) {
-                ePt = Phaser.Geom.Point.Clone(enemy.position);
-                for (let ex: number = ePt.x - 1; ex < ePt.x + 2; ex++) {
-                    for (let ey: number = ePt.y - 1; ey < ePt.y + 2; ey++) {
-                        wPt.setTo(ex, ey);
-                        node = this.getNode(wPt);
-                        if (node) {
-                            node.warning = true;
-                        }
-                    }
+            // Mark adjacent nodes as warning
+            this._board.getAdjacentPoints(
+                node.pos,
+                false
+            ).forEach((adjPt: Phaser.Geom.Point) => {
+                const adjNodeKey = adjPt.x + "," + adjPt.y;
+                if (potentiallyValidNodes.has(adjNodeKey)) {
+                    potentiallyValidNodes.get(adjNodeKey).warning = true
+                }
+            });
+        });
+
+        // Set valid nodes to potentially valid nodes for now
+        this._validNodes = Array.from(
+            potentiallyValidNodes.values()
+        );
+
+        // If we're flying we can just take all potentially valid nodes
+        if (this._piece.hasStatus(UnitStatus.Flying)) {
+            await this.generateVisualRange();
+            return;
+        } else {
+            // Otherwise, we need to do pathfinding to determine actual valid nodes
+            for (const node of this._validNodes) {
+                const path: Path = this.getPathTo(node.pos);
+                node.path = path;
+                if (!path || path.cost > this._piece.stats.movement + 1) {
+                    node.traversable = false;
                 }
             }
         }
+        await this.generateVisualPaths();
+    }
 
-        if (this._piece.stats.movement > 1) {
-            this._validNodes.toSorted((n1: Node, n2: Node) =>
-                Board.distance(this._piece.position, n1.pos) <
-                Board.distance(this._piece.position, n2.pos)
-                    ? -1
-                    : 1
-            );
+    /**
+     * Render a debug grid to the console showing traversable, terminal, and
+     * warning nodes
+     * 
+     * @param board the board
+     * @param nodes the nodes to show
+     */
+    private static showDebugGrid(board: Board, nodes: Node[]): void {
+        let debugGrid: string = "";
+        for (let yy: number = 0; yy < board.height; yy++) {
+            let row: string = "";
+            for (let xx: number = 0; xx < board.width; xx++) {
+                const node = nodes.find((n: Node) => n.x === xx && n.y === yy);
+                if (node) {
+                    if (node.terminal) {
+                        row += "X ";
+                    } else if (node.warning) {
+                        row += "! ";
+                    } else {
+                        row += ". ";
+                    }
+                } else {
+                    row += "# ";
+                }
+            }
+            debugGrid += row + "\n";
         }
-
-        if (this._piece.hasStatus(UnitStatus.Flying)) {
-            await this.generateRange();
-        } else {
-            await this.generatePaths();
-        }
+        console.log(`Debug grid:\n${debugGrid}`);
     }
 
     public async reset(force?: boolean): Promise<RangeGizmo> {
@@ -173,7 +220,7 @@ export class RangeGizmo {
         });
     }
 
-    private async generatePaths(): Promise<void> {
+    private async generateVisualPaths(): Promise<void> {
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
@@ -377,7 +424,7 @@ export class RangeGizmo {
         });
     }
 
-    private async generateRange(): Promise<void> {
+    private async generateVisualRange(): Promise<void> {
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
@@ -529,30 +576,6 @@ export class RangeGizmo {
             return null;
         }
 
-        // If destination is a terminal node, find path to adjacent safe node
-        // instead
-        if (destinationNode.terminal) {
-            const adjacentNodes = this.findConnectedNodes(destinationNode);
-            let closestAdjacentNode: Node = null;
-            let closestDistance: number = Infinity;
-            
-            for (const adjNode of adjacentNodes) {
-                if (adjNode.traversable && !adjNode.warning) {
-                    const dist = Board.distance(firstNode.pos, adjNode.pos);
-                    if (dist < closestDistance) {
-                        closestDistance = dist;
-                        closestAdjacentNode = adjNode;
-                    }
-                }
-            }
-            
-            if (closestAdjacentNode) {
-                destinationNode = closestAdjacentNode;
-            } else {
-                return null;
-            }
-        }
-
         const openNodes: Node[] = [];
         const closedNodes: Node[] = [];
 
@@ -569,6 +592,10 @@ export class RangeGizmo {
         let h: number;
         let f: number;
 
+        if (!currentNode) {
+            return null;
+        }
+
         currentNode.g = 0;
         currentNode.h = RangeGizmo.diagonalHeuristic(
             currentNode,
@@ -583,11 +610,10 @@ export class RangeGizmo {
             l = connectedNodes.length;
 
             for (i = 0; i < l; ++i) {
-                testNode = connectedNodes[i];
-                
-                // Can't traverse to self or non-traversable nodes (terminal
-                // nodes are non-traversable)
-                if (testNode === currentNode || !testNode.traversable) {
+                testNode = connectedNodes[i];    
+                // Can't traverse to self or non-traversable nodes except
+                // terminal
+                if (testNode === currentNode || (!testNode.traversable && !testNode.terminal)) {
                     continue;
                 }
                 g =
@@ -619,10 +645,7 @@ export class RangeGizmo {
                     testNode.g = g;
                     testNode.h = h;
                     testNode.parentNode = currentNode;
-                    if (!currentNode.warning) {
-                        openNodes.push(testNode);
-                    }
-                    
+                    openNodes.push(testNode);
                 }
             }
             closedNodes.push(currentNode);
@@ -669,7 +692,7 @@ export class RangeGizmo {
         destinationNode: Node,
         cost: number = 1,
         diagonalCost: number = 1.5,
-        warningCost: number = 999,
+        terminalCost: number = 100,
     ): number {
         const dx: number = Math.abs(node.x - destinationNode.x);
         const dy: number = Math.abs(node.y - destinationNode.y);
@@ -677,11 +700,11 @@ export class RangeGizmo {
         const diag: number = Math.min(dx, dy);
         const straight: number = dx + dy;
 
-        // If this node is a warning node, add a high cost to discourage pathing
-        // through it unless necessary
-        if (node.warning) {
+        // If this node is a terminal or warning node, landing on it will end
+        // movement, so try to avoid it if possible
+        if (node.warning || node.terminal) {
             return (
-                diagonalCost * diag + cost * (straight - 2 * diag) + warningCost
+                diagonalCost * diag + cost * (straight - 2 * diag) + terminalCost
             );
         }
 
@@ -689,8 +712,8 @@ export class RangeGizmo {
     }
 
     public static buildPath(destinationNode: Node, startNode: Node): Path {
-        let angles: number[] = [];
-        let path: Node[] = [];
+        const angles: number[] = [];
+        const path: Node[] = [];
         let node: Node = destinationNode;
         let cost: number = 0;
         path.push(node);
@@ -701,7 +724,18 @@ export class RangeGizmo {
             path.unshift(node);
         }
         angles.unshift(this.getAngle(startNode.pos, destinationNode.pos));
-        
+
+        // If we find a non-traversable or terminal node in the path, we need
+        // to mark nodes in the path after that as non-traversable
+        let foundBlockingNode: boolean = false;
+        for (const pathNode of path) {
+            if (foundBlockingNode) {
+                pathNode.traversable = false;
+            } else if (!pathNode.traversable || pathNode.terminal) {
+                foundBlockingNode = true;
+            }
+        }
+
         return new Path(path, angles, cost);
     }
 
@@ -732,7 +766,7 @@ export class Node {
     public parentNode: Node;
 
     /**
-     * Whether this node can be traversed
+     * Whether this node can be traversed (i.e. passed through)
      */
     public traversable: boolean = true;
 

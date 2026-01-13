@@ -2,6 +2,7 @@ import {
     wizcodes,
     effectOffsets,
 } from "../../assets/spritesheets/wizards.json";
+import units from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { EffectType } from "./effectemitter";
@@ -13,6 +14,8 @@ import { WizCode } from "./interfaces/wizcode";
 import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
 import { Math as PMath, Geom, GameObjects, BlendModes } from "phaser";
+
+const wizardUnitData = units['1'];
 
 /**
  * A wizard piece on the game board, controlled by a player. Wizards can cast
@@ -29,15 +32,15 @@ export class Wizard extends Piece {
         y: 0,
         type: UnitType.Wizard,
         properties: {
-            movement: 1,
-            combat: 3,
-            rangedCombat: 0,
-            range: 0,
-            defense: 3,
-            maneuverability: 3,
-            magicResistance: 6,
-            attackType: "hit",
-            rangedType: "shot",
+            movement: wizardUnitData.properties.mov,
+            combat: wizardUnitData.properties.com,
+            rangedCombat: wizardUnitData.properties.rcm,
+            range: wizardUnitData.properties.rng,
+            defense: wizardUnitData.properties.def,
+            maneuverability: wizardUnitData.properties.mnv,
+            magicResistance: wizardUnitData.properties.res,
+            attackType: wizardUnitData.attackType,
+            rangedType: wizardUnitData.rangedType,
             status: [UnitStatus.Wizard],
         },
     };

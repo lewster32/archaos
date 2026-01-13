@@ -14,7 +14,9 @@
             "wizard",
             "noCorpse"
         ],
-        "name": "Wizard"
+        "name": "Wizard",
+        "rangedType": "shot",
+        "projectileType": "arrow"
     },
     "2": {
         "attackType": "struck",
@@ -39,7 +41,7 @@
         "shadowScale": 2
     },
     "3": {
-        "attackType": "savaged",
+        "attackType": "bit",
         "properties": {
             "mov": 3,
             "com": 3,

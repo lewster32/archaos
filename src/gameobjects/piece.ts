@@ -1,5 +1,5 @@
 import units from "../../assets/data/classicunits.json";
-import { Board } from "./board";
+import { Board, RangeType } from "./board";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";
@@ -765,11 +765,13 @@ export class Piece extends Entity {
     }
 
     inAttackRange(point: Geom.Point): boolean {
+        // If we haven't moved yet, we can attack anywhere within movement
         if (
             !this.moved && this.inMovementRange(point)
         ) {
             return true;
         }
+        // Otherwise, we can only attack adjacent squares
         if (Board.distance(this.position, point) > 1.5) {
             return false;
         }
@@ -777,7 +779,7 @@ export class Piece extends Entity {
     }
 
     inRangedAttackRange(point: Geom.Point): boolean {
-        if (Board.distance(this.position, point) > this.stats.range) {
+        if (Board.distance(this.position, point, RangeType.RangedAttack) > this.stats.range) {
             return false;
         }
         return true;
@@ -889,8 +891,7 @@ export class Piece extends Entity {
             piece.dead || // Cannot attack dead pieces
             piece.engulfed || // Cannot attack engulfed pieces
             piece.currentMount || // Cannot attack mounted pieces
-            piece.hasStatus(UnitStatus.Invulnerable) || // Cannot attack invulnerable pieces
-            !this.inAttackRange(piece.position) // Must be in attack range
+            piece.hasStatus(UnitStatus.Invulnerable) // Cannot attack invulnerable pieces
         ) {
             return false;
         }
@@ -943,7 +944,7 @@ export class Piece extends Entity {
             this.hasStatus(UnitStatus.Wizard) && // Must be a wizard
             !piece.currentRider && // Cannot mount already mounted pieces
             ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) || // Must be mountable by owner
-            piece.hasStatus(UnitStatus.MountAny)) // or mountable by anyone (e.g., Magic Wood)
+            piece.hasStatus(UnitStatus.MountAny))// or mountable by anyone (e.g., Magic Wood)
         ) {
             return true;
         }
