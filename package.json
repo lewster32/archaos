@@ -4,7 +4,8 @@
     "scripts": {
         "start": "vite",
         "build": "vue-tsc --noEmit && vite build",
-        "serve": "vite preview"
+        "serve": "vite preview",
+        "deploy": "node ./.deploy/deploy.js"
     },
     "keywords": [],
     "author": "Lewis Lane",

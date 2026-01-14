@@ -104,3 +104,6 @@ dist
 .tern-port
 .vscode/launch.json
 .vscode/settings.json
+
+# Deploy
+.deploy/
