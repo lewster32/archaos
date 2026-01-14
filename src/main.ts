@@ -7,6 +7,9 @@ import App from "./App.vue";
 const uiImages = import.meta.glob("../assets/images/ui/**", { eager: true, import: "default" });
 Object.keys(uiImages).forEach((key) => {
     const img = uiImages[key] as { default: string };
+    if (!key || !img?.default) {
+        return;
+    }
     const link = document.createElement("link");
     link.rel = "preload";
     link.as = "image";
