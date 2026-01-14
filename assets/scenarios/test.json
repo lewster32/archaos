@@ -13,30 +13,49 @@
             "computerControlled": true,
             "pieces": [
                 {
-                    "type": "Ogre",
-                    "position": { "x": 7, "y": 7 }
+                    "type": "Bat",
+                    "position": { "x": 1, "y": 0 }
+                },
+                {
+                    "type": "Bat",
+                    "position": { "x": 0, "y": 1 }
                 }
             ],
             "spells": [
-                "Dire Wolf", "Horse", "Dire Wolf", "Horse", "Dire Wolf", "Horse"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 6, "y": 3 },
+            "position": { "x": 8, "y": 8 },
             "computerControlled": true,
             "pieces": [
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 4, "y": 2 }
+                },
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 3, "y": 4 }
+                },
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 4, "y": 3 }
+                },
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 4, "y": 4 }
+                }
             ],
             "spells": [
-                "Dire Wolf", "Horse", "Dire Wolf", "Horse", "Dire Wolf", "Horse"
+
             ]
         }
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": true,
-        "forceCast": true,
-        "shortDelay": false
+        "forceHit": null,
+        "forceCast": null,
+        "shortDelay": true
     }
 }

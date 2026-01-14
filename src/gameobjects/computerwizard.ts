@@ -510,9 +510,42 @@ export class ComputerWizard {
                 }
             }
 
+            // Special case: if there are any terminal paths and this is a
+            // flying unit, attack one of them with a greater chance the higher
+            // the difficulty level
+            if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(0.3 + (0.5 * this._difficulty))) {
+                const terminalPaths: Set<Path> = this._board.moveGizmo.getAllTerminalPaths();
+                if (terminalPaths.size > 0) {
+                    const terminalPathArray: Path[] = Array.from(terminalPaths);
+                    const pos: Geom.Point = PMath.RND.pick(terminalPathArray)
+                        ?.nodes
+                        ?.findLast(node => node.terminal)
+                        ?.pos;
+                    const targetPiece: Piece | null = this._board.getPiecesAtPosition(
+                        pos,
+                        (p: Piece) => p.owner !== this._player && piece.canAttackPiece(p)
+                    )[0] || null;
+                    if (targetPiece) {
+                        console.debug(`${piece.owner.name}'s ${piece.name} flies to terminal position and attacks ${targetPiece.name}`);
+                        piece.moved = true;
+                        await this._board.attackPiece(piece.id, targetPiece.id);
+                        return true;
+                    }
+                    else {
+                        console.debug(`No attackable terminal targets found for ${piece.owner.name}'s ${piece.name}`);
+                    }
+                }
+                else {
+                    console.debug(`No terminal paths found for ${piece.owner.name}'s ${piece.name}`);
+                }
+            }
+            else {
+                console.debug(`${piece.owner.name}'s ${piece.name} is not flying or did not roll to attack terminal paths`);
+            }
+
             // Move to a random reachable position
             const reachableTiles: Geom.Point[] = Array.from(
-                this._board.moveGizmo.getAllValidPaths().values()
+                this._board.moveGizmo.getAllValidPaths()
             ).map((path: Path) => {
                 // Get the last node in the path
                 return path.nodes?.filter(node => node.traversable).at(-1)?.pos;
@@ -521,7 +554,6 @@ export class ComputerWizard {
                     return false;
                 }
                 // Ignore tile the piece is currently on
-                // return !(pt.x === piece.position.x && pt.y === piece.position.y);
                 return !Geom.Point.Equals(pt, piece.position);
             });
             if (reachableTiles.length === 0) {
@@ -529,8 +561,8 @@ export class ComputerWizard {
                 this._board.sound.play("cancel");
                 return false;
             }
-            const movePt: Geom.Point =
-                PMath.RND.pick(reachableTiles);
+            const movePt: Geom.Point = PMath.RND.pick(reachableTiles);
+            
             console.debug(`${piece.owner.name}'s ${piece.name} moves to (${movePt.x}, ${movePt.y})`);
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {

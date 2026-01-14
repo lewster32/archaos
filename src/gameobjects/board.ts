@@ -959,6 +959,7 @@ export class Board extends Model implements Box {
         this.cursor.enabled = false;
         const path: Path = this.moveGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
+
         if (isFlying || Board.distance(piece.position, position) <= 1.5) {
             this.sound.play(isFlying ? "fly" : "move");
             await piece.moveTo(position);
@@ -1208,6 +1209,11 @@ export class Board extends Model implements Box {
      */
     get currentPlayer(): Player | null {
         return this._currentPlayer;
+    }
+
+    set currentPlayer(player: Player | null) {
+        this._currentPlayer = player;
+        this.cursor.enabled = Boolean(!this._currentPlayer?.ai);
     }
 
     /**

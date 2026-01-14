@@ -511,13 +511,39 @@ export class RangeGizmo {
         return path || null;
     }
 
-    public getAllValidPaths(): Map<string, Path> {
-        const output: Map<string, Path> = new Map();
+    /**
+     * Get all valid paths from the piece's current position to valid nodes.
+     * Used for AI movement calculations.
+     * 
+     * @param ignoreTerminal Whether to ignore terminal nodes when finding paths
+     * @returns A map of node positions to paths
+     */
+    public getAllValidPaths(ignoreTerminal: boolean = true): Set<Path> {
+        const output: Set<Path> = new Set();
         for (const node of this._validNodes) {
-            if (node.isValid()) {
+            if (node.isValid() && (!ignoreTerminal || !node.terminal)) {
                 const path: Path = this.getPathTo(node.pos);
                 if (path) {
-                    output.set(node.x + "," + node.y, path);
+                    output.add(path);
+                }
+            }
+        }
+        return output;
+    }
+
+    /**
+     * Get all valid paths from the piece's current position to terminal nodes.
+     * Used for AI movement calculations.
+     * 
+     * @returns A map of node positions to paths
+     */
+    public getAllTerminalPaths(): Set<Path> {
+        const output: Set<Path> = new Set();
+        for (const node of this._validNodes) {
+            if (node.isValid() && node.terminal) {
+                const path: Path = this.getPathTo(node.pos);
+                if (path) {
+                    output.add(path);
                 }
             }
         }
