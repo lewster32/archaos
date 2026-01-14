@@ -9,6 +9,7 @@ import { UnitConfig } from "../interfaces/ui";
 import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";
+import { Geom } from "phaser";
 
 /**
  * A spell that summons a unit onto the board.
@@ -73,7 +74,7 @@ export class SummonSpell extends Spell {
         return this.illusion || this._board.rollChance(this.chance)
     }
 
-    isValidTarget(target: Phaser.Geom.Point, showReason?: boolean): Phaser.Geom.Point | null {
+    isValidTarget(target: Geom.Point, showReason?: boolean): Geom.Point | null {
         if (!this.inCastingRange(target)) {
             if (showReason) {
                 this._board.logger.log(
@@ -111,7 +112,7 @@ export class SummonSpell extends Spell {
     async doCast(
         owner: Player,
         castingPiece: Piece,
-        point: Phaser.Geom.Point
+        point: Geom.Point
     ): Promise<Piece> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 

@@ -8,11 +8,16 @@ export default defineConfig({
     base: "./",
     build: {
         assetsInlineLimit: 0,
+        chunkSizeWarningLimit: 1500,
         rollupOptions: {
             output: {
                 entryFileNames: `assets/[name].js`,
                 chunkFileNames: `assets/[name].js`,
-                assetFileNames: `assets/[name].[ext]`
+                assetFileNames: `assets/[name].[ext]`,
+                manualChunks: {
+                    phaser: ["phaser"],
+                    vue: ["vue"]
+                }
             }
         }
     },

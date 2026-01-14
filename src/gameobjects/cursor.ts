@@ -7,17 +7,18 @@ import { CursorType } from "./enums/cursortype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
+import { Geom, GameObjects, Input, Math as PMath } from "phaser";
 
 export class Cursor {
     /**
      * Current cursor position on the board.
      */
-    private readonly _position: Phaser.Geom.Point;
+    private readonly _position: Geom.Point;
 
     /**
      * Image representing the cursor.
      */
-    private readonly _image: Phaser.GameObjects.Image;
+    private readonly _image: GameObjects.Image;
 
     /**
      * Reference to the board the cursor is on.
@@ -42,7 +43,7 @@ export class Cursor {
     /**
      * Offset to apply to cursor image position.
      */
-    static readonly OFFSET: Phaser.Geom.Point = new Phaser.Geom.Point(0, 0);
+    static readonly OFFSET: Geom.Point = new Geom.Point(0, 0);
 
     /**
      * Map of direction vectors to cursor types.
@@ -71,7 +72,7 @@ export class Cursor {
         this._board.getLayer(BoardLayer.Pieces).add(this._image);
         this._type = CursorType.Idle;
 
-        this._position = new Phaser.Geom.Point(0, 0);
+        this._position = new Geom.Point(0, 0);
 
         this._board.scene.input.on("pointermove", async () => {
             await this.update();
@@ -113,7 +114,7 @@ export class Cursor {
     /**
      * Get the current cursor position on the board.
      */
-    get position(): Phaser.Geom.Point {
+    get position(): Geom.Point {
         return this._position;
     }
 
@@ -128,16 +129,16 @@ export class Cursor {
             return ActionType.None;
         }
 
-        const pointer: Phaser.Input.Pointer =
+        const pointer: Input.Pointer =
             this._board.scene.input.activePointer;
 
-        const translatedIsoPosition: Phaser.Geom.Point =
+        const translatedIsoPosition: Geom.Point =
             this.translateCursorPosition(pointer.position);
 
         // Only perform one intent check per tile (unless forced)
         if (
             !force &&
-            Phaser.Geom.Point.Equals(translatedIsoPosition, this._position)
+            Geom.Point.Equals(translatedIsoPosition, this._position)
         ) {
             return ActionType.None;
         }
@@ -231,8 +232,8 @@ export class Cursor {
                 break;
         }
 
-        const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
-            new Phaser.Geom.Point(
+        const isoPosition: Geom.Point = this._board.getIsoPosition(
+            new Geom.Point(
                 translatedIsoPosition.x,
                 translatedIsoPosition.y
             )
@@ -346,9 +347,9 @@ export class Cursor {
      * @returns
      */
     private translateCursorPosition(
-        vector: Phaser.Math.Vector2
-    ): Phaser.Geom.Point {
-        const point: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
+        vector: PMath.Vector2
+    ): Geom.Point {
+        const point: PMath.Vector2 = new PMath.Vector2(
             vector.x,
             vector.y
         );
@@ -369,7 +370,7 @@ export class Cursor {
         point.x = Math.round(ax);
         point.y = Math.round(ay);
 
-        return new Phaser.Geom.Point(point.x, point.y);
+        return new Geom.Point(point.x, point.y);
     }
 
     /**
@@ -409,11 +410,11 @@ export class Cursor {
      * @returns the cursor type representing the direction
      */
     static getMovementDirectionType(
-        fromPoint: Phaser.Geom.Point,
-        toPoint: Phaser.Geom.Point
+        fromPoint: Geom.Point,
+        toPoint: Geom.Point
     ): CursorType {
-        const dx: number = Phaser.Math.Clamp(toPoint.x - fromPoint.x, -1, 1);
-        const dy: number = Phaser.Math.Clamp(toPoint.y - fromPoint.y, -1, 1);
+        const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
+        const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);
 
         return Cursor.DIRECTION_MAP[`${dx},${dy}`] ?? CursorType.Invalid;
     }

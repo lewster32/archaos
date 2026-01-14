@@ -1,4 +1,3 @@
-import "phaser";
 import units from "../assets/data/classicunits.json";
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
@@ -28,7 +27,9 @@ import { BoardPhase } from "./gameobjects/enums/boardphase";
 import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
-export class GameScene extends Phaser.Scene {
+import { Scene } from "phaser";
+
+export class GameScene extends Scene {
     board: Board;
 
     constructor() {

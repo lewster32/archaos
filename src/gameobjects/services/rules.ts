@@ -10,6 +10,8 @@ import { UnitStatus } from "../enums/unitstatus";
 import type { Piece } from "../piece";
 import type { Spell } from "../spells/spell";
 
+import { Geom } from "phaser";
+
 /**
  * The 'brains' of the game live here. This is the beating heart of the game
  * logic. We handle two main types of processing:
@@ -77,7 +79,7 @@ export class Rules {
                 board.currentPlayer?.selectedSpell;
 
             if (selectedSpell && selectedSpell.castTimes > 0) {
-                const spellTarget: Phaser.Geom.Point | Piece | null =
+                const spellTarget: Geom.Point | Piece | null =
                     selectedSpell.isValidTarget(board.cursor.position);
 
                 return spellTarget ? ActionType.Cast : ActionType.Invalid;
@@ -201,7 +203,7 @@ export class Rules {
     public async doCastSpell(
         board: Board,
         spell: Spell,
-        currentTarget: Piece | Phaser.Geom.Point | null
+        currentTarget: Piece | Geom.Point | null
     ): Promise<boolean> {
         const casted: Spell | null = await board.currentPlayer.useSpell();
         if (casted) {
@@ -272,7 +274,7 @@ export class Rules {
                 board.selected &&
                 board.currentPlayer.selectedSpell
             ) {
-                const currentTarget: Piece | Phaser.Geom.Point | null =
+                const currentTarget: Piece | Geom.Point | null =
                     board.currentPlayer.selectedSpell.isValidTarget(
                         board.cursor.position,
                         true

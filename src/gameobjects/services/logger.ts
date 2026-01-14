@@ -1,18 +1,20 @@
 import type { Colour } from "../enums/colour";
 
+import { Events } from "phaser";
+
 /**
  * Singleton Logger service to log messages throughout the game.
  */
 export class Logger {
-    private readonly _eventEmitter: Phaser.Events.EventEmitter;
+    private readonly _eventEmitter: Events.EventEmitter;
     private _currentLogId: number = 0;
     private static instance: Logger;
 
-    protected constructor(eventEmitter: Phaser.Events.EventEmitter) {
+    protected constructor(eventEmitter: Events.EventEmitter) {
         this._eventEmitter = eventEmitter;
     }
 
-    public static getInstance(eventEmitter: Phaser.Events.EventEmitter): Logger {
+    public static getInstance(eventEmitter: Events.EventEmitter): Logger {
         if (!Logger.instance) {
             Logger.instance = new Logger(eventEmitter);
         }

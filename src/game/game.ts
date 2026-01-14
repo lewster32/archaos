@@ -1,13 +1,13 @@
-import Phaser from 'phaser';
 import { GameScene } from '../game-scene';
+import { Game, Scale, AUTO } from 'phaser';
 
 export const launch = (containerId: string) => {
-    return new Phaser.Game({
+    return new Game({
         title: "Archaos",
         version: "0.1.0",
         width: 400,
         height: 220,
-        type: Phaser.AUTO,
+        type: AUTO,
         parent: containerId,
         scene: [GameScene],
         input: {
@@ -26,7 +26,7 @@ export const launch = (containerId: string) => {
             transparent: true,
         },
         scale: {
-            mode: Phaser.Scale.NONE,
+            mode: Scale.NONE,
             fullscreenTarget: containerId,
             zoom: 2,
         },

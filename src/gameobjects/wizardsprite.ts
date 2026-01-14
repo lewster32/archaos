@@ -4,9 +4,11 @@ import {
 } from "../../assets/spritesheets/wizards.json";
 import { WizCode } from "./interfaces/wizcode";
 
-export class WizardSprite extends Phaser.GameObjects.Sprite {
+import { GameObjects, Textures, Scene } from "phaser";
+
+export class WizardSprite extends GameObjects.Sprite {
     private _wizCode: WizCode;
-    constructor(scene: Phaser.Scene, x: number, y: number, wizCode: WizCode) {
+    constructor(scene: Scene, x: number, y: number, wizCode: WizCode) {
         super(scene, x, y, "wizards");
         this._wizCode = wizCode;
 
@@ -18,7 +20,7 @@ export class WizardSprite extends Phaser.GameObjects.Sprite {
     }
 
     protected generateFrames() {
-        const canvas: Phaser.Textures.CanvasTexture =
+        const canvas: Textures.CanvasTexture =
             this.scene.textures.createCanvas(this._wizCode.code, 36, 24);
 
         canvas.drawFrame(
@@ -120,10 +122,10 @@ export class WizardSprite extends Phaser.GameObjects.Sprite {
     }
 
     static replaceColor(
-        canvas: Phaser.Textures.CanvasTexture,
+        canvas: Textures.CanvasTexture,
         searchColor: number[],
         replaceColor: number[]
-    ): Phaser.Textures.CanvasTexture {
+    ): Textures.CanvasTexture {
         const imgData: ImageData = canvas.context.getImageData(
             0,
             0,

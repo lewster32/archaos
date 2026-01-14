@@ -7,6 +7,7 @@ import { Spell } from "./spell";
 import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
+import { Geom } from "phaser";
 
 /**
  * A spell that attacks one or more target pieces.
@@ -21,7 +22,7 @@ export class AttackSpell extends Spell {
         return this._properties.damage || 0;
     }
 
-    async doCast(owner: Player, castingPiece: Piece, point?: Phaser.Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
         }

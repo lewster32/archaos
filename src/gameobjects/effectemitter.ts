@@ -1,26 +1,28 @@
 import { Board } from "./board";
 import { Piece } from "./piece";
 
+import { GameObjects, Animations, Math as PMath, Geom, Curves, BlendModes, Display } from "phaser";
+
 /**
  * Essentially a big hardcoded class full of fireworks and sparkles driven by
  * tweens and particle emitters. A lot of this should be modularised and maybe
  * able to be driven by JSON configuration instead to allow for modding.
  */
-export class EffectEmitter extends Phaser.GameObjects.Particles
+export class EffectEmitter extends GameObjects.Particles
     .ParticleEmitter {
-    private readonly _anim: Phaser.Animations.Animation;
-    private readonly _startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
-    private readonly _endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point;
+    private readonly _anim: Animations.Animation;
+    private readonly _startPosition: PMath.Vector2 | Geom.Point;
+    private readonly _endPosition: PMath.Vector2 | Geom.Point;
     private readonly _target: Piece | null;
     private readonly _type: EffectType;
     get anim() {
         return this._anim;
     }
     constructor(
-        manager: Phaser.GameObjects.Particles.ParticleEmitterManager,
+        manager: GameObjects.Particles.ParticleEmitterManager,
         type: EffectType,
-        startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        endPosition: Phaser.Math.Vector2 | Phaser.Geom.Point | null,
+        startPosition: PMath.Vector2 | Geom.Point,
+        endPosition: PMath.Vector2 | Geom.Point | null,
         target: Piece | null,
         resolve: Function
     ) {
@@ -39,15 +41,15 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
 
     private static getConfig(
         type: EffectType,
-        startPosition: Phaser.Math.Vector2 | Phaser.Geom.Point,
-        endPosition?: Phaser.Math.Vector2 | Phaser.Geom.Point,
+        startPosition: PMath.Vector2 | Geom.Point,
+        endPosition?: PMath.Vector2 | Geom.Point,
         target?: Piece
     ): any {
-        let path: Phaser.Curves.Path;
+        let path: Curves.Path;
         let circleSize: number = 10;
         switch (type) {
             case EffectType.WizardCasting:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x + circleSize,
                     startPosition.y
                 ).circleTo(circleSize);
@@ -59,7 +61,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedX: { min: -20, max: 20 },
                     lifespan: 500,
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 30 },
                     particleClass: EffectParticle,
                 };
@@ -72,12 +74,12 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedY: { min: -10, max: -50 },
                     lifespan: 300,
                     tint: [0x7744ff, 0x333388, 0x6666cc],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     alpha: { start: 1, end: 0 },
                     particleClass: EffectParticle,
                 };
             case EffectType.WizardCastBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -90,12 +92,12 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     lifespan: 400,
                     scale: { start: 1, end: 0 },
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
                     particleClass: EffectParticle,
                 };
             case EffectType.DragonFireBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -107,7 +109,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedX: { min: -10, max: 10 },
                     scale: { start: 0.5, end: 1 },
                     lifespan: 400,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     tint: [0xffffff, 0xff00ff, 0xff0088],
                     emitZone: { type: "edge", source: path, quantity: 20 },
                     particleClass: EffectParticle,
@@ -122,11 +124,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     gravityY: -60,
                     lifespan: 300,
                     tint: [0xffffff, 0xff00ff, 0xff0088],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.MagicBoltBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -156,7 +158,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     particleClass: EffectParticle,
                 };
             case EffectType.LightningBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -171,7 +173,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedX: { min: -50, max: 50 },
                     lifespan: 300,
                     tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
                     particleClass: EffectParticle,
                 };
@@ -186,11 +188,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     scale: { start: 1, end: 0 },
                     lifespan: 400,
                     tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.ArrowBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -198,7 +200,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     frame: "sparkle1",
                     quantity: 5,
                     lifespan: 50,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 80 },
                 };
             case EffectType.ArrowHit:
@@ -211,7 +213,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedY: { min: -180, max: -80 },
                     gravityY: 1000,
                     lifespan: 250,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     scale: { start: 1.5, end: 0 },
                 };
             case EffectType.AttackHit:
@@ -224,7 +226,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedY: { min: -80, max: -180 },
                     gravityY: 500,
                     lifespan: 250,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     scale: { start: 2, end: 0 },
                 };
             case EffectType.SummonPiece:
@@ -238,11 +240,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     lifespan: 400,
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
                     scale: { start: 1, end: 0 },
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.DisbelieveBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -255,7 +257,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     speedX: { min: -10, max: 10 },
                     lifespan: 400,
                     scale: { start: 2, end: 0.5 },
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 20 },
                     particleClass: EffectParticle,
                 };
@@ -270,7 +272,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     scale: { start: 2, end: 0 },
                     gravityY: 260,
                     lifespan: 500,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.DarkPowerHit:
@@ -285,7 +287,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     tint: [0xff0000, 0x0000ff, 0xff00ff],
                     gravityY: 160,
                     lifespan: 500,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.JusticeHit:
@@ -300,7 +302,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     tint: [0x0000ff, 0x00ffff, 0x0077ff],
                     gravityY: 160,
                     lifespan: 500,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.WizardDefeated:
@@ -314,11 +316,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     scale: { start: 3, end: 0 },
                     tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff],
                     lifespan: 400,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.RaiseDeadBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -332,7 +334,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     lifespan: 400,
                     scale: { start: 0, end: 1 },
                     tint: [0x66ffff, 0x6666ff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
                     particleClass: EffectParticle,
                 };
@@ -347,11 +349,11 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     tint: [0x66ffff, 0x6666ff],
                     gravityY: -560,
                     lifespan: 200,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.SubversionBeam:
-                path = new Phaser.Curves.Path(
+                path = new Curves.Path(
                     startPosition.x,
                     startPosition.y
                 ).lineTo(endPosition.x, endPosition.y);
@@ -365,7 +367,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     lifespan: 600,
                     scale: { start: 2, end: 0 },
                     tint: [0xff00ff, 0x00ffff],
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 90 },
                     particleClass: EffectParticle,
                 };
@@ -380,7 +382,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     tint: [0xff00ff, 0x00ffff],
                     gravityY: -100,
                     lifespan: 400,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
             case EffectType.GiveSpell:
@@ -394,14 +396,14 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                     scale: { start: 1.5, end: .5 },
                     gravityY: 260,
                     lifespan: 250,
-                    blendMode: Phaser.BlendModes.ADD,
+                    blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                     tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff]
                 };
         }
     }
 
-    private getAnim(): Phaser.Animations.Animation {
+    private getAnim(): Animations.Animation {
         switch (this._type) {
             case EffectType.DragonFireBeam:
             case EffectType.DragonFireHit:
@@ -521,7 +523,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
                         const value: number = Math.floor(tween.getValue());
 
                         target.sprite.setTintFill(
-                            Phaser.Display.Color.GetColor(value, value, value)
+                            Display.Color.GetColor(value, value, value)
                         );
                     },
                 });
@@ -542,7 +544,7 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
 
                         if (value === 0) {
                             target.sprite.setTintFill(
-                                Phaser.Math.RND.pick([0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff])
+                                PMath.RND.pick([0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff])
                             );
                         }
                     },
@@ -625,17 +627,17 @@ export class EffectEmitter extends Phaser.GameObjects.Particles
     }
 }
 
-class EffectParticle extends Phaser.GameObjects.Particles.Particle {
+class EffectParticle extends GameObjects.Particles.Particle {
     private _frameTime: number;
     private _frameIndex: number;
 
-    private readonly _anim: Phaser.Animations.Animation;
+    private readonly _anim: Animations.Animation;
 
     constructor(emitter: EffectEmitter) {
         super(emitter);
         this._anim = emitter.anim;
         this._frameTime = 0;
-        this._frameIndex = Phaser.Math.RND.integerInRange(
+        this._frameIndex = PMath.RND.integerInRange(
             0,
             this._anim.frames.length - 1
         );

@@ -5,7 +5,8 @@
         "start": "vite",
         "build": "vue-tsc --noEmit && vite build",
         "serve": "vite preview",
-        "deploy": "node ./.deploy/deploy.js"
+        "deploy": "node ./.deploy/deploy.js",
+        "release": "npm run build && npm run deploy"
     },
     "keywords": [],
     "author": "Lewis Lane",

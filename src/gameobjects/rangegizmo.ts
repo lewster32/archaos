@@ -5,13 +5,15 @@ import { CursorType } from "./enums/cursortype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 
+import { Geom, GameObjects } from "phaser";
+
 export class RangeGizmo {
     private static readonly GIZMO_REVEAL_DURATION: number = 50;
     private static readonly GIZMO_REVEAL_STAGGER_DELAY: number = 5;
 
     private readonly _board: Board;
-    private readonly _rangeLayer: Phaser.GameObjects.Layer;
-    private readonly _pathLayer: Phaser.GameObjects.Layer;
+    private readonly _rangeLayer: GameObjects.Layer;
+    private readonly _pathLayer: GameObjects.Layer;
     private _piece: Piece = null;
     private _validNodes: Node[] = [];
     private _paths: Map<string, Path>;
@@ -31,7 +33,7 @@ export class RangeGizmo {
     protected checkNodeTraversal(node: Node): Node {
         // If the node is empty, it's traversable
         const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
-            new Phaser.Geom.Point(node.x, node.y),
+            new Geom.Point(node.x, node.y),
             (piece: Piece) => !piece.dead
         );
         if (livePiecesAtPosition.length) {
@@ -92,7 +94,7 @@ export class RangeGizmo {
             unit.hasStatus(UnitStatus.Flying) ? RangeType.Fly : RangeType.Foot
         )
         // Create nodes from those points
-        .map((pt: Phaser.Geom.Point) => new Node(pt.x, pt.y))
+        .map((pt: Geom.Point) => new Node(pt.x, pt.y))
         // Filter out non-traversable nodes
         .filter((node: Node) => {
             node = this.checkNodeTraversal(node);
@@ -125,7 +127,7 @@ export class RangeGizmo {
             this._board.getAdjacentPoints(
                 node.pos,
                 false
-            ).forEach((adjPt: Phaser.Geom.Point) => {
+            ).forEach((adjPt: Geom.Point) => {
                 const adjNodeKey = adjPt.x + "," + adjPt.y;
                 if (potentiallyValidNodes.has(adjNodeKey)) {
                     potentiallyValidNodes.get(adjNodeKey).warning = true
@@ -236,9 +238,9 @@ export class RangeGizmo {
                         node.traversable = false;
                     } else {
                         node.path = path;
-                        const isoPosition: Phaser.Geom.Point =
+                        const isoPosition: Geom.Point =
                             this._board.getIsoPosition(node.pos);
-                        let cursorImage: Phaser.GameObjects.Image;
+                        let cursorImage: GameObjects.Image;
 
                         if (node.warning) {
                             cursorImage = this._board.scene.add.image(
@@ -278,7 +280,7 @@ export class RangeGizmo {
         });
     }
 
-    private lastSimplePosition: Phaser.Geom.Point = new Phaser.Geom.Point(
+    private lastSimplePosition: Geom.Point = new Geom.Point(
         -1,
         -1
     );
@@ -287,7 +289,7 @@ export class RangeGizmo {
     private lastLoS: boolean;
 
     public async generateSimpleRange(
-        position: Phaser.Geom.Point,
+        position: Geom.Point,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -295,7 +297,7 @@ export class RangeGizmo {
     ): Promise<void> {
         if (
             !force &&
-            Phaser.Geom.Point.Equals(position, this.lastSimplePosition) &&
+            Geom.Point.Equals(position, this.lastSimplePosition) &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
             lineOfSight === this.lastLoS
@@ -304,12 +306,12 @@ export class RangeGizmo {
         }
         await this.reset(force);
 
-        this.lastSimplePosition = Phaser.Geom.Point.Clone(position);
+        this.lastSimplePosition = Geom.Point.Clone(position);
         this.lastDistance = distance;
         this.lastCursor = cursor;
         this.lastLoS = lineOfSight;
 
-        const startPosition = Phaser.Geom.Point.Clone(position);
+        const startPosition = Geom.Point.Clone(position);
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
@@ -317,7 +319,7 @@ export class RangeGizmo {
                 for (let xx: number = 0; xx < this._board.width; xx++) {
                     const currentDistance: number = Board.distance(
                         startPosition,
-                        new Phaser.Geom.Point(xx, yy)
+                        new Geom.Point(xx, yy)
                     );
                     if (currentDistance > distance) {
                         continue;
@@ -326,16 +328,16 @@ export class RangeGizmo {
                         lineOfSight &&
                         !this._board.hasLineOfSight(
                             startPosition,
-                            new Phaser.Geom.Point(xx, yy)
+                            new Geom.Point(xx, yy)
                         )
                     ) {
                         continue;
                     }
-                    const isoPosition: Phaser.Geom.Point =
+                    const isoPosition: Geom.Point =
                         this._board.getIsoPosition(
-                            new Phaser.Geom.Point(xx, yy)
+                            new Geom.Point(xx, yy)
                         );
-                    const cursorImage: Phaser.GameObjects.Image =
+                    const cursorImage: GameObjects.Image =
                         this._board.scene.add.image(
                             isoPosition.x,
                             isoPosition.y,
@@ -375,7 +377,7 @@ export class RangeGizmo {
     }
 
     public async showSimpleRange(
-        position: Phaser.Geom.Point,
+        position: Geom.Point,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -388,7 +390,7 @@ export class RangeGizmo {
             true
         );
         
-        this._rangeLayer.getChildren().forEach((child: Phaser.GameObjects.Image) => {
+        this._rangeLayer.getChildren().forEach((child: GameObjects.Image) => {
             child.setAlpha(0);
         });
 
@@ -431,9 +433,9 @@ export class RangeGizmo {
             this._validNodes
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
-                    const isoPosition: Phaser.Geom.Point =
+                    const isoPosition: Geom.Point =
                         this._board.getIsoPosition(node.pos);
-                    let cursorImage: Phaser.GameObjects.Image;
+                    let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
                         cursorImage = this._board.scene.add.image(
@@ -473,8 +475,8 @@ export class RangeGizmo {
     }
 
     private static getAngle(
-        fromPt: Phaser.Geom.Point,
-        toPt: Phaser.Geom.Point
+        fromPt: Geom.Point,
+        toPt: Geom.Point
     ): number {
         let a: number = Math.floor(
             Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI)
@@ -484,16 +486,16 @@ export class RangeGizmo {
         return Math.floor(a / 45);
     }
 
-    public getNode(pt: Phaser.Geom.Point): Node | null {
+    public getNode(pt: Geom.Point): Node | null {
         return (
             this._validNodes.find(
                 (node: Node) =>
-                    Phaser.Geom.Point.Equals(node.pos, pt) && (node.traversable || node.terminal)
+                    Geom.Point.Equals(node.pos, pt) && (node.traversable || node.terminal)
             ) || null
         );
     }
 
-    public getPathTo(pt: Phaser.Geom.Point): Path {
+    public getPathTo(pt: Geom.Point): Path {
         let path: Path, node: Node;
         node = this.getNode(pt);
         if (!this._piece) {
@@ -550,12 +552,12 @@ export class RangeGizmo {
         return output;
     }
 
-    public showPath(toPt: Phaser.Geom.Point): void {
+    public showPath(toPt: Geom.Point): void {
         this._pathLayer.removeAll();
         if (
             !this._piece ||
             this._piece.hasStatus(UnitStatus.Flying) ||
-            Phaser.Geom.Point.Equals(toPt, this._piece.position)
+            Geom.Point.Equals(toPt, this._piece.position)
         ) {
             return;
         }
@@ -571,11 +573,11 @@ export class RangeGizmo {
         const endIndex = destinationNode?.terminal ? path.nodes.length : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
-            const isoPosition: Phaser.Geom.Point = this._board.getIsoPosition(
+            const isoPosition: Geom.Point = this._board.getIsoPosition(
                 path.nodes[n].pos
             );
 
-            const cursorImage: Phaser.GameObjects.Image =
+            const cursorImage: GameObjects.Image =
                 this._board.scene.add.image(
                     isoPosition.x,
                     isoPosition.y,
@@ -587,13 +589,13 @@ export class RangeGizmo {
         }
     }
 
-    public findPath(fromPt: Phaser.Geom.Point, toPt: Phaser.Geom.Point): Path {
+    public findPath(fromPt: Geom.Point, toPt: Geom.Point): Path {
         let firstNode: Node, destinationNode: Node;
         for (const node of this._validNodes) {
-            if (Phaser.Geom.Point.Equals(node.pos, fromPt)) {
+            if (Geom.Point.Equals(node.pos, fromPt)) {
                 firstNode = node;
             }
-            if (Phaser.Geom.Point.Equals(node.pos, toPt)) {
+            if (Geom.Point.Equals(node.pos, toPt)) {
                 destinationNode = node;
             }
         }
@@ -785,7 +787,7 @@ export class RangeGizmo {
 }
 
 export class Node {
-    private readonly _pos: Phaser.Geom.Point = new Phaser.Geom.Point(-1, -1);
+    private readonly _pos: Geom.Point = new Geom.Point(-1, -1);
     public g: number;
     public f: number;
     public h: number;
@@ -829,7 +831,7 @@ export class Node {
         return this._pos.y;
     }
 
-    get pos(): Phaser.Geom.Point {
+    get pos(): Geom.Point {
         return this._pos;
     }
 
@@ -854,9 +856,9 @@ export class Path {
         }
     }
 
-    public toPoints(): Phaser.Geom.Point[] {
+    public toPoints(): Geom.Point[] {
         return this._nodes.map((node: Node) =>
-            Phaser.Geom.Point.Clone(node.pos)
+            Geom.Point.Clone(node.pos)
         );
     }
 
