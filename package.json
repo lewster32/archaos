@@ -9,7 +9,7 @@
         "release": "npm run build && npm run deploy"
     },
     "keywords": [],
-    "author": "Lewis Lane",
+    "author": "Lewis 'SEPTiMUS' Lane",
     "license": "ISC",
     "devDependencies": {
         "@vitejs/plugin-vue": "^6.0.3",

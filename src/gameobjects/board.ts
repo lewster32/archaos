@@ -87,7 +87,7 @@ export class Board extends Model implements Box {
     private _balance: number;
     private _balanceShift: number;
     private readonly _cursor: Cursor;
-    private readonly _moveGizmo: RangeGizmo;
+    private readonly _rangeGizmo: RangeGizmo;
     private readonly _pieces: Map<number, Piece>;
     private _selected: Piece | null;
 
@@ -141,7 +141,7 @@ export class Board extends Model implements Box {
         this._balanceShift = 0;
 
         this._cursor = new Cursor(this);
-        this._moveGizmo = new RangeGizmo(this);
+        this._rangeGizmo = new RangeGizmo(this);
 
         this._selected = null;
         this._currentPlayer = null;
@@ -263,8 +263,8 @@ export class Board extends Model implements Box {
      * Get the movement gizmo for this board. This handles things like range
      * and paths.
      */
-    get moveGizmo(): RangeGizmo {
-        return this._moveGizmo;
+    get rangeGizmo(): RangeGizmo {
+        return this._rangeGizmo;
     }
 
     /**
@@ -662,7 +662,7 @@ export class Board extends Model implements Box {
         if (this.phase === BoardPhase.Moving) {
             this.sound.play("select");
             if (this._selected.currentMount) {
-                await this.moveGizmo.generate(this._selected);
+                await this.rangeGizmo.generate(this._selected);
                 return;
             }
 
@@ -678,18 +678,18 @@ export class Board extends Model implements Box {
                     )
                 ) {
                     await this._selected.engage(firstEngagingPiece);
-                    await this.moveGizmo.reset();
+                    await this.rangeGizmo.reset();
                 } else {
                     this.logger.log(
                         `${this._selected.name} disengaged from ${firstEngagingPiece.name}`,
                         Colour.Green
                     );
                     if (!this._selected.moved) {
-                        await this.moveGizmo.generate(this._selected);
+                        await this.rangeGizmo.generate(this._selected);
                     }
                 }
             } else if (!this._selected.moved) {
-                await this.moveGizmo.generate(this._selected);
+                await this.rangeGizmo.generate(this._selected);
             }
         }
 
@@ -740,7 +740,7 @@ export class Board extends Model implements Box {
         if (turnOver) {
             this.deselectPlayer();
         }
-        await this.moveGizmo.reset();
+        await this.rangeGizmo.reset();
 
         return new Promise((resolve) => {
             setTimeout(async () => {
@@ -957,7 +957,7 @@ export class Board extends Model implements Box {
             throw new Error(`Could not find piece with ID ${id}`);
         }
         this.cursor.enabled = false;
-        const path: Path = this.moveGizmo.getPathTo(position);
+        const path: Path = this.rangeGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
         if (isFlying || Board.distance(piece.position, position) <= 1.5) {
@@ -970,7 +970,7 @@ export class Board extends Model implements Box {
         } else {
             throw new Error(`No path to ${position.x}, ${position.y}`);
         }
-        await this.moveGizmo.reset();
+        await this.rangeGizmo.reset();
         piece.moved = true;
         this.cursor.enabled = true;
 
@@ -1022,7 +1022,7 @@ export class Board extends Model implements Box {
             );
             this.state = oldState;
             if (attackResult) {
-                await this.moveGizmo.reset();
+                await this.rangeGizmo.reset();
             }
             return attackingPiece;
         }
@@ -1056,7 +1056,7 @@ export class Board extends Model implements Box {
             );
             this.state = oldState;
             if (attackResult) {
-                await this.moveGizmo.reset();
+                await this.rangeGizmo.reset();
             }
             return attackingPiece;
         }
@@ -1074,7 +1074,7 @@ export class Board extends Model implements Box {
         mountingPieceId: number,
         mountedPieceId: number
     ): Promise<Piece | null> {
-        await this.moveGizmo.reset();
+        await this.rangeGizmo.reset();
         const mountingPiece: Piece | null = this.getPiece(mountingPieceId);
         const mountedPiece: Piece | null = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
@@ -1481,7 +1481,7 @@ export class Board extends Model implements Box {
      */
     deselectPlayer(): void {
         this._currentPlayer = null;
-        this.moveGizmo.reset();
+        this.rangeGizmo.reset();
         this._selected = null;
         this.scene.game.events.emit("end-turn-available", false);
     }
@@ -1616,15 +1616,20 @@ export class Board extends Model implements Box {
 
                 if (this.selected) {
                     const spell: Spell = this.currentPlayer?.selectedSpell;
-                    if (spell?.range === 0) {
+                    if (spell?.properties?.autoPlace) {
+                        await this.rules.doAutoCastSpell(
+                            this
+                        );
+                        continue;
+                    }
+                    else if (spell?.range === 0) {
                         await this.rules.doCastSpell(
                             this,
-                            spell,
                             this.currentPlayer.castingPiece
                         );
                         continue;
                     } else if (spell?.range > 0) {
-                        await this.moveGizmo.showSimpleRange(
+                        await this.rangeGizmo.showSimpleRange(
                             this.selected.position,
                             spell.range,
                             CursorType.RangeCast,

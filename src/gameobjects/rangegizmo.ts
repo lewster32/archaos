@@ -8,16 +8,53 @@ import { Piece } from "./piece";
 import { Geom, GameObjects } from "phaser";
 
 export class RangeGizmo {
+    /**
+     * Duration of gizmo reveal animation in milliseconds
+     */
     private static readonly GIZMO_REVEAL_DURATION: number = 50;
+
+    /**
+     * Stagger delay between gizmo reveal animations in milliseconds
+     */
     private static readonly GIZMO_REVEAL_STAGGER_DELAY: number = 5;
 
+    /**
+     * Reference to the board
+     */
     private readonly _board: Board;
+
+    /**
+     * Layer for range gizmo graphics
+     */
     private readonly _rangeLayer: GameObjects.Layer;
+
+    /**
+     * Layer for path gizmo graphics
+     */
     private readonly _pathLayer: GameObjects.Layer;
+
+    /**
+     * The piece we're generating the range gizmo for
+     */
     private _piece: Piece = null;
+
+    /**
+     * The valid nodes in the range gizmo
+     */
     private _validNodes: Node[] = [];
+
+    /**
+     * The calculated paths to valid nodes
+     */
     private _paths: Map<string, Path>;
 
+    /**
+     * Create a new RangeGizmo for the given board. RangeGizmo is responsible
+     * for calculating and displaying movement ranges and paths for pieces. It's
+     * a single instance per board, and is reused for each piece as needed.
+     * 
+     * @param board The board to create the RangeGizmo for
+     */
     constructor(board: Board) {
         this._board = board;
         this._rangeLayer = board.getLayer(BoardLayer.FloorCursors);

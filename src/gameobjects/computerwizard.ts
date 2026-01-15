@@ -57,15 +57,16 @@ export class ComputerWizard {
     /**
      * Given a list of spells, finds all valid targets for each spell.
      * 
+     * @param board the game board to search for targets on
      * @param spells the spells to find targets for
      */
-    protected findSpellTargets(spells: Spell[]): Map<Spell, Piece[]> {
+    public static findSpellTargets(board: Board, spells: Spell[]): Map<Spell, Piece[]> {
         const targets: Map<Spell, Piece[]> = new Map();
 
         // Loop over all of the board pieces, and ask each spell if it can
         // target that piece
         for (const spell of spells) {
-            for (let piece of this._board.pieces) {
+            for (let piece of board.pieces) {
                 if (spell.isValidTarget(piece.position, false)) {
                     if (!targets.has(spell)) {
                         targets.set(spell, []);
@@ -94,7 +95,7 @@ export class ComputerWizard {
                 for (const piece of targets.get(justiceSpell)) {
                     if (piece.type === UnitType.Wizard) {
                         const wizardOwner: Player = piece.owner;
-                        const ownerUnits: Piece[] = this._board
+                        const ownerUnits: Piece[] = board
                             .getPiecesByOwner(wizardOwner)
                             .filter((p: Piece) => {
                                 return p.type !== UnitType.Wizard && !p.dead;
@@ -111,6 +112,16 @@ export class ComputerWizard {
         }
 
         return targets;
+    }
+
+    /**
+     * Finds valid targets for the given spells.
+     * 
+     * @param spells the spells to find targets for
+     * @returns a map of spells to their valid targets
+     */
+    protected findSpellTargets(spells: Spell[]): Map<Spell, Piece[]> {
+        return ComputerWizard.findSpellTargets(this._board, spells);
     }
 
     /**
@@ -142,6 +153,16 @@ export class ComputerWizard {
         }
         console.debug(`${this._player.name} has learned from another player that piece ID ${pieceId} is not an illusion`);
         this._knownNonIllusionPieces.add(pieceId);
+    }
+
+    /**
+     * Checks if the computer wizard knows that a given piece is not an illusion.
+     * 
+     * @param pieceId the ID of the piece to check
+     * @returns true if the piece is known to be non-illusion, false otherwise
+     */
+    public knowsPieceIsNonIllusion(pieceId: number): boolean {
+        return this._knownNonIllusionPieces.has(pieceId);
     }
 
     /**
@@ -236,12 +257,18 @@ export class ComputerWizard {
     }
 
     /**
-     * Casts the currently selected spell.
+     * Automatically casts the currently selected spell for the specified player
+     * on the board. Normally used for computer-controlled wizards, but can also
+     * be used for auto-casting spells for human players (e.g., Magic Wood)
+     * 
+     * @param board The game board on which the spell is to be cast.
+     * @param player The player who is casting the spell.
+     * @returns A promise that resolves to true if the spell was cast successfully, false otherwise.
      */
-    async castSpell(): Promise<boolean> {
-        this._board.cursor.enabled = false;
+    static async autoCastSpell(board: Board, player: Player): Promise<boolean> {
+        board.cursor.enabled = false;
         try {
-            const spell: Spell | null = await this._player.useSpell();
+            const spell: Spell | null = await player.useSpell();
             let successfullyCast: boolean = false;
             if (spell) {
                 if (spell.type === SpellType.Summon) {
@@ -253,8 +280,8 @@ export class ComputerWizard {
                         // change which board tiles are valid (e.g., trees cannot
                         // be cast adjacent to other trees).
                         const validTiles: Geom.Point[] = [];
-                        for (let xx = 0; xx < this._board.width; xx++) {
-                            for (let yy = 0; yy < this._board.height; yy++) {
+                        for (let xx = 0; xx < board.width; xx++) {
+                            for (let yy = 0; yy < board.height; yy++) {
                                 const pt: Geom.Point = new Geom.Point(
                                     xx,
                                     yy
@@ -265,35 +292,36 @@ export class ComputerWizard {
                             }
                         }
                         if (!validTiles.length) {
-                            console.debug(`${this._player.name} has no valid tiles to cast ${spell.name}`);
+                            console.debug(`${player.name} has no valid tiles to cast ${spell.name}`);
                             if (successfullyCast) {
-                                this._player.discardSpell();
+                                player.discardSpell();
                             }
-                            this._board.sound.play("cancel");
+                            board.sound.play("cancel");
                             return false;
                         }
                         summonPt = PMath.RND.pick(validTiles);
 
-                        await this._board.rules.doCastSpell(
-                            this._board,
-                            spell,
+                        await board.rules.doCastSpell(
+                            board,
                             summonPt
                         );
                         successfullyCast = true;
                     }
+                    if (successfullyCast) {
+                        player.discardSpell();
+                    }
                     return true;
                 } else if (spell.type === SpellType.Buff) {
-                    await this._board.rules.doCastSpell(
-                        this._board,
-                        spell,
-                        this._player.castingPiece
+                    await board.rules.doCastSpell(
+                        board,
+                        player.castingPiece
                     );
                     return true;
                 } else if (spell.type === SpellType.Attack) {
                     const attackSpell: AttackSpell = spell as AttackSpell;
-                    console.debug(`${this._player.name} is casting attack spell ${spell.name}`);
+                    console.debug(`${player.name} is casting attack spell ${spell.name}`);
                     while (attackSpell.castTimes > 0) {
-                        const targets: Piece[] = (this.findSpellTargets([attackSpell]).get(attackSpell) || [])
+                        const targets: Piece[] = (ComputerWizard.findSpellTargets(board, [attackSpell]).get(attackSpell) || [])
                             .toSorted((a: Piece, b: Piece) => {
                             // Prefer wizard targets
                             if (
@@ -311,61 +339,58 @@ export class ComputerWizard {
                             return 0;
                         });
                         if (targets.length) {
-                            console.debug(`${this._player.name} has ${targets.length} valid targets to cast ${spell.name}`);
+                            console.debug(`${player.name} has ${targets.length} valid targets to cast ${spell.name}`);
                         }
                         else {
-                            console.debug(`${this._player.name} has no valid targets to cast ${spell.name}`);
+                            console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
                             if (successfullyCast) {
-                                this._player.discardSpell();
+                                player.discardSpell();
                             }
-                            this._board.sound.play("cancel");
+                            board.sound.play("cancel");
                             return false;
                         }
                         const target: Piece = PMath.RND.weightedPick(targets);
-                        await this._board.rules.doCastSpell(
-                            this._board,
-                            spell,
+                        await board.rules.doCastSpell(
+                            board,
                             target
                         );
                         successfullyCast = true;
                     }
                     return true;
                 } else if (spell.type === SpellType.Disbelieve) {
-                    console.debug(`${this._player.name} is casting Disbelieve`);
-                    const potentialTargets: Piece[] = this._board.pieces
+                    console.debug(`${player.name} is casting Disbelieve`);
+                    const potentialTargets: Piece[] = board.pieces
                         .filter((p: Piece) => {
                             return (
-                                p.owner !== this._player && // Enemy piece
+                                p.owner !== player && // Enemy piece
                                 !p.dead && // Not dead
                                 p.canDisbelieve && // Can be disbelieved
-                                !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
+                                !player.ai.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
                             );
                         });
 
                     if (!potentialTargets.length) {
-                        console.debug(`${this._player.name} has no valid targets to cast Disbelieve`);
-                        this._board.sound.play("cancel");
+                        console.debug(`${player.name} has no valid targets to cast Disbelieve`);
+                        board.sound.play("cancel");
                         return false;
                     }
 
                     const target: Piece = PMath.RND.pick(potentialTargets);
-                    await this._board.rules.doCastSpell(
-                        this._board,
-                        spell,
+                    await board.rules.doCastSpell(
+                        board,
                         target
                     );
                     return true;
                 } else if (spell.type === SpellType.Misc) {
                     if (spell.properties.target === 'self') {
-                        await this._board.rules.doCastSpell(
-                            this._board,
-                            spell,
-                            this._player.castingPiece
+                        await board.rules.doCastSpell(
+                            board,
+                            player.castingPiece
                         );
                         return true;
                     }
                     else if ([SpellTarget.Piece, SpellTarget.Corpse].includes(spell.properties.target)) {
-                        const potentialTargets: Piece[] = this._board.pieces
+                        const potentialTargets: Piece[] = board.pieces
                             .filter((p: Piece) => {
                                 return (
                                     spell.isValidTarget(p.position, false)
@@ -373,28 +398,34 @@ export class ComputerWizard {
                             });
 
                         if (!potentialTargets.length) {
-                            console.debug(`${this._player.name} has no valid targets to cast ${spell.name}`);
-                            this._board.sound.play("cancel");
+                            console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
+                            board.sound.play("cancel");
                             return false;
                         }
                         const target: Piece = PMath.RND.pick(potentialTargets);
-                        await this._board.rules.doCastSpell(
-                            this._board,
-                            spell,
+                        await board.rules.doCastSpell(
+                            board,
                             target
                         );
                         return true;
                     }
                 }
             }
-            this._board.sound.play("cancel");
+            board.sound.play("cancel");
             return false;
         } catch (error) {
-            console.error(`Error casting spell for ${this._player.name}:`, error);
+            console.error(`Error casting spell for ${player.name}:`, error);
             return false;
         } finally {
-            this._board.cursor.enabled = true;
+            board.cursor.enabled = true;
         }
+    }
+
+    /**
+     * Casts the currently selected spell.
+     */
+    async castSpell(): Promise<boolean> {
+        return ComputerWizard.autoCastSpell(this._board, this._player);
     }
 
     /**
@@ -514,7 +545,7 @@ export class ComputerWizard {
             // flying unit, attack one of them with a greater chance the higher
             // the difficulty level
             if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(0.3 + (0.5 * this._difficulty))) {
-                const terminalPaths: Set<Path> = this._board.moveGizmo.getAllTerminalPaths();
+                const terminalPaths: Set<Path> = this._board.rangeGizmo.getAllTerminalPaths();
                 if (terminalPaths.size > 0) {
                     const terminalPathArray: Path[] = Array.from(terminalPaths);
                     const pos: Geom.Point = PMath.RND.pick(terminalPathArray)
@@ -545,7 +576,7 @@ export class ComputerWizard {
 
             // Move to a random reachable position
             const reachableTiles: Geom.Point[] = Array.from(
-                this._board.moveGizmo.getAllValidPaths()
+                this._board.rangeGizmo.getAllValidPaths()
             ).map((path: Path) => {
                 // Get the last node in the path
                 return path.nodes?.filter(node => node.traversable).at(-1)?.pos;

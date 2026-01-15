@@ -723,7 +723,7 @@ export class Spell extends Model {
      */
     async showRange(show: boolean): Promise<void> {
         if (show) {
-            this._board.moveGizmo.showSimpleRange(
+            this._board.rangeGizmo.showSimpleRange(
                 this._castingPiece.position,
                 this.range,
                 CursorType.RangeCast,
@@ -731,7 +731,7 @@ export class Spell extends Model {
             );
             return;
         }
-        this._board.moveGizmo.reset();
+        this._board.rangeGizmo.reset();
     }
 
     /**

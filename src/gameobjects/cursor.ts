@@ -184,7 +184,7 @@ export class Cursor {
                 break;
             case ActionType.Move:
                 if (selectedPiece) {
-                    this._board.moveGizmo.showPath(this._position);
+                    this._board.rangeGizmo.showPath(this._position);
                     const neighbours: Piece[] =
                         this._board.getAdjacentPiecesAtPosition(
                             this._position,
@@ -214,7 +214,7 @@ export class Cursor {
                 break;
             case ActionType.Mount:
                 if (selectedPiece.stats.movement > 1) {
-                    this._board.moveGizmo.showPath(this._position);
+                    this._board.rangeGizmo.showPath(this._position);
                 }
                 this.type = CursorType.Mount;
                 break;
@@ -223,7 +223,7 @@ export class Cursor {
                 break;
             case ActionType.Attack:
                 if (selectedPiece.stats.movement > 1) {
-                    this._board.moveGizmo.showPath(this._position);
+                    this._board.rangeGizmo.showPath(this._position);
                 }
                 this.type = CursorType.Attack;
                 break;
@@ -289,7 +289,7 @@ export class Cursor {
                         `${selected.name}'s turn to ranged attack`,
                         Colour.Yellow
                     );
-                    await this._board.moveGizmo.showSimpleRange(
+                    await this._board.rangeGizmo.showSimpleRange(
                         this._board.selected.position,
                         this._board.selected.stats.range,
                         CursorType.RangeRangedAttack,

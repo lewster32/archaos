@@ -2,60 +2,39 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 9,
-        "height": 9
+        "width": 15,
+        "height": 15
     },
     "players": [
         {
             "id": 1,
             "name": "Player 1",
-            "position": { "x": 0, "y": 0 },
-            "computerControlled": true,
+            "position": { "x": 3, "y": 3 },
+            "computerControlled": false,
             "pieces": [
-                {
-                    "type": "Bat",
-                    "position": { "x": 1, "y": 0 }
-                },
-                {
-                    "type": "Bat",
-                    "position": { "x": 0, "y": 1 }
-                }
+
             ],
             "spells": [
+                "Magic Wood"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 8, "y": 8 },
-            "computerControlled": true,
+            "position": { "x": 11, "y": 11 },
+            "computerControlled": false,
             "pieces": [
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 4, "y": 2 }
-                },
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 3, "y": 4 }
-                },
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 4, "y": 3 }
-                },
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 4, "y": 4 }
-                }
+
             ],
             "spells": [
-
+                "Shadow Wood"
             ]
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": null,
-        "forceCast": null,
-        "shortDelay": true
+        "forceCast": true,
+        "shortDelay": false
     }
 }

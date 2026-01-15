@@ -1,4 +1,5 @@
 import { Board } from "../board";
+import { ComputerWizard } from "../computerwizard";
 import { Cursor } from "../cursor";
 import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
@@ -193,6 +194,18 @@ export class Rules {
     }
 
     /**
+     * Automatically cast a spell for the current player.
+     * 
+     * @param board The game board
+     * @param spell The spell to be cast
+     */
+    public async doAutoCastSpell(
+        board: Board
+    ): Promise<boolean> {
+        return await ComputerWizard.autoCastSpell(board, board.currentPlayer);
+    }
+
+    /**
      * Handle the casting of a spell.
      * 
      * @param board The game board
@@ -202,48 +215,47 @@ export class Rules {
      */
     public async doCastSpell(
         board: Board,
-        spell: Spell,
         currentTarget: Piece | Geom.Point | null
     ): Promise<boolean> {
         const casted: Spell | null = await board.currentPlayer.useSpell();
-        if (casted) {
-            board.state = BoardState.Idle;
-            board.logger.log(
-                `${board.currentPlayer.name} casts '${casted.name}'`
-            );
-            await casted.cast(
-                board.currentPlayer,
-                board.selected,
-                currentTarget
-            );
-            board.state = BoardState.CastSpell;
-            if (casted.castTimes <= 0) {
-                await board.currentPlayer.discardSpell();
-                if (casted.failed) {
-                    board.logger.log(`Spell failed`, Colour.Magenta);
-                }
-                if (board.selected) {
-                    board.selected.turnOver = true;
-                }
-                board.deselectPlayer();
-                await board.idleDelay(Board.DEFAULT_DELAY);
-                return false;
-            } else {
-                board.logger.log(
-                    `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
-                );
-                if (casted.lineOfSight) {
-                    await board.moveGizmo.showSimpleRange(
-                        board.selected.position,
-                        board.currentPlayer?.selectedSpell.range,
-                        CursorType.RangeCast,
-                        true
-                    );
-                }
-            }
-            return true;
+        if (!casted) {
+            return false;
         }
-        return false;
+        board.state = BoardState.Idle;
+        board.logger.log(
+            `${board.currentPlayer.name} casts '${casted.name}'`
+        );
+        await casted.cast(
+            board.currentPlayer,
+            board.selected,
+            currentTarget
+        );
+        board.state = BoardState.CastSpell;
+        if (casted.castTimes <= 0) {
+            await board.currentPlayer.discardSpell();
+            if (casted.failed) {
+                board.logger.log(`Spell failed`, Colour.Magenta);
+            }
+            if (board.selected) {
+                board.selected.turnOver = true;
+            }
+            board.deselectPlayer();
+            await board.idleDelay(Board.DEFAULT_DELAY);
+            return false;
+        } else {
+            board.logger.log(
+                `${board.currentPlayer.name} casts '${casted.name}' (${casted.castTimes} more available)`
+            );
+            if (casted.lineOfSight) {
+                await board.rangeGizmo.showSimpleRange(
+                    board.selected.position,
+                    board.currentPlayer?.selectedSpell.range,
+                    CursorType.RangeCast,
+                    true
+                );
+            }
+        }
+        return true;
     }
 
     /**
@@ -285,7 +297,6 @@ export class Rules {
                 if (
                     await this.doCastSpell(
                         board,
-                        board.currentPlayer.selectedSpell,
                         currentTarget
                     )
                 ) {
