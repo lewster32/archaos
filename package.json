@@ -6,7 +6,8 @@
         "build": "vue-tsc --noEmit && vite build",
         "serve": "vite preview",
         "deploy": "node ./.deploy/deploy.js",
-        "release": "npm run build && npm run deploy"
+        "manifest": "node ./.deploy/manifest.js",
+        "release": "npm run manifest && npm run build && npm run deploy"
     },
     "keywords": [],
     "author": "Lewis 'SEPTiMUS' Lane",
