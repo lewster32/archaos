@@ -41,3 +41,10 @@ _Note: the `deploy`, `manifest` and `release` scripts will not work as they refe
 - [@DarkHalfUK](https://twitter.com/DarkHalfUK) - gave great feedback and playtesting of earlier iterations of the game
 - [Richard Davey](https://twitter.com/photonstorm) - maker of the very snazzy Phaser framework, which I've been a fan of (and even a minor contributor to) for many years
 - [Julian Gollop](https://twitter.com/julian_gollop) - where it all began - the author of the original (as well as some largely forgotten minor titles like X-Com: UFO Defense) and who personally gave blessing to my remake - even clearing me to sell it if I so wished!
+
+<pre>
+🧙🏽‍♂️    ☘️☘️ ☘️  ☘️   
+🐍  ☘️☘️☘️ ☘️  ☘️ 
+      🔥🔥☘️🔥
+    🔥🔥🔥 🔥  🐉
+       🔥          🧙
