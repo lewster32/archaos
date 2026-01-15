@@ -249,12 +249,12 @@ export class Piece extends Entity {
                 );
             }
             this.highlighted = false;
-        } else {
-            if (this._raisedDead) {
-                this._sprite.setTint(Piece.RAISED_DEAD_TINT);
-            } else {
-                this._sprite?.setTint(this.defaultTint);
-            }
+        }
+        else if (this._raisedDead) {
+            this._sprite.setTint(Piece.RAISED_DEAD_TINT);
+        }
+        else {
+            this._sprite?.setTint(this.defaultTint);
         }
     }
 
@@ -290,11 +290,11 @@ export class Piece extends Entity {
     }
 
     get sprite(): GameObjects.Sprite {
-        return this._sprite!;
+        return this._sprite;
     }
 
     get shadow(): GameObjects.Image {
-        return this._shadow!;
+        return this._shadow;
     }
 
     get moved(): boolean {
@@ -532,7 +532,7 @@ export class Piece extends Entity {
     }
 
     protected updateDepth() {
-        this._sprite?.setDepth(this._sprite?.y as number);
+        this._sprite?.setDepth(this._sprite?.y);
     }
 
     get depth(): number {
@@ -649,6 +649,7 @@ export class Piece extends Entity {
                                 `${piece.owner.name}'s ${piece.name} was destroyed by ${this.owner.name}'s ${this.name}`,
                                 Colour.Red
                             );
+                            // TODO: This should happen in the effect system
                             switch (this.properties.attackType) {
                                 case UnitAttackType.Burned:
                                     await this.board.playEffect(
@@ -1235,7 +1236,7 @@ export class Piece extends Entity {
     }
 
     protected playAnim() {
-        if (!this._sprite || !this._sprite.anims) {
+        if (!this._sprite?.anims) {
             return;
         }
         this._sprite.anims.stop();

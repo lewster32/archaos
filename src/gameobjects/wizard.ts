@@ -58,7 +58,7 @@ export class Wizard extends Piece {
      * The WizCode for this wizard. Defines their appearance in a compact
      * sharable string form.
      */
-    private _wizCode: WizCode;
+    private readonly _wizCode: WizCode;
 
     /**
      * Create a new Wizard instance with the given configuration. The config is
@@ -106,7 +106,7 @@ export class Wizard extends Piece {
                 (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                     (this._direction === UnitDirection.Left ? -1 : 1);
             sprite.setFlipX(
-                this._direction === UnitDirection.Left ? true : false
+                this._direction === UnitDirection.Left
             );
         });
     }
@@ -236,7 +236,6 @@ export class Wizard extends Piece {
         if (!super.addStatus(status)) {
             return false;
         }
-        // console.log(`${this.name} gained ${status}`);
         const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
@@ -274,7 +273,7 @@ export class Wizard extends Piece {
                 });
                 sprite.setOrigin(0.5, 0.5);
                 sprite.setFlipX(
-                    this._direction === UnitDirection.Left ? true : false
+                    this._direction === UnitDirection.Left
                 );
                 sprite.setBlendMode(BlendModes.ADD);
                 this.board.getLayer(BoardLayer.Pieces).add(sprite);
@@ -298,7 +297,7 @@ export class Wizard extends Piece {
                 );
                 sprite.setOrigin(0.5, 0.6);
                 sprite.setFlipX(
-                    this._direction === UnitDirection.Left ? true : false
+                    this._direction === UnitDirection.Left
                 );
                 this.board.getLayer(BoardLayer.Pieces).add(sprite);
                 this._effects.set(status, sprite);
@@ -477,7 +476,7 @@ export class Wizard extends Piece {
      * @returns The parsed wizard configuration object.
      */
     static parseWizCode(wizCode: string): WizCode {
-        if (!wizCode || !wizCode.trim()) {
+        if (!wizCode?.trim()) {
             throw new Error("WizCode cannot be empty");
         }
 
@@ -491,14 +490,14 @@ export class Wizard extends Piece {
 
         return {
             code: wizCode,
-            wiz: Math.min(parseInt(wizCode.slice(0, 2), 16), wizcodes.max.wiz),
-            pri: Math.min(parseInt(wizCode.slice(2, 4), 16), wizcodes.max.pri),
-            sec: Math.min(parseInt(wizCode.slice(4, 6), 16), wizcodes.max.sec),
+            wiz: Math.min(Number.parseInt(wizCode.slice(0, 2), 16), wizcodes.max.wiz),
+            pri: Math.min(Number.parseInt(wizCode.slice(2, 4), 16), wizcodes.max.pri),
+            sec: Math.min(Number.parseInt(wizCode.slice(4, 6), 16), wizcodes.max.sec),
             skin: Math.min(
-                parseInt(wizCode.slice(6, 8), 16),
+                Number.parseInt(wizCode.slice(6, 8), 16),
                 wizcodes.max.skin
             ),
-            hat: Math.min(parseInt(wizCode.slice(8, 10), 16), wizcodes.max.hat),
+            hat: Math.min(Number.parseInt(wizCode.slice(8, 10), 16), wizcodes.max.hat),
         };
     }
 

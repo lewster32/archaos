@@ -10,12 +10,12 @@ export class Entity extends Model {
     /**
      * The parent board this entity is on.
      */
-    private _board: Board;
+    private readonly _board: Board;
 
     /**
      * The position of this entity on the board.
      */
-    private _position: Geom.Point;
+    private readonly _position: Geom.Point;
 
     /**
      * Create a new Entity instance.

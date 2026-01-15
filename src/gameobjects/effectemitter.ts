@@ -1,4 +1,3 @@
-import { Board } from "./board";
 import { Piece } from "./piece";
 
 import { GameObjects, Animations, Math as PMath, Geom, Curves, BlendModes, Display } from "phaser";

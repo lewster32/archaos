@@ -15,6 +15,7 @@ import type { Player } from "../player";
 
 import { CursorType } from "../enums/cursortype";
 import { Math as PMath, Geom } from "phaser";
+import { SpellCastTarget } from "../services/rules";
 
 /**
  * The spell data imported from JSON.
@@ -333,7 +334,7 @@ export class Spell extends Model {
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    isValidTarget(target: Geom.Point, showReason?: boolean): Geom.Point | Piece | null {
+    isValidTarget(target: Geom.Point, showReason?: boolean): SpellCastTarget {
         if (!this.inCastingRange(target)) {
             if (showReason) {
                 this._board.logger.log(

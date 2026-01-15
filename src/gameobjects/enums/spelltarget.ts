@@ -1,5 +1,5 @@
 /**
- * Enumeration of spell targets
+ * What type of target a spell can have
  */
 export enum SpellTarget {
     /**

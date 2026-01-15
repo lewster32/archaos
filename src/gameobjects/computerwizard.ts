@@ -228,7 +228,13 @@ export class ComputerWizard {
 
             // Rank spells by how likely they are to cast to play conservatively
             spells.sort((a, b) => {
-                return a.chance > b.chance ? -1 : a.chance < b.chance ? 1 : 0;
+                if (a.chance > b.chance) {
+                    return -1;
+                }
+                if (a.chance < b.chance) {
+                    return 1;
+                }
+                return 0;
             });
 
             const pickedSpell: SummonSpell = PMath.RND.weightedPick(
@@ -590,7 +596,7 @@ export class ComputerWizard {
                 this._board.rangeGizmo.getAllValidPaths()
             ).map((path: Path) => {
                 // Get the last node in the path
-                return path.nodes?.filter(node => node.traversable).at(-1)?.pos;
+                return path.nodes?.findLast(node => node.traversable)?.pos;
             }).filter((pt: Geom.Point) => {
                 if (!pt) {
                     return false;

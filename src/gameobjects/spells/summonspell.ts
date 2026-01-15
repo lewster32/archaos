@@ -42,8 +42,10 @@ export class SummonSpell extends Spell {
 
     get allowIllusion(): boolean {
         return (
-            (typeof this._properties.allowIllusion === "undefined" ||
-                this._properties.allowIllusion === true)
+            (
+                this._properties.allowIllusion === undefined || // Default to true
+                this._properties.allowIllusion === true 
+            )
         );
     }
 

@@ -14,6 +14,11 @@ import type { Spell } from "../spells/spell";
 import { Geom } from "phaser";
 
 /**
+ * A target for a cast spell can be either a board position or a piece, or null
+ */
+export type SpellCastTarget = Geom.Point | Piece | null;
+
+/**
  * The 'brains' of the game live here. This is the beating heart of the game
  * logic. We handle two main types of processing:
  * 
@@ -80,7 +85,7 @@ export class Rules {
                 board.currentPlayer?.selectedSpell;
 
             if (selectedSpell && selectedSpell.castTimes > 0) {
-                const spellTarget: Geom.Point | Piece | null =
+                const spellTarget: SpellCastTarget =
                     selectedSpell.isValidTarget(board.cursor.position);
 
                 return spellTarget ? ActionType.Cast : ActionType.Invalid;
@@ -215,7 +220,7 @@ export class Rules {
      */
     public async doCastSpell(
         board: Board,
-        currentTarget: Piece | Geom.Point | null
+        currentTarget: SpellCastTarget
     ): Promise<boolean> {
         const casted: Spell | null = await board.currentPlayer.useSpell();
         if (!casted) {
@@ -286,7 +291,7 @@ export class Rules {
                 board.selected &&
                 board.currentPlayer.selectedSpell
             ) {
-                const currentTarget: Piece | Geom.Point | null =
+                const currentTarget: SpellCastTarget =
                     board.currentPlayer.selectedSpell.isValidTarget(
                         board.cursor.position,
                         true
@@ -464,7 +469,7 @@ export class Rules {
         board.sound.play("cancel");
 
         if (board.state === BoardState.CastSpell) {
-            if (board.currentPlayer && board.currentPlayer.selectedSpell) {
+            if (board.currentPlayer?.selectedSpell) {
                 const wasted: Spell | null =
                     await board.currentPlayer.discardSpell();
                 if (wasted) {
@@ -496,8 +501,7 @@ export class Rules {
             }
             board.logger.log(`Dismount cancelled`, Colour.Magenta);
             if (
-                selectedPiece.currentMount &&
-                selectedPiece.currentMount.canSelect
+                selectedPiece.currentMount?.canSelect
             ) {
                 await board.selectPiece(selectedPiece.currentMount.id);
                 return ActionType.Move;

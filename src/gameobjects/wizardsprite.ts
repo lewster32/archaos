@@ -7,7 +7,7 @@ import { WizCode } from "./interfaces/wizcode";
 import { GameObjects, Textures, Scene } from "phaser";
 
 export class WizardSprite extends GameObjects.Sprite {
-    private _wizCode: WizCode;
+    private readonly _wizCode: WizCode;
     constructor(scene: Scene, x: number, y: number, wizCode: WizCode) {
         super(scene, x, y, "wizards");
         this._wizCode = wizCode;

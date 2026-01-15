@@ -28,19 +28,19 @@ export class SoundEffects {
      */
     public async playAsync(effectName: string, options?: SoundEffectOptions): Promise<void> {
         try {
-            if (!options) {
-                this._sound.play(effectName);
-            }
-            else {
+            if (options) {
                 const repeat: number = options.repeat ?? 1;
                 const delay: number = options.delay ?? 0;
-
+                
                 for (let i = 0; i < repeat; i++) {
                     this._sound.play(effectName);
                     if (i < repeat) {
                         await new Promise((resolve) => setTimeout(resolve, delay));
                     }
                 }
+            }
+            else {
+                this._sound.play(effectName);
             }
         } catch (e) {
             console.error(`Error playing sound effect '${effectName}':`, e);

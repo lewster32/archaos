@@ -1347,14 +1347,12 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to select a spell`
                 );
-                // this.centreOnPieces([this.currentPlayer.castingPiece]);
                 break;
             case BoardPhase.Casting:
                 if (this.currentPlayer?.selectedSpell) {
                     this.logger.log(
                         `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`
                     );
-                    // this.centreOnPieces([this.currentPlayer.castingPiece]);
                 } else {
                     this.sound.play("cancel");
                     this.logger.log(
@@ -1368,7 +1366,6 @@ export class Board extends Model implements Box {
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to move`
                 );
-                // this.centreOnPieces(units);
                 break;
         }
 
@@ -1880,8 +1877,6 @@ export class Board extends Model implements Box {
 
         let xDir: number, yDir: number;
 
-        let a: number = 1;
-
         let xVal: number, yVal: number;
 
         let numChecks: number;
@@ -1891,7 +1886,7 @@ export class Board extends Model implements Box {
 
         if (xDiff === 0 || yDiff === 0) {
             if (yDiff === 0) {
-                for (a = 1; a < Math.abs(xDiff); a++) {
+                for (let a = 1; a < Math.abs(xDiff); a++) {
                     xVal = a * xDir + startPosition.x;
                     if (
                         this.isBlocker(
@@ -1902,7 +1897,7 @@ export class Board extends Model implements Box {
                     }
                 }
             } else {
-                for (a = 1; a < Math.abs(yDiff); a++) {
+                for (let a = 1; a < Math.abs(yDiff); a++) {
                     yVal = a * yDir + startPosition.y;
                     if (
                         this.isBlocker(
@@ -1918,7 +1913,7 @@ export class Board extends Model implements Box {
             let yInc = yDiff / numChecks,
                 xInc = xDiff / numChecks;
 
-            for (a = 1; a < numChecks; a++) {
+            for (let a = 1; a < numChecks; a++) {
                 xVal = startPosition.x + Math.round(xInc * a);
                 yVal = startPosition.y + Math.round(yInc * a);
                 if (this.isBlocker(new Geom.Point(xVal, yVal))) {
@@ -2074,7 +2069,6 @@ export class Board extends Model implements Box {
             layer.destroy();
         });
         this._particles?.destroy();
-        // this._sound.destroy();
     }
 
     /* #endregion */

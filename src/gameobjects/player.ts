@@ -22,7 +22,7 @@ export class Player extends Model {
 
     private readonly _ai: ComputerWizard | null;
 
-    static PLAYER_COLOURS: number[] = [
+    static readonly PLAYER_COLOURS: number[] = [
         0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0x000000,
         0xff5500,
     ];
@@ -150,11 +150,11 @@ export class Player extends Model {
     async discardSpell(): Promise<Spell | null> {
         if (this._selectedSpell) {
             const spell: Spell = this._selectedSpell;
-            if (!spell.persist) {
-                this._spells.delete(this._selectedSpell.id);
+            if (spell.persist) {
+                spell.resetCastTimes();
             }
             else {
-                spell.resetCastTimes();
+                this._spells.delete(this._selectedSpell.id);
             }
             this._selectedSpell = null;
             return spell;
