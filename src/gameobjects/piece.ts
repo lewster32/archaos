@@ -629,13 +629,12 @@ export class Piece extends Entity {
                         piece.hasStatus(UnitStatus.Wizard)
                     )
                 ) {
+                    const killedPiece: Piece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
                     this.board.logger.log(
-                        `${this.owner.name}'s ${this.name} was destroyed by ${spreadPieces[0].owner.name}!`,
+                        `${killedPiece.owner.name} was destroyed by ${this.owner.name}'s ${this.name}!`,
                         Colour.Red
                     );
-                    await spreadPieces
-                        .find((piece) => piece.hasStatus(UnitStatus.Wizard))!
-                        .kill();
+                    await killedPiece.kill();
                 } else if (this.hasStatus(UnitStatus.Engulfs)) {
                     this.board.logger.log(
                         `${this.owner.name}'s ${this.name} has engulfed ${spreadPieces[0].owner.name}'s ${spreadPieces[0].name}`,
