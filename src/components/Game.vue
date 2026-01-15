@@ -513,4 +513,8 @@ input[type="checkbox"] {
     cursor: pointer;
 }
 
+#game-container {
+    filter: drop-shadow(-2.5rem 5rem rgb(0 0 0 / 0.75));
+}
+
 </style>
