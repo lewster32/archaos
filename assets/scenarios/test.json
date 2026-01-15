@@ -2,39 +2,48 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 15,
-        "height": 15
+        "width": 9,
+        "height": 9
     },
     "players": [
         {
             "id": 1,
             "name": "Player 1",
-            "position": { "x": 3, "y": 3 },
+            "position": { "x": 0, "y": 0 },
             "computerControlled": false,
             "pieces": [
-
+                {
+                    "type": "Bat",
+                    "position": { "x": 1, "y": 0 }
+                }
             ],
             "spells": [
-                "Magic Wood"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 11, "y": 11 },
+            "position": { "x": 8, "y": 8 },
             "computerControlled": false,
             "pieces": [
-
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 4, "y": 3 }
+                },
+                {
+                    "type": "King Cobra",
+                    "position": { "x": 4, "y": 4 }
+                }
             ],
             "spells": [
-                "Shadow Wood"
+
             ]
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
-        "forceHit": null,
-        "forceCast": true,
+        "forceHit": true,
+        "forceCast": null,
         "shortDelay": false
     }
 }

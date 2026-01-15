@@ -560,6 +560,17 @@ export class ComputerWizard {
                         console.debug(`${piece.owner.name}'s ${piece.name} flies to terminal position and attacks ${targetPiece.name}`);
                         piece.moved = true;
                         await this._board.attackPiece(piece.id, targetPiece.id);
+                        if (!piece.currentMount && piece.engaged) {
+                            const firstEngagingPiece: Piece | null =
+                                piece.getFirstEngagingPiece();
+
+                            if (firstEngagingPiece) {
+                                console.debug(`${piece.owner.name}'s ${piece.name} is now engaged after attacking`);
+                                piece.attacked = false;
+                                await this.moveUnit(piece);
+                            }
+                        }
+                        piece.attacked = true;
                         return true;
                     }
                     else {
