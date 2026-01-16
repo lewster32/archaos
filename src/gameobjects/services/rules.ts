@@ -104,7 +104,8 @@ export class Rules {
                         return ActionType.Mount;
                     }
                     if (
-                        selectedPiece.canAttackPiece(currentAliveHoveredPiece)
+                        selectedPiece.canAttackPiece(currentAliveHoveredPiece) &&
+                        selectedPiece.inAttackRange(currentAliveHoveredPiece.position)
                     ) {
                         return ActionType.Attack;
                     }
@@ -418,6 +419,11 @@ export class Rules {
                             currentAliveHoveredPiece.position
                         );
                         selectedPiece.moved = false;
+                    }
+                    else if (
+                        !currentAliveHoveredPiece.inAttackRange(selectedPiece.position)
+                    ) {
+                        return ActionType.Invalid;
                     }
                     selectedPiece.attacked = false;
                     await board.attackPiece(

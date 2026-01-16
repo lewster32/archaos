@@ -759,7 +759,7 @@ export class Piece extends Entity {
             }
         }
         // Flying units can move anywhere within their movement stat
-        if (this.hasStatus(UnitStatus.Flying) && Board.distance(this.position, point) <= this.stats.movement) {
+        if (this.hasStatus(UnitStatus.Flying) && Board.distance(this.position, point, RangeType.Fly) <= this.stats.movement) {
             return true;
         }
         if (!this.board.rangeGizmo.getPathTo(point)) {

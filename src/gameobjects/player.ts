@@ -23,7 +23,14 @@ export class Player extends Model {
     private readonly _ai: ComputerWizard | null;
 
     static readonly PLAYER_COLOURS: number[] = [
-        0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0x000000, 0xff5500,
+        0x0000ff, // Blue
+        0xff0000, // Red
+        0xff00ff, // Magenta
+        0x00ff00, // Green
+        0x00ffff, // Cyan
+        0xffff00, // Yellow
+        0x5500ff, // Purple
+        0xff5500, // Orange
     ];
 
     constructor(board: Board, id: number, config: PlayerConfig) {
