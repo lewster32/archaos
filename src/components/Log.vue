@@ -74,8 +74,13 @@ const formatDate = (date: Date) => {
  * @returns The colour style object (a CSS custom property).
  */
 const getColour = (log: Log) => {
-    if (log.colour) {
-        return { color: `var(--color-${Colour[log.colour].toLowerCase()})` };
+    if (log?.colour) {
+        if (Colour[log.colour]) {
+            return { color: `var(--color-${Colour[log.colour]})` };
+        }
+        else {
+            return { color: `color-mix(in oklab, ${log.colour.toString()}, white 20%)` };
+        }
     }
     return { color: `var(--color-white)` };
 };

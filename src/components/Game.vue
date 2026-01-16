@@ -124,6 +124,11 @@ import type {
     SetupPlayer,
 } from "../gameobjects/interfaces/ui";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
+import { EventType } from "../gameobjects/enums/eventtype";
+import { Colour } from "../gameobjects/enums/colour";
+import { Piece } from "../gameobjects/piece";
+import { Wizard } from "../gameobjects/wizard";
+import { Display } from "phaser";
 
 /**
  * Game component - contains the Phaser game instance and UI components.
@@ -422,7 +427,33 @@ onMounted(async () => {
             );
         }
     }
+
+    globalThis.addEventListener(EventType.PieceInfo, (e: CustomEvent) => {
+        const piece:Piece = e.detail as Piece;
+        if (!piece?.owner) {
+            return;
+        }
+        logs.value.push({
+            message: 'Clicked on ' + ((piece instanceof Wizard) ? `${piece.owner.name}` : `${piece.owner.name}'s ${piece.name}`) + ` at position ${piece.position.x}, ${piece.position.y}`,
+            id: logs.value.length,
+            timestamp: new Date(),
+            colour: hexColour(piece.owner.colour)
+        });
+    });
 });
+
+/**
+ * Converts a numeric colour to a hex string.
+ * 
+ * @param colourNum  The numeric colour.
+ * @returns The hex colour string.
+ */
+const hexColour = (colourNum: number) => {
+    const colour: Display.Color =
+        Display.Color.ValueToColor(colourNum);
+    return `${colour.rgba}`;
+};
+
 
 onUnmounted(() => {
     // Clean up event listeners

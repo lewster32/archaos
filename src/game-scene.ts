@@ -11,6 +11,7 @@ import effectsAtlas from "../assets/spritesheets/effects.png";
 import hatsSheet from "../assets/spritesheets/hats.png";
 import wizardsSheet from "../assets/spritesheets/wizards.png";
 import magicArmourSheet from "../assets/spritesheets/magic-armour.png";
+import unitGlow from "../assets/spritesheets/unit-glow.png";
 import classicSoundsJson from "../assets/sounds/chaossounds.json?url";
 import classicSoundsAc3 from "../assets/sounds/chaossounds.ac3?url";
 import classicSoundsM4a from "../assets/sounds/chaossounds.m4a?url";
@@ -28,6 +29,7 @@ import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
 import { Scene } from "phaser";
+import { UnitStatus } from "./gameobjects/enums/unitstatus";
 
 export class GameScene extends Scene {
     board: Board;
@@ -61,6 +63,8 @@ export class GameScene extends Scene {
             frameWidth: 14,
             frameHeight: 14,
         });
+
+        this.load.image("unit-glow", unitGlow);
 
         this.load.plugin(
             "rexcolorreplacepipelineplugin",
@@ -154,13 +158,13 @@ export class GameScene extends Scene {
         });
 
         // Start a normal game
-        this.game.events.on("start-game", (data: GameSetupData) => {
-            this.startGame(data);
+        this.game.events.on("start-game", async (data: GameSetupData) => {
+            await this.startGame(data);
         });
 
         // Start a scenario (a predefined board state)
-        this.game.events.on("start-scenario", (scenarioData: GameScenarioData) => {
-            this.startScenario(scenarioData);
+        this.game.events.on("start-scenario", async (scenarioData: GameScenarioData) => {
+            await this.startScenario(scenarioData);
         });
     }
 
@@ -169,7 +173,7 @@ export class GameScene extends Scene {
      * 
      * @param data Initialisation data for the game.
      */
-    startGame(data: GameSetupData): void {
+    async startGame(data: GameSetupData): Promise<void> {
         if (this.board) {
             this.board.destroy();
         }
@@ -209,7 +213,7 @@ export class GameScene extends Scene {
      * 
      * @param scenarioData Scenario data to load.
      */
-    startScenario(scenarioData: GameScenarioData): void {
+    async startScenario(scenarioData: GameScenarioData): Promise<void> {
         if (this.board) {
             this.board.destroy();
         }
@@ -227,12 +231,19 @@ export class GameScene extends Scene {
                 name: player.name,
                 computerControlled: player.computerControlled || false,
             })
-            this.board.addWizard({
+            const wizard: Wizard = this.board.addWizard({
                 owner: currentPlayer,
                 x: player.position.x,
                 y: player.position.y,
                 wizCode: player.wizCode || Wizard.randomWizCode()
             });
+            if (player.statuses?.length) {
+                for (let statusName of player.statuses) {
+                    const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                    wizard.addStatus(status);
+                }
+            }
+
             if (player.spells?.length) {
                 for (let spellName of player.spells) {
                     // If spell starts with '*', add all of that type
@@ -257,13 +268,19 @@ export class GameScene extends Scene {
             if (player.pieces?.length) {
                 for (let pieceData of player.pieces) {
                     const pieceProperties = Piece.getPieceProperties(pieceData.type);
-                    this.board.addPiece({
+                    const piece: Piece = await this.board.addPiece({
                         ...pieceProperties,
                         owner: currentPlayer,
                         x: pieceData.position.x,
                         y: pieceData.position.y,
                         unitType: pieceProperties.unitType || UnitType.Creature
                     });
+                    if (pieceData.statuses?.length) {
+                        for (let statusName of pieceData.statuses) {
+                            const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                            piece.addStatus(status);
+                        }
+                    }
                 }
             }
         }

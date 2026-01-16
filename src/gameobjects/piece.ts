@@ -172,9 +172,13 @@ export class Piece extends Entity {
 
         setTimeout(() => {
             this.initSprites();
-        }, Math.random() * 10);
+        });
     }
 
+    /**
+     * Initialize the piece's sprites. Will not create duplicate sprites if
+     * they already exist.
+     */
     protected initSprites() {
         this.createShadow();
         this.createSprite();
@@ -1254,6 +1258,9 @@ export class Piece extends Entity {
     protected createShadow(): GameObjects.Image | null {
         if (this.hasStatus(UnitStatus.Transparent)) {
             return null;
+        }
+        if (this._shadow) {
+            return this._shadow;
         }
         const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position

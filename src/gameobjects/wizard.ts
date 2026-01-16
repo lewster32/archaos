@@ -15,6 +15,9 @@ import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
 import { Math as PMath, Geom, GameObjects, BlendModes } from "phaser";
 
+/**
+ * Get the Wizard unit configuration
+ */
 const wizardUnitData = units['1'];
 
 /**
@@ -81,6 +84,8 @@ export class Wizard extends Piece {
         } else {
             throw new Error("Wizard must have an owner");
         }
+        // Init the sprites again to use the wizard-specific sprite.
+        this.initSprites();
     }
 
     /**
@@ -244,7 +249,7 @@ export class Wizard extends Piece {
             // Visual effects
             case UnitStatus.ShadowForm:
                 // Make the wizard semi-transparent
-                this.sprite.setAlpha(Piece.SHADOW_FORM_ALPHA);
+                this.sprite?.setAlpha(Piece.SHADOW_FORM_ALPHA);
                 break;
             case UnitStatus.MagicKnife:
             case UnitStatus.MagicSword:
@@ -465,6 +470,46 @@ export class Wizard extends Piece {
         this.playAnim();
 
         return this._sprite;
+    }
+
+    createShadow(): GameObjects.Image | null {
+        // Wizards have a unit-glow effect instead of a shadow.
+        if (this._shadow) {
+            return this._shadow;
+        }
+        const isoPosition: Geom.Point = this.board.getIsoPosition(
+            this.position
+        );
+
+        this._shadow = this.board.scene.add.image(
+            isoPosition.x,
+            isoPosition.y,
+            "unit-glow"
+        );
+
+        // Tint the glow to match the wizard's owner colour.
+        this._shadow.setTint(this.owner?.colour);
+
+        // Make additive
+        this._shadow.setBlendMode(BlendModes.SCREEN);
+
+        // Add repeating tween to pulse the glow
+        this.board.scene.tweens.add({
+            targets: [this._shadow],
+            duration: 1000,
+            yoyo: true,
+            ease: "Stepped",
+            easeParams: [5],
+            alpha: {from: 0, to: 1},
+            loop: -1,
+        });
+
+        this.board.getLayer(BoardLayer.Shadows).add(this._shadow);
+
+        this._shadow.setOrigin(0.5, 0.5);
+        this._shadow.displayOriginY = -3;
+
+        return this._shadow;
     }
 
     /**

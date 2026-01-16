@@ -69,7 +69,7 @@ const close = () => {
  * @returns The hex colour string.
  */
 const hexColour = (colourNum: number) => {
-    const colour: Phaser.Display.Color =
+    const colour: Display.Color =
         Display.Color.ValueToColor(colourNum);
     return `${colour.rgba}`;
 };
@@ -84,7 +84,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
     return {
         "--piece-x": piece.position.x + "px",
         "--piece-y": piece.position.y + "px",
-        "--piece-color": hexColour(piece.owner?.colour ?? 0x444444),
+        "--piece-color": `color-mix(in oklab, ${hexColour(piece.owner?.colour ?? 0x444444)}, white 10%)`,
     };
 };
 </script>
@@ -131,6 +131,16 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
         &--wizard {
             z-index: 2;
             transform: scale(1);
+            &::after {
+                content: '';
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 33%;
+                height: 33%;
+                background: var(--color-yellow);
+            }
         }
     }
 }

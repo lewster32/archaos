@@ -39,5 +39,5 @@ export interface Log {
     message: string;
     timestamp: Date;
     id: number;
-    colour?: Colour;
+    colour?: Colour | string;
 }

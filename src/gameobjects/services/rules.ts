@@ -404,13 +404,14 @@ export class Rules {
             }
             if (actionType === ActionType.Attack) {
                 if (selectedPiece.canAttackPiece(currentAliveHoveredPiece)) {
-                    // If we're not flying and we're more than 1 tile away, we
-                    // need to move first
+                    // If we're not flying and we're more than 1.5 tiles away,
+                    // we need to move first
                     if (
                         !selectedPiece.hasStatus(UnitStatus.Flying) &&
                         selectedPiece.inMovementRange(
                             currentAliveHoveredPiece.position
-                        )
+                        ) &&
+                        Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
                         await board.movePiece(
                             selectedPiece.id,
@@ -418,9 +419,7 @@ export class Rules {
                         );
                         selectedPiece.moved = false;
                     }
-                    else {
-                        console.log(`No need to move before attacking`);
-                    }
+                    selectedPiece.attacked = false;
                     await board.attackPiece(
                         selectedPiece.id,
                         currentAliveHoveredPiece.id

@@ -81,6 +81,7 @@ export interface GameScenarioPlayer {
     pieces?: GameScenarioPiece[];
     spells?: string[]; // A simple list of spell names for now.
     computerControlled?: boolean;
+    statuses?: string[];
 }
 
 /**
@@ -89,6 +90,7 @@ export interface GameScenarioPlayer {
 export interface GameScenarioPiece {
     type: string; // The piece's name, e.g. 'Golden Dragon'
     position: { x: number; y: number };
+    statuses?: string[];
 }
 
 /**

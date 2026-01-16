@@ -13,7 +13,7 @@
             "computerControlled": false,
             "pieces": [
                 {
-                    "type": "Bat",
+                    "type": "Wraith",
                     "position": { "x": 1, "y": 0 }
                 }
             ],
@@ -23,17 +23,12 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 8, "y": 8 },
+            "position": { "x": 3, "y": 0 },
             "computerControlled": false,
+            "statuses": [
+                "ShadowForm"
+            ],
             "pieces": [
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 4, "y": 3 }
-                },
-                {
-                    "type": "King Cobra",
-                    "position": { "x": 4, "y": 4 }
-                }
             ],
             "spells": [
 
@@ -42,8 +37,8 @@
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": true,
+        "forceHit": false,
         "forceCast": null,
-        "shortDelay": false
+        "shortDelay": true
     }
 }
