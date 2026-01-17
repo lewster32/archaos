@@ -134,8 +134,6 @@ import type {
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
 import { Piece } from "../gameobjects/piece";
-import { Wizard } from "../gameobjects/wizard";
-import { hexColour } from "../utils";
 import UnitInfo from "./UnitInfo.vue";
 
 /**
