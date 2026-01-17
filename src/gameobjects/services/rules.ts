@@ -139,11 +139,14 @@ export class Rules {
                         if (currentAliveHoveredPiece.canSelect) {
                             return ActionType.Select;
                         } else {
-                            return ActionType.Invalid;
+                            return ActionType.Info;
                         }
                     } else {
                         return ActionType.Info;
                     }
+                }
+                else if (hoveredPieces.length > 0) {
+                    return ActionType.Info;
                 }
                 return ActionType.Idle;
             }
@@ -279,7 +282,27 @@ export class Rules {
     ): Promise<ActionType> {
         if (actionType === ActionType.Info) {
             if (hoveredPieces.length > 0) {
-                this.dispatchEvent(EventType.PieceInfo, hoveredPieces[0]);
+                // The piece of interest is the best match (in order of priority):
+                // 1. Alive piece that has a current rider
+                // 2. Alive piece
+                // 3. Any remaining piece
+                const pieceOfInterest: Piece = hoveredPieces
+                    .toSorted((a: Piece, b: Piece) => {
+                        if (!a.dead && a.currentRider) {
+                            return -1;
+                        }
+                        if (!b.dead && b.currentRider) {
+                            return 1;
+                        }
+                        if (!a.dead && b.dead) {
+                            return -1;
+                        }
+                        if (a.dead && !b.dead) {
+                            return 1;
+                        }
+                        return 0;
+                    }).at(0);
+                this.dispatchEvent(EventType.PieceInfo, pieceOfInterest);
                 return ActionType.Info;
             }
         }

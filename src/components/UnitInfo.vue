@@ -5,7 +5,9 @@
         </button>
         <div class="unitinfo__inner callout">
             <h2>{{ unit?.name }}<template v-if="unit.dead">'s corpse</template></h2>
-            <p v-if="unit.type !== UnitType.Wizard && unit?.owner" >Owned by <span :style="`color: var(--tint-colour)`">{{ unit?.owner.name }}</span></p>
+            <p v-if="unit.type !== UnitType.Wizard && unit?.owner">
+                {{ unit.currentRider ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ unit?.owner.name }}</span>
+            </p>
             <UnitStats v-if="unit" :unit="unit.unitConfig" />
             <div class="callout__buttons">
                 <button class="spellinfo__select button button--green" @click="highlightOwnedUnits(unit!.owner!)">

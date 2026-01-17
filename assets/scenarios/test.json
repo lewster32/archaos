@@ -13,7 +13,7 @@
             "computerControlled": false,
             "pieces": [
                 {
-                    "type": "Giant",
+                    "type": "Centaur",
                     "position": { "x": 1, "y": 0 },
                     "statuses": [
                         "Undead"
@@ -50,7 +50,7 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": true,
         "forceCast": true,

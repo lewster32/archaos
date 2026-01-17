@@ -728,6 +728,8 @@ export class Board extends Model implements Box {
      * @returns A promise that resolves when the piece has been deselected.
      */
     async deselectPiece(): Promise<void> {
+        this.rules.dispatchEvent(EventType.PieceInfo, null);
+
         if (!this._selected) {
             console.warn("No piece selected to deselect");
             return;
