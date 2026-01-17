@@ -88,7 +88,7 @@
                 <ul class="spellbook__list spell-list">
                     <li
                         class="spell-list__item spell"
-                        v-for="spell in spellsByChance()"
+                        v-for="spell in spellsByChance"
                         :key="spell.id"
                     >
                         <img class="spell__image" :src="getImageUrl(spell)" :alt="spell.name"/>
@@ -292,14 +292,14 @@ const closeInfo: () => void = () => {
 /**
  * Gets the spells sorted by casting chance (highest first), then by name.
  */
-const spellsByChance: () => Spell[] = () => {
+const spellsByChance: Ref<Spell[]> = computed(() => {
     return props.data.spells.sort((a: Spell, b: Spell) => {
         if (b.chance != a.chance) {
             return b.chance - a.chance;
         }
         return a.name.localeCompare(b.name);
     });
-};
+});
 
 /**
  * Gets the image URL for a spell.
@@ -431,7 +431,10 @@ const toggle: () => void = () => {
         flex: 1 1 auto;
     }
     &__balance {
-        flex: 0 1 auto;
+        flex: 0 1 2ch;
+        flex-direction: column-reverse;
+        overflow-wrap: anywhere;
+        text-align: center;
     }
 }
 

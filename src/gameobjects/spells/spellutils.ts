@@ -27,17 +27,18 @@ export const chanceRounded = (chance: number): number => {
 
 /**
  * Gets the balance indicator for a spell. This is a simple symbol as per the
- * original game: ^ for lawful, * for chaotic, - for neutral.
+ * original game: ^ for lawful, * for chaotic, - for neutral. The number of
+ * symbols indicates the strength of the balance effect, up to a maximum of 4.
  * 
  * @param spell The spell to get the balance indicator for.
  * @returns The balance indicator symbol.
  */
 export const balance = (spell: Spell): string => {
     if (spell.balance > 0) {
-        return "^".repeat(spell.balance);
+        return "^".repeat(Math.min(spell.balance, 4));
     }
     else if (spell.balance < 0) {
-        return "*".repeat(-spell.balance);
+        return "*".repeat(Math.min(Math.abs(spell.balance), 4));
     }
     return "-";
 }

@@ -74,6 +74,8 @@ body,
     2px 2px var(--color-white), -2px 2px var(--color-white),
     0 -2px var(--color-white), 0 2px var(--color-white),
     2px 0 var(--color-white), -2px 0 var(--color-white);
+
+    // --help-tips-display: inline-block;
 }
 
 body {
@@ -184,6 +186,7 @@ button {
 [title] {
     cursor: help;
     &::after {
+        display: var(--help-tips-display, none);
         content: '?';
         margin-left: .25em;
         font-size: .5em;
