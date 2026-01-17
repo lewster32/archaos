@@ -140,6 +140,7 @@
         },
         "status": [],
         "name": "Elf",
+        "indefiniteArticle": "an",
         "animFrames": [
             0,
             1,
@@ -162,6 +163,7 @@
         },
         "status": [],
         "name": "Orc",
+        "indefiniteArticle": "an",
         "animFrames": [
             0,
             1,
@@ -206,6 +208,7 @@
             "mount"
         ],
         "name": "Unicorn",
+        "indefiniteArticle": "a",
         "animFrames": [
             0,
             1,
@@ -686,6 +689,7 @@
         },
         "status": [],
         "name": "Ogre",
+        "indefiniteArticle": "an",
         "animFrames": [
             0,
             1,
@@ -796,6 +800,7 @@
             "flying"
         ],
         "name": "Eagle",
+        "indefiniteArticle": "an",
         "animFrames": [
             0,
             1,

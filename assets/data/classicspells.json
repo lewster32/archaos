@@ -202,7 +202,7 @@
         "allowIllusion": false,
         "unitId": "21",
         "name": "Magic Wood",
-        "description": "Plants six trees which can be hidden in by wizards. Randomly expires and grants a new spell if a wizard is currently occupying."
+        "description": "Automatically summons up to eight trees which can be mounted by wizards."
     },
     "shadow-wood": {
         "chance": 0.4,
@@ -214,7 +214,7 @@
         "allowIllusion": false,
         "unitId": "22",
         "name": "Shadow Wood",
-        "description": "Plants six trees which can attack adjacent creatures and wizards."
+        "description": "Summons up to eight trees which can not move, but can attack adjacent enemy creatures and wizards."
     },
     "magic-fire": {
         "chance": 0.8,
@@ -224,7 +224,7 @@
         "allowIllusion": false,
         "unitId": "23",
         "name": "Magic Fire",
-        "description": "Slowly and randomly spreads around the map, destroying creatures and wizards."
+        "description": "Slowly and randomly spreads around the map, destroying any enemy creatures and wizards it spreads over."
     },
     "gooey-blob": {
         "chance": 0.9,
@@ -234,7 +234,7 @@
         "allowIllusion": false,
         "unitId": "24",
         "name": "Gooey Blob",
-        "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Wizards are defeated if engulfed."
+        "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Beware, wizards are destroyed if engulfed!"
     },
     "magic-castle": {
         "chance": 0.5,
@@ -259,7 +259,7 @@
         "range": 4,
         "unitId": "27",
         "name": "Wall",
-        "description": "Builds four walls which cannot be attacked or passed by land-based units."
+        "description": "Summons four walls which cannot be attacked or passed by land-based units."
     },
     "magic-bolt": {
         "balance": 0,
@@ -362,7 +362,7 @@
         "target": "corpse",
         "projectile": "raisedead",
         "name": "Raise Dead",
-        "description": "Reanimates the corpse of a creature, making it undead, and puts it under the control of the caster."
+        "description": "Reanimates the corpse of a creature, making it undead, and putting it under the control of the caster."
     },
     "subversion": {
         "balance": 0,
@@ -383,7 +383,7 @@
         "name": "Shadow Form",
         "projectile": "shadowform",
         "range": 0,
-        "description": "Increases the caster's defense and movement range. If the caster physically attacks another unit, the effect is lost."
+        "description": "Increases the caster's defense and movement range, and breaks any engagement at the start of the caster's movement turn. If the caster physically attacks another unit, the effect is lost."
     },
     "magic-knife": {
         "balance": 1,
@@ -423,7 +423,7 @@
         "target": "self",
         "range": 0,
         "name": "Magic Bow",
-        "description": "Allows the caster to make long ranged attacks, and to attack the undead."
+        "description": "Allows the caster to take ranged attacks, and to attack the undead."
     },
     "magic-wings": {
         "balance": 0,
@@ -431,7 +431,7 @@
         "target": "self",
         "range": 0,
         "name": "Magic Wings",
-        "description": "Allows the caster to fly over long distances."
+        "description": "Allows the caster to fly."
     },
     "law-1": {
         "balance": 2,

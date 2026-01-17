@@ -21,7 +21,7 @@
                 }
             ],
             "spells": [
-                "Bat", "Chaos 1", "Chaos 2", "Law 1", "Law 2", "Horse"
+                "Magic Wood", "Shadow Wood", "Magic Fire", "Gooey Blob", "Orc"
             ]
         },
         {
@@ -50,7 +50,7 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": true,
         "forceCast": true,

@@ -52,8 +52,11 @@ export class SummonSpell extends Spell {
     get description(): string {
         let description: string = "";
 
-        description += ` Summon a ${this.name}.`;
         const unitConfig: any = Piece.getUnitConfig(this.unitId);
+        
+        if (this.castTimes === 1)  {
+            description += ` Summon ${unitConfig.indefiniteArticle || (/^[aeiou]/i.test(unitConfig.name) ? "an" : "a")} ${unitConfig.name}.`;
+        }
         if (unitConfig?.status?.includes("undead")) {
             description += ` Undead units cannot usually be attacked by the living.`;
         }
@@ -67,9 +70,16 @@ export class SummonSpell extends Spell {
         }
         if (unitConfig?.status?.includes("expires")) {
             description += ` Has a random chance to expire each turn.`;
+            if (unitConfig?.status?.includes("expiresGivesSpell")) {
+                description += ` Will only expire if a wizard is currently mounted, and upon doing so, grants a new spell to that player.`;
+            }
         }
 
-        return (description + " " + super.description).trim();
+        if (!unitConfig?.status?.includes("spread")) {
+            return `${super.description} ${description}`.trim();
+        }
+
+        return `${description} ${super.description}`.trim();
     }
 
     protected roll(): boolean {
