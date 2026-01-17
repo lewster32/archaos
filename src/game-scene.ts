@@ -66,11 +66,13 @@ export class GameScene extends Scene {
 
         this.load.image("unit-glow", unitGlow);
 
-        this.load.plugin(
-            "rexcolorreplacepipelineplugin",
-            rexcolorreplacepipelineplugin,
-            true
-        );
+        if (!this.plugins.get("rexcolorreplacepipelineplugin")) {
+            this.load.plugin(
+                "rexcolorreplacepipelineplugin",
+                rexcolorreplacepipelineplugin,
+                true
+            );
+        }
 
         this.load.audioSprite("classicsounds", classicSoundsJson, [
             classicSoundsAc3,
@@ -243,6 +245,30 @@ export class GameScene extends Scene {
                     wizard.addStatus(status);
                 }
             }
+            if (scenarioData.corpses?.length) {
+                for (let corpseData of scenarioData.corpses) {
+                    const pieceProperties = Piece.getPieceProperties(corpseData.type);
+                    const piece: Piece = await this.board.addPiece({
+                        ...pieceProperties,
+                        owner: null,
+                        x: corpseData.position.x,
+                        y: corpseData.position.y,
+                        unitType: pieceProperties.unitType || UnitType.Creature,
+                    });
+                    if (corpseData.statuses?.length) {
+                        for (let statusName of corpseData.statuses) {
+                            const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                            piece.addStatus(status);
+                        }
+                    }
+                    if (piece.hasStatus(UnitStatus.NoCorpse)) {
+                        this.board.removePiece(piece.id);
+                    }
+                    else {
+                        piece.kill(true);
+                    }
+                }
+            }
 
             if (player.spells?.length) {
                 for (let spellName of player.spells) {
@@ -278,6 +304,10 @@ export class GameScene extends Scene {
                     if (pieceData.statuses?.length) {
                         for (let statusName of pieceData.statuses) {
                             const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                            if (status === UnitStatus.Undead && !piece.hasStatus(UnitStatus.Undead)) {
+                                console.log(`Setting piece ${piece.name} as raised undead`);
+                                piece.raisedDead = true;
+                            }
                             piece.addStatus(status);
                         }
                     }

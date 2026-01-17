@@ -61,7 +61,7 @@ export class Piece extends Entity {
     /**
      * Tint color to use when rendering a piece raised from the dead.
      */
-    static readonly RAISED_DEAD_TINT: number = 0xb0d9ff;
+    static readonly RAISED_DEAD_TINT: number = 0x55ffcc;
 
     /**
      * Amount to darken the piece's tint when it has moved this turn.
@@ -294,10 +294,16 @@ export class Piece extends Entity {
     }
 
     get sprite(): GameObjects.Sprite {
+        if (!this._sprite) {
+            this.createSprite();
+        }
         return this._sprite;
     }
 
     get shadow(): GameObjects.Image {
+        if (!this._shadow) {
+            this.createShadow();
+        }
         return this._shadow;
     }
 
@@ -966,9 +972,7 @@ export class Piece extends Entity {
             piece.stats.maneuverability === 0 || // Cannot engage pieces with zero maneuverability
             this.currentMount || // Cannot engage when mounted
             piece.currentMount || // Cannot engage mounted pieces
-            this.owner === piece.owner || // Cannot engage own pieces
-            this.hasStatus(UnitStatus.ShadowForm) || // Units with Shadow Form do not engage
-            piece.hasStatus(UnitStatus.ShadowForm) // Units with Shadow Form cannot be engaged
+            this.owner === piece.owner
         ) {
             return false;
         }
@@ -1140,7 +1144,7 @@ export class Piece extends Entity {
         return false;
     }
 
-    async kill(): Promise<void> {
+    async kill(silent: boolean = false): Promise<void> {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
@@ -1170,7 +1174,9 @@ export class Piece extends Entity {
         ) {
             await this.destroy();
         }
-        this.board.sound.play("killcreature");
+        if (!silent) {
+            this.board.sound.play("killcreature");
+        }
         if (!this._sprite) {
             return;
         }

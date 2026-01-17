@@ -68,6 +68,7 @@ export interface GameScenarioData {
     cheats?: GameScenarioCheats;
     phase?: string,
     currentPlayerIndex?: number,
+    corpses?: GameScenarioPiece[];
 }
 
 /**

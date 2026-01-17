@@ -518,7 +518,7 @@ export class Spell extends Model {
         }
         if (this._castTimes === this._totalCastTimes) {
             // TODO: Check how this shift compares to the real game
-            this._board.balanceShift += this.balance * 0.025;
+            this._board.balanceShift += this.balance * 0.01;
         }
         this._castTimes--;
 

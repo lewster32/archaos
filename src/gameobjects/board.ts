@@ -666,8 +666,16 @@ export class Board extends Model implements Box {
                 return;
             }
 
-            const firstEngagingPiece: Piece | null =
-                this._selected.getFirstEngagingPiece();
+            
+            let firstEngagingPiece: Piece | null = null;
+            // Special case: Units in Shadow Form do not become engaged at the
+            // start of movement.
+            if (this._selected.hasStatus(UnitStatus.ShadowForm)) {
+                this._selected.engaged = false;
+            }
+            else {
+                firstEngagingPiece = this._selected.getFirstEngagingPiece();
+            }
 
             if (firstEngagingPiece) {
                 if (

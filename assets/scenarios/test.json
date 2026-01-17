@@ -13,8 +13,11 @@
             "computerControlled": false,
             "pieces": [
                 {
-                    "type": "Bat",
-                    "position": { "x": 1, "y": 0 }
+                    "type": "Giant",
+                    "position": { "x": 1, "y": 0 },
+                    "statuses": [
+                        "Undead"
+                    ]
                 }
             ],
             "spells": [
@@ -27,19 +30,26 @@
             "position": { "x": 4, "y": 0 },
             "computerControlled": false,
             "statuses": [
-                
+                "ShadowForm"
             ],
             "pieces": [
+
             ],
             "spells": [
 
             ]
         }
     ],
+    "corpses": [
+        {
+            "type": "Bat",
+            "position": { "x": 2, "y": 2 }
+        }
+    ],
     "phase": "moving",
     "cheats": {
         "forceHit": true,
-        "forceCast": null,
+        "forceCast": true,
         "shortDelay": true
     }
 }
