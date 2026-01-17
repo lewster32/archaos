@@ -10,7 +10,10 @@
         ref="container"
     />
     <div class="placeholder" v-else>Loading...</div>
-    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted && spellbook" />
+    <Spellbook
+        :data="spellbook"
+        @select="spellSelect"
+        v-if="gameStarted && spellbook" />
     <Log :logs="logs" />
     <Minimap :pieces="pieces" :board="board" v-if="gameStarted" />
     <div class="menu" v-if="!gameStarted">
@@ -97,6 +100,11 @@
             title="Cancel"
         />
     </div>
+    <UnitInfo
+        v-if="currentUnit"
+        :unit="currentUnit"
+        @close="closeUnitInfo()"
+    />
 </template>
 
 <script setup lang="ts">
@@ -127,7 +135,8 @@ import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
 import { Piece } from "../gameobjects/piece";
 import { Wizard } from "../gameobjects/wizard";
-import { Display } from "phaser";
+import { hexColour } from "../utils";
+import UnitInfo from "./UnitInfo.vue";
 
 /**
  * Game component - contains the Phaser game instance and UI components.
@@ -211,6 +220,7 @@ const setup: Ref<SetupData | null> = ref(null);
  * @param spell The spell that was selected.
  */
 const spellSelect: (spell: Spell) => void = (spell: Spell) => {
+    closeUnitInfo();
     spellbook.value?.onSelect?.(spell);
 };
 
@@ -292,6 +302,18 @@ const defaultPlayers: SetupPlayer[] = [
         computerControlled: true,
     },
 ];
+
+/**
+ * The currently selected unit for displaying info.
+ */
+const currentUnit: Ref<Piece | null> = ref(null);
+
+/**
+ * Closes the unit info display.
+ */
+const closeUnitInfo: () => void = () => {
+    currentUnit.value = null;
+};
 
 watch(
     () => setup.value?.playerCount,
@@ -429,6 +451,7 @@ onMounted(async () => {
 
     globalThis.addEventListener(EventType.PieceInfo, (e: CustomEvent) => {
         const piece:Piece = e.detail as Piece;
+        currentUnit.value = piece;
         if (!piece?.owner) {
             return;
         }
@@ -440,19 +463,6 @@ onMounted(async () => {
         });
     });
 });
-
-/**
- * Converts a numeric colour to a hex string.
- * 
- * @param colourNum  The numeric colour.
- * @returns The hex colour string.
- */
-const hexColour = (colourNum: number) => {
-    const colour: Display.Color =
-        Display.Color.ValueToColor(colourNum);
-    return `${colour.rgba}`;
-};
-
 
 onUnmounted(() => {
     // Clean up event listeners
@@ -469,7 +479,7 @@ onUnmounted(() => {
     top: 0;
     left: 6em;
     padding: 1em;
-    z-index: 2;
+    z-index: 20;
 }
 
 .big-button {

@@ -12,12 +12,14 @@
     color: var(--color-white);
     font-weight: 300;
     letter-spacing: 1px;
-    border-image-source: url("../../assets/images/ui/button-header.png");
+    --border-image-source: url("../../assets/images/ui/button-header.png");
+    --border-image-source-hover: url("../../assets/images/ui/button-header-hover.png");
     text-align: center;
     user-select: none;
+    border-image-source: var(--border-image-source);
 
     &:hover {
-        border-image-source: url("../../assets/images/ui/button-header-hover.png");
+        border-image-source: var(--border-image-source-hover);
     }
 
     &--important {
@@ -25,31 +27,37 @@
     }
 
     &--red {
-        border-image-source: url("../../assets/images/ui/button-red.png");
-        &:hover {
-            border-image-source: url("../../assets/images/ui/button-red-hover.png");
-        }
+        --border-image-source: url("../../assets/images/ui/button-red.png");
+        --border-image-source-hover: url("../../assets/images/ui/button-red-hover.png");
     }
 
     &--green {
-        border-image-source: url("../../assets/images/ui/button-green.png");
-        &:hover {
-            border-image-source: url("../../assets/images/ui/button-green-hover.png");
-        }
+        --border-image-source: url("../../assets/images/ui/button-green.png");
+        --border-image-source-hover: url("../../assets/images/ui/button-green-hover.png");
     }
 
     &--yellow {
         color: var(--color-black);
         text-shadow: var(--text-shadow-inverted);
-        border-image-source: url("../../assets/images/ui/button-yellow.png");
-        &:hover {
-            border-image-source: url("../../assets/images/ui/button-yellow.png");
-            opacity: 0.9;
-        }
+        --border-image-source: url("../../assets/images/ui/button-yellow.png");
+        --border-image-source-hover: url("../../assets/images/ui/button-yellow-hover.png");
     }
 
     &--small {
         padding: 0 0.25em;
         line-height: 1;
+    }
+    
+    &--flashing {
+        animation: toggle-flash .75s infinite;
+    }
+
+    @keyframes toggle-flash {
+        0%, 100% {
+            border-imatge-source: var(--border-image-source);
+        }
+        50% {
+            border-image-source: var(--border-image-source-hover);
+        }
     }
 }

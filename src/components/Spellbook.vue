@@ -61,7 +61,7 @@
             v-if="minimised"
             class="
                 spellbook__toggle spellbook__toggle--closed
-                button button--green
+                button button--green button--flashing
             "
             @click="toggle()"
             title="Open spellbook"
@@ -156,7 +156,11 @@ const props = defineProps<{
     data: SpellbookData;
 }>();
 
-const emit = defineEmits<(e: "select", spell: Spell | null) => void>();
+const emit = defineEmits<{
+    (e: "select", spell: Spell | null): void;
+    (e: "open"): void;
+    (e: "close"): void;
+}>();
 
 /**
  * The scroll element for the spell list.
@@ -316,6 +320,7 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
  */
 const toggle: () => void = () => {
     props.data.minimised = !props.data.minimised;
+    props.data.minimised ? emit("close") : emit("open");
     if (currentSpell.value) {
         closeInfo();
     }
@@ -328,7 +333,7 @@ const toggle: () => void = () => {
     right: 0;
     top: 0;
     bottom: 0;
-    z-index: 3;
+    z-index: 30;
     padding: 1em;
     display: flex;
     justify-content: right;
@@ -381,6 +386,7 @@ const toggle: () => void = () => {
         position: absolute;
         left: 2px;
         top: 2em;
+        cursor: pointer;
         z-index: 50;
         &--closed {
             top: 1.5em;

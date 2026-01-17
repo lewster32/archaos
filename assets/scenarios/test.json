@@ -33,6 +33,10 @@
                 "ShadowForm"
             ],
             "pieces": [
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 5, "y": 0 }
+                }
 
             ],
             "spells": [
@@ -46,10 +50,10 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": true,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

@@ -174,4 +174,6 @@ export interface UnitConfig {
     };
     status: string[];
     name: string;
+    dead: boolean;
+    wizard: boolean;
 }

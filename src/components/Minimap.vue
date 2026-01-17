@@ -25,7 +25,7 @@ import type { CSSProperties } from 'vue'
 import { ref, computed } from "vue";
 import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
 import { Piece } from "../gameobjects/piece";
-import { Display } from "phaser";
+import { hexColour } from "../utils";
 
 const props = defineProps<{
     pieces: Piece[];
@@ -63,18 +63,6 @@ const close = () => {
 };
 
 /**
- * Converts a numeric colour to a hex string.
- * 
- * @param colourNum  The numeric colour.
- * @returns The hex colour string.
- */
-const hexColour = (colourNum: number) => {
-    const colour: Display.Color =
-        Display.Color.ValueToColor(colourNum);
-    return `${colour.rgba}`;
-};
-
-/**
  * Gets the styles for a piece on the minimap.
  * 
  * @param piece The piece to get the styles for.
@@ -91,7 +79,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
 <style lang="scss" scoped>
 :host {
     position: relative;
-    z-index: 1;
+    z-index: 5;
 }
 
 .minimap {
@@ -120,7 +108,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
     transition: all 0.25s;
     &__piece {
         position: absolute;
-        z-index: 1;
+        z-index: 10;
         background-color: var(--piece-color);
         left: calc(var(--piece-x) * var(--map-scale));
         top: calc(var(--piece-y) * var(--map-scale));
@@ -129,7 +117,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
         transition: all 0.25s;
         transform: scale(0.75);
         &--wizard {
-            z-index: 2;
+            z-index: 20;
             transform: scale(1);
             &::after {
                 content: '';

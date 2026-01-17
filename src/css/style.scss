@@ -35,9 +35,7 @@ body,
 }
 
 :root {
-    --bg-colour: #555;
-    --fg-colour: #eee;
-
+    
     // Speccy colours
     --color-white: #fff;
     --color-yellow: #ff0;
@@ -47,10 +45,15 @@ body,
     --color-red: #f00;
     --color-blue: #00f;
     --color-black: #000;
+    --color-grey: #888;
 
+    // Foreground/background colours
+    --bg-colour: #555;
+    --fg-colour: #eee;
+    
     // Additional colours
     --color-brown: #8b5731;
-    --color-lightblue: #009cef;
+    --color-light-blue: #009cef;
 
     // Spell chances
     --spell-chance-colour-100: var(--color-white);
@@ -130,7 +133,7 @@ button {
     position: absolute;
     top: 0;
     right: 0;
-    z-index: 1;
+    z-index: 10;
     margin: 1.175em 0.5em;
     padding: 0.25em 0.5em;
     font-size: 16px;
@@ -177,6 +180,9 @@ button {
 }
 .c-light-blue {
     color: var(--color-light-blue);
+}
+.c-grey {
+    color: var(--color-grey);
 }
 
 .game-log__item {

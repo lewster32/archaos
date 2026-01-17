@@ -61,7 +61,7 @@ export class Rules {
             board.cursor.position
         );
 
-        if (board.state === BoardState.View) {
+        if (board.state === BoardState.View || board.state === BoardState.SelectSpell) {
             if (hoveredPieces.length > 0) {
                 return ActionType.Info;
             }
@@ -80,7 +80,7 @@ export class Rules {
 
         const selectedPiece: Piece | null = board.selected;
 
-        if (board.state === BoardState.CastSpell && board.selected) {
+        if (board.state === BoardState.CastSpell) {
             const selectedSpell: Spell | null =
                 board.currentPlayer?.selectedSpell;
 
@@ -90,7 +90,7 @@ export class Rules {
 
                 return spellTarget ? ActionType.Cast : ActionType.Invalid;
             }
-            return ActionType.Idle;
+            return ActionType.Info;
         }
         if (
             board.state === BoardState.Move ||
@@ -191,7 +191,7 @@ export class Rules {
      * @param type The event type
      * @param data The event data
      */
-    private dispatchEvent(type: EventType, data: any) {
+    public dispatchEvent(type: EventType, data: any) {
         globalThis.dispatchEvent(
             new CustomEvent(type, {
                 detail: data,

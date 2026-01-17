@@ -8,6 +8,7 @@ import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
+import { EventType } from "./enums/eventtype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
@@ -159,6 +160,12 @@ export class Board extends Model implements Box {
 
         this._sound.play("screenactive");
 
+        document.addEventListener("highlight-owned-units", (event: CustomEvent) => {
+            const owner: Player = event.detail;
+            this.highlightOwnedUnitsForPlayer(this.getPlayer(owner.id));
+        });
+
+        // Debugging aid
         window["currentBoard"] = this;
     }
 
@@ -291,6 +298,7 @@ export class Board extends Model implements Box {
      */
     async newTurn(): Promise<void> {
         this._selected = null;
+        this.rules.dispatchEvent(EventType.PieceInfo, null);
 
         if (this.state === BoardState.GameOver) {
             return;
@@ -1448,6 +1456,17 @@ export class Board extends Model implements Box {
                 await piece.flashHighlight();
             })
         );
+    }
+
+    /**
+     * Highlight all units owned by the given player.
+     * 
+     * @param player The player whose units to highlight.
+     * @param silent Whether to suppress logging output (default: false).
+     */
+    async highlightOwnedUnitsForPlayer(player: Player, silent?: boolean): Promise<void> {
+        const playerIndex: number = Array.from(this._players.keys()).indexOf(player.id);
+        await this.highlightOwnedUnitsForPlayerIndex(playerIndex, silent);
     }
 
     /**

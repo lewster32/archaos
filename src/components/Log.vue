@@ -76,7 +76,7 @@ const formatDate = (date: Date) => {
 const getColour = (log: Log) => {
     if (log?.colour) {
         if (Colour[log.colour]) {
-            return { color: `var(--color-${Colour[log.colour]})` };
+            return { color: `var(--color-${Colour[log.colour].toLowerCase()})` };
         }
         else {
             return { color: `color-mix(in oklab, ${log.colour.toString()}, white 20%)` };
@@ -95,7 +95,7 @@ const getColour = (log: Log) => {
         height: 17.5vh;
         min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
-        z-index: 1;
+        z-index: 10;
         &--minimised {
             height: auto;
             min-height: 0;

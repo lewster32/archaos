@@ -63,10 +63,12 @@
             </div>
         </div>
         <div class="unit-stats__status unit-statuses">
+            <span class="unit-statuses__item c-white" v-if="isWizard">Wizard</span>
+            <span class="unit-statuses__item c-grey" v-if="isDead">Dead</span>
             <span class="unit-statuses__item c-yellow" v-if="canFly">Flying</span>
-            <span class="unit-statuses__item c-lightblue" v-if="isUndead">Undead</span>
+            <span class="unit-statuses__item c-light-blue" v-if="isUndead">Undead</span>
             <span class="unit-statuses__item c-brown" v-if="isMount">Mountable</span>
-            <span class="unit-statuses__item c-green" v-if="canSpread">Spreads</span>
+            <span class="unit-statuses__item c-magenta" v-if="canSpread">Spreads</span>
             <span class="unit-statuses__item c-cyan" v-if="isInvulnerable">Invulnerable</span>
             <span class="unit-statuses__item c-green" v-if="isTree">Tree</span>
             <span class="unit-statuses__item c-yellow" v-if="expires">Expires</span>
@@ -81,6 +83,14 @@ import { UnitConfig } from "../gameobjects/interfaces/ui";
 const props = defineProps<{
     unit: UnitConfig | null;
 }>();
+
+const isWizard = computed(() => {
+    return props.unit?.wizard;
+});
+
+const isDead = computed(() => {
+    return props.unit?.dead;
+});
 
 const canFly = computed(() => {
     return props.unit?.status?.includes("flying");
@@ -120,7 +130,17 @@ const itemNumClass = (num: number) => {
 
 </script>
 <style lang="scss" scoped>
+.unit-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin-block: .25em;
+}
+
 .unit-statuses {
+    &:empty {
+        display: none;
+    }
     &__item + &__item {
         &::before {
             color: var(--color-white);
@@ -145,7 +165,7 @@ const itemNumClass = (num: number) => {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    margin: .5em 0;
+    gap: .25em;
     &__item {
         width: 36px;
         height: 36px;
@@ -166,7 +186,13 @@ const itemNumClass = (num: number) => {
             }
         }
         span {
-            opacity: var(--stat-number-opacity, 1);
+            visibility: hidden;
+        }
+        &:hover {
+            --stat-icon: none;
+            span {
+                visibility: visible;
+            }
         }
         &--mov {
             --stat-icon: url("../../assets/images/ui/stat-move.png");
@@ -198,8 +224,6 @@ const itemNumClass = (num: number) => {
                 --stat-num: url("../../assets/images/ui/stat-num-#{$_i}.png");
             }
         }
-
-        animation: flip-numbers 3s infinite steps(1);
     }
 }
 </style>

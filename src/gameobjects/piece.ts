@@ -1389,6 +1389,30 @@ export class Piece extends Entity {
     }
 
     /**
+     * Get the unit configuration for this piece.
+     * 
+     * @returns Unit configuration
+     */
+    public get unitConfig(): UnitConfig {
+        return {
+            attackType: this.properties.attackType,
+            properties: {
+                mov: this.stats.movement,
+                com: this.stats.combat,
+                rcm: this.stats.rangedCombat,
+                rng: this.stats.range,
+                def: this.stats.defense,
+                mnv: this.stats.maneuverability,
+                res: this.stats.magicResistance,
+            },
+            status: [...this.properties.status],
+            name: this.name,
+            dead: this.dead,
+            wizard: this.type === UnitType.Wizard,
+        };
+    }
+
+    /**
      * Get the raw unit configuration from the units data file by ID.
      * 
      * @param id Unit ID
