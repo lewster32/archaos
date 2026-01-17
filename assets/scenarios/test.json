@@ -24,10 +24,10 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 7, "y": 0 },
+            "position": { "x": 4, "y": 0 },
             "computerControlled": false,
             "statuses": [
-                "ShadowForm"
+                
             ],
             "pieces": [
             ],
@@ -36,7 +36,7 @@
             ]
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": true,
         "forceCast": null,

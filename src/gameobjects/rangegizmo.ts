@@ -150,7 +150,7 @@ export class RangeGizmo {
         // adjacent to it
         potentiallyValidNodes.forEach((node: Node) => {
             const potentialEnemies: Set<Piece> = new Set(
-                this._board.getPiecesAtPosition(
+                this._board.getAdjacentPiecesAtPosition(
                     node.pos,
                     (piece: Piece) => {
                         return piece.canEngagePiece(this._piece);
@@ -161,14 +161,16 @@ export class RangeGizmo {
                 return;
             }
             // Mark adjacent nodes as warning
-            this._board.getAdjacentPoints(
-                node.pos,
-                false
-            ).forEach((adjPt: Geom.Point) => {
-                const adjNodeKey = adjPt.x + "," + adjPt.y;
-                if (potentiallyValidNodes.has(adjNodeKey)) {
-                    potentiallyValidNodes.get(adjNodeKey).warning = true
-                }
+            potentialEnemies.forEach((enemy: Piece) => {
+                this._board.getAdjacentPoints(
+                    enemy.position,
+                    false
+                ).forEach((adjPt: Geom.Point) => {
+                    const adjNodeKey = adjPt.x + "," + adjPt.y;
+                    if (potentiallyValidNodes.has(adjNodeKey)) {
+                        potentiallyValidNodes.get(adjNodeKey).warning = true
+                    }
+                });
             });
         });
 

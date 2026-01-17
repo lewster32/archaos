@@ -125,7 +125,6 @@ import type {
 } from "../gameobjects/interfaces/ui";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
-import { Colour } from "../gameobjects/enums/colour";
 import { Piece } from "../gameobjects/piece";
 import { Wizard } from "../gameobjects/wizard";
 import { Display } from "phaser";
