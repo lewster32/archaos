@@ -1186,24 +1186,23 @@ export class Board extends Model implements Box {
                 piece.currentRider &&
                 this.roll(4, 10)
             ) {
-                // TODO: This sound seems to be missing
-                // this.sound.play("giftspell");
+                const owner: Player = piece.currentRider.owner;
+                this.logger.log(
+                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
+                    Colour.Cyan
+                );
+                this.sound.play("newspell");
                 await this.playEffect(
                     EffectType.GiveSpell,
                     piece.sprite.getCenter(),
                     null,
                     piece
                 );
-                const owner: Player = piece.currentRider.owner;
                 this.addSpell(
                     piece.currentRider.owner,
                     Spell.getRandomSpell(true)
                 );
                 await piece.kill();
-                this.logger.log(
-                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
-                    Colour.Cyan
-                );
                 await this.idleDelay(Board.DEFAULT_DELAY);
             }
         }
@@ -1422,9 +1421,9 @@ export class Board extends Model implements Box {
 
             // Beep beep beep for casting phase
             if (this.phase === BoardPhase.Casting) {
-                this.sound.playAsync("chaoskeypress2", {
+                this.sound.playAsync("casting", {
                     repeat: 3,
-                    delay: 175
+                    delay: 150
                 });
             }
         });

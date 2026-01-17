@@ -13,7 +13,6 @@ import wizardsSheet from "../assets/spritesheets/wizards.png";
 import magicArmourSheet from "../assets/spritesheets/magic-armour.png";
 import unitGlow from "../assets/spritesheets/unit-glow.png";
 import classicSoundsJson from "../assets/sounds/chaossounds.json?url";
-import classicSoundsAc3 from "../assets/sounds/chaossounds.ac3?url";
 import classicSoundsM4a from "../assets/sounds/chaossounds.m4a?url";
 import classicSoundsMp3 from "../assets/sounds/chaossounds.mp3?url";
 import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
@@ -75,10 +74,9 @@ export class GameScene extends Scene {
         }
 
         this.load.audioSprite("classicsounds", classicSoundsJson, [
-            classicSoundsAc3,
-            classicSoundsM4a,
-            classicSoundsMp3,
             classicSoundsOgg,
+            classicSoundsMp3,
+            classicSoundsM4a,
         ]);
     }
 

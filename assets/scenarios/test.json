@@ -12,13 +12,7 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
             "pieces": [
-                {
-                    "type": "Centaur",
-                    "position": { "x": 1, "y": 0 },
-                    "statuses": [
-                        "Undead"
-                    ]
-                }
+
             ],
             "spells": [
                 "Magic Wood", "Shadow Wood", "Magic Fire", "Gooey Blob", "Orc"
@@ -33,10 +27,6 @@
                 "ShadowForm"
             ],
             "pieces": [
-                {
-                    "type": "Gooey Blob",
-                    "position": { "x": 5, "y": 0 }
-                }
 
             ],
             "spells": [

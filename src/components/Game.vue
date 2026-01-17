@@ -455,12 +455,6 @@ onMounted(async () => {
         if (!piece?.owner) {
             return;
         }
-        logs.value.push({
-            message: 'Clicked on ' + ((piece instanceof Wizard) ? `${piece.owner.name}` : `${piece.owner.name}'s ${piece.name}`) + ` at position ${piece.position.x}, ${piece.position.y}`,
-            id: logs.value.length,
-            timestamp: new Date(),
-            colour: hexColour(piece.owner.colour)
-        });
     });
 });
 

@@ -563,12 +563,12 @@ export class EffectEmitter extends GameObjects.Particles
         switch (this._type) {
             case EffectType.JusticeHit:
             case EffectType.DarkPowerHit:
+            case EffectType.GiveSpell:
                 duration = 2000;
                 break;
             case EffectType.WizardDefeated:
             case EffectType.RaiseDeadHit:
             case EffectType.SubversionHit:
-            case EffectType.GiveSpell:
             case EffectType.DragonFireHit:
                 duration = 1000;
                 break;
