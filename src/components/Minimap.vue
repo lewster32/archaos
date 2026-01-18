@@ -7,7 +7,7 @@
             <span style="font-weight:bold" :class="{'c-magenta' : balance < 0, 'c-cyan' : balance > 0}">
                 {{ `${balance < 0 ? '*' : (balance > 0 ? '^' : '-')}`}}
             </span>
-            {{ balance ? `(+${Math.abs(balance).toFixed(2)})` : '' }}
+            {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : '' }}
             <span :class="{'c-magenta' : balanceShift < 0, 'c-cyan' : balanceShift > 0}">
                 {{ balanceShift ? ` ${balanceShift < 0 ? '↓' : (balanceShift > 0 ? '↑' : '')}` : '' }}
             </span>
@@ -39,7 +39,7 @@
                     {{ `${balance < 0 ? '* chaotic' : (balance > 0 ? '^ lawful' : 'neutral')}`}}
                 </span>
                 <span class="balance-info__amount">
-                    {{ balance ? `(+${Math.abs(balance).toFixed(2)})` : '' }}
+                    {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : '' }}
                     <span class="balance-info__shift" :class="{'c-magenta' : balanceShift < 0, 'c-cyan' : balanceShift > 0}">
                         {{ balanceShift ? ` ${balanceShift < 0 ? '↓' : (balanceShift > 0 ? '↑' : '')}` : '' }}
                     </span>
