@@ -86,8 +86,19 @@ export class SummonSpell extends Spell {
         return this.illusion || this._board.rollChance(this.chance)
     }
 
-    isValidTarget(target: Geom.Point, showReason?: boolean): Geom.Point | null {
-        if (!this.inCastingRange(target)) {
+    isValidTarget(target: Geom.Point | Piece, showReason?: boolean): Geom.Point | null {
+        if (target instanceof Piece) {
+            console.debug(`Cannot cast summon spells in occupied positions (target: ${target.name})`);
+            if (showReason) {
+                this._board.logger.log(
+                    `${this.name} cannot be cast in occupied positions`,
+                    Colour.Magenta
+                );
+            }
+            return null;
+        }
+        const targetPoint: Geom.Point = (target instanceof Piece) ? target.position : target;
+        if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} target is out of range`,
@@ -96,11 +107,11 @@ export class SummonSpell extends Spell {
             }
             return null;
         }
-        if (!this.canCastAtPosition(target, showReason)) {
+        if (!this.canCastAtPosition(targetPoint, showReason)) {
             return null;
         }
 
-        const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
+        const targetPieces: Piece[] = this._board.getPiecesAtPosition(targetPoint, (piece: Piece) => {
             return !piece.currentMount && !piece.engulfed && !piece.dead;
         });
 

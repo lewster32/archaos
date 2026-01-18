@@ -335,8 +335,11 @@ export class Spell extends Model {
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    isValidTarget(target: Geom.Point, showReason?: boolean): SpellCastTarget {
-        if (!this.inCastingRange(target)) {
+    isValidTarget(target: Geom.Point | Piece, showReason?: boolean): SpellCastTarget {
+        const targetPoint: Geom.Point = target instanceof Geom.Point ? target : target.position;
+        const targetPiece: Piece = target instanceof Piece ? target : null;
+
+        if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} target is out of range`,
@@ -345,14 +348,16 @@ export class Spell extends Model {
             }
             return null;
         }
-        if (!this.canCastAtPosition(target, showReason)) {
+        if (!this.canCastAtPosition(targetPoint, showReason)) {
             return null;
         }
         // Only find actively targetable pieces
-        const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
-            return !piece.currentMount && // Cannot directly target mounted pieces
-            !piece.engulfed; // Nor engulfed pieces
-        });
+        const targetPieces: Piece[] = (targetPiece ? [targetPiece] : this._board.getPiecesAtPosition(targetPoint))
+            .filter((piece: Piece) => {
+                return !piece.currentMount && // Cannot directly target mounted pieces
+                !piece.engulfed; // Nor engulfed pieces
+            });
+
         const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
 
         if (this._properties.target === SpellTarget.Self) {
@@ -754,7 +759,7 @@ export class Spell extends Model {
         // Any other range requires checking all pieces on the board for valid
         // targets
         for (let piece of this._board.pieces) {
-            if (this.isValidTarget(piece.position)) {
+            if (this.isValidTarget(piece)) {
                 return true;
             }
         }

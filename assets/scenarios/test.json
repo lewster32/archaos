@@ -13,27 +13,27 @@
             "computerControlled": false,
             "pieces": [
                 {
-                    "type": "White Dragon",
-                    "position": { "x": 2, "y": 0 }
+                    "type": "Horse",
+                    "position": { "x": 1, "y": 0 }
                 }
             ],
             "spells": [
-                "White Dragon"
+                "Orc"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 4, "y": 0 },
-            "computerControlled": false,
+            "position": { "x": 5, "y": 0 },
+            "computerControlled": true,
             "statuses": [
-                "ShadowForm"
+                
             ],
             "pieces": [
 
             ],
             "spells": [
-
+                "Magic Bolt", "Magic Bolt", "Magic Bolt", "Magic Bolt"
             ]
         }
     ],
@@ -45,8 +45,8 @@
     ],
     "phase": "casting",
     "cheats": {
-        "forceHit": true,
+        "forceHit": false,
         "forceCast": true,
-        "shortDelay": false
+        "shortDelay": true
     }
 }

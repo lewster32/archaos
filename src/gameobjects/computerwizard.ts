@@ -67,11 +67,7 @@ export class ComputerWizard {
         // target that piece
         for (const spell of spells) {
             for (let piece of board.pieces) {
-                // Mounted or engulfed pieces are never directly targetable
-                if (piece.currentMount || piece.engulfed) {
-                    continue;
-                }
-                if (spell.isValidTarget(piece.position, false)) {
+                if (spell.isValidTarget(piece, false)) {
                     if (!targets.has(spell)) {
                         targets.set(spell, []);
                     }
@@ -393,7 +389,7 @@ export class ComputerWizard {
                         const potentialTargets: Piece[] = board.pieces
                             .filter((p: Piece) => {
                                 return (
-                                    spell.isValidTarget(p.position, false)
+                                    spell.isValidTarget(p, false)
                                 );
                             });
 
