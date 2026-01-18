@@ -351,7 +351,7 @@ export class Spell extends Model {
         // Only find actively targetable pieces
         const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
             return !piece.currentMount && // Cannot directly target mounted pieces
-            !piece.engulfed; // Not engulfed pieces
+            !piece.engulfed; // Nor engulfed pieces
         });
         const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
 

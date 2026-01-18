@@ -67,6 +67,10 @@ export class ComputerWizard {
         // target that piece
         for (const spell of spells) {
             for (let piece of board.pieces) {
+                // Mounted or engulfed pieces are never directly targetable
+                if (piece.currentMount || piece.engulfed) {
+                    continue;
+                }
                 if (spell.isValidTarget(piece.position, false)) {
                     if (!targets.has(spell)) {
                         targets.set(spell, []);
@@ -173,15 +177,6 @@ export class ComputerWizard {
         // Possibly forget some illusion knowledge
         this.forgetIllusionKnowledge();
         try {
-            // For now, just pick a random spell from the player's spell list
-            // let spells: Spell[] = this._player.spells.filter((spell: Spell) => {
-            //     return (
-            //         spell.type === SpellType.Summon ||
-            //         spell.type === SpellType.Buff ||
-            //         spell.type === SpellType.Attack ||
-            //         spell.type === SpellType.Disbelieve
-            //     );
-            // });
             let spells: Spell[] = this._player.spells;
 
             if (!spells.length) {
@@ -344,10 +339,7 @@ export class ComputerWizard {
                             }
                             return 0;
                         });
-                        if (targets.length) {
-                            console.debug(`${player.name} has ${targets.length} valid targets to cast ${spell.name}`);
-                        }
-                        else {
+                        if (!targets.length) {
                             console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
                             if (successfullyCast) {
                                 player.discardSpell();
@@ -355,7 +347,9 @@ export class ComputerWizard {
                             board.sound.play("cancel");
                             return false;
                         }
+                        console.debug(`${player.name} has ${targets.length} valid targets to cast ${spell.name}`);
                         const target: Piece = PMath.RND.weightedPick(targets);
+                        console.debug(`${player.name} is casting ${spell.name} on target ${target.name}`, target);
                         await board.rules.doCastSpell(
                             board,
                             target
