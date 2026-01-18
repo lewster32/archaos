@@ -614,7 +614,7 @@ export class ComputerWizard {
                 .filter((p: Piece) => {
                     return (
                         p.owner !== this._player && // Enemy piece
-                        p.stats.combat > 0 && // Can potentially deal damage back
+                        (p.stats.combat > 0 || p.stats.rangedCombat > 0) && // Can potentially deal damage back
                         !p.currentMount && // Not mounted (can't target riders without killing the mount first)
                         (!p.hasStatus(UnitStatus.Undead) ||
                             piece.hasStatus(UnitStatus.AttackUndead) ||

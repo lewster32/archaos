@@ -7,14 +7,17 @@
     },
     "players": [
         {
-            "id": 1,
-            "name": "Player 1",
-            "position": { "x": 0, "y": 0 },
+            "id": 2,
+            "name": "Player 2",
+            "position": { "x": 5, "y": 0 },
             "computerControlled": false,
+            "statuses": [
+                
+            ],
             "pieces": [
                 {
-                    "type": "White Dragon",
-                    "position": { "x": 1, "y": 0 }
+                    "type": "Elf",
+                    "position": { "x": 3, "y": 0}
                 }
             ],
             "spells": [
@@ -22,18 +25,18 @@
             ]
         },
         {
-            "id": 2,
-            "name": "Player 2",
-            "position": { "x": 5, "y": 0 },
-            "computerControlled": true,
-            "statuses": [
-                
-            ],
+            "id": 1,
+            "name": "Player 1",
+            "position": { "x": 0, "y": 0 },
+            "computerControlled": false,
             "pieces": [
-
+                {
+                    "type": "Obelisk",
+                    "position": { "x": 1, "y": 0 }
+                }
             ],
             "spells": [
-                "Magic Bolt", "Magic Bolt", "Magic Bolt", "Magic Bolt"
+                "Obelisk"
             ]
         }
     ],
@@ -43,10 +46,10 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
-        "forceHit": false,
+        "forceHit": true,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

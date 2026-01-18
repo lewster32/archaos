@@ -399,6 +399,20 @@ export class EffectEmitter extends GameObjects.Particles
                     particleClass: EffectParticle,
                     tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff]
                 };
+            case EffectType.NoCorpseDeath:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "dragonfire1",
+                    quantity: 1,
+                    speedX: { min: -120, max: 120 },
+                    speedY: { min: -80, max: -120 },
+                    gravityY: 500,
+                    lifespan: 150,
+                    blendMode: BlendModes.ADD,
+                    particleClass: EffectParticle,
+                    tint: [0x888888, 0x66ffff, 0x6666ff, 0xaaaaaa]
+                }
         }
     }
 
@@ -685,5 +699,6 @@ export enum EffectType {
     SubversionBeam,
     SubversionHit,
     GiveSpell,
-    AttackHit
+    AttackHit,
+    NoCorpseDeath
 }

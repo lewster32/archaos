@@ -15,6 +15,7 @@ import type { UnitProperties, IUnitStats } from "./interfaces/unitproperties";
 import type { PieceConfig } from "./configs/piececonfig";
 import type { Types } from "phaser";
 import { UnitConfig, UnitStats } from "./interfaces/ui";
+import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
 
 enum PieceState {
     Idle,
@@ -696,6 +697,7 @@ export class Piece extends Entity {
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
                     rangedType: unit.rangedType || "shot",
+                    projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                     status: [...(unit.status || [])],
                 },
                 shadowScale: unit.shadowScale,
@@ -1094,17 +1096,43 @@ export class Piece extends Entity {
             }
             this.updateDirection(this.position, piece.position);
 
-            let beamEffectType: EffectType = EffectType.ArrowBeam;
-            let hitEffectType: EffectType = EffectType.ArrowHit;
+            let beamEffectType: EffectType;
+            let hitEffectType: EffectType;
+            let beamSound: string;
+            let hitSound: string;
 
-            switch (this.properties.rangedType) {
-                case "burned":
+            console.log(this.properties.projectileType);
+
+            // TODO: Combine this with the same code in AttackSpell
+            switch (this.properties.projectileType) {
+                case UnitRangedProjectileType.Lightning:
+                    beamEffectType = EffectType.LightningBeam;
+                    hitEffectType = EffectType.LightningHit;
+                    beamSound = "lightning4";
+                    hitSound = "lightningexplode";
+                    break;
+                case UnitRangedProjectileType.DragonFire:
                     beamEffectType = EffectType.DragonFireBeam;
                     hitEffectType = EffectType.DragonFireHit;
+                    beamSound = "dragonfire6";
+                    hitSound = "dragonfireexplosion";
+                    break;
+                case UnitRangedProjectileType.MagicBolt:
+                    beamEffectType = EffectType.MagicBoltBeam;
+                    hitEffectType = EffectType.MagicBoltHit;
+                    beamSound = "magicbolt6";
+                    hitSound = "magicboltexplode";
+                    break;
+                case UnitRangedProjectileType.Arrow:
+                default:
+                    beamEffectType = EffectType.ArrowBeam;
+                    hitEffectType = EffectType.ArrowHit;
+                    beamSound = "bowfire6";
+                    hitSound = "bowhit";
                     break;
             }
 
-            this.board.sound.play(beamEffectType === EffectType.DragonFireBeam ? "dragonfire6" : "bowfire6");
+            this.board.sound.play(beamSound);
             await this.board.playEffect(
                 beamEffectType,
                 this.sprite.getCenter(),
@@ -1112,7 +1140,7 @@ export class Piece extends Entity {
                 piece
             );
 
-            this.board.sound.play(beamEffectType === EffectType.DragonFireBeam ? "dragonfireexplosion" : "bowhit");
+            this.board.sound.play(hitSound);
             await this.board.playEffect(
                 hitEffectType,
                 piece.sprite.getCenter(),
@@ -1130,7 +1158,8 @@ export class Piece extends Entity {
             );
 
             this.board.logger.log(
-                `${this.name} ${this.properties.rangedType} ${piece.name}`
+                `${this.name} ${this.properties.rangedType} ${piece.name}`,
+                Colour.Orange
             );
 
             await Board.delay(Board.DEFAULT_DELAY / 2);
@@ -1176,6 +1205,11 @@ export class Piece extends Entity {
             this.hasStatus(UnitStatus.NoCorpse) ||
             this.hasStatus(UnitStatus.Undead)
         ) {
+            silent = true;
+            await this.board.playEffect(
+                EffectType.NoCorpseDeath,
+                this.sprite.getCenter()
+            );
             await this.destroy();
         }
         if (!silent) {
@@ -1403,6 +1437,8 @@ export class Piece extends Entity {
     public get unitConfig(): UnitConfig {
         return {
             attackType: this.properties.attackType,
+            rangedType: this.properties.rangedType,
+            projectileType: this.properties.projectileType,
             properties: {
                 mov: this.stats.movement,
                 com: this.stats.combat,
@@ -1463,6 +1499,7 @@ export class Piece extends Entity {
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
+            projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
             status: [...(unit.status || [])],
             group: unit.group || "classicunits",
         };
@@ -1497,6 +1534,7 @@ export class Piece extends Entity {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
+                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: [...(unit.status || [])],
             },
             shadowScale: unit.shadowScale,

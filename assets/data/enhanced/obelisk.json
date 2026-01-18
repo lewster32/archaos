@@ -1,0 +1,256 @@
+{
+    "spell": {
+        "id": "obelisk",
+        "chance": 0.4,
+        "balance": 0,
+        "name": "Obelisk",
+        "description": "Cannot move, and can only ranged attack.",
+        "group": "enhanced",
+        "unit": {
+            "id": "obelisk",
+            "attackType": "attacked",
+            "rangedType": "zapped",
+            "projectileType": "lightning",
+            "properties": {
+                "mov": 0,
+                "com": 0,
+                "rcm": 5,
+                "rng": 5,
+                "def": 5,
+                "mnv": 0,
+                "res": 5
+            },
+            "status": [
+                "attackUndead", "noCorpse"
+            ],
+            "name": "Obelisk",
+            "indefiniteArticle": "an",
+            "animFrames": [0, 1, 2, 3],
+            "animSpeed": 1,
+            "shadowScale": 3,
+            "textures": [
+                {
+                    "image": "obelisk.png",
+                    "format": "RGBA8888",
+                    "size": {
+                        "w": 42,
+                        "h": 42
+                    },
+                    "scale": 1,
+                    "frames": [
+                        {
+                            "filename": "obelisk_l_0",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            },
+                            "frame": {
+                                "x": 1,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            }
+                        },
+                        {
+                            "filename": "obelisk_l_1",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            },
+                            "frame": {
+                                "x": 15,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            }
+                        },
+                        {
+                            "filename": "obelisk_l_2",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 2,
+                                "w": 12,
+                                "h": 16
+                            },
+                            "frame": {
+                                "x": 29,
+                                "y": 1,
+                                "w": 12,
+                                "h": 16
+                            }
+                        },
+                        {
+                            "filename": "obelisk_l_3",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 2,
+                                "w": 12,
+                                "h": 16
+                            },
+                            "frame": {
+                                "x": 1,
+                                "y": 20,
+                                "w": 12,
+                                "h": 16
+                            }
+                        },
+                        {
+                            "filename": "obelisk_l_d",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 9,
+                                "w": 18,
+                                "h": 9
+                            },
+                            "frame": {
+                                "x": 15,
+                                "y": 20,
+                                "w": 18,
+                                "h": 9
+                            }
+                        },
+                        {
+                            "filename": "obelisk_r_0",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            },
+                            "frame": {
+                                "x": 1,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            }
+                        },
+                        {
+                            "filename": "obelisk_r_1",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            },
+                            "frame": {
+                                "x": 15,
+                                "y": 1,
+                                "w": 12,
+                                "h": 17
+                            }
+                        },
+                        {
+                            "filename": "obelisk_r_2",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 2,
+                                "w": 12,
+                                "h": 16
+                            },
+                            "frame": {
+                                "x": 29,
+                                "y": 1,
+                                "w": 12,
+                                "h": 16
+                            }
+                        },
+                        {
+                            "filename": "obelisk_r_3",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 3,
+                                "y": 2,
+                                "w": 12,
+                                "h": 16
+                            },
+                            "frame": {
+                                "x": 1,
+                                "y": 20,
+                                "w": 12,
+                                "h": 16
+                            }
+                        },
+                        {
+                            "filename": "obelisk_r_d",
+                            "rotated": false,
+                            "trimmed": true,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 9,
+                                "w": 18,
+                                "h": 9
+                            },
+                            "frame": {
+                                "x": 15,
+                                "y": 20,
+                                "w": 18,
+                                "h": 9
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

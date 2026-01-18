@@ -12,5 +12,6 @@ export enum Colour {
     Cyan = 5,
     Yellow = 6,
     White = 7,
-    LightBlue = 8
+    LightBlue = 8,
+    Orange = 9,
 }

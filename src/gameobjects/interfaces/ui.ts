@@ -159,6 +159,7 @@ export interface UnitStats {
     magicResistance: number;
     attackType: string;
     rangedType: string;
+    projectileType: string;
     status: string[];
     group?: string;
 }
@@ -168,6 +169,8 @@ export interface UnitStats {
  */
 export interface UnitConfig {
     attackType: string;
+    rangedType: string;
+    projectileType: string;
     properties: {
         mov: number;
         com: number;

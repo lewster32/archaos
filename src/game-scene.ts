@@ -91,13 +91,13 @@ export class GameScene extends Scene {
         for (let [path, spellData] of Object.entries(enhancedSpells)) {
             const textures: any[] = spellData.spell?.unit?.textures || [];
             console.debug(`Loading enhanced spell ${spellData.spell.name}: ${path}`);
-
             
             if (textures.length) {
                 // Load any additional textures for this unit
                 const textureKey: string = spellData.spell.unit.id;
                 for (let texture of textures) {
                     const texturePath: string = import.meta.resolve(`../images/units/enhanced/${texture.image}`);
+                    console.debug(`  Loading texture for unit ${textureKey}: ${texturePath}`);
                     this.load.atlas(
                         textureKey,
                         texturePath,

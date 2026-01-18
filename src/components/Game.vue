@@ -439,7 +439,6 @@ onMounted(async () => {
     });
 
     eventEmitter.value.on("end-turn-available", (state: boolean) => {
-        console.log(`End turn available: ${state}`);
         canEndTurn.value = state;
     });
 

@@ -4,6 +4,7 @@ import { EffectType } from "../effectemitter";
 import { Colour } from "../enums/colour";
 import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
+import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitType } from "../enums/unittype";
 import { UnitConfig } from "../interfaces/ui";
 import { Piece } from "../piece";
@@ -73,10 +74,6 @@ export class SummonSpell extends Spell {
             if (unitConfig?.status?.includes("expiresGivesSpell")) {
                 description += ` Will only expire if a wizard is currently mounted, and upon doing so, grants a new spell to that player.`;
             }
-        }
-
-        if (!unitConfig?.status?.includes("spread")) {
-            return `${super.description} ${description}`.trim();
         }
 
         return `${description} ${super.description}`.trim();
@@ -167,6 +164,7 @@ export class SummonSpell extends Spell {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
+                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: unit.status || [],
             },
             shadowScale: unit.shadowScale,
