@@ -96,7 +96,7 @@ export class GameScene extends Scene {
                 // Load any additional textures for this unit
                 const textureKey: string = spellData.spell.unit.id;
                 for (let texture of textures) {
-                    const texturePath: string = `../assets/data/enhanced/${texture.image}`;
+                    const texturePath: string = import.meta.resolve(`../images/units/enhanced/${texture.image}`);
                     this.load.atlas(
                         textureKey,
                         texturePath,
