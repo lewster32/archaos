@@ -11,6 +11,7 @@ export interface UnitProperties extends IUnitStats {
     projectileType?: UnitRangedProjectileType;
 
     status: UnitStatus[];
+    group?: string;
 }
 
 export interface IUnitStats {

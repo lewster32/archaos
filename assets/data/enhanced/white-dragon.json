@@ -1,0 +1,209 @@
+{
+    "spell": {
+        "id": "white-dragon",
+        "chance": 0.1,
+        "balance": 2,
+        "name": "White Dragon",
+        "group": "enhanced",
+        "unit": {
+            "id": "white-dragon",
+            "attackType": "attacked",
+            "rangedType": "burned",
+            "projectileType": "dragonfire",
+            "properties": {
+                "mov": 3,
+                "com": 9,
+                "rcm": 0,
+                "rng": 0,
+                "def": 9,
+                "mnv": 4,
+                "res": 9
+            },
+            "status": ["flying"],
+            "name": "White Dragon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 7,
+            "textures": [
+                {
+                    "image": "white-dragon.png",
+                    "format": "RGBA8888",
+                    "size": {
+                        "w": 54,
+                        "h": 54
+                    },
+                    "scale": 1,
+                    "frames": [
+                        {
+                            "filename": "white-dragon_l_0",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_l_1",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 18,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_l_2",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 36,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_l_d",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 0,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_r_0",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 18,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_r_1",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 36,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_r_2",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 0,
+                                "y": 36,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "white-dragon_r_d",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 18,
+                                "y": 36,
+                                "w": 18,
+                                "h": 18
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

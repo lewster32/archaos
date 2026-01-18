@@ -25,7 +25,7 @@ export class SummonSpell extends Spell {
     }
 
     get unitId(): string {
-        return this._properties.unitId || "";
+        return this._properties.unitId || this._properties.unit?.id || "";
     }
 
     get unitProperties(): UnitConfig {
@@ -163,6 +163,7 @@ export class SummonSpell extends Spell {
             offsetY: unit.offY,
             owner: owner,
             illusion: !!this._illusion,
+            group: unit.group || "classicunits",
         });
 
         this._board.sound.play("spelleffect");

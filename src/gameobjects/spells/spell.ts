@@ -18,14 +18,15 @@ import { Math as PMath, Geom } from "phaser";
 import { SpellCastTarget } from "../services/rules";
 
 /**
- * The spell data imported from JSON.
- */
-const spells: { [key: string]: SpellConfig } = spellJsonData as any;
-
-/**
  * A spell that can be cast by a player's wizard.
  */
 export class Spell extends Model {
+
+    /**
+     * All spell configurations loaded from JSON.
+     */
+    public static readonly spells: { [key: string]: SpellConfig } = spellJsonData as any;
+
     /**
      * A reference to the game board.
      */
@@ -349,7 +350,8 @@ export class Spell extends Model {
         }
         // Only find actively targetable pieces
         const targetPieces: Piece[] = this._board.getPiecesAtPosition(target, (piece: Piece) => {
-            return !piece.currentMount && !piece.engulfed;
+            return !piece.currentMount && // Cannot directly target mounted pieces
+            !piece.engulfed; // Not engulfed pieces
         });
         const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
 
@@ -766,7 +768,7 @@ export class Spell extends Model {
      * @returns A random spell configuration
      */
     static getRandomSpell(gifted?: boolean): any {
-        const spellNames: string[] = Object.values(spells)
+        const spellNames: string[] = Object.values(Spell.spells)
             .filter((spell:SpellConfig) => {
                 // Exclude persistent spells like Disbelieve
                 if (spell.persist) {
@@ -794,7 +796,7 @@ export class Spell extends Model {
      */
     static getSpellsByType(type: SpellType): string[] {
         const spellsByType: Set<string> = new Set<string>();
-        for (let spell of Object.values(spells)) {
+        for (let spell of Object.values(Spell.spells)) {
             if (spell.unitId && type === SpellType.Summon) {
                 spellsByType.add(spell.name);
                 continue;
@@ -823,7 +825,7 @@ export class Spell extends Model {
      */
     static getSpellProperties(name: string): any {
         let key = "";
-        for (let [k, spell] of Object.entries(spells)) {
+        for (let [k, spell] of Object.entries(Spell.spells)) {
             if (spell.name.toLowerCase() === name.toLowerCase()) {
                 key = k;
                 break;
@@ -834,7 +836,7 @@ export class Spell extends Model {
             return;
         }
 
-        const spell: SpellConfig = (spells as any)[key];
+        const spell: SpellConfig = (Spell.spells as any)[key];
 
         return {
             id: key,
@@ -856,6 +858,7 @@ export class Spell extends Model {
             projectile: spell.projectile,
             persist: spell.persist,
             target: spell.target || SpellTarget.Empty,
+            group: spell.group || "classicspells",
         }
     }
 }

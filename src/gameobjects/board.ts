@@ -1258,7 +1258,7 @@ export class Board extends Model implements Box {
             throw new Error("No player or config provided");
         }
         let spell: Spell;
-        if (config.unitId) {
+        if (config.unitId || config.unit) {
             spell = new SummonSpell(this, this._idCounter++, config);
         } else if (config.damage) {
             spell = new AttackSpell(this, this._idCounter++, config);

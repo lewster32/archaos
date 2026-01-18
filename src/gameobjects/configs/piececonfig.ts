@@ -14,6 +14,7 @@ export interface PieceConfig extends UnitConfig {
     shadowScale?: number;
     offsetY?: number;
     illusion?: boolean;
+    group?: string;
 }
 
 export interface WizardConfig extends UnitConfig {

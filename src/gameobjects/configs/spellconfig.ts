@@ -1,4 +1,5 @@
 import { SpellTarget } from "../enums/spelltarget";
+import { UnitConfig } from "../interfaces/ui";
 
 export interface SpellConfig {
     /**
@@ -107,4 +108,14 @@ export interface SpellConfig {
      * Whether this spell is only available as a gift (e.g., Turmoil)
      */
     giftOnly?: boolean;
+
+    /**
+     * A UnitConfig object for enhanced summon spells
+     */
+    unit?: UnitConfig;
+
+    /**
+     * The group this spell belongs to (e.g., 'classicspells' or 'enhanced')
+     */
+    group?: string;
 }

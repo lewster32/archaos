@@ -193,7 +193,7 @@ export class ComputerWizard {
             // Filter out any spells that have no valid targets
             const validSpellsTargets: Map<Spell, Piece[]> = this.findSpellTargets(spells);
             spells = spells.filter((spell: Spell) => {
-                return spell.properties.unitId || // Summon spells are always valid
+                return spell.properties.unitId || spell.properties.unit || // Summon spells are always valid
                     spell.properties.target === 'self' || // Self-targeting spells are always valid
                     validSpellsTargets.get(spell)?.length > 0; // Has valid targets
             });

@@ -1,4 +1,3 @@
-import units from "../assets/data/classicunits.json";
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
 import boardAtlas from "../assets/spritesheets/board.png";
@@ -31,7 +30,7 @@ import { Scene } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 
 export class GameScene extends Scene {
-    board: Board;
+    private board: Board;
 
     constructor() {
         super({
@@ -78,17 +77,57 @@ export class GameScene extends Scene {
             classicSoundsMp3,
             classicSoundsM4a,
         ]);
+
+        // Load any enhanced content (additional spells/units)
+        this.loadEnhancedData();
+    }
+
+
+    async loadEnhancedData(): Promise<void> {
+        // Scan the assets/data/enhanced folder and load all JSON files to find
+        // any additional spells and their associated units and textures
+        const enhancedSpells: Record<string, any> = import.meta.glob("../assets/data/enhanced/*.json", { eager: true });
+        for (let [path, spellData] of Object.entries(enhancedSpells)) {
+            const textures: any[] = spellData.spell?.unit?.textures || [];
+            console.debug(`Loading enhanced spell ${spellData.spell.name}: ${path}`);
+
+            
+            if (textures.length) {
+                // Load any additional textures for this unit
+                const textureKey: string = spellData.spell.unit.id;
+                for (let texture of textures) {
+                    const texturePath: string = `../assets/data/enhanced/${texture.image}`;
+                    this.load.atlas(
+                        textureKey,
+                        texturePath,
+                        texture
+                    );
+                }
+            }
+
+            // Register the spell
+            Spell.spells[spellData.spell.id] = spellData.spell;
+
+            // Register the unit (if any)
+            if (spellData.spell.unit) {
+                Spell.spells[spellData.spell.id].unitId = spellData.spell.unit.id;
+                Piece.units[spellData.spell.unit.id] = spellData.spell.unit;
+                Piece.units[spellData.spell.unit.id].group = spellData.spell.group;
+            }
+        }
     }
 
     create(): void {
-        for (let [key, unit] of Object.entries(units)) {
+
+        for (let [key, unit] of Object.entries(Piece.units)) {
             for (let direction of ["l", "r"]) {
                 this.anims.create({
                     key: `${key}_${direction}`,
                     frames: ((unit as any).animFrames || []).map(
                         (frame: any) => {
+                            const group: string = unit.group ? unit.id : "classicunits";
                             return {
-                                key: "classicunits",
+                                key: group,
                                 frame: `${key}_${direction}_${frame}`,
                             };
                         }

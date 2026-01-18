@@ -312,7 +312,7 @@ const spellsByChance: Ref<Spell[]> = computed(() => {
  * @returns The image URL.
  */
 const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
-    return `/images/spells/classicspells/${spell.spellId}.png`;
+    return `/images/spells/${spell.properties.group || "classicspells"}/${spell.spellId}.png`;
 };
 
 /**

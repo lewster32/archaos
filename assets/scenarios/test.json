@@ -12,10 +12,13 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
             "pieces": [
-
+                {
+                    "type": "White Dragon",
+                    "position": { "x": 2, "y": 0 }
+                }
             ],
             "spells": [
-                "Magic Wood", "Shadow Wood", "Magic Fire", "Gooey Blob", "Orc"
+                "White Dragon"
             ]
         },
         {

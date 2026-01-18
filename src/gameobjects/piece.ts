@@ -1,4 +1,4 @@
-import units from "../../assets/data/classicunits.json";
+import unitJsonData from "../../assets/data/classicunits.json";
 import { Board, RangeType } from "./board";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
@@ -28,6 +28,8 @@ enum PieceState {
  * A game piece on the board. This can be a creature, wizard, structure, etc.
  */
 export class Piece extends Entity {
+    public static readonly units: { [key: string]: UnitConfig } = unitJsonData as any;
+
     /**
      * Duration of move animations (in ms).
      */
@@ -128,6 +130,7 @@ export class Piece extends Entity {
                 attackType: "hit",
                 rangedType: "shot",
                 status: [] as UnitStatus[],
+                group: Piece.units[config.properties.id]?.group || "classicunits",
             }),
         };
 
@@ -699,6 +702,7 @@ export class Piece extends Entity {
                 offsetY: unit.offY,
                 owner: this.owner,
                 illusion: !!this._illusion,
+                group: unit.group || "classicunits",
             } as PieceConfig);
 
             this.board.sound.play(`blob${PMath.RND.integerInRange(1, 2)}`);
@@ -1305,10 +1309,12 @@ export class Piece extends Entity {
             this.position
         );
 
+        const group: string = Piece.getUnitConfig(this._properties.id).group ? this._properties.id : "classicunits";
+
         this._sprite = this.board.scene.add.sprite(
             isoPosition.x,
             isoPosition.y - this._offsetY,
-            "classicunits",
+            group,
             this._properties.id + "_r_0"
         );
 
@@ -1409,6 +1415,7 @@ export class Piece extends Entity {
             name: this.name,
             dead: this.dead,
             wizard: this.type === UnitType.Wizard,
+            group: this.properties.group || "classicunits",
         };
     }
 
@@ -1419,7 +1426,7 @@ export class Piece extends Entity {
      * @returns Unit configuration or undefined if not found
      */
     static getUnitConfig(id: string): UnitConfig | undefined {
-        return units[id];
+        return Piece.units[id];
     }
 
     /**
@@ -1430,7 +1437,7 @@ export class Piece extends Entity {
      */
     static getUnitPropertiesByName(name: string): UnitStats | null {
         let key = "";
-        for (let [k, unit] of Object.entries(units)) {
+        for (let [k, unit] of Object.entries(Piece.units)) {
             if (unit.name.toLowerCase().trim() === name.toLowerCase().trim()) {
                 key = k;
                 break;
@@ -1456,12 +1463,13 @@ export class Piece extends Entity {
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
             status: [...(unit.status || [])],
+            group: unit.group || "classicunits",
         };
     }
 
     static getPieceProperties(name: string): any {
         let key = "";
-        for (let [k, piece] of Object.entries(units)) {
+        for (let [k, piece] of Object.entries(Piece.units)) {
             if (piece.name.toLowerCase() === name.toLowerCase()) {
                 key = k;
                 break;
@@ -1472,7 +1480,7 @@ export class Piece extends Entity {
             return;
         }
 
-        const unit: any = (units as any)[key];
+        const unit: any = (Piece.units as any)[key];
 
         return {
             type: UnitType.Creature,
@@ -1492,6 +1500,7 @@ export class Piece extends Entity {
             },
             shadowScale: unit.shadowScale,
             offsetY: unit.offY,
+            group: unit.group || "classicunits",
         };
     }
 }

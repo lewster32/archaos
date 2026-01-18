@@ -106,7 +106,7 @@ const show: Ref<boolean> = computed(() => {
  * @param spell The spell to get the image URL for.
  */
 const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
-    return `/images/spells/classicspells/${spell.spellId}.png`;
+    return `/images/spells/${spell.properties.group || "classicspells"}/${spell.spellId}.png`;
 };
 
 /**

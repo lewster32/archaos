@@ -156,6 +156,7 @@ export interface UnitStats {
     attackType: string;
     rangedType: string;
     status: string[];
+    group?: string;
 }
 
 /**
@@ -176,4 +177,7 @@ export interface UnitConfig {
     name: string;
     dead: boolean;
     wizard: boolean;
+    textures?: any[];
+    group?: string;
+    id?: string;
 }
