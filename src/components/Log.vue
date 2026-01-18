@@ -89,8 +89,9 @@ const getColour = (log: Log) => {
     .game-log {
         position: fixed;
         left: 0;
-        right: 0;
         bottom: 0;
+        width: 50%;
+        min-width: 400px;
         margin: 0 1em;
         height: 17.5vh;
         min-height: 33.33333%;

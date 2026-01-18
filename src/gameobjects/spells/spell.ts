@@ -770,10 +770,15 @@ export class Spell extends Model {
      * Get a random spell configuration.
      * 
      * @param gifted Whether the spell is being gifted (allows certain spells)
+     * @param filter Optional filter function to select spells
      * @returns A random spell configuration
      */
-    static getRandomSpell(gifted?: boolean): any {
+    static getRandomSpell(gifted?: boolean, filter?: (spell: SpellConfig) => boolean): any {
+        if (!filter) {
+            filter = () => true;
+        }
         const spellNames: string[] = Object.values(Spell.spells)
+            .filter(filter)
             .filter((spell:SpellConfig) => {
                 // Exclude persistent spells like Disbelieve
                 if (spell.persist) {
@@ -791,6 +796,15 @@ export class Spell extends Model {
             );
 
         return Spell.getSpellProperties(PMath.RND.pick(spellNames));
+    }
+
+    /**
+     * Get all spell configurations.
+     * 
+     * @returns All spell configurations
+     */
+    static getAllSpells(): SpellConfig[] {
+        return Object.values(Spell.spells);
     }
 
     /**

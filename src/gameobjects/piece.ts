@@ -1195,6 +1195,7 @@ export class Piece extends Entity {
             this._sprite.visible = false;
         }
         this.board.emitBoardUpdateEvent();
+        await Board.delay(Board.DEFAULT_DELAY);
     }
 
     async mount(piece: Piece): Promise<void> {

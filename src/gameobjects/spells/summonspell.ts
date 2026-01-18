@@ -88,7 +88,6 @@ export class SummonSpell extends Spell {
 
     isValidTarget(target: Geom.Point | Piece, showReason?: boolean): Geom.Point | null {
         if (target instanceof Piece) {
-            console.debug(`Cannot cast summon spells in occupied positions (target: ${target.name})`);
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} cannot be cast in occupied positions`,

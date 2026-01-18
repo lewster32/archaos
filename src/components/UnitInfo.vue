@@ -5,15 +5,12 @@
         </button>
         <div class="unitinfo__inner callout">
             <h2>{{ unit?.name }}<template v-if="unit.dead">'s corpse</template></h2>
-            <p v-if="unit.type !== UnitType.Wizard && unit?.owner">
-                {{ unit.currentRider ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ unit?.owner.name }}</span>
-            </p>
-            <UnitStats v-if="unit" :unit="unit.unitConfig" />
+            <UnitStats v-if="unit" :unit="unit.unitConfig" :owner="unit.owner?.name" :isMount="Boolean(unit.currentRider)" />
             <div class="callout__buttons">
-                <button class="spellinfo__select button button--green" @click="highlightOwnedUnits(unit!.owner!)">
+                <button class="spellinfo__select button button--green button--small" @click="highlightOwnedUnits(unit!.owner!)">
                     Highlight
                 </button>
-                <button class="spellinfo__select button" @click="close()">
+                <button class="spellinfo__select button button--small" @click="close()">
                     Dismiss
                 </button>
             </div>
@@ -57,15 +54,15 @@ const close: () => void = () => {
 <style lang="scss" scoped>
 .unitinfo {
     position: fixed;
-    top: 6.5rem;
-    left: 0;
+    right: 2px;
+    bottom: 2px;
     padding: 1em;
-    z-index: 20;
+    z-index: 60;
     background-color: var(--color-background-light);
     border: 2px solid var(--color-border);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 300px;
+    width: 415px;
     max-width: 90%;
     &__close {
         position: absolute;
@@ -86,5 +83,4 @@ const close: () => void = () => {
         font-size: 2rem;    
     }
 }
-
 </style>

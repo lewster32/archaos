@@ -63,6 +63,9 @@
             </div>
         </div>
         <div class="unit-stats__status unit-statuses">
+            <span v-if="owner && !isWizard">
+                {{ isMount ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span>: 
+            </span>
             <span class="unit-statuses__item c-white" v-if="isWizard">Wizard</span>
             <span class="unit-statuses__item c-grey" v-if="isDead">Dead</span>
             <span class="unit-statuses__item c-yellow" v-if="canFly">Flying</span>
@@ -82,6 +85,8 @@ import { UnitConfig } from "../gameobjects/interfaces/ui";
 
 const props = defineProps<{
     unit: UnitConfig | null;
+    owner: string;
+    isMount?: boolean;
 }>();
 
 const isWizard = computed(() => {

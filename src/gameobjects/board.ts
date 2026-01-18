@@ -40,37 +40,104 @@ type SimplePoint = { x: number; y: number };
  * @param height The height of the board in cells.
  */
 export class Board extends Model implements Box {
+    /**
+     * Cheat to force all attacks to hit (true), miss (false), or normal (null).
+     */
     public static CHEAT_FORCE_HIT: boolean | null = null;
+
+    /**
+     * Cheat to force all spells to cast successfully (true), fail (false), or normal
+     */
     public static CHEAT_FORCE_CAST: boolean | null = null;
+
+    /**
+     * Cheat to use short animation delays for actions (true), normal delays (false or
+     */
     public static CHEAT_SHORT_DELAY: boolean = false;
 
+    /**
+     * Duration of new turn highlight animation in milliseconds.
+     */
     static get NEW_TURN_HIGHLIGHT_DURATION(): number {
         return Board.CHEAT_SHORT_DELAY ? 10 : 700;
     }
+
+    /**
+     * Number of steps in new turn highlight animation.
+     */
     static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
+
+    /**
+     * Number of iterations for each spread phase. Determines how many steps of
+     * the automata are run.
+     */
     static readonly SPREAD_ITERATIONS: number = 2;
 
+    /**
+     * The Phaser scene the board is present in.
+     */
     private readonly _scene: Scene;
+
+    /**
+     * The width of the board in tiles.
+     */
     private readonly _width: number;
+
+    /**
+     * The height of the board in tiles.
+     */
     private readonly _height: number;
 
+    /**
+     * The different visual layers of the board (floor, pieces, cursors, etc).
+     */
     private readonly _layers: Map<BoardLayer, GameObjects.Layer>;
+
+    /**
+     * Particle effects manager for board effects.
+     */
     private _particles: GameObjects.Particles.ParticleEmitterManager;
 
+    /**
+     * Default board width in tiles.
+     */
     static readonly DEFAULT_WIDTH: number = 13;
+
+    /**
+     * Default board height in tiles.
+     */
     static readonly DEFAULT_HEIGHT: number = 13;
+
+    /**
+     * How wide a tile is in pixels.
+     */
     static readonly DEFAULT_CELLSIZE: number = 14;
 
+    /**
+     * Default delay for actions in milliseconds.
+     */
     static get DEFAULT_DELAY(): number {
         return Board.CHEAT_SHORT_DELAY ? 10 : 750;
     }
+
+    /**
+     * Delay after ending a turn in milliseconds.
+     */
     static get END_TURN_DELAY(): number {
         return Board.CHEAT_SHORT_DELAY ? 10 : 1500;
     }
+
+    /**
+     * Delay between spread steps in milliseconds.
+     */
     static get SPREAD_DELAY(): number {
         return Board.CHEAT_SHORT_DELAY ? 10 : 250;
     }
 
+    /**
+     * Hard-coded table for looking up neighbouring directions to save us doing
+     * the loop/maths each time.
+     */
     static readonly NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
         { x: 0, y: -1 },
         { x: 1, y: 0 },
@@ -82,25 +149,96 @@ export class Board extends Model implements Box {
         { x: 1, y: -1 },
     ];
 
+    /**
+     * The current phase of the board. The phase is the broader stage of
+     * the game, such as spell selection or movement.
+     */
     private _phase: BoardPhase;
 
+    /**
+     * The current state of the board. The state is the specific mode the
+     * board is in within a phase, such as moving or casting a spell. It mostly
+     * affects what user inputs are valid.
+     */
     private _state: BoardState;
+
+    /**
+     * The current world balance. A positive value indicates a shift towards law
+     * while a negative value indicates a shift towards chaos.
+     */
     private _balance: number;
+
+    /**
+     * How much the world balance will shift at the end of the turn.
+     */
     private _balanceShift: number;
-    private readonly _cursor: Cursor;
-    private readonly _rangeGizmo: RangeGizmo;
+
+    /**
+     * All pieces on the board, mapped by their unique IDs.
+     */
     private readonly _pieces: Map<number, Piece>;
+
+    /**
+     * The currently selected piece, or null if no piece is selected.
+     */
     private _selected: Piece | null;
 
+    /**
+     * All players in the game, mapped by their unique IDs.
+     */
     private readonly _players: Map<number, Player>;
+
+    /**
+     * The current player whose turn it is.
+     */
     private _currentPlayer: Player | null;
+
+    /**
+     * The index of the current player in the players map. -1 if no current
+     * player.
+     */
     private _currentPlayerIndex: number = -1;
 
+    /**
+     * Simple auto-incrementing ID counter for pieces.
+     */
     private _idCounter: number = 1;
 
+    /**
+     * The cursor for this board.
+     */
+    private readonly _cursor: Cursor;
+
+    /**
+     * The movement gizmo for this board. This handles things like range and
+     * paths.
+     */
+    private readonly _rangeGizmo: RangeGizmo;
+
+    /**
+     * The rules service for this board. The rules apply most of the logic of
+     * the game.
+     */
     private readonly _rules: Rules;
+
+    /**
+     * The logger for this board. The logger handles logging alerts to the
+     * game's UI.
+     */
     private readonly _logger: Logger;
+
+    /**
+     * The sound effects manager for this board.
+     */
     private readonly _sound: SoundEffects;
+
+    /**
+     * Spell filter function to use when generating random spells. By default,
+     * this allows all spells.
+     * 
+     * @returns Whether the spell should be included in random selection.
+     */
+    private _spellFilter: (spell: SpellConfig) => boolean = () => true;
 
     constructor(
         scene: Scene,
@@ -197,14 +335,18 @@ export class Board extends Model implements Box {
                 break;
             case BoardState.Move:
             case BoardState.SelectSpell:
-                if (!this.currentPlayer?.ai) {
-                    this.scene.game.events.emit("end-turn-available", true);
-                }
+                setTimeout(() => {
+                    if (this.currentPlayer && !this.currentPlayer.ai) {
+                        this.scene.game.events.emit("end-turn-available", true);
+                    }
+                }, 10);
                 break;
             default:
-                if (this.currentPlayer && !this.currentPlayer.ai) {
-                    this.scene.game.events.emit("cancel-available", true);
-                }
+                setTimeout(() => {
+                    if (this.currentPlayer && !this.currentPlayer.ai) {
+                        this.scene.game.events.emit("cancel-available", true);
+                    }
+                }, 10);
                 this.scene.game.events.emit("end-turn-available", false);
                 break;
         }
@@ -314,6 +456,7 @@ export class Board extends Model implements Box {
             this._logger.log(`New turn`, Colour.Green);
             if (this._balanceShift !== 0) {
                 this._balance += this._balanceShift;
+                this._balance = Number.parseFloat(this._balance.toFixed(2));
                 this._logger.log(
                     `World balance shifts towards ${
                         this._balanceShift < 0 ? "chaos" : "law"
@@ -386,13 +529,15 @@ export class Board extends Model implements Box {
             clearTimeout(this._emitTimeout);
         }
         this._emitTimeout = setTimeout(() => {
-            this.scene.game.events.emit("board-update", <BoardUpdateEventData> {
+            this.scene.game.events.emit("board-update", {
                 pieces: this.pieces,
                 board: {
                     width: this._width,
                     height: this._height,
                 },
-            });
+                balance: this._balance,
+                balanceShift: this._balanceShift,
+            } as BoardUpdateEventData);
         }, 500);
     }
 
@@ -1200,7 +1345,7 @@ export class Board extends Model implements Box {
                 );
                 this.addSpell(
                     piece.currentRider.owner,
-                    Spell.getRandomSpell(true)
+                    Spell.getRandomSpell(true, this.spellFilter)
                 );
                 await piece.kill();
                 await this.idleDelay(Board.DEFAULT_DELAY);
@@ -1244,6 +1389,20 @@ export class Board extends Model implements Box {
         this._players.set(player.id, player);
         player.colour = Player.PLAYER_COLOURS[this._players.size - 1];
         return player;
+    }
+
+    /**
+     * Get or set the spell filter function used when adding spells.
+     */
+    get spellFilter(): (config: SpellConfig) => boolean {
+        return this._spellFilter ?? (() => true);
+    }
+
+    /**
+     * Get or set the spell filter function used when adding spells.
+     */
+    set spellFilter(filter: (config: SpellConfig) => boolean) {
+        this._spellFilter = filter;
     }
 
     /**
@@ -1573,6 +1732,7 @@ export class Board extends Model implements Box {
      * Advance to the next player's turn.
      */
     async nextPlayer(): Promise<void> {
+        this.emitBoardUpdateEvent();
         while (true) {
             if (
                 this.state == BoardState.GameOver ||

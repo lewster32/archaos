@@ -41,6 +41,7 @@ export interface SetupData {
     boardSize: number;
     spellCount: number;
     players: SetupPlayer[];
+    classicSpells: boolean;
 }
 
 /**
@@ -50,6 +51,7 @@ export interface GameSetupData {
     players: GameSetupPlayer[];
     board: Box;
     spellCount: number;
+    classicSpells: boolean;
 }
 
 export interface GameSetupPlayer {
@@ -122,6 +124,8 @@ export interface GameScenarioCheats {
 export interface BoardUpdateEventData {
     pieces: Piece[];
     board: Box;
+    balance: number;
+    balanceShift: number;
 }
 
 /**

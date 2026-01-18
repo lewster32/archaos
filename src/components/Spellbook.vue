@@ -327,12 +327,17 @@ const toggle: () => void = () => {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+body:has(.unitinfo) {
+    --spellbook-bottom: 15rem;
+}
+
 .spellbook {
     position: fixed;
     right: 0;
     top: 0;
-    bottom: 0;
+    bottom: var(--spellbook-bottom, 0);
+    transition: bottom 0.25s;
     z-index: 30;
     padding: 1em;
     display: flex;

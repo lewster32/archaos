@@ -28,6 +28,7 @@ import { SpellType } from "./gameobjects/enums/spelltype";
 
 import { Scene } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
+import { SpellConfig } from "./gameobjects/configs/spellconfig";
 
 export class GameScene extends Scene {
     private board: Board;
@@ -223,6 +224,24 @@ export class GameScene extends Scene {
             data?.board?.height
         );
 
+        if (data.classicSpells) {
+            // Set spell filter to exclude enhanced spells
+            this.board.spellFilter = (spell: SpellConfig) => {
+                return !spell.group || spell.group === "classicspells";
+            };
+            console.debug(
+                "The following spells will be excluded from random selection:",
+                Spell.getAllSpells()
+                    .filter(spell => !this.board.spellFilter(spell))
+                    .map(spell => spell.name)
+                    .join(", ")
+            );
+        }
+        else {
+            this.board.spellFilter = () => true;
+            console.debug("All spells will be included in random selection.");
+        }
+
         for (let player of data.players) {
             this.board.addPlayer({
                 name: player.name,
@@ -234,7 +253,7 @@ export class GameScene extends Scene {
 
         for (let i = 0; i < (data?.spellCount ?? 12) - 1; i++) {
             this.board.players.forEach((player: Player) => {
-                this.board.addSpell(player, Spell.getRandomSpell());
+                this.board.addSpell(player, Spell.getRandomSpell(false, this.board.spellFilter));
             });
         }
 

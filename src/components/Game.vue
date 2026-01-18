@@ -15,7 +15,7 @@
         @select="spellSelect"
         v-if="gameStarted && spellbook" />
     <Log :logs="logs" />
-    <Minimap :pieces="pieces" :board="board" v-if="gameStarted" />
+    <Minimap :pieces="pieces" :board="board" :balance="balance" :balanceShift="balanceShift" v-if="gameStarted" />
     <div class="menu" v-if="!gameStarted">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
         <div class="callout__inner" v-if="setup">
@@ -75,6 +75,16 @@
                     <option value="20">20</option>
                     <option value="25">25</option>
                 </select>
+            </div>
+            <div class="callout__row">
+                <label for="classicspells" class="checkbox-label">
+                    <input
+                        type="checkbox"
+                        v-model="setup.classicSpells"
+                        id="classicspells"
+                    />
+                    Classic spells (only allow spells from original)
+                </label>
             </div>
             <div class="callout__row">
                 <button
@@ -193,6 +203,16 @@ const logs: Ref<LogEntry[]> = ref([]);
 const board: Ref<Box> = ref({ width: 0, height: 0 });
 
 /**
+ * The current balance value.
+ */
+const balance: Ref<number> = ref(0);
+
+/**
+ * The current balance shift value.
+ */
+const balanceShift: Ref<number> = ref(0);
+
+/**
  * Whether the game has started (true) or is in setup/menu mode (false).
  */
 const gameStarted: Ref<boolean> = ref(false);
@@ -254,6 +274,7 @@ const startGame: (save: boolean) => void = (save: boolean) => {
             height: Math.abs(setup.value.boardSize) || 13,
         },
         spellCount: Math.abs(setup.value.spellCount) || 15,
+        classicSpells: Boolean(setup.value.classicSpells),
     } as GameSetupData);
 
     // Mark the game as started
@@ -352,6 +373,7 @@ onMounted(async () => {
             boardSize: 13,
             spellCount: 15,
             players: defaultPlayers,
+            classicSpells: false,
         };
     }
 
@@ -407,6 +429,8 @@ onMounted(async () => {
     eventEmitter.value.on("board-update", (data: BoardUpdateEventData) => {
         pieces.value = data.pieces;
         board.value = data.board;
+        balance.value = data.balance;
+        balanceShift.value = data.balanceShift;
     });
 
     // Listen for action availability updates
@@ -415,6 +439,7 @@ onMounted(async () => {
     });
 
     eventEmitter.value.on("end-turn-available", (state: boolean) => {
+        console.log(`End turn available: ${state}`);
         canEndTurn.value = state;
     });
 
@@ -431,7 +456,7 @@ onMounted(async () => {
     if (scenario) {
         console.log(`Auto-starting scenario: ${scenario}`);
         const scenarioResponse: Response = await fetch(
-            `/assets/scenarios/${scenario.toLowerCase().trim()}.json`
+            import.meta.resolve(`../../scenarios/${scenario.toLowerCase().trim()}.json`)
         );
         if (scenarioResponse.ok) {
             const scenarioData: GameScenarioData = await scenarioResponse.json();
@@ -543,6 +568,12 @@ input[type="checkbox"] {
     height: 2rem;
     accent-color: var(--color-yellow);
     cursor: pointer;
+}
+
+.checkbox-label {
+    display:flex;
+    align-items:center;
+    gap:1rem;
 }
 
 #game-container {

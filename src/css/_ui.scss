@@ -43,6 +43,21 @@
     }
 }
 
+dialog.callout {
+    color: var(--color-foreground);
+    &::backdrop {
+        // checkerboard pattern
+        background-image: 
+            linear-gradient(45deg, #000 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #000 75%),
+            linear-gradient(45deg, transparent 75%, #000 75%),
+            linear-gradient(45deg, #000 25%, transparent 25%);
+        --size: 2px;
+        background-size: calc(var(--size) * 2) calc(var(--size) * 2);
+        background-position: 0 0, 0 0, calc(var(--size) * -1) calc(var(--size) * -1), calc(var(--size)) calc(var(--size));
+    }
+}
+
 .modal {
     position: fixed;
     left: 0;
