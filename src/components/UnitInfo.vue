@@ -22,7 +22,6 @@ import { computed, onMounted } from "vue";
 import type { Ref } from "vue";
 import type { Piece } from '../gameobjects/piece';
 import UnitStats from "./UnitStats.vue";
-import { UnitType } from "../gameobjects/enums/unittype";
 import { hexColour } from "../utils";
 import type { Player } from "../gameobjects/player";
 

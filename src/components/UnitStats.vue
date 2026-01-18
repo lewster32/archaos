@@ -84,8 +84,8 @@ import { computed } from "vue";
 import { UnitConfig } from "../gameobjects/interfaces/ui";
 
 const props = defineProps<{
-    unit: UnitConfig | null;
-    owner: string;
+    unit: UnitConfig |null;
+    owner?: string;
     isMount?: boolean;
 }>();
 
