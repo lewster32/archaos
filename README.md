@@ -25,6 +25,9 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Standalone client
 - New units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
 
+## Play now! 🔥
+You can play the latest build in your browser here: https://www.archaos.co.uk/2021/
+
 ## Installing and building
 
 ### Requirements:
