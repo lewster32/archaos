@@ -46,7 +46,7 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": true,
         "forceCast": true,

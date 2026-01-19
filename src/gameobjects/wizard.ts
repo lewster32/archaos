@@ -491,7 +491,7 @@ export class Wizard extends Piece {
         this._shadow.setTint(this.owner?.colour);
 
         // Make additive
-        this._shadow.setBlendMode(BlendModes.SCREEN);
+        this._shadow.setBlendMode(BlendModes.ADD);
 
         // Add repeating tween to pulse the glow
         this.board.scene.tweens.add({

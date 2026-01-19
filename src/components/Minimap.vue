@@ -3,7 +3,7 @@
         <button class="minimap__close button button--small" @click="close()">
             &times;
         </button>
-        <button class="minimap__info button button--small" @click="toggleInfo()">
+        <button class="minimap__info callout button--small c-white" @click="toggleInfo()">
             <span style="font-weight:bold" :class="{'c-magenta' : balance < 0, 'c-cyan' : balance > 0}">
                 {{ `${balance < 0 ? '*' : (balance > 0 ? '^' : '-')}`}}
             </span>
@@ -150,8 +150,9 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
     &__info {
         position: absolute;
         z-index: 100;
-        left: 1em;
+        left: 50%;
         top: 100%;
+        translate: -50% 0;
         text-align: center;
         text-wrap: nowrap;
     }

@@ -328,27 +328,28 @@ const toggle: () => void = () => {
 </script>
 
 <style lang="scss">
-body:has(.unitinfo) {
+body:has(.unitinfo--show) {
     --spellbook-bottom: 15rem;
 }
 
 .spellbook {
     position: fixed;
     right: 0;
+    width: 418px;
     top: 0;
     bottom: var(--spellbook-bottom, 0);
     transition: bottom 0.25s;
     z-index: 30;
     padding: 1em;
-    display: flex;
     justify-content: right;
     &__inner {
         display: flex;
         flex-direction: column;
-        transition: max-width 0.25s, opacity 0.25s, padding 0.25s;
+        transition: translate 0.25s, opacity 0.25s;
         max-width: 500px;
+        height: 100%;
         &--minimised {
-            max-width: 0;
+            translate: 100% 0;
             opacity: 0;
             padding-left: 0;
             padding-right: 0;
@@ -395,7 +396,8 @@ body:has(.unitinfo) {
         z-index: 50;
         &--closed {
             top: 1.5em;
-            left: -2em;
+            left: auto;
+            right: 1em;
         }
         &::after {
             display: none;

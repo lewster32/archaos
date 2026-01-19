@@ -111,7 +111,7 @@
         />
     </div>
     <UnitInfo
-        v-if="currentUnit"
+        :class="{'unitinfo--show': currentUnit != null}"
         :unit="currentUnit"
         @close="closeUnitInfo()"
     />
@@ -532,7 +532,7 @@ onUnmounted(() => {
 }
 
 .container {
-    transition: margin-right 1s ease-in-out, filter 0.5s;
+    transition: margin-right .33s ease-in-out, filter 0.5s;
     &--nudge {
         margin-right: 350px;
     }
