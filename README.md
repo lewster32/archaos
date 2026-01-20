@@ -20,7 +20,7 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Computer-controlled opponents (they're a bit dim right now, but getting better)
 - All of the original spells and units
 
-<p align="center"><img width="240" src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
+<p align="center"><img src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
 
 ### Not yet features
 - Online multiplayer
