@@ -109,6 +109,12 @@
             class="big-button big-button--cancel"
             title="Cancel"
         />
+        <button
+            :class="{ 'big-button--hide': !gameStarted || !canDismount }"
+            @click="dismount()"
+            class="big-button big-button--dismount"
+            title="Dismount"
+        />
     </div>
     <UnitInfo
         :class="{'unitinfo--show': currentUnit != null}"
@@ -180,6 +186,11 @@ const canCancel: Ref<boolean> = ref(false);
  * Whether the end turn action is currently available.
  */
 const canEndTurn: Ref<boolean> = ref(false);
+
+/**
+ * Whether the dismount action is currently available.
+ */
+const canDismount: Ref<boolean> = ref(false);
 
 /**
  * The spellbook UI data.
@@ -254,6 +265,13 @@ const cancel: () => void = () => {
  */
 const endTurn: () => void = () => {
     eventEmitter.value?.emit("end-turn");
+};
+
+/**
+ * Handler for the dismount button.
+ */
+const dismount: () => void = () => {
+    eventEmitter.value?.emit("dismount");
 };
 
 /**
@@ -442,6 +460,10 @@ onMounted(async () => {
         canEndTurn.value = state;
     });
 
+    eventEmitter.value.on("dismount-available", (state: boolean) => {
+        canDismount.value = state;
+    });
+
     // GAME OVER YEAHHHH
     eventEmitter.value.on("game-over", (): void => {
         gameOver.value = true;
@@ -528,6 +550,9 @@ onUnmounted(() => {
     }
     &--skip {
         background-image: url("../../assets/images/ui/end-turn.png");
+    }
+    &--dismount {
+        background-image: url("../../assets/images/ui/dismount.png");
     }
 }
 

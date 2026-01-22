@@ -289,7 +289,26 @@ export class Board extends Model implements Box {
         this._logger = Logger.getInstance(this.scene.game.events);
 
         this.scene.game.events.on("end-turn", async () => {
+            if (!this.cursor.enabled || this.state === BoardState.GameOver) {
+                return;
+            }
             await this.nextPlayer();
+        });
+
+        this.scene.game.events.on("dismount", async () => {
+            if (!this.cursor.enabled || !this.selected || this.state === BoardState.GameOver || this.state === BoardState.Dismount) {
+                return;
+            }
+            if ((!this.selected.moved || this.selected.stats.movement === 0) && this.selected.currentRider) {
+                this.logger.log(
+                    `Dismount ${this.selected.currentRider.owner.name}? (${Cursor.CANCEL_KEY} to cancel)`,
+                    Colour.Yellow
+                );
+                this.selectPiece(this.selected.currentRider.id);
+                this.state = BoardState.Dismount;
+                console.log(this.state, this.selected);
+                await this.rangeGizmo.generate(this.selected);
+            }
         });
 
         this.createEffects();
@@ -346,8 +365,8 @@ export class Board extends Model implements Box {
                     if (this.currentPlayer && !this.currentPlayer.ai) {
                         this.scene.game.events.emit("cancel-available", true);
                     }
+                    this.scene.game.events.emit("end-turn-available", false);
                 }, 10);
-                this.scene.game.events.emit("end-turn-available", false);
                 break;
         }
     }
@@ -815,8 +834,7 @@ export class Board extends Model implements Box {
         if (this.phase === BoardPhase.Moving) {
             this.sound.play("select");
             if (this._selected.currentMount) {
-                await this.rangeGizmo.generate(this._selected);
-                return;
+                this.scene.game.events.emit("dismount-available", true);
             }
 
             
@@ -877,6 +895,7 @@ export class Board extends Model implements Box {
 
         if (!this._selected) {
             console.warn("No piece selected to deselect");
+            this.nextPlayer();
             return;
         }
         if (this.phase === BoardPhase.Moving) {
@@ -893,6 +912,7 @@ export class Board extends Model implements Box {
                 return;
             }
         }
+        this.scene.game.events.emit("dismount-available", false);
         this.scene.game.events.emit("cancel-available", false);
 
         const turnOver: boolean =
@@ -1120,6 +1140,7 @@ export class Board extends Model implements Box {
             throw new Error(`Could not find piece with ID ${id}`);
         }
         this.cursor.enabled = false;
+        this.scene.game.events.emit("dismount-available", false);
         const path: Path = this.rangeGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
@@ -1129,6 +1150,10 @@ export class Board extends Model implements Box {
         } else if (path && path.nodes?.length > 1) {
             // Remove first step, as that's the piece's current position
             path.nodes.shift();
+            // If the last step is terminal, remove it also
+            if (path.nodes.at(-1).terminal) {
+                path.nodes.pop();
+            }
             await this.movePath(piece, path);
         } else {
             throw new Error(`No path to ${position.x}, ${position.y}`);
@@ -1274,6 +1299,7 @@ export class Board extends Model implements Box {
             console.error(`Could not find piece with ID ${dismountingPieceId}`);
             return null;
         }
+        this.scene.game.events.emit("dismount-available", false);
         this.sound.play("move");
         await dismountingPiece.dismount();
         this.emitBoardUpdateEvent();
@@ -1514,6 +1540,7 @@ export class Board extends Model implements Box {
         );
 
         await this.updateBackgroundColour();
+        this.scene.game.events.emit("end-turn-available", true);
 
         let previousVal = 0;
 

@@ -7,36 +7,41 @@
     },
     "players": [
         {
+            "id": 1,
+            "name": "Player 1",
+            "position": { "x": 0, "y": 0 },
+            "computerControlled": false,
+            "statuses": [
+            ],
+            "pieces": [
+                {
+                    "type": "Magic Wood",
+                    "position": { "x": 0, "y":1 }
+                },
+                {
+                    "type": "Horse",
+                    "position": { "x": 3, "y": 0 }
+                }
+            ],
+            "spells": [
+                "Magic Bow"
+            ]
+        },
+        {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 5, "y": 0 },
+            "position": { "x": 8, "y": 3 },
             "computerControlled": false,
             "statuses": [
                 
             ],
             "pieces": [
                 {
-                    "type": "Elf",
-                    "position": { "x": 3, "y": 0}
+                    "type": "Bat",
+                    "position": { "x": 1, "y": 1 }
                 }
             ],
             "spells": [
-                "Orc"
-            ]
-        },
-        {
-            "id": 1,
-            "name": "Player 1",
-            "position": { "x": 0, "y": 0 },
-            "computerControlled": false,
-            "pieces": [
-                {
-                    "type": "Obelisk",
-                    "position": { "x": 1, "y": 0 }
-                }
-            ],
-            "spells": [
-                "Obelisk"
             ]
         }
     ],
@@ -46,9 +51,9 @@
             "position": { "x": 2, "y": 2 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
-        "forceHit": true,
+        "forceHit": false,
         "forceCast": true,
         "shortDelay": false
     }

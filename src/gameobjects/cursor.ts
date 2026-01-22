@@ -273,9 +273,7 @@ export class Cursor {
         const selected: Piece | null = this._board.selected;
 
         if (selected?.moved) {
-            if (selected.currentRider && !selected.currentRider.moved) {
-                this._board.state = BoardState.Dismount;
-            } else {
+            if (!selected.currentRider || selected.currentRider.moved) {
                 if (selected.canAttack) {
                     return;
                 }

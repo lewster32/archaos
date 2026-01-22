@@ -352,14 +352,10 @@ export class Rules {
                         currentAliveHoveredPiece.currentRider
                     );
                     await board.selectPiece(
-                        currentAliveHoveredPiece.currentRider.id
+                        currentAliveHoveredPiece.id
                     );
-                    board.logger.log(
-                        `Dismount ${currentAliveHoveredPiece.currentRider.name}? (${Cursor.CANCEL_KEY} to cancel)`,
-                        Colour.Yellow
-                    );
-                    board.state = BoardState.Dismount;
-                    return ActionType.Dismount;
+                    board.scene.game.events.emit("dismount-available", true);
+                    return ActionType.Move;
                 } else if (
                     currentAliveHoveredPiece?.canSelect
                 ) {
@@ -409,7 +405,8 @@ export class Rules {
                         !selectedPiece.hasStatus(UnitStatus.Flying) &&
                         selectedPiece.inMovementRange(
                             currentAliveHoveredPiece.position
-                        )
+                        ) &&
+                        Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
                         await board.movePiece(
                             selectedPiece.id,
@@ -417,11 +414,16 @@ export class Rules {
                         );
                         selectedPiece.moved = false;
                     }
-                    await board.mountPiece(
-                        selectedPiece.id,
-                        currentAliveHoveredPiece.id
-                    );
-                    return ActionType.Mount;
+                    if (selectedPiece.engaged) {
+                        return ActionType.Invalid;
+                    }
+                    else {
+                        await board.mountPiece(
+                            selectedPiece.id,
+                            currentAliveHoveredPiece.id
+                        );
+                        return ActionType.Mount;
+                    }
                 } else {
                     return ActionType.Invalid;
                 }
@@ -515,24 +517,40 @@ export class Rules {
             return ActionType.Cancel;
         }
 
+        if (board.state === BoardState.Move) {
+            if (selectedPiece) {
+                selectedPiece.moved = true;
+                selectedPiece.turnOver = true;
+                if (selectedPiece.currentRider) {
+                    selectedPiece.currentRider.moved = true;
+                    selectedPiece.currentRider.turnOver = true;
+                }
+            }
+            board.scene.game.events.emit("dismount-available", false);
+            await board.deselectPiece();
+            return ActionType.Cancel;
+        }
+
         if (!selectedPiece) {
             await board.nextPlayer();
             return ActionType.Cancel;
         }
 
         if (board.state === BoardState.Dismount) {
-            if (selectedPiece) {
-                selectedPiece.moved = true;
-            }
             if (selectedPiece.currentRider) {
+                selectedPiece.moved = true;
                 selectedPiece.currentRider.moved = true;
-            }
+            } 
             board.logger.log(`Dismount cancelled`, Colour.Magenta);
             if (
                 selectedPiece.currentMount?.canSelect
             ) {
                 await board.selectPiece(selectedPiece.currentMount.id);
+                board.state = BoardState.Move;
                 return ActionType.Move;
+            }
+            else {
+                board.scene.game.events.emit("dismount-available", false);
             }
         }
 
