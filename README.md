@@ -20,10 +20,15 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Computer-controlled opponents (they're a bit dim right now, but getting better)
 - All of the original spells and units
 
+<p align="center"><img src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
+
 ### Not yet features
 - Online multiplayer
 - Standalone client
 - New units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
+
+## Play now! 🔥
+You can play the latest build in your browser here: https://www.archaos.co.uk/2021/
 
 ## Installing and building
 
