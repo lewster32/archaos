@@ -189,21 +189,22 @@ export class Piece extends Entity {
         this.createShaders();
     }
 
-    get turnOver(): boolean {
-        return (
-            (this.moved && !this.canAttack && !this.canRangedAttack) ||
-            this.dead ||
-            this.engulfed ||
-            (this.moved && this.attacked && this.rangedAttacked)
-        );
-    }
-
+    /**
+     * Whether this piece is currently highlighted on the board. Used to
+     * indicate whether the piece can still be selected.
+     */
     private _highlighted: boolean = false;
 
+    /**
+     * Get whether this piece is highlighted on the board.
+     */
     get highlighted(): boolean {
         return this._highlighted;
     }
 
+    /**
+     * Set whether this piece is highlighted on the board.
+     */
     set highlighted(state: boolean) {
         if (!this._ownerHighlightTween) {
             return;
@@ -235,10 +236,35 @@ export class Piece extends Entity {
         this._sprite.setTint(this.defaultTint);
     }
 
+    /**
+     * Get the default tint color for this piece. Normally it's white which does
+     * not alter the piece's colors, but pieces that have been resurrected via
+     * Raise Dead have a sallow green tint.
+     * 
+     */
     get defaultTint(): number {
         return this.raisedDead ? Piece.RAISED_DEAD_TINT : 0xffffff;
     }
 
+
+    /**
+     * Check if this piece's turn is over, i.e., it cannot perform any valid
+     * actions this turn.
+     */
+    get turnOver(): boolean {
+        return (
+            (this.moved && !this.canAttack && !this.canRangedAttack) ||
+            this.dead ||
+            this.engulfed ||
+            (this.moved && this.attacked && this.rangedAttacked)
+        );
+    }
+
+
+    /**
+     * End this piece's turn, marking all of its action flags as complete and
+     * tinting it slightly darker.
+     */
     set turnOver(state: boolean) {
         this.moved = this.attacked = this.rangedAttacked = state;
 
@@ -266,22 +292,38 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get the type of this piece (creature, wizard, structure, etc.).
+     */
     get type(): UnitType {
         return this._type;
     }
 
+    /**
+     * Get the owner of this piece (if any).
+     */
     get owner(): Player | null {
         return this._owner || null;
     }
 
+    /**
+     * Set the owner of this piece. Can be set to null to indicate no owner,
+     * e.g., for corpses or neutral pieces.
+     */
     set owner(owner: Player | null) {
         this._owner = owner;
     }
 
+    /**
+     * Get the facing direction of this piece.
+     */
     get direction(): UnitDirection {
         return this._direction;
     }
 
+    /**
+     * Set the facing direction of this piece.
+     */
     set direction(direction: UnitDirection) {
         if (direction != this._direction) {
             this._direction = direction;
@@ -289,14 +331,24 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get whether this piece is dead. Cannot be set directly; use the `kill()`
+     * method instead.
+     */
     get dead(): boolean {
         return this._dead;
     }
 
+    /**
+     * Get the name of this piece.
+     */
     get name(): string {
         return this._properties?.name || "Unnamed Unit";
     }
 
+    /**
+     * Get the sprite representing this piece.
+     */
     get sprite(): GameObjects.Sprite {
         if (!this._sprite) {
             this.createSprite();
@@ -304,6 +356,9 @@ export class Piece extends Entity {
         return this._sprite;
     }
 
+    /**
+     * Get the shadow sprite for this piece.
+     */
     get shadow(): GameObjects.Image {
         if (!this._shadow) {
             this.createShadow();
@@ -311,6 +366,9 @@ export class Piece extends Entity {
         return this._shadow;
     }
 
+    /**
+     * Get whether this piece has moved this turn.
+     */
     get moved(): boolean {
         if (this.stats.movement === 0 || this._engaged) {
             return true;
@@ -318,6 +376,9 @@ export class Piece extends Entity {
         return this._moved;
     }
 
+    /**
+     * Set whether this piece has moved this turn.
+     */
     set moved(moved: boolean) {
         this._moved = moved;
         if (this.currentRider) {
@@ -327,6 +388,9 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get whether this piece has attacked this turn.
+     */
     get attacked(): boolean {
         if (this.stats.combat === 0) {
             return true;
@@ -334,6 +398,9 @@ export class Piece extends Entity {
         return this._attacked;
     }
 
+    /**
+     * Set whether this piece has attacked this turn.
+     */
     set attacked(attacked: boolean) {
         this._moved = attacked;
         this._attacked = attacked;
@@ -347,6 +414,9 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get whether this piece has performed a ranged attack this turn.
+     */
     get rangedAttacked(): boolean {
         if (this.stats.rangedCombat === 0 || this.stats.range === 0) {
             return true;
@@ -354,6 +424,9 @@ export class Piece extends Entity {
         return this._rangedAttacked;
     }
 
+    /**
+     * Set whether this piece has performed a ranged attack this turn.
+     */
     set rangedAttacked(rangedAttacked: boolean) {
         this._moved = rangedAttacked;
         this._attacked = rangedAttacked;
@@ -376,14 +449,24 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get whether this piece is currently engaged in combat, i.e., it can't
+     * move away, and must either attack an adjacent enemy or end its turn.
+     */
     get engaged(): boolean {
         return this._engaged;
     }
 
+    /**
+     * Set whether this piece is currently engaged in combat.
+     */
     set engaged(engaged: boolean) {
         this._engaged = engaged;
     }
 
+    /**
+     * Set whether this piece is currently engulfed by another piece.
+     */
     set engulfed(engulfed: boolean) {
         this._engulfed = engulfed;
         setTimeout(() => {
@@ -405,18 +488,33 @@ export class Piece extends Entity {
         });
     }
 
+    /**
+     * Get whether this piece is currently engulfed by another piece.
+     */
     get engulfed(): boolean {
         return this._engulfed;
     }
 
+    /**
+     * Get whether this piece is an illusion.
+     */
     get illusion(): boolean {
         return this._illusion;
     }
 
+    /**
+     * Get whether this piece was raised from the dead. Used mainly to apply a
+     * visual tint to the piece, as the mechanical aspects are handled by the
+     * `Undead` status, but we don't want _naturally_ undead units to have the 
+     * tint.
+     */
     get raisedDead(): boolean {
         return this._raisedDead;
     }
 
+    /**
+     * Set whether this piece was raised from the dead.
+     */
     set raisedDead(raisedDead: boolean) {
         this._raisedDead = raisedDead;
         if (raisedDead) {
@@ -424,6 +522,9 @@ export class Piece extends Entity {
         }
     }
 
+    /**
+     * Get the stats for this piece, taking into account any status effects.
+     */
     get stats(): IUnitStats {
         const stats: IUnitStats = {
             movement: this._properties.movement,
@@ -434,6 +535,9 @@ export class Piece extends Entity {
             maneuverability: this._properties.maneuverability,
             magicResistance: this._properties.magicResistance
         };
+
+        // TODO: This should really be defined by the spell system, maybe by
+        // layering additional modifiers on top of the base stats.
         if (this.hasStatus(UnitStatus.ShadowForm)) {
             stats.movement = 3;
             stats.defense = Math.min(stats.defense + 3,9);
@@ -460,10 +564,17 @@ export class Piece extends Entity {
         return stats;
     }
 
+    /**
+     * Get the properties of this piece from the original JSON unit definition.
+     */
     get properties(): UnitProperties {
         return this._properties;
     }
 
+    /**
+     * Set the current rider of this piece (if any). This is called via the
+     * mount/dismount actions.
+     */
     set currentRider(rider: Piece | null) {
         if (!rider) {
             this._currentRider = null;
@@ -507,6 +618,13 @@ export class Piece extends Entity {
         return this._currentMount;
     }
 
+    /**
+     * Visually update the position of this piece on the board with a tween for
+     * a smooth movement animation.
+     * 
+     * @param duration Duration of the move animation (in ms).
+     * @returns A promise that resolves when the animation is complete.
+     */
     async updatePosition(
         duration: number = Piece.DEFAULT_MOVE_DURATION
     ): Promise<void> {
@@ -545,27 +663,49 @@ export class Piece extends Entity {
         });
     }
 
+    /**
+     * Update the depth of this piece's sprite based on its current Y position.
+     */
     protected updateDepth() {
         this._sprite?.setDepth(this._sprite?.y);
     }
 
+    /**
+     * Get the depth value for this piece based on its Y position.
+     */
     get depth(): number {
         return this._sprite?.y || 0;
     }
 
+    /**
+     * Update the facing direction of this piece based on movement from one
+     * point to another.
+     * 
+     * @param fromPoint The starting point of the movement.
+     * @param toPoint The ending point of the movement.
+     */
     protected updateDirection(
         fromPoint: Geom.Point,
         toPoint: Geom.Point
     ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
-        if (isoXOffset < 0) {
-            this.direction = UnitDirection.Left;
-        } else if (isoXOffset > 0) {
-            this.direction = UnitDirection.Right;
+
+        // No change in X direction means no change in facing direction
+        if (isoXOffset === 0) {
+            return;
         }
+        // Otherwise, face left or right based on X offset
+        this.direction = isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
     }
 
+    /**
+     * Move this piece to the specified point on the board, updating its
+     * facing direction accordingly.
+     * 
+     * @param point The point to move to.
+     * @param stepDuration Optional duration for the move animation.
+     */
     async moveTo(point: Geom.Point, stepDuration?: number) {
         this.updateDirection(this.position, point);
         this.position = point;
@@ -582,7 +722,16 @@ export class Piece extends Entity {
         await this.updatePosition(stepDuration);
     }
 
+    /**
+     * Spread this piece to adjacent squares, potentially engulfing or
+     * destroying any pieces it spreads over.
+     * 
+     * @returns A promise that resolves when the spread action is complete.
+     */
     async spread(): Promise<void> {
+        if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
+            throw new Error("Cannot spread a non-spreading or dead piece");
+        }
         const spreadAction: SpreadAction = PMath.RND.pick([
             SpreadAction.Spread,
             SpreadAction.Spread,
@@ -723,11 +872,16 @@ export class Piece extends Entity {
         }
     }
 
-    async raiseDead(owner: Player): Promise<void> {
+    /**
+     * Raise this piece from the dead, assigning its new owner in the process.
+     * 
+     * @param owner The new owner of the raised piece.
+     */
+    async raiseDead(owner: Player | null): Promise<void> {
         if (!this.dead) {
             throw new Error("Cannot raise a piece that is not dead");
         }
-        this._owner = owner;
+        this.owner = owner;
         this._dead = false;
         this.raisedDead = true;
         if (this.sprite) {
@@ -737,6 +891,12 @@ export class Piece extends Entity {
         this.addStatus(UnitStatus.Undead);
     }
 
+    /**
+     * Add a status effect to this piece.
+     * 
+     * @param status The status effect to add.
+     * @returns True if the status was added, false if it was already present.
+     */
     addStatus(status: UnitStatus): boolean {
         if (!this.hasStatus(status)) {
             this._properties.status.push(status);
@@ -745,6 +905,12 @@ export class Piece extends Entity {
         return false;
     }
 
+    /**
+     * Remove a status effect from this piece.
+     * 
+     * @param status The status effect to remove.
+     * @returns True if the status was removed, false if it was not present.
+     */
     removeStatus(status: UnitStatus): boolean {
         if (this.hasStatus(status)) {
             this._properties.status = this._properties.status.filter(
@@ -755,10 +921,22 @@ export class Piece extends Entity {
         return false;
     }
 
+    /**
+     * Check if this piece has a specific status effect.
+     * 
+     * @param status The status effect to check for.
+     * @returns True if the piece has the status effect, false otherwise.
+     */
     hasStatus(status: UnitStatus): boolean {
         return this._properties.status.includes(status);
     }
 
+    /**
+     * Check if a point is within this piece's movement range.
+     * 
+     * @param point The point to check.
+     * @returns True if the point is within movement range, false otherwise.
+     */
     inMovementRange(point: Geom.Point): boolean {
         // Cannot move to the same point
         if (Geom.Point.Equals(this.position, point)) {
@@ -780,6 +958,12 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if a point is within this piece's attack range.
+     * 
+     * @param point The point to check.
+     * @returns True if the point is within attack range, false otherwise.
+     */
     inAttackRange(point: Geom.Point): boolean {
         // If we haven't moved yet, we can attack anywhere within movement
         if (
@@ -794,6 +978,12 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if a point is within this piece's ranged attack range.
+     * 
+     * @param point The point to check.
+     * @returns True if the point is within ranged attack range, false otherwise.
+     */
     inRangedAttackRange(point: Geom.Point): boolean {
         if (Board.distance(this.position, point, RangeType.RangedAttack) > this.stats.range) {
             return false;
@@ -801,6 +991,11 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can be selected. A piece cannot be selected if it is
+     * dead, has already ended its turn, is a structure, has zero movement,
+     * combat, and ranged combat, or is currently engulfed by another piece.
+     */
     get canSelect(): boolean {
         if (this._engulfed) {
             return false;
@@ -827,6 +1022,10 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can be disbelieved (i.e., a potentially illusionary
+     * unit)
+     */
     get canDisbelieve(): boolean {
         return (
             this.type === UnitType.Creature && // Only creatures can be disbelieved
@@ -837,6 +1036,9 @@ export class Piece extends Entity {
         );
     }
 
+    /**
+     * Check if this piece can be spread on by spreading units.
+     */
     get canBeSpreadOn(): boolean {
         return (
             (this.type === UnitType.Creature || // Only creatures and wizards can be spread on
@@ -848,6 +1050,9 @@ export class Piece extends Entity {
         );
     }
 
+    /**
+     * Check if this piece can have the Subversion spell cast on it.
+     */
     get canBeSubverted(): boolean {
         return (
             this.type === UnitType.Creature && // Only creatures can be subverted
@@ -861,10 +1066,20 @@ export class Piece extends Entity {
         );
     }
 
+    /**
+     * Check if this piece can be magic attacked. Currently only checks for
+     * invulnerability, but other statuses could be added in future for this,
+     * such as Sanctity.
+     */
     get canBeMagicAttacked(): boolean {
         return !this.hasStatus(UnitStatus.Invulnerable) // Cannot be magic attacked if invulnerable
     }
 
+    /**
+     * Check if this piece can perform a melee attack.
+     * 
+     * @returns True if this piece can perform a melee attack, false otherwise.
+     */
     get canAttack(): boolean {
         const neighbours: Piece[] = this.getNeighbours();
 
@@ -883,6 +1098,11 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can move.
+     * 
+     * @returns True if this piece can move, false otherwise.
+     */
     get canMove(): boolean {
         if (
             this._dead || // Cannot move when dead
@@ -896,6 +1116,32 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can attack a piece that may be undead. Only pieces
+     * that are themselves undead or have the `AttackUndead` status can attack
+     * other undead pieces.
+     * 
+     * @param piece The piece to check against.
+     * @returns True if this piece can attack the possibly undead piece, false otherwise.
+     */
+    canAttackPossiblyUndeadPiece(piece: Piece): boolean {
+        if (
+            piece.hasStatus(UnitStatus.Undead) &&
+            !this.hasStatus(UnitStatus.Undead) &&
+            !this.hasStatus(UnitStatus.AttackUndead)
+        ) { 
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if this piece can attack the given piece. Does not check for Undead
+     * status; use `canAttackPossiblyUndeadPiece` for that.
+     * 
+     * @param piece The piece to check against.
+     * @returns True if this piece can attack the given piece, false otherwise.
+     */
     canAttackPiece(piece: Piece): boolean {
         if (
             this == piece || // Cannot attack self
@@ -914,6 +1160,11 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can perform a ranged attack.
+     * 
+     * @returns True if this piece can perform a ranged attack, false otherwise.
+     */
     get canRangedAttack(): boolean {
         if (
             this._dead || // Cannot attack when dead
@@ -929,6 +1180,13 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can perform a ranged attack on the given piece. Does
+     * not check for Undead status; use `canAttackPossiblyUndeadPiece` for that.
+     * 
+     * @param piece The piece to check against.
+     * @returns True if this piece can perform a ranged attack on the given piece, false otherwise.
+     */
     canRangedAttackPiece(piece: Piece): boolean {
         if (
             this == piece || // Cannot attack self
@@ -950,6 +1208,12 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Check if this piece can mount the given piece.
+     * 
+     * @param piece The piece to check against.
+     * @returns True if this piece can mount the given piece, false otherwise.
+     */
     canMountPiece(piece: Piece): boolean {
         if (
             this != piece && // Cannot mount self
@@ -967,6 +1231,12 @@ export class Piece extends Entity {
         return false;
     }
 
+    /**
+     * Check if this piece can become engaged in combat with the given piece.
+     * 
+     * @param piece The piece to check against.
+     * @returns True if this piece can engage the given piece, false otherwise.
+     */
     canEngagePiece(piece: Piece): boolean {
         if (
             this == piece || // Cannot engage self
@@ -985,6 +1255,11 @@ export class Piece extends Entity {
         return true;
     }
 
+    /**
+     * Get the first neighbouring piece that this piece can become engaged with.
+     * 
+     * @returns The first piece that can be engaged with, or null if none found.
+     */
     getFirstEngagingPiece(): Piece | null {
         const neighbours: Piece[] = this.getNeighbours();
         for (const neighbour of neighbours) {
@@ -995,6 +1270,11 @@ export class Piece extends Entity {
         return null;
     }
 
+    /**
+     * Engage this piece with the given piece.
+     * 
+     * @param piece The piece to engage with.
+     */
     async engage(piece: Piece): Promise<void> {
         if (this.canEngagePiece(piece)) {
             this.engaged = true;
@@ -1010,6 +1290,11 @@ export class Piece extends Entity {
         });
     }
 
+    /**
+     * Get all neighbouring pieces that are not dead.
+     * 
+     * @returns An array of non-dead neighbouring pieces.
+     */
     getNeighbours(): Piece[] {
         return this.board.getAdjacentPiecesAtPosition(
             this.position,
@@ -1017,12 +1302,16 @@ export class Piece extends Entity {
         );
     }
 
+    /**
+     * Perform an attack on the given piece.
+     * 
+     * @param piece The piece to attack.
+     * @returns True if the attack was successful, false otherwise.
+     */
     async attack(piece: Piece): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
             if (
-                piece.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.AttackUndead)
+                !this.canAttackPossiblyUndeadPiece(piece)
             ) {
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
@@ -1078,12 +1367,16 @@ export class Piece extends Entity {
         return false;
     }
 
+    /**
+     * Perform a ranged attack on the given piece.
+     * 
+     * @param piece The piece to attack.
+     * @returns True if the attack was successful, false otherwise.
+     */
     async rangedAttack(piece: Piece): Promise<boolean> {
         if (this.canRangedAttackPiece(piece)) {
             if (
-                piece.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.Undead) &&
-                !this.hasStatus(UnitStatus.AttackUndead)
+                !this.canAttackPossiblyUndeadPiece(piece)
             ) {
                 await this.board.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY
@@ -1177,6 +1470,12 @@ export class Piece extends Entity {
         return false;
     }
 
+    /**
+     * Kill this piece.
+     * 
+     * @param silent Whether to suppress sound effects, e.g., when you just want to apply the status of dead without the effects.
+     * @returns A promise that resolves when the kill action is complete.
+     */
     async kill(silent: boolean = false): Promise<void> {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
@@ -1232,6 +1531,11 @@ export class Piece extends Entity {
         await Board.delay(Board.DEFAULT_DELAY);
     }
 
+    /**
+     * Mount this piece upon the given piece.
+     * 
+     * @param piece The piece to mount.
+     */
     async mount(piece: Piece): Promise<void> {
         if (!this.canMountPiece(piece)) {
             throw new Error(`${this.name} cannot mount ${piece.name}`);
@@ -1249,6 +1553,9 @@ export class Piece extends Entity {
         piece.createShaders(true, this.owner);
     }
 
+    /**
+     * Dismount this piece from its current mount.
+     */
     async dismount(): Promise<void> {
         if (!this.currentMount) {
             throw new Error(`${this.name} is not mounted`);
@@ -1264,6 +1571,14 @@ export class Piece extends Entity {
         this.currentMount = null;
     }
 
+    /**
+     * Destroy this piece, removing it from the board. This a more nuclear
+     * option than `kill`, as it removes the piece entirely rather than just
+     * marking it as dead. Typically used for Disbelieved illusions or stuff
+     * engulfed by Magic Fire.
+     * 
+     * @returns A promise that resolves when the destroy action is complete.
+     */
     async destroy() {
         this._dead = true;
         if (this.currentRider) {
@@ -1283,6 +1598,21 @@ export class Piece extends Entity {
         this.board.emitBoardUpdateEvent();
     }
 
+    /**
+     * Reset this piece's state for a new turn.
+     */
+    reset() {
+        this.turnOver = false;
+        this.engaged = false;
+
+        if (this.currentRider) {
+            this.currentRider.reset();
+        }
+    }
+
+    /**
+     * Play the appropriate animation for this piece based on its state.
+     */
     protected playAnim() {
         if (!this._sprite?.anims) {
             return;
@@ -1300,6 +1630,11 @@ export class Piece extends Entity {
         this._sprite.anims.setProgress(Math.random());
     }
 
+    /**
+     * Create the shadow sprite for this piece.
+     * 
+     * @returns The shadow sprite or null if the piece is transparent.
+     */
     protected createShadow(): GameObjects.Image | null {
         if (this.hasStatus(UnitStatus.Transparent)) {
             return null;
@@ -1326,15 +1661,11 @@ export class Piece extends Entity {
         return this._shadow;
     }
 
-    reset() {
-        this.turnOver = false;
-        this.engaged = false;
-
-        if (this.currentRider) {
-            this.currentRider.reset();
-        }
-    }
-
+    /**
+     * Create the sprite for this piece.
+     * 
+     * @returns 
+     */
     protected createSprite(): GameObjects.Sprite {
         if (this._sprite) {
             return this._sprite;
@@ -1372,6 +1703,13 @@ export class Piece extends Entity {
         return this._sprite;
     }
 
+    /**
+     * Create the owner highlight shaders for this piece.
+     * 
+     * @param forceUpdate Whether to force update the shaders
+     * @param tempOwner Temporary owner for the highlight effect. Used for when mounting a non-owned piece such as Magic Wood.
+     * @returns 
+     */
     protected createShaders(forceUpdate?: boolean, tempOwner?: Player): void {
         if (!forceUpdate && this._ownerHighlightTween) {
             return;
@@ -1505,6 +1843,12 @@ export class Piece extends Entity {
         };
     }
 
+    /**
+     * Get the piece properties from the JSON data by unit name.
+     * 
+     * @param name Unit name
+     * @returns Piece properties or undefined if not found
+     */
     static getPieceProperties(name: string): any {
         let key = "";
         for (let [k, piece] of Object.entries(Piece.units)) {
