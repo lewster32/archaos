@@ -493,6 +493,7 @@
         "range": 0,
         "name": "Turmoil",
         "description": "Randomly moves pieces around the board.",
-        "types": ["turmoil"]
+        "types": ["turmoil"],
+        "giftOnly": true
     }
 }
