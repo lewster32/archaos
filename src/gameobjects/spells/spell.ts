@@ -376,7 +376,10 @@ export class Spell extends Model {
 
         // Corpse spells (e.g., raise dead)
         if (this._properties.target === SpellTarget.Corpse) {
-            if (targetLivingPiece) {
+            if (
+                targetLivingPiece || // Cannot target living pieces
+                this._board.getPiecesAtPosition(targetPoint, (p: Piece) => !p.dead).length > 0 // Cannot target if any living pieces are present on the same tile
+            ) {
                 if (showReason) {
                     this._board.logger.log(
                         `${this.name} must be cast on a corpse`,

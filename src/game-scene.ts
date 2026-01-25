@@ -284,6 +284,33 @@ export class GameScene extends Scene {
         if (!scenarioData.players?.length) {
             throw new Error("Scenario data must include players array");
         }
+        if (scenarioData.corpses?.length) {
+            for (let corpseData of scenarioData.corpses) {
+                const pieceProperties = Piece.getPieceProperties(corpseData.type);
+                const piece: Piece = await this.board.addPiece({
+                    ...pieceProperties,
+                    owner: null,
+                    x: corpseData.position.x,
+                    y: corpseData.position.y,
+                    unitType: pieceProperties.unitType || UnitType.Creature,
+                });
+                console.debug(`Adding corpse of type ${corpseData.type} at (${corpseData.position.x}, ${corpseData.position.y})`);
+                if (corpseData.statuses?.length) {
+                    for (let statusName of corpseData.statuses) {
+                        const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                        piece.addStatus(status);
+                    }
+                }
+                if (piece.hasStatus(UnitStatus.NoCorpse)) {
+                    this.board.removePiece(piece.id);
+                    console.debug(`  Piece type ${corpseData.type} has NoCorpse status; removing piece after creation`);
+                }
+                else {
+                    piece.kill(true);
+                    console.debug(`  Piece type ${corpseData.type} marked as dead to represent corpse`);
+                }
+            }
+        }
         for (let player of scenarioData.players) {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
@@ -299,30 +326,6 @@ export class GameScene extends Scene {
                 for (let statusName of player.statuses) {
                     const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
                     wizard.addStatus(status);
-                }
-            }
-            if (scenarioData.corpses?.length) {
-                for (let corpseData of scenarioData.corpses) {
-                    const pieceProperties = Piece.getPieceProperties(corpseData.type);
-                    const piece: Piece = await this.board.addPiece({
-                        ...pieceProperties,
-                        owner: null,
-                        x: corpseData.position.x,
-                        y: corpseData.position.y,
-                        unitType: pieceProperties.unitType || UnitType.Creature,
-                    });
-                    if (corpseData.statuses?.length) {
-                        for (let statusName of corpseData.statuses) {
-                            const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
-                            piece.addStatus(status);
-                        }
-                    }
-                    if (piece.hasStatus(UnitStatus.NoCorpse)) {
-                        this.board.removePiece(piece.id);
-                    }
-                    else {
-                        piece.kill(true);
-                    }
                 }
             }
 

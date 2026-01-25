@@ -38,27 +38,24 @@
             "pieces": [
                 {
                     "type": "Obelisk",
-                    "position": { "x": 3, "y": 3 }
-                },
-                {
-                    "type": "Magic Castle",
-                    "position": { "x": 8, "y": 4 }
+                    "position": { "x": 2, "y": 3 }
                 }
             ],
             "spells": [
+                "Raise Dead","Raise Dead","Raise Dead"
             ]
         }
     ],
     "corpses": [
         {
             "type": "Orc",
-            "position": { "x": 2, "y": 2 }
+            "position": { "x": 3, "y": 3 }
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": false,
-        "forceCast": null,
+        "forceCast": true,
         "shortDelay": false
     }
 }
