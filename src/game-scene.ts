@@ -1,4 +1,5 @@
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
+import rexperlinplugin from "../assets/plugins/rexperlinplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
 import boardAtlas from "../assets/spritesheets/board.png";
 import classicunitsJson from "../assets/spritesheets/classicunits.json?url";
@@ -69,6 +70,14 @@ export class GameScene extends Scene {
             this.load.plugin(
                 "rexcolorreplacepipelineplugin",
                 rexcolorreplacepipelineplugin,
+                true
+            );
+        }
+
+        if (!this.plugins.get("rexperlinplugin")) {
+            this.load.plugin(
+                "rexperlinplugin",
+                rexperlinplugin,
                 true
             );
         }

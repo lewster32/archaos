@@ -1516,15 +1516,20 @@ export class Board extends Model implements Box {
                             Display.Color.ValueToColor(
                                 this.currentPlayer.colour
                             );
+                        const noiseValue: number = child.getData("noiseValue");
                         (child as GameObjects.Sprite).setTint(
-                            tintColour.brighten(80).color
+                            tintColour.brighten(70 - (noiseValue * 10)).color
                         );
                     });
             } else {
                 this.getLayer(BoardLayer.Floor)
                     .getChildren()
                     .forEach((child) => {
-                        (child as GameObjects.Sprite).clearTint();
+                        const noiseValue: number = child.getData("noiseValue");
+                        (child as GameObjects.Sprite).setTint(
+                            Display.Color.ValueToColor(0xffffff)
+                                .darken(noiseValue * 20).color
+                        );
                     });
                 document.body.style.removeProperty("--bg-colour");
             }
@@ -1925,11 +1930,41 @@ export class Board extends Model implements Box {
     createFloor() {
         const floorLayer: GameObjects.Layer = this.scene.add.layer();
 
+        // Get some simplex noise for tile variation
+        const noise: any = (this.scene.game.plugins.get(
+            "rexperlinplugin"
+        ) as any).add(Math.random());
+
+        const noiseToTileImage: { [key: number]: string } = {
+            "-0.9": "slab-mud",
+            "-0.6": "slab-dirty",
+            "-0.3": "slab-patchy",
+            "-0.15": "slab",
+            "0": "empty",
+            "0.15": "slab",
+            "0.3": "slab-grassy-dirty",
+            "0.6": "slab-grass-patchy",
+            "0.9": "slab-grass"
+        };
+
+
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
                 const isoPos: Geom.Point = this.getIsoPosition(
                     new Geom.Point(x, y)
                 );
+
+                // const tileNoiseValue: number = noise.perlin2(x / 6, y / 6) * 1.2;
+                // const tileImage: string = noiseToTileImage[
+                //     Object.keys(noiseToTileImage)
+                //         .map((key) => parseFloat(key))
+                //         .reduce((prev, curr) =>
+                //             Math.abs(curr - tileNoiseValue) <
+                //             Math.abs(prev - tileNoiseValue)
+                //                 ? curr
+                //                 : prev
+                //         )
+                // ];
 
                 const tile: GameObjects.Image = this.scene.add.image(
                     isoPos.x,
@@ -1940,6 +1975,15 @@ export class Board extends Model implements Box {
 
                 tile.setDisplayOrigin(14, 1);
                 tile.setActive(false);
+
+                // Set tint based on noise value
+                const noiseValue: number = noise.simplex2(x / 4, y / 4);
+                tile.setData("noiseValue", noiseValue);
+                tile.setTint(
+                    Display.Color.ValueToColor(0xffffff)
+                        .darken(noiseValue * 20)
+                        .color
+                );
 
                 floorLayer.add(tile);
             }
