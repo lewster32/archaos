@@ -609,20 +609,20 @@ export class Board extends Model implements Box {
                 // Triangle
                 this.addWizard({
                     owner: this.players[0],
-                    x: this.width - 2,
-                    y: this.height - 2,
+                    x: 1,
+                    y: Math.floor(this.height / 2),
                     wizCode: this.players[0].wizcode,
                 });
                 this.addWizard({
                     owner: this.players[1],
                     x: this.width - 2,
-                    y: 1,
+                    y: this.height - 2,
                     wizCode: this.players[1].wizcode,
                 });
                 this.addWizard({
                     owner: this.players[2],
-                    x: 1,
-                    y: Math.floor(this.height / 2),
+                    x: this.width - 2,
+                    y: 1,
                     wizCode: this.players[2].wizcode,
                 });
                 break;
@@ -630,26 +630,26 @@ export class Board extends Model implements Box {
                 // Corners
                 this.addWizard({
                     owner: this.players[0],
-                    x: this.width - 2,
+                    x: 1,
                     y: this.height - 2,
                     wizCode: this.players[0].wizcode,
                 });
                 this.addWizard({
                     owner: this.players[1],
-                    x: this.width - 2,
+                    x: 1,
                     y: 1,
                     wizCode: this.players[1].wizcode,
                 });
                 this.addWizard({
                     owner: this.players[2],
-                    x: 1,
-                    y: 1,
+                    x: this.width - 2,
+                    y: this.height - 2,
                     wizCode: this.players[2].wizcode,
                 });
                 this.addWizard({
                     owner: this.players[3],
-                    x: 1,
-                    y: this.height - 2,
+                    x: this.width - 2,
+                    y: 1,
                     wizCode: this.players[3].wizcode,
                 });
                 break;
@@ -665,11 +665,12 @@ export class Board extends Model implements Box {
                         -0.5 + this.height / 2 +
                             (this.height / 2) * Math.sin(angle)
                     );
+                    // Index is offset by 2 to start on board left
                     this.addWizard({
-                        owner: this.players[i],
+                        owner: this.players[(i + 2) % 5],
                         x: x,
                         y: y,
-                        wizCode: this.players[i].wizcode,
+                        wizCode: this.players[(i + 2) % 5].wizcode,
                     });
                 }
                 break;             
@@ -686,10 +687,10 @@ export class Board extends Model implements Box {
                             (this.height / 2 - 0.5) * Math.sin(angle)
                     );
                     this.addWizard({
-                        owner: this.players[i],
+                        owner: this.players[(i + 2) % 6],
                         x: x,
                         y: y,
-                        wizCode: this.players[i].wizcode,
+                        wizCode: this.players[(i + 2) % 6].wizcode,
                     });
                 }
                 break;
@@ -714,10 +715,10 @@ export class Board extends Model implements Box {
                             (this.height / 2 - 0.5) * Math.sin(angle)
                     );
                     this.addWizard({
-                        owner: this.players[i],
+                        owner: this.players[((i + 2) % 6) + 1],
                         x: x,
                         y: y,
-                        wizCode: this.players[i].wizcode,
+                        wizCode: this.players[((i + 2) % 6) + 1].wizcode,
                     });
                 }
                 break
@@ -725,7 +726,7 @@ export class Board extends Model implements Box {
                 // All corners and middles
                 {
                     let playerIndex: number = 0;
-                    for (let xx of [this.width - 1, Math.floor(this.width / 2), 0]) {
+                    for (let xx of [0, Math.floor(this.width / 2), this.width - 1]) {
                         for (let yy of [this.height - 1, Math.floor(this.height / 2), 0]) {
                             if (xx === Math.floor(this.width / 2) && yy === Math.floor(this.height / 2)) {
                                 continue;
