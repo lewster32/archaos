@@ -881,6 +881,7 @@ export class Spell extends Model {
             persist: spell.persist,
             target: spell.target || SpellTarget.Empty,
             group: spell.group || "classicspells",
+            types: spell.types || [],
         }
     }
 }

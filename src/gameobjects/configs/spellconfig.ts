@@ -118,4 +118,10 @@ export interface SpellConfig {
      * The group this spell belongs to (e.g., 'classicspells' or 'enhanced')
      */
     group?: string;
+
+    /**
+     * The overall types of this spell (e.g., 'buff', 'ranged', 'flying') - used
+     * for display in the spellbook.
+     */
+    types?: string[];
 }

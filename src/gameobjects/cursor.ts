@@ -156,6 +156,7 @@ export class Cursor {
             return ActionType.None;
         }
 
+        this._image.setFlipX(false);
         this._image.setVisible(true);
 
         const allowedAction: ActionType = await this._board.rules.processIntent(
@@ -217,6 +218,9 @@ export class Cursor {
                 if (selectedPiece.stats.movement > 1) {
                     this._board.rangeGizmo.showPath(this._position);
                 }
+                this._image.setFlipX(
+                    Board.toIsometric(this._position).x < Board.toIsometric(selectedPiece.position).x
+                );
                 this.type = CursorType.Mount;
                 break;
             case ActionType.Dismount:

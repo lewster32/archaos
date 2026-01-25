@@ -6,6 +6,7 @@
         "name": "Obelisk",
         "description": "Cannot move, and can only ranged attack.",
         "group": "enhanced",
+        "types": ["ranged", "static"],
         "unit": {
             "id": "obelisk",
             "attackType": "attacked",

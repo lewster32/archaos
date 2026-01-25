@@ -39,7 +39,8 @@
         "chance": 0.7,
         "balance": 2,
         "unitId": "7",
-        "name": "Elf"
+        "name": "Elf",
+        "types": ["ranged", "ground"]
     },
     "orc": {
         "chance": 1,
@@ -99,25 +100,29 @@
         "chance": 0.7,
         "balance": 1,
         "unitId": "11",
-        "name": "Centaur"
+        "name": "Centaur",
+        "types": ["ranged", "mount"]
     },
     "pegasus": {
         "chance": 0.6,
         "balance": 2,
         "unitId": "12",
-        "name": "Pegasus"
+        "name": "Pegasus",
+        "types": ["flying", "mount"]
     },
     "gryphon": {
         "chance": 0.6,
         "balance": 1,
         "unitId": "13",
-        "name": "Gryphon"
+        "name": "Gryphon",
+        "types": ["flying", "mount"]
     },
     "manticore": {
         "chance": 0.4,
         "balance": -1,
         "unitId": "14",
-        "name": "Manticore"
+        "name": "Manticore",
+        "types": ["flying", "ranged", "mount"]
     },
     "bat": {
         "chance": 0.8,
@@ -129,19 +134,22 @@
         "chance": 0.1,
         "balance": -1,
         "unitId": "16",
-        "name": "Green Dragon"
+        "name": "Green Dragon",
+        "types": ["flying", "ranged"]
     },
     "red-dragon": {
         "chance": 0.1,
         "balance": -2,
         "unitId": "17",
-        "name": "Red Dragon"
+        "name": "Red Dragon",
+        "types": ["flying", "ranged"]
     },
     "golden-dragon": {
         "chance": 0.1,
         "balance": 2,
         "unitId": "18",
-        "name": "Golden Dragon"
+        "name": "Golden Dragon",
+        "types": ["flying", "ranged"]
     },
     "harpy": {
         "chance": 0.6,
@@ -159,13 +167,15 @@
         "chance": 0.2,
         "balance": -2,
         "unitId": "1b",
-        "name": "Vampire"
+        "name": "Vampire",
+        "types": ["flying", "undead"]
     },
     "ghost": {
         "chance": 0.5,
         "balance": -1,
         "unitId": "1c",
-        "name": "Ghost"
+        "name": "Ghost",
+        "types": ["flying", "undead"]
     },
     "spectre": {
         "chance": 0.6,
@@ -202,7 +212,8 @@
         "allowIllusion": false,
         "unitId": "21",
         "name": "Magic Wood",
-        "description": "Automatically summons up to eight trees which can be mounted by wizards."
+        "description": "Automatically summons up to eight trees which can be mounted by wizards.",
+        "types": ["static", "mount"]
     },
     "shadow-wood": {
         "chance": 0.4,
@@ -241,14 +252,16 @@
         "balance": 1,
         "allowIllusion": false,
         "unitId": "25",
-        "name": "Magic Castle"
+        "name": "Magic Castle",
+        "types": ["static", "mount"]
     },
     "dark-citadel": {
         "chance": 0.5,
         "balance": -1,
         "allowIllusion": false,
         "unitId": "26",
-        "name": "Dark Citadel"
+        "name": "Dark Citadel",
+        "types": ["static", "mount"]
     },
     "wall": {
         "chance": 0.8,
@@ -362,7 +375,8 @@
         "target": "corpse",
         "projectile": "raisedead",
         "name": "Raise Dead",
-        "description": "Reanimates the corpse of a creature, making it undead, and putting it under the control of the caster."
+        "description": "Reanimates the corpse of a creature, making it undead, and putting it under the control of the caster.",
+        "types": ["special", "undead"]
     },
     "subversion": {
         "balance": 0,
@@ -374,7 +388,8 @@
         "name": "Subversion",
         "projectile": "subversion",
         "range": 7,
-        "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion."
+        "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion.",
+        "types": ["special"]
     },
     "shadow-form": {
         "balance": 0,
@@ -423,7 +438,8 @@
         "target": "self",
         "range": 0,
         "name": "Magic Bow",
-        "description": "Allows the caster to take ranged attacks, and to attack the undead."
+        "description": "Allows the caster to take ranged attacks, and to attack the undead.",
+        "types": ["ranged", "buff"]
     },
     "magic-wings": {
         "balance": 0,
@@ -431,7 +447,8 @@
         "target": "self",
         "range": 0,
         "name": "Magic Wings",
-        "description": "Allows the caster to fly."
+        "description": "Allows the caster to fly.",
+        "types": ["flying", "buff"]
     },
     "law-1": {
         "balance": 2,
@@ -439,7 +456,8 @@
         "target": "self",
         "range": 0,
         "name": "Law 1",
-        "description": "Makes the world moderately more lawful."
+        "description": "Makes the world moderately more lawful.",
+        "types": ["balance"]
     },
     "law-2": {
         "balance": 4,
@@ -447,7 +465,8 @@
         "target": "self",
         "range": 0,
         "name": "Law 2",
-        "description": "Makes the world greatly more lawful."
+        "description": "Makes the world greatly more lawful.",
+        "types": ["balance"]
     },
     "chaos-1": {
         "balance": -2,
@@ -455,7 +474,8 @@
         "target": "self",
         "range": 0,
         "name": "Chaos 1",
-        "description": "Makes the world moderately more chaotic."
+        "description": "Makes the world moderately more chaotic.",
+        "types": ["balance"]
     },
     "chaos-2": {
         "balance": -4,
@@ -463,7 +483,8 @@
         "target": "self",
         "range": 0,
         "name": "Chaos 2",
-        "description": "Makes the world greatly more chaotic."
+        "description": "Makes the world greatly more chaotic.",
+        "types": ["balance"]
     },
     "turmoil": {
         "balance": -1,
@@ -472,6 +493,6 @@
         "range": 0,
         "name": "Turmoil",
         "description": "Randomly moves pieces around the board.",
-        "giftOnly": true
+        "types": ["turmoil"]
     }
 }

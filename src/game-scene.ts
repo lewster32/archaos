@@ -342,14 +342,27 @@ export class GameScene extends Scene {
                 for (let spellName of player.spells) {
                     // If spell starts with '*', add all of that type
                     if (spellName.startsWith("*")) {
-                        const spellType: string = spellName.substring(1).toLowerCase();
-                        const spellsToAdd = Spell.getSpellsByType(Object.values(SpellType).includes(spellType as SpellType) ? spellType as SpellType : SpellType.Summon);
-                        console.log(`Adding ${spellsToAdd.length} ${spellType} spells to player ${currentPlayer.name}`);
-                        for (let spell of spellsToAdd) {
-                            this.board.addSpell(
-                                currentPlayer,
-                                Spell.getSpellProperties(spell)
-                            );
+                        // If spell is just '*', get all types
+                        if (spellName === "*") {
+                            const allSpells = Spell.getAllSpells();
+                            console.log(`Adding all ${allSpells.length} spells to player ${currentPlayer.name}`);
+                            for (let spell of allSpells) {
+                                this.board.addSpell(
+                                    currentPlayer,
+                                    Spell.getSpellProperties(spell.name)
+                                );
+                            }
+                        }
+                        else {
+                            const spellType: string = spellName.substring(1).toLowerCase();
+                            const spellsToAdd = Spell.getSpellsByType(Object.values(SpellType).includes(spellType as SpellType) ? spellType as SpellType : SpellType.Summon);
+                            console.log(`Adding ${spellsToAdd.length} ${spellType} spells to player ${currentPlayer.name}`);
+                            for (let spell of spellsToAdd) {
+                                this.board.addSpell(
+                                    currentPlayer,
+                                    Spell.getSpellProperties(spell)
+                                );
+                            }
                         }
                     } else {
                         this.board.addSpell(

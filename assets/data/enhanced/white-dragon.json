@@ -5,6 +5,7 @@
         "balance": 2,
         "name": "White Dragon",
         "group": "enhanced",
+        "types": ["flying"],
         "unit": {
             "id": "white-dragon",
             "attackType": "attacked",

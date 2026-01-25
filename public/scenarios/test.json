@@ -15,34 +15,26 @@
             ],
             "pieces": [
                 {
-                    "type": "Magic Wood",
-                    "position": { "x": 0, "y":1 }
-                },
-                {
-                    "type": "Orc",
-                    "position": { "x": 3, "y": 0 }
+                    "type": "Obelisk",
+                    "position": { "x": 2, "y": 2 }
                 }
             ],
             "spells": [
-                "Magic Bow"
+                "*"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
             "position": { "x": 4, "y": 3 },
-            "computerControlled": true,
+            "computerControlled": false,
             "statuses": [
                 
             ],
             "pieces": [
-                {
-                    "type": "Centaur",
-                    "position": { "x": 3, "y": 3 }
-                }
+
             ],
             "spells": [
-                "Raise Dead","Raise Dead","Raise Dead"
             ]
         }
     ],
@@ -52,10 +44,10 @@
             "position": { "x": 3, "y": 3 }
         }
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": false,
         "forceCast": true,
-        "shortDelay": false
+        "shortDelay": true
     }
 }

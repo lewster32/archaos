@@ -4,7 +4,7 @@
             &times;
         </button>
         <div class="spellinfo__inner callout">
-            <img class="spellinfo__image" :src="getImageUrl(spell)" :alt="spell.name" />
+            <SpellImage class="spellinfo__image" :spell="spell" style="--zoom: 5" />
             <div class="spellinfo__stats spell-stats">
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Name:</span>
@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import UnitStats from "./UnitStats.vue";
+import SpellImage from "./SpellImage.vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
 import { computed } from "vue";
 import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
@@ -147,10 +148,6 @@ const select: () => void = () => {
     top: 0;
     padding: 1em;
     &__image {
-        width: 96px;
-        height: 96px;
-        image-rendering: pixelated;
-        margin-right: 1em;
         background-color: var(--color-black);
     }
     &__stats {
@@ -160,6 +157,7 @@ const select: () => void = () => {
         min-width: 360px;
         max-width: 480px;
         display: flex;
+        gap: 1rem;
         justify-content: center;
         align-items: flex-start;
     }

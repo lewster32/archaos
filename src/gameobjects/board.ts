@@ -547,7 +547,9 @@ export class Board extends Model implements Box {
 
     /**
      * Emit a board update event to notify listeners that the board state has
-     * changed. This is mainly used by the UI, such as the minimap.
+     * changed. This is mainly used by the UI, such as the minimap. It's also
+     * debounced to avoid flooding listeners with too many events, as it always
+     * contains a snapshot of the board state.
      */
     emitBoardUpdateEvent(): void {
         if (this._emitTimeout) {
@@ -1935,36 +1937,11 @@ export class Board extends Model implements Box {
             "rexperlinplugin"
         ) as any).add(Math.random());
 
-        const noiseToTileImage: { [key: number]: string } = {
-            "-0.9": "slab-mud",
-            "-0.6": "slab-dirty",
-            "-0.3": "slab-patchy",
-            "-0.15": "slab",
-            "0": "empty",
-            "0.15": "slab",
-            "0.3": "slab-grassy-dirty",
-            "0.6": "slab-grass-patchy",
-            "0.9": "slab-grass"
-        };
-
-
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
                 const isoPos: Geom.Point = this.getIsoPosition(
                     new Geom.Point(x, y)
                 );
-
-                // const tileNoiseValue: number = noise.perlin2(x / 6, y / 6) * 1.2;
-                // const tileImage: string = noiseToTileImage[
-                //     Object.keys(noiseToTileImage)
-                //         .map((key) => parseFloat(key))
-                //         .reduce((prev, curr) =>
-                //             Math.abs(curr - tileNoiseValue) <
-                //             Math.abs(prev - tileNoiseValue)
-                //                 ? curr
-                //                 : prev
-                //         )
-                // ];
 
                 const tile: GameObjects.Image = this.scene.add.image(
                     isoPos.x,

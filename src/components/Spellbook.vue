@@ -91,7 +91,7 @@
                         v-for="spell in spellsByChance"
                         :key="spell.id"
                     >
-                        <img class="spell__image" :src="getImageUrl(spell)" :alt="spell.name"/>
+                        <SpellImage :spell="spell" />
                         <span class="spell__name">{{ spell.name }}</span>
                         <span
                             :title="`${friendlyBalance(spell.balance)}`"
@@ -144,6 +144,7 @@
 </template>
 <script setup lang="ts">
 import SpellInfo from "./SpellInfo.vue";
+import SpellImage from "./SpellImage.vue";
 import { ref, computed, watch, nextTick } from "vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
 import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
@@ -304,16 +305,6 @@ const spellsByChance: Ref<Spell[]> = computed(() => {
         return a.name.localeCompare(b.name);
     });
 });
-
-/**
- * Gets the image URL for a spell.
- * 
- * @param spell The spell to get the image URL for.
- * @returns The image URL.
- */
-const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
-    return `/images/spells/${spell.properties.group || "classicspells"}/${spell.spellId}.png`;
-};
 
 /**
  * Toggles the minimised state of the spellbook.
