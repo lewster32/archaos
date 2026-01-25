@@ -19,7 +19,7 @@
                     "position": { "x": 0, "y":1 }
                 },
                 {
-                    "type": "Horse",
+                    "type": "Wraith",
                     "position": { "x": 3, "y": 0 }
                 }
             ],
@@ -31,14 +31,14 @@
             "id": 2,
             "name": "Player 2",
             "position": { "x": 8, "y": 3 },
-            "computerControlled": false,
+            "computerControlled": true,
             "statuses": [
                 
             ],
             "pieces": [
                 {
-                    "type": "Bat",
-                    "position": { "x": 1, "y": 1 }
+                    "type": "Dire Wolf",
+                    "position": { "x": 3, "y": 1 }
                 }
             ],
             "spells": [
@@ -47,14 +47,14 @@
     ],
     "corpses": [
         {
-            "type": "Bat",
+            "type": "Orc",
             "position": { "x": 2, "y": 2 }
         }
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": false,
-        "forceCast": true,
+        "forceHit": null,
+        "forceCast": null,
         "shortDelay": false
     }
 }

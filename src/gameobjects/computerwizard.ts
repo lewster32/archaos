@@ -453,6 +453,8 @@ export class ComputerWizard {
                 const target: Piece = PMath.RND.pick(engagedEnemies);
                 console.debug(`${piece.owner.name}'s ${piece.name} attacks engaged target ${target.name}`);
                 await this._board.attackPiece(piece.id, target.id);
+                piece.moved = true;
+                piece.attacked = true;
             }
             else {
                 console.debug(`No engaged targets found for ${piece.owner.name}'s ${piece.name}`);
@@ -502,6 +504,8 @@ export class ComputerWizard {
                 );
                 console.debug(`${piece.owner.name}'s ${piece.name} attacks target ${target.name}`);
                 await this._board.attackPiece(piece.id, target.id);
+                piece.moved = true;
+                piece.attacked = true;
             }
             else {
                 console.debug(`No attack targets found for ${piece.owner.name}'s ${piece.name}`);
@@ -614,11 +618,9 @@ export class ComputerWizard {
                 .filter((p: Piece) => {
                     return (
                         p.owner !== this._player && // Enemy piece
-                        (p.stats.combat > 0 || p.stats.rangedCombat > 0) && // Can potentially deal damage back
+                        (p.stats.combat > 0 || p.stats.rangedCombat > 0 || p.hasStatus(UnitStatus.Spreads)) && // Is potentially dangerous
                         !p.currentMount && // Not mounted (can't target riders without killing the mount first)
-                        (!p.hasStatus(UnitStatus.Undead) ||
-                            piece.hasStatus(UnitStatus.AttackUndead) ||
-                            piece.hasStatus(UnitStatus.Undead)) && // Can be attacked
+                        piece.canAttackPossiblyUndeadPiece(p) &&
                         piece.canRangedAttackPiece(p) // In ranged attack range
                     ); 
                 })
