@@ -669,10 +669,9 @@ export class ComputerWizard {
                 .filter((p: Piece) => {
                     return (
                         !p.currentMount && // Not mounted - mounted units move with their mounts
-                        (
-                            (!p.moved && p.canMove) || // Is able to move
-                            (!p.attacked && (p.canAttack || p.canRangedAttack)) // Is able to attack
-                        ) 
+                        p.canSelect && // Can be selected
+                        !p.hasStatus(UnitStatus.Structure) && // Not a structure
+                        !p.dead
                     );
                 });
 
@@ -685,6 +684,7 @@ export class ComputerWizard {
                 if (this._board.state === BoardState.GameOver) {
                     break;
                 }
+                console.debug(`Moving ${this._player.name}'s ${piece.name}`);
                 await this.moveUnit(piece);
                 piece.turnOver = true;
             }

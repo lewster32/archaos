@@ -19,7 +19,7 @@
                     "position": { "x": 0, "y":1 }
                 },
                 {
-                    "type": "Wraith",
+                    "type": "Orc",
                     "position": { "x": 3, "y": 0 }
                 }
             ],
@@ -37,8 +37,12 @@
             ],
             "pieces": [
                 {
-                    "type": "Dire Wolf",
-                    "position": { "x": 3, "y": 1 }
+                    "type": "Obelisk",
+                    "position": { "x": 3, "y": 3 }
+                },
+                {
+                    "type": "Magic Castle",
+                    "position": { "x": 8, "y": 4 }
                 }
             ],
             "spells": [
@@ -53,7 +57,7 @@
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": null,
+        "forceHit": false,
         "forceCast": null,
         "shortDelay": false
     }
