@@ -4,6 +4,7 @@ import { BoardLayer } from "./enums/boardlayer";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
+import { EventType } from "./enums/eventtype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
@@ -102,7 +103,7 @@ export class Cursor {
             }
         );
 
-        this._board.scene.game.events.on("cancel", async () => {
+        this._board.scene.game.events.on(EventType.Cancel, async () => {
             await this.action(InputType.Cancel);
         });
 

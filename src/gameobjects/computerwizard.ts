@@ -12,6 +12,8 @@ import type { SummonSpell } from "./spells/summonspell";
 import { SpellTarget } from "./enums/spelltarget";
 
 import { Geom, Math as PMath } from "phaser";
+import { Colour } from "./enums/colour";
+import { CursorType } from "./enums/cursortype";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
@@ -532,7 +534,7 @@ export class ComputerWizard {
                     await this._board.mountPiece(piece.id, mountable.id);
                     // Select the mountable if it can attack or ranged attack
                     if ((mountable.canAttack && !mountable.attacked) || (mountable.canRangedAttack && !mountable.rangedAttacked)) {
-                        await this._board.selectPiece(mountable.id);
+                        await this._board.selectPiece(mountable.id, true);
                     }
                     return true;
                 }
@@ -643,6 +645,20 @@ export class ComputerWizard {
             if (rangedTargets.length > 0) {
                 const target: Piece =
                     PMath.RND.weightedPick(rangedTargets);
+
+                this._board.sound.play("bowselecta");
+                this._board.logger.log(
+                    `${piece.name}'s turn to ranged attack`,
+                    Colour.Yellow
+                );
+                await this._board.rangeGizmo.showSimpleRange(
+                    piece.position,
+                    piece.stats.range,
+                    CursorType.RangeRangedAttack,
+                    true
+                );
+
+                await Board.delay(Board.DEFAULT_DELAY * 1.5);
                 console.debug(`${piece.owner.name}'s ${piece.name} performs ranged attack on target ${target.name}`);
                 await this._board.rangedAttackPiece(piece.id, target.id);
                 return true;
@@ -683,6 +699,10 @@ export class ComputerWizard {
             for (const piece of pieces) {
                 if (this._board.state === BoardState.GameOver) {
                     break;
+                }
+                if (piece.turnOver) {
+                    console.debug(`${this._player.name}'s ${piece.name} has already taken its turn`);
+                    continue;
                 }
                 console.debug(`Moving ${this._player.name}'s ${piece.name}`);
                 await this.moveUnit(piece);

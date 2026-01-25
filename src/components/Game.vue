@@ -257,21 +257,21 @@ const spellSelect: (spell: Spell) => void = (spell: Spell) => {
  * Handler for the cancel button.
  */
 const cancel: () => void = () => {
-    eventEmitter.value?.emit("cancel");
+    eventEmitter.value?.emit(EventType.Cancel);
 };
 
 /**
  * Handler for the end turn button.
  */
 const endTurn: () => void = () => {
-    eventEmitter.value?.emit("end-turn");
+    eventEmitter.value?.emit(EventType.EndTurn);
 };
 
 /**
  * Handler for the dismount button.
  */
 const dismount: () => void = () => {
-    eventEmitter.value?.emit("dismount");
+    eventEmitter.value?.emit(EventType.Dismount);
 };
 
 /**
@@ -429,14 +429,14 @@ onMounted(async () => {
     });
 
     // Listen for spellbook open/close events
-    eventEmitter.value.on("spellbook-open", (event: SpellbookOpenEventData) => {
+    eventEmitter.value.on(EventType.SpellbookOpen, (event: SpellbookOpenEventData) => {
         spellbook.value.show = true;
         spellbook.value.spells = event.data.spells;
         spellbook.value.caster = event.data.caster;
         spellbook.value.onSelect = event.callback;
     });
 
-    eventEmitter.value.on("spellbook-close", () => {
+    eventEmitter.value.on(EventType.SpellbookClose, () => {
         spellbook.value.show = false;
         spellbook.value.spells = null;
         spellbook.value.caster = null;
@@ -444,7 +444,7 @@ onMounted(async () => {
     });
 
     // Listen for board updates
-    eventEmitter.value.on("board-update", (data: BoardUpdateEventData) => {
+    eventEmitter.value.on(EventType.BoardUpdate, (data: BoardUpdateEventData) => {
         pieces.value = data.pieces;
         board.value = data.board;
         balance.value = data.balance;
@@ -452,20 +452,20 @@ onMounted(async () => {
     });
 
     // Listen for action availability updates
-    eventEmitter.value.on("cancel-available", (state: boolean) => {
+    eventEmitter.value.on(EventType.CancelAvailable, (state: boolean) => {
         canCancel.value = state;
     });
 
-    eventEmitter.value.on("end-turn-available", (state: boolean) => {
+    eventEmitter.value.on(EventType.EndTurnAvailable, (state: boolean) => {
         canEndTurn.value = state;
     });
 
-    eventEmitter.value.on("dismount-available", (state: boolean) => {
+    eventEmitter.value.on(EventType.DismountAvailable, (state: boolean) => {
         canDismount.value = state;
     });
 
     // GAME OVER YEAHHHH
-    eventEmitter.value.on("game-over", (): void => {
+    eventEmitter.value.on(EventType.GameOver, (): void => {
         gameOver.value = true;
         gameStarted.value = false;
     });

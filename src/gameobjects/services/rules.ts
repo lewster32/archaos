@@ -354,7 +354,7 @@ export class Rules {
                     await board.selectPiece(
                         currentAliveHoveredPiece.id
                     );
-                    board.scene.game.events.emit("dismount-available", true);
+                    board.emitUIEvent(EventType.DismountAvailable, true);
                     return ActionType.Move;
                 } else if (
                     currentAliveHoveredPiece?.canSelect
@@ -526,7 +526,7 @@ export class Rules {
                     selectedPiece.currentRider.turnOver = true;
                 }
             }
-            board.scene.game.events.emit("dismount-available", false);
+            board.emitUIEvent(EventType.DismountAvailable, false);
             await board.deselectPiece();
             return ActionType.Cancel;
         }
@@ -550,7 +550,7 @@ export class Rules {
                 return ActionType.Move;
             }
             else {
-                board.scene.game.events.emit("dismount-available", false);
+                board.emitUIEvent(EventType.DismountAvailable, false);
             }
         }
 

@@ -30,15 +30,15 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 8, "y": 3 },
+            "position": { "x": 4, "y": 3 },
             "computerControlled": true,
             "statuses": [
                 
             ],
             "pieces": [
                 {
-                    "type": "Obelisk",
-                    "position": { "x": 2, "y": 3 }
+                    "type": "Centaur",
+                    "position": { "x": 3, "y": 3 }
                 }
             ],
             "spells": [
@@ -52,7 +52,7 @@
             "position": { "x": 3, "y": 3 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

@@ -288,14 +288,14 @@ export class Board extends Model implements Box {
         this._rules = Rules.getInstance();
         this._logger = Logger.getInstance(this.scene.game.events);
 
-        this.scene.game.events.on("end-turn", async () => {
+        this.scene.game.events.on(EventType.EndTurn, async () => {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {
                 return;
             }
             await this.nextPlayer();
         });
 
-        this.scene.game.events.on("dismount", async () => {
+        this.scene.game.events.on(EventType.Dismount, async () => {
             if (!this.cursor.enabled || !this.selected || this.state === BoardState.GameOver || this.state === BoardState.Dismount) {
                 return;
             }
@@ -349,24 +349,30 @@ export class Board extends Model implements Box {
             case BoardState.Idle:
             case BoardState.GameOver:
             case BoardState.View:
-                this.scene.game.events.emit("cancel-available", false);
-                this.scene.game.events.emit("end-turn-available", false);
+                this.emitUIEvent(EventType.CancelAvailable, false);
+                this.emitUIEvent(EventType.EndTurnAvailable, false);
                 break;
             case BoardState.Move:
             case BoardState.SelectSpell:
                 setTimeout(() => {
                     if (this.currentPlayer && !this.currentPlayer.ai) {
-                        this.scene.game.events.emit("end-turn-available", true);
+                        this.emitUIEvent(EventType.EndTurnAvailable, true);
                     }
-                }, 10);
+                    else {
+                        this.emitUIEvent(EventType.EndTurnAvailable, false);
+                    }
+                });
                 break;
             default:
                 setTimeout(() => {
                     if (this.currentPlayer && !this.currentPlayer.ai) {
-                        this.scene.game.events.emit("cancel-available", true);
+                        this.emitUIEvent(EventType.CancelAvailable, true);
                     }
-                    this.scene.game.events.emit("end-turn-available", false);
-                }, 10);
+                    else {
+                        this.emitUIEvent(EventType.CancelAvailable, false);
+                    }
+                    this.emitUIEvent(EventType.EndTurnAvailable, false);
+                });
                 break;
         }
     }
@@ -499,14 +505,14 @@ export class Board extends Model implements Box {
             this.phase = BoardPhase.Spreading;
             this.state = BoardState.Idle;
 
-            const previousPlayer: Player = this._currentPlayer;
-            this._currentPlayer = null;
+            const previousPlayer: Player = this.currentPlayer;
+            this.currentPlayer = null;
             this.updateBackgroundColour();
 
             await this.doSpread();
             await this.doExpire();
 
-            this._currentPlayer = previousPlayer;
+            this.currentPlayer = previousPlayer;
             this.emitBoardUpdateEvent();
         } else if (this.phase === BoardPhase.Spreading) {
             this.phase = BoardPhase.Moving;
@@ -548,7 +554,7 @@ export class Board extends Model implements Box {
             clearTimeout(this._emitTimeout);
         }
         this._emitTimeout = setTimeout(() => {
-            this.scene.game.events.emit("board-update", {
+            this.emitUIEvent(EventType.BoardUpdate, {
                 pieces: this.pieces,
                 board: {
                     width: this._width,
@@ -558,6 +564,16 @@ export class Board extends Model implements Box {
                 balanceShift: this._balanceShift,
             } as BoardUpdateEventData);
         }, 500);
+    }
+
+    /**
+     * Emit a UI event, such as enabling or disabling buttons.
+     * 
+     * @param eventType 
+     * @param data 
+     */
+    emitUIEvent(eventType: EventType, data: any): void {
+        this.scene.game.events.emit(eventType, data);
     }
 
     /**
@@ -819,7 +835,7 @@ export class Board extends Model implements Box {
      * @param id The ID of the piece to select.
      * @returns A promise that resolves when the piece has been selected.
      */
-    async selectPiece(id: number): Promise<void> {
+    async selectPiece(id: number, silent?: boolean): Promise<void> {
         if (!id || this.state === BoardState.GameOver) {
             return;
         }
@@ -833,11 +849,12 @@ export class Board extends Model implements Box {
         }
 
         if (this.phase === BoardPhase.Moving) {
-            this.sound.play("select");
-            if (this._selected.currentMount) {
-                this.scene.game.events.emit("dismount-available", true);
+            if (!silent) {
+                this.sound.play("select");
             }
-
+            if (this._selected.currentMount) {
+                this.emitUIEvent(EventType.DismountAvailable, true);
+            }
             
             let firstEngagingPiece: Piece | null = null;
             // Special case: Units in Shadow Form do not become engaged at the
@@ -879,7 +896,7 @@ export class Board extends Model implements Box {
             case BoardState.Attack:
             case BoardState.RangedAttack:
                 if (this.currentPlayer && !this.currentPlayer.ai) {
-                    this.scene.game.events.emit("cancel-available", true);
+                    this.emitUIEvent(EventType.CancelAvailable, true);
                 }
                 break;
         }
@@ -913,8 +930,8 @@ export class Board extends Model implements Box {
                 return;
             }
         }
-        this.scene.game.events.emit("dismount-available", false);
-        this.scene.game.events.emit("cancel-available", false);
+        this.emitUIEvent(EventType.DismountAvailable, false);
+        this.emitUIEvent(EventType.CancelAvailable, false);
 
         const turnOver: boolean =
             this.getPiecesByOwner(this.currentPlayer).every(
@@ -1141,7 +1158,7 @@ export class Board extends Model implements Box {
             throw new Error(`Could not find piece with ID ${id}`);
         }
         this.cursor.enabled = false;
-        this.scene.game.events.emit("dismount-available", false);
+        this.emitUIEvent(EventType.DismountAvailable, false);
         const path: Path = this.rangeGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
@@ -1300,7 +1317,7 @@ export class Board extends Model implements Box {
             console.error(`Could not find piece with ID ${dismountingPieceId}`);
             return null;
         }
-        this.scene.game.events.emit("dismount-available", false);
+        this.emitUIEvent(EventType.DismountAvailable, false);
         this.sound.play("move");
         await dismountingPiece.dismount();
         this.emitBoardUpdateEvent();
@@ -1403,6 +1420,14 @@ export class Board extends Model implements Box {
     set currentPlayer(player: Player | null) {
         this._currentPlayer = player;
         this.cursor.enabled = Boolean(!this._currentPlayer?.ai);
+        if (this._currentPlayer?.ai) {
+            setTimeout(() => {
+                // Disable UI buttons for AI players
+                this.emitUIEvent(EventType.EndTurnAvailable, false);
+                this.emitUIEvent(EventType.CancelAvailable, false);
+                this.emitUIEvent(EventType.DismountAvailable, false);
+            }, 10);
+        }
     }
 
     /**
@@ -1475,12 +1500,12 @@ export class Board extends Model implements Box {
      */
     private async updateBackgroundColour(): Promise<void> {
         return new Promise((resolve) => {
-            if (this._currentPlayer?.colour) {
+            if (this.currentPlayer?.colour) {
                 document.body.style.setProperty(
                     "--bg-colour",
                     `${
                         Display.Color.ValueToColor(
-                            this._currentPlayer.colour
+                            this.currentPlayer.colour
                         ).rgba
                     }`
                 );
@@ -1489,7 +1514,7 @@ export class Board extends Model implements Box {
                     .forEach((child) => {
                         const tintColour: Display.Color =
                             Display.Color.ValueToColor(
-                                this._currentPlayer.colour
+                                this.currentPlayer.colour
                             );
                         (child as GameObjects.Sprite).setTint(
                             tintColour.brighten(80).color
@@ -1522,26 +1547,33 @@ export class Board extends Model implements Box {
         });
 
         // Set current player
-        this._currentPlayer = this.getPlayer(id);
+        this.currentPlayer = this.getPlayer(id);
 
-        if (!this._currentPlayer) {
+        if (!this.currentPlayer) {
             console.trace("No current player to select");
             return;
         }
 
         // If the current player is defeated, skip their turn
-        if (this._currentPlayer.defeated) {
+        if (this.currentPlayer.defeated) {
             return;
         }
 
         const units: Piece[] = this.pieces.filter(
             (piece: Piece) =>
-                piece.owner === this._currentPlayer ||
-                piece.currentRider?.owner === this._currentPlayer
+                piece.owner === this.currentPlayer ||
+                piece.currentRider?.owner === this.currentPlayer
         );
 
         await this.updateBackgroundColour();
-        this.scene.game.events.emit("end-turn-available", true);
+        if (this.currentPlayer.ai) {
+            this.cursor.enabled = false;
+            this.emitUIEvent(EventType.EndTurnAvailable, false);
+        }
+        else {
+            this.cursor.enabled = true;
+            this.emitUIEvent(EventType.EndTurnAvailable, true);
+        }
 
         let previousVal = 0;
 
@@ -1586,7 +1618,7 @@ export class Board extends Model implements Box {
                                 piece.sprite;
                             currentVal === 0
                                 ? target.setTintFill(
-                                    this._currentPlayer?.colour ||
+                                    this.currentPlayer?.colour ||
                                         0xffffff
                                 )
                                 : target.setTint(piece.defaultTint);
@@ -1692,10 +1724,10 @@ export class Board extends Model implements Box {
      * Deselect the current player.
      */
     deselectPlayer(): void {
-        this._currentPlayer = null;
+        this.currentPlayer = null;
         this.rangeGizmo.reset();
         this._selected = null;
-        this.scene.game.events.emit("end-turn-available", false);
+        this.emitUIEvent(EventType.EndTurnAvailable, false);
     }
 
     /**
@@ -1703,7 +1735,7 @@ export class Board extends Model implements Box {
      */
     async startGame(): Promise<void> {
         this._currentPlayerIndex = -1;
-        this._currentPlayer = null;
+        this.currentPlayer = null;
         this.state = BoardState.Idle;
         this.phase = BoardPhase.Idle;
         await this.nextPlayer();
@@ -1717,7 +1749,7 @@ export class Board extends Model implements Box {
      */
     async resumeGame(playerIndex: number, phase: BoardPhase): Promise<void> {
         this._currentPlayerIndex = playerIndex - 1;
-        this._currentPlayer = null;
+        this.currentPlayer = null;
         this.state = BoardState.Idle;
         this.phase = phase || BoardPhase.Idle;
         console.log(`Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`);
@@ -1750,7 +1782,7 @@ export class Board extends Model implements Box {
                 // got out of control. Game over with no winner.
                 this.logger.log(`Game over! Everybody's dead Dave.`, Colour.Yellow);
             }
-            this.scene.game.events.emit("game-over");
+            this.emitUIEvent(EventType.GameOver, true);
             return true;
         }
         return false;
@@ -1796,7 +1828,7 @@ export class Board extends Model implements Box {
                 }
                 else if (this.currentPlayer?.spells?.length) {
                     return new Promise<void>((resolve) => {
-                        this.scene.game.events.emit("spellbook-open", <SpellbookOpenEventData>{ 
+                        this.emitUIEvent(EventType.SpellbookOpen, <SpellbookOpenEventData>{ 
                             data: {
                                 caster: this.currentPlayer?.name,
                                 spells: this.currentPlayer?.spells,
@@ -1805,7 +1837,7 @@ export class Board extends Model implements Box {
                                 if (spell) {
                                     this.currentPlayer?.pickSpell(spell.id);
                                 }
-                                this.scene.game.events.emit("spellbook-close");
+                                this.emitUIEvent(EventType.SpellbookClose, true);
                                 resolve();
                                 await this.nextPlayer();
                             },
@@ -1813,7 +1845,7 @@ export class Board extends Model implements Box {
                     });
                 }
             } else {
-                this.scene.game.events.emit("spellbook-close");
+                this.emitUIEvent(EventType.SpellbookClose, true);
             }
 
             // Skip if no spells available in spellbook phase
