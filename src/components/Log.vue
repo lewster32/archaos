@@ -94,6 +94,7 @@ const getColour = (log: Log) => {
         min-width: 400px;
         margin: 0 1em;
         height: 17.5vh;
+        line-height: 1.5;
         min-height: 33.33333%;
         transition: min-height 0.25s, height 0.25s;
         z-index: 10;
@@ -135,7 +136,6 @@ const getColour = (log: Log) => {
             top: -2em;
         }
         &__item {
-            line-height: 1.25;
             + .game-log__item {
                 margin-top: .5em;
             }

@@ -172,7 +172,6 @@ const select: () => void = () => {
     }
     &__description {
         margin: .5em 0;
-        line-height: 1.4;
     }
 }
 
@@ -182,6 +181,7 @@ const select: () => void = () => {
     &__item {
         display: flex;
         margin-bottom: 0.25em;
+        line-height: 1;
     }
     &__label {
         color: var(--color-cyan);

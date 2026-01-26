@@ -243,7 +243,7 @@ export class Rules {
         if (casted.castTimes <= 0) {
             await board.currentPlayer.discardSpell();
             if (casted.failed) {
-                board.logger.log(`Spell failed`, Colour.Magenta);
+                board.logger.log(`${board.currentPlayer.name} failed to cast ${casted.name}`, Colour.Magenta);
             }
             if (board.selected) {
                 board.selected.turnOver = true;
