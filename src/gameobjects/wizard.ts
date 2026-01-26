@@ -93,7 +93,15 @@ export class Wizard extends Piece {
      * player that owns them.
      */
     get name(): string {
-        return this.owner?.name || "Unnamed Wizard";
+        return this.owner?.name || "Unnamed wizard";
+    }
+
+    /**
+     * Get the full name of this wizard. As a wizard 'is' the player, this is
+     * the same as the name.
+     */
+    get fullName(): string {
+        return this.name;
     }
 
     /**

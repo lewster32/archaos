@@ -343,7 +343,17 @@ export class Piece extends Entity {
      * Get the name of this piece.
      */
     get name(): string {
-        return this._properties?.name || "Unnamed Unit";
+        return this._properties?.name || "Unnamed unit";
+    }
+
+    /**
+     * Get the full name of this piece, including the owner's name.
+     */
+    get fullName(): string {
+        if (this.owner) {
+            return `${this.owner.name}'s ${this.name}`;
+        }
+        return this.name;
     }
 
     /**

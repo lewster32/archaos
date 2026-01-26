@@ -10,7 +10,6 @@ import type { Player } from "./player";
 import type { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
 import { SpellTarget } from "./enums/spelltarget";
-
 import { Geom, Math as PMath } from "phaser";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
@@ -54,6 +53,16 @@ export class ComputerWizard {
         this._player = player;
         this._difficulty = difficulty ?? 0.5;
         this._knownNonIllusionPieces = new Set<number>();
+    }
+
+    /**
+     * Gets the aggression level of the computer wizard, from 0 (least
+     * aggressive) to 1 (most aggressive). This affects how likely the computer
+     * wizard is to take risks, such as attacking or moving into dangerous
+     * positions.
+     */
+    private get aggression(): number {
+        return Math.min(Math.max(this._difficulty + 0.2, 0), 1);
     }
 
     /**
@@ -132,8 +141,14 @@ export class ComputerWizard {
      */
     private forgetIllusionKnowledge(): void {
         // Small chance to forget a known non-illusion piece each turn
-        const forgetChance: number = 0.1 * (1 - this._difficulty); // Harder difficulties forget less often
+        // Graph: https://www.desmos.com/calculator/ismripyway
+        const forgetChance: number = Math.min(
+            0.001, // Cap at 0.1% minimum chance
+            (-(0.4 * Math.log(Math.max(0.1, this._difficulty))) * 0.3) // Higher difficulties forget less often; 1 = 0.1%, 0.5 = 8%, 0.1 = ~28%
+        );
         for (const pieceId of this._knownNonIllusionPieces) {
+            // If we succeed the 'forget' roll, stop tracking this piece as a 
+            // known non-illusion
             if (this._board.rollChance(forgetChance)) {
                 this._knownNonIllusionPieces.delete(pieceId);
                 console.debug(`${this._player.name} has forgotten that piece ID ${pieceId} is not an illusion`);
@@ -148,8 +163,8 @@ export class ComputerWizard {
      * @param pieceId the ID of the piece to remember
      */
     public rememberNonIllusionPiece(pieceId: number): void {
-        const rememberChance: number = 0.2 * (1 - this._difficulty); // Harder difficulties remember more often
-        if (this._board.rollChance(rememberChance)) {
+        const rememberChance: number = 0.2 + this._difficulty; // Harder difficulties remember more often
+        if (!this._board.rollChance(rememberChance)) {
             console.debug(`${this._player.name} failed to notice that piece ID ${pieceId} is not an illusion`);
             return;
         }
@@ -465,10 +480,8 @@ export class ComputerWizard {
         else {
             console.debug(`${piece.owner.name}'s ${piece.name} is not engaged`);
         }
-        // 50/50 chance to run instead of attack if not engaged. If the unit
-        // cannot move (e.g., a Shadow Wood) it has a much higher chance to
-        // attack.
-        const willAttack: boolean = this._board.rollChance(piece.canMove ? 0.5 : 0.1);
+
+        const willAttack: boolean = this._board.rollChance(this.aggression);
         if (!willAttack) {
             console.debug(`${piece.owner.name}'s ${piece.name} will skip attacking this turn`);
         }
@@ -480,6 +493,7 @@ export class ComputerWizard {
                         p.owner !== this._player && // Enemy piece
                         !p.currentMount && // Not mounted
                         piece.canAttackPiece(p) && // Can attack target
+                        piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
                         (p.canAttackPiece(piece) ||
                             p.hasStatus(UnitStatus.Spreads))
                     ); // Target can fight back or is dangerous
@@ -546,20 +560,31 @@ export class ComputerWizard {
             // Special case: if there are any terminal paths and this is a
             // flying unit, attack one of them with a greater chance the higher
             // the difficulty level
-            if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(0.3 + (0.5 * this._difficulty))) {
+            if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(this.aggression)) {
                 const terminalPaths: Set<Path> = this._board.rangeGizmo.getAllTerminalPaths();
                 if (terminalPaths.size > 0) {
-                    const terminalPathArray: Path[] = Array.from(terminalPaths);
-                    const pos: Geom.Point = PMath.RND.pick(terminalPathArray)
-                        ?.nodes
-                        ?.findLast(node => node.terminal)
-                        ?.pos;
-                    const targetPiece: Piece | null = this._board.getPiecesAtPosition(
-                        pos,
-                        (p: Piece) => p.owner !== this._player && piece.canAttackPiece(p)
-                    )[0] || null;
+                    // Search the terminal paths for the first attackable target
+                    let targetPiece: Piece | null = null;
+                    for (const path of terminalPaths) {
+                        const terminalNode = path.nodes?.findLast(node => node.terminal);
+                        if (terminalNode) {
+                            const pos: Geom.Point = terminalNode.pos;
+                            targetPiece = this._board.getPiecesAtPosition(
+                                pos,
+                                (p: Piece) => {
+                                    return p.owner !== this._player && // Enemy piece
+                                    piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
+                                    piece.canAttackPiece(p); // Can attack target
+                                }
+                            )[0] || null;
+                            if (targetPiece) {
+                                break;
+                            }
+                        }
+                    }
+                    // If we found a target, go git it
                     if (targetPiece) {
-                        console.debug(`${piece.owner.name}'s ${piece.name} flies to terminal position and attacks ${targetPiece.name}`);
+                        console.debug(`${piece.owner.name}'s ${piece.name} flies to attack ${targetPiece.name}`);
                         piece.moved = true;
                         await this._board.attackPiece(piece.id, targetPiece.id);
                         if (!piece.currentMount && piece.engaged) {

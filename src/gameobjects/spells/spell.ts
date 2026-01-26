@@ -604,7 +604,15 @@ export class Spell extends Model {
                 `${target.name} was reanimated and now belongs to ${owner.name}`,
                 Colour.LightBlue
             );
-                
+
+            // Raised dead units are not illusionary, since they came from a
+            // corpse and illusionary units don't leave corpses. Ipso facto.
+            this._board.players.forEach((player: Player) => {
+                if (player.ai) {
+                    player.ai.rememberNonIllusionPiece(target.id);
+                }
+            });
+            
             await this._board.idleDelay(Board.DEFAULT_DELAY);
             return true;
         }
