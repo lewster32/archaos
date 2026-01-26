@@ -95,6 +95,24 @@ export class EffectEmitter extends GameObjects.Particles
                     emitZone: { type: "edge", source: path, quantity: 40 },
                     particleClass: EffectParticle,
                 };
+            case EffectType.TurmoilBeam:
+                path = new Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -2, max: 2 },
+                    y: { min: -2, max: 2 },
+                    frame: "sparkle1",
+                    gravityY: -100,
+                    speedX: { min: -20, max: 20 },
+                    lifespan: 800,
+                    scale: { start: 2, end: 0 },
+                    tint: [0x00ffff, 0x00ff00, 0x0099ff, 0x00ff99],
+                    blendMode: BlendModes.ADD,
+                    emitZone: { type: "edge", source: path, quantity: 10 },
+                    particleClass: EffectParticle,
+                };
             case EffectType.DragonFireBeam:
                 path = new Curves.Path(
                     startPosition.x,
@@ -595,6 +613,7 @@ export class EffectEmitter extends GameObjects.Particles
             case EffectType.WizardCastBeam:
             case EffectType.DisbelieveBeam:
             case EffectType.RaiseDeadBeam:
+            case EffectType.TurmoilBeam:
                 duration = 300;
                 break;
             case EffectType.LightningHit:
@@ -700,5 +719,6 @@ export enum EffectType {
     SubversionHit,
     GiveSpell,
     AttackHit,
-    NoCorpseDeath
+    NoCorpseDeath,
+    TurmoilBeam
 }

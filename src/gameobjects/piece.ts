@@ -647,13 +647,21 @@ export class Piece extends Entity {
                 this.position
             );
 
+            const difference: number = Board.distance(
+                new Geom.Point(this._sprite.x, this._sprite.y),
+                isoPosition
+            );
+
+            // A little hop for the piece as it moves
             this.board.scene.tweens.add({
                 targets: [this._sprite],
-                displayOriginY: "+" + Board.DEFAULT_CELLSIZE,
+                // Limit hop height to 120px no matter how far we move
+                displayOriginY: `+${Math.min(120, difference * 1.5)}`,
                 duration: duration / 2,
                 yoyo: true,
             });
 
+            // Move the piece to the new position
             this.board.scene.tweens.add({
                 targets: [this._sprite, this._shadow],
                 x: isoPosition.x,
@@ -721,7 +729,7 @@ export class Piece extends Entity {
         this.position = point;
         if (this.currentRider) {
             this.currentRider.position = point;
-            this.currentRider.updatePosition(0);
+            this.currentRider.updatePosition(stepDuration);
         }
         if (
             this.currentMount &&

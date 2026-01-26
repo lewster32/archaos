@@ -12,25 +12,30 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
             "statuses": [
+                "MagicArmour", "MagicSword"
             ],
             "pieces": [
                 {
-                    "type": "Orc",
+                    "type": "Eagle",
                     "position": { "x": 2, "y": 2 }
                 },
                 {
-                    "type": "Orc",
+                    "type": "Giant",
+                    "position": { "x": 2, "y": 3 }
+                },
+                {
+                    "type": "Bat",
                     "position": { "x": 2, "y": 4 }
                 }
             ],
             "spells": [
-                "*"
+                "Turmoil"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 4, "y": 3 },
+            "position": { "x": 8, "y": 8 },
             "computerControlled": false,
             "statuses": [
                 "ShadowForm"
@@ -52,6 +57,6 @@
     "cheats": {
         "forceHit": false,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

@@ -675,9 +675,9 @@ export class Spell extends Model {
                         this._board.sound.play("spelleffect");
                         const oldPiecePos: PMath.Vector2 = piece.sprite.getCenter().clone();
                         const newPiecePos: Geom.Point = this._board.getIsoPosition(randomEmptySpace)
-                        piece.moveTo(randomEmptySpace, 200);
+                        piece.moveTo(randomEmptySpace, 500);
                         await this._board.playEffect(
-                            EffectType.WizardCastBeam,
+                            EffectType.TurmoilBeam,
                             oldPiecePos,
                             newPiecePos,
                             piece

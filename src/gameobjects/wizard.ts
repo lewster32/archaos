@@ -145,10 +145,15 @@ export class Wizard extends Piece {
                 this.position
             );
 
+            const difference: number = Board.distance(
+                new Geom.Point(this._sprite.x, this._sprite.y),
+                isoPosition
+            );
+
             // Animate the wizard and its effects together.
             this.board.scene.tweens.add({
                 targets: [this._sprite, ...this._effects.values()],
-                displayOriginY: "+" + Board.DEFAULT_CELLSIZE,
+                displayOriginY: `+${Math.min(120, difference * 1.5)}`,
                 duration: duration / 2,
                 yoyo: true,
             });
