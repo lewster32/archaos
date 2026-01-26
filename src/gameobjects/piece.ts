@@ -759,7 +759,7 @@ export class Piece extends Entity {
             if (this.currentEngulfed) {
                 this.currentEngulfed.engulfed = false;
                 this.board.logger.log(
-                    `${this.currentEngulfed.owner?.name}'s ${this.currentEngulfed.name} was released from ${this.owner?.name}'s ${this.name}`,
+                    `${this.currentEngulfed.fullName} was released from ${this.fullName}`,
                     Colour.Green
                 );
             }
@@ -804,13 +804,13 @@ export class Piece extends Entity {
                 ) {
                     const killedPiece: Piece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
                     this.board.logger.log(
-                        `${killedPiece.owner.name} was destroyed by ${this.owner.name}'s ${this.name}!`,
+                        `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
                         Colour.Red
                     );
                     await killedPiece.kill();
                 } else if (this.hasStatus(UnitStatus.Engulfs)) {
                     this.board.logger.log(
-                        `${this.owner.name}'s ${this.name} has engulfed ${spreadPieces[0].owner.name}'s ${spreadPieces[0].name}`,
+                        `${this.fullName} has engulfed ${spreadPieces[0].fullName}`,
                         Colour.Yellow
                     );
                     spreadPieces[0].engulfed = true;
@@ -818,7 +818,7 @@ export class Piece extends Entity {
                     await Promise.all(
                         spreadPieces.map(async (piece) => {
                             this.board.logger.log(
-                                `${piece.owner.name}'s ${piece.name} was destroyed by ${this.owner.name}'s ${this.name}`,
+                                `${piece.fullName} was destroyed by ${this.fullName}`,
                                 Colour.Red
                             );
                             // TODO: This should happen in the effect system
@@ -1344,7 +1344,8 @@ export class Piece extends Entity {
 
             this.board.sound.play("attackonly");
             this.board.logger.log(
-                `${this.name} ${this.properties.attackType} ${piece.name}`
+                `${this.name} ${this.properties.attackType} ${piece.name}`,
+                Colour.Yellow
             );
             await this.board.playEffect(EffectType.AttackHit, piece.sprite.getCenter(), null, piece);
             await Board.delay(Board.DEFAULT_DELAY);
@@ -1355,7 +1356,7 @@ export class Piece extends Entity {
             }
 
             if (rollSuccess) {
-                this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                this.board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
                 this.board.sound.play("killcreature");
                 await piece.kill();
                 // If the attacked piece was killed and the attacker can move,
@@ -1403,8 +1404,6 @@ export class Piece extends Entity {
             let hitEffectType: EffectType;
             let beamSound: string;
             let hitSound: string;
-
-            console.log(this.properties.projectileType);
 
             // TODO: Combine this with the same code in AttackSpell
             switch (this.properties.projectileType) {
@@ -1472,7 +1471,10 @@ export class Piece extends Entity {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
                 this.board.sound.play("killcreature");
-                this.board.logger.log(`${this.name} defeated ${piece.name}`);
+                this.board.logger.log(
+                    `${this.fullName} defeated ${piece.fullName}`,
+                    Colour.Red
+                );
                 await piece.kill();
                 return true;
             }

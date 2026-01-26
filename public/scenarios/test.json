@@ -15,8 +15,12 @@
             ],
             "pieces": [
                 {
-                    "type": "Obelisk",
+                    "type": "Orc",
                     "position": { "x": 2, "y": 2 }
+                },
+                {
+                    "type": "Orc",
+                    "position": { "x": 2, "y": 4 }
                 }
             ],
             "spells": [
@@ -29,7 +33,7 @@
             "position": { "x": 4, "y": 3 },
             "computerControlled": false,
             "statuses": [
-                
+                "ShadowForm"
             ],
             "pieces": [
 
@@ -44,7 +48,7 @@
             "position": { "x": 3, "y": 3 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

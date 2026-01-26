@@ -7,6 +7,7 @@ import type { PlayerConfig } from "./configs/playerconfig";
 import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";
 import { ComputerWizard } from "./computerwizard";
+import { Colour } from "./enums/colour";
 
 export class Player extends Model {
     private readonly _name?: string;
@@ -97,7 +98,10 @@ export class Player extends Model {
 
     async defeat(): Promise<void> {
         this._defeated = true;
-        this.board.logger.log(`Game over for ${this.name}`);
+        this.board.logger.log(
+            `Game over for ${this.name}`,
+            Colour.Red
+        );
         await this.board.sound.playAsync("deadwizard2", {
             delay: Board.DEFAULT_DELAY
         });

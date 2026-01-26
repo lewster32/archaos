@@ -29,10 +29,6 @@ const props = defineProps<{
     unit: Piece | null;
 }>();
 
-onMounted(() => {
-    console.log("UnitInfo mounted with unit:", props.unit);
-});
-
 const highlightOwnedUnits: (owner: Player) => void = (owner) => {
     document.dispatchEvent(new CustomEvent("highlight-owned-units", { detail: owner }));
 }

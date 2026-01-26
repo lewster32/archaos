@@ -306,7 +306,6 @@ export class Board extends Model implements Box {
                 );
                 this.selectPiece(this.selected.currentRider.id);
                 this.state = BoardState.Dismount;
-                console.log(this.state, this.selected);
                 await this.rangeGizmo.generate(this.selected);
             }
         });
@@ -1141,6 +1140,15 @@ export class Board extends Model implements Box {
             path.nodes.shift().pos,
             Piece.DEFAULT_STEP_MOVE_DURATION
         );
+        // Check for engagement after each step
+        const firstEngagingPiece: Piece | null =
+            piece.getFirstEngagingPiece();
+        if (firstEngagingPiece) {
+            // Cancel movement if engagement occurs
+            await this.rangeGizmo.reset();
+            return;
+        }
+
         if (path.nodes.length > 0) {
             await this.movePath(piece, path);
         }
@@ -1872,6 +1880,7 @@ export class Board extends Model implements Box {
                         await this.rules.doAutoCastSpell(
                             this
                         );
+                        this.emitBoardUpdateEvent();
                         continue;
                     }
                     else if (spell?.range === 0) {
@@ -1879,6 +1888,7 @@ export class Board extends Model implements Box {
                             this,
                             this.currentPlayer.castingPiece
                         );
+                        this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
                         await this.rangeGizmo.showSimpleRange(

@@ -8,6 +8,7 @@ import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Geom } from "phaser";
+import { Colour } from "../enums/colour";
 
 /**
  * A spell that attacks one or more target pieces.
@@ -94,7 +95,7 @@ export class AttackSpell extends Spell {
                 });
                 await target.owner.destroyCreations();
                 this._board.logger.log(
-                    `${target.owner.name}'s creations were dispelled by ${this.name}`
+                    `${target.fullName}'s creations were dispelled by ${this.name}`
                 );
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
             }
@@ -107,7 +108,8 @@ export class AttackSpell extends Spell {
 
         if (targetKilled) {
             this._board.logger.log(
-                `${target.name} was defeated by ${owner.name}'s ${this.name}`
+                `${target.fullName} was defeated by ${this.name}`,
+                Colour.Red
             );
         }
 

@@ -185,7 +185,7 @@ export class SummonSpell extends Spell {
         newPiece.turnOver = true;
 
         this._board.logger.log(
-            `${owner.name} successfully cast '${this.name}'`,
+            `${owner.name} successfully casts '${this.name}'`,
             Colour.Green
         );
 

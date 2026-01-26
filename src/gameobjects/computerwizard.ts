@@ -453,7 +453,7 @@ export class ComputerWizard {
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
         if (piece.engaged) {
-            console.debug(`${piece.owner.name}'s ${piece.name} is engaged`);
+            console.debug(`${piece.fullName} is engaged`);
             // Try to attack the engaged enemy if possible
             const engagedEnemies: Piece[] =
                 this._board.getAdjacentPiecesAtPosition(
@@ -468,22 +468,22 @@ export class ComputerWizard {
                 );
             if (engagedEnemies.length > 0) {
                 const target: Piece = PMath.RND.pick(engagedEnemies);
-                console.debug(`${piece.owner.name}'s ${piece.name} attacks engaged target ${target.name}`);
+                console.debug(`${piece.fullName} is engaged and attacks ${target.fullName}`);
                 await this._board.attackPiece(piece.id, target.id);
                 piece.moved = true;
                 piece.attacked = true;
             }
             else {
-                console.debug(`No engaged targets found for ${piece.owner.name}'s ${piece.name}`);
+                console.debug(`No engaged targets found for ${piece.fullName}`);
             }
         }
         else {
-            console.debug(`${piece.owner.name}'s ${piece.name} is not engaged`);
+            console.debug(`${piece.fullName} is not engaged`);
         }
 
         const willAttack: boolean = this._board.rollChance(this.aggression);
         if (!willAttack) {
-            console.debug(`${piece.owner.name}'s ${piece.name} will skip attacking this turn`);
+            console.debug(`${piece.fullName} will skip attacking this turn`);
         }
         if (!piece.attacked && piece.canAttack && willAttack) {
             // Try to attack a random hostile target in range
@@ -518,17 +518,17 @@ export class ComputerWizard {
                 const target: Piece = PMath.RND.weightedPick(
                     potentialAttackTargets
                 );
-                console.debug(`${piece.owner.name}'s ${piece.name} attacks target ${target.name}`);
+                console.debug(`${piece.fullName} attacks target ${target.name}`);
                 await this._board.attackPiece(piece.id, target.id);
                 piece.moved = true;
                 piece.attacked = true;
             }
             else {
-                console.debug(`No attack targets found for ${piece.owner.name}'s ${piece.name}`);
+                console.debug(`No attack targets found for ${piece.fullName}`);
             }
         }
         else {
-            console.debug(`${piece.owner.name}'s ${piece.name} cannot attack or has already attacked`);
+            console.debug(`${piece.fullName} cannot attack or has already attacked`);
         }
         if (!piece.moved && piece.canMove) {
             // Special case: if this is a wizard and there are mountable units
@@ -544,7 +544,7 @@ export class ComputerWizard {
                 if (mountablePieces.length > 0) {
                     const mountable: Piece =
                         PMath.RND.pick(mountablePieces);
-                    console.debug(`${piece.owner.name}'s ${piece.name} mounts ${mountable.owner.name}'s ${mountable.name}`);
+                    console.debug(`${piece.fullName} mounts ${mountable.fullName}`);
                     await this._board.mountPiece(piece.id, mountable.id);
                     // Select the mountable if it can attack or ranged attack
                     if ((mountable.canAttack && !mountable.attacked) || (mountable.canRangedAttack && !mountable.rangedAttacked)) {
@@ -553,7 +553,7 @@ export class ComputerWizard {
                     return true;
                 }
                 else {
-                    console.debug(`No friendly mountables found for ${piece.owner.name}'s ${piece.type}`);
+                    console.debug(`No friendly mountables found for ${piece.fullName}`);
                 }
             }
 
@@ -584,7 +584,7 @@ export class ComputerWizard {
                     }
                     // If we found a target, go git it
                     if (targetPiece) {
-                        console.debug(`${piece.owner.name}'s ${piece.name} flies to attack ${targetPiece.name}`);
+                        console.debug(`${piece.fullName} flies to attack ${targetPiece.fullName}`);
                         piece.moved = true;
                         await this._board.attackPiece(piece.id, targetPiece.id);
                         if (!piece.currentMount && piece.engaged) {
@@ -592,7 +592,7 @@ export class ComputerWizard {
                                 piece.getFirstEngagingPiece();
 
                             if (firstEngagingPiece) {
-                                console.debug(`${piece.owner.name}'s ${piece.name} is now engaged after attacking`);
+                                console.debug(`${piece.fullName} is now engaged after attacking`);
                                 piece.attacked = false;
                                 await this.moveUnit(piece);
                             }
@@ -601,15 +601,15 @@ export class ComputerWizard {
                         return true;
                     }
                     else {
-                        console.debug(`No attackable terminal targets found for ${piece.owner.name}'s ${piece.name}`);
+                        console.debug(`No attackable terminal targets found for ${piece.fullName}`);
                     }
                 }
                 else {
-                    console.debug(`No terminal paths found for ${piece.owner.name}'s ${piece.name}`);
+                    console.debug(`No terminal paths found for ${piece.fullName}`);
                 }
             }
             else {
-                console.debug(`${piece.owner.name}'s ${piece.name} is not flying or did not roll to attack terminal paths`);
+                console.debug(`${piece.fullName} is not flying or did not roll to attack terminal paths`);
             }
 
             // Move to a random reachable position
@@ -626,16 +626,16 @@ export class ComputerWizard {
                 return !Geom.Point.Equals(pt, piece.position);
             });
             if (reachableTiles.length === 0) {
-                console.debug(`No reachable tiles for ${piece.owner.name}'s ${piece.name}`);
+                console.debug(`No reachable tiles for ${piece.fullName}`);
                 this._board.sound.play("cancel");
                 return false;
             }
             const movePt: Geom.Point = PMath.RND.pick(reachableTiles);
             
-            console.debug(`${piece.owner.name}'s ${piece.name} moves to (${movePt.x}, ${movePt.y})`);
+            console.debug(`${piece.fullName} moves to (${movePt.x}, ${movePt.y})`);
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
-                console.debug(`${piece.owner.name}'s ${piece.name} is now engaged after moving`);
+                console.debug(`${piece.fullName} is now engaged after moving`);
                 await this.moveUnit(piece);
             }
         }
@@ -684,15 +684,15 @@ export class ComputerWizard {
                 );
 
                 await Board.delay(Board.DEFAULT_DELAY * 1.5);
-                console.debug(`${piece.owner.name}'s ${piece.name} performs ranged attack on target ${target.name}`);
+                console.debug(`${piece.fullName} performs ranged attack on ${target.fullName}`);
                 await this._board.rangedAttackPiece(piece.id, target.id);
                 return true;
             }
             else {
-                console.debug(`No ranged attack targets found for ${piece.owner.name}'s ${piece.name}`);
+                console.debug(`No ranged attack targets found for ${piece.fullName}`);
             }
         } else {
-            console.debug(`${piece.owner.name}'s ${piece.name} cannot ranged attack or has already ranged attacked`);
+            console.debug(`${piece.fullName} cannot ranged attack or has already ranged attacked`);
         }
         
         return true;
@@ -726,10 +726,10 @@ export class ComputerWizard {
                     break;
                 }
                 if (piece.turnOver) {
-                    console.debug(`${this._player.name}'s ${piece.name} has already taken its turn`);
+                    console.debug(`${piece.fullName} has already taken its turn`);
                     continue;
                 }
-                console.debug(`Moving ${this._player.name}'s ${piece.name}`);
+                console.debug(`Moving ${piece.fullName}`);
                 await this.moveUnit(piece);
                 piece.turnOver = true;
             }
