@@ -13,7 +13,7 @@ import { UnitType } from "./enums/unittype";
 import { WizCode } from "./interfaces/wizcode";
 import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
-import { Math as PMath, Geom, GameObjects, BlendModes } from "phaser";
+import { Math as PMath, Geom, GameObjects, BlendModes, Tweens } from "phaser";
 
 /**
  * Get the Wizard unit configuration
@@ -254,6 +254,25 @@ export class Wizard extends Piece {
         if (!super.addStatus(status)) {
             return false;
         }
+        // Mutually exclusive statuses - can't have a shield and armour at once,
+        // nor knife and sword.
+        if (status === UnitStatus.MagicShield) {
+            console.debug("Removing Magic Armour due to Magic Shield being added");
+            this.removeStatus(UnitStatus.MagicArmour);
+        }
+        else if (status === UnitStatus.MagicArmour) {
+            console.debug("Removing Magic Shield due to Magic Armour being added");
+            this.removeStatus(UnitStatus.MagicShield);
+        }
+        if (status === UnitStatus.MagicKnife) {
+            console.debug("Removing Magic Sword due to Magic Knife being added");
+            this.removeStatus(UnitStatus.MagicSword);
+        }
+        else if (status === UnitStatus.MagicSword) {
+            console.debug("Removing Magic Knife due to Magic Sword being added");
+            this.removeStatus(UnitStatus.MagicKnife);
+        }
+
         const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
@@ -320,7 +339,7 @@ export class Wizard extends Piece {
                 sprite.setBlendMode(BlendModes.ADD);
                 this.board.getLayer(BoardLayer.Pieces).add(sprite);
                 this._effects.set(status, sprite);
-                sprite['_effectTween'] = this.board.scene.tweens.add({
+                sprite.setData('_effectTween', this.board.scene.tweens.add({
                     targets: [sprite],
                     duration: 500,
                     yoyo: true,
@@ -328,7 +347,7 @@ export class Wizard extends Piece {
                     easeParams: [3],
                     alpha: {from: 0.2, to: 1},
                     loop: -1
-                });
+                }));
                 this.updateDepth();
                 break;
         }
@@ -341,21 +360,6 @@ export class Wizard extends Piece {
         // Any magical weapon lets us attack the undead.
         if (Wizard.MAGIC_WEAPONS.includes(status)) {
             this.addStatus(UnitStatus.AttackUndead);
-        }
-
-        // Mutually exclusive statuses - can't have a shield and armour at once,
-        // nor knife and sword.
-        if (status === UnitStatus.MagicShield) {
-            this.removeStatus(UnitStatus.MagicArmour);
-        }
-        else if (status === UnitStatus.MagicArmour) {
-            this.removeStatus(UnitStatus.MagicShield);
-        }
-        if (status === UnitStatus.MagicKnife) {
-            this.removeStatus(UnitStatus.MagicSword);
-        }
-        else if (status === UnitStatus.MagicSword) {
-            this.removeStatus(UnitStatus.MagicKnife);
         }
 
         // If we're mounted, hide all effects so we don't have a horse with
@@ -394,17 +398,26 @@ export class Wizard extends Piece {
             case UnitStatus.MagicShield:
             case UnitStatus.MagicWings:
             case UnitStatus.MagicArmour:
-                if (this._effects.has(status)) {
-                    const sprite = this._effects.get(status);
+                // All of these have effect sprites, so get rid of the
+                // appropriate one from the map.
+                {
+                    if (!this._effects.has(status)) {
+                        break;
+                    }
+                    const sprite: GameObjects.Sprite | GameObjects.Image = this._effects.get(status);
                     if (sprite) {
-                        if (sprite['_effectTween']) {
-                            sprite['_effectTween'].stop().destroy();
+                        try {
+                            if (sprite.getData('_effectTween') instanceof Tweens.Tween) {
+                                (sprite.getData('_effectTween') as Tweens.Tween)?.stop()?.destroy();
+                            }
+                        } catch {
+                            // Ignore - probably doesn't have a tween?
                         }
                         sprite.destroy();
                     }
                     this._effects.delete(status);
+                    break;
                 }
-                break;
         }
 
         // We stop flying now.
