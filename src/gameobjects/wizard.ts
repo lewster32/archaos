@@ -317,6 +317,7 @@ export class Wizard extends Piece {
                 sprite.setFlipX(
                     this._direction === UnitDirection.Left
                 );
+                sprite.setBlendMode(BlendModes.ADD);
                 this.board.getLayer(BoardLayer.Pieces).add(sprite);
                 this._effects.set(status, sprite);
                 sprite['_effectTween'] = this.board.scene.tweens.add({
@@ -325,7 +326,7 @@ export class Wizard extends Piece {
                     yoyo: true,
                     ease: "Stepped",
                     easeParams: [3],
-                    alpha: {from: 0, to: 1},
+                    alpha: {from: 0.2, to: 1},
                     loop: -1
                 });
                 this.updateDepth();
