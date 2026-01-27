@@ -985,7 +985,12 @@ export class Piece extends Entity {
     inAttackRange(point: Geom.Point): boolean {
         // If we haven't moved yet, we can attack anywhere within movement
         if (
-            !this.moved && this.inMovementRange(point)
+            !this.moved && // Haven't moved yet
+            this.inMovementRange(point) && // Point is within movement range
+            (
+                this.hasStatus(UnitStatus.Flying) || // Flying units can attack anywhere within movement
+                this.board.rangeGizmo.getPathTo(point) // Otherwise, needs a valid path to point
+            )
         ) {
             return true;
         }
@@ -1568,7 +1573,7 @@ export class Piece extends Entity {
         piece.currentRider = this;            
         await this.board.movePiece(this.id, piece.position);
         this.board.logger.log(
-            `${this.name} mounted ${piece.name}`
+            `${this.fullName} mounted ${piece.fullName}`
         );
         piece.createShaders(true, this.owner);
     }
@@ -1585,7 +1590,7 @@ export class Piece extends Entity {
         this.moved = true;
         this.currentMount.turnOver = true;
         this.board.logger.log(
-            `${this.name} dismounted ${this.currentMount.name}`
+            `${this.fullName} dismounted ${this.currentMount.fullName}`
         );
         this.currentMount.createShaders(true);
         this.currentMount = null;

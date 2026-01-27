@@ -16,16 +16,13 @@
             ],
             "pieces": [
                 {
-                    "type": "Eagle",
-                    "position": { "x": 2, "y": 2 }
+                    "type": "Wall",
+                    "position": { "x": 0, "y": 1 }
                 },
+
                 {
-                    "type": "Giant",
-                    "position": { "x": 2, "y": 3 }
-                },
-                {
-                    "type": "Bat",
-                    "position": { "x": 2, "y": 4 }
+                    "type": "Wall",
+                    "position": { "x": 1, "y": 0 }
                 }
             ],
             "spells": [
@@ -41,7 +38,10 @@
                 "ShadowForm"
             ],
             "pieces": [
-
+                {
+                    "type": "Dire Wolf",
+                    "position": { "x": 2, "y": 0 }
+                }
             ],
             "spells": [
             ]
@@ -53,7 +53,7 @@
             "position": { "x": 3, "y": 3 }
         }
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

@@ -1777,7 +1777,7 @@ export class Board extends Model implements Box {
      * 
      * @returns True if the game is over, false otherwise.
      */
-    async checkWinCondition(): Promise<boolean> {
+    checkWinCondition(): boolean {
         if (this.state === BoardState.GameOver) {
             return true;
         }
@@ -1811,7 +1811,7 @@ export class Board extends Model implements Box {
         while (true) {
             if (
                 this.state == BoardState.GameOver ||
-                (await this.checkWinCondition())
+                this.checkWinCondition()
             ) {
                 return;
             }

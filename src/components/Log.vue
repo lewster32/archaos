@@ -90,7 +90,7 @@ const getColour = (log: Log) => {
         position: fixed;
         left: 0;
         bottom: 0;
-        width: 50%;
+        width: 60%;
         min-width: 400px;
         margin: 0 1em;
         height: 17.5vh;
@@ -136,6 +136,7 @@ const getColour = (log: Log) => {
             top: -2em;
         }
         &__item {
+            text-wrap: balance;
             + .game-log__item {
                 margin-top: .5em;
             }
