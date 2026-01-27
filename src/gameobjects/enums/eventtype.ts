@@ -55,5 +55,10 @@ export enum EventType {
     /**
      * Request to dismount a piece. Sent from the dismount button.
      */
-    Dismount = "dismount"
+    Dismount = "dismount",
+
+    /**
+     * A new turn has started.
+     */
+    NewTurn = "new-turn"
 }

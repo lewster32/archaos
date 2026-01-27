@@ -27,7 +27,7 @@ import { BoardPhase } from "./gameobjects/enums/boardphase";
 import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
-import { Scene } from "phaser";
+import { Scene, Math as PMath } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 
@@ -255,6 +255,7 @@ export class GameScene extends Scene {
             this.board.addPlayer({
                 name: player.name,
                 computerControlled: player.computerControlled,
+                difficulty: player.difficulty || Number.parseFloat(PMath.RND.realInRange(0.5, 1).toFixed(1)),
             });
         }
 
@@ -324,6 +325,7 @@ export class GameScene extends Scene {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
                 computerControlled: player.computerControlled || false,
+                difficulty: player.difficulty || 0.5,
             })
             const wizard: Wizard = this.board.addWizard({
                 owner: currentPlayer,

@@ -10,37 +10,32 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
-            "computerControlled": false,
+            "computerControlled": true,
             "statuses": [
                 "MagicKnife"
             ],
             "pieces": [
                 {
-                    "type": "Wall",
-                    "position": { "x": 0, "y": 1 }
-                },
-
-                {
-                    "type": "Wall",
-                    "position": { "x": 1, "y": 0 }
+                    "type": "Eagle",
+                    "position": { "x": 0, "y": 8 }
                 }
             ],
             "spells": [
-                "Magic Sword"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
             "position": { "x": 8, "y": 8 },
-            "computerControlled": false,
+            "computerControlled": true,
+            "difficulty": 0.5,
             "statuses": [
                 "ShadowForm"
             ],
             "pieces": [
                 {
                     "type": "Dire Wolf",
-                    "position": { "x": 2, "y": 0 }
+                    "position": { "x": 8, "y": 0 }
                 }
             ],
             "spells": [
@@ -48,15 +43,12 @@
         }
     ],
     "corpses": [
-        {
-            "type": "Orc",
-            "position": { "x": 3, "y": 3 }
-        }
+
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": false,
-        "forceCast": true,
+        "forceHit": null,
+        "forceCast": null,
         "shortDelay": false
     }
 }

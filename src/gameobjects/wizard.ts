@@ -237,14 +237,12 @@ export class Wizard extends Piece {
         await this.destroy();
         await this.owner?.defeat();
         // PCHOWWW
-        await this.board.sound.playAsync("disbelieve", {
-            delay: Board.DEFAULT_DELAY
-        });
+        this.board.sound.play("disbelieve");
         return new Promise<void>((resolve) => {
             setTimeout(async () => {
                 this.board.checkWinCondition();
                 resolve();
-            }, Board.END_TURN_DELAY);
+            }, Board.END_TURN_DELAY / 2);
         });
     }
 

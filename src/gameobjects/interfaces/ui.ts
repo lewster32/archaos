@@ -57,6 +57,7 @@ export interface GameSetupData {
 export interface GameSetupPlayer {
     name: string;
     computerControlled: boolean;
+    difficulty?: number;
 }
 
 /**
@@ -85,6 +86,7 @@ export interface GameScenarioPlayer {
     spells?: string[]; // A simple list of spell names for now.
     computerControlled?: boolean;
     statuses?: string[];
+    difficulty?: number;
 }
 
 /**

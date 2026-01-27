@@ -48,8 +48,8 @@ export class Player extends Model {
         this._defeated = false;
         this._wizcode = "";
         if (config.computerControlled) {
-            this._ai = new ComputerWizard(board, this);
-            console.log(`${this.name} will be controlled by AI.`);
+            this._ai = new ComputerWizard(board, this, config.difficulty ?? 0.5);
+            console.log(`${this.name} will be controlled by AI, with difficulty ${this._ai.difficulty}.`);
         }
     }
 
@@ -170,5 +170,9 @@ export class Player extends Model {
             return spell;
         }
         return null;
+    }
+
+    toString(): string {
+        return this.name;
     }
 }

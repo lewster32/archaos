@@ -2123,7 +2123,7 @@ export class Board extends Model implements Box {
      * Roll a chance check for spell casting.
      * 
      * @param attack the chance value (0 to 1)
-     * @returns true if the chance check succeeds, false otherwise
+     * @returns true if the chance check succeeds (i.e., the `attack` value is greater than the saving roll), false otherwise
      */
     rollChance(attack: number): boolean {
         if (Board.CHEAT_FORCE_CAST !== null) {

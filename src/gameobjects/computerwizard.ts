@@ -15,6 +15,66 @@ import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
 
 /**
+ * Types of goals a unit can have.
+ */
+enum UnitGoalType {
+    /**
+     * Seek out the unit, e.g., to attack or mount.
+     */
+    Seek,
+
+    /**
+     * Avoid/flee from the unit, e.g., to avoid danger.
+     */
+    Flee,
+
+    /**
+     * Support an allied unit, e.g., to follow.
+     */
+    Support,
+
+    /**
+     * Camp at a position, e.g., to defend or hold ground.
+     */
+    Camp
+}
+
+/**
+ * A goal for a unit to achieve, used in AI decision-making.
+ */
+interface UnitGoal {
+    /**
+     * The score of this goal, higher is better.
+     */
+    score: number;
+
+    /**
+     * The type of goal.
+     */
+    type: UnitGoalType;
+}
+
+/**
+ * A goal targeting a specific piece.
+ */
+interface UnitPieceGoal extends UnitGoal {
+    /**
+     * The target piece for this goal.
+     */
+    targetPiece: Piece;
+}
+
+/**
+ * A goal targeting a specific position.
+ */
+interface UnitPositionGoal extends UnitGoal {
+    /**
+     * The target position for this goal.
+     */
+    targetPosition: Geom.Point;
+}
+
+/**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
  */
@@ -38,6 +98,16 @@ export class ComputerWizard {
     private readonly _knownNonIllusionPieces: Set<number>;
 
     /**
+     * A map of units to their current goals.
+     */
+    private readonly _unitGoals: Map<Piece, UnitGoal[]> = new Map();
+
+    /**
+     * A map of enemy players to their threat priority levels.
+     */
+    private readonly _enemyPlayerPriorities: Map<Player, number> = new Map();
+
+    /**
      * The difficulty level of the computer wizard, from 0 (easiest) to 1 (hardest).
      */
     private readonly _difficulty: number = 0.5;
@@ -53,6 +123,86 @@ export class ComputerWizard {
         this._player = player;
         this._difficulty = difficulty ?? 0.5;
         this._knownNonIllusionPieces = new Set<number>();
+    }
+
+    /**
+     * Gets the difficulty level of the computer wizard, from 0 (easiest) to 1
+     * (hardest).
+     */
+    public get difficulty(): number {
+        return this._difficulty;
+    }
+
+    /**
+     * Check the players on the board, and evaluate their threat levels based on
+     * proximity and strength of their units. This updates
+     * `_enemyPlayerPriorities` accordingly.
+     */
+    protected evaluateEnemyPlayerPriorities(): void {
+        this._enemyPlayerPriorities.clear();
+
+        // First of all, who's left to fight?
+        const enemyPlayers: Player[] = this._board.players.filter((p: Player) => {
+            return p !== this._player && !p.defeated;
+        });
+
+        // Evaluate each enemy player
+        for (const enemy of enemyPlayers) {
+            let threatLevel: number = 0;
+            const enemyPieces: Piece[] = this._board.getPiecesByOwner(enemy).filter((p: Piece) => {
+                return !p.dead && !p.hasStatus(UnitStatus.Structure);
+            });
+
+            for (const enemyPiece of enemyPieces) {
+                threatLevel += enemyPiece.strength;
+            }
+            this._enemyPlayerPriorities.set(enemy, threatLevel);
+        }
+
+        // Temper the threat levels based on the average distance to our wizard
+        // of the enemy's pieces
+        const wizardPiece: Piece | null = this._player.castingPiece;
+
+        if (!wizardPiece) {
+            console.error(`Cannot evaluate enemy player priorities for ${this._player.name} as they have no wizard`);
+            return;
+        }
+
+        for (const [enemy, threatLevel] of this._enemyPlayerPriorities) {
+            const enemyPieces: Piece[] = this._board.getPiecesByOwner(enemy).filter((p: Piece) => {
+                return !p.dead && // Not dead (corpses aren't usually owned, but just in case)
+                    !p.hasStatus(UnitStatus.Structure) && // Not a structure
+                    (
+                        p.canAttackPiece(wizardPiece) || // Can attack our wizard
+                        p.hasStatus(UnitStatus.Spreads) // Or can spread (which is also dangerous for a wizard)
+                    )
+            });
+            let totalDistance: number = 0;
+            if (enemyPieces.length === 0) {
+                // No threatening pieces, so just put the enemy wizard into the
+                // enemyPieces list
+                enemyPieces.push(enemy.castingPiece)
+            }
+            for (const enemyPiece of enemyPieces) {
+                const distance: number = Board.distance(
+                    wizardPiece.position,
+                    enemyPiece.position
+                );
+                totalDistance += distance;
+            }
+            const averageDistance: number = totalDistance / enemyPieces.length;
+            const adjustedThreatLevel: number = threatLevel / (averageDistance + 1);
+            this._enemyPlayerPriorities.set(enemy, adjustedThreatLevel);
+        }
+
+        // Normalise threat levels to 0-1 range, with 1 always being the highest
+        // perceived threat
+        const maxThreatLevel: number = Math.max(...this._enemyPlayerPriorities.values(), 1);
+        for (const [enemy, threatLevel] of this._enemyPlayerPriorities) {
+            this._enemyPlayerPriorities.set(enemy, threatLevel / maxThreatLevel);
+        }
+
+        console.debug(`Enemy player threat levels for ${this._player.name}:`, Object.fromEntries(this._enemyPlayerPriorities));
     }
 
     /**
@@ -187,6 +337,11 @@ export class ComputerWizard {
      */
     async selectSpell(): Promise<boolean> {
         this._board.cursor.enabled = false;
+
+        // Re-evaluate enemy player priorities as this may impact our spell
+        // choices
+        this.evaluateEnemyPlayerPriorities();
+
         // Possibly forget some illusion knowledge
         this.forgetIllusionKnowledge();
         try {
@@ -337,20 +492,14 @@ export class ComputerWizard {
                     while (attackSpell.castTimes > 0) {
                         const targets: Piece[] = (ComputerWizard.findSpellTargets(board, [attackSpell]).get(attackSpell) || [])
                             .toSorted((a: Piece, b: Piece) => {
-                            // Prefer wizard targets
-                            if (
-                                a.type === UnitType.Wizard &&
-                                b.type !== UnitType.Wizard
-                            ) {
+                            // Prefer wizard or high strength targets
+                            if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
                                 return -1;
                             }
-                            if (
-                                a.type !== UnitType.Wizard &&
-                                b.type === UnitType.Wizard
-                            ) {
+                            if (a.type !== UnitType.Wizard && b.type === UnitType.Wizard) {
                                 return 1;
                             }
-                            return 0;
+                            return b.strength - a.strength;
                         });
                         if (!targets.length) {
                             console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
@@ -362,7 +511,7 @@ export class ComputerWizard {
                         }
                         console.debug(`${player.name} has ${targets.length} valid targets to cast ${spell.name}`);
                         const target: Piece = PMath.RND.weightedPick(targets);
-                        console.debug(`${player.name} is casting ${spell.name} on target ${target.name}`, target);
+                        console.debug(`${player.name} is casting ${spell.name} on target ${target.name}`);
                         await board.rules.doCastSpell(
                             board,
                             target
@@ -532,7 +681,7 @@ export class ComputerWizard {
         }
         if (!piece.moved && piece.canMove) {
             // Special case: if this is a wizard and there are mountable units
-            // adjacent, mount one of them
+            // adjacent, consider mounting one of them
             if (piece.type === UnitType.Wizard && piece.currentMount == null) {
                 const mountablePieces: Piece[] =
                     this._board.getAdjacentPiecesAtPosition(
@@ -541,7 +690,21 @@ export class ComputerWizard {
                             return piece.canMountPiece(p); // Can mount the piece
                         }
                     );
-                if (mountablePieces.length > 0) {
+                // 
+                if (mountablePieces.length > 0) {                    
+                    // Increase chance to mount if the wizard is in danger
+                    let modifier: number = 0;
+                    if (this._player.castingPiece.findThreatPieces().size > 0) {
+                        console.debug(`${piece.fullName} is in danger and more likely to mount`);
+                        modifier = this._difficulty * 0.5; // More likely to mount if in danger
+                    }
+                    
+                    // Wizards usually want to mount, but lower difficulties may
+                    // sometimes choose not to (75% for 0, 100% for 1)
+                    if (!this._board.rollChance(Math.min(0.75 + ((this._difficulty + modifier) * 0.25), 1))) {
+                        console.debug(`${piece.fullName} chooses not to mount this turn`);
+                        return false;
+                    }
                     const mountable: Piece =
                         PMath.RND.pick(mountablePieces);
                     console.debug(`${piece.fullName} mounts ${mountable.fullName}`);
@@ -612,7 +775,7 @@ export class ComputerWizard {
                 console.debug(`${piece.fullName} is not flying or did not roll to attack terminal paths`);
             }
 
-            // Move to a random reachable position
+            // Find all valid reachable tiles
             const reachableTiles: Geom.Point[] = Array.from(
                 this._board.rangeGizmo.getAllValidPaths()
             ).map((path: Path) => {
@@ -630,7 +793,62 @@ export class ComputerWizard {
                 this._board.sound.play("cancel");
                 return false;
             }
-            const movePt: Geom.Point = PMath.RND.pick(reachableTiles);
+            // We're going to move to a point, but it may be random or it may
+            // be tactical, depending on the difficulty level
+            let movePt: Geom.Point = null;
+
+            // For now, let's just move every piece towards the highest priority
+            // enemy (based on aggression) while keeping the wizards random
+            if (piece !== this._player.castingPiece && this._board.rollChance(this.aggression)) {
+                // Get the highest priority enemy player
+                const highestPriorityEnemy: Player | null = Array.from(this._enemyPlayerPriorities.entries())
+                    .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+                if (highestPriorityEnemy) {
+                    // Pick the closest reachable tile to any of that player's 
+                    // pieces, preferentially targeting wizards
+                    let closestTile: Geom.Point | null = null;
+                    let closestDistance: number = Infinity;
+                    let closestPiece: Piece | null = null;
+                    const enemyPieces: Piece[] = this._board.getPiecesByOwner(highestPriorityEnemy)
+                        .filter((p: Piece) => {
+                            return !p.dead && // Not dead
+                                piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
+                                piece.canAttackPiece(p); // Can attack target
+                        });
+                    for (const tile of reachableTiles) {
+                        for (const enemyPiece of enemyPieces) {
+                            const distance: number = Board.distance(
+                                tile,
+                                enemyPiece.position
+                            );
+                            // Prefer wizard targets by reducing their effective
+                            // distance; the higher the difficulty, the more we
+                            // prefer wizards
+                            const effectiveDistance: number = enemyPiece.type === UnitType.Wizard
+                                ? distance * Math.max(0.1, 1 - this.difficulty)
+                                : distance;
+                            if (effectiveDistance < closestDistance) {
+                                closestDistance = effectiveDistance;
+                                closestTile = tile;
+                                closestPiece = enemyPiece;
+                            }
+                        }
+                    }
+                    if (closestTile) {
+                        console.debug(`${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`);
+                        movePt = closestTile;
+                    }
+                    else {
+                        console.debug(`Could not find closest tile to enemy pieces for ${piece.fullName}`);
+                    }
+                }
+            }
+            // If we didn't find a tactical move point, pick a random one
+            if (!movePt) {
+                console.debug(`${piece.fullName} chooses to move randomly`);
+                movePt = PMath.RND.pick(reachableTiles)
+            }
             
             console.debug(`${piece.fullName} moves to (${movePt.x}, ${movePt.y})`);
             await this._board.movePiece(piece.id, movePt);
@@ -704,6 +922,11 @@ export class ComputerWizard {
      */
     async moveAllUnits(): Promise<void> {
         this._board.cursor.enabled = false;
+
+        // Re-evaluate enemy players again, as that may have changed after
+        // the spell casting round
+        this.evaluateEnemyPlayerPriorities();
+
         try {
             const pieces: Piece[] = this._board
                 .getPiecesByOwner(this._player)

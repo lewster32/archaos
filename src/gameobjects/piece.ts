@@ -71,7 +71,6 @@ export class Piece extends Entity {
      */
     static readonly MOVED_DARKEN_AMOUNT: number = 25;
 
-
     /**
      * Alpha value to use when rendering a wizard in Shadow Form.
      */
@@ -180,7 +179,7 @@ export class Piece extends Entity {
     }
 
     /**
-     * Initialize the piece's sprites. Will not create duplicate sprites if
+     * Initialise the piece's sprites. Will not create duplicate sprites if
      * they already exist.
      */
     protected initSprites() {
@@ -579,6 +578,38 @@ export class Piece extends Entity {
      */
     get properties(): UnitProperties {
         return this._properties;
+    }
+
+    /**
+     * Get the overall strength of this piece
+     */
+    get strength(): number {
+        let strength: number = 0;
+        
+        // Start with base melee attack strength
+        strength += this.stats.combat;
+        
+        // Add ranged attack strength if applicable, with range as a bonus
+        if (this.stats.rangedCombat > 0) {
+            strength += this.stats.rangedCombat + this.stats.range;
+        }
+
+        // Add movement range
+        strength += this.stats.movement;
+
+        // Higher defense increases strength
+        strength += this.stats.defense;
+
+        // Magic resistance doesn't have as big an impact as it's mainly only
+        // relevant against wizards
+        strength += this.stats.magicResistance / 2;
+
+        // If the unit is undead, add a small bonus
+        if (this.hasStatus(UnitStatus.Undead) || this.raisedDead) {
+            strength += 2;
+        }
+
+        return strength;
     }
 
     /**
@@ -1012,6 +1043,35 @@ export class Piece extends Entity {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Find all pieces that pose a threat to this piece, e.g., pieces that can
+     * attack it within the coming turn, or spreading units that are nearby.
+     * 
+     * @returns A set of pieces that threaten this piece.
+     */
+    findThreatPieces(): Set<Piece> {
+        const threatPieces: Set<Piece> = new Set<Piece>();
+
+        const allPieces: Piece[] = this.board.pieces.filter(
+            (piece: Piece) =>
+                piece.owner !== this.owner && // Only enemy pieces
+                !piece.dead && // Only alive pieces
+                !piece.currentRider && // Ignore riders of mounted units
+                !piece.engulfed && // Ignore engulfed pieces
+                (
+                    (piece.canAttackPiece(this) && this.inAttackRange(piece.position)) || // That can attack this piece
+                    (piece.canRangedAttackPiece(this) && this.inRangedAttackRange(piece.position)) || // Or ranged attack this piece
+                    (piece.hasStatus(UnitStatus.Spreads) && Board.distance(piece.position, this.position) <= 3) // Is a nearby spreading unit
+                )
+        );
+
+        allPieces.forEach((piece: Piece) => {
+            threatPieces.add(piece);
+        });
+
+        return threatPieces;
     }
 
     /**
