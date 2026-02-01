@@ -10,14 +10,34 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
-            "computerControlled": true,
+            "computerControlled": false,
             "statuses": [
                 "MagicKnife"
             ],
             "pieces": [
                 {
-                    "type": "Eagle",
-                    "position": { "x": 0, "y": 8 }
+                    "type": "Bat",
+                    "position": { "x": 1, "y": 0 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 2, "y": 0 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 2, "y": 1 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 2, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 1, "y": 2 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 0, "y": 2 }
                 }
             ],
             "spells": [
@@ -26,8 +46,8 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 8, "y": 8 },
-            "computerControlled": true,
+            "position": { "x": 5, "y": 0 },
+            "computerControlled": false,
             "difficulty": 0.5,
             "statuses": [
                 "ShadowForm"
@@ -35,7 +55,7 @@
             "pieces": [
                 {
                     "type": "Dire Wolf",
-                    "position": { "x": 8, "y": 0 }
+                    "position": { "x": 4, "y": 0 }
                 }
             ],
             "spells": [
@@ -47,8 +67,8 @@
     ],
     "phase": "moving",
     "cheats": {
-        "forceHit": null,
-        "forceCast": null,
+        "forceHit": false,
+        "forceCast": true,
         "shortDelay": false
     }
 }

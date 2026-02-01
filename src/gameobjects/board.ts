@@ -1367,6 +1367,7 @@ export class Board extends Model implements Box {
         for (const piece of expirePieces) {
             if (piece.hasStatus(UnitStatus.Structure)) {
                 if (this.roll(2, 10)) {
+                    this.sound.play("disbelieve");
                     await this.playEffect(
                         EffectType.DisbelieveHit,
                         piece.sprite.getCenter(),
@@ -1374,7 +1375,6 @@ export class Board extends Model implements Box {
                         piece
                     );
                     await piece.kill();
-                    this.sound.play("disbelieve");
                     this.logger.log(
                         `${piece.name} has expired`,
                         Colour.Magenta
