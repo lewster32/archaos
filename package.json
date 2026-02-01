@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "phaser": "3.55",
+        "typescript-fsm": "^1.6.0",
         "vue": "^3.5.26"
     }
 }

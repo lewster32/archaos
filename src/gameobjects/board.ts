@@ -23,6 +23,7 @@ import { SoundEffects } from "./soundeffects";
 import { AttackSpell } from "./spells/attackspell";
 import { Spell } from "./spells/spell";
 import { SummonSpell } from "./spells/summonspell";
+import { Events, StateManager, States } from "./statemanager";
 import { Wizard } from "./wizard";
 import { Display, Geom, GameObjects, Scene, Math as PMath, Cameras } from "phaser";
 
@@ -222,6 +223,12 @@ export class Board extends Model implements Box {
     private readonly _rules: Rules;
 
     /**
+     * The state manager for this board. The state manager handles the finite
+     * state machine for the game's phases and states.
+     */
+    private readonly _stateManager: StateManager;
+
+    /**
      * The logger for this board. The logger handles logging alerts to the
      * game's UI.
      */
@@ -286,6 +293,9 @@ export class Board extends Model implements Box {
         this._currentPlayer = null;
 
         this._rules = Rules.getInstance();
+        this._stateManager = new StateManager(this, (newState: States) => {
+            console.log(`Board: State changed to: ${States[newState]}`);
+        });
         this._logger = Logger.getInstance(this.scene.game.events);
 
         this.scene.game.events.on(EventType.EndTurn, async () => {
@@ -328,9 +338,19 @@ export class Board extends Model implements Box {
     /* #region State */
 
     /**
+     * Get the state manager for this board. The state manager handles the
+     * finite state machine for the game's phases and states.
+     */
+    get stateManager(): StateManager {
+        return this._stateManager;
+    }
+
+    /**
      * Get the current state of the board. The state is the specific mode the
      * board is in within a phase, such as moving or casting a spell. It mostly
      * affects what user inputs are valid.
+     * 
+     * @deprecated Use `stateManager` instead.
      */
     get state(): BoardState {
         return this._state;
@@ -338,6 +358,8 @@ export class Board extends Model implements Box {
 
     /**
      * Set the current state of the board.
+     * 
+     * @deprecated Use `stateManager` instead.
      */
     set state(state: BoardState) {
         if (this._state === BoardState.GameOver) {
@@ -379,6 +401,8 @@ export class Board extends Model implements Box {
     /**
      * Get the current phase of the board. The phase is the broader stage of
      * the game, such as spell selection or movement.
+     * 
+     * @deprecated Use `stateManager` instead.
      */
     get phase(): BoardPhase {
         return this._phase;
@@ -386,6 +410,8 @@ export class Board extends Model implements Box {
 
     /**
      * Set the current phase of the board.
+     * 
+     * @deprecated Use `stateManager` instead.
      */
     set phase(phase: BoardPhase) {
         this._phase = phase;
@@ -1753,6 +1779,8 @@ export class Board extends Model implements Box {
         this.currentPlayer = null;
         this.state = BoardState.Idle;
         this.phase = BoardPhase.Idle;
+
+        this.stateManager.sendEvent(Events.StartGame);
         await this.nextPlayer();
     }
 
@@ -1767,6 +1795,8 @@ export class Board extends Model implements Box {
         this.currentPlayer = null;
         this.state = BoardState.Idle;
         this.phase = phase || BoardPhase.Idle;
+
+        this.stateManager.sendEvent(Events.StartGame);
         console.log(`Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`);
         this.nextPlayer();
     }
