@@ -2,7 +2,7 @@
     <div class="unit-stats">
         <div class="unit-stats__properties unit-properties">
             <div
-                v-if="!canFly"
+                v-if="!hasStatus('flying')"
                 class="unit-properties__item unit-properties__item--mov"
                 :class="itemNumClass(unit.properties?.mov)"
                 :title="'Movement range: ' + unit.properties?.mov"
@@ -10,7 +10,7 @@
                 <span>{{ unit.properties?.mov }}</span>
             </div>
             <div
-                v-if="canFly"
+                v-else
                 class="unit-properties__item unit-properties__item--fly"
                 :class="itemNumClass(unit.properties?.mov)"
                 :title="'Flying range: ' + unit.properties?.mov"
@@ -64,18 +64,19 @@
         </div>
         <div class="unit-stats__status unit-statuses">
             <span v-if="owner && !isWizard">
-                {{ isMount ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span>: 
+                {{ isMount ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span> 
             </span>
-            <span class="unit-statuses__item c-white" v-if="isWizard">Wizard</span>
-            <span class="unit-statuses__item c-grey" v-if="isDead">Dead</span>
-            <span class="unit-statuses__item c-yellow" v-if="canFly">Flying</span>
-            <span class="unit-statuses__item c-light-blue" v-if="isUndead">Undead</span>
-            <span class="unit-statuses__item c-brown" v-if="isMount">Mountable</span>
-            <span class="unit-statuses__item c-magenta" v-if="canSpread">Spreads</span>
-            <span class="unit-statuses__item c-cyan" v-if="isInvulnerable">Invulnerable</span>
-            <span class="unit-statuses__item c-green" v-if="isTree">Tree</span>
-            <span class="unit-statuses__item c-yellow" v-if="expires">Expires</span>
-            <span class="unit-statuses__item c-cyan" v-if="expiresGiveSpell">Gives spell</span>
+            <span class="unit-statuses__item c-white" v-if="isWizard" title="The spell casting unit of each player">Wizard</span>
+            <span class="unit-statuses__item c-grey" v-if="isDead" title="R.I.P.">Dead</span>
+            <span class="unit-statuses__item c-yellow" v-if="hasStatus('flying')" title="Can fly over obstacles and units">Flying</span>
+            <span class="unit-statuses__item c-light-blue" v-if="hasStatus('undead')" title="Cannot be harmed by normal means">Undead</span>
+            <span class="unit-statuses__item c-brown" v-if="hasAnyStatus(['mount', 'mountAny'])" title="Can be mounted by a wizard">Mountable</span>
+            <span class="unit-statuses__item c-magenta" v-if="hasStatus('spread')" title="Has a chance to multiply and harm units it spreads over">Spreads</span>
+            <span class="unit-statuses__item c-cyan" v-if="hasStatus('invuln')" title="Cannot be attacked by any means">Invulnerable</span>
+            <span class="unit-statuses__item c-light-blue" v-if="hasStatus('sanctity')" title="Immune to magical attacks">Sanctity</span>
+            <span class="unit-statuses__item c-green" v-if="hasStatus('tree')" title="Cannot move">Tree</span>
+            <span class="unit-statuses__item c-yellow" v-if="hasStatus('expires')" title="Has a chance to permanently disappear">Expires</span>
+            <span class="unit-statuses__item c-cyan" v-if="hasStatus('expiresGiveSpell')" title="Gifts a new spell to the mounted wizard on expiry">Gives spell</span>
         </div>
     </div>
 </template>
@@ -89,47 +90,64 @@ const props = defineProps<{
     isMount?: boolean;
 }>();
 
+/**
+ * Check if the current unit has a specific status.
+ * 
+ * @param status The status to check for.
+ */
+type Status = "flying" | "undead" | "mount" | "mountAny" | "spread" | "invuln" | "sanctity" | "tree" | "expires" | "expiresGiveSpell";
+
+/**
+ * Check the unit has the given status.
+ * 
+ * @param status The status to check for.
+ */
+const hasStatus = (status: Status): boolean => {
+    return props.unit?.status?.includes(status) ?? false;
+};
+
+/**
+ * Check if the unit has any of the given statuses.
+ * 
+ * @param statuses The statuses to check for.
+ */
+const hasAnyStatus = (statuses: Status[]): boolean => {
+    return props.unit?.status?.some((status: Status) => hasStatus(status));
+};
+
+/**
+ * Check if the unit has all of the given statuses.
+ * 
+ * @param statuses The statuses to check for.
+ */
+const hasAllStatuses = (statuses: Status[]): boolean => {
+    return statuses.every((status: Status) => hasStatus(status));
+};
+
+/**
+ * Whether the unit is a wizard.
+ */
 const isWizard = computed(() => {
     return props.unit?.wizard;
 });
 
+/**
+ * Whether the unit is dead.
+ */
 const isDead = computed(() => {
     return props.unit?.dead;
 });
 
-const canFly = computed(() => {
-    return props.unit?.status?.includes("flying");
-});
-
-const isUndead = computed(() => {
-    return props.unit?.status?.includes("undead");
-});
-
-const isMount = computed(() => {
-    return props.unit?.status?.includes("mount") || props.unit?.status?.includes("mountAny");
-});
-
-const canSpread = computed(() => {
-    return props.unit?.status?.includes("spread");
-});
-
-const isInvulnerable = computed(() => {
-    return props.unit?.status?.includes("invuln");
-});
-
-const isTree = computed(() => {
-    return props.unit?.status?.includes("tree");
-});
-
-const expires = computed(() => {
-    return props.unit?.status?.includes("expires");
-});
-
-const expiresGiveSpell = computed(() => {
-    return props.unit?.status?.includes("expiresGiveSpell");
-});
-
+/**
+ * Get the numeral class for the given number.
+ * 
+ * @param num The number to get the class for.
+ */
 const itemNumClass = (num: number) => {
+    // Only return classes for numbers 1-10
+    if (!num || num < 1 || num > 10) {
+        return '';
+    }
     return `unit-properties__item--num-${num}`;
 };
 

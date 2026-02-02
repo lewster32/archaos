@@ -434,6 +434,12 @@ onMounted(async () => {
         spellbook.value.spells = event.data.spells;
         spellbook.value.caster = event.data.caster;
         spellbook.value.onSelect = event.callback;
+        if (event.data.soloMode) {
+            nextTick(() => {
+                spellbook.value.minimised = false;
+            });
+
+        }
     });
 
     eventEmitter.value.on(EventType.SpellbookClose, () => {

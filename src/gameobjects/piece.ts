@@ -1109,7 +1109,7 @@ export class Piece extends Entity {
      * Check if this piece can be disbelieved (i.e., a potentially illusionary
      * unit)
      */
-    get canDisbelieve(): boolean {
+    get canBeDisbelieved(): boolean {
         return (
             this.type === UnitType.Creature && // Only creatures can be disbelieved
             !this.hasStatus(UnitStatus.Wizard) && // Cannot disbelieve wizards
@@ -1155,7 +1155,10 @@ export class Piece extends Entity {
      * such as Sanctity.
      */
     get canBeMagicAttacked(): boolean {
-        return !this.hasStatus(UnitStatus.Invulnerable) // Cannot be magic attacked if invulnerable
+        return (
+            !this.hasStatus(UnitStatus.Invulnerable) && // Cannot be magic attacked if invulnerable
+            !this.hasStatus(UnitStatus.Sanctity) // Cannot be magic attacked if has sanctity
+        );
     }
 
     /**

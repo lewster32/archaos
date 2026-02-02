@@ -28,6 +28,11 @@ export enum UnitStatus {
     Invulnerable = "invuln",
 
     /**
+     * Cannot be attacked with magical attacks
+     */
+    Sanctity = "sanctity",
+
+    /**
      * Mountable by wizards
      */
     Mount = "mount",

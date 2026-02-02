@@ -144,6 +144,10 @@ export interface SpellbookOpenEventData {
 export interface SpellbookEventData {
     caster: string;
     spells: Spell[];
+    /**
+     * If true, the spellbook will immediately show on opening.
+     */
+    soloMode: boolean;
 }
 
 /**

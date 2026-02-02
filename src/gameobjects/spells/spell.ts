@@ -433,7 +433,7 @@ export class Spell extends Model {
                     return null;
                 }
                 if (this.type === SpellType.Disbelieve) {
-                    const disbelievableTarget: Piece = targetEnemyLivingPiece.canDisbelieve ? targetEnemyLivingPiece : null;
+                    const disbelievableTarget: Piece = targetEnemyLivingPiece.canBeDisbelieved ? targetEnemyLivingPiece : null;
                     if (!disbelievableTarget) {
                         if (showReason) {
                             this._board.logger.log(
@@ -458,14 +458,25 @@ export class Spell extends Model {
                     }
                     return subversionTarget;
                 }
-                if (this.properties.damage > 0 && targetEnemyLivingPiece?.hasStatus(UnitStatus.Invulnerable)) {
-                    if (showReason) {
-                        this._board.logger.log(
-                            `${this.name} cannot be cast on an invulnerable unit`,
-                            Colour.Magenta
-                        );
+                if (this.properties.damage > 0) {
+                    if (targetEnemyLivingPiece?.hasStatus(UnitStatus.Invulnerable)) {
+                        if (showReason) {
+                            this._board.logger.log(
+                                `${this.name} cannot be cast on an invulnerable unit`,
+                                Colour.Magenta
+                            );
+                        }
+                        return null;
                     }
-                    return null;
+                    if (!targetEnemyLivingPiece?.canBeMagicAttacked) {
+                        if (showReason) {
+                            this._board.logger.log(
+                                `${this.name} cannot be cast on a unit protected from magical attacks`,
+                                Colour.Magenta
+                            );
+                        }
+                        return null;
+                    }
                 }
 
                 return targetEnemyLivingPiece;
@@ -546,7 +557,7 @@ export class Spell extends Model {
      */
     async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         if (this.type === SpellType.Disbelieve) {
-            const target: Piece = targets.find((p: Piece) => p.canDisbelieve);
+            const target: Piece = targets.find((p: Piece) => p.canBeDisbelieved);
             if (!target) {
                 return false;
             }

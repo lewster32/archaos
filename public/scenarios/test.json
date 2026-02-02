@@ -15,39 +15,17 @@
                 "MagicKnife"
             ],
             "pieces": [
-                {
-                    "type": "Bat",
-                    "position": { "x": 1, "y": 0 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 2, "y": 0 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 2, "y": 1 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 2, "y": 2 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 1, "y": 2 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 0, "y": 2 }
-                }
+
             ],
             "spells": [
+                "Magic Bolt"
             ]
         },
         {
             "id": 2,
             "name": "Player 2",
             "position": { "x": 5, "y": 0 },
-            "computerControlled": false,
+            "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [
                 "ShadowForm"
@@ -56,6 +34,10 @@
                 {
                     "type": "Dire Wolf",
                     "position": { "x": 4, "y": 0 }
+                },
+                {
+                    "type": "Bat",
+                    "position": { "x": 4, "y": 1 }
                 }
             ],
             "spells": [
@@ -65,7 +47,7 @@
     "corpses": [
 
     ],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

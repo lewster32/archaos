@@ -1877,6 +1877,7 @@ export class Board extends Model implements Box {
                             data: {
                                 caster: this.currentPlayer?.name,
                                 spells: this.currentPlayer?.spells,
+                                soloMode: this.players.filter(p => !p.defeated && !p.ai).length === 1
                             },
                             callback: async (spell: Spell | null) => {
                                 if (spell) {

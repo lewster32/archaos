@@ -371,7 +371,8 @@ export class ComputerWizard {
                         return (
                             p.owner !== this._player && // Enemy piece
                             !p.dead && // Not dead
-                            p.canDisbelieve && // Can be disbelieved
+                            p.canBeDisbelieved && // Can be disbelieved
+                            !p.raisedDead && // Not raised dead (can't be an illusion)
                             !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
                         );
                     });
@@ -526,7 +527,7 @@ export class ComputerWizard {
                             return (
                                 p.owner !== player && // Enemy piece
                                 !p.dead && // Not dead
-                                p.canDisbelieve && // Can be disbelieved
+                                p.canBeDisbelieved && // Can be disbelieved
                                 !player.ai.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
                             );
                         });
