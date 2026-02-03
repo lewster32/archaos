@@ -8,6 +8,8 @@ import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";
 import { ComputerWizard } from "./computerwizard";
 import { Colour } from "./enums/colour";
+import { RemotePlayer } from "../remoteplayer";
+import { GameSetupPlayerType } from "./interfaces/ui";
 
 export class Player extends Model {
     private readonly _name?: string;
@@ -21,7 +23,17 @@ export class Player extends Model {
     private _selectedSpell: Spell | null;
     private _defeated: boolean;
 
-    private readonly _ai: ComputerWizard | null;
+    private readonly _remote: RemotePlayer | null;
+
+    /**
+     * Get the AI controller for this player, if any.
+     */
+    public get ai(): ComputerWizard | null {
+        if (this._remote instanceof ComputerWizard) {
+            return this._remote;
+        }
+        return null;
+    }
 
     static readonly PLAYER_COLOURS: number[] = [
         0x0000ff, // Blue
@@ -47,9 +59,9 @@ export class Player extends Model {
         this._selectedSpell = null;
         this._defeated = false;
         this._wizcode = "";
-        if (config.computerControlled) {
-            this._ai = new ComputerWizard(board, this, config.difficulty ?? 0.5);
-            console.log(`${this.name} will be controlled by AI, with difficulty ${this._ai.difficulty}.`);
+        if (config.type === GameSetupPlayerType.Computer) {
+            this._remote = new ComputerWizard(board, this, config.difficulty ?? 0.5);
+            console.log(`${this.name} will be controlled by AI, with difficulty ${this.ai.difficulty}.`);
         }
     }
 
@@ -92,8 +104,8 @@ export class Player extends Model {
         this._castingPiece = piece;
     }
     
-    get ai(): ComputerWizard | null {
-        return this._ai;
+    get remote(): RemotePlayer | null {
+        return this._remote;
     }
 
     async defeat(): Promise<void> {

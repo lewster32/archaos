@@ -18,7 +18,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed } from "vue";
 import type { Ref } from "vue";
 import type { Piece } from '../gameobjects/piece';
 import UnitStats from "./UnitStats.vue";

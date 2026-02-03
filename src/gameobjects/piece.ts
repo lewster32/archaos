@@ -1086,8 +1086,7 @@ export class Piece extends Entity {
         if (
             (this.hasStatus(UnitStatus.Mount) ||
                 this.hasStatus(UnitStatus.MountAny)) &&
-            this.currentRider &&
-            this.currentRider.owner === this.board.currentPlayer &&
+            this.currentRider?.owner === this.board.currentPlayer &&
             !this.currentRider.turnOver
         ) {
             return true;

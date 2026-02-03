@@ -24,7 +24,7 @@ import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
-import { GameScenarioData, GameSetupData } from "./gameobjects/interfaces/ui";
+import { GameScenarioData, GameSetupData, GameSetupPlayerType } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
 import { Scene, Math as PMath } from "phaser";
@@ -252,10 +252,17 @@ export class GameScene extends Scene {
         }
 
         for (let player of data.players) {
+            // Get distributed difficulty between 0.1 and 1.0, favouring
+            // middle values
+            const difficulty: number = player.difficulty ||
+                PMath.RND.weightedPick([
+                    .5, .5, .5, .6, .6, .4, .4, .7, .3, .8, .2, .9, .1, 1
+                ]);
+
             this.board.addPlayer({
                 name: player.name,
-                computerControlled: player.computerControlled,
-                difficulty: player.difficulty || Number.parseFloat(PMath.RND.realInRange(0.5, 1).toFixed(1)),
+                type: player.computerControlled ? GameSetupPlayerType.Computer : GameSetupPlayerType.Local,
+                difficulty: player.difficulty || difficulty,
             });
         }
 
@@ -324,7 +331,7 @@ export class GameScene extends Scene {
         for (let player of scenarioData.players) {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
-                computerControlled: player.computerControlled || false,
+                type: player.computerControlled ? GameSetupPlayerType.Computer : GameSetupPlayerType.Local,
                 difficulty: player.difficulty || 0.5,
             })
             const wizard: Wizard = this.board.addWizard({

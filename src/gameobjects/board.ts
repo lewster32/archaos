@@ -376,7 +376,7 @@ export class Board extends Model implements Box {
             case BoardState.Move:
             case BoardState.SelectSpell:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.ai) {
+                    if (this.currentPlayer && !this.currentPlayer.remote) {
                         this.emitUIEvent(EventType.EndTurnAvailable, true);
                     }
                     else {
@@ -386,7 +386,7 @@ export class Board extends Model implements Box {
                 break;
             default:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.ai) {
+                    if (this.currentPlayer && !this.currentPlayer.remote) {
                         this.emitUIEvent(EventType.CancelAvailable, true);
                     }
                     else {
@@ -922,7 +922,7 @@ export class Board extends Model implements Box {
             case BoardState.Dismount:
             case BoardState.Attack:
             case BoardState.RangedAttack:
-                if (this.currentPlayer && !this.currentPlayer.ai) {
+                if (this.currentPlayer && !this.currentPlayer.remote) {
                     this.emitUIEvent(EventType.CancelAvailable, true);
                 }
                 break;
@@ -1455,8 +1455,8 @@ export class Board extends Model implements Box {
 
     set currentPlayer(player: Player | null) {
         this._currentPlayer = player;
-        this.cursor.enabled = Boolean(!this._currentPlayer?.ai);
-        if (this._currentPlayer?.ai) {
+        this.cursor.enabled = Boolean(!this._currentPlayer?.remote);
+        if (this._currentPlayer?.remote) {
             setTimeout(() => {
                 // Disable UI buttons for AI players
                 this.emitUIEvent(EventType.EndTurnAvailable, false);
@@ -1607,7 +1607,7 @@ export class Board extends Model implements Box {
         );
 
         await this.updateBackgroundColour();
-        if (this.currentPlayer.ai) {
+        if (this.currentPlayer.remote) {
             this.cursor.enabled = false;
             this.emitUIEvent(EventType.EndTurnAvailable, false);
         }
@@ -1865,9 +1865,9 @@ export class Board extends Model implements Box {
 
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
-                if (this.currentPlayer?.ai) {
-                    if (!await this.currentPlayer.ai.selectSpell()) {
-                        console.log("AI could not select spell, skipping...");
+                if (this.currentPlayer?.remote) {
+                    if (!await this.currentPlayer.remote.selectSpell()) {
+                        console.log("Remote player could not select spell, skipping...");
                     }
                     continue;
                 }
@@ -1877,7 +1877,7 @@ export class Board extends Model implements Box {
                             data: {
                                 caster: this.currentPlayer?.name,
                                 spells: this.currentPlayer?.spells,
-                                soloMode: this.players.filter(p => !p.defeated && !p.ai).length === 1
+                                soloMode: this.players.filter(p => !p.defeated && !p.remote).length === 1
                             },
                             callback: async (spell: Spell | null) => {
                                 if (spell) {
@@ -1928,16 +1928,16 @@ export class Board extends Model implements Box {
                             CursorType.RangeCast,
                             spell.lineOfSight
                         );
-                        if (this.currentPlayer?.ai) {
-                            if (!await this.currentPlayer.ai.castSpell()) {
-                                console.log("AI could not cast spell, skipping...");
+                        if (this.currentPlayer?.remote) {
+                            if (!await this.currentPlayer.remote.castSpell()) {
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }
                     } else if (spell?.range === -1) {
-                        if (this.currentPlayer?.ai) {
-                            if (!await this.currentPlayer.ai.castSpell()) {
-                                console.log("AI could not cast spell, skipping...");
+                        if (this.currentPlayer?.remote) {
+                            if (!await this.currentPlayer.remote.castSpell()) {
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }
@@ -1950,8 +1950,8 @@ export class Board extends Model implements Box {
                 }
             }
 
-            if (this.phase === BoardPhase.Moving && this.currentPlayer?.ai) {
-                await this.currentPlayer.ai.moveAllUnits();
+            if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
+                await this.currentPlayer.remote.moveAllUnits();
                 await this.nextPlayer();
             }
 

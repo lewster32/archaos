@@ -31,6 +31,7 @@ export interface Box {
 export interface SetupPlayer {
     name: string;
     computerControlled?: boolean;
+    difficulty?: number;
 }
 
 /**
@@ -48,15 +49,21 @@ export interface SetupData {
  * Game setup data sent from the UI to the game logic.
  */
 export interface GameSetupData {
-    players: GameSetupPlayer[];
+    players: SetupPlayer[];
     board: Box;
     spellCount: number;
     classicSpells: boolean;
 }
 
+export enum GameSetupPlayerType {
+    Local,
+    Computer,
+    Remote
+}
+
 export interface GameSetupPlayer {
     name: string;
-    computerControlled: boolean;
+    type: GameSetupPlayerType;
     difficulty?: number;
 }
 

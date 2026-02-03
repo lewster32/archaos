@@ -13,6 +13,7 @@ import { SpellTarget } from "./enums/spelltarget";
 import { Geom, Math as PMath } from "phaser";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
+import { RemotePlayer } from "../remoteplayer";
 
 /**
  * Types of goals a unit can have.
@@ -78,7 +79,7 @@ interface UnitPositionGoal extends UnitGoal {
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
  */
-export class ComputerWizard {
+export class ComputerWizard implements RemotePlayer {
     /**
      * The board the computer wizard is playing on.
      */
@@ -334,6 +335,8 @@ export class ComputerWizard {
 
     /**
      * Selects a spell for the computer wizard to cast.
+     * 
+     * @returns whether a spell was successfully selected
      */
     async selectSpell(): Promise<boolean> {
         this._board.cursor.enabled = false;
@@ -528,7 +531,7 @@ export class ComputerWizard {
                                 p.owner !== player && // Enemy piece
                                 !p.dead && // Not dead
                                 p.canBeDisbelieved && // Can be disbelieved
-                                !player.ai.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
+                                !player.ai?.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
                             );
                         });
 
@@ -586,6 +589,8 @@ export class ComputerWizard {
 
     /**
      * Casts the currently selected spell.
+     * 
+     * @returns whether the spell was successfully cast
      */
     async castSpell(): Promise<boolean> {
         return ComputerWizard.autoCastSpell(this._board, this._player);

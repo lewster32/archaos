@@ -1,5 +1,7 @@
+import { GameSetupPlayerType } from "../interfaces/ui";
+
 export interface PlayerConfig {
     name?: string;
-    computerControlled?: boolean;
+    type: GameSetupPlayerType;
     difficulty?: number;
 }
