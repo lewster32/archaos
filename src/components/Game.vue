@@ -81,9 +81,10 @@
                     <input
                         type="checkbox"
                         v-model="setup.classicSpells"
+                        style="accent-color: var(--color-cyan);"
                         id="classicspells"
                     />
-                    Classic spells (only allow spells from original)
+                    <span class="c-cyan">Classic spells</span><span>(only allow spells from original)</span>
                 </label>
             </div>
             <div class="callout__row">
