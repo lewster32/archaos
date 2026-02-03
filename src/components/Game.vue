@@ -18,7 +18,7 @@
     <Minimap :pieces="pieces" :board="board" :balance="balance" :balanceShift="balanceShift" v-if="gameStarted" />
     <div class="menu" v-if="!gameStarted">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
-        <div class="callout__inner" v-if="setup">
+        <div class="callout__inner" v-if="setup" :style="{'columns': setup.playerCount > 4 ? 2 : 1}">
             <div class="callout__row">
                 <label for="playercount">Number of players:</label>
                 <select v-model="setup.playerCount" id="playercount">
