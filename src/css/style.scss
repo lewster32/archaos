@@ -84,7 +84,7 @@ body,
 
 body {
     --bg-transition-time: 0.15s;
-    background: url("../../assets/images/bg.png") repeat-x 60% 40%;
+    background: url("../../assets/images/bg.png") 60% 40%;
     background-color: var(--bg-colour, #555);
     color: var(--fg-colour, #eee);
     margin: 0;

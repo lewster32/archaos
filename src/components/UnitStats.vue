@@ -63,7 +63,7 @@
             </div>
         </div>
         <div class="unit-stats__status unit-statuses">
-            <span v-if="owner && !isWizard">
+            <span v-if="owner && !isWizard" class="unit-statuses__item">
                 {{ isMount ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span> 
             </span>
             <span class="unit-statuses__item c-white" v-if="isWizard" title="The spell casting unit of each player">Wizard</span>
@@ -112,7 +112,7 @@ const hasStatus = (status: Status): boolean => {
  * @param statuses The statuses to check for.
  */
 const hasAnyStatus = (statuses: Status[]): boolean => {
-    return props.unit?.status?.some((status: Status) => hasStatus(status));
+    return statuses.some((status: Status) => hasStatus(status));
 };
 
 /**

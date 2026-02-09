@@ -16,66 +16,6 @@ import { CursorType } from "./enums/cursortype";
 import { RemotePlayer } from "../remoteplayer";
 
 /**
- * Types of goals a unit can have.
- */
-enum UnitGoalType {
-    /**
-     * Seek out the unit, e.g., to attack or mount.
-     */
-    Seek,
-
-    /**
-     * Avoid/flee from the unit, e.g., to avoid danger.
-     */
-    Flee,
-
-    /**
-     * Support an allied unit, e.g., to follow.
-     */
-    Support,
-
-    /**
-     * Camp at a position, e.g., to defend or hold ground.
-     */
-    Camp
-}
-
-/**
- * A goal for a unit to achieve, used in AI decision-making.
- */
-interface UnitGoal {
-    /**
-     * The score of this goal, higher is better.
-     */
-    score: number;
-
-    /**
-     * The type of goal.
-     */
-    type: UnitGoalType;
-}
-
-/**
- * A goal targeting a specific piece.
- */
-interface UnitPieceGoal extends UnitGoal {
-    /**
-     * The target piece for this goal.
-     */
-    targetPiece: Piece;
-}
-
-/**
- * A goal targeting a specific position.
- */
-interface UnitPositionGoal extends UnitGoal {
-    /**
-     * The target position for this goal.
-     */
-    targetPosition: Geom.Point;
-}
-
-/**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
  */
@@ -97,11 +37,6 @@ export class ComputerWizard implements RemotePlayer {
      * or neglect to record it altogether, to simulate imperfect memory.
      */
     private readonly _knownNonIllusionPieces: Set<number>;
-
-    /**
-     * A map of units to their current goals.
-     */
-    private readonly _unitGoals: Map<Piece, UnitGoal[]> = new Map();
 
     /**
      * A map of enemy players to their threat priority levels.

@@ -13,6 +13,11 @@ export enum UnitRangedProjectileType {
     DragonFire = "dragonfire",
 
     /**
+     * Black dragon fire, from, erm, black dragons.
+     */
+    BlackDragonFire = "blackdragonfire",
+
+    /**
      * Magic bolt projectiles from wizards.
      */
     MagicBolt = "magicbolt",

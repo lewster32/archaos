@@ -1494,6 +1494,12 @@ export class Piece extends Entity {
                     beamSound = "dragonfire6";
                     hitSound = "dragonfireexplosion";
                     break;
+                case UnitRangedProjectileType.BlackDragonFire:
+                    beamEffectType = EffectType.BlackDragonFireBeam;
+                    hitEffectType = EffectType.BlackDragonFireHit;
+                    beamSound = "dragonfire6";
+                    hitSound = "dragonfireexplosion";
+                    break;
                 case UnitRangedProjectileType.MagicBolt:
                     beamEffectType = EffectType.MagicBoltBeam;
                     hitEffectType = EffectType.MagicBoltHit;

@@ -144,6 +144,37 @@ export class EffectEmitter extends GameObjects.Particles
                     blendMode: BlendModes.ADD,
                     particleClass: EffectParticle,
                 };
+            case EffectType.BlackDragonFireBeam:
+                path = new Curves.Path(
+                    startPosition.x,
+                    startPosition.y
+                ).lineTo(endPosition.x, endPosition.y);
+                return {
+                    x: { min: -2, max: 2 },
+                    y: { min: -5, max: 2 },
+                    frame: "sparkle1",
+                    gravityY: -60,
+                    speedX: { min: -10, max: 10 },
+                    scale: { start: 0.5, end: 1 },
+                    lifespan: 400,
+                    blendMode: BlendModes.ADD,
+                    tint: [0x0000ff, 0x5500ff],
+                    emitZone: { type: "edge", source: path, quantity: 20 },
+                    particleClass: EffectParticle,
+                };
+            case EffectType.BlackDragonFireHit:
+                return {
+                    x: { min: startPosition.x - 7, max: startPosition.x + 7 },
+                    y: { min: startPosition.y - 8, max: startPosition.y + 8 },
+                    frame: "sparkle2",
+                    speedX: { min: -20, max: 20 },
+                    speedY: { min: -10, max: -50 },
+                    gravityY: -60,
+                    lifespan: 300,
+                    tint: [0x0000ff, 0x5500ff],
+                    blendMode: BlendModes.ADD,
+                    particleClass: EffectParticle,
+                };
             case EffectType.MagicBoltBeam:
                 path = new Curves.Path(
                     startPosition.x,
@@ -439,6 +470,9 @@ export class EffectEmitter extends GameObjects.Particles
             case EffectType.DragonFireBeam:
             case EffectType.DragonFireHit:
                 return this.manager.scene.anims.get("dragonfire");
+            case EffectType.BlackDragonFireHit:
+            case EffectType.BlackDragonFireBeam:
+                return this.manager.scene.anims.get("magicbolt");
             case EffectType.MagicBoltBeam:
             case EffectType.MagicBoltHit:
             case EffectType.WizardDefeated:
@@ -503,6 +537,23 @@ export class EffectEmitter extends GameObjects.Particles
                         target.sprite.setTintFill(
                             [0xff0000, 0xff7700, 0x000000][
                                 Math.floor(tween.getValue()) % 3
+                            ]
+                        );
+                    },
+                    onComplete: () => {
+                        target.sprite.setTint(target.defaultTint)
+                    },
+                });
+                break;
+            case EffectType.BlackDragonFireHit:
+                this.manager.scene.tweens.addCounter({
+                    from: 0,
+                    to: 10,
+                    duration: duration,
+                    onUpdate: (tween) => {
+                        target.sprite.setTintFill(
+                            [0x0000ff, 0x5500ff][
+                                Math.floor(tween.getValue()) % 2
                             ]
                         );
                     },
@@ -602,6 +653,7 @@ export class EffectEmitter extends GameObjects.Particles
             case EffectType.RaiseDeadHit:
             case EffectType.SubversionHit:
             case EffectType.DragonFireHit:
+            case EffectType.BlackDragonFireHit:
                 duration = 1000;
                 break;
             case EffectType.MagicBoltBeam:
@@ -704,6 +756,8 @@ export enum EffectType {
     ArrowHit,
     DragonFireBeam,
     DragonFireHit,
+    BlackDragonFireBeam,
+    BlackDragonFireHit,
     MagicBoltBeam,
     MagicBoltHit,
     LightningBeam,

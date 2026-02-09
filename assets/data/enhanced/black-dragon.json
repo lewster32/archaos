@@ -1,0 +1,168 @@
+{
+    "spell": {
+        "id": "black-dragon",
+        "chance": 0.1,
+        "balance": -2,
+        "name": "Black Dragon",
+        "group": "enhanced",
+        "types": ["flying", "ranged", "undead"],
+        "unit": {
+            "id": "black-dragon",
+            "attackType": "attacked",
+            "rangedType": "burned",
+            "projectileType": "blackdragonfire",
+            "properties": {
+                "mov": 4,
+                "com": 7,
+                "rcm": 5,
+                "rng": 4,
+                "def": 8,
+                "mnv": 6,
+                "res": 8
+            },
+            "status": ["flying", "undead"],
+            "name": "Black Dragon",
+            "animFrames": [0, 1, 2, 1],
+            "animSpeed": 7,
+            "textures": [
+                {
+                    "image": "black-dragon.png",
+                    "format": "RGBA8888",
+                    "size": {
+                        "w": 54,
+                        "h": 54
+                    },
+                    "scale": 1,
+                    "frames": [
+                        {
+                            "filename": "black-dragon_l_0",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "black-dragon_l_1",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 18,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "black-dragon_l_2",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 36,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "black-dragon_r_0",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 0,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "black-dragon_r_1",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 18,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        },
+                        {
+                            "filename": "black-dragon_r_2",
+                            "rotated": false,
+                            "trimmed": false,
+                            "sourceSize": {
+                                "w": 18,
+                                "h": 18
+                            },
+                            "spriteSourceSize": {
+                                "x": 0,
+                                "y": 0,
+                                "w": 18,
+                                "h": 18
+                            },
+                            "frame": {
+                                "x": 36,
+                                "y": 18,
+                                "w": 18,
+                                "h": 18
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

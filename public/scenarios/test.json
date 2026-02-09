@@ -15,10 +15,14 @@
                 "MagicKnife"
             ],
             "pieces": [
+                {
+                    "type": "Black Dragon",
+                    "position": { "x": 0, "y": 1 }
+                }
 
             ],
             "spells": [
-                "Magic Bolt"
+                "Magic Bolt", "Black Dragon"
             ]
         },
         {
@@ -47,7 +51,7 @@
     "corpses": [
 
     ],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,
