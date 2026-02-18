@@ -552,7 +552,8 @@ export class ComputerWizard implements RemotePlayer {
                         return (
                             p.owner !== this._player && // Enemy piece
                             !p.currentMount && // Not mounted
-                            piece.canAttackPiece(p)
+                            piece.canAttackPiece(p) && // Can attack target
+                            piece.canAttackPossiblyUndeadPiece(p) // Can attack target even if undead
                         ); // Can attack engaged piece
                     }
                 );
@@ -560,12 +561,15 @@ export class ComputerWizard implements RemotePlayer {
                 const target: Piece = PMath.RND.pick(engagedEnemies);
                 console.debug(`${piece.fullName} is engaged and attacks ${target.fullName}`);
                 await this._board.attackPiece(piece.id, target.id);
-                piece.moved = true;
-                piece.attacked = true;
             }
             else {
                 console.debug(`No engaged targets found for ${piece.fullName}`);
             }
+            // Whether we attacked or not, if we're engaged then we consider our
+            // move for the turn done. We may still be able to ranged attack
+            // later though, so don't return yet.
+            piece.moved = true;
+            piece.attacked = true;
         }
         else {
             console.debug(`${piece.fullName} is not engaged`);
