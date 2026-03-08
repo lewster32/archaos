@@ -7,16 +7,19 @@
         "serve": "vite preview",
         "deploy": "node ./.deploy/deploy.js",
         "manifest": "node ./.deploy/manifest.js",
-        "release": "npm run manifest && npm run build && npm run deploy"
+        "release": "npm run manifest && npm run build && npm run deploy",
+        "test": "vitest"
     },
     "keywords": [],
     "author": "Lewis 'SEPTiMUS' Lane",
     "license": "ISC",
     "devDependencies": {
         "@vitejs/plugin-vue": "^6.0.3",
+        "jsdom": "^28.1.0",
         "sass": "^1.97.2",
         "typescript": "^5.9",
         "vite": "npm:rolldown-vite@latest",
+        "vitest": "^4.0.18",
         "vue-tsc": "^3.2.2"
     },
     "dependencies": {

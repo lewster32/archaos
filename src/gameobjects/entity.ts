@@ -26,6 +26,12 @@ export class Entity extends Model {
      */
     constructor(board: Board, id: number, x: number, y: number) {
         super(id);
+        if (!board) {
+            throw new Error("Board cannot be null or undefined.");
+        }
+        if (!Number.isInteger(x) || !Number.isInteger(y)) {
+            throw new TypeError("Coordinates must be integers.");
+        }
         this._position = new Geom.Point(x, y);
         this._board = board;
     }
@@ -50,6 +56,9 @@ export class Entity extends Model {
      * @param value The new position.
      */
     set position(value: Geom.Point) {
+        if (!Number.isInteger(value.x) || !Number.isInteger(value.y)) {
+            throw new TypeError("Coordinates must be integers.");
+        }
         this._position.setTo(value.x, value.y);
     }
 }
