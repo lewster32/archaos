@@ -266,6 +266,10 @@ const cancel: () => void = () => {
  */
 const endTurn: () => void = () => {
     eventEmitter.value?.emit(EventType.EndTurn);
+    // If the spellbook is open, close it
+    if (spellbookOpen.value) {
+        eventEmitter.value?.emit(EventType.SpellbookClose);
+    }
 };
 
 /**

@@ -211,7 +211,7 @@ export class Piece extends Entity {
             return;
         }
         this._highlighted = false;
-        this._ownerHighlightTween.pause().seek(0);
+        this._ownerHighlightTween.stop();
     }
 
     /**
