@@ -565,7 +565,7 @@ export class Wizard extends Piece {
         wizCode = wizCode.toLowerCase().trim();
 
         // Sense check the WizCode format; it should be exactly 10 hex digits.
-        if (!/[0-9a-f]{10}/.test(wizCode)) {
+        if (!/^[0-9a-f]{10}$/.test(wizCode)) {
             throw new Error("Invalid WizCode");
         }
 

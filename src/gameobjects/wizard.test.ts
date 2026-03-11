@@ -100,6 +100,14 @@ describe('Wizard.parseWizCode', () => {
     });
 
     describe('valid parsing', () => {
+        it('throws when given a WizCode that is too long', () => {
+            expect(() => Wizard.parseWizCode('0f1a2b3c4d00')).toThrow();
+        });
+
+        it('throws when given a WizCode that is too short', () => {
+            expect(() => Wizard.parseWizCode('0f1a2b3c')).toThrow();
+        });
+
         it('parses a valid lowercase WizCode', () => {
             const result = Wizard.parseWizCode('010203040f');
             expect(result.code).toBe('010203040f');
@@ -172,17 +180,6 @@ describe('Wizard.parseWizCode', () => {
             expect(result.sec).toBe(3);
             expect(result.skin).toBe(4);
             expect(result.hat).toBe(15);
-        });
-    });
-
-    describe('known regex quirk', () => {
-        // The current regex /[0-9a-f]{10}/ is unanchored, so strings that
-        // *contain* 10 consecutive hex chars pass validation — even if they
-        // are longer. Field parsing then slices from the start of the trimmed
-        // string, so extra trailing characters are silently ignored.
-        it('accepts strings longer than 10 hex chars (unanchored regex)', () => {
-            // 12 hex chars — should NOT throw with the current implementation
-            expect(() => Wizard.parseWizCode('0f1a2b3c4d00')).not.toThrow();
         });
     });
 });

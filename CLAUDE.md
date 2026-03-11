@@ -1,15 +1,10 @@
 # Archaos
 
-A modern remake of Chaos: Battle of the Wizards, an original Sinclair Spectrum
-game from 1985 by Julian Gollop. This version uses web technology such as Vite,
-Phaser and Vue and runs in a browser. It includes modern amenities such as a
-mouse-driven interface, improved graphics (most notably an isometric perspective
-instead of the original's top-down view) and quality-of-life improvements to
-make the game more accessible to new players.
+A modern remake of Chaos: Battle of the Wizards, an original Sinclair Spectrum game from 1985 by Julian Gollop. This version uses web technology such as Vite, Phaser and Vue and runs in a browser. It includes modern amenities such as a mouse-driven interface, improved graphics (most notably an isometric perspective instead of the original's top-down view) and quality-of-life improvements to make the game more accessible to new players.
 
 ## Tech Stack
 
-- **Phaser 3.55** — game engine (WebGL/Canvas 2D rendering)
+- **Phaser 3.55** — game engine (WebGL/Canvas 2D rendering) - not yet migrated to 3.6 due to emitter incompatibilities
 - **Vue 3** — reactive UI components overlaid on the canvas
 - **TypeScript 5** — language; strict mode is off but `noImplicitReturns` is on
 - **Vite (rolldown-vite)** — build tool; Phaser and Vue are split into separate manual chunks
@@ -31,6 +26,7 @@ src/
     spells/         Spell hierarchy: Spell → AttackSpell / SummonSpell; SpellUtils helpers
 assets/
   data/             JSON configs for units and spells; enhanced/ subdir loaded via Vite glob
+    enhanced/       New (i.e. not present in the original game) spells and units
   spritesheets/     PNG atlases + JSON metadata
   sounds/           Audio sprite (faithful 48K Spectrum beeper sounds)
   plugins/          Rex Phaser plugins (colour replacement pipeline, Perlin noise)
@@ -38,7 +34,7 @@ assets/
 
 ## Architecture
 
-### Class Hierarchy
+### Model Class Hierarchy
 
 ```
 Model               — base class; validates unique IDs
@@ -58,6 +54,7 @@ Model               — base class; validates unique IDs
 | `Board` | Central game state — grid, pieces, players, turn order |
 | `GameScene` | Phaser Scene; loads assets and bootstraps `Board` |
 | `Rules` | Singleton service — validates and executes all game actions |
+| `Spell` | Spell handling and casting logic |
 | `Logger` | Singleton service — emits structured events consumed by Vue components |
 | `ComputerWizard` | AI controller implementing the `RemotePlayer` interface |
 | `Cursor` | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface |
