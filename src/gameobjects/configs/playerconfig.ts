@@ -4,4 +4,5 @@ export interface PlayerConfig {
     name?: string;
     type: GameSetupPlayerType;
     difficulty?: number;
+    wizcode?: string;
 }

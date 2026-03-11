@@ -105,6 +105,13 @@ export class Wizard extends Piece {
     }
 
     /**
+     * Get the WizCode string for this wizard, which defines their appearance.
+     */
+    get wizCode(): string {
+        return this._wizCode.code;
+    }
+
+    /**
      * Set the direction of this wizard. Some extra logic is needed to flip
      * effect sprites as well.
      * 
@@ -582,19 +589,19 @@ export class Wizard extends Piece {
      */
     public static randomWizCode(): string {
         return [
-            PMath.RND.integerInRange(0, wizcodes.max.wiz)
+            Math.floor(Math.random() * (wizcodes.max.wiz + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            PMath.RND.integerInRange(0, wizcodes.max.pri)
+            Math.floor(Math.random() * (wizcodes.max.pri + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            PMath.RND.integerInRange(0, wizcodes.max.sec)
+            Math.floor(Math.random() * (wizcodes.max.sec + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            PMath.RND.integerInRange(0, wizcodes.max.skin)
+            Math.floor(Math.random() * (wizcodes.max.skin + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            PMath.RND.integerInRange(0, wizcodes.max.hat)
+            Math.floor(Math.random() * (wizcodes.max.hat + 1))
                 .toString(16)
                 .padStart(2, "0"),
         ].join("").toLowerCase();

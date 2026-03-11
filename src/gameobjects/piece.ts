@@ -148,10 +148,7 @@ export class Piece extends Entity {
         } else if (directionOffset < 0) {
             this._direction = UnitDirection.Right;
         } else {
-            this._direction = PMath.RND.pick([
-                UnitDirection.Left,
-                UnitDirection.Right,
-            ]);
+            this._direction = Math.random() < 0.5 ? UnitDirection.Left : UnitDirection.Right;
         }
 
         this._dead = false;
