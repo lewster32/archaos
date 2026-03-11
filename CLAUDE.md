@@ -1,6 +1,22 @@
 # Archaos
 
-A modern remake of Chaos: Battle of the Wizards, an original Sinclair Spectrum game from 1985 by Julian Gollop. This version uses web technology such as Vite, Phaser and Vue and runs in a browser. It includes modern amenities such as a mouse-driven interface, improved graphics (most notably an isometric perspective instead of the original's top-down view) and quality-of-life improvements to make the game more accessible to new players.
+A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/Chaos:_The_Battle_of_Wizards), an original Sinclair Spectrum game from 1985 by Julian Gollop. This version uses web technology such as Vite, Phaser and Vue and runs in a browser. It includes modern amenities such as a mouse-driven interface, improved graphics (most notably an isometric perspective instead of the original's top-down view) and quality-of-life improvements to make the game more accessible to new players.
+
+**Live build:** https://www.archaos.co.uk/2021/
+
+## Game Features
+
+- Isometric perspective with pixel art based on the original graphics
+- Crunchy beeper sounds faithfully ported from the 48K Spectrum
+- Up to 8 local players with computer-controlled opponents
+- All original spells and units, plus new content in `assets/data/enhanced/`
+- Quality-of-life: mouse-driven UI, inline help, safeguards (e.g. warns if no valid targets in range)
+
+### Not yet implemented
+
+- Online multiplayer
+- Standalone (non-browser) client
+- New units/spells/scenarios (see the [original design document](https://www.rotates.org/old/chaos/) for where this may go)
 
 ## Tech Stack
 
@@ -124,13 +140,18 @@ Remaining pattern to follow for further coverage: **inject** Phaser-dependent de
 
 ## Build & Deploy
 
+**Requirements:** Node.js 24+, a desktop browser (mobile is partially supported)
+
 ```bash
+npm install        # install dependencies
 npm start          # dev server (Vite HMR)
 npm run build      # type-check (vue-tsc) then Vite build → dist/
-npm run deploy     # custom deploy script
+npm run deploy     # references a private deployment script — will not work from a clone
 ```
 
 Vite uses a relative base path (`./`) for deployment flexibility. Chunk size warning threshold is 1500 KB.
+
+> Note: `deploy`, `manifest` and `release` scripts reference a private deployment script not included in the repo.
 
 ## Linting
 
