@@ -3,7 +3,7 @@
         "target": "ESNext",
         "module": "ESNext",
         "lib": ["ESNext", "DOM", "scripthost"],
-        "moduleResolution": "Node",
+        "moduleResolution": "Bundler",
         "jsx": "preserve",
         "strict": false,
         "sourceMap": true,
