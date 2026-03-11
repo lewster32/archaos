@@ -24,7 +24,7 @@
         "vue-tsc": "^3.2.2"
     },
     "dependencies": {
-        "phaser": "3.55",
+        "phaser": "^3.60.0",
         "typescript-fsm": "^1.6.0",
         "vue": "^3.5.26"
     }

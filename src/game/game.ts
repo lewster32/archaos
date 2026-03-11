@@ -16,7 +16,7 @@ export const launch = (containerId: string) => {
         physics: {
             default: "arcade",
             arcade: {
-                gravity: { y: 0 },
+                gravity: { y: 0, x: 0 },
                 debug: false,
             },
         },

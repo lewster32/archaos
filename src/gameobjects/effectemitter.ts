@@ -1,6 +1,6 @@
 import { Piece } from "./piece";
 
-import { GameObjects, Animations, Math as PMath, Geom, Curves, BlendModes, Display } from "phaser";
+import { Scene, GameObjects, Math as PMath, Geom, Curves, BlendModes, Display } from "phaser";
 
 /**
  * Essentially a big hardcoded class full of fireworks and sparkles driven by
@@ -9,16 +9,13 @@ import { GameObjects, Animations, Math as PMath, Geom, Curves, BlendModes, Displ
  */
 export class EffectEmitter extends GameObjects.Particles
     .ParticleEmitter {
-    private readonly _anim: Animations.Animation;
     private readonly _startPosition: PMath.Vector2 | Geom.Point;
     private readonly _endPosition: PMath.Vector2 | Geom.Point;
     private readonly _target: Piece | null;
     private readonly _type: EffectType;
-    get anim() {
-        return this._anim;
-    }
+
     constructor(
-        manager: GameObjects.Particles.ParticleEmitterManager,
+        scene: Scene,
         type: EffectType,
         startPosition: PMath.Vector2 | Geom.Point,
         endPosition: PMath.Vector2 | Geom.Point | null,
@@ -26,11 +23,13 @@ export class EffectEmitter extends GameObjects.Particles
         resolve: Function
     ) {
         super(
-            manager,
+            scene,
+            0,
+            0,
+            'effects',
             EffectEmitter.getConfig(type, startPosition, endPosition, target)
         );
         this._type = type;
-        this._anim = this.getAnim();
 
         this._startPosition = startPosition;
         this._endPosition = endPosition;
@@ -55,27 +54,25 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -5, max: 5 },
                     y: { min: -5, max: 5 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     gravityY: 60,
                     speedX: { min: -20, max: 20 },
                     lifespan: 500,
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 30 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.WizardCastFail:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     speedX: { min: -20, max: 20 },
                     speedY: { min: -10, max: -50 },
                     lifespan: 300,
                     tint: [0x7744ff, 0x333388, 0x6666cc],
                     blendMode: BlendModes.ADD,
                     alpha: { start: 1, end: 0 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.WizardCastBeam:
                 path = new Curves.Path(
@@ -85,7 +82,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -2, max: 2 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     gravityY: 60,
                     speedX: { min: -10, max: 10 },
                     lifespan: 400,
@@ -93,7 +90,6 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.TurmoilBeam:
                 path = new Curves.Path(
@@ -103,7 +99,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -2, max: 2 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     gravityY: -100,
                     speedX: { min: -20, max: 20 },
                     lifespan: 800,
@@ -111,7 +107,6 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0x00ffff, 0x00ff00, 0x0099ff, 0x00ff99],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 10 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.DragonFireBeam:
                 path = new Curves.Path(
@@ -121,7 +116,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -5, max: 2 },
-                    frame: "dragonfire1",
+                    anim: { anims: 'dragonfire', startFrame: true },
                     gravityY: -60,
                     speedX: { min: -10, max: 10 },
                     scale: { start: 0.5, end: 1 },
@@ -129,20 +124,18 @@ export class EffectEmitter extends GameObjects.Particles
                     blendMode: BlendModes.ADD,
                     tint: [0xffffff, 0xff00ff, 0xff0088],
                     emitZone: { type: "edge", source: path, quantity: 20 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.DragonFireHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "dragonfire1",
+                    anim: { anims: 'dragonfire', startFrame: true },
                     speedX: { min: -20, max: 20 },
                     speedY: { min: -10, max: -50 },
                     gravityY: -60,
                     lifespan: 300,
                     tint: [0xffffff, 0xff00ff, 0xff0088],
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.BlackDragonFireBeam:
                 path = new Curves.Path(
@@ -152,7 +145,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -5, max: 2 },
-                    frame: "sparkle1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     gravityY: -60,
                     speedX: { min: -10, max: 10 },
                     scale: { start: 0.5, end: 1 },
@@ -160,20 +153,18 @@ export class EffectEmitter extends GameObjects.Particles
                     blendMode: BlendModes.ADD,
                     tint: [0x0000ff, 0x5500ff],
                     emitZone: { type: "edge", source: path, quantity: 20 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.BlackDragonFireHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle2",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     speedX: { min: -20, max: 20 },
                     speedY: { min: -10, max: -50 },
                     gravityY: -60,
                     lifespan: 300,
                     tint: [0x0000ff, 0x5500ff],
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.MagicBoltBeam:
                 path = new Curves.Path(
@@ -183,27 +174,25 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -5, max: 2 },
-                    frame: "magicbolt1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     quantity: 2,
                     speedX: { min: -10, max: 10 },
                     scale: { start: 1, end: 0 },
                     lifespan: 100,
                     tint: [0xffffff, 0x9955ff],
                     emitZone: { type: "edge", source: path, quantity: 120 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.MagicBoltHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "magicbolt1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     speedX: { min: -80, max: 80 },
                     speedY: { min: -10, max: -150 },
                     scale: { start: 1, end: 0 },
                     gravityY: 160,
                     lifespan: 500,
                     tint: [0xffffff, 0x9955ff],
-                    particleClass: EffectParticle,
                 };
             case EffectType.LightningBeam:
                 path = new Curves.Path(
@@ -216,20 +205,19 @@ export class EffectEmitter extends GameObjects.Particles
                     angle: { min: 0, max: 180 },
                     scale: { min: 0.1, max: 1, start: 1, end: 0 },
                     quantity: 4,
-                    frame: "lightning1",
+                    anim: { anims: 'lightning', startFrame: true },
                     speedY: { min: -50, max: 50 },
                     speedX: { min: -50, max: 50 },
                     lifespan: 300,
                     tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.LightningHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "lightning1",
+                    anim: { anims: 'lightning', startFrame: true },
                     angle: { min: 0, max: 180 },
                     speedX: { min: -120, max: 120 },
                     speedY: { min: -50, max: 50 },
@@ -237,7 +225,6 @@ export class EffectEmitter extends GameObjects.Particles
                     lifespan: 400,
                     tint: [0x0000ff, 0x00ffff, 0x66ffff, 0xffffff],
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.ArrowBeam:
                 path = new Curves.Path(
@@ -281,7 +268,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 2,
                     speedX: { min: -10, max: 10 },
                     speedY: { min: -10, max: -100 },
@@ -289,7 +276,6 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0xff00ff, 0x5500ff, 0x9900ff, 0xff44ff],
                     scale: { start: 1, end: 0 },
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.DisbelieveBeam:
                 path = new Curves.Path(
@@ -299,7 +285,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -4, max: 4 },
                     y: { min: -4, max: 4 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     gravityY: 60,
                     quantity: 2,
                     speedX: { min: -10, max: 10 },
@@ -307,13 +293,12 @@ export class EffectEmitter extends GameObjects.Particles
                     scale: { start: 2, end: 0.5 },
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 20 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.DisbelieveHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 2,
                     speedX: { min: -80, max: 80 },
                     speedY: { min: -10, max: -150 },
@@ -321,13 +306,12 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: 260,
                     lifespan: 500,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.DarkPowerHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 2,
                     speedX: { min: -80, max: 80 },
                     speedY: { min: -10, max: -80 },
@@ -336,13 +320,12 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: 160,
                     lifespan: 500,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.JusticeHit:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 2,
                     speedX: { min: -80, max: 80 },
                     speedY: { min: -10, max: -80 },
@@ -351,13 +334,12 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: 160,
                     lifespan: 500,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.WizardDefeated:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "magicbolt1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     quantity: 2,
                     speed: { min: 10, max: 180 },
                     angle: { start: 0, end: 360, steps: 8 },
@@ -365,7 +347,6 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff],
                     lifespan: 400,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.RaiseDeadBeam:
                 path = new Curves.Path(
@@ -375,7 +356,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -4, max: 4 },
                     y: { min: -4, max: 4 },
-                    frame: "magicbolt1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     gravityY: -100,
                     quantity: 4,
                     speedX: { min: -20, max: 20 },
@@ -384,11 +365,10 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0x66ffff, 0x6666ff],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 40 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.RaiseDeadHit:
                 return {
-                    frame: "magicbolt1",
+                    anim: { anims: 'magicbolt', startFrame: true },
                     quantity: 1,
                     x: { min: startPosition.x - 2, max: startPosition.x + 2 },
                     y: { min: startPosition.y - 2, max: startPosition.y + 7 },
@@ -398,7 +378,6 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: -560,
                     lifespan: 200,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.SubversionBeam:
                 path = new Curves.Path(
@@ -408,7 +387,7 @@ export class EffectEmitter extends GameObjects.Particles
                 return {
                     x: { min: -2, max: 2 },
                     y: { min: -2, max: 2 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     gravityY: 50,
                     quantity: 2,
                     speedX: { min: -20, max: 20 },
@@ -417,11 +396,10 @@ export class EffectEmitter extends GameObjects.Particles
                     tint: [0xff00ff, 0x00ffff],
                     blendMode: BlendModes.ADD,
                     emitZone: { type: "edge", source: path, quantity: 90 },
-                    particleClass: EffectParticle,
                 };
             case EffectType.SubversionHit:
                 return {
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 1,
                     x: { min: startPosition.x - 2, max: startPosition.x + 2 },
                     y: { min: startPosition.y - 2, max: startPosition.y + 7 },
@@ -431,13 +409,12 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: -100,
                     lifespan: 400,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                 };
             case EffectType.GiveSpell:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "sparkle1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 1,
                     speedX: { min: -80, max: 80 },
                     speedY: { min: -10, max: -150 },
@@ -445,45 +422,21 @@ export class EffectEmitter extends GameObjects.Particles
                     gravityY: 260,
                     lifespan: 250,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                     tint: [0x0000ff, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0xffff00, 0xffffff]
                 };
             case EffectType.NoCorpseDeath:
                 return {
                     x: { min: startPosition.x - 7, max: startPosition.x + 7 },
                     y: { min: startPosition.y - 8, max: startPosition.y + 8 },
-                    frame: "dragonfire1",
+                    anim: { anims: 'sparkle', startFrame: true },
                     quantity: 1,
                     speedX: { min: -120, max: 120 },
                     speedY: { min: -80, max: -120 },
                     gravityY: 500,
                     lifespan: 150,
                     blendMode: BlendModes.ADD,
-                    particleClass: EffectParticle,
                     tint: [0x888888, 0x66ffff, 0x6666ff, 0xaaaaaa]
                 }
-        }
-    }
-
-    private getAnim(): Animations.Animation {
-        switch (this._type) {
-            case EffectType.DragonFireBeam:
-            case EffectType.DragonFireHit:
-                return this.manager.scene.anims.get("dragonfire");
-            case EffectType.BlackDragonFireHit:
-            case EffectType.BlackDragonFireBeam:
-                return this.manager.scene.anims.get("magicbolt");
-            case EffectType.MagicBoltBeam:
-            case EffectType.MagicBoltHit:
-            case EffectType.WizardDefeated:
-            case EffectType.RaiseDeadBeam:
-            case EffectType.RaiseDeadHit:
-                return this.manager.scene.anims.get("magicbolt");
-            case EffectType.LightningBeam:
-            case EffectType.LightningHit:
-                return this.manager.scene.anims.get("lightning");
-            default:
-                return this.manager.scene.anims.get("sparkle");
         }
     }
 
@@ -495,7 +448,7 @@ export class EffectEmitter extends GameObjects.Particles
         switch (this._type) {
             case EffectType.ArrowHit:
             case EffectType.AttackHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 4,
                     duration: duration,
@@ -512,7 +465,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.LightningHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 5,
                     duration: duration,
@@ -529,7 +482,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.DragonFireHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 10,
                     duration: duration,
@@ -546,7 +499,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.BlackDragonFireHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 10,
                     duration: duration,
@@ -563,7 +516,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.DarkPowerHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 10,
                     duration: duration,
@@ -580,7 +533,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.JusticeHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 10,
                     duration: duration,
@@ -597,7 +550,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.DisbelieveHit:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 255,
                     duration: duration / 2,
@@ -609,7 +562,7 @@ export class EffectEmitter extends GameObjects.Particles
                         );
                     },
                 });
-                this.manager.scene.tweens.add({
+                this.scene.tweens.add({
                     targets: [target.sprite, target.shadow],
                     duration: duration,
                     delay: duration / 2,
@@ -617,7 +570,7 @@ export class EffectEmitter extends GameObjects.Particles
                 });
                 break;
             case EffectType.WizardDefeated:
-                this.manager.scene.tweens.addCounter({
+                this.scene.tweens.addCounter({
                     from: 0,
                     to: 64,
                     duration: duration,
@@ -631,7 +584,7 @@ export class EffectEmitter extends GameObjects.Particles
                         }
                     },
                 });
-                this.manager.scene.tweens.add({
+                this.scene.tweens.add({
                     targets: [target.sprite, target.shadow],
                     duration: duration / 2,
                     delay: duration / 2,
@@ -685,10 +638,10 @@ export class EffectEmitter extends GameObjects.Particles
         switch (this._type) {
             case EffectType.MagicBoltHit:
             case EffectType.ArrowHit:
-                this.manager.scene.cameras.main.shake(150, 0.005, true);
+                this.scene.cameras.main.shake(150, 0.005, true);
                 break;
             case EffectType.LightningHit:
-                this.manager.scene.cameras.main.shake(300, 0.0125, true);
+                this.scene.cameras.main.shake(300, 0.0125, true);
                 break;
         }
 
@@ -696,7 +649,7 @@ export class EffectEmitter extends GameObjects.Particles
             this.playTargetEffect(duration);
         }
 
-        this.manager.scene.tweens.addCounter({
+        this.scene.tweens.addCounter({
             from: 0,
             to: 1,
             duration: duration,
@@ -704,46 +657,10 @@ export class EffectEmitter extends GameObjects.Particles
                 this.stop();
                 resolve();
                 setTimeout(() => {
-                    this.manager.removeEmitter(this);
+                    this.destroy();
                 }, duration * 2);
             },
         });
-    }
-}
-
-class EffectParticle extends GameObjects.Particles.Particle {
-    private _frameTime: number;
-    private _frameIndex: number;
-
-    private readonly _anim: Animations.Animation;
-
-    constructor(emitter: EffectEmitter) {
-        super(emitter);
-        this._anim = emitter.anim;
-        this._frameTime = 0;
-        this._frameIndex = PMath.RND.integerInRange(
-            0,
-            this._anim.frames.length - 1
-        );
-    }
-
-    update(delta: number, step: number, processors: any): boolean {
-        const result: boolean = super.update(delta, step, processors);
-
-        this._frameTime += delta;
-        if (this._frameTime >= this._anim.msPerFrame) {
-            this._frameIndex++;
-
-            if (this._frameIndex > this._anim.frames.length - 1) {
-                this._frameIndex = 0;
-            }
-
-            this.frame = this._anim.frames[this._frameIndex].frame;
-
-            this._frameTime -= this._anim.msPerFrame;
-        }
-
-        return result;
     }
 }
 

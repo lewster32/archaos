@@ -94,10 +94,6 @@ export class Board extends Model implements Box {
      */
     private readonly _layers: Map<BoardLayer, GameObjects.Layer>;
 
-    /**
-     * Particle effects manager for board effects.
-     */
-    private _particles: GameObjects.Particles.ParticleEmitterManager;
 
     /**
      * Default board width in tiles.
@@ -2027,27 +2023,23 @@ export class Board extends Model implements Box {
         target?: Piece
     ): Promise<void> {
         return new Promise((resolve) => {
-            this._particles.addEmitter(
-                new EffectEmitter(
-                    this._particles,
-                    type,
-                    startPosition,
-                    endPosition,
-                    target,
-                    resolve
-                )
+            const emitter = new EffectEmitter(
+                this.scene,
+                type,
+                startPosition,
+                endPosition,
+                target,
+                resolve
             );
+            this.scene.add.existing(emitter);
         });
     }
 
     /**
-     * Set up the effects layer. This includes pre-Phaser 3.6 particle system
-     * shenanigans which will need to be refactored eventually.
+     * Set up the effects layer.
      */
     createEffects() {
         const effectsLayer: GameObjects.Layer = this.scene.add.layer();
-
-        this._particles = this.scene.add.particles("effects");
 
         this._layers.set(BoardLayer.Effects, effectsLayer);
     }
@@ -2377,7 +2369,6 @@ export class Board extends Model implements Box {
         this._layers?.forEach((layer: GameObjects.Layer) => {
             layer.destroy();
         });
-        this._particles?.destroy();
     }
 
     /* #endregion */

@@ -680,7 +680,7 @@ export class Spell extends Model {
                     const randomEmptySpace: Geom.Point = this._board.getRandomEmptySpace();
                     if (randomEmptySpace) {
                         this._board.sound.play("spelleffect");
-                        const oldPiecePos: PMath.Vector2 = piece.sprite.getCenter().clone();
+                        const oldPiecePos: PMath.Vector2 = new PMath.Vector2(piece.sprite.getCenter().x, piece.sprite.getCenter().y);
                         const newPiecePos: Geom.Point = this._board.getIsoPosition(randomEmptySpace)
                         piece.moveTo(randomEmptySpace, 500);
                         await this._board.playEffect(
