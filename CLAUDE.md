@@ -110,11 +110,10 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 ### What's tested (and at 100% coverage)
 
-- `Model`, `Entity`, `StateManager`, `spells/SpellUtils`
+- `Model`, `Entity`, `StateManager`, `Player`, `spells/SpellUtils`
 
 ### What's partially tested
 
-- `Player` (~70%) — Phaser-dependent methods (`defeat`, `destroyCreations`, board getter) are not reached
 - `Wizard` (~6%) — most instance methods require a live Phaser scene
 - `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
 
