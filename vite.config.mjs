@@ -9,14 +9,14 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         chunkSizeWarningLimit: 1500,
-        rollupOptions: {
+        rolldownOptions: {
             output: {
                 entryFileNames: `assets/[name].js`,
                 chunkFileNames: `assets/[name].js`,
                 assetFileNames: `assets/[name].[ext]`,
-                manualChunks: {
-                    phaser: ["phaser"],
-                    vue: ["vue"]
+                manualChunks: (id) => {
+                    if (id.includes("node_modules/phaser")) return "phaser";
+                    if (id.includes("node_modules/vue")) return "vue";
                 }
             }
         }
