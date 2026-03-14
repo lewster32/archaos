@@ -1,6 +1,6 @@
 {
     "name": "archaos-vite",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "scripts": {
         "start": "vite",
         "build": "vue-tsc --noEmit && vite build",
@@ -14,18 +14,19 @@
     "author": "Lewis 'SEPTiMUS' Lane",
     "license": "ISC",
     "devDependencies": {
-        "@vitejs/plugin-vue": "^6.0.3",
-        "@vitest/coverage-v8": "^4.0.18",
+        "@vitejs/plugin-vue": "^6.0.5",
+        "@vitest/coverage-v8": "^4.1.0",
         "jsdom": "^28.1.0",
-        "sass": "^1.97.2",
+        "phaser3spectorjs": "^0.0.8",
+        "sass": "^1.98.0",
         "typescript": "^5.9",
-        "vite": "npm:rolldown-vite@latest",
-        "vitest": "^4.0.18",
-        "vue-tsc": "^3.2.2"
+        "vite": "^8.0.0",
+        "vitest": "^4.1.0",
+        "vue-tsc": "^3.2.5"
     },
     "dependencies": {
-        "phaser": "^3.60.0",
+        "phaser": "^3.90.0",
         "typescript-fsm": "^1.6.0",
-        "vue": "^3.5.26"
+        "vue": "^3.5.30"
     }
 }

@@ -132,6 +132,13 @@ export class Wizard extends Piece {
     }
 
     /**
+     * Get the direction this wizard is facing.
+     */
+    get direction(): UnitDirection {
+        return super.direction;
+    }
+
+    /**
      * Update the position of this wizard's sprite on screen to match its
      * logical position on the board.
      * 
