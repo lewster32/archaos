@@ -59,7 +59,7 @@ import type { CSSProperties } from 'vue'
 import { ref, computed } from "vue";
 import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
 import { Piece } from "../gameobjects/piece";
-import { hexColour } from "../utils";
+import { cssColour } from "../utils";
 
 const props = defineProps<{
     pieces: Piece[];
@@ -116,7 +116,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
     return {
         "--piece-x": piece.position.x + "px",
         "--piece-y": piece.position.y + "px",
-        "--piece-color": `color-mix(in oklab, ${hexColour(piece.owner?.colour ?? 0x444444)}, white 10%)`,
+        "--piece-color": `color-mix(in oklab, ${cssColour(piece.owner?.colour ?? 0x444444)}, white 10%)`,
     };
 };
 </script>

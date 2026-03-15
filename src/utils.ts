@@ -6,10 +6,8 @@ import { Display } from "phaser";
  * @param colourNum  The numeric colour.
  * @returns The hex colour string.
  */
-export const hexColour = (colourNum: number) => {
-    if (colourNum === undefined || colourNum === null) {
-        return "#ffffff";
-    }
+export const cssColour = (colourNum: number = 0xffffff) => {
+    colourNum ??= 0xffffff; // Default to white if no colour is provided
     const colour: Display.Color =
         Display.Color.ValueToColor(colourNum);
     return `${colour.rgba}`;

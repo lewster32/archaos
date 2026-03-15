@@ -1,5 +1,5 @@
 <template>
-    <div class="unitinfo" :style="unit?.owner?.colour ? `--tint-colour: ${hexColour(unit?.owner.colour)}` : ''">
+    <div class="unitinfo" :style="unit?.owner?.colour ? `--tint-colour: ${cssColour(unit?.owner.colour)}` : ''">
         <button class="unitinfo__close button button--small" @click="close()">
             &times;
         </button>
@@ -22,7 +22,7 @@ import { computed } from "vue";
 import type { Ref } from "vue";
 import type { Piece } from '../gameobjects/piece';
 import UnitStats from "./UnitStats.vue";
-import { hexColour } from "../utils";
+import { cssColour } from "../utils";
 import type { Player } from "../gameobjects/player";
 
 const props = defineProps<{
