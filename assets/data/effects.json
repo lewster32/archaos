@@ -1,0 +1,399 @@
+{
+  "WizardCasting": {
+    "duration": 250,
+    "emitZone": { "shape": "circle", "radius": 10, "quantity": 30 },
+    "particle": {
+      "x": { "min": -5, "max": 5 },
+      "y": { "min": -5, "max": 5 },
+      "anim": "sparkle",
+      "gravityY": 60,
+      "speedX": { "min": -20, "max": 20 },
+      "lifespan": 500,
+      "tint": ["ff00ff", "5500ff", "9900ff", "ff44ff"],
+      "blendMode": "ADD"
+    }
+  },
+  "WizardCastFail": {
+    "duration": 500,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "speedX": { "min": -20, "max": 20 },
+      "speedY": { "min": -10, "max": -50 },
+      "lifespan": 300,
+      "tint": ["7744ff", "333388", "6666cc"],
+      "blendMode": "ADD",
+      "alpha": { "start": 1, "end": 0 }
+    }
+  },
+  "WizardCastBeam": {
+    "duration": 300,
+    "emitZone": { "shape": "line", "quantity": 40 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -2, "max": 2 },
+      "anim": "sparkle",
+      "gravityY": 60,
+      "speedX": { "min": -10, "max": 10 },
+      "lifespan": 400,
+      "scale": { "start": 1, "end": 0 },
+      "tint": ["ff00ff", "5500ff", "9900ff", "ff44ff"],
+      "blendMode": "ADD"
+    }
+  },
+  "TurmoilBeam": {
+    "duration": 300,
+    "emitZone": { "shape": "line", "quantity": 10 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -2, "max": 2 },
+      "anim": "sparkle",
+      "gravityY": -100,
+      "speedX": { "min": -20, "max": 20 },
+      "lifespan": 800,
+      "scale": { "start": 2, "end": 0 },
+      "tint": ["00ffff", "00ff00", "0099ff", "00ff99"],
+      "blendMode": "ADD"
+    }
+  },
+  "DragonFireBeam": {
+    "duration": 400,
+    "emitZone": { "shape": "line", "quantity": 20 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -5, "max": 2 },
+      "anim": "dragonfire",
+      "gravityY": -60,
+      "speedX": { "min": -10, "max": 10 },
+      "scale": { "start": 0.5, "end": 1 },
+      "lifespan": 400,
+      "blendMode": "ADD",
+      "tint": ["ffffff", "ff00ff", "ff0088"]
+    }
+  },
+  "DragonFireHit": {
+    "duration": 1000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "dragonfire",
+      "speedX": { "min": -20, "max": 20 },
+      "speedY": { "min": -10, "max": -50 },
+      "gravityY": -60,
+      "lifespan": 300,
+      "tint": ["ffffff", "ff00ff", "ff0088"],
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "cycleTint", "to": 10, "colors": ["ff0000", "ff7700", "000000"] }
+  },
+  "BlackDragonFireBeam": {
+    "duration": 400,
+    "emitZone": { "shape": "line", "quantity": 20 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -5, "max": 2 },
+      "anim": "magicbolt",
+      "gravityY": -60,
+      "speedX": { "min": -10, "max": 10 },
+      "scale": { "start": 0.5, "end": 1 },
+      "lifespan": 400,
+      "blendMode": "ADD",
+      "tint": ["0000ff", "5500ff"]
+    }
+  },
+  "BlackDragonFireHit": {
+    "duration": 1000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "magicbolt",
+      "speedX": { "min": -20, "max": 20 },
+      "speedY": { "min": -10, "max": -50 },
+      "gravityY": -60,
+      "lifespan": 300,
+      "tint": ["0000ff", "5500ff"],
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "cycleTint", "to": 10, "colors": ["0000ff", "5500ff"] }
+  },
+  "MagicBoltBeam": {
+    "duration": 500,
+    "emitZone": { "shape": "line", "quantity": 120 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -5, "max": 2 },
+      "anim": "magicbolt",
+      "quantity": 2,
+      "speedX": { "min": -10, "max": 10 },
+      "scale": { "start": 1, "end": 0 },
+      "lifespan": 100,
+      "tint": ["ffffff", "9955ff"]
+    }
+  },
+  "MagicBoltHit": {
+    "duration": 250,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "magicbolt",
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -10, "max": -150 },
+      "scale": { "start": 1, "end": 0 },
+      "gravityY": 160,
+      "lifespan": 500,
+      "tint": ["ffffff", "9955ff"]
+    },
+    "cameraShake": { "duration": 150, "intensity": 0.005 }
+  },
+  "LightningBeam": {
+    "duration": 150,
+    "emitZone": { "shape": "line", "quantity": 40 },
+    "particle": {
+      "x": { "min": -5, "max": 5 },
+      "y": { "min": -5, "max": 5 },
+      "angle": { "min": 0, "max": 180 },
+      "scale": { "min": 0.1, "max": 1, "start": 1, "end": 0 },
+      "quantity": 4,
+      "anim": "lightning",
+      "speedY": { "min": -50, "max": 50 },
+      "speedX": { "min": -50, "max": 50 },
+      "lifespan": 300,
+      "tint": ["0000ff", "00ffff", "66ffff", "ffffff"],
+      "blendMode": "ADD"
+    }
+  },
+  "LightningHit": {
+    "duration": 250,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "lightning",
+      "angle": { "min": 0, "max": 180 },
+      "speedX": { "min": -120, "max": 120 },
+      "speedY": { "min": -50, "max": 50 },
+      "scale": { "start": 1, "end": 0 },
+      "lifespan": 400,
+      "tint": ["0000ff", "00ffff", "66ffff", "ffffff"],
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "cycleTint", "to": 5, "colors": ["ffffff", "0000ff"] },
+    "cameraShake": { "duration": 300, "intensity": 0.0125 }
+  },
+  "ArrowBeam": {
+    "duration": 150,
+    "emitZone": { "shape": "line", "quantity": 80 },
+    "particle": {
+      "frame": "sparkle1",
+      "quantity": 5,
+      "lifespan": 50,
+      "blendMode": "ADD"
+    }
+  },
+  "ArrowHit": {
+    "duration": 150,
+    "origin": { "x": [-2, 2], "y": [-2, 2] },
+    "particle": {
+      "frame": "sparkle2",
+      "frequency": 20,
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -180, "max": -80 },
+      "gravityY": 1000,
+      "lifespan": 250,
+      "blendMode": "ADD",
+      "scale": { "start": 1.5, "end": 0 }
+    },
+    "targetEffect": { "type": "flash", "to": 4 },
+    "cameraShake": { "duration": 150, "intensity": 0.005 }
+  },
+  "AttackHit": {
+    "duration": 250,
+    "origin": { "x": [-2, 2], "y": [-2, 8] },
+    "particle": {
+      "frame": "sparkle2",
+      "frequency": 15,
+      "speedX": { "min": -120, "max": 120 },
+      "speedY": { "min": -80, "max": -180 },
+      "gravityY": 500,
+      "lifespan": 250,
+      "blendMode": "ADD",
+      "scale": { "start": 2, "end": 0 }
+    },
+    "targetEffect": { "type": "flash", "to": 4 }
+  },
+  "SummonPiece": {
+    "duration": 250,
+    "origin": { "x": [-7, 7], "y": [0, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 2,
+      "speedX": { "min": -10, "max": 10 },
+      "speedY": { "min": -10, "max": -100 },
+      "lifespan": 400,
+      "tint": ["ff00ff", "5500ff", "9900ff", "ff44ff"],
+      "scale": { "start": 1, "end": 0 },
+      "blendMode": "ADD"
+    }
+  },
+  "DisbelieveBeam": {
+    "duration": 300,
+    "emitZone": { "shape": "line", "quantity": 20 },
+    "particle": {
+      "x": { "min": -4, "max": 4 },
+      "y": { "min": -4, "max": 4 },
+      "anim": "sparkle",
+      "gravityY": 60,
+      "quantity": 2,
+      "speedX": { "min": -10, "max": 10 },
+      "lifespan": 400,
+      "scale": { "start": 2, "end": 0.5 },
+      "blendMode": "ADD"
+    }
+  },
+  "DisbelieveHit": {
+    "duration": 500,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 2,
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -10, "max": -150 },
+      "scale": { "start": 2, "end": 0 },
+      "gravityY": 260,
+      "lifespan": 500,
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "fadeToWhite" }
+  },
+  "DarkPowerHit": {
+    "duration": 2000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 2,
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -10, "max": -80 },
+      "scale": { "start": 2, "end": 0 },
+      "tint": ["ff0000", "0000ff", "ff00ff"],
+      "gravityY": 160,
+      "lifespan": 500,
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "cycleTint", "to": 10, "colors": ["ff0000", "0000ff", "ff00ff"] }
+  },
+  "JusticeHit": {
+    "duration": 2000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 2,
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -10, "max": -80 },
+      "scale": { "start": 2, "end": 0 },
+      "tint": ["0000ff", "00ffff", "0077ff"],
+      "gravityY": 160,
+      "lifespan": 500,
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "cycleTint", "to": 10, "colors": ["0000ff", "00ffff", "0077ff"] }
+  },
+  "WizardDefeated": {
+    "duration": 1000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "magicbolt",
+      "quantity": 2,
+      "speed": { "min": 10, "max": 180 },
+      "angle": { "start": 0, "end": 360, "steps": 8 },
+      "scale": { "start": 3, "end": 0 },
+      "tint": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"],
+      "lifespan": 400,
+      "blendMode": "ADD"
+    },
+    "targetEffect": { "type": "explode", "colors": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"] }
+  },
+  "RaiseDeadBeam": {
+    "duration": 300,
+    "emitZone": { "shape": "line", "quantity": 40 },
+    "particle": {
+      "x": { "min": -4, "max": 4 },
+      "y": { "min": -4, "max": 4 },
+      "anim": "magicbolt",
+      "gravityY": -100,
+      "quantity": 4,
+      "speedX": { "min": -20, "max": 20 },
+      "lifespan": 400,
+      "scale": { "start": 0, "end": 1 },
+      "tint": ["66ffff", "6666ff"],
+      "blendMode": "ADD"
+    }
+  },
+  "RaiseDeadHit": {
+    "duration": 1000,
+    "origin": { "x": [-2, 2], "y": [-2, 7] },
+    "particle": {
+      "anim": "magicbolt",
+      "quantity": 1,
+      "speed": { "min": 10, "max": 50 },
+      "scale": { "start": 0, "end": 2 },
+      "tint": ["66ffff", "6666ff"],
+      "gravityY": -560,
+      "lifespan": 200,
+      "blendMode": "ADD"
+    }
+  },
+  "SubversionBeam": {
+    "duration": 500,
+    "emitZone": { "shape": "line", "quantity": 90 },
+    "particle": {
+      "x": { "min": -2, "max": 2 },
+      "y": { "min": -2, "max": 2 },
+      "anim": "sparkle",
+      "gravityY": 50,
+      "quantity": 2,
+      "speedX": { "min": -20, "max": 20 },
+      "lifespan": 600,
+      "scale": { "start": 2, "end": 0 },
+      "tint": ["ff00ff", "00ffff"],
+      "blendMode": "ADD"
+    }
+  },
+  "SubversionHit": {
+    "duration": 1000,
+    "origin": { "x": [-2, 2], "y": [-2, 7] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 1,
+      "speed": { "min": 10, "max": 50 },
+      "scale": { "start": 4, "end": 0 },
+      "tint": ["ff00ff", "00ffff"],
+      "gravityY": -100,
+      "lifespan": 400,
+      "blendMode": "ADD"
+    }
+  },
+  "GiveSpell": {
+    "duration": 2000,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 1,
+      "speedX": { "min": -80, "max": 80 },
+      "speedY": { "min": -10, "max": -150 },
+      "scale": { "start": 1.5, "end": 0.5 },
+      "gravityY": 260,
+      "lifespan": 250,
+      "blendMode": "ADD",
+      "tint": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"]
+    }
+  },
+  "NoCorpseDeath": {
+    "duration": 400,
+    "origin": { "x": [-7, 7], "y": [-8, 8] },
+    "particle": {
+      "anim": "sparkle",
+      "quantity": 1,
+      "speedX": { "min": -120, "max": 120 },
+      "speedY": { "min": -80, "max": -120 },
+      "gravityY": 500,
+      "lifespan": 150,
+      "blendMode": "ADD",
+      "tint": ["888888", "66ffff", "6666ff", "aaaaaa"]
+    }
+  }
+}
