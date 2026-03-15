@@ -7,7 +7,7 @@
         "serve": "vite preview",
         "deploy": "node ./.deploy/deploy.js",
         "manifest": "node ./.deploy/manifest.js",
-        "release": "npm run manifest && npm run build && npm run deploy",
+        "release": "npm run test -- --run && npm run manifest && npm run build && npm run deploy",
         "test": "vitest"
     },
     "keywords": [],
