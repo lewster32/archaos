@@ -1469,7 +1469,7 @@ export class Board extends Model implements Box {
      * @returns The newly added player.
      */
     addPlayer(config: PlayerConfig): Player {
-        const player: Player = new Player(this, this._idCounter++, config, Player.PLAYER_COLOURS[this._players.size - 1]);
+        const player: Player = new Player(this, this._idCounter++, config, Player.PLAYER_COLOURS[this._players.size]);
         this._players.set(player.id, player);
         return player;
     }
