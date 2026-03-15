@@ -183,6 +183,14 @@ export class Piece extends Entity {
         this.createShadow();
         this.createSprite();
         this.createShaders();
+
+        // Perform initial animation to fade the piece in and pop it in slightly
+        this.board.scene.tweens.add({
+            targets: [this._sprite, this._shadow, ...this._effects.values()],
+            alpha: { from: 0, to: 1 },
+            duration: Piece.DEFAULT_MOVE_DURATION / 2,
+            ease: PMath.Easing.Cubic.Out,
+        });
     }
 
     /**

@@ -292,7 +292,7 @@ export class Board extends Model implements Box {
         this._stateManager = new StateManager(this, (newState: States) => {
             console.log(`Board: State changed to: ${States[newState]}`);
         });
-        this._logger = Logger.getInstance(this.scene.game.events);
+        this._logger = Logger.getInstance();
 
         this.scene.game.events.on(EventType.EndTurn, async () => {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {

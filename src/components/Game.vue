@@ -148,6 +148,7 @@ import type {
     GameScenarioData,
     SetupPlayer,
 } from "../gameobjects/interfaces/ui";
+import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
 import { Piece } from "../gameobjects/piece";
@@ -423,8 +424,8 @@ onMounted(async () => {
     gameInstance.value = launch(containerId.value);
     eventEmitter.value = gameInstance.value.events;
 
-    // Listen for logs
-    eventEmitter.value.on("log", (log: LogEntry) => {
+    // Listen for logs via Logger's own stable emitter (survives HMR game restarts)
+    Logger.getEventEmitter().on("log", (log: LogEntry) => {
         logs.value.push({
             message: log.message,
             id: logs.value.length,
@@ -516,6 +517,7 @@ onMounted(async () => {
 onUnmounted(() => {
     // Clean up event listeners
     eventEmitter.value?.removeAllListeners();
+    Logger.getEventEmitter().removeAllListeners("log");
 
     // Destroy the Phaser game instance, leaving the canvas in place
     gameInstance.value?.destroy(false);

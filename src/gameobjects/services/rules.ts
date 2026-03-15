@@ -31,18 +31,18 @@ export type SpellCastTarget = Geom.Point | Piece | null;
  * player about what they can do at any given time, and then to execute
  * those actions in a consistent manner.
  */
-export class Rules {
-    private static instance: Rules;
+let _instance: Rules | undefined;
 
+export class Rules {
     protected constructor() {
         // Singleton
     }
 
     public static getInstance(): Rules {
-        if (!Rules.instance) {
-            Rules.instance = new Rules();
+        if (!_instance) {
+            _instance = new Rules();
         }
-        return Rules.instance;
+        return _instance;
     }
 
     /**
@@ -579,4 +579,10 @@ export class Rules {
 
         return ActionType.None;
     }
+}
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        _instance = undefined;
+    });
 }

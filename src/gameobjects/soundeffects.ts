@@ -4,20 +4,20 @@ import { Sound, Scene } from "phaser"
  * Class to manage sound effects in the game. Mostly just a wrapper around
  * Phaser's sound system, but some effects need a bit more logic.
  */
+let _instance: SoundEffects | undefined;
+
 export class SoundEffects {
     private readonly _sound: Sound.BaseSound;
-
-    private static _instance: SoundEffects;
 
     protected constructor(scene: Scene) {
         this._sound = scene.sound.addAudioSprite("classicsounds")
     }
 
     public static getInstance(scene: Scene): SoundEffects {
-        if (!SoundEffects._instance) {
-            SoundEffects._instance = new SoundEffects(scene);
+        if (!_instance) {
+            _instance = new SoundEffects(scene);
         }
-        return SoundEffects._instance;
+        return _instance;
     }
 
     /**
@@ -65,7 +65,14 @@ export class SoundEffects {
      */
     public destroy(): void {
         this._sound.destroy();
+        _instance = undefined;
     }
+}
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        _instance?.destroy();
+    });
 }
 
 /**
