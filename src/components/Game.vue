@@ -488,7 +488,7 @@ onMounted(async () => {
     if (scenario) {
         console.log(`Auto-starting scenario: ${scenario}`);
         const scenarioResponse: Response = await fetch(
-            import.meta.resolve(`../../scenarios/${scenario.toLowerCase().trim()}.json`)
+            `${import.meta.env.BASE_URL}scenarios/${scenario.toLowerCase().trim()}.json`
         );
         if (scenarioResponse.ok) {
             const scenarioData: GameScenarioData = await scenarioResponse.json();

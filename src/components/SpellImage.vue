@@ -161,7 +161,7 @@ onMounted(() => {
  * @returns The image URL.
  */
 const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
-    return `/images/spells/${spell.properties.group || "classicspells"}/${spell.spellId}.png`;
+    return `${import.meta.env.BASE_URL}images/spells/${spell.properties.group || "classicspells"}/${spell.spellId}.png`;
 };
 
 </script>

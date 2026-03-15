@@ -207,11 +207,15 @@ export class Piece extends Entity {
         }
         if (state && this.canSelect) {
             this._highlighted = true;
-            this._ownerHighlightTween.play().resume();
+            if (!this._ownerHighlightTween?.isDestroyed) {
+                this._ownerHighlightTween.play().resume();
+            }
             return;
         }
         this._highlighted = false;
-        this._ownerHighlightTween.stop();
+        if (!this._ownerHighlightTween?.isDestroyed) {
+            this._ownerHighlightTween.stop();
+        }
     }
 
     /**
