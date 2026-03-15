@@ -85,7 +85,7 @@ body,
 body {
     --bg-transition-time: 0.15s;
     background: url("../../assets/images/bg.png") 60% 40%;
-    background-color: lch(from var(--bg-colour, #555) 30 c h);
+    background-color: hsl(from var(--bg-colour, #555) h calc(s * 0.5) 30);
     color: var(--fg-colour, #eee);
     margin: 0;
     padding: 0;
