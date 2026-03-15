@@ -86,7 +86,7 @@ export class Rules {
 
             if (selectedSpell && selectedSpell.castTimes > 0) {
                 const spellTarget: SpellCastTarget =
-                    selectedSpell.isValidTarget(board.cursor.position);
+                    selectedSpell.getValidTarget(board.cursor.position);
 
                 return spellTarget ? ActionType.Cast : ActionType.Invalid;
             }
@@ -316,7 +316,7 @@ export class Rules {
                 board.currentPlayer.selectedSpell
             ) {
                 const currentTarget: SpellCastTarget =
-                    board.currentPlayer.selectedSpell.isValidTarget(
+                    board.currentPlayer.selectedSpell.getValidTarget(
                         board.cursor.position,
                         true
                     );

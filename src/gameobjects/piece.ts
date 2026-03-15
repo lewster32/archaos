@@ -1976,4 +1976,15 @@ export class Piece extends Entity {
             group: unit.group || "classicunits",
         };
     }
+
+    /**
+     * Check if the given object is a Piece instance. Used mainly to allow tests
+     * to not have to import the Piece class just to use this type guard.
+     * 
+     * @param obj  The object to check.
+     * @returns True if the object is a Piece, false otherwise.
+     */
+    static isPiece(obj: unknown): obj is Piece {
+        return obj instanceof Piece;
+    }
 }

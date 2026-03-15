@@ -335,9 +335,9 @@ export class Spell extends Model {
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    isValidTarget(target: Geom.Point | Piece, showReason?: boolean): SpellCastTarget {
+    getValidTarget(target: Geom.Point | Piece, showReason?: boolean): SpellCastTarget {
         const targetPoint: Geom.Point = target instanceof Geom.Point ? target : target.position;
-        const targetPiece: Piece = target instanceof Piece ? target : null;
+        const targetPiece: Piece = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
@@ -362,7 +362,7 @@ export class Spell extends Model {
 
         if (this._properties.target === SpellTarget.Self) {
             const wizard: Piece = targetPieces.find((piece: Piece) => piece.type === UnitType.Wizard);
-            if (!wizard) {
+            if (wizard?.owner !== this._owner) {
                 if (showReason) {
                     this._board.logger.log(
                         `${this.name} can only be cast on your own wizard`,
@@ -525,7 +525,7 @@ export class Spell extends Model {
         let castPiece: Piece;
         if (target instanceof Geom.Point) {
             castPoint = Geom.Point.Clone(target);
-        } else if (target instanceof Piece) {
+        } else if (Piece.isPiece(target)) {
             castPiece = target;
             castPoint = Geom.Point.Clone(target.position);
         }
@@ -777,7 +777,7 @@ export class Spell extends Model {
         // Any other range requires checking all pieces on the board for valid
         // targets
         for (let piece of this._board.pieces) {
-            if (this.isValidTarget(piece)) {
+            if (this.getValidTarget(piece)) {
                 return true;
             }
         }

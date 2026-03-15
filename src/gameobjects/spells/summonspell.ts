@@ -83,8 +83,8 @@ export class SummonSpell extends Spell {
         return this.illusion || this._board.rollChance(this.chance)
     }
 
-    isValidTarget(target: Geom.Point | Piece, showReason?: boolean): Geom.Point | null {
-        if (target instanceof Piece) {
+    getValidTarget(target: Geom.Point | Piece, showReason?: boolean): Geom.Point | null {
+        if (Piece.isPiece(target)) {
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} cannot be cast in occupied positions`,
@@ -93,7 +93,7 @@ export class SummonSpell extends Spell {
             }
             return null;
         }
-        const targetPoint: Geom.Point = (target instanceof Piece) ? target.position : target;
+        const targetPoint: Geom.Point = target;
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
                 this._board.logger.log(

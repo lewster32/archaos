@@ -164,7 +164,7 @@ export class ComputerWizard implements RemotePlayer {
         // target that piece
         for (const spell of spells) {
             for (let piece of board.pieces) {
-                if (spell.isValidTarget(piece, false)) {
+                if (spell.getValidTarget(piece, false)) {
                     if (!targets.has(spell)) {
                         targets.set(spell, []);
                     }
@@ -394,7 +394,7 @@ export class ComputerWizard implements RemotePlayer {
                                     xx,
                                     yy
                                 );
-                                if (summonSpell.isValidTarget(pt, false)) {
+                                if (summonSpell.getValidTarget(pt, false)) {
                                     validTiles.push(pt);
                                 }
                             }
@@ -494,7 +494,7 @@ export class ComputerWizard implements RemotePlayer {
                         const potentialTargets: Piece[] = board.pieces
                             .filter((p: Piece) => {
                                 return (
-                                    spell.isValidTarget(p, false)
+                                    spell.getValidTarget(p, false)
                                 );
                             });
 
