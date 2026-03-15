@@ -34,6 +34,11 @@ export interface SpellConfig {
     unitId?: string;
 
     /**
+     * The frame of animation to use for the spell image (if a summon spell)
+     */
+    spellFrame?: number;
+
+    /**
      * Whether illusions are allowed for this summon spell
      */
     allowIllusion?: boolean;

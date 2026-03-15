@@ -21,7 +21,8 @@
         "chance": 0.8,
         "balance": 0,
         "unitId": "4",
-        "name": "Crocodile"
+        "name": "Crocodile",
+        "spellFrame": 2
     },
     "faun": {
         "chance": 0.8,
@@ -40,7 +41,8 @@
         "balance": 2,
         "unitId": "7",
         "name": "Elf",
-        "types": ["ranged", "ground"]
+        "types": ["ranged", "ground"],
+        "spellFrame": 3
     },
     "orc": {
         "chance": 1,
@@ -58,7 +60,8 @@
         "chance": 0.7,
         "balance": 0,
         "unitId": "a",
-        "name": "Gorilla"
+        "name": "Gorilla",
+        "spellFrame": 1
     },
     "ogre": {
         "chance": 0.7,
@@ -181,13 +184,15 @@
         "chance": 0.6,
         "balance": -1,
         "unitId": "1d",
-        "name": "Spectre"
+        "name": "Spectre",
+        "spellFrame": 1
     },
     "wraith": {
         "chance": 0.5,
         "balance": -1,
         "unitId": "1e",
-        "name": "Wraith"
+        "name": "Wraith",
+        "spellFrame": 2
     },
     "skeleton": {
         "chance": 0.7,

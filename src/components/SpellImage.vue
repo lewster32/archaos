@@ -1,13 +1,127 @@
 <template>
     <div class="spell-icon spell__image" :class="spellClasses" :style="spellStyles">
-        <img class="spell-icon__image" v-if="spell"
+        <canvas v-if="spell && usesAtlasIcon"
+            ref="canvasRef"
+            class="spell-icon__image"
+            width="18"
+            height="18" />
+        <img v-else-if="spell"
+            class="spell-icon__image"
             :src="spellImage"
             :alt="spell.name"/>
     </div>
 </template>
+<script lang="ts">
+/**
+ * Module-level frame indices, image loader, and trim-bounds cache — shared
+ * across all SpellImage instances. Built once from the same atlas data Phaser
+ * uses so there is no duplication of asset loading logic.
+ */
+import classicunitsAtlas from '../../assets/spritesheets/classicunits.png';
+import classicunitsData from '../../assets/spritesheets/classicunits.json';
+
+type FrameRect = { x: number; y: number; w: number; h: number };
+
+const _classicFrames = new Map<string, FrameRect>(
+    classicunitsData.textures[0].frames.map(f => [f.filename, f.frame as FrameRect])
+);
+
+// Enhanced spells carry their atlas frame data inline in the spell JSON.
+// Build a map from unit ID → { imageUrl, frames } using the same glob as
+// game-scene.ts so both share the same eagerly-loaded module instances.
+type EnhancedAtlasInfo = { imageUrl: string; frames: Map<string, FrameRect> };
+const _enhancedFrames = new Map<string, EnhancedAtlasInfo>();
+
+const _enhancedFiles: Record<string, any> =
+    import.meta.glob('../../assets/data/enhanced/*.json', { eager: true });
+
+for (const data of Object.values(_enhancedFiles)) {
+    const unit = data.spell?.unit;
+    if (!unit?.textures?.length) continue;
+    const texture = unit.textures[0];
+    _enhancedFrames.set(unit.id, {
+        imageUrl: `${import.meta.env.BASE_URL}images/units/enhanced/${texture.image}`,
+        frames: new Map<string, FrameRect>(
+            texture.frames.map((f: any) => [f.filename, f.frame as FrameRect])
+        ),
+    });
+}
+
+// Generic per-URL image loader with a shared promise cache so each atlas PNG
+// is fetched at most once regardless of how many SpellImage instances exist.
+const _imageCache = new Map<string, Promise<HTMLImageElement>>();
+
+function _loadImage(url: string): Promise<HTMLImageElement> {
+    let p = _imageCache.get(url);
+    if (!p) {
+        p = new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = url;
+        });
+        _imageCache.set(url, p);
+    }
+    return p;
+}
+
+// Vertical trim cache: maps frame name → first/last opaque row offsets.
+// Results are computed once per unique frame via a shared scan canvas.
+type TrimBounds = { top: number; visibleHeight: number; left: number; visibleWidth: number };
+const _trimCache = new Map<string, TrimBounds>();
+let _scanCanvas: HTMLCanvasElement | null = null;
+
+/**
+ * Returns the trim bounds for a frame: the first and last non-transparent rows
+ * and columns, expressed as { top, visibleHeight, left, visibleWidth }. Results
+ * are cached by frame name so the pixel scan only runs once per unique frame.
+ */
+function _getTrimBounds(img: HTMLImageElement, frame: FrameRect, frameName: string): TrimBounds {
+    const cached = _trimCache.get(frameName);
+    if (cached) return cached;
+
+    if (!_scanCanvas) {
+        _scanCanvas = document.createElement('canvas');
+        _scanCanvas.width = 18;
+        _scanCanvas.height = 18;
+    }
+    const ctx = _scanCanvas.getContext('2d')!;
+    ctx.clearRect(0, 0, frame.w, frame.h);
+    ctx.drawImage(img, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
+    const { data } = ctx.getImageData(0, 0, frame.w, frame.h);
+
+    const isRowOpaque = (row: number) => {
+        for (let x = 0; x < frame.w; x++) {
+            if (data[(row * frame.w + x) * 4 + 3] !== 0) return true;
+        }
+        return false;
+    };
+
+    const isColOpaque = (col: number) => {
+        for (let y = 0; y < frame.h; y++) {
+            if (data[(y * frame.w + col) * 4 + 3] !== 0) return true;
+        }
+        return false;
+    };
+
+    let top = 0;
+    while (top < frame.h && !isRowOpaque(top)) top++;
+    let bottom = frame.h - 1;
+    while (bottom > top && !isRowOpaque(bottom)) bottom--;
+
+    let left = 0;
+    while (left < frame.w && !isColOpaque(left)) left++;
+    let right = frame.w - 1;
+    while (right > left && !isColOpaque(right)) right--;
+
+    const result: TrimBounds = { top, visibleHeight: bottom - top + 1, left, visibleWidth: right - left + 1 };
+    _trimCache.set(frameName, result);
+    return result;
+}
+</script>
 <script setup lang="ts">
 import { Spell } from '../gameobjects/spells/spell';
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import { SpellType } from '../gameobjects/enums/spelltype';
 import { UnitStatus } from '../gameobjects/enums/unitstatus';
@@ -49,8 +163,63 @@ const spellIconData: Ref<SpellIconData> = ref({
 });
 
 /**
- * Get the base image URL for the spell. This contains the icon inside the
- * border.
+ * True when atlas frame data is available for the spell, covering both classic
+ * and enhanced summon spells. Drives the v-if that shows the canvas instead of
+ * the fallback static image.
+ */
+const usesAtlasIcon = computed(() => {
+    if (props.spell?.type !== SpellType.Summon) return false;
+    const unitId: string | undefined = (props.spell as any).unitId;
+    if (!unitId) return false;
+    const spellFrame: number = (props.spell as any).spellFrame ?? 0;
+    const frameName = `${unitId}_r_${spellFrame}`;
+    return _classicFrames.has(frameName) || _enhancedFrames.has(unitId);
+});
+
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+
+/**
+ * Redraws the canvas whenever the spell or the canvas element changes.
+ * Watching canvasRef handles the v-if mount/unmount cycle.
+ */
+watch(
+    [() => props.spell, canvasRef],
+    async ([spell, canvas]) => {
+        if (!canvas || !spell || !usesAtlasIcon.value) return;
+        const unitId: string = (spell as any).unitId;
+        const spellFrame: number = (spell as any).spellFrame ?? 0;
+        const frameName = `${unitId}_r_${spellFrame}`;
+
+        let frame: FrameRect | undefined;
+        let imgPromise: Promise<HTMLImageElement>;
+
+        const classicFrame = _classicFrames.get(frameName);
+        if (classicFrame) {
+            frame = classicFrame;
+            imgPromise = _loadImage(classicunitsAtlas);
+        } else {
+            const enhanced = _enhancedFrames.get(unitId);
+            if (!enhanced) return;
+            frame = enhanced.frames.get(frameName);
+            if (!frame) return;
+            imgPromise = _loadImage(enhanced.imageUrl);
+        }
+
+        const img = await imgPromise;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const { top, visibleHeight, left, visibleWidth } = _getTrimBounds(img, frame, frameName);
+        const destX = Math.round((canvas.width - visibleWidth) / 2);
+        const destY = Math.round((canvas.height - visibleHeight) / 2);
+        ctx.drawImage(img, frame.x + left, frame.y + top, visibleWidth, visibleHeight, destX, destY, visibleWidth, visibleHeight);
+    },
+    { immediate: true }
+);
+
+/**
+ * Get the base image URL for the spell. Used for non-summon spells where no
+ * atlas frame is available.
  */
 const spellImage = computed(() => {
     return getImageUrl(props.spell);
@@ -155,8 +324,9 @@ onMounted(() => {
 });
 
 /**
- * Gets the image URL for a spell.
- * 
+ * Gets the image URL for a spell. Used when no atlas frame is available
+ * (attack spells, buff spells, and any summon spell without a registered unit).
+ *
  * @param spell The spell to get the image URL for.
  * @returns The image URL.
  */
@@ -174,7 +344,7 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
         height: 100%;
         image-rendering: pixelated;
     }
-    
+
     --colour-red: #f00;
     --colour-blue: #210eb4;
     --colour-grey: #7d7d7d;
@@ -256,7 +426,7 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
         border-style: solid;
         border-color: var(--spell-grad-top,
                 var(--spell-grad-middle, var(--spell-grad-bottom, var(--spell-unknown))));
-        z-index: 10;    
+        z-index: 10;
     }
 }
 </style>

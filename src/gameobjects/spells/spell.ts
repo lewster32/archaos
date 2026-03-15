@@ -882,6 +882,7 @@ export class Spell extends Model {
             chance: spell.chance,
             balance: spell.balance,
             unitId: spell.unitId,
+            spellFrame: spell.spellFrame,
             allowIllusion: spell.allowIllusion,
             autoPlace: spell.autoPlace,
             tree: spell.tree,

@@ -29,6 +29,10 @@ export class SummonSpell extends Spell {
         return this._properties.unitId || this._properties.unit?.id || "";
     }
 
+    get spellFrame(): number {
+        return this._properties.spellFrame ?? 0;
+    }
+
     get unitProperties(): UnitConfig {
         return Piece.getUnitConfig(this.unitId);
     }
