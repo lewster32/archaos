@@ -581,6 +581,7 @@ export class Rules {
     }
 }
 
+/* v8 ignore next 5 */
 if (import.meta.hot) {
     import.meta.hot.dispose(() => {
         _instance = undefined;

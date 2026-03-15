@@ -55,10 +55,10 @@ export function _resetLoggerForTesting(): void {
     _emitter.removeAllListeners();
 }
 
+/* v8 ignore next 5 */
 if (import.meta.hot) {
     import.meta.hot.dispose(() => {
         _instance = undefined;
-        // _emitter is intentionally kept alive on globalThis
     });
 }
 

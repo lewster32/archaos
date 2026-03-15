@@ -120,6 +120,13 @@ describe('SummonSpell.unitId', () => {
         const s = new SummonSpell(board, 1, makeSummonConfig({ unitId: undefined }));
         expect(s.unitId).toBe('');
     });
+
+    it('returns an appropriate spellFrame value from config or defaults to 0', () => {
+        const s1 = new SummonSpell(board, 1, makeSummonConfig({ spellFrame: 5 }));
+        expect(s1.spellFrame).toBe(5);
+        const s2 = new SummonSpell(board, 1, makeSummonConfig({ spellFrame: undefined }));
+        expect(s2.spellFrame).toBe(0);
+    });
 });
 
 // ─── illusion getter / setter ─────────────────────────────────────────────────
