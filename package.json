@@ -8,12 +8,16 @@
         "deploy": "node ./.deploy/deploy.js",
         "manifest": "node ./.deploy/manifest.js",
         "release": "npm run test -- --run && npm run manifest && npm run build && npm run deploy",
-        "test": "vitest"
+        "test": "vitest",
+        "tauri": "tauri",
+        "tauri:dev": "tauri dev",
+        "tauri:build": "tauri build"
     },
     "keywords": [],
     "author": "Lewis 'SEPTiMUS' Lane",
     "license": "ISC",
     "devDependencies": {
+        "@tauri-apps/cli": "^2.10.1",
         "@vitejs/plugin-vue": "^6.0.5",
         "@vitest/coverage-v8": "^4.1.0",
         "jsdom": "^28.1.0",
@@ -25,6 +29,7 @@
         "vue-tsc": "^3.2.5"
     },
     "dependencies": {
+        "@tauri-apps/api": "^2.10.1",
         "phaser": "^3.90.0",
         "typescript-fsm": "^1.6.0",
         "vue": "^3.5.30"

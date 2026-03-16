@@ -15,7 +15,6 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 ### Not yet implemented
 
 - Online multiplayer
-- Standalone (non-browser) client
 - New units/spells/scenarios (see the [original design document](https://www.rotates.org/old/chaos/) for where this may go)
 
 ## Tech Stack
@@ -25,6 +24,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - **TypeScript 5** — language; strict mode is off but `noImplicitReturns` is on
 - **Vite (rolldown-vite)** — build tool; Phaser and Vue are split into separate manual chunks
 - **typescript-fsm** — FSM library used by `StateManager` to drive game phase transitions (not yet implemented in-game)
+- **Tauri 2** — standalone desktop packaging (uses system WebView2 on Windows); Steam integration planned
 - **Vitest + @vitest/coverage-v8** — unit testing and coverage reporting
 - **jsdom** — DOM environment for tests (mocks Canvas API and rAF in `vitest.setup.ts`)
 
@@ -40,6 +40,10 @@ src/
     interfaces/     UI communication contracts and data structures
     services/       Singleton services: Rules (game logic) and Logger (UI event bus)
     spells/         Spell hierarchy: Spell → AttackSpell / SummonSpell; SpellUtils helpers
+src-tauri/
+  src/              Rust entry point (thin wrapper — no game logic here)
+  Cargo.toml        Rust dependencies (tauri, steamworks in future)
+  tauri.conf.json   Window config, bundling, build commands
 assets/
   data/             JSON configs for units and spells; enhanced/ subdir loaded via Vite glob
     enhanced/       New (i.e. not present in the original game) spells and units
@@ -53,14 +57,19 @@ assets/
 ### Model Class Hierarchy
 
 ```
-Model               — base class; validates unique IDs
-├── Entity          — board-positioned object with x/y coordinates
-│   ├── Piece       — game units and creatures on the board
-│   │   └── Wizard  — player-controlled wizard; extends Piece
-├── Spell           — base class
-│   ├── AttackSpell — direct-attack spells
-│   └── SummonSpell — spells which summon pieces to the board
-└── Player          — a player in the game, owns spells and pieces
+Model                     — base class; validates unique IDs
+├── Entity                — board-positioned object with x/y coordinates
+│   ├── Piece             — game units and creatures on the board
+│   │   └── Wizard        — player-controlled wizard; extends Piece
+├── Spell                 — base class
+│   ├── AttackSpell       — direct-attack spells
+│   ├── DisbelieveSpell   — Disbelieve spell
+│   ├── RaiseDeadSpell    — Raise Dead spell
+│   ├── StatusEffectSpell — buff spells such as Magic Sword etc.
+│   ├── SubversionSpell   — Subversion spell
+│   ├── SummonSpell       — spells which summon pieces to the board
+│   └── TurmoilSpell      — Turmoil spell
+└── Player                — a player in the game, owns spells and pieces
 ```
 
 ### Key Classes
@@ -139,7 +148,7 @@ Remaining pattern to follow for further coverage: **inject** Phaser-dependent de
 
 ## Build & Deploy
 
-**Requirements:** Node.js 24+, a desktop browser (mobile is partially supported)
+**Requirements:** Node.js 24+, a desktop browser (mobile is partially supported). Standalone builds also require Rust 1.77.2+.
 
 ```bash
 npm install        # install dependencies
@@ -147,6 +156,15 @@ npm start          # dev server (Vite HMR)
 npm run build      # type-check (vue-tsc) then Vite build → dist/
 npm run deploy     # references a private deployment script — will not work from a clone
 ```
+
+### Standalone Desktop Build (Tauri)
+
+```bash
+npm run tauri:dev    # dev mode — Vite HMR + native window with devtools
+npm run tauri:build  # production build → src-tauri/target/release/bundle/
+```
+
+Tauri uses the system WebView2 (Chromium-based on Windows) — WebGL/Phaser runs identically to Chrome. The bundled executable is ~5-10 MB.
 
 Vite uses a relative base path (`./`) for deployment flexibility. Chunk size warning threshold is 1500 KB.
 

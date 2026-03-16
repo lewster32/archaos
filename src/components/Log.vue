@@ -1,5 +1,5 @@
 <template>
-    <div class="game-log" :class="{'game-log--minimised': isMinimised}">
+    <div class="game-log" :class="{'game-log--minimised': isMinimised}" v-if="props.logs?.length > 0">
         <button class="game-log__toggle button button--small" @click="toggle()">
             {{ minimised ? "+" : "-" }}
         </button>
