@@ -2,7 +2,6 @@ import { Board } from "../board";
 import { EffectType } from "../effectemitter";
 import { Colour } from "../enums/colour";
 import { Spell } from "./spell";
-import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Geom } from "phaser";
@@ -12,10 +11,6 @@ import { Geom } from "phaser";
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
 export class DisbelieveSpell extends Spell {
-
-    constructor(board: Board, id: number, config: SpellConfig) {
-        super(board, id, config);
-    }
 
     async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         const target: Piece = targets.find((p: Piece) => p.canBeDisbelieved);

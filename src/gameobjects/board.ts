@@ -1668,12 +1668,14 @@ export class Board extends Model implements Box {
                         units.forEach((piece: Piece) => {
                             const target: GameObjects.Sprite =
                                 piece.sprite;
-                            currentVal === 0
-                                ? target.setTintFill(
+                            if (currentVal === 0) {
+                                target.setTintFill(
                                     this.currentPlayer?.colour ||
                                         0xffffff
-                                )
-                                : target.setTint(piece.defaultTint);
+                                );
+                            } else {
+                                target.setTint(piece.defaultTint);
+                            }
                         });
                     }
                 },

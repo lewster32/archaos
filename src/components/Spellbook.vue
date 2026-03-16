@@ -311,7 +311,11 @@ const spellsByChance: Ref<Spell[]> = computed(() => {
  */
 const toggle: () => void = () => {
     props.data.minimised = !props.data.minimised;
-    props.data.minimised ? emit("close") : emit("open");
+    if (props.data.minimised) {
+        emit("close");
+    } else {
+        emit("open");
+    }
     if (currentSpell.value) {
         closeInfo();
     }

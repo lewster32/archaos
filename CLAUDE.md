@@ -174,6 +174,15 @@ Vite uses a relative base path (`./`) for deployment flexibility. Chunk size war
 
 > Note: `deploy`, `manifest` and `release` scripts reference a private deployment script not included in the repo.
 
-## Linting
+## Linting & Formatting
 
-ESLint was removed; migration to **oxlint** is planned but not yet configured.
+**oxlint** for linting, **oxfmt** for formatting (replaces ESLint and Prettier).
+
+```bash
+npm run lint          # lint all files
+npm run lint:fix      # lint and auto-fix
+npm run fmt           # format all files in-place
+npm run fmt:check     # check formatting without writing
+```
+
+Configuration files: `.oxlintrc.json`, `.oxfmtrc.json`.

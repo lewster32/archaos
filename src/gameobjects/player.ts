@@ -185,7 +185,7 @@ export class Player extends Model {
             this.board.getPiecesByOwner(this)
                 .filter(p => !p.hasStatus(UnitStatus.Wizard))
                 .map((piece: Piece) => {
-                    return new Promise((resolve, reject) => {
+                    return new Promise((resolve) => {
                         setTimeout(async () => {
                             this.board.sound.play("disbelieve");
                             await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);

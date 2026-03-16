@@ -1,0 +1,21 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "oxc", "unicorn", "import", "vue", "vitest"],
+    "categories": {
+        "correctness": "error",
+        "suspicious": "warn",
+        "perf": "warn"
+    },
+    "rules": {},
+    "settings": {
+        "vitest": {
+            "typecheck": false
+        }
+    },
+    "env": {
+        "builtin": true,
+        "browser": true
+    },
+    "globals": {},
+    "ignorePatterns": ["dist/", "node_modules/", "src-tauri/"]
+}

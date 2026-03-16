@@ -29,7 +29,7 @@ export class AttackSpell extends Spell {
         }
         // Find the first valid target from the list of potential targets
         const target: Piece = targets
-            .filter(t => this.getValidTarget(t))?.at(0);
+            .find(t => this.getValidTarget(t));
         if (!target) {
             throw new Error("No valid target for attack spell");
         }

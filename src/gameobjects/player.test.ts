@@ -49,7 +49,7 @@ function makeMockPiece(id: number, owner: Player, isWizard = false) {
         isWizard,
         destroy: vi.fn(),
         // should return true if UnitStatus.Wizard is passed
-        hasStatus: vi.fn().mockImplementation((status) => isWizard),
+        hasStatus: vi.fn().mockImplementation(() => isWizard),
         sprite: {
             getCenter: vi.fn().mockReturnValue({ x: 0, y: 0 }),
         },

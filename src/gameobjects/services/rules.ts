@@ -1,6 +1,5 @@
 import { Board } from "../board";
 import { ComputerWizard } from "../computerwizard";
-import { Cursor } from "../cursor";
 import { ActionType } from "../enums/actiontype";
 import { BoardState } from "../enums/boardstate";
 import { Colour } from "../enums/colour";

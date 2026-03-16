@@ -5,7 +5,6 @@ import { SummonSpell } from './summonspell';
 import { Piece } from '../piece';
 import { SpellTarget } from '../enums/spelltarget';
 import { SpellType } from '../enums/spelltype';
-import { UnitType } from '../enums/unittype';
 import { Geom, Math as PMath } from 'phaser';
 import type { Board } from '../board';
 import type { SpellConfig } from '../configs/spellconfig';
@@ -196,7 +195,7 @@ describe('SummonSpell.roll (via cast)', () => {
         s.owner = owner;
         s.illusion = true;
         // cast() checks roll() on the first cast; illusion bypasses rollChance
-        const result = await s.cast(owner, castingPiece, new Geom.Point(0, 0));
+        await s.cast(owner, castingPiece, new Geom.Point(0, 0));
         // Should not have returned null (which would mean castFail was called)
         // doCast for SummonSpell with addPiece mocked returns a piece
         expect((board as any).rollChance).not.toHaveBeenCalled();

@@ -195,7 +195,7 @@ describe('Piece', () => {
                 properties: { ...BASE_PROPERTIES, status: [] },
                 x: 0,
                 y: 0,
-            })).toThrow();
+            })).toThrow('Board cannot be null');
         });
 
         it('throws when coordinates are non-integers', () => {

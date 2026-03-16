@@ -61,7 +61,7 @@ export class RemoteWizard implements RemotePlayer {
      * @param piece the piece to move
      * @returns whether the piece was successfully moved
      */
-    async moveUnit(piece: Piece): Promise<boolean> {
+    async moveUnit(_piece: Piece): Promise<boolean> {
         // Dummy implementation
         return false;
     }

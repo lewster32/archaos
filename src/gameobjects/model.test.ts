@@ -38,6 +38,6 @@ describe('Model', () => {
         const model = new TestModel(100);
         expect(() => {
             (model as any).id = 200;
-        }).toThrow();
+        }).toThrow(TypeError);
     });
 });

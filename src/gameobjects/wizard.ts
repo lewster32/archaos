@@ -381,7 +381,7 @@ export class Wizard extends Piece {
         // If we're mounted, hide all effects so we don't have a horse with
         // wings. Or worse, a Pegasus with two sets of wings.
         if (this.currentMount) {
-            this._effects.forEach((sprite, status) => {
+            this._effects.forEach((sprite) => {
                 sprite.setVisible(false);
             });
         }
@@ -463,7 +463,7 @@ export class Wizard extends Piece {
         await super.mount(piece);
 
         // Hide all effects while mounted.
-        this._effects.forEach((sprite, status) => {
+        this._effects.forEach((sprite) => {
             sprite.setVisible(false);
         });
 
@@ -478,7 +478,7 @@ export class Wizard extends Piece {
         await super.dismount();
 
         // Show all effects again.
-        this._effects.forEach((sprite, status) => {
+        this._effects.forEach((sprite) => {
             sprite.setVisible(true);
         });
     }

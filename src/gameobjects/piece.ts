@@ -811,7 +811,7 @@ export class Piece extends Entity {
                     Colour.Green
                 );
             }
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 this.board.scene.tweens.add({
                     targets: this.sprite,
                     duration: Piece.DEFAULT_MOVE_DURATION / 2,
@@ -1836,8 +1836,8 @@ export class Piece extends Entity {
             epsilon: 0,
         });
 
-        const tweenColours: Types.Display.ColorObject[] = new Array(
-            Piece.DEFAULT_HIGHLIGHT_STEPS
+        const tweenColours: Types.Display.ColorObject[] = Array.from<Types.Display.ColorObject>(
+            { length: Piece.DEFAULT_HIGHLIGHT_STEPS }
         );
         for (let i = 0; i < Piece.DEFAULT_HIGHLIGHT_STEPS; i++) {
             tweenColours[i] = Display.Color.Interpolate.ColorWithColor(

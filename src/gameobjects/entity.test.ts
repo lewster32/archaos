@@ -64,7 +64,7 @@ describe('Entity', () => {
         const entity = new Entity(mockBoard, 3, 10, 10);
         expect(() => {
             (entity as any).board = {} as Board;
-        }).toThrow();
+        }).toThrow(TypeError);
     });
 
     it('should handle large coordinate values', () => {

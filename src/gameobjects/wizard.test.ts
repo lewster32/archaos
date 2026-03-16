@@ -151,11 +151,11 @@ describe('Wizard.parseWizCode', () => {
 
     describe('valid parsing', () => {
         it('throws when given a WizCode that is too long', () => {
-            expect(() => Wizard.parseWizCode('0f1a2b3c4d00')).toThrow();
+            expect(() => Wizard.parseWizCode('0f1a2b3c4d00')).toThrow('Invalid WizCode');
         });
 
         it('throws when given a WizCode that is too short', () => {
-            expect(() => Wizard.parseWizCode('0f1a2b3c')).toThrow();
+            expect(() => Wizard.parseWizCode('0f1a2b3c')).toThrow('Invalid WizCode');
         });
 
         it('parses a valid lowercase WizCode', () => {
