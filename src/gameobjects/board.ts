@@ -8,6 +8,7 @@ import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
+import { SpellTarget } from "./enums/spelltarget";
 import { EventType } from "./enums/eventtype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
@@ -21,8 +22,13 @@ import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
 import { AttackSpell } from "./spells/attackspell";
+import { DisbelieveSpell } from "./spells/disbelievespell";
+import { RaiseDeadSpell } from "./spells/raisedeadspell";
 import { Spell } from "./spells/spell";
+import { StatusEffectSpell } from "./spells/statuseffectspell";
+import { SubversionSpell } from "./spells/subversionspell";
 import { SummonSpell } from "./spells/summonspell";
+import { TurmoilSpell } from "./spells/turmoilspell";
 import { Events, StateManager, States } from "./statemanager";
 import { Wizard } from "./wizard";
 import { Display, Geom, GameObjects, Scene, Math as PMath, Cameras } from "phaser";
@@ -1504,6 +1510,16 @@ export class Board extends Model implements Box {
             spell = new SummonSpell(this, this._idCounter++, config);
         } else if (config.damage) {
             spell = new AttackSpell(this, this._idCounter++, config);
+        } else if (config.id === "disbelieve") {
+            spell = new DisbelieveSpell(this, this._idCounter++, config);
+        } else if (config.id === "raise-dead") {
+            spell = new RaiseDeadSpell(this, this._idCounter++, config);
+        } else if (config.id === "subversion") {
+            spell = new SubversionSpell(this, this._idCounter++, config);
+        } else if (config.id === "turmoil") {
+            spell = new TurmoilSpell(this, this._idCounter++, config);
+        } else if (config.target === SpellTarget.Self) {
+            spell = new StatusEffectSpell(this, this._idCounter++, config);
         } else {
             spell = new Spell(this, this._idCounter++, config);
         }
