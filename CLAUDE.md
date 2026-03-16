@@ -22,7 +22,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - **Phaser 3.90** — game engine (WebGL/Canvas 2D rendering)
 - **Vue 3** — reactive UI components overlaid on the canvas
 - **TypeScript 5** — language; strict mode is off but `noImplicitReturns` is on
-- **Vite (rolldown-vite)** — build tool; Phaser and Vue are split into separate manual chunks
+- **Vite 8** — build tool; Phaser and Vue are split into separate manual chunks
 - **typescript-fsm** — FSM library used by `StateManager` to drive game phase transitions (not yet implemented in-game)
 - **Tauri 2** — standalone desktop packaging (uses system WebView2 on Windows); Steam integration planned
 - **Vitest + @vitest/coverage-v8** — unit testing and coverage reporting
@@ -45,8 +45,9 @@ src-tauri/
   Cargo.toml        Rust dependencies (tauri, steamworks in future)
   tauri.conf.json   Window config, bundling, build commands
 assets/
-  data/             JSON configs for units and spells; enhanced/ subdir loaded via Vite glob
+  data/             JSON configs for units, spells and effects; enhanced/ subdir loaded via Vite glob
     enhanced/       New (i.e. not present in the original game) spells and units
+    effects.json    Config-driven visual effects (particle emitters, tweens, etc.)
   spritesheets/     PNG atlases + JSON metadata
   sounds/           Audio sprite (faithful 48K Spectrum beeper sounds)
   plugins/          Rex Phaser plugins (colour replacement pipeline, Perlin noise)
@@ -119,11 +120,14 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 ### What's tested (and at 100% coverage)
 
-- `Model`, `Entity`, `StateManager`, `Player`, `spells/SpellUtils`
+- `Model`, `Entity`, `StateManager`, `Player`, `Logger`
+- All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`
 
 ### What's partially tested
 
-- `Wizard` (~6%) — most instance methods require a live Phaser scene
+- `Wizard` (~64%) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
+- `TurmoilSpell` (~94%)
+- `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
 - `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
 
 ### Improving testability
