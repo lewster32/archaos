@@ -1,9 +1,11 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { phaserAssetSizesPlugin } from "./vite-plugin-asset-sizes.mjs";
 
 export default defineConfig({
     plugins: [
-        vue()
+        vue(),
+        phaserAssetSizesPlugin(),
     ],
     base: "./",
     build: {

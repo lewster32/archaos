@@ -30,7 +30,7 @@ import { SpellType } from "./gameobjects/enums/spelltype";
 import { Scene, Math as PMath } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
-import { loadingProgress } from "./game/loading-state";
+import { loadingProgress, debugLoading } from "./game/loading-state";
 
 export class GameScene extends Scene {
     private board: Board;
@@ -43,7 +43,9 @@ export class GameScene extends Scene {
 
     preload(): void {
         this.load.on("progress", (value: number) => {
-            loadingProgress.value = value;
+            if (!debugLoading) {
+                loadingProgress.value = value;
+            }
         });
 
         this.load.atlas("classicunits", classicunitsAtlas, classicunitsJson);

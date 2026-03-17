@@ -84,7 +84,7 @@ const emit = defineEmits<{
 // Suspend (via <Suspense> in parent) until Phaser finishes loading assets.
 if (loadingProgress.value < 1) {
     await new Promise<void>(resolve => {
-        const stop = watch(loadingProgress, v => {
+        const stop: () => void = watch(loadingProgress, v => {
             if (v >= 1) {
                 stop();
                 resolve();
