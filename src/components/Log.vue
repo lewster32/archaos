@@ -51,7 +51,7 @@ const toggle = () => {
 const logsSorted = computed(() => {
     return props.logs
         .slice()
-        .sort((a: Log, b: Log) => {
+        .toSorted((a: Log, b: Log) => {
             return b.timestamp.getTime() - a.timestamp.getTime();
         })
         .slice(0, 25);

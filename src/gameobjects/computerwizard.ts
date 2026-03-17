@@ -747,7 +747,7 @@ export class ComputerWizard implements RemotePlayer {
             if (piece !== this._player.castingPiece && this._board.rollChance(this.aggression)) {
                 // Get the highest priority enemy player
                 const highestPriorityEnemy: Player | null = Array.from(this._enemyPlayerPriorities.entries())
-                    .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+                    .toSorted((a, b) => b[1] - a[1])[0]?.[0] || null;
 
                 if (highestPriorityEnemy) {
                     // Pick the closest reachable tile to any of that player's 

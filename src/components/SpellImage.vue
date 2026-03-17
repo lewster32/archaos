@@ -56,8 +56,8 @@ function _loadImage(url: string): Promise<HTMLImageElement> {
     if (!p) {
         p = new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
+            img.addEventListener('load', () => resolve(img));
+            img.addEventListener('error', reject);
             img.src = url;
         });
         _imageCache.set(url, p);

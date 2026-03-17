@@ -33,7 +33,7 @@ export const chanceRounded = (chance: number): number => {
  * @param spell The spell to get the balance indicator for.
  * @returns The balance indicator symbol.
  */
-export const balance = (spell: Spell): string => {
+export const balanceIndicator = (spell: Spell): string => {
     if (spell.balance > 0) {
         return "^".repeat(Math.min(spell.balance, 4));
     }

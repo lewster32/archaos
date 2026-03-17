@@ -3,7 +3,6 @@ import { Wizard } from './wizard';
 // Import the same JSON data used by Wizard to verify clamping behaviour
 import { wizcodes } from '../../assets/spritesheets/wizards.json';
 import { Board } from './board';
-import { WizardConfig } from './configs/piececonfig';
 import { Player } from './player';
 import { UnitDirection } from './enums/unitdirection';
 import { UnitStatus } from './enums/unitstatus';
@@ -81,10 +80,6 @@ function makeMockPlayer(name: string = 'Test Wizard') {
 }
 
 class MockWizard extends Wizard {
-    constructor(board: Board, id: number, config: WizardConfig) {
-        super(board, id, config);
-    }
-
     createSprite() {
         if (!this._sprite) {
             this._sprite = makeMockSprite() as unknown as Phaser.GameObjects.Sprite;

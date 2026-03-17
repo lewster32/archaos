@@ -4,7 +4,6 @@ import { Colour } from "../enums/colour";
 import { UnitStatus } from "../enums/unitstatus";
 import { UnitType } from "../enums/unittype";
 import { Spell } from "./spell";
-import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Geom } from "phaser";
@@ -24,10 +23,6 @@ export class StatusEffectSpell extends Spell {
         "magic-bow": UnitStatus.MagicBow,
         "magic-wings": UnitStatus.MagicWings,
     };
-
-    constructor(board: Board, id: number, config: SpellConfig) {
-        super(board, id, config);
-    }
 
     async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
         const target: Piece = targets.find((p: Piece) => p.type === UnitType.Wizard && p.owner === this.owner);

@@ -3,9 +3,7 @@ import { Model } from './model';
 
 // Create a concrete implementation for testing
 class TestModel extends Model {
-    constructor(id: number) {
-        super(id);
-    }
+
 }
 
 describe('Model', () => {

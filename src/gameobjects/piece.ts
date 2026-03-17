@@ -1448,8 +1448,8 @@ export class Piece extends Entity {
                 if (
                     this.board.getPiecesAtPosition(
                         piece.position,
-                        (piece: Piece) => {
-                            return !piece.dead;
+                        (p: Piece) => {
+                            return !p.dead;
                         }
                     ).length === 0 &&
                     this.canMove

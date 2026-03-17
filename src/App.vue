@@ -1,10 +1,15 @@
 <template>
-  <Game />
+    <Suspense>
+        <Game />
+        <template #fallback>
+            <LoadingScreen />
+        </template>
+    </Suspense>
 </template>
-<script lang="ts">
-import Game from './components/Game.vue';
 
-export default {
-  components: { Game }
-}
+<script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
+import LoadingScreen from './components/LoadingScreen.vue';
+
+const Game = defineAsyncComponent(() => import('./components/Game.vue'));
 </script>

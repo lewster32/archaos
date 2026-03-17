@@ -46,7 +46,7 @@
                             'balance-chaotic': spell.balance < 0,
                         }"
                         :title="`${friendlyBalance(spell.balance)}`"
-                        >{{ balance(spell) }}</span
+                        >{{ balanceIndicator(spell) }}</span
                     >
                 </p>
                 <p v-if="spell.castTimes > 1" class="spell-stats__item">
@@ -79,7 +79,7 @@ import UnitStats from "./UnitStats.vue";
 import SpellImage from "./SpellImage.vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
 import { computed } from "vue";
-import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import { balanceIndicator, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
 import type { Spell } from "../gameobjects/spells/spell";
 import type { AttackSpell } from "../gameobjects/spells/attackspell";
 import type { SummonSpell } from "../gameobjects/spells/summonspell";

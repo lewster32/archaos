@@ -292,7 +292,7 @@ export class Wizard extends Piece {
         const isoPosition: Geom.Point = this.board.getIsoPosition(
             this.position
         );
-        let sprite:GameObjects.Sprite | GameObjects.Image;
+        let effectSprite:GameObjects.Sprite | GameObjects.Image;
         switch (status) {
             // Visual effects
             case UnitStatus.ShadowForm:
@@ -309,7 +309,7 @@ export class Wizard extends Piece {
                 // replaced the wizard sprite entirely. This way multiple
                 // effects can be shown at once and the wizard's appearance
                 // remains consistent.
-                sprite =
+                effectSprite =
                     this.board.scene.add.sprite(
                         isoPosition.x +
                             (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
@@ -320,24 +320,24 @@ export class Wizard extends Piece {
                             (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                         "effects"
                     ) ;
-                (sprite as GameObjects.Sprite).anims.play({
+                (effectSprite as GameObjects.Sprite).anims.play({
                     key: status.toLowerCase(),
                     repeat: -1,
                 });
-                sprite.setOrigin(0.5, 0.5);
-                sprite.setFlipX(
+                effectSprite.setOrigin(0.5, 0.5);
+                effectSprite.setFlipX(
                     this._direction === UnitDirection.Left
                 );
-                sprite.setBlendMode(BlendModes.ADD);
-                this.board.getLayer(BoardLayer.Pieces).add(sprite);
-                this._effects.set(status, sprite);
+                effectSprite.setBlendMode(BlendModes.ADD);
+                this.board.getLayer(BoardLayer.Pieces).add(effectSprite);
+                this._effects.set(status, effectSprite);
                 this.updateDepth();
                 break;
             case UnitStatus.MagicArmour:
                 // Similar to the other magic effects, but this one is a static
                 // image that overlays the whole wizard and pulses in and out
                 // via a tween.
-                sprite = this.board.scene.add.image(
+                effectSprite = this.board.scene.add.image(
                     isoPosition.x +
                     (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                         (this._direction === UnitDirection.Left
@@ -348,15 +348,15 @@ export class Wizard extends Piece {
                     "magic-armour",
                     this._wizCode.wiz
                 );
-                sprite.setOrigin(0.5, 0.6);
-                sprite.setFlipX(
+                effectSprite.setOrigin(0.5, 0.6);
+                effectSprite.setFlipX(
                     this._direction === UnitDirection.Left
                 );
-                sprite.setBlendMode(BlendModes.ADD);
-                this.board.getLayer(BoardLayer.Pieces).add(sprite);
-                this._effects.set(status, sprite);
-                sprite.setData('_effectTween', this.board.scene.tweens.add({
-                    targets: [sprite],
+                effectSprite.setBlendMode(BlendModes.ADD);
+                this.board.getLayer(BoardLayer.Pieces).add(effectSprite);
+                this._effects.set(status, effectSprite);
+                effectSprite.setData('_effectTween', this.board.scene.tweens.add({
+                    targets: [effectSprite],
                     duration: 500,
                     yoyo: true,
                     ease: "Stepped",
@@ -381,8 +381,8 @@ export class Wizard extends Piece {
         // If we're mounted, hide all effects so we don't have a horse with
         // wings. Or worse, a Pegasus with two sets of wings.
         if (this.currentMount) {
-            this._effects.forEach((sprite) => {
-                sprite.setVisible(false);
+            this._effects.forEach((effect) => {
+                effect.setVisible(false);
             });
         }
 

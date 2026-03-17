@@ -6,7 +6,10 @@
         "suspicious": "warn",
         "perf": "warn"
     },
-    "rules": {},
+    "rules": {
+        "no-await-in-loop": "off",
+        "import/no-unassigned-import": "off"
+    },
     "settings": {
         "vitest": {
             "typecheck": false

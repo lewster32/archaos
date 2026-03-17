@@ -100,7 +100,7 @@
                                 'balance-lawful': spell.balance > 0,
                                 'balance-chaotic': spell.balance < 0,
                             }"
-                            >{{ balance(spell) }}</span
+                            >{{ balanceIndicator(spell) }}</span
                         >
                         <span
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
@@ -147,7 +147,7 @@ import SpellInfo from "./SpellInfo.vue";
 import SpellImage from "./SpellImage.vue";
 import { ref, computed, watch, nextTick } from "vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
-import { balance, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import { balanceIndicator, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
 import type { Spell } from "../gameobjects/spells/spell";
 import type { SummonSpell } from "../gameobjects/spells/summonspell";
 import type { SpellbookData } from "../gameobjects/interfaces/ui";
@@ -298,7 +298,7 @@ const closeInfo: () => void = () => {
  * Gets the spells sorted by casting chance (highest first), then by name.
  */
 const spellsByChance: Ref<Spell[]> = computed(() => {
-    return props.data.spells.sort((a: Spell, b: Spell) => {
+    return props.data.spells.toSorted((a: Spell, b: Spell) => {
         if (b.chance != a.chance) {
             return b.chance - a.chance;
         }
