@@ -2,32 +2,32 @@
     "name": "Test Scenario",
     "description": "A scenario for testing purposes.",
     "board": {
-        "width": 11,
-        "height": 11
+        "width": 15,
+        "height": 15
     },
     "players": [
         {
             "id": 1,
             "name": "Gandalf",
-            "position": { "x": 0, "y": 10 },
+            "position": { "x": 0, "y": 14 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
             "id": 2,
             "name": "Saruman",
-            "position": { "x": 0, "y": 5 },
+            "position": { "x": 0, "y": 7 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
@@ -39,74 +39,74 @@
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
             "id": 4,
             "name": "Merlin",
-            "position": { "x": 5, "y": 10 },
+            "position": { "x": 7, "y": 14 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
-            "id": 5,
+            "id": 7,
             "name": "Morgana",
-            "position": { "x": 5, "y": 0 },
+            "position": { "x": 7, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
             "id": 6,
             "name": "Dumbledore",
-            "position": { "x": 10, "y": 10 },
+            "position": { "x": 14, "y": 14 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
             "id": 7,
             "name": "Voldemort",
-            "position": { "x": 10, "y": 5 },
+            "position": { "x": 14, "y": 7 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         },
         {
             "id": 8,
             "name": "Grindelwald",
-            "position": { "x": 10, "y": 0 },
+            "position": { "x": 14, "y": 0 },
             "computerControlled": true,
             "pieces": [
 
             ],
             "spells": [
-                "*Summon", "*Buff", "*Attack", "*Misc"
+                "Magic Wood"
             ]
         }
     ],
     "phase": "casting",
     "cheats": {
         "forceHit": null,
-        "forceCast": null,
+        "forceCast": true,
         "shortDelay": true
     }
 }

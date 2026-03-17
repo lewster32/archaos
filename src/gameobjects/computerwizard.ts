@@ -380,45 +380,7 @@ export class ComputerWizard implements RemotePlayer {
             let successfullyCast: boolean = false;
             if (spell) {
                 if (spell.type === SpellType.Summon) {
-                    const summonSpell: SummonSpell = spell as SummonSpell;
-                    let summonPt: Geom.Point | null = null;
-                    while (spell.castTimes > 0) {
-                        // Find a random valid tile on the board to summon onto. We
-                        // do this each time because the casting of a spell can
-                        // change which board tiles are valid (e.g., trees cannot
-                        // be cast adjacent to other trees).
-                        const validTiles: Geom.Point[] = [];
-                        for (let xx = 0; xx < board.width; xx++) {
-                            for (let yy = 0; yy < board.height; yy++) {
-                                const pt: Geom.Point = new Geom.Point(
-                                    xx,
-                                    yy
-                                );
-                                if (summonSpell.getValidTarget(pt, false)) {
-                                    validTiles.push(pt);
-                                }
-                            }
-                        }
-                        if (!validTiles.length) {
-                            console.debug(`${player.name} has no valid tiles to cast ${spell.name}`);
-                            if (successfullyCast) {
-                                player.discardSpell();
-                            }
-                            board.sound.play("cancel");
-                            return false;
-                        }
-                        summonPt = PMath.RND.pick(validTiles);
-
-                        await board.rules.doCastSpell(
-                            board,
-                            summonPt
-                        );
-                        successfullyCast = true;
-                    }
-                    if (successfullyCast) {
-                        player.discardSpell();
-                    }
-                    return true;
+                    return await (spell as SummonSpell).autoCast(player);
                 } else if (spell.type === SpellType.Buff) {
                     await board.rules.doCastSpell(
                         board,
@@ -742,10 +704,65 @@ export class ComputerWizard implements RemotePlayer {
             // be tactical, depending on the difficulty level
             let movePt: Geom.Point = null;
 
-            // For now, let's just move every piece towards the highest priority
-            // enemy (based on aggression) while keeping the wizards random
-            if (piece !== this._player.castingPiece && this._board.rollChance(this.aggression)) {
-                // Get the highest priority enemy player
+            if (piece === this._player.castingPiece) {
+                // Wizard priority 1: seek a mountable unit if unmounted.
+                // Higher difficulties do this more reliably (50% at diff 0,
+                // 100% at diff 1). Adjacent mounts are already handled above,
+                // so we skip any that are already adjacent.
+                if (piece.currentMount == null && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
+                    const mountTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
+                        if (p.dead) return false;
+                        // Must be mountable by this wizard
+                        if (!piece.canMountPiece(p)) return false;
+                        // Skip pieces already adjacent (mounting handled separately)
+                        return Board.distance(piece.position, p.position) > 1;
+                    });
+                    if (mountTargets.length > 0) {
+                        let closestTile: Geom.Point | null = null;
+                        let closestDist: number = Infinity;
+                        let closestMount: Piece | null = null;
+                        for (const tile of reachableTiles) {
+                            for (const mount of mountTargets) {
+                                const dist: number = Board.distance(tile, mount.position);
+                                if (dist < closestDist) {
+                                    closestDist = dist;
+                                    closestTile = tile;
+                                    closestMount = mount;
+                                }
+                            }
+                        }
+                        if (closestTile) {
+                            console.debug(`${piece.fullName} moves towards mountable unit ${closestMount?.fullName}`);
+                            movePt = closestTile;
+                        }
+                    }
+                }
+                // Wizard priority 2: move away from threats when threatened.
+                // Higher difficulties do this more reliably (50% at diff 0,
+                // 100% at diff 1).
+                if (!movePt) {
+                const threats: Set<Piece> = piece.findThreatPieces();
+                if (threats.size > 0 && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
+                    const threatArray: Piece[] = Array.from(threats);
+                    let safestTile: Geom.Point | null = null;
+                    let maxMinDistance: number = -Infinity;
+                    for (const tile of reachableTiles) {
+                        const minDist: number = Math.min(
+                            ...threatArray.map((t: Piece) => Board.distance(tile, t.position))
+                        );
+                        if (minDist > maxMinDistance) {
+                            maxMinDistance = minDist;
+                            safestTile = tile;
+                        }
+                    }
+                    if (safestTile) {
+                        console.debug(`${piece.fullName} moves away from ${threats.size} threat(s)`);
+                        movePt = safestTile;
+                    }
+                }
+                }
+            } else if (this._board.rollChance(this.aggression)) {
+                // Non-wizard: move towards the highest priority enemy
                 const highestPriorityEnemy: Player | null = Array.from(this._enemyPlayerPriorities.entries())
                     .toSorted((a, b) => b[1] - a[1])[0]?.[0] || null;
 

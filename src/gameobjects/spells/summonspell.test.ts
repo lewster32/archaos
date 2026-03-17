@@ -5,12 +5,16 @@ import { SummonSpell } from './summonspell';
 import { Piece } from '../piece';
 import { SpellTarget } from '../enums/spelltarget';
 import { SpellType } from '../enums/spelltype';
+import { UnitStatus } from '../enums/unitstatus';
 import { Geom, Math as PMath } from 'phaser';
-import type { Board } from '../board';
+import { Board } from '../board';
 import type { SpellConfig } from '../configs/spellconfig';
 
 // PMath.RND is not initialised without a Phaser.Game instance.
-PMath.RND = { pick: (arr: any[]) => arr[Math.floor(Math.random() * arr.length)] } as any;
+PMath.RND = {
+    pick: (arr: any[]) => arr[Math.floor(Math.random() * arr.length)],
+    weightedPick: (arr: any[]) => arr[0],
+} as any;
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
@@ -513,5 +517,763 @@ describe('SummonSpell.doCast', () => {
         expect(args.properties.rangedType).toBe('shot');
         expect(args.properties.status).toEqual([]);
         expect(args.group).toBe('classicunits');
+    });
+});
+
+// ─── scoreLoSBlock ────────────────────────────────────────────────────────────
+
+describe('SummonSpell.scoreLoSBlock (private)', () => {
+    let spell: SummonSpell;
+
+    beforeEach(() => {
+        const board = makeMockBoard();
+        spell = new SummonSpell(board, 1, makeSummonConfig());
+    });
+
+    it('returns 0 when fromPos equals toPos (zero-length segment)', () => {
+        const pos = new Geom.Point(3, 3);
+        expect((spell as any).scoreLoSBlock(new Geom.Point(3, 3), pos, pos)).toBe(0);
+    });
+
+    it('returns 0 when tile projects before the segment (proj <= 0.05)', () => {
+        // Enemy at (0,0), wizard at (10,0). Tile at (-1,0) projects behind enemy.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(-1, 0),
+            new Geom.Point(0, 0),
+            new Geom.Point(10, 0)
+        );
+        expect(result).toBe(0);
+    });
+
+    it('returns 0 when tile projects beyond the segment (proj >= 0.95)', () => {
+        // Enemy at (0,0), wizard at (10,0). Tile at (11,0) projects beyond wizard.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(11, 0),
+            new Geom.Point(0, 0),
+            new Geom.Point(10, 0)
+        );
+        expect(result).toBe(0);
+    });
+
+    it('returns 3 when tile lies exactly on the segment midpoint', () => {
+        // Enemy at (0,0), wizard at (10,0). Tile at (5,0) is exactly on the line.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(5, 0),
+            new Geom.Point(0, 0),
+            new Geom.Point(10, 0)
+        );
+        expect(result).toBeCloseTo(3, 5);
+    });
+
+    it('returns a value between 0 and 3 for a tile near but off the segment', () => {
+        // Enemy at (0,0), wizard at (10,0). Tile at (5,1) is 1 unit off the midpoint.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(5, 1),
+            new Geom.Point(0, 0),
+            new Geom.Point(10, 0)
+        );
+        expect(result).toBeGreaterThan(0);
+        expect(result).toBeLessThan(3);
+    });
+
+    it('returns 0 when tile is more than 1.5 units from the segment', () => {
+        // Enemy at (0,0), wizard at (10,0). Tile at (5,2) is 2 units off the midpoint.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(5, 2),
+            new Geom.Point(0, 0),
+            new Geom.Point(10, 0)
+        );
+        expect(result).toBe(0);
+    });
+
+    it('scores a diagonal segment correctly (non-zero for on-path tile)', () => {
+        // Enemy at (0,0), wizard at (4,4). Tile at (2,2) is exactly on the diagonal.
+        const result = (spell as any).scoreLoSBlock(
+            new Geom.Point(2, 2),
+            new Geom.Point(0, 0),
+            new Geom.Point(4, 4)
+        );
+        expect(result).toBeCloseTo(3, 5);
+    });
+});
+
+// ─── selectSpreadingTile ──────────────────────────────────────────────────────
+
+describe('SummonSpell.selectSpreadingTile (private)', () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let spell: SummonSpell;
+    let getUnitConfigSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        board = makeMockBoard();
+        getUnitConfigSpy = vi.spyOn(Piece, 'getUnitConfig').mockReturnValue(
+            makeUnitConfig({ status: [UnitStatus.Spreads] })
+        );
+        spell = new SummonSpell(board, 1, makeSummonConfig());
+    });
+
+    afterEach(() => {
+        getUnitConfigSpy.mockRestore();
+    });
+
+    it('sorts tiles ascending by nearest-enemy distance when enemies exist', () => {
+        // Enemy at (8,8). Tile (7,7) is closer to enemy than (0,0).
+        const enemy = { owner: { name: 'foe' }, dead: false, position: new Geom.Point(8, 8) };
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [enemy];
+        const near = new Geom.Point(7, 7);
+        const far = new Geom.Point(0, 0);
+        const validTiles = [far, near];
+        // weightedPick returns arr[0] — should be the nearest tile after sort
+        const result = (spell as any).selectSpreadingTile(player, new Geom.Point(0, 0), validTiles);
+        expect(result).toBe(near);
+    });
+
+    it('sorts tiles descending by wizard distance when no enemies exist', () => {
+        // No enemies. Wizard at (0,0). Tile (5,5) is farther; should be index 0 after sort.
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [];
+        const near = new Geom.Point(1, 0);
+        const far = new Geom.Point(5, 5);
+        const validTiles = [near, far];
+        const result = (spell as any).selectSpreadingTile(player, new Geom.Point(0, 0), validTiles);
+        expect(result).toBe(far);
+    });
+
+    it('returns a tile without sorting when no enemies and wizardPos is null', () => {
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [];
+        const t1 = new Geom.Point(2, 3);
+        const t2 = new Geom.Point(4, 5);
+        const validTiles = [t1, t2];
+        const result = (spell as any).selectSpreadingTile(player, null, validTiles);
+        // weightedPick returns arr[0] — no sort applied, so first tile returned
+        expect(result).toBe(t1);
+    });
+
+    it('filters out pieces owned by the same player and dead pieces when finding enemies', () => {
+        const ownPiece = { owner: 'samePlayer', dead: false, position: new Geom.Point(1, 1) };
+        const deadEnemy = { owner: 'foe', dead: true, position: new Geom.Point(2, 2) };
+        const player = { ...makeMockPlayer(makeMockCastingPiece()), name: 'samePlayer' };
+        // Both pieces should be excluded: own piece (same owner) and dead enemy
+        (board as any).pieces = [ownPiece, deadEnemy];
+        const t1 = new Geom.Point(0, 0);
+        const validTiles = [t1];
+        // No enemies after filter → falls to wizardPos branch but wizardPos is null
+        const result = (spell as any).selectSpreadingTile(player, null, validTiles);
+        expect(result).toBe(t1);
+    });
+});
+
+// ─── selectMagicWoodTile ──────────────────────────────────────────────────────
+
+describe('SummonSpell.selectMagicWoodTile (private)', () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let spell: SummonSpell;
+
+    beforeEach(() => {
+        board = makeMockBoard();
+        spell = new SummonSpell(board, 1, makeSummonConfig({ autoPlace: true }));
+    });
+
+    it('sorts tiles ascending by distance from wizard when wizardPos is provided', () => {
+        // Wizard at (0,0). Tile (1,0) closer than (5,5).
+        const near = new Geom.Point(1, 0);
+        const far = new Geom.Point(5, 5);
+        const validTiles = [far, near];
+        const result = (spell as any).selectMagicWoodTile(new Geom.Point(0, 0), validTiles);
+        // weightedPick returns arr[0] — nearest tile after sort
+        expect(result).toBe(near);
+    });
+
+    it('returns a tile without sorting when wizardPos is null', () => {
+        const t1 = new Geom.Point(3, 3);
+        const t2 = new Geom.Point(1, 1);
+        const validTiles = [t1, t2];
+        const result = (spell as any).selectMagicWoodTile(null, validTiles);
+        // No sort applied; weightedPick returns arr[0]
+        expect(result).toBe(t1);
+    });
+
+    it('handles a single tile', () => {
+        const only = new Geom.Point(2, 2);
+        const result = (spell as any).selectMagicWoodTile(new Geom.Point(0, 0), [only]);
+        expect(result).toBe(only);
+    });
+});
+
+// ─── selectShadowWoodTile ─────────────────────────────────────────────────────
+
+describe('SummonSpell.selectShadowWoodTile (private)', () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let spell: SummonSpell;
+    let getUnitConfigSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        board = makeMockBoard();
+        getUnitConfigSpy = vi.spyOn(Piece, 'getUnitConfig').mockReturnValue(
+            makeUnitConfig({ status: ['tree'] })
+        );
+        spell = new SummonSpell(board, 1, makeSummonConfig({ tree: true }));
+    });
+
+    afterEach(() => {
+        getUnitConfigSpy.mockRestore();
+    });
+
+    it('returns a tile from validTiles when no enemies are present', () => {
+        (board as any).pieces = [];
+        const t = new Geom.Point(2, 2);
+        const result = (spell as any).selectShadowWoodTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            new Geom.Point(0, 0),
+            [t]
+        );
+        expect(result).toBe(t);
+    });
+
+    it('returns a tile from validTiles when enemies exist but wizardPos is null', () => {
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(5, 5) };
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [enemy];
+        const t = new Geom.Point(3, 3);
+        const result = (spell as any).selectShadowWoodTile(player, null, [t]);
+        expect(result).toBe(t);
+    });
+
+    it('scores tiles by LoS-block and proximity bonus and sorts descending', () => {
+        // Wizard at (5,0). Enemy at (0,0). Tile on the line (2,0) gets LoS score;
+        // tile (5,5) is far from both.
+        const wizard = new Geom.Point(5, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(0, 0) };
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [enemy];
+        const onLine = new Geom.Point(2, 0);   // near midpoint of enemy-wizard line
+        const offBoard = new Geom.Point(5, 5); // far from both
+        const validTiles = [offBoard, onLine];
+        const result = (spell as any).selectShadowWoodTile(player, wizard, validTiles);
+        // onLine should score higher (LoS block + proximity bonus) → index 0 after sort
+        expect(result).toBe(onLine);
+    });
+
+    it('applies proximity bonus when tile is within 3 units of enemy', () => {
+        // Enemy at (0,0). Wizard at (20,0). Tile (1,0) is 1 unit from enemy:
+        //   proj = 1/20 = 0.05 → on the boundary (LoS score ~0), proximity = max(0,3-1)=2.
+        // Tile (18,0) is 18 units from enemy:
+        //   proj = 18/20 = 0.9 → LoS score ~3, proximity = max(0,3-18)=0.
+        // Use tile (1,1): proj = dot((1,1),(20,0))/400 = 20/400 = 0.05 boundary → LoS ~0,
+        //   distance from enemy = sqrt(2) ≈ 1.41 → proximity = max(0,3-1.41) ≈ 1.59.
+        // Use far-off tile (0,8): proj = 0 → LoS 0, dist from enemy = 8 → proximity 0.
+        // So tile (1,1) should outscore (0,8) via proximity bonus alone.
+        const wizard = new Geom.Point(20, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(0, 0) };
+        const player = makeMockPlayer(makeMockCastingPiece());
+        (board as any).pieces = [enemy];
+        const close = new Geom.Point(1, 1);   // proximity bonus > 0
+        const nowhere = new Geom.Point(0, 8); // proximity 0, LoS 0
+        const validTiles = [nowhere, close];
+        const result = (spell as any).selectShadowWoodTile(player, wizard, validTiles);
+        // close tile scores higher via proximity bonus → index 0 after descending sort
+        expect(result).toBe(close);
+    });
+});
+
+// ─── trySelectWallTile ────────────────────────────────────────────────────────
+
+describe('SummonSpell.trySelectWallTile (private)', () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let spell: SummonSpell;
+
+    beforeEach(() => {
+        board = makeMockBoard();
+        spell = new SummonSpell(board, 1, makeSummonConfig({ name: 'Wall' }));
+    });
+
+    it('returns null when all tiles are adjacent (Chebyshev ≤ 1) to the wizard', () => {
+        const wizardPos = new Geom.Point(5, 5);
+        // All tiles within Chebyshev distance 1
+        const adjacent = [
+            new Geom.Point(4, 4), new Geom.Point(5, 4), new Geom.Point(6, 4),
+            new Geom.Point(4, 5),                        new Geom.Point(6, 5),
+            new Geom.Point(4, 6), new Geom.Point(5, 6), new Geom.Point(6, 6),
+        ];
+        const result = (spell as any).trySelectWallTile(
+            makeMockPlayer(makeMockCastingPiece()), wizardPos, adjacent, null, null
+        );
+        expect(result).toBeNull();
+    });
+
+    it('returns null when validTiles is empty', () => {
+        const result = (spell as any).trySelectWallTile(
+            makeMockPlayer(makeMockCastingPiece()), new Geom.Point(5, 5), [], null, null
+        );
+        expect(result).toBeNull();
+    });
+
+    it('returns a candidate when a non-adjacent tile exists', () => {
+        const wizardPos = new Geom.Point(0, 0);
+        const safeTile = new Geom.Point(3, 3);
+        const result = (spell as any).trySelectWallTile(
+            makeMockPlayer(makeMockCastingPiece()), wizardPos, [safeTile], null, null
+        );
+        expect(result).toBe(safeTile);
+    });
+
+    it('uses all validTiles as candidates when wizardPos is null', () => {
+        const t1 = new Geom.Point(0, 0);
+        const t2 = new Geom.Point(1, 0);
+        const result = (spell as any).trySelectWallTile(
+            makeMockPlayer(makeMockCastingPiece()), null, [t1, t2], null, null
+        );
+        // No filtering → weightedPick returns arr[0]
+        expect(result).toBe(t1);
+    });
+
+    it('skips scoring branch when no enemies present, still returns a tile', () => {
+        (board as any).pieces = [];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const wizardPos = new Geom.Point(0, 0);
+        const safeTile = new Geom.Point(3, 3);
+        const result = (spell as any).trySelectWallTile(
+            makeMockPlayer(makeMockCastingPiece()), wizardPos, [safeTile], null, null
+        );
+        expect(result).toBe(safeTile);
+    });
+
+    it('applies LoS-scoring when enemies exist and rollChance is true', () => {
+        // Wizard at (5,0). Enemy at (0,0). Tile on line (2,0) scores higher than (3,7).
+        const wizardPos = new Geom.Point(5, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(0, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const player = makeMockPlayer(makeMockCastingPiece());
+        const onLine = new Geom.Point(2, 0);
+        const offLine = new Geom.Point(3, 7);
+        const result = (spell as any).trySelectWallTile(
+            player, wizardPos, [offLine, onLine], null, null
+        );
+        // onLine scores higher — ends up at index 0 after sort
+        expect(result).toBe(onLine);
+    });
+
+    it('skips scoring when rollChance is false and returns first candidate', () => {
+        const wizardPos = new Geom.Point(5, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(0, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(false);
+        const player = makeMockPlayer(makeMockCastingPiece());
+        const t1 = new Geom.Point(3, 3);
+        const t2 = new Geom.Point(4, 4);
+        const result = (spell as any).trySelectWallTile(
+            player, wizardPos, [t1, t2], null, null
+        );
+        expect(result).toBe(t1);
+    });
+
+    it('adds contiguity bonus (+4) when tile is adjacent to lastWallPt', () => {
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(9, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const player = makeMockPlayer(makeMockCastingPiece());
+        // lastWallPt at (5,5). Adjacent tile (6,5) gets +4; isolated tile (3,3) does not.
+        const lastWallPt = new Geom.Point(5, 5);
+        const adjacent = new Geom.Point(6, 5);
+        const isolated = new Geom.Point(3, 3);
+        const result = (spell as any).trySelectWallTile(
+            player, wizardPos, [isolated, adjacent], lastWallPt, null
+        );
+        expect(result).toBe(adjacent);
+    });
+
+    it('awards straight-continuation bonus (+3) when tile continues the wall direction', () => {
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(9, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const player = makeMockPlayer(makeMockCastingPiece());
+        // Wall running rightward: prevWallPt (4,5) → lastWallPt (5,5) → dir=(1,0).
+        // Tile (6,5) continues straight; tile (5,6) turns 90°.
+        const prevWallPt = new Geom.Point(4, 5);
+        const lastWallPt = new Geom.Point(5, 5);
+        const straight = new Geom.Point(6, 5);
+        const turn = new Geom.Point(5, 6);
+        const result = (spell as any).trySelectWallTile(
+            player, wizardPos, [turn, straight], lastWallPt, prevWallPt
+        );
+        expect(result).toBe(straight);
+    });
+
+    it('awards 90-degree-turn bonus (+1) over diagonal step (no bonus)', () => {
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(9, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const player = makeMockPlayer(makeMockCastingPiece());
+        // Wall running rightward: prevWallPt (4,5) → lastWallPt (5,5) → dir=(1,0).
+        // 90-degree turn tile (5,6): tdx=0, tdy=1 → dot product=0 → +1.
+        // Diagonal tile (6,6): tdx=1, tdy=1 → dot product=1 → no straight, not 0 → 0 bonus.
+        const prevWallPt = new Geom.Point(4, 5);
+        const lastWallPt = new Geom.Point(5, 5);
+        const turnTile = new Geom.Point(5, 6);
+        const diagTile = new Geom.Point(6, 6);
+        const result = (spell as any).trySelectWallTile(
+            player, wizardPos, [diagTile, turnTile], lastWallPt, prevWallPt
+        );
+        expect(result).toBe(turnTile);
+    });
+
+    it('uses default difficulty 0.5 when player has no ai', () => {
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(9, 0) };
+        (board as any).pieces = [enemy];
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        // Player with no ai — difficulty defaults to 0.5 inside trySelectWallTile
+        const playerNoAi = { ...makeMockPlayer(makeMockCastingPiece()), ai: null };
+        const safeTile = new Geom.Point(3, 3);
+        const result = (spell as any).trySelectWallTile(
+            playerNoAi, wizardPos, [safeTile], null, null
+        );
+        expect(result).toBe(safeTile);
+    });
+});
+
+// ─── autoCast ─────────────────────────────────────────────────────────────────
+
+describe('SummonSpell.autoCast', () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let getUnitConfigSpy: ReturnType<typeof vi.spyOn>;
+
+    /** Build a board stub suitable for autoCast with a 2×2 grid (4 tiles). */
+    function makeAutoCastBoard(): ReturnType<typeof makeMockBoard> {
+        const b = makeMockBoard();
+        (b as any).width = 2;
+        (b as any).height = 2;
+        (b as any).pieces = [];
+        (b as any).rules = {
+            doCastSpell: vi.fn(),
+        };
+        return b;
+    }
+
+    /** Build a player stub with a castingPiece at (0,0). */
+    function makeAutoCastPlayer(): any {
+        const castingPiece = makeMockCastingPiece();
+        castingPiece.position = new Geom.Point(0, 0);
+        return {
+            castingPiece,
+            name: 'TestPlayer',
+            ai: null,
+            discardSpell: vi.fn().mockResolvedValue(undefined),
+        };
+    }
+
+    beforeEach(() => {
+        board = makeAutoCastBoard();
+        getUnitConfigSpy = vi.spyOn(Piece, 'getUnitConfig').mockReturnValue(
+            makeUnitConfig({ status: [] })
+        );
+    });
+
+    afterEach(() => {
+        getUnitConfigSpy.mockRestore();
+    });
+
+    it('returns false and plays "cancel" when no valid tiles exist on first iteration', async () => {
+        // Make getValidTarget always return null by filling every tile
+        board.getPiecesAtPosition = vi.fn().mockImplementation((_pt: any, filter: any) =>
+            filter ? [{ currentMount: null, engulfed: false, dead: false }] : []
+        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        const result = await spell.autoCast(player);
+        expect(result).toBe(false);
+        expect(board.sound.play).toHaveBeenCalledWith('cancel');
+        expect(player.discardSpell).not.toHaveBeenCalled();
+    });
+
+    it('calls discardSpell and plays "cancel" when no valid tiles remain after first successful cast', async () => {
+        // First iteration: tiles available → cast succeeds and decrements castTimes.
+        // Second iteration (castTimes=1 multi-cast): no tiles left.
+        let callCount = 0;
+        board.getPiecesAtPosition = vi.fn().mockImplementation((_pt: any, filter: any) => {
+            callCount++;
+            // First 4 calls (first iteration grid scan): empty → tiles valid
+            // Subsequent calls (second iteration grid scan): occupied → no valid tiles
+            if (callCount <= 4) {
+                return [];
+            }
+            return filter ? [{ currentMount: null, engulfed: false, dead: false }] : [];
+        });
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 2 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        // doCastSpell decrements _castTimes by calling cast → simulate that directly
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const result = await spell.autoCast(player);
+        expect(result).toBe(false);
+        expect(player.discardSpell).toHaveBeenCalled();
+        expect(board.sound.play).toHaveBeenCalledWith('cancel');
+    });
+
+    it('returns true and calls discardSpell after casting all times (random path)', async () => {
+        // Standard summon (not spreading, not autoPlace, not tree, not Wall).
+        // rollChance is not consulted for random path.
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const result = await spell.autoCast(player);
+        expect(result).toBe(true);
+        expect(player.discardSpell).toHaveBeenCalled();
+    });
+
+    it('uses selectSpreadingTile path when unit has Spreads status and rollChance favours it', async () => {
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: [UnitStatus.Spreads] }));
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'selectSpreadingTile');
+        const result = await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+        expect(result).toBe(true);
+    });
+
+    it('uses selectMagicWoodTile path when autoPlace is true', async () => {
+        // autoPlace overrides spreading/tree branches
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(false); // not spreading
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, autoPlace: true }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'selectMagicWoodTile');
+        await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+    });
+
+    it('uses selectShadowWoodTile path when tree=true and unit has positive combat', async () => {
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ['tree'] }));
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(false); // not spreading
+        // combat > 0 is provided by default makeUnitConfig (com: 3)
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, tree: true }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'selectShadowWoodTile');
+        await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+    });
+
+    it('uses trySelectWallTile path for Wall spell and returns true on success', async () => {
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: 'Wall' }));
+        const player = makeAutoCastPlayer();
+        player.castingPiece.position = new Geom.Point(9, 9); // wizard far from valid tiles
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'trySelectWallTile');
+        const result = await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+        expect(result).toBe(true);
+    });
+
+    it('returns successfullyCast=true and stops when trySelectWallTile returns null mid-cast', async () => {
+        // First iteration: wall cast succeeds (castTimes goes 2→1).
+        // Second iteration: trySelectWallTile returns null → returns true (already cast once).
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 2, name: 'Wall' }));
+        const player = makeAutoCastPlayer();
+        player.castingPiece.position = new Geom.Point(9, 9);
+        spell.owner = player;
+        let tryCallCount = 0;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        vi.spyOn(spell as any, 'trySelectWallTile').mockImplementation(() => {
+            tryCallCount++;
+            if (tryCallCount === 1) return new Geom.Point(0, 0);
+            return null;
+        });
+        const result = await spell.autoCast(player);
+        expect(result).toBe(true);
+        expect(player.discardSpell).toHaveBeenCalled();
+    });
+
+    it('plays "cancel" and returns false when trySelectWallTile returns null on first cast', async () => {
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: 'Wall' }));
+        const player = makeAutoCastPlayer();
+        player.castingPiece.position = new Geom.Point(9, 9);
+        spell.owner = player;
+        vi.spyOn(spell as any, 'trySelectWallTile').mockReturnValue(null);
+        const result = await spell.autoCast(player);
+        expect(result).toBe(false);
+        expect(board.sound.play).toHaveBeenCalledWith('cancel');
+        expect(player.discardSpell).not.toHaveBeenCalled();
+    });
+
+    it('tracks lastWallPt and prevWallPt across wall casts', async () => {
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 3, name: 'Wall' }));
+        const player = makeAutoCastPlayer();
+        player.castingPiece.position = new Geom.Point(9, 9);
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const pt1 = new Geom.Point(0, 0);
+        const pt2 = new Geom.Point(1, 0);
+        const pt3 = new Geom.Point(2, 0);
+        let tryCallCount = 0;
+        const capturedArgs: Array<{ lastPt: unknown; prevPt: unknown }> = [];
+        const tryMock = vi.spyOn(spell as any, 'trySelectWallTile').mockImplementation(
+            (_p: any, _w: any, _v: any, lastPt: any, prevPt: any) => {
+                capturedArgs.push({ lastPt, prevPt });
+                tryCallCount++;
+                if (tryCallCount === 1) return pt1;
+                if (tryCallCount === 2) return pt2;
+                return pt3;
+            }
+        );
+        await spell.autoCast(player);
+        expect(tryMock).toHaveBeenCalledTimes(3);
+        expect(capturedArgs[0].lastPt).toBeNull();
+        expect(capturedArgs[1].lastPt).toBe(pt1);
+        expect(capturedArgs[1].prevPt).toBeNull();
+        expect(capturedArgs[2].lastPt).toBe(pt2);
+        expect(capturedArgs[2].prevPt).toBe(pt1);
+    });
+
+    it('uses ai.difficulty when player has an ai controller (spreading path)', async () => {
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: [UnitStatus.Spreads] }));
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        player.ai = { difficulty: 1 };
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const result = await spell.autoCast(player);
+        // rollChance was called with 0.5 + 1 * 0.5 = 1.0 — should have taken spreading path
+        expect((board as any).rollChance).toHaveBeenCalledWith(1);
+        expect(result).toBe(true);
+    });
+
+    it('treats isSpreading as false when unitProperties is null (covers ?? false branch)', async () => {
+        // getUnitConfig returns null — unitProperties?.status?.includes(...) ?? false → false
+        getUnitConfigSpy.mockReturnValue(null as any);
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        // Should not throw and should use the random path
+        const result = await spell.autoCast(player);
+        expect(result).toBe(true);
+    });
+
+    it('treats wizardPos as null when player.castingPiece is null (covers ?? null branch)', async () => {
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        // castingPiece has no position — spell.owner setter requires a castingPiece but position
+        // comes from player.castingPiece?.position ?? null inside autoCast
+        const playerNoCastPos = {
+            castingPiece: { ...makeMockCastingPiece(), position: undefined },
+            name: 'NoPosPlayer',
+            ai: null,
+            discardSpell: vi.fn().mockResolvedValue(undefined),
+        };
+        // owner setter requires castingPiece; use a fully-formed player for that, then swap
+        const ownerForSetter = makeAutoCastPlayer();
+        spell.owner = ownerForSetter;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        // Call autoCast with a player whose castingPiece.position is undefined → wizardPos = null
+        const result = await spell.autoCast(playerNoCastPos as any);
+        expect(result).toBe(true);
+    });
+
+    // ── line 284: if (successfullyCast) false branch ──────────────────────────
+
+    it('returns true without calling discardSpell when _castTimes is already 0 (line 284 false branch)', async () => {
+        // Force the while loop to be skipped entirely so successfullyCast stays false.
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (spell as any)._castTimes = 0; // skip the loop
+        const result = await spell.autoCast(player);
+        expect(result).toBe(true);
+        expect(player.discardSpell).not.toHaveBeenCalled();
+    });
+
+    // ── line 364: sort comparator in selectShadowWoodTile ────────────────────
+
+    it('sort comparator in selectShadowWoodTile is exercised when enemies are on the board (line 364)', async () => {
+        // Use a Shadow Wood spell (tree=true, unit has positive com).
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ['tree'] }));
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        // Place an enemy on the board so the enemies array is non-empty → sort runs.
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(5, 5) };
+        (board as any).pieces = [enemy];
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, tree: true }));
+        const player = makeAutoCastPlayer();
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'selectShadowWoodTile');
+        const result = await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+        expect(result).toBe(true);
+        expect(player.discardSpell).toHaveBeenCalled();
+    });
+
+    // ── line 446: sort comparator in trySelectWallTile ────────────────────────
+
+    it('sort comparator in trySelectWallTile is exercised when enemies are on the board (line 446)', async () => {
+        // Use a Wall spell with an enemy on the board and rollChance=true so scoring runs.
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const enemy = { owner: 'foe', dead: false, position: new Geom.Point(9, 9) };
+        (board as any).pieces = [enemy];
+        // Wizard far from the 2×2 grid tiles so all candidates pass the adjacency filter.
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: 'Wall' }));
+        const player = makeAutoCastPlayer();
+        player.castingPiece.position = new Geom.Point(5, 5);
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
+        const selectSpy = vi.spyOn(spell as any, 'trySelectWallTile');
+        const result = await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+        expect(result).toBe(true);
+        expect(player.discardSpell).toHaveBeenCalled();
     });
 });

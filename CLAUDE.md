@@ -11,6 +11,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - Up to 8 local players with computer-controlled opponents
 - All original spells and units, plus new content in `assets/data/enhanced/`
 - Quality-of-life: mouse-driven UI, inline help, safeguards (e.g. warns if no valid targets in range)
+- AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers)
 
 ### Not yet implemented
 
@@ -82,7 +83,8 @@ Model                     — base class; validates unique IDs
 | `Rules` | Singleton service — validates and executes all game actions |
 | `Spell` | Spell handling and casting logic |
 | `Logger` | Singleton service — emits structured events consumed by Vue components |
-| `ComputerWizard` | AI controller implementing the `RemotePlayer` interface |
+| `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting |
+| `SummonSpell` | Summon spells; owns AI auto-cast logic via `autoCast(player)` and private tile-selection helpers |
 | `Cursor` | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface |
 
 ### Data Flow
@@ -129,6 +131,18 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 - `TurmoilSpell` (~94%)
 - `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
 - `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
+
+### AI auto-cast architecture
+
+`SummonSpell.autoCast(player)` drives all summon-spell casting for both AI and human auto-place spells (e.g. Magic Wood). `ComputerWizard.autoCastSpell` delegates to it for `SpellType.Summon` and handles the other spell types directly. Private helpers on `SummonSpell`:
+
+| Method | Used for |
+|---|---|
+| `selectSpreadingTile` | Gooey Blob etc. — prefers tiles near enemies |
+| `selectMagicWoodTile` | Magic Wood — clusters near the casting wizard |
+| `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency |
+| `trySelectWallTile` | Wall — hard-filters adjacent tiles, scores by LoS + contiguity + run direction; returns `null` to cancel remaining casts |
+| `scoreLoSBlock` | Shared geometry: scores a tile by how closely it lies on the enemy→wizard line segment |
 
 ### Improving testability
 
