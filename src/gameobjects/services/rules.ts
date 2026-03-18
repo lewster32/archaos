@@ -445,7 +445,7 @@ export class Rules {
                         selectedPiece.moved = false;
                     }
                     else if (
-                        !currentAliveHoveredPiece.inAttackRange(selectedPiece.position)
+                        !selectedPiece.inAttackRange(currentAliveHoveredPiece.position)
                     ) {
                         return ActionType.Invalid;
                     }
