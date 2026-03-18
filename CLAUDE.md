@@ -86,6 +86,8 @@ Model                     — base class; validates unique IDs
 | `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting |
 | `SummonSpell` | Summon spells; owns AI auto-cast logic via `autoCast(player)` and private tile-selection helpers |
 | `Cursor` | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface |
+| `RangeGizmo` | Calculates and displays movement ranges and A* paths for pieces; owns `Node` (tile in range graph) and `Path` (ordered node sequence with cost) |
+| `EffectEmitter` | Config-driven particle effects (extends Phaser `ParticleEmitter`); definitions in `effects.json` |
 
 ### Data Flow
 
@@ -124,10 +126,12 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 - `Model`, `Entity`, `StateManager`, `Player`, `Logger`
 - All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`
+- `EffectEmitter` (100% lines/functions, ~99% statements, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
 
 ### What's partially tested
 
 - `Wizard` (~64%) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
+- `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
 - `TurmoilSpell` (~94%)
 - `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
 - `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
@@ -148,8 +152,9 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 The main blocker for the Phaser-coupled classes is that they create sprites and call Phaser math (`PMath.RND`, scene textures, etc.) in their constructors or early in methods. Improvements already made:
 - Removed direct `Phaser.Math.RND` calls from `Wizard.randomWizCode()` (replaced with `Math.random`)
+- `EffectEmitter` tests use `vi.mock('phaser')` to replace the entire Phaser module with stubs (mock `ParticleEmitter` base class, `Curves.Path`, `Display.Color`, `BlendModes`, etc.), allowing full coverage of a class that extends a Phaser `GameObjects` class
 
-Remaining pattern to follow for further coverage: **inject** Phaser-dependent dependencies (scene, rng) rather than calling them directly, so tests can pass a stub/null.
+Remaining pattern to follow for further coverage: **inject** Phaser-dependent dependencies (scene, rng) rather than calling them directly, so tests can pass a stub/null. For classes that extend Phaser base classes, the `vi.mock('phaser')` approach (as used in `effectemitter.test.ts`) provides a viable alternative.
 
 ### Test setup
 

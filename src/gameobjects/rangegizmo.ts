@@ -226,6 +226,13 @@ export class RangeGizmo {
         console.log(`Debug grid:\n${debugGrid}`);
     }
 
+    /**
+     * Reset the range gizmo, clearing all visual elements. Optionally forces
+     * an immediate reset without animation.
+     *
+     * @param force If true, removes layers immediately without tween animation
+     * @returns A promise resolving to this RangeGizmo once cleared
+     */
     public async reset(force?: boolean): Promise<RangeGizmo> {
         if (this._rangeLayer.length === 0 && this._pathLayer.length === 0) {
             return this;
@@ -261,6 +268,11 @@ export class RangeGizmo {
         });
     }
 
+    /**
+     * Generate visual path indicators for all valid and terminal nodes.
+     * Creates cursor images at each node's isometric position and animates
+     * them in with a staggered reveal.
+     */
     private async generateVisualPaths(): Promise<void> {
         this._rangeLayer.removeAll();
 
@@ -327,6 +339,16 @@ export class RangeGizmo {
     private lastCursor: CursorType;
     private lastLoS: boolean;
 
+    /**
+     * Generate a simple circular range overlay centred on a position. Skips
+     * regeneration if the parameters match the last call (unless forced).
+     *
+     * @param position Centre point of the range
+     * @param distance Maximum distance from the centre
+     * @param cursor Cursor sprite frame to use for each tile
+     * @param lineOfSight If true, only shows tiles with line of sight from position
+     * @param force If true, bypasses the duplicate-call check and skips reveal animation
+     */
     public async generateSimpleRange(
         position: Geom.Point,
         distance: number,
@@ -415,6 +437,16 @@ export class RangeGizmo {
         });
     }
 
+    /**
+     * Show a simple range overlay with a reveal animation. Delegates to
+     * {@link generateSimpleRange} with `force: true`, then animates children
+     * from alpha 0 to 1.
+     *
+     * @param position Centre point of the range
+     * @param distance Maximum distance from the centre
+     * @param cursor Cursor sprite frame to use for each tile
+     * @param lineOfSight If true, only shows tiles with line of sight from position
+     */
     public async showSimpleRange(
         position: Geom.Point,
         distance: number,
@@ -446,6 +478,10 @@ export class RangeGizmo {
         });
     }
 
+    /**
+     * Hide the currently displayed simple range overlay with a fade-out
+     * animation (last-to-first stagger). No-ops if no range is visible.
+     */
     public async hideSimpleRange(): Promise<void> {
         // If no range to hide, return
         if (this._rangeLayer.length === 0) {
@@ -465,6 +501,11 @@ export class RangeGizmo {
         });
     }
 
+    /**
+     * Generate visual range indicators for flying units. Unlike
+     * {@link generateVisualPaths}, flying units can reach any valid node
+     * directly so no pathfinding is needed — only validity is checked.
+     */
     private async generateVisualRange(): Promise<void> {
         this._rangeLayer.removeAll();
 
@@ -513,6 +554,14 @@ export class RangeGizmo {
         });
     }
 
+    /**
+     * Calculate the 8-direction angle index (0–7) from one point to another.
+     * 0 = right, proceeding clockwise (1 = down-right, 2 = down, etc.).
+     *
+     * @param fromPt The origin point
+     * @param toPt The destination point
+     * @returns An integer 0–7 representing the octant direction
+     */
     private static getAngle(
         fromPt: Geom.Point,
         toPt: Geom.Point
@@ -525,6 +574,13 @@ export class RangeGizmo {
         return Math.floor(a / 45);
     }
 
+    /**
+     * Look up a valid (traversable or terminal) node at the given board
+     * position.
+     *
+     * @param pt The board position to look up
+     * @returns The matching Node, or null if none found
+     */
     public getNode(pt: Geom.Point): Node | null {
         return (
             this._validNodes.find(
@@ -534,6 +590,13 @@ export class RangeGizmo {
         );
     }
 
+    /**
+     * Get (or compute and cache) the shortest path from the current piece's
+     * position to the given board position.
+     *
+     * @param pt The destination board position
+     * @returns The computed Path, or null if unreachable / no piece set
+     */
     public getPathTo(pt: Geom.Point): Path {
         let path: Path, node: Node;
         node = this.getNode(pt);
@@ -591,6 +654,12 @@ export class RangeGizmo {
         return output;
     }
 
+    /**
+     * Display directional arrow cursors along the path from the current piece
+     * to the given destination. Clears any previously shown path first.
+     *
+     * @param toPt The destination board position
+     */
     public showPath(toPt: Geom.Point): void {
         this._pathLayer.removeAll();
         if (
@@ -628,6 +697,14 @@ export class RangeGizmo {
         }
     }
 
+    /**
+     * Run A* pathfinding between two board positions using the current set of
+     * valid nodes. Returns null if no path exists.
+     *
+     * @param fromPt The start position
+     * @param toPt The destination position
+     * @returns The shortest Path, or null if unreachable
+     */
     public findPath(fromPt: Geom.Point, toPt: Geom.Point): Path {
         let firstNode: Node, destinationNode: Node;
         for (const node of this._validNodes) {
@@ -729,6 +806,13 @@ export class RangeGizmo {
         return RangeGizmo.buildPath(destinationNode, firstNode);
     }
 
+    /**
+     * Find all valid nodes adjacent to the given node (within 1 tile in any
+     * direction, i.e. the 8-connected neighbourhood).
+     *
+     * @param node The node to find neighbours for
+     * @returns Array of adjacent valid nodes (excludes the node itself)
+     */
     public findConnectedNodes(node: Node): Node[] {
         const output: Node[] = [];
 
@@ -754,6 +838,17 @@ export class RangeGizmo {
         return output;
     }
 
+    /**
+     * Diagonal-shortcut heuristic for A* pathfinding. Penalises terminal and
+     * warning nodes with an additional cost to encourage paths that avoid them.
+     *
+     * @param node The current node
+     * @param destinationNode The target node
+     * @param cost Movement cost for straight (cardinal) steps
+     * @param diagonalCost Movement cost for diagonal steps
+     * @param terminalCost Extra penalty added for warning/terminal nodes
+     * @returns The estimated movement cost from node to destinationNode
+     */
     public static diagonalHeuristic(
         node: Node,
         destinationNode: Node,
@@ -778,6 +873,15 @@ export class RangeGizmo {
         return diagonalCost * diag + cost * (straight - 2 * diag);
     }
 
+    /**
+     * Reconstruct a Path by walking the parentNode chain from destination back
+     * to start. Also marks nodes after any blocking (non-traversable/terminal)
+     * node as non-traversable.
+     *
+     * @param destinationNode The end node of the path
+     * @param startNode The start node of the path
+     * @returns A new Path with nodes, angles, and total cost
+     */
     public static buildPath(destinationNode: Node, startNode: Node): Path {
         const angles: number[] = [];
         const path: Node[] = [];
@@ -806,6 +910,13 @@ export class RangeGizmo {
         return new Path(path, angles, cost);
     }
 
+    /**
+     * Check whether a node exists in the open set.
+     *
+     * @param node The node to search for
+     * @param openNodes The current open set
+     * @returns True if the node is in the open set
+     */
     public static isOpen(node: Node, openNodes: Node[]): boolean {
         const l: number = openNodes.length;
         for (let i: number = 0; i < l; ++i) {
@@ -815,6 +926,13 @@ export class RangeGizmo {
         return false;
     }
 
+    /**
+     * Check whether a node exists in the closed set.
+     *
+     * @param node The node to search for
+     * @param closedNodes The current closed set
+     * @returns True if the node is in the closed set
+     */
     public static isClosed(node: Node, closedNodes: Node[]): boolean {
         const l: number = closedNodes.length;
         for (let i: number = 0; i < l; ++i) {
@@ -825,6 +943,11 @@ export class RangeGizmo {
     }
 }
 
+/**
+ * A node in the movement range graph. Represents a single board tile with
+ * pathfinding metadata (g/h/f costs, parent link) and movement flags
+ * (traversable, terminal, warning).
+ */
 export class Node {
     private readonly _pos: Geom.Point = new Geom.Point(-1, -1);
     public g: number;
@@ -858,22 +981,33 @@ export class Node {
      */
     public flying: boolean = false;
 
+    /**
+     * @param x Board x coordinate
+     * @param y Board y coordinate
+     */
     constructor(x: number, y: number) {
         this._pos.setTo(x, y);
     }
 
+    /** Board x coordinate */
     get x(): number {
         return this._pos.x;
     }
 
+    /** Board y coordinate */
     get y(): number {
         return this._pos.y;
     }
 
+    /** The board position as a Phaser Point */
     get pos(): Geom.Point {
         return this._pos;
     }
 
+    /**
+     * A node is valid if it is traversable and either has a computed path or
+     * is being reached via flying movement.
+     */
     isValid(): boolean {
         if ((this.path !== null || this.flying) && this.traversable) {
             return true;
@@ -882,11 +1016,20 @@ export class Node {
     }
 }
 
+/**
+ * An ordered sequence of {@link Node}s forming a movement path, along with
+ * the direction angles between each step and the total movement cost.
+ */
 export class Path {
     private readonly _nodes: Node[];
     private readonly _angles: number[];
     private readonly _cost: number;
 
+    /**
+     * @param nodes Ordered list of nodes from start to destination
+     * @param angles Direction angle indices (0–7) between consecutive nodes
+     * @param cost Total movement cost of the path
+     */
     constructor(nodes: Node[], angles: number[], cost: number) {
         if (nodes?.length && cost > 0) {
             this._nodes = nodes;
@@ -895,28 +1038,34 @@ export class Path {
         }
     }
 
+    /** Convert the path's nodes into an array of cloned Phaser Points. */
     public toPoints(): Geom.Point[] {
         return this._nodes.map((node: Node) =>
             Geom.Point.Clone(node.pos)
         );
     }
 
+    /** Total movement cost of the path */
     get cost(): number {
         return this._cost;
     }
 
+    /** Ordered array of nodes from start to destination */
     get nodes(): Node[] {
         return this._nodes;
     }
 
+    /** Direction angle indices (0–7) for each step in the path */
     get angles(): number[] {
         return this._angles;
     }
 
+    /** True if the final node in the path is a warning node */
     get warning(): boolean {
         return this._nodes.at(-1).warning;
     }
 
+    /** True if any node in the path is a terminal node */
     get terminal(): boolean {
         return this._nodes.some((n: Node) => n.terminal);
     }
