@@ -2181,6 +2181,50 @@ export class Board extends Model implements Box {
     }
 
     /**
+     * Pick a random element from an array, with a weight value to bias it
+     * towards earlier or later elements. The weight value increases the
+     * likelihood of picking later elements when positive, and earlier elements
+     * when negative. The absolute value of the weight determines how strong the
+     * bias is. A weight of 0 picks uniformly at random.
+     *
+     * In linear mode (default) slot weights increase by equal steps from 1 to
+     * 1+|weight|. In exponential mode slot weights grow as exp(i·|weight|/(n-1)),
+     * which produces a much stronger concentration at the favoured end for the
+     * same weight value — useful when a very pronounced preference is needed.
+     *
+     * @param array       the array to pick from
+     * @param weight      bias strength; positive → later elements, negative → earlier
+     * @param exponential use exponential slot weights instead of linear (default true)
+     */
+    public static weightedRandomPick<T>(array: T[], weight: number, exponential: boolean = true): T {
+        if (array.length === 0) {
+            throw new Error("Cannot pick from an empty array");
+        }
+        if (array.length === 1 || weight === 0) {
+            return PMath.RND.pick(array);
+        }
+        const n = array.length;
+        const absW = Math.abs(weight);
+        const slotWeights: number[] = Array.from({ length: n });
+        let totalWeight = 0;
+        for (let i = 0; i < n; i++) {
+            slotWeights[i] = exponential
+                ? Math.exp(i * absW / (n - 1))
+                : 1 + (i * absW) / (n - 1);
+            totalWeight += slotWeights[i];
+        }
+        const randomWeight: number = PMath.RND.frac() * totalWeight;
+        let cumulativeWeight = 0;
+        for (let i = 0; i < n; i++) {
+            cumulativeWeight += slotWeights[i];
+            if (randomWeight < cumulativeWeight) {
+                return weight >= 0 ? array[i] : array[n - 1 - i];
+            }
+        }
+        return weight >= 0 ? array.at(-1) : array[0];
+    }
+
+    /**
      * Check if there is line of sight between two positions on the board.
      * 
      * @param startPosition the starting position

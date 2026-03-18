@@ -12,6 +12,7 @@ import type { SpellConfig } from '../configs/spellconfig';
 
 // PMath.RND is not initialised without a Phaser.Game instance.
 PMath.RND = {
+    frac: () => Math.random(),
     pick: (arr: any[]) => arr[Math.floor(Math.random() * arr.length)],
     weightedPick: (arr: any[]) => arr[0],
 } as any;
@@ -681,8 +682,11 @@ describe('SummonSpell.selectMagicWoodTile (private)', () => {
         const near = new Geom.Point(1, 0);
         const far = new Geom.Point(5, 5);
         const validTiles = [far, near];
+        // Spy to capture what order tiles arrive in — pick returns arr[0]
+        const spy = vi.spyOn(Board, 'weightedRandomPick').mockImplementation((arr) => arr[0]);
         const result = (spell as any).selectMagicWoodTile(new Geom.Point(0, 0), validTiles);
-        // weightedPick returns arr[0] — nearest tile after sort
+        spy.mockRestore();
+        // After ascending sort by distance, nearest tile is at index 0
         expect(result).toBe(near);
     });
 
@@ -690,8 +694,11 @@ describe('SummonSpell.selectMagicWoodTile (private)', () => {
         const t1 = new Geom.Point(3, 3);
         const t2 = new Geom.Point(1, 1);
         const validTiles = [t1, t2];
+        // Spy to capture which array is passed — no sort should occur
+        const spy = vi.spyOn(Board, 'weightedRandomPick').mockImplementation((arr) => arr[0]);
         const result = (spell as any).selectMagicWoodTile(null, validTiles);
-        // No sort applied; weightedPick returns arr[0]
+        spy.mockRestore();
+        // No sort applied; original first element is returned
         expect(result).toBe(t1);
     });
 

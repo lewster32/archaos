@@ -27,13 +27,20 @@ import { BoardPhase } from "./gameobjects/enums/boardphase";
 import { GameScenarioData, GameSetupData, GameSetupPlayerType } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
-import { Scene, Math as PMath } from "phaser";
+import { Scene } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
 import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { loadingProgress, debugLoading } from "./game/loading-state";
 
 export class GameScene extends Scene {
     private board: Board;
+
+    /**
+     * Pre-generated distribution of difficulties to favour middle values when
+     * randomly picking difficulty for computer players. Values are between 0.1
+     * and 1.0, where 1.0 is the hardest difficulty.
+     */
+    private static readonly DIFFICULTY_DISTRIBUTION: number[] = [.5, .6, .4, .7, .3, .8, .2, .9, .1, 1];
 
     constructor() {
         super({
@@ -262,9 +269,10 @@ export class GameScene extends Scene {
             // Get distributed difficulty between 0.1 and 1.0, favouring
             // middle values
             const difficulty: number = player.difficulty ||
-                PMath.RND.weightedPick([
-                    .5, .5, .5, .6, .6, .4, .4, .7, .3, .8, .2, .9, .1, 1
-                ]);
+                Board.weightedRandomPick(
+                    GameScene.DIFFICULTY_DISTRIBUTION,
+                    -3
+                );
 
             this.board.addPlayer({
                 name: player.name,
@@ -339,7 +347,10 @@ export class GameScene extends Scene {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
                 type: player.computerControlled ? GameSetupPlayerType.Computer : GameSetupPlayerType.Local,
-                difficulty: player.difficulty || 0.5,
+                difficulty: player.difficulty || Board.weightedRandomPick(
+                    GameScene.DIFFICULTY_DISTRIBUTION,
+                    -3
+                ),
             })
             const wizard: Wizard = this.board.addWizard({
                 owner: currentPlayer,

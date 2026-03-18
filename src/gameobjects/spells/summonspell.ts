@@ -333,7 +333,8 @@ export class SummonSpell extends Spell {
                 Board.distance(a, wizardPos) - Board.distance(b, wizardPos)
             );
         }
-        return PMath.RND.weightedPick(validTiles); // favours closer (earlier) entries
+        // Favour closer tiles much more heavily to create tight clusters
+        return Board.weightedRandomPick(validTiles, -4);
     }
 
     /**
@@ -363,7 +364,9 @@ export class SummonSpell extends Spell {
             // Sort descending — best tile at index 0 for weightedPick
             validTiles.sort((a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0));
         }
-        return PMath.RND.weightedPick(validTiles);
+        // Favour higher-scoring tiles, but still allow some randomness so
+        // placement isn't too predictable
+        return Board.weightedRandomPick(validTiles, -4);
     }
 
     /**
@@ -446,7 +449,7 @@ export class SummonSpell extends Spell {
             candidates.sort((a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0));
         }
 
-        return PMath.RND.weightedPick(candidates);
+        return Board.weightedRandomPick(candidates, -8); // favour higher-scoring tiles, but with some randomness
     }
 
     /**
