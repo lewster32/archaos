@@ -30,6 +30,15 @@ const PHASER_ASSET_FILES = new Set([
  */
 const AUDIO_FORMAT_PREFERENCE = [".ogg", ".mp3", ".m4a"];
 
+/** Returns the preferred audio filename for a stem, or null if none found. */
+function preferredAudioFile(stem, files) {
+    for (const ext of AUDIO_FORMAT_PREFERENCE) {
+        const candidate = `${stem}${ext}`;
+        if (files.includes(candidate)) return candidate;
+    }
+    return null;
+}
+
 /**
  * JS files produced by the entry bundle that load before the loading screen
  * appears and therefore should NOT be counted.
@@ -41,6 +50,14 @@ const JS_EXCLUDE = new Set([
     "rexcolorreplacepipelineplugin.min.js",
     "rexperlinplugin.min.js",
 ]);
+
+/**
+ * CSS files that are part of the initial (pre-loading-screen) bundle and
+ * therefore should NOT be counted.  Lazy CSS chunks (e.g. Game.css) are
+ * fetched alongside their JS counterpart after the loading screen appears
+ * and ARE counted.
+ */
+const CSS_EXCLUDE = new Set(["index.css"]);
 
 /**
  * Vite plugin: after each production build, calculates the total byte size of
@@ -94,18 +111,20 @@ export function phaserAssetSizesPlugin() {
                 audioFiles.map((f) => f.replace(/\.(ogg|mp3|m4a)$/, "")),
             );
             for (const stem of audioStems) {
-                for (const ext of AUDIO_FORMAT_PREFERENCE) {
-                    const candidate = `${stem}${ext}`;
-                    if (files.includes(candidate)) {
-                        const size = sizeOf(candidate);
-                        total += size;
-                        counted.push({
-                            file: candidate,
-                            size,
-                            note: `audio (${ext} preferred)`,
-                        });
-                        break;
-                    }
+                const file = preferredAudioFile(stem, files);
+                if (file) {
+                    const size = sizeOf(file);
+                    total += size;
+                    counted.push({ file, size, note: "audio (preferred format)" });
+                }
+            }
+
+            // --- Lazy CSS bundles (fetched alongside their JS chunk) ---
+            for (const file of files) {
+                if (file.endsWith(".css") && !CSS_EXCLUDE.has(file)) {
+                    const size = sizeOf(file);
+                    total += size;
+                    counted.push({ file, size, note: "lazy CSS bundle" });
                 }
             }
 

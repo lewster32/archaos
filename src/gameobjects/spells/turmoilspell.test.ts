@@ -35,6 +35,23 @@ describe('TurmoilSpell.doCast', () => {
         expect(corpse.moveTo).not.toHaveBeenCalled();
     });
 
+    it('returns false when no wizard owned by the caster is in the targets list', async () => {
+        // targets list contains only a non-wizard piece — find() returns undefined
+        const creature = makeMockPiece({ type: UnitType.Creature, id: 10, x: 1, y: 1 });
+        const wizard = makeMockPiece({ type: UnitType.Wizard, id: 11, x: 0, y: 0 });
+        const owner = makeMockPlayer(wizard);
+        wizard.owner = owner;
+        const board = makeMockBoard();
+        (board as any).pieces = [creature];
+        const turmoilConfig = Spell.getSpellProperties('Turmoil');
+        const spell = new TurmoilSpell(board, 1, turmoilConfig);
+        spell.owner = owner;
+
+        // Pass creature (not a wizard) as the only target
+        const result = await spell.doCast(owner, wizard, new Geom.Point(0, 0), [creature]);
+        expect(result).toBe(false);
+    });
+
     it('skips a piece when getRandomEmptySpace returns null', async () => {
         const wizard = makeMockPiece({ type: UnitType.Wizard });
         const owner = makeMockPlayer(wizard);
