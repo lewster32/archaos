@@ -8,7 +8,7 @@ import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";
 import { ComputerWizard } from "./computerwizard";
 import { Colour } from "./enums/colour";
-import { RemotePlayer } from "../remoteplayer";
+import { RemotePlayer } from "./remoteplayer";
 import { GameSetupPlayerType } from "./interfaces/ui";
 
 export class Player extends Model {
