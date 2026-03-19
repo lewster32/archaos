@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ComputerWizard } from './computerwizard';
 import type { Board } from './board';
 import type { Player } from './player';
@@ -6,7 +6,6 @@ import type { Piece } from './piece';
 import type { Spell } from './spells/spell';
 import { SpellType } from './enums/spelltype';
 import { UnitType } from './enums/unittype';
-import { UnitStatus } from './enums/unitstatus';
 import { Geom } from 'phaser';
 
 // ─── Shared stubs ────────────────────────────────────────────────────────────
