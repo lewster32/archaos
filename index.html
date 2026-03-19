@@ -74,28 +74,30 @@
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     <script type="module">
-        import { getCurrentWindow } from '@tauri-apps/api/window';
-        try {
-            const appWindow = getCurrentWindow();
+        if (globalThis.__TAURI_INTERNALS__) {
+            const { getCurrentWindow } = await import('@tauri-apps/api/window');
+            try {
+                const appWindow = getCurrentWindow();
 
-            if (!appWindow) {
-                console.error("Failed to get current window");
-            } else {
-                document
-                    .getElementById('titlebar-minimize')
-                    ?.addEventListener('click', () => appWindow.minimize());
-                document
-                    .getElementById('titlebar-maximize')
-                    ?.addEventListener('click', () => appWindow.toggleMaximize());
-                document
-                    .getElementById('titlebar-close')
-                    ?.addEventListener('click', () => appWindow.close());
+                if (appWindow) {
+                    document
+                        .getElementById('titlebar-minimize')
+                        ?.addEventListener('click', () => appWindow.minimize());
+                    document
+                        .getElementById('titlebar-maximize')
+                        ?.addEventListener('click', () => appWindow.toggleMaximize());
+                    document
+                        .getElementById('titlebar-close')
+                        ?.addEventListener('click', () => appWindow.close());
 
-                document.getElementById('titlebar')?.style.removeProperty('display');
-                document.querySelector('body')?.classList.add('tauri-app');
+                    document.getElementById('titlebar')?.style.removeProperty('display');
+                    document.querySelector('body')?.classList.add('tauri-app');
+                } else {
+                    console.error("Failed to get current window");
+                }
+            } catch (error) {
+                console.error("Failed to initialise titlebar controls", error);
             }
-        } catch (error) {
-            console.error("Failed to initialise titlebar controls", error);
         }
     </script>
 </body>
