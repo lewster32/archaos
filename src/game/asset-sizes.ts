@@ -17,10 +17,11 @@
 //   rexperlinplugin.min.js                                3899 B  (Phaser preload)
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)
-//   chaossounds.ogg                                     147151 B  (audio (.ogg preferred))
-//   Game.js                                             222275 B  (lazy JS bundle)
+//   chaossounds.ogg                                     147151 B  (audio (preferred format))
+//   Game.css                                             14007 B  (lazy CSS bundle)
+//   Game.js                                             222762 B  (lazy JS bundle)
 //   phaser.js                                          1198751 B  (lazy JS bundle)
-//   TOTAL                                              1843988 B
+//   TOTAL                                              1858482 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 1843988;
+export const TOTAL_GAME_ASSET_BYTES = 1858482;
