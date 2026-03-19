@@ -13,7 +13,7 @@ import { SpellTarget } from "./enums/spelltarget";
 import { Geom, Math as PMath } from "phaser";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
-import { RemotePlayer } from "./remoteplayer";
+import { RemotePlayer } from "./interfaces/remoteplayer";
 
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
