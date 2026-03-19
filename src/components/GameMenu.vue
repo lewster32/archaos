@@ -56,7 +56,7 @@
                     <input
                         type="checkbox"
                         v-model="setup.classicSpells"
-                        style="accent-color: var(--color-cyan)"
+                        style="--accent-color: var(--color-cyan)"
                         id="classicspells"
                     />
                     <span class="c-cyan">Classic spells</span
@@ -178,16 +178,9 @@ function startGame(): void {
     image-rendering: pixelated;
 }
 
-input[type='checkbox'] {
-    width: 2rem;
-    height: 2rem;
-    accent-color: var(--color-yellow);
-    cursor: pointer;
-}
-
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: .5rem;
 }
 </style>
