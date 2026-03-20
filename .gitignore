@@ -111,3 +111,7 @@ dist
 
 # Claude files
 .claude/
+
+# Playwright / vitest-browser failure screenshots
+src/**/__screenshots__/
+.vitest-attachments/

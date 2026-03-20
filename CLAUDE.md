@@ -112,9 +112,21 @@ Model                     — base class; validates unique IDs
 
 ## Testing
 
-Run tests:
+The test suite is split into two projects via `vitest.config.ts`:
+
+| Project | Environment | Scope |
+|---|---|---|
+| `unit` | jsdom | `src/**/*.test.ts` (excludes `src/components/`) |
+| `components` | Real Chromium (Playwright) | `src/components/**/*.test.ts` |
+
+Run all tests:
 ```bash
 npm test
+```
+
+Run only component tests (browser):
+```bash
+npx vitest run --project=components
 ```
 
 Run with coverage (scoped to gameobjects):
@@ -127,6 +139,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 - `Model`, `Entity`, `StateManager`, `Player`, `Logger`
 - All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`
 - `EffectEmitter` (100% lines/functions, ~99% statements, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
+- Vue components: `GameMenu`, `LoadingScreen`, `Log`, `GameControls`, `UnitStats` — tested in real Chromium via `vitest-browser-vue`
 
 ### What's partially tested
 
@@ -158,9 +171,11 @@ Remaining pattern to follow for further coverage: **inject** Phaser-dependent de
 
 ### Test setup
 
-`vitest.setup.ts` mocks:
+`vitest.setup.ts` (unit project only) mocks:
 - `HTMLCanvasElement` methods (`getContext`, `fillRect`, `strokeRect`, etc.)
 - `requestAnimationFrame` / `cancelAnimationFrame`
+
+Component tests use `vitest-browser-vue` as the setup file, which registers `render()` and per-test cleanup in the real browser. Failure screenshots are written to `src/components/__screenshots__/` (git-ignored).
 
 ### Cheat flags (for manual debugging)
 

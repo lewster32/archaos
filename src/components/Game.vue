@@ -8,12 +8,8 @@
         }"
         ref="container"
     />
-    <Suspense>
-        <GameMenu v-if="!gameStarted" @start="onGameStart" />
-        <template #fallback>
-            <LoadingScreen />
-        </template>
-    </Suspense>
+    <LoadingScreen v-if="loadingProgress < 1" />
+    <GameMenu v-else-if="!gameStarted" @start="onGameStart" />
     <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted && spellbook" />
     <Log :logs="logs" />
     <Minimap
@@ -51,6 +47,7 @@ import UnitInfo from './UnitInfo.vue';
 
 // Phaser game launcher
 import { launch } from '../game/game';
+import { loadingProgress } from '../game/loading-state';
 
 // Vue and types
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';

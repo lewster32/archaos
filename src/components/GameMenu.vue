@@ -74,24 +74,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { loadingProgress } from '../game/loading-state';
 import type { SetupData, GameSetupData, SetupPlayer } from '../gameobjects/interfaces/ui';
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
 }>();
-
-// Suspend (via <Suspense> in parent) until Phaser finishes loading assets.
-if (loadingProgress.value < 1) {
-    await new Promise<void>(resolve => {
-        const stop: () => void = watch(loadingProgress, v => {
-            if (v >= 1) {
-                stop();
-                resolve();
-            }
-        });
-    });
-}
 
 const defaultPlayers: SetupPlayer[] = [
     { name: 'Gandalf' },

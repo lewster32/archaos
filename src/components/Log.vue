@@ -84,6 +84,8 @@ const getColour = (log: Log) => {
     }
     return { color: `var(--color-white)` };
 };
+
+defineExpose({ showTimestamps });
 </script>
 <style lang="scss" scoped>
     .game-log {
