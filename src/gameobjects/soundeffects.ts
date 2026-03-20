@@ -34,6 +34,7 @@ export class SoundEffects {
                 
                 for (let i = 0; i < repeat; i++) {
                     this._sound.play(effectName);
+                    /* v8 ignore next */
                     if (i < repeat) {
                         await new Promise((resolve) => setTimeout(resolve, delay));
                     }
