@@ -722,10 +722,15 @@ describe('SummonSpell.selectShadowWoodTile (private)', () => {
             makeUnitConfig({ status: ['tree'] })
         );
         spell = new SummonSpell(board, 1, makeSummonConfig({ tree: true }));
+        // weightedRandomPick uses PMath.RND.frac() (= Math.random()) for randomness.
+        // Pin it to 0.5 so it deterministically returns the highest-scored tile
+        // (index 0 after descending sort) rather than flaking ~1.8% of the time.
+        vi.spyOn(Math, 'random').mockReturnValue(0.5);
     });
 
     afterEach(() => {
         getUnitConfigSpy.mockRestore();
+        vi.restoreAllMocks();
     });
 
     it('returns a tile from validTiles when no enemies are present', () => {
