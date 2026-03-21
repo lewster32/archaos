@@ -11,7 +11,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - Up to 8 local players with computer-controlled opponents
 - All original spells and units, plus new content in `assets/data/enhanced/`
 - Quality-of-life: mouse-driven UI, inline help, safeguards (e.g. warns if no valid targets in range)
-- AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (general summons towards highest threat, spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers)
+- AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (general summons towards highest threat, spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers), illusion-suspicion Disbelieve preference (suspects high-strength low-cast-chance units; boosted by threat proximity; tempered by world balance and known-non-illusion memory)
 
 ### Not yet implemented
 
@@ -163,7 +163,11 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 - `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A\* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
 - `TurmoilSpell` (~94%)
 - `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
-- `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
+- `ComputerWizard` (~33%) — `getSpellChanceForUnit`, `selectSpell` illusion-suspicion logic, `withPreferredFirst`, `preferredTargetId`, `findSpellTargets`, `evaluateEnemyPlayerPriorities`, `rememberNonIllusionPiece`/`forgetIllusionKnowledge` tested; remaining gaps are `autoCastSpell`, `moveUnit`/`moveAllUnits` (Phaser-coupled movement and combat)
+
+### AI spell-selection architecture
+
+`ComputerWizard.selectSpell` evaluates enemy threat priorities, then filters and ranks available spells. Before the normal weighted-pick, it checks whether Disbelieve should be preferred: for each disbelievable enemy piece, it computes a suspicion score = `strength × (1 − effectiveCastChance)`, doubled if the piece threatens the wizard. The effective cast chance is looked up via `getSpellChanceForUnit` (which applies the same world-balance adjustment as `Spell.chance`). The resulting preference is normalised to 0–1 and gated by difficulty, so higher-difficulty wizards are much more likely to Disbelieve a suspected illusion (e.g. a dragon). Pieces already known to be non-illusions (via `_knownNonIllusionPieces`) are skipped. When suspicion fires, `selectSpell` sets `preferredTargetId`, which `autoCastSpell` consumes via `withPreferredFirst` + `weightedPick` to strongly favour that target. This preferred-target mechanism is reusable across all piece-targeting spell types (attack, Disbelieve, Subversion, Raise Dead, etc.).
 
 ### AI auto-cast architecture
 

@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { ComputerWizard } from "./computerwizard";
 import type { Board } from "./board";
 import type { Player } from "./player";
 import type { Piece } from "./piece";
-import type { Spell } from "./spells/spell";
+import { Spell } from "./spells/spell";
 import { SpellType } from "./enums/spelltype";
 import { UnitType } from "./enums/unittype";
 import { Geom } from "phaser";
@@ -524,6 +524,687 @@ describe("ComputerWizard", () => {
             expect(() =>
                 (cw as any).evaluateEnemyPlayerPriorities(),
             ).not.toThrow();
+        });
+    });
+
+    // ─── getSpellChanceForUnit (private static) ──────────────────────────────
+
+    describe("getSpellChanceForUnit", () => {
+        const TEST_KEY = "__test_spell__";
+
+        afterEach(() => {
+            delete (Spell.spells as any)[TEST_KEY];
+        });
+
+        function inject(overrides: Record<string, unknown> = {}) {
+            (Spell.spells as any)[TEST_KEY] = {
+                chance: 0.1,
+                balance: 0,
+                name: "Test Spell",
+                unitId: "test-unit",
+                ...overrides,
+            };
+        }
+
+        it("returns the chance for a classic spell matched by unitId", () => {
+            inject({ chance: 0.3, balance: 0 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit("test-unit", 0),
+            ).toBe(0.3);
+        });
+
+        it("returns the chance for an enhanced spell matched by unit.id", () => {
+            (Spell.spells as any)[TEST_KEY] = {
+                chance: 0.4,
+                balance: 0,
+                name: "Test Enhanced",
+                unit: { id: "enhanced-unit" },
+            };
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "enhanced-unit",
+                    0,
+                ),
+            ).toBe(0.4);
+        });
+
+        it("returns null when no spell matches the unit ID", () => {
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "no-such-unit",
+                    0,
+                ),
+            ).toBeNull();
+        });
+
+        it("increases chance for a chaotic spell on a chaotic board", () => {
+            // balance -2, worldBalance -0.3 → offset flips to +0.3
+            inject({ chance: 0.1, balance: -2 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    -0.3,
+                ),
+            ).toBeCloseTo(0.4);
+        });
+
+        it("increases chance for a lawful spell on a lawful board", () => {
+            inject({ chance: 0.3, balance: 2 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    0.2,
+                ),
+            ).toBeCloseTo(0.5);
+        });
+
+        it("returns base chance unchanged for neutral spells", () => {
+            inject({ chance: 0.5, balance: 0 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    -0.5,
+                ),
+            ).toBe(0.5);
+        });
+
+        it("clamps the adjusted chance to a maximum of 1", () => {
+            inject({ chance: 0.5, balance: -2 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    -1,
+                ),
+            ).toBe(1);
+        });
+
+        it("clamps the adjusted chance to a minimum of 0.1", () => {
+            inject({ chance: 0.1, balance: 2 });
+            expect(
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    -0.5,
+                ),
+            ).toBe(0.1);
+        });
+    });
+
+    // ─── selectSpell — illusion suspicion ─────────────────────────────────────
+
+    describe("selectSpell — illusion suspicion", () => {
+        const TEST_KEY = "__test_selectspell__";
+        const DRAGON_UNIT_ID = "test-dragon-unit";
+
+        afterEach(() => {
+            delete (Spell.spells as any)[TEST_KEY];
+        });
+
+        function injectDragonSpell(
+            chance: number = 0.1,
+            balance: number = -2,
+        ) {
+            (Spell.spells as any)[TEST_KEY] = {
+                chance,
+                balance,
+                name: "Test Dragon",
+                unitId: DRAGON_UNIT_ID,
+            };
+        }
+
+        function makeDisbelieve(): Spell {
+            return {
+                id: 100,
+                type: SpellType.Disbelieve,
+                properties: { id: "disbelieve", persist: true },
+                getValidTarget: vi.fn().mockReturnValue(true),
+                chance: 0.5, // Lower than fallback so weighted-pick prefers fallback on normal path
+            } as unknown as Spell;
+        }
+
+        function makeFallback(): Spell {
+            return {
+                id: 200,
+                type: SpellType.Summon,
+                properties: { unitId: "some-unit" },
+                getValidTarget: vi.fn().mockReturnValue(null),
+                chance: 0.8,
+                allowIllusion: false,
+            } as unknown as Spell;
+        }
+
+        function makeDragon(
+            owner: any,
+            extra: Record<string, unknown> = {},
+        ): Piece {
+            return {
+                id: 50,
+                type: UnitType.Creature,
+                owner,
+                dead: false,
+                raisedDead: false,
+                canBeDisbelieved: true,
+                position: new Geom.Point(3, 0),
+                strength: 30,
+                properties: { id: DRAGON_UNIT_ID },
+                fullName: "Test Dragon",
+                hasStatus: vi.fn().mockReturnValue(false),
+                canAttackPiece: vi.fn().mockReturnValue(true),
+                ...extra,
+            } as unknown as Piece;
+        }
+
+        /**
+         * Build a board + player + ComputerWizard configured for selectSpell
+         * tests. `rollChanceReturn` can be a boolean or a function to control
+         * the suspicion preference roll.
+         */
+        function setup(
+            opts: {
+                difficulty?: number;
+                boardBalance?: number;
+                dragonStrength?: number;
+                dragonChance?: number;
+                dragonBalance?: number;
+                rollChanceReturn?: boolean | ((c: number) => boolean);
+                threatening?: boolean;
+                knownNonIllusion?: boolean;
+                raisedDead?: boolean;
+                noDragon?: boolean;
+            } = {},
+        ) {
+            const {
+                difficulty = 1,
+                boardBalance = 0,
+                dragonStrength = 30,
+                dragonChance = 0.1,
+                dragonBalance = -2,
+                rollChanceReturn = ((c: number) => c > 0) as
+                    | boolean
+                    | ((c: number) => boolean),
+                threatening = false,
+                knownNonIllusion = false,
+                raisedDead = false,
+                noDragon = false,
+            } = opts;
+
+            const enemy = {
+                name: "Enemy",
+                defeated: false,
+            } as unknown as Player;
+            const dragon = noDragon
+                ? null
+                : makeDragon(enemy, {
+                      strength: dragonStrength,
+                      raisedDead,
+                  });
+
+            const disbelieve = makeDisbelieve();
+            const fallback = makeFallback();
+
+            const wizardPiece = makePieceStub({
+                type: UnitType.Wizard,
+                position: new Geom.Point(0, 0),
+                findThreatPieces: vi
+                    .fn()
+                    .mockReturnValue(
+                        threatening && dragon
+                            ? new Set([dragon])
+                            : new Set(),
+                    ),
+            });
+
+            const player = {
+                name: "TestAI",
+                defeated: false,
+                spells: [disbelieve, fallback],
+                castingPiece: wizardPiece,
+                pickSpell: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Player;
+
+            const pieces = dragon ? [dragon] : [];
+
+            const rollChanceFn =
+                typeof rollChanceReturn === "function"
+                    ? vi.fn().mockImplementation(rollChanceReturn)
+                    : vi.fn().mockReturnValue(rollChanceReturn);
+
+            const board = {
+                pieces,
+                players: [player, enemy],
+                balance: boardBalance,
+                cursor: { enabled: true },
+                sound: { play: vi.fn() },
+                rollChance: rollChanceFn,
+                rng: new TestRNG(),
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+            } as unknown as Board;
+
+            injectDragonSpell(dragonChance, dragonBalance);
+
+            const cw = new ComputerWizard(board, player, difficulty);
+
+            // Stub methods that aren't under test
+            vi.spyOn(
+                cw as any,
+                "evaluateEnemyPlayerPriorities",
+            ).mockImplementation(() => {});
+            vi.spyOn(
+                cw as any,
+                "forgetIllusionKnowledge",
+            ).mockImplementation(() => {});
+
+            // findSpellTargets: return the dragon as a target for Disbelieve
+            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
+                dragon
+                    ? new Map([[disbelieve, [dragon]]])
+                    : new Map(),
+            );
+
+            if (knownNonIllusion && dragon) {
+                (cw as any)._knownNonIllusionPieces.add(dragon.id);
+            }
+
+            return {
+                cw,
+                board,
+                player,
+                disbelieve,
+                fallback,
+                dragon,
+                wizardPiece,
+            };
+        }
+
+        it("prefers Disbelieve when a high-strength low-chance piece is on the board", async () => {
+            const { cw, player, disbelieve } = setup();
+            await cw.selectSpell();
+            expect(player.pickSpell).toHaveBeenCalledWith(disbelieve.id);
+        });
+
+        it("does not prefer Disbelieve for a known non-illusion piece", async () => {
+            const { cw, player, disbelieve } = setup({
+                knownNonIllusion: true,
+            });
+            await cw.selectSpell();
+            expect(player.pickSpell).not.toHaveBeenCalledWith(
+                disbelieve.id,
+            );
+        });
+
+        it("never prefers Disbelieve at difficulty 0", async () => {
+            const { cw, player, disbelieve } = setup({ difficulty: 0 });
+            await cw.selectSpell();
+            // preference = suspicion/25 * 0 = 0, rollChance(0) → false
+            expect(player.pickSpell).not.toHaveBeenCalledWith(
+                disbelieve.id,
+            );
+        });
+
+        it("falls through to normal selection when the suspicion roll fails", async () => {
+            const { cw, player, disbelieve } = setup({
+                rollChanceReturn: false,
+            });
+            await cw.selectSpell();
+            expect(player.pickSpell).not.toHaveBeenCalledWith(
+                disbelieve.id,
+            );
+            // Should have picked normally via the weighted-pick path
+            expect(player.pickSpell).toHaveBeenCalled();
+        });
+
+        it("does not prefer Disbelieve for raised-dead pieces", async () => {
+            const { cw, player, disbelieve } = setup({ raisedDead: true });
+            await cw.selectSpell();
+            expect(player.pickSpell).not.toHaveBeenCalledWith(
+                disbelieve.id,
+            );
+        });
+
+        it("threat boost increases the suspicion preference", async () => {
+            // No threat: strength 15, chance 0.1 → suspicion = 13.5
+            // preference = min(13.5/25 * 0.5, 1) = 0.27
+            const noThreat = setup({
+                difficulty: 0.5,
+                dragonStrength: 15,
+                threatening: false,
+                rollChanceReturn: false,
+            });
+            await noThreat.cw.selectSpell();
+            const noThreatArg = (noThreat.board.rollChance as any).mock
+                .calls[0][0];
+
+            // With threat: suspicion = 13.5 * 2 = 27
+            // preference = min(27/25 * 0.5, 1) = 0.54
+            const withThreat = setup({
+                difficulty: 0.5,
+                dragonStrength: 15,
+                threatening: true,
+                rollChanceReturn: false,
+            });
+            await withThreat.cw.selectSpell();
+            const threatArg = (withThreat.board.rollChance as any).mock
+                .calls[0][0];
+
+            expect(threatArg).toBeGreaterThan(noThreatArg);
+        });
+
+        it("world balance reduces suspicion for aligned spells", async () => {
+            // Chaotic dragon on neutral board: effective chance = 0.1
+            const neutral = setup({
+                difficulty: 0.5,
+                boardBalance: 0,
+                dragonChance: 0.1,
+                dragonBalance: -2,
+                rollChanceReturn: false,
+            });
+            await neutral.cw.selectSpell();
+            const neutralArg = (neutral.board.rollChance as any).mock
+                .calls[0][0];
+
+            // Same dragon on chaotic board: effective chance = 0.4
+            // → lower suspicion → lower preference
+            const chaotic = setup({
+                difficulty: 0.5,
+                boardBalance: -0.3,
+                dragonChance: 0.1,
+                dragonBalance: -2,
+                rollChanceReturn: false,
+            });
+            await chaotic.cw.selectSpell();
+            const chaoticArg = (chaotic.board.rollChance as any).mock
+                .calls[0][0];
+
+            expect(chaoticArg).toBeLessThan(neutralArg);
+        });
+
+        it("generates low preference for low-suspicion pieces", async () => {
+            const { cw, board } = setup({
+                difficulty: 1,
+                dragonStrength: 10,
+                dragonChance: 0.9,
+                dragonBalance: 0,
+                rollChanceReturn: false,
+            });
+            await cw.selectSpell();
+            // strength 10 * (1 - 0.9) = 1 → preference = 1/25 = 0.04
+            const preference = (board.rollChance as any).mock.calls[0][0];
+            expect(preference).toBeLessThan(0.1);
+        });
+
+        it("skips suspicion when no pieces have matching spell data", async () => {
+            const { cw, player, disbelieve } = setup();
+            // Remove the test spell so the lookup returns null
+            delete (Spell.spells as any)[TEST_KEY];
+            await cw.selectSpell();
+            expect(player.pickSpell).not.toHaveBeenCalledWith(
+                disbelieve.id,
+            );
+        });
+    });
+
+    // ─── preferredTargetId ───────────────────────────────────────────────────
+
+    describe("preferredTargetId", () => {
+        it("defaults to null", () => {
+            const cw = new ComputerWizard(makeMockBoard(), mockPlayer);
+            expect(cw.preferredTargetId).toBeNull();
+        });
+
+        it("can be set and read back", () => {
+            const cw = new ComputerWizard(makeMockBoard(), mockPlayer);
+            cw.preferredTargetId = 42;
+            expect(cw.preferredTargetId).toBe(42);
+        });
+
+        it("can be cleared to null", () => {
+            const cw = new ComputerWizard(makeMockBoard(), mockPlayer);
+            cw.preferredTargetId = 42;
+            cw.preferredTargetId = null;
+            expect(cw.preferredTargetId).toBeNull();
+        });
+    });
+
+    // ─── withPreferredFirst (static) ─────────────────────────────────────────
+
+    describe("withPreferredFirst", () => {
+        function stubPiece(id: number): Piece {
+            return { id } as unknown as Piece;
+        }
+
+        it("returns the original array when preferredId is null", () => {
+            const pieces = [stubPiece(1), stubPiece(2), stubPiece(3)];
+            const result = ComputerWizard.withPreferredFirst(pieces, null);
+            expect(result).toBe(pieces); // Same reference
+        });
+
+        it("returns the original array when preferredId is not found", () => {
+            const pieces = [stubPiece(1), stubPiece(2)];
+            const result = ComputerWizard.withPreferredFirst(pieces, 99);
+            expect(result).toBe(pieces);
+        });
+
+        it("returns the original array when preferred is already first", () => {
+            const pieces = [stubPiece(1), stubPiece(2), stubPiece(3)];
+            const result = ComputerWizard.withPreferredFirst(pieces, 1);
+            expect(result).toBe(pieces);
+        });
+
+        it("moves a middle element to the front", () => {
+            const pieces = [stubPiece(1), stubPiece(2), stubPiece(3)];
+            const result = ComputerWizard.withPreferredFirst(pieces, 2);
+            expect(result.map((p) => p.id)).toEqual([2, 1, 3]);
+        });
+
+        it("moves the last element to the front", () => {
+            const pieces = [stubPiece(1), stubPiece(2), stubPiece(3)];
+            const result = ComputerWizard.withPreferredFirst(pieces, 3);
+            expect(result.map((p) => p.id)).toEqual([3, 1, 2]);
+        });
+
+        it("does not mutate the original array", () => {
+            const pieces = [stubPiece(1), stubPiece(2), stubPiece(3)];
+            ComputerWizard.withPreferredFirst(pieces, 3);
+            expect(pieces.map((p) => p.id)).toEqual([1, 2, 3]);
+        });
+
+        it("works with a single-element array", () => {
+            const pieces = [stubPiece(5)];
+            const result = ComputerWizard.withPreferredFirst(pieces, 5);
+            expect(result).toBe(pieces); // Already first
+        });
+    });
+
+    // ─── selectSpell sets preferredTargetId ──────────────────────────────────
+
+    describe("selectSpell — preferredTargetId integration", () => {
+        const TEST_KEY = "__test_preferred__";
+        const DRAGON_UNIT_ID = "test-dragon-pref";
+
+        afterEach(() => {
+            delete (Spell.spells as any)[TEST_KEY];
+        });
+
+        it("sets preferredTargetId when suspicion fires", async () => {
+            const enemy = {
+                name: "Enemy",
+                defeated: false,
+            } as unknown as Player;
+            const dragon = {
+                id: 77,
+                type: UnitType.Creature,
+                owner: enemy,
+                dead: false,
+                raisedDead: false,
+                canBeDisbelieved: true,
+                position: new Geom.Point(3, 0),
+                strength: 30,
+                properties: { id: DRAGON_UNIT_ID },
+                fullName: "Test Dragon",
+                hasStatus: vi.fn().mockReturnValue(false),
+                canAttackPiece: vi.fn().mockReturnValue(true),
+            } as unknown as Piece;
+
+            const disbelieve = {
+                id: 100,
+                type: SpellType.Disbelieve,
+                properties: { id: "disbelieve", persist: true },
+                getValidTarget: vi.fn().mockReturnValue(true),
+                chance: 0.5,
+            } as unknown as Spell;
+
+            const fallback = {
+                id: 200,
+                type: SpellType.Summon,
+                properties: { unitId: "some-unit" },
+                getValidTarget: vi.fn().mockReturnValue(null),
+                chance: 0.8,
+                allowIllusion: false,
+            } as unknown as Spell;
+
+            const wizardPiece = makePieceStub({
+                type: UnitType.Wizard,
+                position: new Geom.Point(0, 0),
+                findThreatPieces: vi.fn().mockReturnValue(new Set()),
+            });
+
+            const player = {
+                name: "TestAI",
+                defeated: false,
+                spells: [disbelieve, fallback],
+                castingPiece: wizardPiece,
+                pickSpell: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Player;
+
+            const board = {
+                pieces: [dragon],
+                players: [player, enemy],
+                balance: 0,
+                cursor: { enabled: true },
+                sound: { play: vi.fn() },
+                rollChance: vi.fn().mockImplementation((c: number) => c > 0),
+                rng: new TestRNG(),
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+            } as unknown as Board;
+
+            (Spell.spells as any)[TEST_KEY] = {
+                chance: 0.1,
+                balance: -2,
+                name: "Test Dragon",
+                unitId: DRAGON_UNIT_ID,
+            };
+
+            const cw = new ComputerWizard(board, player, 1);
+            vi.spyOn(
+                cw as any,
+                "evaluateEnemyPlayerPriorities",
+            ).mockImplementation(() => {});
+            vi.spyOn(
+                cw as any,
+                "forgetIllusionKnowledge",
+            ).mockImplementation(() => {});
+            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
+                new Map([[disbelieve, [dragon]]]),
+            );
+
+            await cw.selectSpell();
+
+            expect(player.pickSpell).toHaveBeenCalledWith(disbelieve.id);
+            expect(cw.preferredTargetId).toBe(77);
+        });
+
+        it("does not set preferredTargetId when suspicion does not fire", async () => {
+            const enemy = {
+                name: "Enemy",
+                defeated: false,
+            } as unknown as Player;
+
+            // Low-suspicion piece (high chance)
+            const goblin = {
+                id: 88,
+                type: UnitType.Creature,
+                owner: enemy,
+                dead: false,
+                raisedDead: false,
+                canBeDisbelieved: true,
+                position: new Geom.Point(3, 0),
+                strength: 8,
+                properties: { id: "test-goblin-pref" },
+                fullName: "Test Goblin",
+                hasStatus: vi.fn().mockReturnValue(false),
+                canAttackPiece: vi.fn().mockReturnValue(true),
+            } as unknown as Piece;
+
+            const disbelieve = {
+                id: 100,
+                type: SpellType.Disbelieve,
+                properties: { id: "disbelieve", persist: true },
+                getValidTarget: vi.fn().mockReturnValue(true),
+                chance: 0.5,
+            } as unknown as Spell;
+
+            const fallback = {
+                id: 200,
+                type: SpellType.Summon,
+                properties: { unitId: "some-unit" },
+                getValidTarget: vi.fn().mockReturnValue(null),
+                chance: 0.8,
+                allowIllusion: false,
+            } as unknown as Spell;
+
+            const wizardPiece = makePieceStub({
+                type: UnitType.Wizard,
+                position: new Geom.Point(0, 0),
+                findThreatPieces: vi.fn().mockReturnValue(new Set()),
+            });
+
+            const player = {
+                name: "TestAI",
+                defeated: false,
+                spells: [disbelieve, fallback],
+                castingPiece: wizardPiece,
+                pickSpell: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Player;
+
+            // Register a high-chance spell for the goblin
+            (Spell.spells as any)["__test_goblin__"] = {
+                chance: 0.9,
+                balance: 0,
+                name: "Test Goblin",
+                unitId: "test-goblin-pref",
+            };
+
+            const board = {
+                pieces: [goblin],
+                players: [player, enemy],
+                balance: 0,
+                cursor: { enabled: true },
+                sound: { play: vi.fn() },
+                // Low suspicion → preference ≈ 0.032 → this threshold rejects it
+                rollChance: vi
+                    .fn()
+                    .mockImplementation((c: number) => c > 0.5),
+                rng: new TestRNG(),
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player, 1);
+            vi.spyOn(
+                cw as any,
+                "evaluateEnemyPlayerPriorities",
+            ).mockImplementation(() => {});
+            vi.spyOn(
+                cw as any,
+                "forgetIllusionKnowledge",
+            ).mockImplementation(() => {});
+            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
+                new Map([[disbelieve, [goblin]]]),
+            );
+
+            await cw.selectSpell();
+
+            expect(cw.preferredTargetId).toBeNull();
+
+            delete (Spell.spells as any)["__test_goblin__"];
         });
     });
 });

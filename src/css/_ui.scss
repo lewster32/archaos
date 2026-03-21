@@ -187,8 +187,12 @@ input[type="range"] {
     }
     &--left {
         background-image: url("../../assets/images/ui/icon-left.png");
+        width: 12px;
+        height: 20px;
     }
     &--add {
         background-image: url("../../assets/images/ui/icon-add.png");
+        width: 20px;
+        height: 20px;
     }
 }

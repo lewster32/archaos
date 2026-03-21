@@ -7,7 +7,7 @@ import { BoardState } from "./enums/boardstate";
 import { AttackSpell } from "./spells/attackspell";
 import { Board } from "./board";
 import type { Player } from "./player";
-import type { Spell } from "./spells/spell";
+import { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
 import { SpellTarget } from "./enums/spelltarget";
 import { Geom } from "phaser";
@@ -49,6 +49,15 @@ export class ComputerWizard implements RemotePlayer {
     private readonly _difficulty: number = 0.5;
 
     /**
+     * The ID of a piece that selectSpell identified as a preferred target
+     * for the next spell cast (e.g. a suspected illusion for Disbelieve,
+     * or a high-value threat for an attack spell). When set, autoCastSpell
+     * will strongly favour this piece via weighted selection. Cleared after
+     * use.
+     */
+    private _preferredTargetId: number | null = null;
+
+    /**
      * Creates a new ComputerWizard instance.
      *
      * @param board a reference to the game board
@@ -67,6 +76,19 @@ export class ComputerWizard implements RemotePlayer {
      */
     public get difficulty(): number {
         return this._difficulty;
+    }
+
+    /**
+     * Gets or sets the preferred target piece ID for the next spell cast.
+     * Set by selectSpell when it identifies a high-priority target,
+     * consumed and cleared by autoCastSpell.
+     */
+    public get preferredTargetId(): number | null {
+        return this._preferredTargetId;
+    }
+
+    public set preferredTargetId(id: number | null) {
+        this._preferredTargetId = id;
     }
 
     /**
@@ -299,6 +321,64 @@ export class ComputerWizard implements RemotePlayer {
     }
 
     /**
+     * Looks up the effective casting chance for the spell that summons a unit
+     * with the given unit ID, adjusted for the current world balance (chaotic
+     * spells are easier on a chaotic board, and vice versa).
+     *
+     * @param unitId the unit ID to look up
+     * @param worldBalance the current world balance from the board
+     * @returns the effective casting chance (0.1-1), or null if no matching spell found
+     */
+    private static getSpellChanceForUnit(
+        unitId: string,
+        worldBalance: number,
+    ): number | null {
+        for (const spellConfig of Object.values(Spell.spells)) {
+            if (
+                spellConfig.unitId === unitId ||
+                spellConfig.unit?.id === unitId
+            ) {
+                // Apply the same world-balance adjustment as Spell.chance
+                if (spellConfig.balance === 0) {
+                    return spellConfig.chance;
+                }
+                let balanceOffset: number = worldBalance;
+                if (spellConfig.balance < 0) {
+                    balanceOffset *= -1;
+                }
+                return Math.min(
+                    Math.max(spellConfig.chance + balanceOffset, 0.1),
+                    1,
+                );
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Reorder a targets array so that the preferred target (if present) is
+     * first. This causes `weightedPick` to strongly favour it.
+     * Returns the array unchanged if no preferred target or not found.
+     *
+     * @param targets the original targets array
+     * @param preferredId the preferred piece ID, or null
+     * @returns a new array with the preferred target first, or the original
+     */
+    static withPreferredFirst(
+        targets: Piece[],
+        preferredId: number | null,
+    ): Piece[] {
+        if (preferredId == null) return targets;
+        const idx: number = targets.findIndex((p) => p.id === preferredId);
+        if (idx <= 0) return targets; // Not found or already first
+        return [
+            targets[idx],
+            ...targets.slice(0, idx),
+            ...targets.slice(idx + 1),
+        ];
+    }
+
+    /**
      * Selects a spell for the computer wizard to cast.
      *
      * @returns whether a spell was successfully selected
@@ -333,7 +413,10 @@ export class ComputerWizard implements RemotePlayer {
                 ); // Has valid targets
             });
 
-            // Filter out Disbelieve if there are no valid targets
+            // Filter out Disbelieve if there are no valid targets, or
+            // consider preferring it against suspected illusions —
+            // high-strength units with low casting chances are more likely
+            // to have been cast as illusions
             const disbelieveSpell: Spell | undefined = spells.find(
                 (spell: Spell) => {
                     return spell.type === SpellType.Disbelieve;
@@ -356,15 +439,62 @@ export class ComputerWizard implements RemotePlayer {
                     spells = spells.filter((spell: Spell) => {
                         return spell.type !== SpellType.Disbelieve;
                     });
-                }
-            }
+                } else {
+                    // Score each potential target by how suspicious it looks:
+                    // high strength + low casting chance = likely an illusion
+                    const wizardPiece: Piece | null =
+                        this._player.castingPiece;
+                    if (wizardPiece) {
+                        const wizardThreats: Set<Piece> =
+                            wizardPiece.findThreatPieces();
 
-            if (!spells.length) {
-                console.debug(
-                    `${this._player.name} has no valid spells to cast`,
-                );
-                this._board.sound.play("cancel");
-                return false;
+                        let bestSuspicion: number = 0;
+                        let bestTarget: Piece | null = null;
+
+                        for (const piece of potentialTargets) {
+                            const castChance: number | null =
+                                ComputerWizard.getSpellChanceForUnit(
+                                    piece.properties.id,
+                                    this._board.balance,
+                                );
+                            if (castChance === null) continue;
+
+                            let suspicion: number =
+                                piece.strength * (1 - castChance);
+
+                            // Boost if this piece actively threatens our wizard
+                            if (wizardThreats.has(piece)) {
+                                suspicion *= 2;
+                            }
+
+                            if (suspicion > bestSuspicion) {
+                                bestSuspicion = suspicion;
+                                bestTarget = piece;
+                            }
+                        }
+
+                        if (bestTarget) {
+                            // Normalise to a 0-1 preference, gated by difficulty
+                            const disbelievePreference: number = Math.min(
+                                (bestSuspicion / 25) * this._difficulty,
+                                1,
+                            );
+
+                            if (
+                                this._board.rollChance(disbelievePreference)
+                            ) {
+                                console.debug(
+                                    `${this._player.name} suspects ${bestTarget.fullName} may be an illusion (suspicion: ${bestSuspicion.toFixed(1)}) and prefers Disbelieve`,
+                                );
+                                this._preferredTargetId = bestTarget.id;
+                                await this._player.pickSpell(
+                                    disbelieveSpell.id,
+                                );
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
 
             // Rank spells by how likely they are to cast to play conservatively
@@ -418,6 +548,13 @@ export class ComputerWizard implements RemotePlayer {
     static async autoCastSpell(board: Board, player: Player): Promise<boolean> {
         board.cursor.enabled = false;
         try {
+            // Capture and clear the preferred target set by selectSpell
+            const preferredTargetId: number | null =
+                player.ai?.preferredTargetId ?? null;
+            if (player.ai) {
+                player.ai.preferredTargetId = null;
+            }
+
             const spell: Spell | null = await player.useSpell();
             let successfullyCast: boolean = false;
             if (spell) {
@@ -466,7 +603,12 @@ export class ComputerWizard implements RemotePlayer {
                             `${player.name} has ${targets.length} valid targets to cast ${spell.name}`,
                         );
                         const target: Piece =
-                            board.rng.weightedPick(targets);
+                            board.rng.weightedPick(
+                                ComputerWizard.withPreferredFirst(
+                                    targets,
+                                    preferredTargetId,
+                                ),
+                            );
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );
@@ -495,8 +637,15 @@ export class ComputerWizard implements RemotePlayer {
                         return false;
                     }
 
+                    const reordered: Piece[] =
+                        ComputerWizard.withPreferredFirst(
+                            potentialTargets,
+                            preferredTargetId,
+                        );
                     const target: Piece =
-                        board.rng.pick(potentialTargets);
+                        preferredTargetId == null
+                            ? board.rng.pick(potentialTargets)
+                            : board.rng.weightedPick(reordered);
                     await board.rules.doCastSpell(board, target);
                     return true;
                 } else if (spell.type === SpellType.Misc) {
@@ -524,8 +673,15 @@ export class ComputerWizard implements RemotePlayer {
                             board.sound.play("cancel");
                             return false;
                         }
+                        const miscReordered: Piece[] =
+                            ComputerWizard.withPreferredFirst(
+                                potentialTargets,
+                                preferredTargetId,
+                            );
                         const target: Piece =
-                            board.rng.pick(potentialTargets);
+                            preferredTargetId == null
+                                ? board.rng.pick(potentialTargets)
+                                : board.rng.weightedPick(miscReordered);
                         await board.rules.doCastSpell(board, target);
                         return true;
                     }
