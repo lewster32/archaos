@@ -8,27 +8,22 @@ import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
 import { Colour } from "./enums/colour";
 import { CursorType } from "./enums/cursortype";
-import { SpellTarget } from "./enums/spelltarget";
 import { EventType } from "./enums/eventtype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
+import { RangeType } from "./enums/rangetype";
 import { BoardUpdateEventData, Box, SpellbookOpenEventData } from "./interfaces/ui";
 import { Model } from "./model";
+import { delay as _delay } from "../utils";
 import { Piece } from "./piece";
 import { Player } from "./player";
 import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
-import { AttackSpell } from "./spells/attackspell";
-import { DisbelieveSpell } from "./spells/disbelievespell";
-import { RaiseDeadSpell } from "./spells/raisedeadspell";
 import { Spell } from "./spells/spell";
-import { StatusEffectSpell } from "./spells/statuseffectspell";
-import { SubversionSpell } from "./spells/subversionspell";
-import { SummonSpell } from "./spells/summonspell";
-import { TurmoilSpell } from "./spells/turmoilspell";
+import { createSpell } from "./spells/spellfactory";
 import { Events, StateManager, States } from "./statemanager";
 import { Wizard } from "./wizard";
 import { Display, Geom, GameObjects, Scene, Math as PMath, Cameras } from "phaser";
@@ -536,8 +531,8 @@ export class Board extends Model implements Box {
             this.currentPlayer = null;
             this.updateBackgroundColour();
 
-            await this.doSpread();
-            await this.doExpire();
+            await this.rules.doSpread(this);
+            await this.rules.doExpire(this);
 
             this.currentPlayer = previousPlayer;
             this.emitBoardUpdateEvent();
@@ -634,191 +629,7 @@ export class Board extends Model implements Box {
                 "Cannot create wizards - game not in initialising state"
             );
         }
-        switch (this.players.length) {
-            // Face-to-face
-            case 2:
-                this.addWizard({
-                    owner: this.players[0],
-                    x: Math.floor(this.width / 2),
-                    y: this.height - 2,
-                    wizCode: this.players[0].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[1],
-                    x: Math.floor(this.width / 2),
-                    y: 1,
-                    wizCode: this.players[1].wizcode,
-                });
-                break;
-            case 3:
-                // Triangle
-                this.addWizard({
-                    owner: this.players[0],
-                    x: 1,
-                    y: Math.floor(this.height / 2),
-                    wizCode: this.players[0].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[1],
-                    x: this.width - 2,
-                    y: this.height - 2,
-                    wizCode: this.players[1].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[2],
-                    x: this.width - 2,
-                    y: 1,
-                    wizCode: this.players[2].wizcode,
-                });
-                break;
-            case 4:
-                // Corners
-                this.addWizard({
-                    owner: this.players[0],
-                    x: 1,
-                    y: this.height - 2,
-                    wizCode: this.players[0].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[1],
-                    x: 1,
-                    y: 1,
-                    wizCode: this.players[1].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[2],
-                    x: this.width - 2,
-                    y: this.height - 2,
-                    wizCode: this.players[2].wizcode,
-                });
-                this.addWizard({
-                    owner: this.players[3],
-                    x: this.width - 2,
-                    y: 1,
-                    wizCode: this.players[3].wizcode,
-                });
-                break;
-            case 5:
-                // Evenly spaced in a pentagon
-                for (let i: number = 0; i < 5; i++) {
-                    const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.5 + this.width / 2 +
-                            (this.width / 2) * Math.cos(angle)
-                    );
-                    const y: number = Math.round(
-                        -0.5 + this.height / 2 +
-                            (this.height / 2) * Math.sin(angle)
-                    );
-                    // Index is offset by 2 to start on board left
-                    this.addWizard({
-                        owner: this.players[(i + 2) % 5],
-                        x: x,
-                        y: y,
-                        wizCode: this.players[(i + 2) % 5].wizcode,
-                    });
-                }
-                break;             
-            case 6:
-                // Evenly spaced in a hexagon
-                for (let i: number = 0; i < 6; i++) {
-                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.6 + this.width / 2 +
-                            (this.width / 2 + 0.5) * Math.cos(angle)
-                    );
-                    const y: number = Math.round(
-                        -0.5 + this.height / 2 +
-                            (this.height / 2 - 0.5) * Math.sin(angle)
-                    );
-                    this.addWizard({
-                        owner: this.players[(i + 2) % 6],
-                        x: x,
-                        y: y,
-                        wizCode: this.players[(i + 2) % 6].wizcode,
-                    });
-                }
-                break;
-            case 7:
-                // One in the centre, six in a hexagon around (possibly a bit
-                // more fair in terms of spacing than a heptagon?)
-                this.addWizard({
-                    owner: this.players[0],
-                    x: Math.floor(this.width / 2),
-                    y: Math.floor(this.height / 2),
-                    wizCode: this.players[0].wizcode,
-                });
-
-                for (let i: number = 1; i < 7; i++) {
-                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.6 + this.width / 2 +
-                            (this.width / 2 + 0.5) * Math.cos(angle)
-                    );
-                    const y: number = Math.round(
-                        -0.5 + this.height / 2 +
-                            (this.height / 2 - 0.5) * Math.sin(angle)
-                    );
-                    this.addWizard({
-                        owner: this.players[((i + 2) % 6) + 1],
-                        x: x,
-                        y: y,
-                        wizCode: this.players[((i + 2) % 6) + 1].wizcode,
-                    });
-                }
-                break
-            case 8:
-                // All corners and middles
-                {
-                    let playerIndex: number = 0;
-                    for (let xx of [0, Math.floor(this.width / 2), this.width - 1]) {
-                        for (let yy of [this.height - 1, Math.floor(this.height / 2), 0]) {
-                            if (xx === Math.floor(this.width / 2) && yy === Math.floor(this.height / 2)) {
-                                continue;
-                            }
-                            this.addWizard({
-                                owner: this.players[playerIndex],
-                                x: xx,
-                                y: yy,
-                                wizCode: this.players[playerIndex].wizcode,
-                            });
-                            playerIndex++;
-                        }
-                    }
-                }
-                break;
-            default:
-                // If more than 8 players, place randomly. First get all of the
-                // tiles as a list, shuffle it, then assign starting positions.
-                // This could be better - perhaps some kind of Poisson-disc
-                // sampling to ensure even distribution, but this will do for
-                // now, since it's not possible from the menu to have more than
-                // 8 players anyway.
-                {
-                    const availablePositions: SimplePoint[] = [];
-                    for (let x: number = 1; x < this.width - 1; x++) {
-                        for (let y: number = 1; y < this.height - 1; y++) {
-                            availablePositions.push({ x: x, y: y });
-                        }
-                    }
-                    // Shuffle available positions.
-                    for (let i = availablePositions.length - 1; i > 0; i--) {
-                        const j = Math.floor(PMath.RND.frac() * (i + 1));
-                        [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
-                    }
-                    // Assign positions to players.
-                    this.players.forEach((player, index) => {
-                        const pos = availablePositions[index];
-                        this.addWizard({
-                            owner: player,
-                            x: pos.x,
-                            y: pos.y,
-                            wizCode: player.wizcode,
-                        });
-                    });
-                }
-                break;
-        }
+        Wizard.createAll(this, this.players);
     }
 
     /**
@@ -1362,81 +1173,6 @@ export class Board extends Model implements Box {
         return dismountingPiece;
     }
 
-    /**
-     * Handle spreading effects on the board - called during the spreading phase
-     * and recursively spreads pieces with the 'spreads' status.
-     * 
-     * @returns A promise that resolves when spreading is complete.
-     */
-    async doSpread(): Promise<void> {
-        for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
-            const spreadPieces: Piece[] = this.pieces.filter((piece) =>
-                piece.hasStatus(UnitStatus.Spreads)
-            );
-            for (const piece of spreadPieces) {
-                await piece.spread();
-            }
-            this.emitBoardUpdateEvent();
-            await this.idleDelay(Board.SPREAD_DELAY);
-        }
-    }
-
-    /**
-     * Handle expiring effects on the board - called at the end of the turn
-     * to expire pieces with the 'expires' status.
-     * 
-     * @returns A promise that resolves when expiring is complete.
-     */
-    async doExpire(): Promise<void> {
-        const expirePieces: Piece[] = this.pieces.filter((piece: Piece) =>
-            piece.hasStatus(UnitStatus.Expires)
-        );
-
-        for (const piece of expirePieces) {
-            if (piece.hasStatus(UnitStatus.Structure)) {
-                if (this.roll(2, 10)) {
-                    this.sound.play("disbelieve");
-                    await this.playEffect(
-                        EffectType.DisbelieveHit,
-                        piece.sprite.getCenter(),
-                        null,
-                        piece
-                    );
-                    await piece.kill();
-                    this.logger.log(
-                        `${piece.name} has expired`,
-                        Colour.Magenta
-                    );
-                }
-            } else if (
-                piece.hasStatus(UnitStatus.ExpiresGivesSpell) &&
-                piece.currentRider &&
-                this.roll(4, 10)
-            ) {
-                const owner: Player = piece.currentRider.owner;
-                this.logger.log(
-                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
-                    Colour.Cyan
-                );
-                this.sound.play("newspell");
-                await this.playEffect(
-                    EffectType.GiveSpell,
-                    piece.sprite.getCenter(),
-                    null,
-                    piece
-                );
-                this.addSpell(
-                    piece.currentRider.owner,
-                    Spell.getRandomSpell(true, this.spellFilter)
-                );
-                await piece.kill();
-                await this.idleDelay(Board.DEFAULT_DELAY);
-            }
-        }
-        this.emitBoardUpdateEvent();
-        await this.newTurn();
-    }
-
     /* #endregion */
 
     /* #region Players */
@@ -1505,24 +1241,7 @@ export class Board extends Model implements Box {
         if (!config || !player) {
             throw new Error("No player or config provided");
         }
-        let spell: Spell;
-        if (config.unitId || config.unit) {
-            spell = new SummonSpell(this, this._idCounter++, config);
-        } else if (config.damage) {
-            spell = new AttackSpell(this, this._idCounter++, config);
-        } else if (config.id === "disbelieve") {
-            spell = new DisbelieveSpell(this, this._idCounter++, config);
-        } else if (config.id === "raise-dead") {
-            spell = new RaiseDeadSpell(this, this._idCounter++, config);
-        } else if (config.id === "subversion") {
-            spell = new SubversionSpell(this, this._idCounter++, config);
-        } else if (config.id === "turmoil") {
-            spell = new TurmoilSpell(this, this._idCounter++, config);
-        } else if (config.target === SpellTarget.Self) {
-            spell = new StatusEffectSpell(this, this._idCounter++, config);
-        } else {
-            spell = new Spell(this, this._idCounter++, config);
-        }
+        const spell = createSpell(this, this._idCounter++, config);
         player.addSpell(spell);
         return spell;
     }
@@ -2148,36 +1867,11 @@ export class Board extends Model implements Box {
      * @returns true if the attack is greater than the defense, false otherwise
      */
     roll(attack: number, defense: number): boolean {
-        if (Board.CHEAT_FORCE_HIT !== null) {
-            return Board.CHEAT_FORCE_HIT;
-        }
-        const attackRoll: number = PMath.Between(0, 10 + attack);
-        const defenseRoll: number = PMath.Between(0, 10 + defense);
-        console.debug(`Rolled ${attackRoll} vs ${defenseRoll}; attack ${
-            attackRoll > defenseRoll ? "succeeds" : "fails"
-        }`);
-        return attackRoll > defenseRoll;
+        return this._rules.roll(attack, defense);
     }
 
-    /**
-     * Roll a chance check for spell casting.
-     * 
-     * @param attack the chance value (0 to 1)
-     * @returns true if the chance check succeeds (i.e., the `attack` value is greater than the saving roll), false otherwise
-     */
     rollChance(attack: number): boolean {
-        if (Board.CHEAT_FORCE_CAST !== null) {
-            return Board.CHEAT_FORCE_CAST;
-        }
-        const defenseRoll: number = PMath.RND.frac();
-        if (attack < 0 || attack > 1) {
-            console.warn(`Chance value ${attack} is out of bounds, clamping to 0-1`);
-            attack = Math.max(0, Math.min(1, attack));
-        }
-        console.debug(`Rolled ${attack} vs ${defenseRoll}; chance ${
-            attack > defenseRoll ? "succeeds" : "fails"
-        }`);
-        return attack > defenseRoll;
+        return this._rules.rollChance(attack);
     }
 
     /**
@@ -2378,11 +2072,7 @@ export class Board extends Model implements Box {
      * @param time The delay time in milliseconds.
      */
     static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve();
-            }, time);
-        });
+        return _delay(time);
     }
 
     /* #endregion */
@@ -2434,24 +2124,4 @@ export class Board extends Model implements Box {
     }
 
     /* #endregion */
-}
-
-/**
- * Types of range calculations.
- */
-export enum RangeType {
-    /**
-     * Foot range.
-     */
-    Foot,
-
-    /**
-     * Flying range.
-     */
-    Fly,
-
-    /**
-     * Ranged attack range.
-     */
-    RangedAttack
 }

@@ -10,10 +10,10 @@ import { Geom, Math as PMath } from 'phaser';
 import { Board } from '../board';
 import type { SpellConfig } from '../configs/spellconfig';
 
-// PMath.RND is not initialised without a Phaser.Game instance.
+// Make randomness deterministic for tests that rely on PMath.RND methods
 PMath.RND = {
-    frac: () => Math.random(),
-    pick: (arr: any[]) => arr[Math.floor(Math.random() * arr.length)],
+    frac: () => 0.5,
+    pick: (arr: any[]) => arr[0],
     weightedPick: (arr: any[]) => arr[0],
 } as any;
 

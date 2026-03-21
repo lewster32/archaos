@@ -1,5 +1,6 @@
 import unitJsonData from "../../assets/data/classicunits.json";
-import { Board, RangeType } from "./board";
+import { Board } from "./board";
+import { RangeType } from "./enums/rangetype";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
 import { BoardLayer } from "./enums/boardlayer";

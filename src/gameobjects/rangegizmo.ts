@@ -1,4 +1,5 @@
-import { Board, RangeType } from "./board";
+import { Board } from "./board";
+import { RangeType } from "./enums/rangetype";
 import { Cursor } from "./cursor";
 import { BoardLayer } from "./enums/boardlayer";
 import { CursorType } from "./enums/cursortype";

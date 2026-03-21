@@ -349,6 +349,13 @@ describe('Spell.hasValidTargetsInRange', () => {
         expect(s.hasValidTargetsInRange()).toBe(true);
     });
 
+    it('returns true for Summon spells', () => {
+        const s = new Spell(board, 1, makeConfig());
+        (s as any)._type = SpellType.Summon;
+        s.owner = owner;
+        expect(s.hasValidTargetsInRange()).toBe(true);
+    });
+
     it('returns false when board has no pieces', () => {
         (board as any).pieces = [];
         const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Piece, castOnEnemyUnit: true, range: -1 }));
@@ -883,6 +890,23 @@ describe('Spell.cast', () => {
         const result = await s.cast(owner, castingPiece, pieceTarget);
         expect(result).toBe(false); // base doCast returns false
         spy.mockRestore();
+    });
+
+    it('succeeds and returns doCast result when target is omitted', async () => {
+        const s = new Spell(board, 1, makeConfig());
+        s.owner = owner;
+        const result = await s.cast(owner, castingPiece);
+        expect(result).toBe(false); // base doCast returns false, not null, so roll succeeded
+        expect(s.failed).toBe(false);
+    });
+
+    it('does not shift balance on subsequent casts of a multi-cast spell', async () => {
+        const s = new Spell(board, 1, makeConfig({ castTimes: 3, balance: 2 }));
+        s.owner = owner;
+        await s.cast(owner, castingPiece); // first cast — shifts balance
+        const balanceAfterFirst = (board as any).balanceShift;
+        await s.cast(owner, castingPiece); // second cast — must not shift again
+        expect((board as any).balanceShift).toBe(balanceAfterFirst);
     });
 });
 

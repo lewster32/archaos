@@ -8,9 +8,11 @@ import { EventType } from "../enums/eventtype";
 import { InputType } from "../enums/inputtype";
 import { UnitStatus } from "../enums/unitstatus";
 import type { Piece } from "../piece";
-import type { Spell } from "../spells/spell";
+import type { Player } from "../player";
+import { Spell } from "../spells/spell";
+import { EffectType } from "../effectemitter";
 
-import { Geom } from "phaser";
+import { Geom, Math as PMath } from "phaser";
 
 /**
  * A target for a cast spell can be either a board position or a piece, or null
@@ -577,6 +579,117 @@ export class Rules {
         }
 
         return ActionType.None;
+    }
+
+    /**
+     * Roll an attack vs defense check.
+     *
+     * @param attack the attack value
+     * @param defense the defense value
+     * @returns true if the attack is greater than the defense, false otherwise
+     */
+    roll(attack: number, defense: number): boolean {
+        if (Board.CHEAT_FORCE_HIT !== null) {
+            return Board.CHEAT_FORCE_HIT;
+        }
+        const attackRoll: number = PMath.Between(0, 10 + attack);
+        const defenseRoll: number = PMath.Between(0, 10 + defense);
+        console.debug(`Rolled ${attackRoll} vs ${defenseRoll}; attack ${
+            attackRoll > defenseRoll ? "succeeds" : "fails"
+        }`);
+        return attackRoll > defenseRoll;
+    }
+
+    /**
+     * Roll a chance check for spell casting.
+     *
+     * @param attack the chance value (0 to 1)
+     * @returns true if the chance check succeeds (i.e., the `attack` value is greater than the saving roll), false otherwise
+     */
+    rollChance(attack: number): boolean {
+        if (Board.CHEAT_FORCE_CAST !== null) {
+            return Board.CHEAT_FORCE_CAST;
+        }
+        const defenseRoll: number = PMath.RND.frac();
+        if (attack < 0 || attack > 1) {
+            console.warn(`Chance value ${attack} is out of bounds, clamping to 0-1`);
+            attack = Math.max(0, Math.min(1, attack));
+        }
+        console.debug(`Rolled ${attack} vs ${defenseRoll}; chance ${
+            attack > defenseRoll ? "succeeds" : "fails"
+        }`);
+        return attack > defenseRoll;
+    }
+
+    /**
+     * Handle spreading effects on the board - called during the spreading phase
+     * and recursively spreads pieces with the 'spreads' status.
+     */
+    async doSpread(board: Board): Promise<void> {
+        for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
+            const spreadPieces: Piece[] = board.pieces.filter((piece) =>
+                piece.hasStatus(UnitStatus.Spreads)
+            );
+            for (const piece of spreadPieces) {
+                await piece.spread();
+            }
+            board.emitBoardUpdateEvent();
+            await board.idleDelay(Board.SPREAD_DELAY);
+        }
+    }
+
+    /**
+     * Handle expiring effects on the board - called at the end of the turn
+     * to expire pieces with the 'expires' status.
+     */
+    async doExpire(board: Board): Promise<void> {
+        const expirePieces: Piece[] = board.pieces.filter((piece: Piece) =>
+            piece.hasStatus(UnitStatus.Expires)
+        );
+
+        for (const piece of expirePieces) {
+            if (piece.hasStatus(UnitStatus.Structure)) {
+                if (board.roll(2, 10)) {
+                    board.sound.play("disbelieve");
+                    await board.playEffect(
+                        EffectType.DisbelieveHit,
+                        piece.sprite.getCenter(),
+                        null,
+                        piece
+                    );
+                    await piece.kill();
+                    board.logger.log(
+                        `${piece.name} has expired`,
+                        Colour.Magenta
+                    );
+                }
+            } else if (
+                piece.hasStatus(UnitStatus.ExpiresGivesSpell) &&
+                piece.currentRider &&
+                board.roll(4, 10)
+            ) {
+                const owner: Player = piece.currentRider.owner;
+                board.logger.log(
+                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
+                    Colour.Cyan
+                );
+                board.sound.play("newspell");
+                await board.playEffect(
+                    EffectType.GiveSpell,
+                    piece.sprite.getCenter(),
+                    null,
+                    piece
+                );
+                board.addSpell(
+                    piece.currentRider.owner,
+                    Spell.getRandomSpell(true, board.spellFilter)
+                );
+                await piece.kill();
+                await board.idleDelay(Board.DEFAULT_DELAY);
+            }
+        }
+        board.emitBoardUpdateEvent();
+        await board.newTurn();
     }
 }
 

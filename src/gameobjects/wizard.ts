@@ -5,6 +5,7 @@ import {
 import units from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { PieceConfig, WizardConfig } from "./configs/piececonfig";
+import { Player } from "./player";
 import { EffectType } from "./effectemitter";
 import { BoardLayer } from "./enums/boardlayer";
 import { UnitDirection } from "./enums/unitdirection";
@@ -590,8 +591,200 @@ export class Wizard extends Piece {
     }
 
     /**
+     * Create and place wizards for all players at the start of the game.
+     * Placement geometry varies by player count (2–8 use fixed arrangements;
+     * 9+ fall back to a random shuffle).
+     *
+     * @param board   The board to place wizards on.
+     * @param players The ordered list of players to place.
+     */
+    static createAll(board: Board, players: Player[]): void {
+        switch (players.length) {
+            // Face-to-face
+            case 2:
+                board.addWizard({
+                    owner: players[0],
+                    x: Math.floor(board.width / 2),
+                    y: board.height - 2,
+                    wizCode: players[0].wizcode,
+                });
+                board.addWizard({
+                    owner: players[1],
+                    x: Math.floor(board.width / 2),
+                    y: 1,
+                    wizCode: players[1].wizcode,
+                });
+                break;
+            case 3:
+                // Triangle
+                board.addWizard({
+                    owner: players[0],
+                    x: 1,
+                    y: Math.floor(board.height / 2),
+                    wizCode: players[0].wizcode,
+                });
+                board.addWizard({
+                    owner: players[1],
+                    x: board.width - 2,
+                    y: board.height - 2,
+                    wizCode: players[1].wizcode,
+                });
+                board.addWizard({
+                    owner: players[2],
+                    x: board.width - 2,
+                    y: 1,
+                    wizCode: players[2].wizcode,
+                });
+                break;
+            case 4:
+                // Corners
+                board.addWizard({
+                    owner: players[0],
+                    x: 1,
+                    y: board.height - 2,
+                    wizCode: players[0].wizcode,
+                });
+                board.addWizard({
+                    owner: players[1],
+                    x: 1,
+                    y: 1,
+                    wizCode: players[1].wizcode,
+                });
+                board.addWizard({
+                    owner: players[2],
+                    x: board.width - 2,
+                    y: board.height - 2,
+                    wizCode: players[2].wizcode,
+                });
+                board.addWizard({
+                    owner: players[3],
+                    x: board.width - 2,
+                    y: 1,
+                    wizCode: players[3].wizcode,
+                });
+                break;
+            case 5:
+                // Evenly spaced in a pentagon
+                for (let i: number = 0; i < 5; i++) {
+                    const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.5 + board.width / 2 +
+                            (board.width / 2) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + board.height / 2 +
+                            (board.height / 2) * Math.sin(angle)
+                    );
+                    // Index is offset by 2 to start on board left
+                    board.addWizard({
+                        owner: players[(i + 2) % 5],
+                        x: x,
+                        y: y,
+                        wizCode: players[(i + 2) % 5].wizcode,
+                    });
+                }
+                break;
+            case 6:
+                // Evenly spaced in a hexagon
+                for (let i: number = 0; i < 6; i++) {
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.6 + board.width / 2 +
+                            (board.width / 2 + 0.5) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + board.height / 2 +
+                            (board.height / 2 - 0.5) * Math.sin(angle)
+                    );
+                    board.addWizard({
+                        owner: players[(i + 2) % 6],
+                        x: x,
+                        y: y,
+                        wizCode: players[(i + 2) % 6].wizcode,
+                    });
+                }
+                break;
+            case 7:
+                // One in the centre, six in a hexagon around (possibly a bit
+                // more fair in terms of spacing than a heptagon?)
+                board.addWizard({
+                    owner: players[0],
+                    x: Math.floor(board.width / 2),
+                    y: Math.floor(board.height / 2),
+                    wizCode: players[0].wizcode,
+                });
+
+                for (let i: number = 1; i < 7; i++) {
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                    const x: number = Math.round(
+                        -0.6 + board.width / 2 +
+                            (board.width / 2 + 0.5) * Math.cos(angle)
+                    );
+                    const y: number = Math.round(
+                        -0.5 + board.height / 2 +
+                            (board.height / 2 - 0.5) * Math.sin(angle)
+                    );
+                    board.addWizard({
+                        owner: players[((i + 2) % 6) + 1],
+                        x: x,
+                        y: y,
+                        wizCode: players[((i + 2) % 6) + 1].wizcode,
+                    });
+                }
+                break;
+            case 8:
+                // All corners and middles
+                {
+                    let playerIndex: number = 0;
+                    for (const xx of [0, Math.floor(board.width / 2), board.width - 1]) {
+                        for (const yy of [board.height - 1, Math.floor(board.height / 2), 0]) {
+                            if (xx === Math.floor(board.width / 2) && yy === Math.floor(board.height / 2)) {
+                                continue;
+                            }
+                            board.addWizard({
+                                owner: players[playerIndex],
+                                x: xx,
+                                y: yy,
+                                wizCode: players[playerIndex].wizcode,
+                            });
+                            playerIndex++;
+                        }
+                    }
+                }
+                break;
+            default:
+                // If more than 8 players, place randomly. First get all of the
+                // tiles as a list, shuffle it, then assign starting positions.
+                {
+                    const availablePositions: { x: number; y: number }[] = [];
+                    for (let x: number = 1; x < board.width - 1; x++) {
+                        for (let y: number = 1; y < board.height - 1; y++) {
+                            availablePositions.push({ x: x, y: y });
+                        }
+                    }
+                    // Shuffle available positions.
+                    for (let i = availablePositions.length - 1; i > 0; i--) {
+                        const j = Math.floor(PMath.RND.frac() * (i + 1));
+                        [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                    }
+                    // Assign positions to players.
+                    players.forEach((player, index) => {
+                        const pos = availablePositions[index];
+                        board.addWizard({
+                            owner: player,
+                            x: pos.x,
+                            y: pos.y,
+                            wizCode: player.wizcode,
+                        });
+                    });
+                }
+                break;
+        }
+    }
+
+    /**
      * YOLO WizCode generator. Because some people are not very discerning.
-     * 
+     *
      * @returns A random WizCode string.
      */
     public static randomWizCode(): string {

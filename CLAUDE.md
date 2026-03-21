@@ -40,7 +40,7 @@ src/
     configs/        Interfaces for PieceConfig, PlayerConfig, SpellConfig
     interfaces/     UI communication contracts and data structures
     services/       Singleton services: Rules (game logic) and Logger (UI event bus)
-    spells/         Spell hierarchy: Spell → AttackSpell / SummonSpell; SpellUtils helpers
+    spells/         Spell hierarchy: Spell → AttackSpell / SummonSpell; SpellUtils helpers; spellfactory.ts
 src-tauri/
   src/              Rust entry point (thin wrapper — no game logic here)
   Cargo.toml        Rust dependencies (tauri, steamworks in future)
@@ -78,9 +78,9 @@ Model                     — base class; validates unique IDs
 
 | Class | Role |
 |---|---|
-| `Board` | Central game state — grid, pieces, players, turn order |
+| `Board` | Central game state — grid, pieces, players, turn order. Delegates dice rolls to `Rules`, spell construction to `createSpell`, and wizard placement to `Wizard.createAll` |
 | `GameScene` | Phaser Scene; loads assets and bootstraps `Board` |
-| `Rules` | Singleton service — validates and executes all game actions |
+| `Rules` | Singleton service — validates and executes all game actions; owns `roll`/`rollChance` (dice), `doSpread`/`doExpire` (turn automata) |
 | `Spell` | Spell handling and casting logic |
 | `Logger` | Singleton service — emits structured events consumed by Vue components |
 | `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting |
@@ -97,6 +97,19 @@ Model                     — base class; validates unique IDs
 4. Player input (or `ComputerWizard` AI) calls into `Rules`
 5. `Rules` mutates board state and calls `Logger`
 6. `Logger` emits events that Vue components react to for text-based UI updates
+
+### Board Delegation Pattern
+
+`Board` was reduced from ~2,450 to ~2,130 lines by extracting self-contained logic to the classes and services where it conceptually belongs. Board retains thin delegation wrappers (e.g. `board.roll()` → `rules.roll()`) so existing call sites remain unchanged.
+
+| Extracted to | What moved |
+|---|---|
+| `Wizard.createAll(board, players)` | 198-line wizard placement switch (static method) |
+| `createSpell()` in `spells/spellfactory.ts` | Spell subclass discriminator — priority-ordered `[predicate, Constructor][]` rule table |
+| `Rules.doSpread(board)` / `Rules.doExpire(board)` | Turn automata for spreading creatures and expiring structures |
+| `Rules.roll()` / `Rules.rollChance()` | Dice roll probability logic; Board keeps delegation wrappers |
+| `enums/rangetype.ts` | `RangeType` enum (was defined at the bottom of board.ts) |
+| `utils.ts` `delay()` | Generic setTimeout promise wrapper; `Board.delay` delegates to it |
 
 ### RemotePlayer Interface
 
@@ -137,7 +150,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 ### What's tested (and at 100% coverage)
 
 - `Model`, `Entity`, `StateManager`, `Player`, `Logger`
-- All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`
+- All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`, `createSpell` (spell factory)
 - `EffectEmitter` (100% lines/functions, ~99% statements, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
 - Vue components: `GameMenu`, `LoadingScreen`, `Log`, `GameControls`, `UnitStats` — tested in real Chromium via `vitest-browser-vue`
 
