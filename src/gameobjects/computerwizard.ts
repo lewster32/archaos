@@ -466,7 +466,7 @@ export class ComputerWizard implements RemotePlayer {
                             `${player.name} has ${targets.length} valid targets to cast ${spell.name}`,
                         );
                         const target: Piece =
-                            this._board.rng.weightedPick(targets);
+                            board.rng.weightedPick(targets);
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );
@@ -496,7 +496,7 @@ export class ComputerWizard implements RemotePlayer {
                     }
 
                     const target: Piece =
-                        this._board.rng.pick(potentialTargets);
+                        board.rng.pick(potentialTargets);
                     await board.rules.doCastSpell(board, target);
                     return true;
                 } else if (spell.type === SpellType.Misc) {
@@ -525,7 +525,7 @@ export class ComputerWizard implements RemotePlayer {
                             return false;
                         }
                         const target: Piece =
-                            this._board.rng.pick(potentialTargets);
+                            board.rng.pick(potentialTargets);
                         await board.rules.doCastSpell(board, target);
                         return true;
                     }
