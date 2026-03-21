@@ -462,6 +462,14 @@ export class ComputerWizard implements RemotePlayer {
                             let suspicion: number =
                                 piece.strength * (1 - castChance);
 
+                            // Dampen by distance — nearby pieces keep most
+                            // of their suspicion, distant ones fade out
+                            const distance: number = Board.distance(
+                                wizardPiece.position,
+                                piece.position,
+                            );
+                            suspicion *= 5 / (5 + distance);
+
                             // Boost if this piece actively threatens our wizard
                             if (wizardThreats.has(piece)) {
                                 suspicion *= 2;
@@ -637,15 +645,17 @@ export class ComputerWizard implements RemotePlayer {
                         return false;
                     }
 
-                    const reordered: Piece[] =
-                        ComputerWizard.withPreferredFirst(
-                            potentialTargets,
-                            preferredTargetId,
-                        );
-                    const target: Piece =
-                        preferredTargetId == null
-                            ? board.rng.pick(potentialTargets)
-                            : board.rng.weightedPick(reordered);
+                    let target: Piece;
+                    if (preferredTargetId == null) {
+                        target = board.rng.pick(potentialTargets);
+                    } else {
+                        // Disbelieve was chosen because of a specific
+                        // suspected illusion — target it directly
+                        target =
+                            potentialTargets.find(
+                                (p) => p.id === preferredTargetId,
+                            ) ?? board.rng.pick(potentialTargets);
+                    }
                     await board.rules.doCastSpell(board, target);
                     return true;
                 } else if (spell.type === SpellType.Misc) {

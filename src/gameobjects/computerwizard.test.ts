@@ -861,8 +861,8 @@ describe("ComputerWizard", () => {
         });
 
         it("threat boost increases the suspicion preference", async () => {
-            // No threat: strength 15, chance 0.1 → suspicion = 13.5
-            // preference = min(13.5/25 * 0.5, 1) = 0.27
+            // No threat: strength 15, chance 0.1, distance 3
+            // suspicion = 15*0.9*(5/8) ≈ 8.44, pref ≈ 0.17
             const noThreat = setup({
                 difficulty: 0.5,
                 dragonStrength: 15,
@@ -873,8 +873,8 @@ describe("ComputerWizard", () => {
             const noThreatArg = (noThreat.board.rollChance as any).mock
                 .calls[0][0];
 
-            // With threat: suspicion = 13.5 * 2 = 27
-            // preference = min(27/25 * 0.5, 1) = 0.54
+            // With threat: suspicion ≈ 8.44 * 2 ≈ 16.88
+            // pref ≈ 0.34
             const withThreat = setup({
                 difficulty: 0.5,
                 dragonStrength: 15,
@@ -926,7 +926,8 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await cw.selectSpell();
-            // strength 10 * (1 - 0.9) = 1 → preference = 1/25 = 0.04
+            // strength 10 * (1 - 0.9) = 1, dampened = 1*(5/8) ≈ 0.63
+            // preference ≈ 0.63/25 ≈ 0.025
             const preference = (board.rollChance as any).mock.calls[0][0];
             expect(preference).toBeLessThan(0.1);
         });
@@ -1205,6 +1206,114 @@ describe("ComputerWizard", () => {
             expect(cw.preferredTargetId).toBeNull();
 
             delete (Spell.spells as any)["__test_goblin__"];
+        });
+    });
+
+    // ─── autoCastSpell — Disbelieve targeting ─────────────────────────────────
+
+    describe("autoCastSpell — Disbelieve targets preferred piece directly", () => {
+        it("targets the preferred piece even when other targets exist", async () => {
+            const enemy = {
+                name: "Enemy",
+                defeated: false,
+            } as unknown as Player;
+
+            const dragon = {
+                id: 50,
+                owner: enemy,
+                dead: false,
+                canBeDisbelieved: true,
+                name: "Dragon",
+            } as unknown as Piece;
+
+            const goblin = {
+                id: 60,
+                owner: enemy,
+                dead: false,
+                canBeDisbelieved: true,
+                name: "Goblin",
+            } as unknown as Piece;
+
+            const disbelieveSpell = {
+                type: SpellType.Disbelieve,
+                name: "Disbelieve",
+                properties: { id: "disbelieve" },
+            } as unknown as Spell;
+
+            const doCastSpell = vi.fn().mockResolvedValue(true);
+
+            const board = {
+                pieces: [goblin, dragon],
+                cursor: { enabled: true },
+                sound: { play: vi.fn() },
+                rng: new TestRNG(),
+                rules: { doCastSpell },
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, mockPlayer, 1);
+            cw.preferredTargetId = 50; // the dragon
+
+            const player = {
+                name: "TestAI",
+                defeated: false,
+                ai: cw,
+                useSpell: vi.fn().mockResolvedValue(disbelieveSpell),
+                discardSpell: vi.fn(),
+                castingPiece: makePieceStub({ type: UnitType.Wizard }),
+            } as unknown as Player;
+
+            await ComputerWizard.autoCastSpell(board, player);
+
+            // Should have called doCastSpell with the dragon, not the goblin
+            expect(doCastSpell).toHaveBeenCalledWith(board, dragon);
+        });
+
+        it("falls back to random pick when preferred piece is not in targets", async () => {
+            const enemy = {
+                name: "Enemy",
+                defeated: false,
+            } as unknown as Player;
+
+            const goblin = {
+                id: 60,
+                owner: enemy,
+                dead: false,
+                canBeDisbelieved: true,
+                name: "Goblin",
+            } as unknown as Piece;
+
+            const disbelieveSpell = {
+                type: SpellType.Disbelieve,
+                name: "Disbelieve",
+                properties: { id: "disbelieve" },
+            } as unknown as Spell;
+
+            const doCastSpell = vi.fn().mockResolvedValue(true);
+
+            const board = {
+                pieces: [goblin],
+                cursor: { enabled: true },
+                sound: { play: vi.fn() },
+                rng: new TestRNG(),
+                rules: { doCastSpell },
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, mockPlayer, 1);
+            cw.preferredTargetId = 999; // not present
+
+            const player = {
+                name: "TestAI",
+                defeated: false,
+                ai: cw,
+                useSpell: vi.fn().mockResolvedValue(disbelieveSpell),
+                discardSpell: vi.fn(),
+                castingPiece: makePieceStub({ type: UnitType.Wizard }),
+            } as unknown as Player;
+
+            await ComputerWizard.autoCastSpell(board, player);
+
+            // Should fall back to picking the goblin (only target)
+            expect(doCastSpell).toHaveBeenCalledWith(board, goblin);
         });
     });
 });
