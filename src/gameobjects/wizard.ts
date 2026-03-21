@@ -783,27 +783,61 @@ export class Wizard extends Piece {
                 }
                 break;
             default:
-                // If more than 8 players, place randomly. First get all of the
-                // tiles as a list, shuffle it, then assign starting positions.
+                // If more than 8 players, use farthest-point sampling to
+                // maximise spacing between wizards. Pick the first position
+                // randomly, then greedily place each subsequent wizard on the
+                // candidate tile whose minimum distance to all already-placed
+                // wizards is the largest.
                 {
-                    const availablePositions: { x: number; y: number }[] = [];
+                    const candidates: { x: number; y: number }[] = [];
                     for (let x: number = 1; x < board.width - 1; x++) {
                         for (let y: number = 1; y < board.height - 1; y++) {
-                            availablePositions.push({ x: x, y: y });
+                            candidates.push({ x, y });
                         }
                     }
-                    // Shuffle available positions.
-                    board.rng.shuffle(availablePositions);
-                    // Assign positions to players.
-                    players.forEach((player, index) => {
-                        const pos = availablePositions[index];
+
+                    const placed: { x: number; y: number }[] = [];
+
+                    for (const player of players) {
+                        let best: { x: number; y: number };
+
+                        if (placed.length === 0) {
+                            // First wizard: pick a random candidate.
+                            best = board.rng.pick(candidates);
+                        } else {
+                            // Find the candidate that is farthest from its
+                            // nearest already-placed wizard.
+                            let bestMinDist = -1;
+                            best = candidates[0];
+                            for (const c of candidates) {
+                                let minDist = Infinity;
+                                for (const p of placed) {
+                                    const dx = c.x - p.x;
+                                    const dy = c.y - p.y;
+                                    const dist = dx * dx + dy * dy;
+                                    if (dist < minDist) {
+                                        minDist = dist;
+                                    }
+                                }
+                                if (minDist > bestMinDist) {
+                                    bestMinDist = minDist;
+                                    best = c;
+                                }
+                            }
+                        }
+
+                        // Remove the chosen tile from candidates.
+                        const idx = candidates.indexOf(best);
+                        candidates.splice(idx, 1);
+                        placed.push(best);
+
                         board.addWizard({
                             owner: player,
-                            x: pos.x,
-                            y: pos.y,
+                            x: best.x,
+                            y: best.y,
                             wizCode: player.wizcode,
                         });
-                    });
+                    }
                 }
                 break;
         }
