@@ -11,7 +11,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - Up to 8 local players with computer-controlled opponents
 - All original spells and units, plus new content in `assets/data/enhanced/`
 - Quality-of-life: mouse-driven UI, inline help, safeguards (e.g. warns if no valid targets in range)
-- AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers)
+- AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (general summons towards highest threat, spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers)
 
 ### Not yet implemented
 
@@ -171,6 +171,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 | Method                 | Used for                                                                                                                 |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `selectDefaultTile`    | General summons — finds highest-threat enemy (strength / distance), places unit nearby; gated by `rollChance(difficulty)` |
 | `selectSpreadingTile`  | Gooey Blob etc. — prefers tiles near enemies                                                                             |
 | `selectMagicWoodTile`  | Magic Wood — clusters near the casting wizard                                                                            |
 | `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency                                                                   |
