@@ -36,6 +36,12 @@ export type SpellCastTarget = Geom.Point | Piece | null;
 let _instance: Rules | undefined;
 
 export class Rules {
+    /**
+     * Guard flag to prevent re-entrant cancel processing
+     * (e.g. rapid repeated Escape presses during async operations).
+     */
+    private _cancelInProgress: boolean = false;
+
     protected constructor() {
         // Singleton
     }
@@ -491,91 +497,115 @@ export class Rules {
         _actionType: ActionType,
         _hoveredPieces: Piece[],
     ): Promise<ActionType> {
-        const selectedPiece: Piece | null = board.selected;
-
-        if (board.state === BoardState.Idle) {
+        // Only allow cancel for the current human player
+        if (!board.currentPlayer || board.currentPlayer.remote) {
             return ActionType.None;
         }
 
-        board.sound.play("cancel");
-
-        if (board.state === BoardState.CastSpell) {
-            if (board.currentPlayer?.selectedSpell) {
-                const wasted: Spell | null =
-                    await board.currentPlayer.discardSpell();
-                if (wasted) {
-                    board.logger.log(
-                        `Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`,
-                    );
-                }
-                if (board.selected) {
-                    board.selected.turnOver = true;
-                }
-                board.deselectPlayer();
-                await board.idleDelay(Board.DEFAULT_DELAY);
-                await board.nextPlayer();
-            }
-            return ActionType.Cancel;
+        // Only allow cancel in states where there is a legitimate action to cancel
+        switch (board.state) {
+            case BoardState.SelectSpell:
+            case BoardState.CastSpell:
+            case BoardState.Move:
+            case BoardState.Attack:
+            case BoardState.RangedAttack:
+            case BoardState.Dismount:
+                break;
+            default:
+                return ActionType.None;
         }
 
-        if (board.state === BoardState.Move) {
-            if (selectedPiece) {
-                selectedPiece.moved = true;
-                selectedPiece.turnOver = true;
-                if (selectedPiece.currentRider) {
-                    selectedPiece.currentRider.moved = true;
-                    selectedPiece.currentRider.turnOver = true;
+        // Prevent re-entrant cancel (e.g. rapid repeated Escape presses)
+        if (this._cancelInProgress) {
+            return ActionType.None;
+        }
+        this._cancelInProgress = true;
+
+        try {
+            const selectedPiece: Piece | null = board.selected;
+
+            board.sound.play("cancel");
+
+            if (board.state === BoardState.CastSpell) {
+                if (board.currentPlayer?.selectedSpell) {
+                    const wasted: Spell | null =
+                        await board.currentPlayer.discardSpell();
+                    if (wasted) {
+                        board.logger.log(
+                            `Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`,
+                        );
+                    }
+                    if (board.selected) {
+                        board.selected.turnOver = true;
+                    }
+                    board.deselectPlayer();
+                    await board.idleDelay(Board.DEFAULT_DELAY);
+                    await board.nextPlayer();
                 }
+                return ActionType.Cancel;
             }
-            board.emitUIEvent(EventType.DismountAvailable, false);
-            await board.deselectPiece();
-            return ActionType.Cancel;
-        }
 
-        if (!selectedPiece) {
-            await board.nextPlayer();
-            return ActionType.Cancel;
-        }
-
-        if (board.state === BoardState.Dismount) {
-            if (selectedPiece.currentRider) {
-                selectedPiece.moved = true;
-                selectedPiece.currentRider.moved = true;
-            }
-            board.logger.log(`Dismount cancelled`, Colour.Magenta);
-            if (selectedPiece.currentMount?.canSelect) {
-                await board.selectPiece(selectedPiece.currentMount.id);
-                board.state = BoardState.Move;
-                return ActionType.Move;
-            } else {
+            if (board.state === BoardState.Move) {
+                if (selectedPiece) {
+                    selectedPiece.moved = true;
+                    selectedPiece.turnOver = true;
+                    if (selectedPiece.currentRider) {
+                        selectedPiece.currentRider.moved = true;
+                        selectedPiece.currentRider.turnOver = true;
+                    }
+                }
                 board.emitUIEvent(EventType.DismountAvailable, false);
+                await board.deselectPiece();
+                return ActionType.Cancel;
             }
-        }
 
-        if (
-            !selectedPiece.moved &&
-            selectedPiece.currentRider &&
-            !selectedPiece.currentRider.moved
-        ) {
-            board.state = BoardState.Dismount;
-            return ActionType.Dismount;
-        }
-
-        if (selectedPiece.moved) {
-            if (selectedPiece.canAttack) {
-                selectedPiece.attacked = true;
-            } else if (selectedPiece.canRangedAttack) {
-                selectedPiece.rangedAttacked = true;
+            if (!selectedPiece) {
+                await board.nextPlayer();
+                return ActionType.Cancel;
             }
-            if (!selectedPiece.canSelect) {
-                selectedPiece.turnOver = true;
+
+            if (board.state === BoardState.Dismount) {
+                if (selectedPiece.currentRider) {
+                    selectedPiece.moved = true;
+                    selectedPiece.currentRider.moved = true;
+                }
+                board.logger.log(`Dismount cancelled`, Colour.Magenta);
+                if (selectedPiece.currentMount?.canSelect) {
+                    await board.selectPiece(selectedPiece.currentMount.id);
+                    board.state = BoardState.Move;
+                    return ActionType.Move;
+                } else {
+                    board.emitUIEvent(EventType.DismountAvailable, false);
+                }
+            }
+
+            if (
+                !selectedPiece.moved &&
+                selectedPiece.currentRider &&
+                !selectedPiece.currentRider.moved
+            ) {
+                board.state = BoardState.Dismount;
+                return ActionType.Dismount;
+            }
+
+            if (selectedPiece.moved) {
+                if (selectedPiece.canAttack) {
+                    selectedPiece.attacked = true;
+                } else if (selectedPiece.canRangedAttack) {
+                    selectedPiece.rangedAttacked = true;
+                }
+                if (!selectedPiece.canSelect) {
+                    selectedPiece.turnOver = true;
+                    await board.deselectPiece();
+                }
+            } else {
                 await board.deselectPiece();
             }
-        } else {
-            await board.deselectPiece();
-        }
 
-        return ActionType.None;
+            return ActionType.None;
+        } finally {
+            this._cancelInProgress = false;
+        }
     }
 
     /**
