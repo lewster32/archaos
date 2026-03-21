@@ -41,51 +41,19 @@ export class WizardSprite extends GameObjects.Sprite {
             5 + hatYFix[this._wizCode.wiz],
         );
 
-        // Primary
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.primaryDark,
-            replaceColors[this._wizCode.pri].dark,
-        );
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.primaryMid,
-            replaceColors[this._wizCode.pri].mid,
-        );
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.primaryLight,
-            replaceColors[this._wizCode.pri].light,
-        );
-
-        // Secondary
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.secondaryDark,
-            replaceColors[this._wizCode.sec].dark,
-        );
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.secondaryMid,
-            replaceColors[this._wizCode.sec].mid,
-        );
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.secondaryLight,
-            replaceColors[this._wizCode.sec].light,
-        );
-
-        // Skin
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.skinMid,
-            replaceSkin[this._wizCode.skin].mid,
-        );
-        WizardSprite.replaceColor(
-            canvas,
-            searchColors.skinLight,
-            replaceSkin[this._wizCode.skin].light,
-        );
+        WizardSprite.replaceColors(canvas, [
+            [searchColors.primaryDark, replaceColors[this._wizCode.pri].dark],
+            [searchColors.primaryMid, replaceColors[this._wizCode.pri].mid],
+            [searchColors.primaryLight, replaceColors[this._wizCode.pri].light],
+            [searchColors.secondaryDark, replaceColors[this._wizCode.sec].dark],
+            [searchColors.secondaryMid, replaceColors[this._wizCode.sec].mid],
+            [
+                searchColors.secondaryLight,
+                replaceColors[this._wizCode.sec].light,
+            ],
+            [searchColors.skinMid, replaceSkin[this._wizCode.skin].mid],
+            [searchColors.skinLight, replaceSkin[this._wizCode.skin].light],
+        ]);
 
         canvas.refresh();
 
@@ -126,33 +94,40 @@ export class WizardSprite extends GameObjects.Sprite {
         this.setTexture(this._wizCode.code);
     }
 
-    static replaceColor(
+    static replaceColors(
         canvas: Textures.CanvasTexture,
-        searchColor: number[],
-        replaceColor: number[],
-    ): Textures.CanvasTexture {
+        replacements: [search: number[], replace: number[]][],
+    ) {
         const imgData: ImageData = canvas.context.getImageData(
             0,
             0,
             canvas.width,
             canvas.height,
         );
+        const data = imgData.data;
 
-        for (let i = 0; i < imgData.data.length; i += 4) {
-            if (imgData.data[i + 3] === 255) {
-                if (
-                    imgData.data[i] === searchColor[0] &&
-                    imgData.data[i + 1] === searchColor[1] &&
-                    imgData.data[i + 2] === searchColor[2]
-                ) {
-                    imgData.data[i] = replaceColor[0];
-                    imgData.data[i + 1] = replaceColor[1];
-                    imgData.data[i + 2] = replaceColor[2];
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] !== 255) continue;
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            for (const [search, replace] of replacements) {
+                if (r === search[0] && g === search[1] && b === search[2]) {
+                    data[i] = replace[0];
+                    data[i + 1] = replace[1];
+                    data[i + 2] = replace[2];
+                    break;
                 }
             }
         }
-        canvas.context.putImageData(imgData, 0, 0);
 
-        return canvas;
+        canvas.context.putImageData(imgData, 0, 0);
+    }
+
+    public destroy(fromScene?: boolean) {
+        super.destroy(fromScene);
+        this.scene.textures.remove(this._wizCode.code);
+        this.scene.textures.remove(`${this._wizCode.code}_r`);
+        this.scene.textures.remove(`${this._wizCode.code}_l`);
     }
 }
