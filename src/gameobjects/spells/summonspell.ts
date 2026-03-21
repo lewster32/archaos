@@ -292,11 +292,20 @@ export class SummonSpell extends Spell {
                 lastWallPt = result;
                 chosenTile = result;
             } else {
-                console.debug(
-                    `${player.name} is casting ${this.name} with no special ` +
-                        `placement, ${validTiles.length} valid tiles`,
-                );
-                chosenTile = this._board.rng.pick(validTiles);
+                const difficulty = player.ai?.difficulty ?? 0;
+                if (this._board.rollChance(difficulty)) {
+                    chosenTile = this.selectDefaultTile(
+                        player,
+                        wizardPos,
+                        validTiles,
+                    );
+                } else {
+                    console.debug(
+                        `${player.name} is casting ${this.name} with no ` +
+                            `special placement, ${validTiles.length} valid tiles`,
+                    );
+                    chosenTile = this._board.rng.pick(validTiles);
+                }
             }
 
             await this._board.rules.doCastSpell(this._board, chosenTile);
@@ -307,6 +316,58 @@ export class SummonSpell extends Spell {
             player.discardSpell();
         }
         return true;
+    }
+
+    /**
+     * Selects a tile for a general summon spell by finding the highest-threat
+     * enemy piece (strength scaled by proximity to wizard) and preferring
+     * tiles closest to it — either blocking the threat's path to the wizard
+     * or staging the summoned unit for a short approach.
+     */
+    private selectDefaultTile(
+        player: Player,
+        wizardPos: Geom.Point | null,
+        validTiles: Geom.Point[],
+    ): Geom.Point {
+        const enemies: Piece[] = this._board.pieces.filter(
+            (p: Piece) =>
+                p.owner !== player &&
+                !p.dead &&
+                !p.hasStatus(UnitStatus.Structure),
+        );
+
+        if (enemies.length > 0 && wizardPos) {
+            // Find the highest-threat enemy piece: strength / (distance + 1)
+            let highestThreat: Piece = enemies[0];
+            let highestThreatScore = 0;
+            for (const enemy of enemies) {
+                const dist = Board.distance(wizardPos, enemy.position);
+                const score = enemy.strength / (dist + 1);
+                if (score > highestThreatScore) {
+                    highestThreatScore = score;
+                    highestThreat = enemy;
+                }
+            }
+
+            console.debug(
+                `${player.name} is casting ${this.name} towards ` +
+                    `highest threat ${highestThreat.name} ` +
+                    `(score ${highestThreatScore.toFixed(1)}), ` +
+                    `${validTiles.length} valid tiles`,
+            );
+
+            // Sort tiles ascending by distance to the threat — closer first
+            validTiles.sort(
+                (a, b) =>
+                    Board.distance(a, highestThreat.position) -
+                    Board.distance(b, highestThreat.position),
+            );
+        }
+
+        const difficulty = player.ai?.difficulty ?? 0.5;
+        // Stronger bias at higher difficulty: -2 at diff 0, -6 at diff 1
+        const weight = -(2 + difficulty * 4);
+        return this._board.rng.weightedRandomPick(validTiles, weight);
     }
 
     /**

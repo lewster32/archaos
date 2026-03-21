@@ -1631,4 +1631,331 @@ describe("SummonSpell.autoCast", () => {
         expect(result).toBe(true);
         expect(player.discardSpell).toHaveBeenCalled();
     });
+
+    // ── selectDefaultTile via autoCast — difficulty-gated call site ───────────
+
+    it("calls selectDefaultTile when rollChance(difficulty) returns true for an AI player", async () => {
+        // Standard summon with no special flags (not spreading, autoPlace, tree, or Wall)
+        // so autoCast falls into the else branch and tests rollChance(difficulty).
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(true);
+        const spell = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ castTimes: 1 }),
+        );
+        const player = makeAutoCastPlayer();
+        player.ai = { difficulty: 0.8 };
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi
+            .fn()
+            .mockImplementation(async () => {
+                (spell as any)._castTimes--;
+            });
+        const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
+        const result = await spell.autoCast(player);
+        expect(selectSpy).toHaveBeenCalled();
+        // rollChance called with the player's difficulty value
+        expect((board as any).rollChance).toHaveBeenCalledWith(0.8);
+        expect(result).toBe(true);
+    });
+
+    it("falls back to rng.pick when rollChance(difficulty) returns false", async () => {
+        // rollChance false → random tile via rng.pick; selectDefaultTile must NOT be called.
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        (board as any).rollChance = vi.fn().mockReturnValue(false);
+        const spell = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ castTimes: 1 }),
+        );
+        const player = makeAutoCastPlayer();
+        player.ai = { difficulty: 0.5 };
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi
+            .fn()
+            .mockImplementation(async () => {
+                (spell as any)._castTimes--;
+            });
+        const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
+        const pickSpy = vi.spyOn((board as any).rng, "pick");
+        const result = await spell.autoCast(player);
+        expect(selectSpy).not.toHaveBeenCalled();
+        expect(pickSpy).toHaveBeenCalled();
+        expect(result).toBe(true);
+    });
+
+    it("passes difficulty 0 to rollChance when player has no ai controller", async () => {
+        // player.ai is null → difficulty defaults to 0 → rollChance(0) always false
+        // → random rng.pick path.
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const rollChanceSpy = vi
+            .fn()
+            .mockImplementation((chance: number) => chance > 0);
+        (board as any).rollChance = rollChanceSpy;
+        const spell = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ castTimes: 1 }),
+        );
+        const player = makeAutoCastPlayer();
+        player.ai = null;
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi
+            .fn()
+            .mockImplementation(async () => {
+                (spell as any)._castTimes--;
+            });
+        const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
+        await spell.autoCast(player);
+        // rollChance should have been called with 0 (difficulty default)
+        expect(rollChanceSpy).toHaveBeenCalledWith(0);
+        // difficulty=0 → rollChance(0) → false → selectDefaultTile NOT called
+        expect(selectSpy).not.toHaveBeenCalled();
+    });
+});
+
+// ─── selectDefaultTile ────────────────────────────────────────────────────────
+
+describe("SummonSpell.selectDefaultTile (private)", () => {
+    let board: ReturnType<typeof makeMockBoard>;
+    let spell: SummonSpell;
+    let getUnitConfigSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        board = makeMockBoard();
+        getUnitConfigSpy = vi
+            .spyOn(Piece, "getUnitConfig")
+            .mockReturnValue(makeUnitConfig({ status: [] }));
+        spell = new SummonSpell(board, 1, makeSummonConfig());
+    });
+
+    afterEach(() => {
+        getUnitConfigSpy.mockRestore();
+    });
+
+    /** Helper: a minimal enemy piece stub. */
+    function makeEnemy(
+        x: number,
+        y: number,
+        strength: number,
+        owner = "foe",
+    ): any {
+        return {
+            owner,
+            dead: false,
+            hasStatus: vi.fn().mockReturnValue(false),
+            position: new Geom.Point(x, y),
+            strength,
+            name: `Enemy@${x},${y}`,
+        };
+    }
+
+    it("returns a tile from validTiles when there are no enemies on the board", () => {
+        (board as any).pieces = [];
+        const t1 = new Geom.Point(2, 3);
+        const t2 = new Geom.Point(4, 5);
+        // TestRNG.weightedRandomPick returns array[0] — no sort when no enemies
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            new Geom.Point(0, 0),
+            [t1, t2],
+        );
+        expect(result).toBe(t1);
+    });
+
+    it("returns a tile without sorting when wizardPos is null (even if enemies exist)", () => {
+        const enemy = makeEnemy(5, 5, 10);
+        (board as any).pieces = [enemy];
+        const t1 = new Geom.Point(3, 3);
+        const t2 = new Geom.Point(6, 6);
+        // No sort because wizardPos is null — first tile stays at index 0
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            null,
+            [t1, t2],
+        );
+        expect(result).toBe(t1);
+    });
+
+    it("sorts tiles ascending by distance to the highest-threat enemy", () => {
+        // Wizard at (0,0). Enemy at (8,8), strength=10.
+        // dist(wizard → enemy) = ~11.3 → threat = 10 / (11.3 + 1) ≈ 0.81.
+        // Tile (7,7) is ~1.4 from enemy; tile (0,0) is ~11.3 from enemy.
+        // After ascending sort by distance-to-enemy, (7,7) should be at index 0.
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = makeEnemy(8, 8, 10);
+        (board as any).pieces = [enemy];
+        const near = new Geom.Point(7, 7); // close to enemy
+        const far = new Geom.Point(0, 1); // far from enemy
+        // TestRNG.weightedRandomPick returns array[0]
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            wizardPos,
+            [far, near],
+        );
+        expect(result).toBe(near);
+    });
+
+    it("selects highest-threat enemy by strength / (distance_to_wizard + 1)", () => {
+        // Wizard at (0,0).
+        // Enemy A at (1,0): strength=2, dist=1 → score = 2/2 = 1.0
+        // Enemy B at (5,0): strength=10, dist=5 → score = 10/6 ≈ 1.67  ← highest threat
+        // Tiles: (4,0) is close to enemy B; (0,1) is far from enemy B.
+        // After sort ascending by distance to highest-threat (enemy B), (4,0) should win.
+        const wizardPos = new Geom.Point(0, 0);
+        const enemyA = makeEnemy(1, 0, 2);
+        const enemyB = makeEnemy(5, 0, 10);
+        (board as any).pieces = [enemyA, enemyB];
+        const nearB = new Geom.Point(4, 0); // dist to (5,0) = 1
+        const farB = new Geom.Point(0, 1); // dist to (5,0) = ~5.1
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            wizardPos,
+            [farB, nearB],
+        );
+        expect(result).toBe(nearB);
+    });
+
+    it("excludes pieces owned by the casting player from enemy list", () => {
+        // Own piece at (8,8) strength=99 — should be excluded.
+        // No remaining enemies → no sort → first tile returned as-is.
+        const playerObj = makeMockPlayer(makeMockCastingPiece());
+        const ownPiece = {
+            owner: playerObj,
+            dead: false,
+            hasStatus: vi.fn().mockReturnValue(false),
+            position: new Geom.Point(8, 8),
+            strength: 99,
+            name: "OwnPiece",
+        };
+        (board as any).pieces = [ownPiece];
+        const t1 = new Geom.Point(1, 1);
+        const t2 = new Geom.Point(2, 2);
+        const result = (spell as any).selectDefaultTile(
+            playerObj,
+            new Geom.Point(0, 0),
+            [t1, t2],
+        );
+        // Own piece excluded → no enemies → no sort → array[0] = t1
+        expect(result).toBe(t1);
+    });
+
+    it("excludes dead enemy pieces from enemy list", () => {
+        // Dead enemy at (8,8) — should be excluded.
+        const deadEnemy = {
+            owner: "foe",
+            dead: true,
+            hasStatus: vi.fn().mockReturnValue(false),
+            position: new Geom.Point(8, 8),
+            strength: 50,
+            name: "DeadEnemy",
+        };
+        (board as any).pieces = [deadEnemy];
+        const t1 = new Geom.Point(1, 1);
+        const t2 = new Geom.Point(2, 2);
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            new Geom.Point(0, 0),
+            [t1, t2],
+        );
+        // Dead enemy excluded → no live enemies → no sort → array[0] = t1
+        expect(result).toBe(t1);
+    });
+
+    it("excludes structure-status pieces from enemy list", () => {
+        // A structure enemy at (8,8) — hasStatus(UnitStatus.Structure) returns true
+        // so it should be excluded from the threat calculation.
+        const structEnemy = {
+            owner: "foe",
+            dead: false,
+            hasStatus: vi.fn().mockReturnValue(true), // any status check → true (including Structure)
+            position: new Geom.Point(8, 8),
+            strength: 50,
+            name: "StructureEnemy",
+        };
+        (board as any).pieces = [structEnemy];
+        const t1 = new Geom.Point(1, 1);
+        const t2 = new Geom.Point(2, 2);
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            new Geom.Point(0, 0),
+            [t1, t2],
+        );
+        // Structure excluded → no eligible enemies → no sort → array[0] = t1
+        expect(result).toBe(t1);
+    });
+
+    it("uses player.ai.difficulty to compute weight passed to weightedRandomPick", () => {
+        // At difficulty 0 weight = -(2 + 0*4) = -2; at difficulty 1 weight = -(2 + 1*4) = -6.
+        // We verify by spying on rng.weightedRandomPick and inspecting the weight argument.
+        (board as any).pieces = [];
+        const player = makeMockPlayer(makeMockCastingPiece());
+        player.ai = { difficulty: 1 };
+        const t1 = new Geom.Point(0, 0);
+        const pickSpy = vi.spyOn((board as any).rng, "weightedRandomPick");
+        (spell as any).selectDefaultTile(player, new Geom.Point(0, 0), [t1]);
+        expect(pickSpy).toHaveBeenCalledWith([t1], -6);
+    });
+
+    it("defaults difficulty to 0.5 when player has no ai controller", () => {
+        // player.ai is null → difficulty = 0.5 → weight = -(2 + 0.5*4) = -4.
+        (board as any).pieces = [];
+        const player = makeMockPlayer(makeMockCastingPiece());
+        player.ai = null;
+        const t1 = new Geom.Point(0, 0);
+        const pickSpy = vi.spyOn((board as any).rng, "weightedRandomPick");
+        (spell as any).selectDefaultTile(player, new Geom.Point(0, 0), [t1]);
+        expect(pickSpy).toHaveBeenCalledWith([t1], -4);
+    });
+
+    it("handles a single valid tile (no enemies)", () => {
+        (board as any).pieces = [];
+        const only = new Geom.Point(3, 3);
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            new Geom.Point(0, 0),
+            [only],
+        );
+        expect(result).toBe(only);
+    });
+
+    it("does not modify tile order when all enemies are equidistant from all tiles", () => {
+        // Enemy at (5,0). Tiles at (3,0) and (7,0) are both 2 units away.
+        // Sort is stable on equal distances — original relative order preserved.
+        const wizardPos = new Geom.Point(0, 0);
+        const enemy = makeEnemy(5, 0, 10);
+        (board as any).pieces = [enemy];
+        const t1 = new Geom.Point(3, 0); // dist to (5,0) = 2
+        const t2 = new Geom.Point(7, 0); // dist to (5,0) = 2
+        // Both distances equal; stable sort keeps t1 first
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            wizardPos,
+            [t1, t2],
+        );
+        expect(result).toBe(t1);
+    });
+
+    it("keeps the first enemy as highest-threat when the second enemy scores lower", () => {
+        // Exercises the false branch of `if (score > highestThreatScore)` when a
+        // subsequent enemy produces a score that does NOT exceed the current maximum.
+        // Wizard at (0,0).
+        // Enemy A at (1,0): strength=20, dist=1 → score = 20/2 = 10.0  ← highest
+        // Enemy B at (5,0): strength=2, dist=5 → score = 2/6 ≈ 0.33   ← lower (false branch)
+        // Tiles: (0,1) is far from enemy A; (1,1) is close to enemy A.
+        // After sort ascending by distance to highest-threat (enemy A), (1,1) should win.
+        const wizardPos = new Geom.Point(0, 0);
+        const enemyA = makeEnemy(1, 0, 20); // high score
+        const enemyB = makeEnemy(5, 0, 2); // low score — hits false branch
+        (board as any).pieces = [enemyA, enemyB];
+        const nearA = new Geom.Point(1, 1); // dist to (1,0) = 1
+        const farA = new Geom.Point(5, 5); // dist to (1,0) ≈ 6.4
+        const result = (spell as any).selectDefaultTile(
+            makeMockPlayer(makeMockCastingPiece()),
+            wizardPos,
+            [farA, nearA],
+        );
+        expect(result).toBe(nearA);
+    });
 });
