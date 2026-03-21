@@ -100,10 +100,7 @@ input {
     font-size: 1em;
 }
 
-select,
-input {
-    text-align: left;
-    color: var(--color-yellow);
+@mixin input-border {
     image-rendering: pixelated;
     border-style: solid;
     border-width: 6px;
@@ -111,6 +108,16 @@ input {
     border-image-slice: 3;
     border-image-repeat: repeat;
     border-image-source: url("../../assets/images/ui/edit-inactive.png");
+    &:hover {
+        border-image-source: url("../../assets/images/ui/edit-active.png");
+    }
+}
+
+select,
+input {
+    @include input-border;
+    text-align: left;
+    color: var(--color-yellow);
     background-color: #101010;
 
     &:hover {
@@ -137,5 +144,51 @@ input[type="checkbox"] {
             var(--accent-color, var(--color-yellow)) 20%,
             transparent 80%
         );
+    }
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: inline-flex;
+    height: 0;
+    padding: 0;
+    background: #171717;
+    border-radius: 6px;
+    cursor: pointer;
+    &::-webkit-slider-thumb, &::-moz-range-thumb {
+        border: none;
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        background: url("../../assets/images/ui/button-cyan.png") no-repeat center center / 100% 100%;
+    }
+    &:disabled {
+        pointer-events: none;
+        &::-webkit-slider-thumb, &::-moz-range-thumb {
+            background: url("../../assets/images/ui/button-header.png") no-repeat center center / 100% 100%;
+        }
+    }
+}
+
+.icon {
+    image-rendering: pixelated;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    &--settings {
+        background-image: url("../../assets/images/ui/icon-settings.png");
+    }
+    &--menu {
+        background-image: url("../../assets/images/ui/icon-menu.png");
+    }
+    &--left {
+        background-image: url("../../assets/images/ui/icon-left.png");
+    }
+    &--add {
+        background-image: url("../../assets/images/ui/icon-add.png");
     }
 }

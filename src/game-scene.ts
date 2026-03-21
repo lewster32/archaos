@@ -277,13 +277,16 @@ export class GameScene extends Scene {
         }
 
         for (let player of data.players) {
-            // Get distributed difficulty between 0.1 and 1.0, favouring
-            // middle values
-            const difficulty: number =
-                player.difficulty ||
-                this.board.rng.weightedRandomPick(
-                    GameScene.DIFFICULTY_DISTRIBUTION,
-                    -3,
+            // Get the data.difficulty clamped between 0.1 and 1.0, and with +-3
+            // random variation
+            const modifiedDifficulty: number =
+                Math.min(
+                    1,
+                    Math.max(
+                        0.1,
+                        (Number.parseFloat(data.difficulty?.toString() ?? "0.5") || 0.5) +
+                            this.board.rng.realInRange(-0.3, 0.3),
+                    ),
                 );
 
             this.board.addPlayer({
@@ -291,7 +294,7 @@ export class GameScene extends Scene {
                 type: player.computerControlled
                     ? GameSetupPlayerType.Computer
                     : GameSetupPlayerType.Local,
-                difficulty: player.difficulty || difficulty,
+                difficulty: player.difficulty || modifiedDifficulty,
             });
         }
 

@@ -228,3 +228,7 @@ p {
     white-space: nowrap;
     border: 0;
 }
+
+.text-shadow {
+    text-shadow: var(--text-shadow);
+}

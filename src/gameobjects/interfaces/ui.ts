@@ -43,6 +43,7 @@ export interface SetupData {
     spellCount: number;
     players: SetupPlayer[];
     classicSpells: boolean;
+    difficulty: number;
 }
 
 /**
@@ -53,6 +54,7 @@ export interface GameSetupData {
     board: Box;
     spellCount: number;
     classicSpells: boolean;
+    difficulty?: number;
 }
 
 export enum GameSetupPlayerType {

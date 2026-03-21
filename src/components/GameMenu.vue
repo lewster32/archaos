@@ -2,60 +2,83 @@
     <div class="menu">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
         <div
-            class="callout__inner"
             v-if="setup"
-            :style="{ columns: setup.playerCount > 4 ? 2 : 1 }"
         >
             <div class="callout__row">
-                <label for="playercount">Number of players:</label>
+                <label for="playercount"
+                    title="The number of players in the game.">Number of players:</label>
                 <select v-model="setup.playerCount" id="playercount">
                     <option v-for="n in 7" :key="n" :value="n + 1">
                         {{ n + 1 }} Players
                     </option>
                 </select>
             </div>
-            <div
-                class="callout__row"
-                v-for="(name, index) in setup.players.slice(
-                    0,
-                    setup.playerCount,
-                )"
-                :key="index"
-                style="margin-left: 1em"
-            >
-                <label :for="`player${index}`" style="width: 20ch"
-                    >{{
-                        setup.players[index].computerControlled
-                            ? "Computer"
-                            : "Human"
-                    }}
-                    {{ index + 1 }}'s name:</label
-                >
-                <input
-                    v-model="setup.players[index].name"
-                    type="text"
-                    :id="`player${index}`"
-                    maxlength="20"
-                    style="width: 23ch"
-                />
-                <div
-                    style="
-                        width: 3ch;
-                        display: flex;
-                        align-items: center;
-                        justify-content: flex-end;
-                    "
-                >
-                    <input
-                        type="checkbox"
-                        v-model="setup.players[index].computerControlled"
-                        title="Computer controlled?"
-                        :id="`aicheckbox${index}`"
-                    />
-                </div>
-            </div>
             <div class="callout__row">
-                <label for="boardsize">Board size:</label>
+                <button
+                    class="button"
+                    @click="($refs.playerConfigDialog as HTMLDialogElement)?.showModal()"
+                    >Configure players <i class="icon icon--settings"></i></button>
+            </div>
+            <dialog
+                v-if="setup.playerCount > 0"
+                class="callout"
+                ref="playerConfigDialog">
+                <div
+                    class="callout__row"
+                    v-for="(name, index) in setup.players.slice(
+                        0,
+                        setup.playerCount,
+                    )"
+                    :key="index"
+                    :class="{ 'is-computer': setup.players[index].computerControlled }"
+                >
+                    <label :for="`player${index}`" style="width: 20ch"
+                        >{{
+                            setup.players[index].computerControlled
+                                ? "Computer"
+                                : "Human"
+                        }}
+                        {{ index + 1 }}'s name:</label
+                    >
+                    <input
+                        v-model="setup.players[index].name"
+                        type="text"
+                        :id="`player${index}`"
+                        maxlength="20"
+                        style="width: 23ch;"
+                    />
+                    <label
+                        class="human-computer-toggle"
+                        :for="`aicheckbox${index}`"
+                        title="Computer controlled?"
+                    >
+                        <input
+                            type="checkbox"
+                            v-model="setup.players[index].computerControlled"
+                            class="human-computer-toggle__input"
+                            :id="`aicheckbox${index}`"
+                        />
+                    </label>
+                </div>
+                <div class="callout__row callout__row--difficulty">
+                    <label for="difficulty"
+                    title="The difficulty of computer-controlled players. Higher produces more challenging and aggressive opponents.">Difficulty:</label>
+                    <input type="range" min="0.1" max="1" step="0.1" v-model="setup.difficulty"
+                    :disabled="!hasComputerPlayers"/>
+                    <span class="c-cyan text-shadow">{{ Math.round(setup.difficulty * 10) }}</span>
+                </div>
+                <div class="callout__row">
+                    <button
+                        class="button button--green"
+                        @click="($refs.playerConfigDialog as HTMLDialogElement)?.close()"
+                    >
+                        Done
+                    </button>
+                </div>
+            </dialog>
+            <div class="callout__row">
+                <label for="boardsize"
+                title="The size of the play area. If there are more than 4 players, the small board is disabled to prevent overcrowding.">Board size:</label>
                 <select v-model="setup.boardSize" id="boardsize">
                     <option value="9" :disabled="setup.playerCount > 4">
                         Small Board
@@ -65,7 +88,8 @@
                 </select>
             </div>
             <div class="callout__row">
-                <label for="spellcount">Spell count:</label>
+                <label for="spellcount"
+                    title="The number of spells each player starts with.">Spell count:</label>
                 <select v-model="setup.spellCount" id="spellcount">
                     <option value="10">10</option>
                     <option value="15">15</option>
@@ -78,16 +102,16 @@
                     <input
                         type="checkbox"
                         v-model="setup.classicSpells"
-                        style="--accent-color: var(--color-cyan)"
+                        style="--accent-color: var(--color-green)"
                         id="classicspells"
                     />
-                    <span class="c-cyan">Classic spells</span
-                    ><span>(only allow spells from original)</span>
+                    <span class="c-green">Classic spells</span
+                    ><span>(only use spells from original)</span>
                 </label>
             </div>
             <div class="callout__row">
                 <button
-                    class="button button--green start-game"
+                    class="button button--green button--important start-game"
                     @click="startGame"
                 >
                     Start Game
@@ -98,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import type {
     SetupData,
     GameSetupData,
@@ -134,6 +158,9 @@ if (globalThis.localStorage) {
                 i < existing.length ? existing[i] : p,
             );
         }
+        if (!setup.value.difficulty) {
+            setup.value.difficulty = 0.5;
+        }
     }
 }
 
@@ -144,6 +171,7 @@ if (!setup.value) {
         spellCount: 15,
         players: defaultPlayers,
         classicSpells: false,
+        difficulty: 0.5,
     };
 }
 
@@ -163,6 +191,13 @@ watch(
     { immediate: true },
 );
 
+/**
+ * Check any of the active players are computer-controlled.
+ */
+const hasComputerPlayers = computed(
+    () => setup.value?.players.slice(0, setup.value.playerCount).some(p => p.computerControlled) || false
+);
+
 function startGame(): void {
     globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
     emit("start", {
@@ -176,6 +211,7 @@ function startGame(): void {
         },
         spellCount: Math.abs(setup.value!.spellCount) || 15,
         classicSpells: Boolean(setup.value!.classicSpells),
+        difficulty: setup.value!.difficulty || 0.5,
     });
 }
 </script>
@@ -206,4 +242,60 @@ function startGame(): void {
     align-items: center;
     gap: 0.5rem;
 }
+
+.human-computer-toggle {
+    width: 2.5em;
+    height: 1.5em;
+    padding-block: .25em;
+    display: flex;
+    aspect-ratio: auto;
+    margin: 0;
+    background-color: var(--color-black);
+    position: relative;
+    image-rendering: pixelated;
+    border-style: solid;
+    border-width: 6px;
+    border-image-width: 6px;
+    border-image-slice: 3;
+    border-image-repeat: repeat;
+    border-image-source: url("../../assets/images/ui/check-unchecked.png");
+    cursor: pointer;
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
+        background-color: var(--color-yellow);
+        image-rendering: pixelated;
+        transition: translate 0.2s ease;
+    }
+    &__input[type="checkbox"] {
+        display: none;
+    }
+    &:has(.human-computer-toggle__input:checked) {
+        &::before {
+            translate: 100%;
+            background-color: var(--color-cyan);
+        }
+    }
+}
+
+.callout__row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    &--difficulty {
+        margin-block: 1em;
+    }
+}
+
+.is-computer {
+    input[type="text"] {
+        color: var(--color-cyan);
+    }
+}
+
 </style>
