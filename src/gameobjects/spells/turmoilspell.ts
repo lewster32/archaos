@@ -12,9 +12,15 @@ import { Geom, Math as PMath } from "phaser";
  * Only available as a gift spell.
  */
 export class TurmoilSpell extends Spell {
-
-    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
-        const target: Piece = targets.find((p: Piece) => p.type === UnitType.Wizard && p.owner === this.owner);
+    async doCast(
+        owner: Player,
+        castingPiece: Piece,
+        point?: Geom.Point,
+        targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
+        const target: Piece = targets.find(
+            (p: Piece) => p.type === UnitType.Wizard && p.owner === this.owner,
+        );
         if (!target) {
             return false;
         }
@@ -24,28 +30,35 @@ export class TurmoilSpell extends Spell {
             EffectType.WizardCasting,
             target.sprite.getCenter(),
             null,
-            target
+            target,
         );
 
-        for (const piece of this._board.pieces.filter((p: Piece) => !p.dead && !p.currentMount && !p.engulfed)) {
-            const randomEmptySpace: Geom.Point = this._board.getRandomEmptySpace();
+        for (const piece of this._board.pieces.filter(
+            (p: Piece) => !p.dead && !p.currentMount && !p.engulfed,
+        )) {
+            const randomEmptySpace: Geom.Point =
+                this._board.getRandomEmptySpace();
             if (randomEmptySpace) {
                 this._board.sound.play("spelleffect");
-                const oldPiecePos: PMath.Vector2 = new PMath.Vector2(piece.sprite.getCenter().x, piece.sprite.getCenter().y);
-                const newPiecePos: Geom.Point = this._board.getIsoPosition(randomEmptySpace);
+                const oldPiecePos: PMath.Vector2 = new PMath.Vector2(
+                    piece.sprite.getCenter().x,
+                    piece.sprite.getCenter().y,
+                );
+                const newPiecePos: Geom.Point =
+                    this._board.getIsoPosition(randomEmptySpace);
                 piece.moveTo(randomEmptySpace, 500);
                 await this._board.playEffect(
                     EffectType.TurmoilBeam,
                     oldPiecePos,
                     newPiecePos,
-                    piece
+                    piece,
                 );
             }
         }
 
         this._board.logger.log(
             `${target.name} successfully casts '${this.name}'`,
-            Colour.Green
+            Colour.Green,
         );
 
         await this._board.idleDelay(Board.DEFAULT_DELAY);

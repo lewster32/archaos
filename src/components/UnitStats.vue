@@ -64,19 +64,78 @@
         </div>
         <div class="unit-stats__status unit-statuses">
             <span v-if="owner && !isWizard" class="unit-statuses__item">
-                {{ isMount ? 'Mounted' : 'Owned' }} by <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span> 
+                {{ isMount ? "Mounted" : "Owned" }} by
+                <span
+                    :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`"
+                    >{{ owner }}</span
+                >
             </span>
-            <span class="unit-statuses__item c-white" v-if="isWizard" title="The spell casting unit of each player">Wizard</span>
-            <span class="unit-statuses__item c-grey" v-if="isDead" title="R.I.P.">Dead</span>
-            <span class="unit-statuses__item c-yellow" v-if="hasStatus('flying')" title="Can fly over obstacles and units">Flying</span>
-            <span class="unit-statuses__item c-light-blue" v-if="hasStatus('undead')" title="Cannot be harmed by normal means">Undead</span>
-            <span class="unit-statuses__item c-brown" v-if="hasAnyStatus(['mount', 'mountAny'])" title="Can be mounted by a wizard">Mountable</span>
-            <span class="unit-statuses__item c-magenta" v-if="hasStatus('spread')" title="Has a chance to multiply and harm units it spreads over">Spreads</span>
-            <span class="unit-statuses__item c-cyan" v-if="hasStatus('invuln')" title="Cannot be attacked by any means">Invulnerable</span>
-            <span class="unit-statuses__item c-light-blue" v-if="hasStatus('sanctity')" title="Immune to magical attacks">Sanctity</span>
-            <span class="unit-statuses__item c-green" v-if="hasStatus('tree')" title="Cannot move">Tree</span>
-            <span class="unit-statuses__item c-yellow" v-if="hasStatus('expires')" title="Has a chance to permanently disappear">Expires</span>
-            <span class="unit-statuses__item c-cyan" v-if="hasStatus('expiresGiveSpell')" title="Gifts a new spell to the mounted wizard on expiry">Gives spell</span>
+            <span
+                class="unit-statuses__item c-white"
+                v-if="isWizard"
+                title="The spell casting unit of each player"
+                >Wizard</span
+            >
+            <span
+                class="unit-statuses__item c-grey"
+                v-if="isDead"
+                title="R.I.P."
+                >Dead</span
+            >
+            <span
+                class="unit-statuses__item c-yellow"
+                v-if="hasStatus('flying')"
+                title="Can fly over obstacles and units"
+                >Flying</span
+            >
+            <span
+                class="unit-statuses__item c-light-blue"
+                v-if="hasStatus('undead')"
+                title="Cannot be harmed by normal means"
+                >Undead</span
+            >
+            <span
+                class="unit-statuses__item c-brown"
+                v-if="hasAnyStatus(['mount', 'mountAny'])"
+                title="Can be mounted by a wizard"
+                >Mountable</span
+            >
+            <span
+                class="unit-statuses__item c-magenta"
+                v-if="hasStatus('spread')"
+                title="Has a chance to multiply and harm units it spreads over"
+                >Spreads</span
+            >
+            <span
+                class="unit-statuses__item c-cyan"
+                v-if="hasStatus('invuln')"
+                title="Cannot be attacked by any means"
+                >Invulnerable</span
+            >
+            <span
+                class="unit-statuses__item c-light-blue"
+                v-if="hasStatus('sanctity')"
+                title="Immune to magical attacks"
+                >Sanctity</span
+            >
+            <span
+                class="unit-statuses__item c-green"
+                v-if="hasStatus('tree')"
+                title="Cannot move"
+                >Tree</span
+            >
+            <span
+                class="unit-statuses__item c-yellow"
+                v-if="hasStatus('expires')"
+                title="Has a chance to permanently disappear"
+                >Expires</span
+            >
+            <span
+                class="unit-statuses__item c-cyan"
+                v-if="hasStatus('expiresGiveSpell')"
+                title="Gifts a new spell to the mounted wizard on expiry"
+                >Gives spell</span
+            >
         </div>
     </div>
 </template>
@@ -85,21 +144,31 @@ import { computed } from "vue";
 import { UnitConfig } from "../gameobjects/interfaces/ui";
 
 const props = defineProps<{
-    unit: UnitConfig |null;
+    unit: UnitConfig | null;
     owner?: string;
     isMount?: boolean;
 }>();
 
 /**
  * Check if the current unit has a specific status.
- * 
+ *
  * @param status The status to check for.
  */
-type Status = "flying" | "undead" | "mount" | "mountAny" | "spread" | "invuln" | "sanctity" | "tree" | "expires" | "expiresGiveSpell";
+type Status =
+    | "flying"
+    | "undead"
+    | "mount"
+    | "mountAny"
+    | "spread"
+    | "invuln"
+    | "sanctity"
+    | "tree"
+    | "expires"
+    | "expiresGiveSpell";
 
 /**
  * Check the unit has the given status.
- * 
+ *
  * @param status The status to check for.
  */
 const hasStatus = (status: Status): boolean => {
@@ -108,7 +177,7 @@ const hasStatus = (status: Status): boolean => {
 
 /**
  * Check if the unit has any of the given statuses.
- * 
+ *
  * @param statuses The statuses to check for.
  */
 const hasAnyStatus = (statuses: Status[]): boolean => {
@@ -117,7 +186,7 @@ const hasAnyStatus = (statuses: Status[]): boolean => {
 
 /**
  * Check if the unit has all of the given statuses.
- * 
+ *
  * @param statuses The statuses to check for.
  */
 const hasAllStatuses = (statuses: Status[]): boolean => {
@@ -140,24 +209,23 @@ const isDead = computed(() => {
 
 /**
  * Get the numeral class for the given number.
- * 
+ *
  * @param num The number to get the class for.
  */
 const itemNumClass = (num: number) => {
     // Only return classes for numbers 1-10
     if (!num || num < 1 || num > 10) {
-        return '';
+        return "";
     }
     return `unit-properties__item--num-${num}`;
 };
-
 </script>
 <style lang="scss" scoped>
 .unit-stats {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    margin-block: .25em;
+    margin-block: 0.25em;
 }
 
 .unit-statuses {
@@ -171,7 +239,6 @@ const itemNumClass = (num: number) => {
         }
     }
 }
-
 
 @keyframes flip-numbers {
     0% {
@@ -188,13 +255,14 @@ const itemNumClass = (num: number) => {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    gap: .25em;
+    gap: 0.25em;
     &__item {
         width: 36px;
         height: 36px;
         line-height: 38px;
         text-align: center;
-        background-image: var(--stat-num, none), var(--stat-icon, none),
+        background-image:
+            var(--stat-num, none), var(--stat-icon, none),
             url("../../assets/images/ui/stat-bg.png");
         background-size: 36px;
         user-select: none;
@@ -203,7 +271,7 @@ const itemNumClass = (num: number) => {
             &::after {
                 position: absolute;
                 top: 0;
-                right: -.5em;
+                right: -0.5em;
                 height: 1em;
                 line-height: 1em;
             }

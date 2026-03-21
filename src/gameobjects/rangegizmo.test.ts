@@ -1,18 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Geom } from 'phaser';
-import { RangeGizmo, Node, Path } from './rangegizmo';
-import type { Board } from './board';
-import type { Piece } from './piece';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Geom } from "phaser";
+import { RangeGizmo, Node, Path } from "./rangegizmo";
+import type { Board } from "./board";
+import type { Piece } from "./piece";
 
 // ─── Mock helpers ────────────────────────────────────────────────────────────
 
-function makeNode(x: number, y: number, opts: Partial<{
-    traversable: boolean;
-    terminal: boolean;
-    warning: boolean;
-    flying: boolean;
-    path: Path;
-}> = {}): Node {
+function makeNode(
+    x: number,
+    y: number,
+    opts: Partial<{
+        traversable: boolean;
+        terminal: boolean;
+        warning: boolean;
+        flying: boolean;
+        path: Path;
+    }> = {},
+): Node {
     const node = new Node(x, y);
     if (opts.traversable !== undefined) node.traversable = opts.traversable;
     if (opts.terminal !== undefined) node.terminal = opts.terminal;
@@ -26,10 +30,14 @@ function makeMockLayer() {
     const children: any[] = [];
     return {
         add: vi.fn((child: any) => children.push(child)),
-        removeAll: vi.fn(() => { children.length = 0; }),
+        removeAll: vi.fn(() => {
+            children.length = 0;
+        }),
         getChildren: vi.fn(() => children),
         sort: vi.fn(),
-        get length() { return children.length; },
+        get length() {
+            return children.length;
+        },
     };
 }
 
@@ -96,8 +104,8 @@ function makeMockPiece(overrides: Record<string, any> = {}): Piece {
 
 // ─── Node ────────────────────────────────────────────────────────────────────
 
-describe('Node', () => {
-    it('stores coordinates from constructor', () => {
+describe("Node", () => {
+    it("stores coordinates from constructor", () => {
         const node = new Node(3, 7);
         expect(node.x).toBe(3);
         expect(node.y).toBe(7);
@@ -105,7 +113,7 @@ describe('Node', () => {
         expect(node.pos.y).toBe(7);
     });
 
-    it('defaults to traversable, not terminal, not warning, not flying', () => {
+    it("defaults to traversable, not terminal, not warning, not flying", () => {
         const node = new Node(0, 0);
         expect(node.traversable).toBe(true);
         expect(node.terminal).toBe(false);
@@ -113,20 +121,20 @@ describe('Node', () => {
         expect(node.flying).toBe(false);
     });
 
-    describe('isValid', () => {
-        it('returns true when path is undefined (undefined !== null)', () => {
+    describe("isValid", () => {
+        it("returns true when path is undefined (undefined !== null)", () => {
             const node = new Node(0, 0);
             // path is undefined by default; undefined !== null → true
             expect(node.isValid()).toBe(true);
         });
 
-        it('returns false when path is explicitly null', () => {
+        it("returns false when path is explicitly null", () => {
             const node = new Node(0, 0);
             node.path = null;
             expect(node.isValid()).toBe(false);
         });
 
-        it('returns true when traversable and has a path', () => {
+        it("returns true when traversable and has a path", () => {
             const n1 = makeNode(0, 0);
             const n2 = makeNode(1, 0);
             n2.parentNode = n1;
@@ -137,13 +145,13 @@ describe('Node', () => {
             expect(node.isValid()).toBe(true);
         });
 
-        it('returns true when traversable and flying', () => {
+        it("returns true when traversable and flying", () => {
             const node = new Node(0, 0);
             node.flying = true;
             expect(node.isValid()).toBe(true);
         });
 
-        it('returns false when not traversable even with path', () => {
+        it("returns false when not traversable even with path", () => {
             const n1 = makeNode(0, 0);
             const n2 = makeNode(1, 0);
             n2.parentNode = n1;
@@ -159,8 +167,8 @@ describe('Node', () => {
 
 // ─── Path ────────────────────────────────────────────────────────────────────
 
-describe('Path', () => {
-    it('stores nodes, angles, and cost', () => {
+describe("Path", () => {
+    it("stores nodes, angles, and cost", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0);
         const path = new Path([n1, n2], [0, 1], 1.5);
@@ -170,7 +178,7 @@ describe('Path', () => {
         expect(path.cost).toBe(1.5);
     });
 
-    it('does not store data when cost is 0', () => {
+    it("does not store data when cost is 0", () => {
         const n1 = makeNode(0, 0);
         const path = new Path([n1], [0], 0);
         expect(path.nodes).toBeUndefined();
@@ -178,17 +186,17 @@ describe('Path', () => {
         expect(path.cost).toBeUndefined();
     });
 
-    it('does not store data when nodes is empty', () => {
+    it("does not store data when nodes is empty", () => {
         const path = new Path([], [], 5);
         expect(path.nodes).toBeUndefined();
     });
 
-    it('does not store data when nodes is null', () => {
+    it("does not store data when nodes is null", () => {
         const path = new Path(null, null, 5);
         expect(path.nodes).toBeUndefined();
     });
 
-    it('toPoints clones node positions', () => {
+    it("toPoints clones node positions", () => {
         const n1 = makeNode(2, 3);
         const n2 = makeNode(4, 5);
         const path = new Path([n1, n2], [0, 1], 1);
@@ -203,7 +211,7 @@ describe('Path', () => {
         expect(points[0]).not.toBe(n1.pos);
     });
 
-    it('warning returns the warning flag of the last node', () => {
+    it("warning returns the warning flag of the last node", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0, { warning: true });
         const path = new Path([n1, n2], [0, 0], 1);
@@ -214,7 +222,7 @@ describe('Path', () => {
         expect(path2.warning).toBe(false);
     });
 
-    it('terminal returns true if any node is terminal', () => {
+    it("terminal returns true if any node is terminal", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0, { terminal: true });
         const n3 = makeNode(2, 0);
@@ -222,7 +230,7 @@ describe('Path', () => {
         expect(path.terminal).toBe(true);
     });
 
-    it('terminal returns false if no node is terminal', () => {
+    it("terminal returns false if no node is terminal", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0);
         const path = new Path([n1, n2], [0, 0], 1);
@@ -232,61 +240,61 @@ describe('Path', () => {
 
 // ─── RangeGizmo static methods ──────────────────────────────────────────────
 
-describe('RangeGizmo', () => {
-    describe('diagonalHeuristic', () => {
-        it('returns 0 for identical nodes', () => {
+describe("RangeGizmo", () => {
+    describe("diagonalHeuristic", () => {
+        it("returns 0 for identical nodes", () => {
             const node = makeNode(5, 5);
             expect(RangeGizmo.diagonalHeuristic(node, node)).toBe(0);
         });
 
-        it('returns cost for adjacent cardinal step', () => {
+        it("returns cost for adjacent cardinal step", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
             // dx=1, dy=0 → diag=0, straight=1 → 1.5*0 + 1*1 = 1
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1);
         });
 
-        it('returns diagonalCost for adjacent diagonal step', () => {
+        it("returns diagonalCost for adjacent diagonal step", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             // dx=1, dy=1 → diag=1, straight=2 → 1.5*1 + 1*(2-2) = 1.5
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1.5);
         });
 
-        it('returns correct cost for multi-step path', () => {
+        it("returns correct cost for multi-step path", () => {
             const a = makeNode(0, 0);
             const b = makeNode(3, 1);
             // dx=3, dy=1 → diag=1, straight=4 → 1.5*1 + 1*(4-2) = 3.5
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(3.5);
         });
 
-        it('adds terminalCost when node is terminal', () => {
+        it("adds terminalCost when node is terminal", () => {
             const a = makeNode(0, 0, { terminal: true });
             const b = makeNode(1, 0);
             // 1 + 100 = 101
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(101);
         });
 
-        it('adds terminalCost when node is warning', () => {
+        it("adds terminalCost when node is warning", () => {
             const a = makeNode(0, 0, { warning: true });
             const b = makeNode(1, 0);
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(101);
         });
 
-        it('does not add terminalCost for normal nodes', () => {
+        it("does not add terminalCost for normal nodes", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
             expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1);
         });
 
-        it('uses custom cost parameters', () => {
+        it("uses custom cost parameters", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             // diag=1, straight=2 → 2*1 + 3*(2-2) = 2
             expect(RangeGizmo.diagonalHeuristic(a, b, 3, 2, 50)).toBe(2);
         });
 
-        it('uses custom terminalCost for warning nodes', () => {
+        it("uses custom terminalCost for warning nodes", () => {
             const a = makeNode(0, 0, { warning: true });
             const b = makeNode(1, 1);
             // 2*1 + 3*(2-2) + 50 = 52
@@ -294,43 +302,43 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('isOpen', () => {
-        it('returns true when node is in the open set', () => {
+    describe("isOpen", () => {
+        it("returns true when node is in the open set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             expect(RangeGizmo.isOpen(a, [a, b])).toBe(true);
         });
 
-        it('returns false when node is not in the open set', () => {
+        it("returns false when node is not in the open set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             expect(RangeGizmo.isOpen(a, [b])).toBe(false);
         });
 
-        it('returns false for empty set', () => {
+        it("returns false for empty set", () => {
             expect(RangeGizmo.isOpen(makeNode(0, 0), [])).toBe(false);
         });
     });
 
-    describe('isClosed', () => {
-        it('returns true when node is in the closed set', () => {
+    describe("isClosed", () => {
+        it("returns true when node is in the closed set", () => {
             const a = makeNode(0, 0);
             expect(RangeGizmo.isClosed(a, [a])).toBe(true);
         });
 
-        it('returns false when node is not in the closed set', () => {
+        it("returns false when node is not in the closed set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             expect(RangeGizmo.isClosed(a, [b])).toBe(false);
         });
 
-        it('returns false for empty set', () => {
+        it("returns false for empty set", () => {
             expect(RangeGizmo.isClosed(makeNode(0, 0), [])).toBe(false);
         });
     });
 
-    describe('buildPath', () => {
-        it('builds a single-step path', () => {
+    describe("buildPath", () => {
+        it("builds a single-step path", () => {
             const start = makeNode(0, 0);
             const end = makeNode(1, 0);
             end.parentNode = start;
@@ -342,7 +350,7 @@ describe('RangeGizmo', () => {
             expect(path.cost).toBeGreaterThan(0);
         });
 
-        it('builds a multi-step path in correct order', () => {
+        it("builds a multi-step path in correct order", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
             const c = makeNode(2, 0);
@@ -356,7 +364,7 @@ describe('RangeGizmo', () => {
             expect(path.nodes[2]).toBe(c);
         });
 
-        it('marks nodes after a terminal node as non-traversable', () => {
+        it("marks nodes after a terminal node as non-traversable", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0, { terminal: true });
             const c = makeNode(2, 0);
@@ -370,7 +378,7 @@ describe('RangeGizmo', () => {
             expect(b.terminal).toBe(true);
         });
 
-        it('marks nodes after a non-traversable node as non-traversable', () => {
+        it("marks nodes after a non-traversable node as non-traversable", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0, { traversable: false });
             const c = makeNode(2, 0);
@@ -381,7 +389,7 @@ describe('RangeGizmo', () => {
             expect(c.traversable).toBe(false);
         });
 
-        it('generates angles array', () => {
+        it("generates angles array", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
             b.parentNode = a;
@@ -394,8 +402,8 @@ describe('RangeGizmo', () => {
 
     // ─── Instance methods ────────────────────────────────────────────────────
 
-    describe('constructor', () => {
-        it('creates a RangeGizmo and fetches the correct layers', () => {
+    describe("constructor", () => {
+        it("creates a RangeGizmo and fetches the correct layers", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             expect(board.getLayer).toHaveBeenCalledTimes(2);
@@ -403,24 +411,24 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('getNode', () => {
-        it('returns null when no valid nodes exist', () => {
+    describe("getNode", () => {
+        it("returns null when no valid nodes exist", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             expect(gizmo.getNode(new Geom.Point(0, 0))).toBeNull();
         });
     });
 
-    describe('getPathTo', () => {
-        it('returns null when no piece is set', () => {
+    describe("getPathTo", () => {
+        it("returns null when no piece is set", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             expect(gizmo.getPathTo(new Geom.Point(0, 0))).toBeNull();
         });
     });
 
-    describe('getAllValidPaths', () => {
-        it('returns an empty set when no valid nodes exist', () => {
+    describe("getAllValidPaths", () => {
+        it("returns an empty set when no valid nodes exist", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const paths = gizmo.getAllValidPaths();
@@ -428,8 +436,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('getAllTerminalPaths', () => {
-        it('returns an empty set when no valid nodes exist', () => {
+    describe("getAllTerminalPaths", () => {
+        it("returns an empty set when no valid nodes exist", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const paths = gizmo.getAllTerminalPaths();
@@ -437,8 +445,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('findConnectedNodes', () => {
-        it('returns empty when no valid nodes exist', () => {
+    describe("findConnectedNodes", () => {
+        it("returns empty when no valid nodes exist", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const node = makeNode(5, 5);
@@ -446,19 +454,19 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('findPath', () => {
-        it('returns null when start node is not in valid nodes', () => {
+    describe("findPath", () => {
+        it("returns null when start node is not in valid nodes", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const result = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(1, 0)
+                new Geom.Point(1, 0),
             );
             expect(result).toBeNull();
         });
     });
 
-    describe('checkNodeTraversal', () => {
+    describe("checkNodeTraversal", () => {
         let board: Board;
         let gizmo: any; // Use any to access protected method
 
@@ -467,7 +475,7 @@ describe('RangeGizmo', () => {
             gizmo = new RangeGizmo(board);
         });
 
-        it('marks empty tile as traversable and not terminal', () => {
+        it("marks empty tile as traversable and not terminal", () => {
             gizmo._piece = makeMockPiece();
             (board.getPiecesAtPosition as any).mockReturnValue([]);
 
@@ -477,7 +485,7 @@ describe('RangeGizmo', () => {
             expect(result.terminal).toBe(false);
         });
 
-        it('marks tile containing the piece itself as traversable', () => {
+        it("marks tile containing the piece itself as traversable", () => {
             const piece = makeMockPiece();
             gizmo._piece = piece;
             (board.getPiecesAtPosition as any).mockReturnValue([piece]);
@@ -488,7 +496,7 @@ describe('RangeGizmo', () => {
             expect(result.terminal).toBe(false);
         });
 
-        it('marks tile with a mountable piece as terminal', () => {
+        it("marks tile with a mountable piece as terminal", () => {
             const piece = makeMockPiece({
                 canMountPiece: vi.fn(() => true),
             });
@@ -501,7 +509,7 @@ describe('RangeGizmo', () => {
             expect(result.terminal).toBe(true);
         });
 
-        it('marks tile with an attackable piece as terminal', () => {
+        it("marks tile with an attackable piece as terminal", () => {
             const piece = makeMockPiece({
                 canAttackPiece: vi.fn(() => true),
             });
@@ -514,7 +522,7 @@ describe('RangeGizmo', () => {
             expect(result.terminal).toBe(true);
         });
 
-        it('marks tile with an unmountable/unattackable piece as not traversable', () => {
+        it("marks tile with an unmountable/unattackable piece as not traversable", () => {
             const piece = makeMockPiece({
                 canMountPiece: vi.fn(() => false),
                 canAttackPiece: vi.fn(() => false),
@@ -529,15 +537,15 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('reset', () => {
-        it('returns immediately when both layers are empty', async () => {
+    describe("reset", () => {
+        it("returns immediately when both layers are empty", async () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const result = await gizmo.reset();
             expect(result).toBe(gizmo);
         });
 
-        it('force reset removes all layer children immediately', async () => {
+        it("force reset removes all layer children immediately", async () => {
             const rangeLayer = makeMockLayer();
             const pathLayer = makeMockLayer();
             // Simulate non-empty layers
@@ -558,9 +566,9 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('showDebugGrid (static, via console.log)', () => {
-        it('logs a grid string', () => {
-            const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    describe("showDebugGrid (static, via console.log)", () => {
+        it("logs a grid string", () => {
+            const spy = vi.spyOn(console, "log").mockImplementation(() => {});
             const board = { width: 3, height: 2 } as unknown as Board;
             const nodes = [
                 makeNode(0, 0),
@@ -574,18 +582,18 @@ describe('RangeGizmo', () => {
 
             expect(spy).toHaveBeenCalledOnce();
             const output = spy.mock.calls[0][0] as string;
-            expect(output).toContain('Debug grid:');
+            expect(output).toContain("Debug grid:");
             // First row: . X ! (normal, terminal, warning)
-            expect(output).toContain('. X ! ');
+            expect(output).toContain(". X ! ");
             // Second row: . # # (normal, empty, empty)
-            expect(output).toContain('. # # ');
+            expect(output).toContain(". # # ");
 
             spy.mockRestore();
         });
     });
 
-    describe('A* pathfinding integration', () => {
-        it('finds a straight-line path on a clear grid', () => {
+    describe("A* pathfinding integration", () => {
+        it("finds a straight-line path on a clear grid", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -602,7 +610,7 @@ describe('RangeGizmo', () => {
 
             const path = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(3, 0)
+                new Geom.Point(3, 0),
             );
 
             expect(path).not.toBeNull();
@@ -611,22 +619,18 @@ describe('RangeGizmo', () => {
             expect(path.nodes[3].x).toBe(3);
         });
 
-        it('finds a diagonal path', () => {
+        it("finds a diagonal path", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
-            const nodes = [
-                makeNode(0, 0),
-                makeNode(1, 1),
-                makeNode(2, 2),
-            ];
+            const nodes = [makeNode(0, 0), makeNode(1, 1), makeNode(2, 2)];
             (gizmo as any)._validNodes = nodes;
             (gizmo as any)._piece = makeMockPiece();
             (gizmo as any)._paths = new Map();
 
             const path = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(2, 2)
+                new Geom.Point(2, 2),
             );
 
             expect(path).not.toBeNull();
@@ -634,27 +638,24 @@ describe('RangeGizmo', () => {
             expect(path.nodes[path.nodes.length - 1].x).toBe(2);
         });
 
-        it('returns null when destination is unreachable', () => {
+        it("returns null when destination is unreachable", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
             // Two isolated nodes with a gap
-            const nodes = [
-                makeNode(0, 0),
-                makeNode(5, 5),
-            ];
+            const nodes = [makeNode(0, 0), makeNode(5, 5)];
             (gizmo as any)._validNodes = nodes;
             (gizmo as any)._piece = makeMockPiece();
             (gizmo as any)._paths = new Map();
 
             const path = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(5, 5)
+                new Geom.Point(5, 5),
             );
             expect(path).toBeNull();
         });
 
-        it('routes around a non-traversable node', () => {
+        it("routes around a non-traversable node", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -673,16 +674,16 @@ describe('RangeGizmo', () => {
 
             const path = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(2, 0)
+                new Geom.Point(2, 0),
             );
 
             expect(path).not.toBeNull();
             // Path should not include the blocked node (1,0)
             const pathCoords = path.nodes.map((n: Node) => `${n.x},${n.y}`);
-            expect(pathCoords).not.toContain('1,0');
+            expect(pathCoords).not.toContain("1,0");
         });
 
-        it('can pathfind to a terminal node', () => {
+        it("can pathfind to a terminal node", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -697,7 +698,7 @@ describe('RangeGizmo', () => {
 
             const path = gizmo.findPath(
                 new Geom.Point(0, 0),
-                new Geom.Point(2, 0)
+                new Geom.Point(2, 0),
             );
 
             expect(path).not.toBeNull();
@@ -705,8 +706,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('findConnectedNodes (with populated valid nodes)', () => {
-        it('returns only adjacent nodes', () => {
+    describe("findConnectedNodes (with populated valid nodes)", () => {
+        it("returns only adjacent nodes", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -724,15 +725,20 @@ describe('RangeGizmo', () => {
             expect(connected).not.toContain(center);
         });
 
-        it('includes all 8 neighbours when fully surrounded', () => {
+        it("includes all 8 neighbours when fully surrounded", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
             const center = makeNode(5, 5);
             const neighbours = [
-                makeNode(4, 4), makeNode(5, 4), makeNode(6, 4),
-                makeNode(4, 5),                  makeNode(6, 5),
-                makeNode(4, 6), makeNode(5, 6), makeNode(6, 6),
+                makeNode(4, 4),
+                makeNode(5, 4),
+                makeNode(6, 4),
+                makeNode(4, 5),
+                makeNode(6, 5),
+                makeNode(4, 6),
+                makeNode(5, 6),
+                makeNode(6, 6),
             ];
             (gizmo as any)._validNodes = [center, ...neighbours];
 
@@ -741,8 +747,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('getPathTo (with populated state)', () => {
-        it('caches paths for repeated lookups', () => {
+    describe("getPathTo (with populated state)", () => {
+        it("caches paths for repeated lookups", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -758,7 +764,7 @@ describe('RangeGizmo', () => {
             expect(path1).toBe(path2);
         });
 
-        it('returns null for non-traversable, non-terminal node', () => {
+        it("returns null for non-traversable, non-terminal node", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -772,8 +778,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('showPath', () => {
-        it('clears the path layer and does nothing with no piece', () => {
+    describe("showPath", () => {
+        it("clears the path layer and does nothing with no piece", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
@@ -787,8 +793,8 @@ describe('RangeGizmo', () => {
         });
     });
 
-    describe('hideSimpleRange', () => {
-        it('returns immediately when range layer is empty', async () => {
+    describe("hideSimpleRange", () => {
+        it("returns immediately when range layer is empty", async () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             // Should not throw or add tweens

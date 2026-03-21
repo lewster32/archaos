@@ -1,12 +1,18 @@
 <template>
     <div class="loading-screen">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
-        <div class="loading-bar"
+        <div
+            class="loading-bar"
             role="progressbar"
             :aria-valuenow="Math.round(progress * 100)"
             aria-valuemin="0"
-            aria-valuemax="100":title="`Loading... ${Math.round(progress * 100)}% (${totalMB ? `~${totalMB} MB` : 'size unknown'})`">
-            <div class="loading-bar__fill" :style="{ width: `${Math.round(progress * 100)}%` }" />
+            aria-valuemax="100"
+            :title="`Loading... ${Math.round(progress * 100)}% (${totalMB ? `~${totalMB} MB` : 'size unknown'})`"
+        >
+            <div
+                class="loading-bar__fill"
+                :style="{ width: `${Math.round(progress * 100)}%` }"
+            />
         </div>
         <p class="loading-label">
             {{ Math.round(progress * 100) }}%
@@ -16,13 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import { loadingProgress } from '../game/loading-state';
-import { TOTAL_GAME_ASSET_BYTES } from '../game/asset-sizes';
+import { loadingProgress } from "../game/loading-state";
+import { TOTAL_GAME_ASSET_BYTES } from "../game/asset-sizes";
 
 const progress = loadingProgress;
-const totalMB = TOTAL_GAME_ASSET_BYTES > 0
-    ? (TOTAL_GAME_ASSET_BYTES / 1024 / 1024).toFixed(1)
-    : null;
+const totalMB =
+    TOTAL_GAME_ASSET_BYTES > 0
+        ? (TOTAL_GAME_ASSET_BYTES / 1024 / 1024).toFixed(1)
+        : null;
 </script>
 
 <style lang="scss" scoped>
@@ -53,9 +60,9 @@ const totalMB = TOTAL_GAME_ASSET_BYTES > 0
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
-    border-image-source: url('../../assets/images/ui/callout.png');
-    background-image: url('../../assets/images/ui/background.png');
-    background-size: 32px; 
+    border-image-source: url("../../assets/images/ui/callout.png");
+    background-image: url("../../assets/images/ui/background.png");
+    background-size: 32px;
     overflow: hidden;
 }
 
@@ -76,15 +83,19 @@ const totalMB = TOTAL_GAME_ASSET_BYTES > 0
         var(--color-cyan) 57.12% 71.4%,
         var(--color-yellow) 71.4% 85.68%,
         var(--color-white) 85.68% 100%
-        );
+    );
     background-size: var(--width) 100%;
     transition: width 0.1s linear;
 
-    animation: scroll-fill-colors .6s steps(14) infinite;
+    animation: scroll-fill-colors 0.6s steps(14) infinite;
 }
 
 @keyframes scroll-fill-colors {
-    0% { background-position: 0 0; }
-    100% { background-position: var(--width) 0; }
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: var(--width) 0;
+    }
 }
 </style>

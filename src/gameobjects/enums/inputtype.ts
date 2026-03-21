@@ -15,5 +15,5 @@ export enum InputType {
     /**
      * Cancel input (negative action)
      */
-    Cancel
+    Cancel,
 }

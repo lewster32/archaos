@@ -3,10 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import { phaserAssetSizesPlugin } from "./vite-plugin-asset-sizes.mjs";
 
 export default defineConfig({
-    plugins: [
-        vue(),
-        phaserAssetSizesPlugin(),
-    ],
+    plugins: [vue(), phaserAssetSizesPlugin()],
     base: "./",
     build: {
         assetsInlineLimit: 0,
@@ -19,8 +16,8 @@ export default defineConfig({
                 manualChunks: (id) => {
                     if (id.includes("node_modules/phaser")) return "phaser";
                     if (id.includes("node_modules/vue")) return "vue";
-                }
-            }
-        }
+                },
+            },
+        },
     },
 });

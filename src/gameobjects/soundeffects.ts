@@ -1,4 +1,4 @@
-import { Sound, Scene } from "phaser"
+import { Sound, Scene } from "phaser";
 
 /**
  * Class to manage sound effects in the game. Mostly just a wrapper around
@@ -10,7 +10,7 @@ export class SoundEffects {
     private readonly _sound: Sound.BaseSound;
 
     protected constructor(scene: Scene) {
-        this._sound = scene.sound.addAudioSprite("classicsounds")
+        this._sound = scene.sound.addAudioSprite("classicsounds");
     }
 
     public static getInstance(scene: Scene): SoundEffects {
@@ -22,25 +22,29 @@ export class SoundEffects {
 
     /**
      * Play a sound effect asynchronously.
-     * 
+     *
      * @param effectName the marker name of the effect to play from the audio sprite
      * @param options options for playing the sound effect
      */
-    public async playAsync(effectName: string, options?: SoundEffectOptions): Promise<void> {
+    public async playAsync(
+        effectName: string,
+        options?: SoundEffectOptions,
+    ): Promise<void> {
         try {
             if (options) {
                 const repeat: number = options.repeat ?? 1;
                 const delay: number = options.delay ?? 0;
-                
+
                 for (let i = 0; i < repeat; i++) {
                     this._sound.play(effectName);
                     /* v8 ignore next */
                     if (i < repeat) {
-                        await new Promise((resolve) => setTimeout(resolve, delay));
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, delay),
+                        );
                     }
                 }
-            }
-            else {
+            } else {
                 this._sound.play(effectName);
             }
         } catch (e) {
@@ -50,7 +54,7 @@ export class SoundEffects {
 
     /**
      * Play a sound effect.
-     * 
+     *
      * @param effectName the marker name of the effect to play from the audio sprite
      */
     public play(effectName: string): void {

@@ -47,13 +47,14 @@
         padding: 0 0.25em;
         line-height: 1;
     }
-    
+
     &--flashing {
-        animation: toggle-flash .75s infinite;
+        animation: toggle-flash 0.75s infinite;
     }
 
     @keyframes toggle-flash {
-        0%, 100% {
+        0%,
+        100% {
             border-imatge-source: var(--border-image-source);
         }
         50% {

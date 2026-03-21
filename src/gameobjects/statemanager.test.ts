@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StateManager, States, Events } from './statemanager';
-import type { Board } from './board';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { StateManager, States, Events } from "./statemanager";
+import type { Board } from "./board";
 
-describe('StateManager', () => {
+describe("StateManager", () => {
     let sm: StateManager;
 
     beforeEach(() => {
@@ -10,36 +10,36 @@ describe('StateManager', () => {
         sm = new StateManager(null as unknown as Board);
     });
 
-    describe('initial state', () => {
-        it('starts in the Idle state (can send StartGame)', () => {
+    describe("initial state", () => {
+        it("starts in the Idle state (can send StartGame)", () => {
             expect(sm.canSendEvent(Events.StartGame)).toBe(true);
         });
 
-        it('cannot send NoSpellsAvailable from Idle', () => {
+        it("cannot send NoSpellsAvailable from Idle", () => {
             expect(sm.canSendEvent(Events.NoSpellsAvailable)).toBe(false);
         });
 
-        it('cannot send SpellsAvailable from Idle', () => {
+        it("cannot send SpellsAvailable from Idle", () => {
             expect(sm.canSendEvent(Events.SpellsAvailable)).toBe(false);
         });
 
-        it('cannot send SkipTurn from Idle', () => {
+        it("cannot send SkipTurn from Idle", () => {
             expect(sm.canSendEvent(Events.SkipTurn)).toBe(false);
         });
     });
 
-    describe('sendEvent', () => {
-        it('returns true for a valid transition', async () => {
+    describe("sendEvent", () => {
+        it("returns true for a valid transition", async () => {
             const result = await sm.sendEvent(Events.StartGame);
             expect(result).toBe(true);
         });
 
-        it('returns false for an invalid transition (wrong state)', async () => {
+        it("returns false for an invalid transition (wrong state)", async () => {
             const result = await sm.sendEvent(Events.NoSpellsAvailable);
             expect(result).toBe(false);
         });
 
-        it('transitions to StartCastingPhase after StartGame', async () => {
+        it("transitions to StartCastingPhase after StartGame", async () => {
             await sm.sendEvent(Events.StartGame);
             // Now SpellsAvailable is possible (we are in StartCastingPhase)
             expect(sm.canSendEvent(Events.SpellsAvailable)).toBe(true);
@@ -47,8 +47,8 @@ describe('StateManager', () => {
         });
     });
 
-    describe('callback', () => {
-        it('invokes the callback when a valid transition occurs', async () => {
+    describe("callback", () => {
+        it("invokes the callback when a valid transition occurs", async () => {
             const callback = vi.fn();
             sm = new StateManager(null as unknown as Board, callback);
             await sm.sendEvent(Events.StartGame);
@@ -56,7 +56,7 @@ describe('StateManager', () => {
             expect(callback).toHaveBeenCalledWith(States.StartCastingPhase);
         });
 
-        it('does not invoke the callback when a transition is invalid', async () => {
+        it("does not invoke the callback when a transition is invalid", async () => {
             const callback = vi.fn();
             sm = new StateManager(null as unknown as Board, callback);
             await sm.sendEvent(Events.NoSpellsAvailable); // invalid from Idle
@@ -64,19 +64,23 @@ describe('StateManager', () => {
         });
     });
 
-    describe('happy-path spell casting flow', () => {
-        it('walks through the full casting sequence', async () => {
+    describe("happy-path spell casting flow", () => {
+        it("walks through the full casting sequence", async () => {
             // Idle → StartCastingPhase
             await sm.sendEvent(Events.StartGame);
             expect(sm.canSendEvent(Events.SpellsAvailable)).toBe(true);
 
             // StartCastingPhase → ChooseSpell
             await sm.sendEvent(Events.SpellsAvailable);
-            expect(sm.canSendEvent(Events.SelectSpellTargetEnemyPiece)).toBe(true);
+            expect(sm.canSendEvent(Events.SelectSpellTargetEnemyPiece)).toBe(
+                true,
+            );
 
             // ChooseSpell → SelectSpellTargetEnemyPiece
             await sm.sendEvent(Events.SelectSpellTargetEnemyPiece);
-            expect(sm.canSendEvent(Events.SelectSpellTargetEnemyPiece)).toBe(true);
+            expect(sm.canSendEvent(Events.SelectSpellTargetEnemyPiece)).toBe(
+                true,
+            );
 
             // SelectSpellTargetEnemyPiece → CastSpell
             await sm.sendEvent(Events.SelectSpellTargetEnemyPiece);
@@ -96,7 +100,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.AllPlayersTurnsComplete)).toBe(false);
         });
 
-        it('handles cast failure: CastSpell → NextTurn via CastFailed', async () => {
+        it("handles cast failure: CastSpell → NextTurn via CastFailed", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetBoardTile);
@@ -108,7 +112,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.PlayersStillHaveTurns)).toBe(true);
         });
 
-        it('cycles back to ChooseSpell when more players have turns', async () => {
+        it("cycles back to ChooseSpell when more players have turns", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.NoSpellsAvailable); // → NextTurn
 
@@ -118,8 +122,8 @@ describe('StateManager', () => {
         });
     });
 
-    describe('cancellation', () => {
-        it('cancels spell target selection and returns to ChooseSpell', async () => {
+    describe("cancellation", () => {
+        it("cancels spell target selection and returns to ChooseSpell", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetBoardTile);
@@ -130,10 +134,12 @@ describe('StateManager', () => {
 
             // Back in ChooseSpell
             expect(sm.canSendEvent(Events.SkipTurn)).toBe(true);
-            expect(sm.canSendEvent(Events.SelectSpellTargetAllyPiece)).toBe(true);
+            expect(sm.canSendEvent(Events.SelectSpellTargetAllyPiece)).toBe(
+                true,
+            );
         });
 
-        it('cancels ally piece target selection and returns to ChooseSpell', async () => {
+        it("cancels ally piece target selection and returns to ChooseSpell", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetAllyPiece);
@@ -142,7 +148,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.SkipTurn)).toBe(true);
         });
 
-        it('cancels enemy piece target selection and returns to ChooseSpell', async () => {
+        it("cancels enemy piece target selection and returns to ChooseSpell", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetEnemyPiece);
@@ -152,8 +158,8 @@ describe('StateManager', () => {
         });
     });
 
-    describe('skip turn', () => {
-        it('skips from ChooseSpell to NextTurn', async () => {
+    describe("skip turn", () => {
+        it("skips from ChooseSpell to NextTurn", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
 
@@ -161,7 +167,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.PlayersStillHaveTurns)).toBe(true);
         });
 
-        it('skips from SelectSpellTargetAllyPiece to NextTurn', async () => {
+        it("skips from SelectSpellTargetAllyPiece to NextTurn", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetAllyPiece);
@@ -170,7 +176,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.AllPlayersTurnsComplete)).toBe(true);
         });
 
-        it('skips from SelectSpellTargetEnemyPiece to NextTurn', async () => {
+        it("skips from SelectSpellTargetEnemyPiece to NextTurn", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
             await sm.sendEvent(Events.SelectSpellTargetEnemyPiece);
@@ -180,8 +186,8 @@ describe('StateManager', () => {
         });
     });
 
-    describe('illusion selection flow', () => {
-        it('routes through ChooseIllusion for spells that allow illusions', async () => {
+    describe("illusion selection flow", () => {
+        it("routes through ChooseIllusion for spells that allow illusions", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
 
@@ -191,12 +197,14 @@ describe('StateManager', () => {
 
             // ChooseIllusion → SelectSpellTargetBoardTile
             await sm.sendEvent(Events.SelectIllusion);
-            expect(sm.canSendEvent(Events.SelectSpellTargetBoardTile)).toBe(true);
+            expect(sm.canSendEvent(Events.SelectSpellTargetBoardTile)).toBe(
+                true,
+            );
         });
     });
 
-    describe('immediate cast spells', () => {
-        it('casts immediately with SelectSpellTargetSelf (self-target spells)', async () => {
+    describe("immediate cast spells", () => {
+        it("casts immediately with SelectSpellTargetSelf (self-target spells)", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
 
@@ -205,7 +213,7 @@ describe('StateManager', () => {
             expect(sm.canSendEvent(Events.CastSucceeded)).toBe(true);
         });
 
-        it('casts immediately with SelectSpellTargetNone', async () => {
+        it("casts immediately with SelectSpellTargetNone", async () => {
             await sm.sendEvent(Events.StartGame);
             await sm.sendEvent(Events.SpellsAvailable);
 

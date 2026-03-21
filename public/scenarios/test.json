@@ -11,19 +11,14 @@
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
-            "statuses": [
-                "MagicKnife"
-            ],
+            "statuses": ["MagicKnife"],
             "pieces": [
                 {
                     "type": "Dwarf",
                     "position": { "x": 0, "y": 1 }
                 }
-
             ],
-            "spells": [
-                "*"
-            ]
+            "spells": ["*"]
         },
         {
             "id": 2,
@@ -31,9 +26,7 @@
             "position": { "x": 5, "y": 0 },
             "computerControlled": true,
             "difficulty": 0.5,
-            "statuses": [
-                "ShadowForm"
-            ],
+            "statuses": ["ShadowForm"],
             "pieces": [
                 {
                     "type": "Dwarf",
@@ -44,13 +37,10 @@
                     "position": { "x": 4, "y": 1 }
                 }
             ],
-            "spells": [
-            ]
+            "spells": []
         }
     ],
-    "corpses": [
-
-    ],
+    "corpses": [],
     "phase": "casting",
     "cheats": {
         "forceHit": false,

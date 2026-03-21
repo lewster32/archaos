@@ -30,7 +30,8 @@ enum PieceState {
  * A game piece on the board. This can be a creature, wizard, structure, etc.
  */
 export class Piece extends Entity {
-    public static readonly units: { [key: string]: UnitConfig } = unitJsonData as any;
+    public static readonly units: { [key: string]: UnitConfig } =
+        unitJsonData as any;
 
     /**
      * Duration of move animations (in ms).
@@ -131,11 +132,12 @@ export class Piece extends Entity {
                 attackType: "hit",
                 rangedType: "shot",
                 status: [] as UnitStatus[],
-                group: Piece.units[config.properties.id]?.group || "classicunits",
+                group:
+                    Piece.units[config.properties.id]?.group || "classicunits",
             }),
         };
 
-        this._properties.status = [...this.properties.status ?? []];
+        this._properties.status = [...(this.properties.status ?? [])];
 
         let directionOffset: number = this.position.x - this.position.y;
         if (directionOffset === 0) {
@@ -149,7 +151,8 @@ export class Piece extends Entity {
         } else if (directionOffset < 0) {
             this._direction = UnitDirection.Right;
         } else {
-            this._direction = Math.random() < 0.5 ? UnitDirection.Left : UnitDirection.Right;
+            this._direction =
+                Math.random() < 0.5 ? UnitDirection.Left : UnitDirection.Right;
         }
 
         this._dead = false;
@@ -249,12 +252,11 @@ export class Piece extends Entity {
      * Get the default tint color for this piece. Normally it's white which does
      * not alter the piece's colors, but pieces that have been resurrected via
      * Raise Dead have a sallow green tint.
-     * 
+     *
      */
     get defaultTint(): number {
         return this.raisedDead ? Piece.RAISED_DEAD_TINT : 0xffffff;
     }
-
 
     /**
      * Check if this piece's turn is over, i.e., it cannot perform any valid
@@ -269,7 +271,6 @@ export class Piece extends Entity {
         );
     }
 
-
     /**
      * End this piece's turn, marking all of its action flags as complete and
      * tinting it slightly darker.
@@ -280,23 +281,21 @@ export class Piece extends Entity {
         if (state) {
             if (this._raisedDead) {
                 this._sprite.setTint(
-                    Display.Color.ValueToColor(
-                        Piece.RAISED_DEAD_TINT
-                    ).darken(Piece.MOVED_DARKEN_AMOUNT).color
+                    Display.Color.ValueToColor(Piece.RAISED_DEAD_TINT).darken(
+                        Piece.MOVED_DARKEN_AMOUNT,
+                    ).color,
                 );
             } else {
                 this._sprite.setTint(
                     Display.Color.ValueToColor(0xffffff).darken(
-                        Piece.MOVED_DARKEN_AMOUNT
-                    ).color
+                        Piece.MOVED_DARKEN_AMOUNT,
+                    ).color,
                 );
             }
             this.highlighted = false;
-        }
-        else if (this._raisedDead) {
+        } else if (this._raisedDead) {
             this._sprite.setTint(Piece.RAISED_DEAD_TINT);
-        }
-        else {
+        } else {
             this._sprite?.setTint(this.defaultTint);
         }
     }
@@ -492,14 +491,14 @@ export class Piece extends Entity {
             if (this._engulfed) {
                 this.board.logger.log(
                     `${this.name} was engulfed`,
-                    Colour.Magenta
+                    Colour.Magenta,
                 );
                 this.sprite?.setVisible(false);
                 this.shadow?.setVisible(false);
             } else {
                 this.board.logger.log(
                     `${this.name} was released`,
-                    Colour.Green
+                    Colour.Green,
                 );
                 this.sprite?.setVisible(true);
                 this.shadow?.setVisible(true);
@@ -524,7 +523,7 @@ export class Piece extends Entity {
     /**
      * Get whether this piece was raised from the dead. Used mainly to apply a
      * visual tint to the piece, as the mechanical aspects are handled by the
-     * `Undead` status, but we don't want _naturally_ undead units to have the 
+     * `Undead` status, but we don't want _naturally_ undead units to have the
      * tint.
      */
     get raisedDead(): boolean {
@@ -552,26 +551,24 @@ export class Piece extends Entity {
             range: this._properties.range,
             defense: this._properties.defense,
             maneuverability: this._properties.maneuverability,
-            magicResistance: this._properties.magicResistance
+            magicResistance: this._properties.magicResistance,
         };
 
         // TODO: This should really be defined by the spell system, maybe by
         // layering additional modifiers on top of the base stats.
         if (this.hasStatus(UnitStatus.ShadowForm)) {
             stats.movement = 3;
-            stats.defense = Math.min(stats.defense + 3,9);
+            stats.defense = Math.min(stats.defense + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicSword)) {
-            stats.combat = Math.min(stats.combat + 6,9);
-        }
-        else if (this.hasStatus(UnitStatus.MagicKnife)) {
-            stats.combat = Math.min(stats.combat + 3,9);
+            stats.combat = Math.min(stats.combat + 6, 9);
+        } else if (this.hasStatus(UnitStatus.MagicKnife)) {
+            stats.combat = Math.min(stats.combat + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicArmour)) {
-            stats.defense = Math.min(stats.defense + 6,9);
-        }
-        else if (this.hasStatus(UnitStatus.MagicShield)) {
-            stats.defense = Math.min(stats.defense + 3,9);
+            stats.defense = Math.min(stats.defense + 6, 9);
+        } else if (this.hasStatus(UnitStatus.MagicShield)) {
+            stats.defense = Math.min(stats.defense + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicBow)) {
             stats.rangedCombat = 3;
@@ -595,10 +592,10 @@ export class Piece extends Entity {
      */
     get strength(): number {
         let strength: number = 0;
-        
+
         // Start with base melee attack strength
         strength += this.stats.combat;
-        
+
         // Add ranged attack strength if applicable, with range as a bonus
         if (this.stats.rangedCombat > 0) {
             strength += this.stats.rangedCombat + this.stats.range;
@@ -653,7 +650,9 @@ export class Piece extends Entity {
 
         // When if we're dismounting, we need to make the piece visible again,
         // but if we still have shadow form, we need to keep it semi-transparent
-        const visibleAlpha: number = this.hasStatus(UnitStatus.ShadowForm) ? Piece.SHADOW_FORM_ALPHA : 1;
+        const visibleAlpha: number = this.hasStatus(UnitStatus.ShadowForm)
+            ? Piece.SHADOW_FORM_ALPHA
+            : 1;
 
         this.board.scene.tweens.add({
             targets: [this._sprite, this._shadow, ...this._effects.values()],
@@ -672,12 +671,12 @@ export class Piece extends Entity {
     /**
      * Visually update the position of this piece on the board with a tween for
      * a smooth movement animation.
-     * 
+     *
      * @param duration Duration of the move animation (in ms).
      * @returns A promise that resolves when the animation is complete.
      */
     async updatePosition(
-        duration: number = Piece.DEFAULT_MOVE_DURATION
+        duration: number = Piece.DEFAULT_MOVE_DURATION,
     ): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
@@ -685,12 +684,12 @@ export class Piece extends Entity {
             }
 
             const isoPosition: Geom.Point = this.board.getIsoPosition(
-                this.position
+                this.position,
             );
 
             const difference: number = Board.distance(
                 new Geom.Point(this._sprite.x, this._sprite.y),
-                isoPosition
+                isoPosition,
             );
 
             // A little hop for the piece as it moves
@@ -739,14 +738,11 @@ export class Piece extends Entity {
     /**
      * Update the facing direction of this piece based on movement from one
      * point to another.
-     * 
+     *
      * @param fromPoint The starting point of the movement.
      * @param toPoint The ending point of the movement.
      */
-    protected updateDirection(
-        fromPoint: Geom.Point,
-        toPoint: Geom.Point
-    ) {
+    protected updateDirection(fromPoint: Geom.Point, toPoint: Geom.Point) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
 
@@ -755,13 +751,14 @@ export class Piece extends Entity {
             return;
         }
         // Otherwise, face left or right based on X offset
-        this.direction = isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
+        this.direction =
+            isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
     }
 
     /**
      * Move this piece to the specified point on the board, updating its
      * facing direction accordingly.
-     * 
+     *
      * @param point The point to move to.
      * @param stepDuration Optional duration for the move animation.
      */
@@ -784,14 +781,14 @@ export class Piece extends Entity {
     /**
      * Spread this piece to adjacent squares, potentially engulfing or
      * destroying any pieces it spreads over.
-     * 
+     *
      * @returns A promise that resolves when the spread action is complete.
      */
     async spread(): Promise<void> {
         if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
             throw new Error("Cannot spread a non-spreading or dead piece");
         }
-        const spreadAction: SpreadAction = PMath.RND.pick([
+        const spreadAction: SpreadAction = this.board.rng.pick([
             SpreadAction.Spread,
             SpreadAction.Spread,
             SpreadAction.Spread,
@@ -809,7 +806,7 @@ export class Piece extends Entity {
                 this.currentEngulfed.engulfed = false;
                 this.board.logger.log(
                     `${this.currentEngulfed.fullName} was released from ${this.fullName}`,
-                    Colour.Green
+                    Colour.Green,
                 );
             }
             await new Promise((resolve) => {
@@ -825,13 +822,13 @@ export class Piece extends Entity {
             await this.destroy();
         }
         if (spreadAction === SpreadAction.Spread) {
-            const adjacentPoints: Geom.Point[] =
-                this.board.getAdjacentPoints(this.position);
-            const spreadPoint: Geom.Point =
-                PMath.RND.pick(adjacentPoints);
+            const adjacentPoints: Geom.Point[] = this.board.getAdjacentPoints(
+                this.position,
+            );
+            const spreadPoint: Geom.Point = this.board.rng.pick(adjacentPoints);
             const spreadPieces: Piece[] = this.board.getPiecesAtPosition(
                 spreadPoint,
-                (piece: Piece) => !piece.dead
+                (piece: Piece) => !piece.dead,
             );
 
             if (spreadPieces.length > 0) {
@@ -839,7 +836,7 @@ export class Piece extends Entity {
                 if (
                     spreadPieces.some(
                         (piece) =>
-                            piece.owner === this.owner || !piece.canBeSpreadOn
+                            piece.owner === this.owner || !piece.canBeSpreadOn,
                     )
                 ) {
                     return;
@@ -848,19 +845,21 @@ export class Piece extends Entity {
                 // defeat them immediately
                 if (
                     spreadPieces.some((piece) =>
-                        piece.hasStatus(UnitStatus.Wizard)
+                        piece.hasStatus(UnitStatus.Wizard),
                     )
                 ) {
-                    const killedPiece: Piece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
+                    const killedPiece: Piece = spreadPieces.find((piece) =>
+                        piece.hasStatus(UnitStatus.Wizard),
+                    );
                     this.board.logger.log(
                         `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
-                        Colour.Red
+                        Colour.Red,
                     );
                     await killedPiece.kill();
                 } else if (this.hasStatus(UnitStatus.Engulfs)) {
                     this.board.logger.log(
                         `${this.fullName} has engulfed ${spreadPieces[0].fullName}`,
-                        Colour.Yellow
+                        Colour.Yellow,
                     );
                     spreadPieces[0].engulfed = true;
                 } else {
@@ -868,7 +867,7 @@ export class Piece extends Entity {
                         spreadPieces.map(async (piece) => {
                             this.board.logger.log(
                                 `${piece.fullName} was destroyed by ${this.fullName}`,
-                                Colour.Red
+                                Colour.Red,
                             );
                             // TODO: This should happen in the effect system
                             switch (this.properties.attackType) {
@@ -877,12 +876,12 @@ export class Piece extends Entity {
                                         EffectType.DragonFireHit,
                                         piece.sprite.getCenter(),
                                         null,
-                                        piece
+                                        piece,
                                     );
                                     break;
                             }
                             return await piece.destroy();
-                        })
+                        }),
                     );
                 }
             }
@@ -905,7 +904,8 @@ export class Piece extends Entity {
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
                     rangedType: unit.rangedType || "shot",
-                    projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
+                    projectileType:
+                        unit.projectileType || UnitRangedProjectileType.Arrow,
                     status: [...(unit.status || [])],
                 },
                 shadowScale: unit.shadowScale,
@@ -915,7 +915,7 @@ export class Piece extends Entity {
                 group: unit.group || "classicunits",
             } as PieceConfig);
 
-            this.board.sound.play(`blob${PMath.RND.integerInRange(1, 2)}`);
+            this.board.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
 
             if (spreadPieces.length) {
                 if (
@@ -933,7 +933,7 @@ export class Piece extends Entity {
 
     /**
      * Raise this piece from the dead, assigning its new owner in the process.
-     * 
+     *
      * @param owner The new owner of the raised piece.
      */
     async raiseDead(owner: Player | null): Promise<void> {
@@ -952,7 +952,7 @@ export class Piece extends Entity {
 
     /**
      * Add a status effect to this piece.
-     * 
+     *
      * @param status The status effect to add.
      * @returns True if the status was added, false if it was already present.
      */
@@ -966,14 +966,14 @@ export class Piece extends Entity {
 
     /**
      * Remove a status effect from this piece.
-     * 
+     *
      * @param status The status effect to remove.
      * @returns True if the status was removed, false if it was not present.
      */
     removeStatus(status: UnitStatus): boolean {
         if (this.hasStatus(status)) {
             this._properties.status = this._properties.status.filter(
-                (s) => s !== status
+                (s) => s !== status,
             );
             return true;
         }
@@ -982,7 +982,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece has a specific status effect.
-     * 
+     *
      * @param status The status effect to check for.
      * @returns True if the piece has the status effect, false otherwise.
      */
@@ -992,7 +992,7 @@ export class Piece extends Entity {
 
     /**
      * Check if a point is within this piece's movement range.
-     * 
+     *
      * @param point The point to check.
      * @returns True if the point is within movement range, false otherwise.
      */
@@ -1008,7 +1008,11 @@ export class Piece extends Entity {
             }
         }
         // Flying units can move anywhere within their movement stat
-        if (this.hasStatus(UnitStatus.Flying) && Board.distance(this.position, point, RangeType.Fly) <= this.stats.movement) {
+        if (
+            this.hasStatus(UnitStatus.Flying) &&
+            Board.distance(this.position, point, RangeType.Fly) <=
+                this.stats.movement
+        ) {
             return true;
         }
         if (!this.board.rangeGizmo.getPathTo(point)) {
@@ -1019,7 +1023,7 @@ export class Piece extends Entity {
 
     /**
      * Check if a point is within this piece's attack range.
-     * 
+     *
      * @param point The point to check.
      * @returns True if the point is within attack range, false otherwise.
      */
@@ -1028,10 +1032,8 @@ export class Piece extends Entity {
         if (
             !this.moved && // Haven't moved yet
             this.inMovementRange(point) && // Point is within movement range
-            (
-                this.hasStatus(UnitStatus.Flying) || // Flying units can attack anywhere within movement
-                this.board.rangeGizmo.getPathTo(point) // Otherwise, needs a valid path to point
-            )
+            (this.hasStatus(UnitStatus.Flying) || // Flying units can attack anywhere within movement
+                this.board.rangeGizmo.getPathTo(point)) // Otherwise, needs a valid path to point
         ) {
             return true;
         }
@@ -1044,12 +1046,15 @@ export class Piece extends Entity {
 
     /**
      * Check if a point is within this piece's ranged attack range.
-     * 
+     *
      * @param point The point to check.
      * @returns True if the point is within ranged attack range, false otherwise.
      */
     inRangedAttackRange(point: Geom.Point): boolean {
-        if (Board.distance(this.position, point, RangeType.RangedAttack) > this.stats.range) {
+        if (
+            Board.distance(this.position, point, RangeType.RangedAttack) >
+            this.stats.range
+        ) {
             return false;
         }
         return true;
@@ -1058,7 +1063,7 @@ export class Piece extends Entity {
     /**
      * Find all pieces that pose a threat to this piece, e.g., pieces that can
      * attack it within the coming turn, or spreading units that are nearby.
-     * 
+     *
      * @returns A set of pieces that threaten this piece.
      */
     findThreatPieces(): Set<Piece> {
@@ -1070,11 +1075,12 @@ export class Piece extends Entity {
                 !piece.dead && // Only alive pieces
                 !piece.currentRider && // Ignore riders of mounted units
                 !piece.engulfed && // Ignore engulfed pieces
-                (
-                    (piece.canAttackPiece(this) && this.inAttackRange(piece.position)) || // That can attack this piece
-                    (piece.canRangedAttackPiece(this) && this.inRangedAttackRange(piece.position)) || // Or ranged attack this piece
-                    (piece.hasStatus(UnitStatus.Spreads) && Board.distance(piece.position, this.position) <= 3) // Is a nearby spreading unit
-                )
+                ((piece.canAttackPiece(this) &&
+                    this.inAttackRange(piece.position)) || // That can attack this piece
+                    (piece.canRangedAttackPiece(this) &&
+                        this.inRangedAttackRange(piece.position)) || // Or ranged attack this piece
+                    (piece.hasStatus(UnitStatus.Spreads) &&
+                        Board.distance(piece.position, this.position) <= 3)), // Is a nearby spreading unit
         );
 
         allPieces.forEach((piece: Piece) => {
@@ -1134,7 +1140,7 @@ export class Piece extends Entity {
     get canBeSpreadOn(): boolean {
         return (
             (this.type === UnitType.Creature || // Only creatures and wizards can be spread on
-                this.type === UnitType.Wizard) && 
+                this.type === UnitType.Wizard) &&
             !this.hasStatus(UnitStatus.Engulfs) && // Cannot be spread on if it engulfs
             !this.hasStatus(UnitStatus.Invulnerable) && // Cannot be spread on if invulnerable
             !this.hasStatus(UnitStatus.Structure) && // Cannot be spread on if a structure
@@ -1172,7 +1178,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece can perform a melee attack.
-     * 
+     *
      * @returns True if this piece can perform a melee attack, false otherwise.
      */
     get canAttack(): boolean {
@@ -1185,7 +1191,7 @@ export class Piece extends Entity {
             this.stats.combat === 0 || // Cannot attack with zero combat
             neighbours.length === 0 || // No neighbours to attack
             neighbours.filter((neighbour: Piece) =>
-                this.canAttackPiece(neighbour)
+                this.canAttackPiece(neighbour),
             ).length === 0 // Must be in attack range of at least one neighbour
         ) {
             return false;
@@ -1195,7 +1201,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece can move.
-     * 
+     *
      * @returns True if this piece can move, false otherwise.
      */
     get canMove(): boolean {
@@ -1215,7 +1221,7 @@ export class Piece extends Entity {
      * Check if this piece can attack a piece that may be undead. Only pieces
      * that are themselves undead or have the `AttackUndead` status can attack
      * other undead pieces.
-     * 
+     *
      * @param piece The piece to check against.
      * @returns True if this piece can attack the possibly undead piece, false otherwise.
      */
@@ -1224,7 +1230,7 @@ export class Piece extends Entity {
             piece.hasStatus(UnitStatus.Undead) &&
             !this.hasStatus(UnitStatus.Undead) &&
             !this.hasStatus(UnitStatus.AttackUndead)
-        ) { 
+        ) {
             return false;
         }
         return true;
@@ -1233,7 +1239,7 @@ export class Piece extends Entity {
     /**
      * Check if this piece can attack the given piece. Does not check for Undead
      * status; use `canAttackPossiblyUndeadPiece` for that.
-     * 
+     *
      * @param piece The piece to check against.
      * @returns True if this piece can attack the given piece, false otherwise.
      */
@@ -1257,7 +1263,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece can perform a ranged attack.
-     * 
+     *
      * @returns True if this piece can perform a ranged attack, false otherwise.
      */
     get canRangedAttack(): boolean {
@@ -1267,7 +1273,7 @@ export class Piece extends Entity {
             this.rangedAttacked || // Cannot attack if already attacked
             this.stats.rangedCombat === 0 || // Cannot attack with zero ranged combat
             this.board.pieces.filter((piece: Piece) =>
-                this.canRangedAttackPiece(piece) 
+                this.canRangedAttackPiece(piece),
             ).length === 0 // Must be in ranged attack range
         ) {
             return false;
@@ -1278,7 +1284,7 @@ export class Piece extends Entity {
     /**
      * Check if this piece can perform a ranged attack on the given piece. Does
      * not check for Undead status; use `canAttackPossiblyUndeadPiece` for that.
-     * 
+     *
      * @param piece The piece to check against.
      * @returns True if this piece can perform a ranged attack on the given piece, false otherwise.
      */
@@ -1305,7 +1311,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece can mount the given piece.
-     * 
+     *
      * @param piece The piece to check against.
      * @returns True if this piece can mount the given piece, false otherwise.
      */
@@ -1318,8 +1324,9 @@ export class Piece extends Entity {
             !this.moved && // Must not have moved
             this.hasStatus(UnitStatus.Wizard) && // Must be a wizard
             !piece.currentRider && // Cannot mount already mounted pieces
-            ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) || // Must be mountable by owner
-            piece.hasStatus(UnitStatus.MountAny))// or mountable by anyone (e.g., Magic Wood)
+            ((piece.hasStatus(UnitStatus.Mount) &&
+                piece.owner === this.owner) || // Must be mountable by owner
+                piece.hasStatus(UnitStatus.MountAny)) // or mountable by anyone (e.g., Magic Wood)
         ) {
             return true;
         }
@@ -1328,7 +1335,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece can become engaged in combat with the given piece.
-     * 
+     *
      * @param piece The piece to check against.
      * @returns True if this piece can engage the given piece, false otherwise.
      */
@@ -1352,7 +1359,7 @@ export class Piece extends Entity {
 
     /**
      * Get the first neighbouring piece that this piece can become engaged with.
-     * 
+     *
      * @returns The first piece that can be engaged with, or null if none found.
      */
     getFirstEngagingPiece(): Piece | null {
@@ -1367,7 +1374,7 @@ export class Piece extends Entity {
 
     /**
      * Engage this piece with the given piece.
-     * 
+     *
      * @param piece The piece to engage with.
      */
     async engage(piece: Piece): Promise<void> {
@@ -1378,42 +1385,40 @@ export class Piece extends Entity {
         }
         this.board.logger.log(
             `${this.name} is engaged with ${piece.name}`,
-            Colour.Yellow
+            Colour.Yellow,
         );
         await this.board.sound.playAsync("engaged", {
-            delay: Board.DEFAULT_DELAY
+            delay: Board.DEFAULT_DELAY,
         });
     }
 
     /**
      * Get all neighbouring pieces that are not dead.
-     * 
+     *
      * @returns An array of non-dead neighbouring pieces.
      */
     getNeighbours(): Piece[] {
         return this.board.getAdjacentPiecesAtPosition(
             this.position,
-            (piece: Piece) => !piece.dead
+            (piece: Piece) => !piece.dead,
         );
     }
 
     /**
      * Perform an attack on the given piece.
-     * 
+     *
      * @param piece The piece to attack.
      * @returns True if the attack was successful, false otherwise.
      */
     async attack(piece: Piece): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
-            if (
-                !this.canAttackPossiblyUndeadPiece(piece)
-            ) {
+            if (!this.canAttackPossiblyUndeadPiece(piece)) {
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
-                    Colour.Cyan
+                    Colour.Cyan,
                 );
                 await this.board.sound.playAsync("undead", {
-                    delay: Board.DEFAULT_DELAY
+                    delay: Board.DEFAULT_DELAY,
                 });
                 return false;
             }
@@ -1424,15 +1429,20 @@ export class Piece extends Entity {
 
             const rollSuccess: boolean = this.board.roll(
                 this.stats.combat,
-                piece.stats.defense
+                piece.stats.defense,
             );
 
             this.board.sound.play("attackonly");
             this.board.logger.log(
                 `${this.name} ${this.properties.attackType} ${piece.name}`,
-                Colour.Yellow
+                Colour.Yellow,
             );
-            await this.board.playEffect(EffectType.AttackHit, piece.sprite.getCenter(), null, piece);
+            await this.board.playEffect(
+                EffectType.AttackHit,
+                piece.sprite.getCenter(),
+                null,
+                piece,
+            );
             await Board.delay(Board.DEFAULT_DELAY);
 
             // Shadow Form is lost on attacking, regardless of success
@@ -1441,7 +1451,10 @@ export class Piece extends Entity {
             }
 
             if (rollSuccess) {
-                this.board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
+                this.board.logger.log(
+                    `${this.fullName} defeated ${piece.fullName}`,
+                    Colour.Red,
+                );
                 this.board.sound.play("killcreature");
                 await piece.kill();
                 // If the attacked piece was killed and the attacker can move,
@@ -1451,7 +1464,7 @@ export class Piece extends Entity {
                         piece.position,
                         (p: Piece) => {
                             return !p.dead;
-                        }
+                        },
                     ).length === 0 &&
                     this.canMove
                 ) {
@@ -1465,21 +1478,19 @@ export class Piece extends Entity {
 
     /**
      * Perform a ranged attack on the given piece.
-     * 
+     *
      * @param piece The piece to attack.
      * @returns True if the attack was successful, false otherwise.
      */
     async rangedAttack(piece: Piece): Promise<boolean> {
         if (this.canRangedAttackPiece(piece)) {
-            if (
-                !this.canAttackPossiblyUndeadPiece(piece)
-            ) {
+            if (!this.canAttackPossiblyUndeadPiece(piece)) {
                 await this.board.sound.playAsync("undead", {
-                    delay: Board.DEFAULT_DELAY
+                    delay: Board.DEFAULT_DELAY,
                 });
                 this.board.logger.log(
                     `${this.name} cannot attack the undead`,
-                    Colour.Cyan
+                    Colour.Cyan,
                 );
                 return false;
             }
@@ -1530,7 +1541,7 @@ export class Piece extends Entity {
                 beamEffectType,
                 this.sprite.getCenter(),
                 piece.sprite.getCenter(),
-                piece
+                piece,
             );
 
             this.board.sound.play(hitSound);
@@ -1538,7 +1549,7 @@ export class Piece extends Entity {
                 hitEffectType,
                 piece.sprite.getCenter(),
                 null,
-                piece
+                piece,
             );
 
             this.rangedAttacked = true;
@@ -1547,12 +1558,12 @@ export class Piece extends Entity {
 
             const rollSuccess: boolean = this.board.roll(
                 this.stats.rangedCombat,
-                piece.stats.defense
+                piece.stats.defense,
             );
 
             this.board.logger.log(
                 `${this.name} ${this.properties.rangedType} ${piece.name}`,
-                Colour.Orange
+                Colour.Orange,
             );
 
             await Board.delay(Board.DEFAULT_DELAY / 2);
@@ -1564,7 +1575,7 @@ export class Piece extends Entity {
                 this.board.sound.play("killcreature");
                 this.board.logger.log(
                     `${this.fullName} defeated ${piece.fullName}`,
-                    Colour.Red
+                    Colour.Red,
                 );
                 await piece.kill();
                 return true;
@@ -1575,7 +1586,7 @@ export class Piece extends Entity {
 
     /**
      * Kill this piece.
-     * 
+     *
      * @param silent Whether to suppress sound effects, e.g., when you just want to apply the status of dead without the effects.
      * @returns A promise that resolves when the kill action is complete.
      */
@@ -1600,7 +1611,7 @@ export class Piece extends Entity {
         if (this.illusion) {
             await this.board.playEffect(
                 EffectType.DisbelieveHit,
-                this.sprite.getCenter()
+                this.sprite.getCenter(),
             );
             await this.destroy();
         } else if (
@@ -1610,7 +1621,7 @@ export class Piece extends Entity {
             silent = true;
             await this.board.playEffect(
                 EffectType.NoCorpseDeath,
-                this.sprite.getCenter()
+                this.sprite.getCenter(),
             );
             await this.destroy();
         }
@@ -1622,7 +1633,7 @@ export class Piece extends Entity {
         }
         if (
             this._sprite.texture.has(
-                this._properties.id + `_${this._direction}_d`
+                this._properties.id + `_${this._direction}_d`,
             )
         ) {
             this._sprite.setDepth(this._sprite.depth - 1);
@@ -1636,7 +1647,7 @@ export class Piece extends Entity {
 
     /**
      * Mount this piece upon the given piece.
-     * 
+     *
      * @param piece The piece to mount.
      */
     async mount(piece: Piece): Promise<void> {
@@ -1648,11 +1659,9 @@ export class Piece extends Entity {
         piece.moved = true;
 
         this.currentMount = piece;
-        piece.currentRider = this;            
+        piece.currentRider = this;
         await this.board.movePiece(this.id, piece.position);
-        this.board.logger.log(
-            `${this.fullName} mounted ${piece.fullName}`
-        );
+        this.board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
         piece.createShaders(true, this.owner);
     }
 
@@ -1668,7 +1677,7 @@ export class Piece extends Entity {
         this.moved = true;
         this.currentMount.turnOver = true;
         this.board.logger.log(
-            `${this.fullName} dismounted ${this.currentMount.fullName}`
+            `${this.fullName} dismounted ${this.currentMount.fullName}`,
         );
         this.currentMount.createShaders(true);
         this.currentMount = null;
@@ -1679,7 +1688,7 @@ export class Piece extends Entity {
      * option than `kill`, as it removes the piece entirely rather than just
      * marking it as dead. Typically used for Disbelieved illusions or stuff
      * engulfed by Magic Fire.
-     * 
+     *
      * @returns A promise that resolves when the destroy action is complete.
      */
     async destroy() {
@@ -1728,14 +1737,14 @@ export class Piece extends Entity {
 
         this._sprite.anims.playAfterDelay(
             this._properties.id + `_${this.direction}`,
-            Math.random() * 400
+            Math.random() * 400,
         );
         this._sprite.anims.setProgress(Math.random());
     }
 
     /**
      * Create the shadow sprite for this piece.
-     * 
+     *
      * @returns The shadow sprite or null if the piece is transparent.
      */
     protected createShadow(): GameObjects.Image | null {
@@ -1746,14 +1755,14 @@ export class Piece extends Entity {
             return this._shadow;
         }
         const isoPosition: Geom.Point = this.board.getIsoPosition(
-            this.position
+            this.position,
         );
 
         this._shadow = this.board.scene.add.image(
             isoPosition.x,
             isoPosition.y,
             "board",
-            "shadow-" + this._shadowScale
+            "shadow-" + this._shadowScale,
         );
 
         this.board.getLayer(BoardLayer.Shadows).add(this._shadow);
@@ -1766,8 +1775,8 @@ export class Piece extends Entity {
 
     /**
      * Create the sprite for this piece.
-     * 
-     * @returns 
+     *
+     * @returns
      */
     protected createSprite(): GameObjects.Sprite {
         if (this._sprite) {
@@ -1775,16 +1784,18 @@ export class Piece extends Entity {
         }
 
         const isoPosition: Geom.Point = this.board.getIsoPosition(
-            this.position
+            this.position,
         );
 
-        const group: string = Piece.getUnitConfig(this._properties.id).group ? this._properties.id : "classicunits";
+        const group: string = Piece.getUnitConfig(this._properties.id).group
+            ? this._properties.id
+            : "classicunits";
 
         this._sprite = this.board.scene.add.sprite(
             isoPosition.x,
             isoPosition.y - this._offsetY,
             group,
-            this._properties.id + "_r_0"
+            this._properties.id + "_r_0",
         );
 
         this.updateDepth();
@@ -1808,10 +1819,10 @@ export class Piece extends Entity {
 
     /**
      * Create the owner highlight shaders for this piece.
-     * 
+     *
      * @param forceUpdate Whether to force update the shaders
      * @param tempOwner Temporary owner for the highlight effect. Used for when mounting a non-owned piece such as Magic Wood.
-     * @returns 
+     * @returns
      */
     protected createShaders(forceUpdate?: boolean, tempOwner?: Player): void {
         if (!forceUpdate && this._ownerHighlightTween) {
@@ -1821,31 +1832,29 @@ export class Piece extends Entity {
         this.highlighted = false;
         this._ownerHighlightTween?.stop?.().destroy?.();
 
-        const startColor: Display.Color = new Display.Color(
-            0,
-            0,
-            0
+        const startColor: Display.Color = new Display.Color(0, 0, 0);
+        const endColor: Display.Color = Display.Color.ValueToColor(
+            tempOwner?.colour ?? this.owner?.colour ?? 0,
         );
-        const endColor: Display.Color =
-            Display.Color.ValueToColor(tempOwner?.colour ?? this.owner?.colour ?? 0);
 
         const postFxPlugin: any = this.board.scene.game.plugins.get(
-            "rexcolorreplacepipelineplugin"
+            "rexcolorreplacepipelineplugin",
         );
         const postFxPipeline = postFxPlugin.add(this._sprite, {
             originalColor: startColor,
             epsilon: 0,
         });
 
-        const tweenColours: Types.Display.ColorObject[] = Array.from<Types.Display.ColorObject>(
-            { length: Piece.DEFAULT_HIGHLIGHT_STEPS }
-        );
+        const tweenColours: Types.Display.ColorObject[] =
+            Array.from<Types.Display.ColorObject>({
+                length: Piece.DEFAULT_HIGHLIGHT_STEPS,
+            });
         for (let i = 0; i < Piece.DEFAULT_HIGHLIGHT_STEPS; i++) {
             tweenColours[i] = Display.Color.Interpolate.ColorWithColor(
                 startColor,
                 endColor,
                 Piece.DEFAULT_HIGHLIGHT_STEPS - 1,
-                i
+                i,
             );
         }
 
@@ -1862,7 +1871,7 @@ export class Piece extends Entity {
                 postFxPipeline.newColor = Display.Color.GetColor(
                     newColor.r,
                     newColor.g,
-                    newColor.b
+                    newColor.b,
                 );
             },
         });
@@ -1872,7 +1881,7 @@ export class Piece extends Entity {
 
     /**
      * Get the unit configuration for this piece.
-     * 
+     *
      * @returns Unit configuration
      */
     public get unitConfig(): UnitConfig {
@@ -1899,7 +1908,7 @@ export class Piece extends Entity {
 
     /**
      * Get the raw unit configuration from the units data file by ID.
-     * 
+     *
      * @param id Unit ID
      * @returns Unit configuration or undefined if not found
      */
@@ -1909,7 +1918,7 @@ export class Piece extends Entity {
 
     /**
      * Get the unit properties by unit name.
-     * 
+     *
      * @param name Unit name
      * @returns Unit properties or null if not found
      */
@@ -1940,7 +1949,8 @@ export class Piece extends Entity {
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
-            projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
+            projectileType:
+                unit.projectileType || UnitRangedProjectileType.Arrow,
             status: [...(unit.status || [])],
             group: unit.group || "classicunits",
         };
@@ -1948,7 +1958,7 @@ export class Piece extends Entity {
 
     /**
      * Get the piece properties from the JSON data by unit name.
-     * 
+     *
      * @param name Unit name
      * @returns Piece properties or undefined if not found
      */
@@ -1981,7 +1991,8 @@ export class Piece extends Entity {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
+                projectileType:
+                    unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: [...(unit.status || [])],
             },
             shadowScale: unit.shadowScale,
@@ -1993,7 +2004,7 @@ export class Piece extends Entity {
     /**
      * Check if the given object is a Piece instance. Used mainly to allow tests
      * to not have to import the Piece class just to use this type guard.
-     * 
+     *
      * @param obj  The object to check.
      * @returns True if the object is a Piece, false otherwise.
      */

@@ -12,5 +12,5 @@ export enum RangeType {
     /**
      * Ranged attack range.
      */
-    RangedAttack
+    RangedAttack,
 }

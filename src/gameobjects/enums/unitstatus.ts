@@ -6,7 +6,7 @@ export enum UnitStatus {
      * When spreading, can engulf other units
      */
     Engulfs = "engulf",
-    
+
     /**
      * Disappears after a random number of turns
      */

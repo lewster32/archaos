@@ -1,6 +1,14 @@
 import { Piece } from "./piece";
 
-import { Scene, GameObjects, Math as PMath, Geom, Curves, BlendModes, Display } from "phaser";
+import {
+    Scene,
+    GameObjects,
+    Math as PMath,
+    Geom,
+    Curves,
+    BlendModes,
+    Display,
+} from "phaser";
 
 import effectsData from "../../assets/data/effects.json";
 
@@ -19,12 +27,12 @@ const BLEND_MODES: Record<string, number> = {
 
 const parseHexColor = (hex: string): number => {
     return Number.parseInt(hex, 16);
-}
+};
 
 const buildParticleConfig = (
     def: EffectDefinition,
     startPosition: PMath.Vector2 | Geom.Point,
-    endPosition?: PMath.Vector2 | Geom.Point
+    endPosition?: PMath.Vector2 | Geom.Point,
 ): any => {
     const config: any = { ...def.particle };
 
@@ -41,8 +49,14 @@ const buildParticleConfig = (
     }
 
     if (def.origin) {
-        config.x = { min: startPosition.x + def.origin.x[0], max: startPosition.x + def.origin.x[1] };
-        config.y = { min: startPosition.y + def.origin.y[0], max: startPosition.y + def.origin.y[1] };
+        config.x = {
+            min: startPosition.x + def.origin.x[0],
+            max: startPosition.x + def.origin.x[1],
+        };
+        config.y = {
+            min: startPosition.y + def.origin.y[0],
+            max: startPosition.y + def.origin.y[1],
+        };
     }
 
     if (def.emitZone) {
@@ -51,27 +65,30 @@ const buildParticleConfig = (
             const radius = def.emitZone.radius!;
             path = new Curves.Path(
                 startPosition.x + radius,
-                startPosition.y
+                startPosition.y,
             ).circleTo(radius);
         } else {
-            path = new Curves.Path(
-                startPosition.x,
-                startPosition.y
-            ).lineTo(endPosition!.x, endPosition!.y);
+            path = new Curves.Path(startPosition.x, startPosition.y).lineTo(
+                endPosition!.x,
+                endPosition!.y,
+            );
         }
-        config.emitZone = { type: "edge", source: path, quantity: def.emitZone.quantity };
+        config.emitZone = {
+            type: "edge",
+            source: path,
+            quantity: def.emitZone.quantity,
+        };
     }
 
     return config;
-}
+};
 
 /**
  * Particle-based visual effects driven by configuration in effects.json.
  * Each effect type defines particle properties, optional emit zones/paths,
  * target sprite animations, and camera shakes.
  */
-export class EffectEmitter extends GameObjects.Particles
-    .ParticleEmitter {
+export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
     private readonly _target: Piece | null;
     private readonly _def: EffectDefinition;
 
@@ -81,15 +98,15 @@ export class EffectEmitter extends GameObjects.Particles
         startPosition: PMath.Vector2 | Geom.Point,
         endPosition: PMath.Vector2 | Geom.Point | null,
         target: Piece | null,
-        resolve: Function
+        resolve: Function,
     ) {
         const def = (effectsData as Record<string, EffectDefinition>)[type];
         super(
             scene,
             0,
             0,
-            'effects',
-            buildParticleConfig(def, startPosition, endPosition)
+            "effects",
+            buildParticleConfig(def, startPosition, endPosition),
         );
         this._def = def;
         this._target = target;
@@ -131,7 +148,9 @@ export class EffectEmitter extends GameObjects.Particles
                     duration,
                     onUpdate: (tween) => {
                         target.sprite.setTintFill(
-                            colors![Math.floor(tween.getValue()) % colors!.length]
+                            colors![
+                                Math.floor(tween.getValue()) % colors!.length
+                            ],
                         );
                     },
                     onComplete: () => {
@@ -148,7 +167,7 @@ export class EffectEmitter extends GameObjects.Particles
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue());
                         target.sprite.setTintFill(
-                            Display.Color.GetColor(value, value, value)
+                            Display.Color.GetColor(value, value, value),
                         );
                     },
                 });
@@ -169,7 +188,9 @@ export class EffectEmitter extends GameObjects.Particles
                         const value: number = Math.floor(tween.getValue()) % 5;
                         if (value === 0) {
                             target.sprite.setTintFill(
-                                PMath.RND.pick(colors!)
+                                colors![
+                                    Math.floor(Math.random() * colors!.length)
+                                ],
                             );
                         }
                     },
@@ -191,7 +212,7 @@ export class EffectEmitter extends GameObjects.Particles
             this.scene.cameras.main.shake(
                 this._def.cameraShake.duration,
                 this._def.cameraShake.intensity,
-                true
+                true,
             );
         }
 
@@ -241,5 +262,5 @@ export enum EffectType {
     GiveSpell = "GiveSpell",
     AttackHit = "AttackHit",
     NoCorpseDeath = "NoCorpseDeath",
-    TurmoilBeam = "TurmoilBeam"
+    TurmoilBeam = "TurmoilBeam",
 }

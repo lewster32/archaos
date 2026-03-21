@@ -3,13 +3,29 @@
         <button class="minimap__close button button--small" @click="close()">
             &times;
         </button>
-        <button class="minimap__info callout button--small c-white" @click="toggleInfo()" title="Show world balance info">
-            <span style="font-weight:bold" :class="{'c-magenta' : balance < 0, 'c-cyan' : balance > 0}">
-                {{ `${balance < 0 ? '*' : (balance > 0 ? '^' : '-')}`}}
+        <button
+            class="minimap__info callout button--small c-white"
+            @click="toggleInfo()"
+            title="Show world balance info"
+        >
+            <span
+                style="font-weight: bold"
+                :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
+            >
+                {{ `${balance < 0 ? "*" : balance > 0 ? "^" : "-"}` }}
             </span>
-            {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : '' }}
-            <span :class="{'c-magenta' : balanceShift < 0, 'c-cyan' : balanceShift > 0}">
-                {{ balanceShift ? ` ${balanceShift < 0 ? '+*' : (balanceShift > 0 ? '+^' : '')}` : '' }}
+            {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : "" }}
+            <span
+                :class="{
+                    'c-magenta': balanceShift < 0,
+                    'c-cyan': balanceShift > 0,
+                }"
+            >
+                {{
+                    balanceShift
+                        ? ` ${balanceShift < 0 ? "+*" : balanceShift > 0 ? "+^" : ""}`
+                        : ""
+                }}
             </span>
         </button>
         <div class="minimap__inner callout">
@@ -18,7 +34,7 @@
                     class="map__piece"
                     :class="{
                         'map__piece--wizard': piece.hasStatus(
-                            UnitStatus.Wizard
+                            UnitStatus.Wizard,
                         ),
                     }"
                     v-for="piece in pieces"
@@ -29,33 +45,95 @@
         </div>
     </div>
     <dialog class="minimap-info callout" ref="infoDialog">
-        <button class="minimap-info__close button button--small" @click="infoDialog.close()">
+        <button
+            class="minimap-info__close button button--small"
+            @click="infoDialog.close()"
+        >
             &times;
         </button>
         <div class="minimap-info__balance balance-info">
-            <p class="balance-info__value" :class="{'c-magenta' : balance < 0, 'c-cyan' : balance > 0}">
+            <p
+                class="balance-info__value"
+                :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
+            >
                 <span class="balance-info__name">
-                    {{ `${balance < 0 ? '* Chaotic' : (balance > 0 ? '^ Lawful' : 'Neutral')}`}}
+                    {{
+                        `${balance < 0 ? "* Chaotic" : balance > 0 ? "^ Lawful" : "Neutral"}`
+                    }}
                 </span>
                 <span class="balance-info__amount">
-                    {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : '' }}
-                    <span class="balance-info__shift" :class="{'c-magenta' : balanceShift < 0, 'c-cyan' : balanceShift > 0}">
-                        {{ balanceShift ? ` ${balanceShift < 0 ? '+*' : (balanceShift > 0 ? '+^' : '')}` : '' }}
+                    {{
+                        balance
+                            ? `(+${Math.round(Math.abs(balance) * 100)}%)`
+                            : ""
+                    }}
+                    <span
+                        class="balance-info__shift"
+                        :class="{
+                            'c-magenta': balanceShift < 0,
+                            'c-cyan': balanceShift > 0,
+                        }"
+                    >
+                        {{
+                            balanceShift
+                                ? ` ${balanceShift < 0 ? "+*" : balanceShift > 0 ? "+^" : ""}`
+                                : ""
+                        }}
                     </span>
                 </span>
             </p>
-            <p v-if="balance != 0">The world is currently <span :class="{'c-magenta' : balance < 0, 'c-cyan' : balance > 0}">{{ balance < 0 ? 'chaotic (*)' : (balance > 0 ? 'lawful (^)' : 'neutral (-)') }}</span>, giving <span class="c-green">higher</span> chance to cast spells with this alignment, and a <span class="c-red">lower</span> chance to cast <span :class="{'c-cyan' : balance < 0, 'c-magenta' : balance > 0}">{{ balance < 0 ? 'lawful (^)' : 'chaotic (*)' }}</span> spells.</p>
-            <p v-else>The world is currently neutral (-); all spells will have their normal casting chance.</p>
+            <p v-if="balance != 0">
+                The world is currently
+                <span
+                    :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
+                    >{{
+                        balance < 0
+                            ? "chaotic (*)"
+                            : balance > 0
+                              ? "lawful (^)"
+                              : "neutral (-)"
+                    }}</span
+                >, giving <span class="c-green">higher</span> chance to cast
+                spells with this alignment, and a
+                <span class="c-red">lower</span> chance to cast
+                <span
+                    :class="{ 'c-cyan': balance < 0, 'c-magenta': balance > 0 }"
+                    >{{ balance < 0 ? "lawful (^)" : "chaotic (*)" }}</span
+                >
+                spells.
+            </p>
+            <p v-else>
+                The world is currently neutral (-); all spells will have their
+                normal casting chance.
+            </p>
             <template v-if="balanceShift !== 0">
-                <p>The amount of <span :class="{'c-magenta' : balanceShift < 0, 'c-cyan' : balanceShift > 0}">{{ balanceShift < 0 ? 'chaos (*)' : 'law (^)' }}</span> has increased this turn, which will shift the world balance at the start of the next turn.</p>  
+                <p>
+                    The amount of
+                    <span
+                        :class="{
+                            'c-magenta': balanceShift < 0,
+                            'c-cyan': balanceShift > 0,
+                        }"
+                        >{{ balanceShift < 0 ? "chaos (*)" : "law (^)" }}</span
+                    >
+                    has increased this turn, which will shift the world balance
+                    at the start of the next turn.
+                </p>
             </template>
-            <p>The balance of the world is changed every time a non-neutral spell is <span class="c-green">successfully cast</span>, and affects every player's chance to cast subsequent spells.</p>
-            <p>Neutral (-) spells are not affected by, nor affect world balance.</p>
+            <p>
+                The balance of the world is changed every time a non-neutral
+                spell is <span class="c-green">successfully cast</span>, and
+                affects every player's chance to cast subsequent spells.
+            </p>
+            <p>
+                Neutral (-) spells are not affected by, nor affect world
+                balance.
+            </p>
         </div>
     </dialog>
 </template>
 <script setup lang="ts">
-import type { CSSProperties } from 'vue'
+import type { CSSProperties } from "vue";
 import { ref, computed } from "vue";
 import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
 import { Piece } from "../gameobjects/piece";
@@ -108,7 +186,7 @@ const toggleInfo = () => {
 };
 /**
  * Gets the styles for a piece on the minimap.
- * 
+ *
  * @param piece The piece to get the styles for.
  * @returns The CSS styles for the piece.
  */
@@ -182,7 +260,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
             z-index: 20;
             transform: scale(1);
             &::after {
-                content: '';
+                content: "";
                 position: absolute;
                 inset: 0;
                 border: 1px dashed var(--color-white);
@@ -190,13 +268,13 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
             }
             @keyframes wizard-pulse {
                 0% {
-                    opacity: 1
+                    opacity: 1;
                 }
                 50% {
-                    opacity: 0
+                    opacity: 0;
                 }
                 100% {
-                    opacity: 1
+                    opacity: 1;
                 }
             }
         }
@@ -225,7 +303,7 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
     }
     &__value {
         display: flex;
-        gap: .25rem;
+        gap: 0.25rem;
         align-items: start;
         justify-content: center;
         padding-inline: 2rem;

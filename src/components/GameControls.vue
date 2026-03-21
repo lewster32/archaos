@@ -30,7 +30,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-    'end-turn': [];
+    "end-turn": [];
     cancel: [];
     dismount: [];
 }>();
@@ -58,7 +58,9 @@ defineEmits<{
     background-size: contain;
     image-rendering: pixelated;
     cursor: pointer;
-    transition: transform 0.2s 0.2s ease-in-out, opacity 0.2s 0.2s;
+    transition:
+        transform 0.2s 0.2s ease-in-out,
+        opacity 0.2s 0.2s;
     transform: translateY(0);
     opacity: 1;
     position: relative;
@@ -71,13 +73,13 @@ defineEmits<{
         filter: brightness(0.8);
     }
     &--cancel {
-        background-image: url('../../assets/images/ui/cancel.png');
+        background-image: url("../../assets/images/ui/cancel.png");
     }
     &--skip {
-        background-image: url('../../assets/images/ui/end-turn.png');
+        background-image: url("../../assets/images/ui/end-turn.png");
     }
     &--dismount {
-        background-image: url('../../assets/images/ui/dismount.png');
+        background-image: url("../../assets/images/ui/dismount.png");
     }
 }
 </style>

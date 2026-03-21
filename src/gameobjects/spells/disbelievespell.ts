@@ -11,8 +11,12 @@ import { Geom } from "phaser";
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
 export class DisbelieveSpell extends Spell {
-
-    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(
+        owner: Player,
+        castingPiece: Piece,
+        point?: Geom.Point,
+        targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
         const target: Piece = targets.find((p: Piece) => p.canBeDisbelieved);
         if (!target) {
             return false;
@@ -22,19 +26,18 @@ export class DisbelieveSpell extends Spell {
             EffectType.DisbelieveBeam,
             castingPiece.sprite.getCenter(),
             target.sprite.getCenter(),
-            target
+            target,
         );
         if (target.illusion) {
             this._board.sound.play("disbelieve");
             await target.kill();
             this._board.logger.log(
-                `Disbelieve succeeded on illusionary ${target.name}`
+                `Disbelieve succeeded on illusionary ${target.name}`,
             );
-        }
-        else {
+        } else {
             this._board.logger.log(
                 `Disbelieve failed on non-illusionary ${target.name}`,
-                Colour.Magenta
+                Colour.Magenta,
             );
             // Inform AI players that this piece is not an illusion
             this._board.players.forEach((player: Player) => {

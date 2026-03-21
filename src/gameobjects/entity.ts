@@ -52,7 +52,7 @@ export class Entity extends Model {
 
     /**
      * Set the position of this entity on the board.
-     * 
+     *
      * @param value The new position.
      */
     set position(value: Geom.Point) {

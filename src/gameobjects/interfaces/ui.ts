@@ -3,7 +3,7 @@
  * the Vue UI components. This may be broken out further in future if needed.
  */
 
-import type { Spell } from "../../gameobjects/spells/spell"
+import type { Spell } from "../../gameobjects/spells/spell";
 import type { Piece } from "../piece";
 
 /**
@@ -58,7 +58,7 @@ export interface GameSetupData {
 export enum GameSetupPlayerType {
     Local,
     Computer,
-    Remote
+    Remote,
 }
 
 export interface GameSetupPlayer {
@@ -76,8 +76,8 @@ export interface GameScenarioData {
     board: Box;
     players: GameScenarioPlayer[];
     cheats?: GameScenarioCheats;
-    phase?: string,
-    currentPlayerIndex?: number,
+    phase?: string;
+    currentPlayerIndex?: number;
     corpses?: GameScenarioPiece[];
 }
 
@@ -142,7 +142,7 @@ export interface BoardUpdateEventData {
  */
 export interface SpellbookOpenEventData {
     data: SpellbookEventData;
-    callback:  (spell: Spell) => Promise<void>;
+    callback: (spell: Spell) => Promise<void>;
 }
 
 /**

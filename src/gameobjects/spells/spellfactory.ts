@@ -17,7 +17,7 @@ type SpellConstructor = new (
 ) => Spell;
 
 /**
- * An array of rules to determine which Spell subclass to instantiate based on 
+ * An array of rules to determine which Spell subclass to instantiate based on
  * the provided configuration.
  */
 const SPELL_RULES: [(config: SpellConfig) => boolean, SpellConstructor][] = [
@@ -31,11 +31,11 @@ const SPELL_RULES: [(config: SpellConfig) => boolean, SpellConstructor][] = [
 ];
 
 /**
- * Factory function to create a Spell instance based on the provided 
+ * Factory function to create a Spell instance based on the provided
  * configuration. It checks the configuration against a set of rules to
  * determine which specific Spell subclass to instantiate. If no specific match
  * is found, it defaults to creating a generic Spell instance.
- * 
+ *
  * @param board The game board instance the spell will interact with.
  * @param id The unique identifier for the spell instance.
  * @param config The configuration object that defines the spell's properties and behavior.

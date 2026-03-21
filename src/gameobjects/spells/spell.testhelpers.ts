@@ -1,16 +1,19 @@
 /** @internal – only for use in unit tests */
 /* v8 ignore start */
-import { vi } from 'vitest';
-import { UnitType } from '../enums/unittype';
-import { Geom } from 'phaser';
-import type { Board } from '../board';
-import type { SpellConfig } from '../configs/spellconfig';
+import { vi } from "vitest";
+import { UnitType } from "../enums/unittype";
+import { Geom } from "phaser";
+import type { Board } from "../board";
+import type { SpellConfig } from "../configs/spellconfig";
+import { TestRNG } from "../rng";
 
-export function makeMockBoard(opts: {
-    balance?: number;
-    rollChanceResult?: boolean;
-    players?: any[];
-} = {}): Board {
+export function makeMockBoard(
+    opts: {
+        balance?: number;
+        rollChanceResult?: boolean;
+        players?: any[];
+    } = {},
+): Board {
     const { balance = 0, rollChanceResult = true, players = [] } = opts;
     return {
         balance,
@@ -30,24 +33,27 @@ export function makeMockBoard(opts: {
         },
         pieces: [],
         players,
+        rng: new TestRNG(),
     } as unknown as Board;
 }
 
-export function makeMockPiece(opts: {
-    id?: number;
-    type?: UnitType;
-    owner?: any;
-    dead?: boolean;
-    currentMount?: any;
-    engulfed?: boolean;
-    canBeDisbelieved?: boolean;
-    canBeSubverted?: boolean;
-    canBeMagicAttacked?: boolean;
-    illusion?: boolean;
-    x?: number;
-    y?: number;
-    name?: string;
-} = {}): any {
+export function makeMockPiece(
+    opts: {
+        id?: number;
+        type?: UnitType;
+        owner?: any;
+        dead?: boolean;
+        currentMount?: any;
+        engulfed?: boolean;
+        canBeDisbelieved?: boolean;
+        canBeSubverted?: boolean;
+        canBeMagicAttacked?: boolean;
+        illusion?: boolean;
+        x?: number;
+        y?: number;
+        name?: string;
+    } = {},
+): any {
     const {
         id = 1,
         type = UnitType.Creature,
@@ -61,7 +67,7 @@ export function makeMockPiece(opts: {
         illusion = false,
         x = 0,
         y = 0,
-        name = 'Test Piece',
+        name = "Test Piece",
     } = opts;
     return {
         id,
@@ -89,15 +95,15 @@ export function makeMockPiece(opts: {
 export function makeMockPlayer(castingPiece?: any): any {
     return {
         castingPiece: castingPiece ?? null,
-        name: 'Test Player',
+        name: "Test Player",
         ai: null,
     };
 }
 
 export function makeConfig(overrides: Partial<SpellConfig> = {}): SpellConfig {
     return {
-        id: 'test-spell',
-        name: 'Test Spell',
+        id: "test-spell",
+        name: "Test Spell",
         chance: 0.8,
         balance: 0,
         ...overrides,

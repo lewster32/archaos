@@ -11,9 +11,9 @@ export enum UnitType {
      * Wizard units
      */
     Wizard,
-    
+
     /**
      * Normal creatures - everything else basically
      */
-    Creature
+    Creature,
 }

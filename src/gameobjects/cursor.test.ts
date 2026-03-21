@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Cursor } from './cursor';
-import { CursorType } from './enums/cursortype';
-import { ActionType } from './enums/actiontype';
-import { BoardState } from './enums/boardstate';
-import { InputType } from './enums/inputtype';
-import { Colour } from './enums/colour';
-import { Geom } from 'phaser';
-import type { Board } from './board';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Cursor } from "./cursor";
+import { CursorType } from "./enums/cursortype";
+import { ActionType } from "./enums/actiontype";
+import { BoardState } from "./enums/boardstate";
+import { InputType } from "./enums/inputtype";
+import { Colour } from "./enums/colour";
+import { Geom } from "phaser";
+import type { Board } from "./board";
 
 // ─── Pointer/tile coordinate helpers ─────────────────────────────────────────
 //
@@ -121,7 +121,8 @@ function makeCursor(boardOverrides: Record<string, unknown> = {}) {
 
 /** Helper to get the image stub that the cursor holds internally. */
 function getImage(board: Board) {
-    return (board.scene.add.image as ReturnType<typeof vi.fn>).mock.results[0].value;
+    return (board.scene.add.image as ReturnType<typeof vi.fn>).mock.results[0]
+        .value;
 }
 
 /**
@@ -169,207 +170,272 @@ afterEach(() => {
 
 // ─── Static API ───────────────────────────────────────────────────────────────
 
-describe('Cursor static constants', () => {
+describe("Cursor static constants", () => {
     it('CANCEL_KEY is "Escape"', () => {
-        expect(Cursor.CANCEL_KEY).toBe('Escape');
+        expect(Cursor.CANCEL_KEY).toBe("Escape");
     });
 
-    it('OFFSET is at (0, 0)', () => {
+    it("OFFSET is at (0, 0)", () => {
         expect(Cursor.OFFSET.x).toBe(0);
         expect(Cursor.OFFSET.y).toBe(0);
     });
 
-    it('DIRECTION_MAP has exactly 8 entries', () => {
+    it("DIRECTION_MAP has exactly 8 entries", () => {
         expect(Object.keys(Cursor.DIRECTION_MAP)).toHaveLength(8);
     });
 
     it('DIRECTION_MAP maps "0,1" to CursorType.DownLeft', () => {
-        expect(Cursor.DIRECTION_MAP['0,1']).toBe(CursorType.DownLeft);
+        expect(Cursor.DIRECTION_MAP["0,1"]).toBe(CursorType.DownLeft);
     });
 
     it('DIRECTION_MAP maps "1,1" to CursorType.Down', () => {
-        expect(Cursor.DIRECTION_MAP['1,1']).toBe(CursorType.Down);
+        expect(Cursor.DIRECTION_MAP["1,1"]).toBe(CursorType.Down);
     });
 
     it('DIRECTION_MAP maps "1,0" to CursorType.DownRight', () => {
-        expect(Cursor.DIRECTION_MAP['1,0']).toBe(CursorType.DownRight);
+        expect(Cursor.DIRECTION_MAP["1,0"]).toBe(CursorType.DownRight);
     });
 
     it('DIRECTION_MAP maps "1,-1" to CursorType.Right', () => {
-        expect(Cursor.DIRECTION_MAP['1,-1']).toBe(CursorType.Right);
+        expect(Cursor.DIRECTION_MAP["1,-1"]).toBe(CursorType.Right);
     });
 
     it('DIRECTION_MAP maps "0,-1" to CursorType.UpRight', () => {
-        expect(Cursor.DIRECTION_MAP['0,-1']).toBe(CursorType.UpRight);
+        expect(Cursor.DIRECTION_MAP["0,-1"]).toBe(CursorType.UpRight);
     });
 
     it('DIRECTION_MAP maps "-1,-1" to CursorType.Up', () => {
-        expect(Cursor.DIRECTION_MAP['-1,-1']).toBe(CursorType.Up);
+        expect(Cursor.DIRECTION_MAP["-1,-1"]).toBe(CursorType.Up);
     });
 
     it('DIRECTION_MAP maps "-1,0" to CursorType.UpLeft', () => {
-        expect(Cursor.DIRECTION_MAP['-1,0']).toBe(CursorType.UpLeft);
+        expect(Cursor.DIRECTION_MAP["-1,0"]).toBe(CursorType.UpLeft);
     });
 
     it('DIRECTION_MAP maps "-1,1" to CursorType.Left', () => {
-        expect(Cursor.DIRECTION_MAP['-1,1']).toBe(CursorType.Left);
+        expect(Cursor.DIRECTION_MAP["-1,1"]).toBe(CursorType.Left);
     });
 });
 
 // ─── getCursorAngle ───────────────────────────────────────────────────────────
 
-describe('Cursor.getCursorAngle', () => {
-    it('returns CursorType.DownRight for angle 0 (start direction)', () => {
+describe("Cursor.getCursorAngle", () => {
+    it("returns CursorType.DownRight for angle 0 (start direction)", () => {
         expect(Cursor.getCursorAngle(0)).toBe(CursorType.DownRight);
     });
 
-    it('returns CursorType.DownRight for angle 8 (wraps back to start)', () => {
+    it("returns CursorType.DownRight for angle 8 (wraps back to start)", () => {
         expect(Cursor.getCursorAngle(8)).toBe(CursorType.DownRight);
     });
 
-    it('returns CursorType.Down for angle 1', () => {
+    it("returns CursorType.Down for angle 1", () => {
         expect(Cursor.getCursorAngle(1)).toBe(CursorType.Down);
     });
 
-    it('returns CursorType.DownLeft for angle 2', () => {
+    it("returns CursorType.DownLeft for angle 2", () => {
         expect(Cursor.getCursorAngle(2)).toBe(CursorType.DownLeft);
     });
 
-    it('returns CursorType.Left for angle 3', () => {
+    it("returns CursorType.Left for angle 3", () => {
         expect(Cursor.getCursorAngle(3)).toBe(CursorType.Left);
     });
 
-    it('returns CursorType.UpLeft for angle 4', () => {
+    it("returns CursorType.UpLeft for angle 4", () => {
         expect(Cursor.getCursorAngle(4)).toBe(CursorType.UpLeft);
     });
 
-    it('returns CursorType.Up for angle 5', () => {
+    it("returns CursorType.Up for angle 5", () => {
         expect(Cursor.getCursorAngle(5)).toBe(CursorType.Up);
     });
 
-    it('returns CursorType.UpRight for angle 6', () => {
+    it("returns CursorType.UpRight for angle 6", () => {
         expect(Cursor.getCursorAngle(6)).toBe(CursorType.UpRight);
     });
 
-    it('returns CursorType.Right for angle 7', () => {
+    it("returns CursorType.Right for angle 7", () => {
         expect(Cursor.getCursorAngle(7)).toBe(CursorType.Right);
     });
 
-    it('returns CursorType.Idle for an out-of-range positive angle', () => {
+    it("returns CursorType.Idle for an out-of-range positive angle", () => {
         expect(Cursor.getCursorAngle(9)).toBe(CursorType.Idle);
         expect(Cursor.getCursorAngle(100)).toBe(CursorType.Idle);
     });
 
-    it('returns CursorType.Idle for a negative angle', () => {
+    it("returns CursorType.Idle for a negative angle", () => {
         expect(Cursor.getCursorAngle(-1)).toBe(CursorType.Idle);
     });
 
-    it('returns CursorType.DownRight when no argument is supplied (default = 0)', () => {
+    it("returns CursorType.DownRight when no argument is supplied (default = 0)", () => {
         expect(Cursor.getCursorAngle()).toBe(CursorType.DownRight);
     });
 });
 
 // ─── getMovementDirectionType ─────────────────────────────────────────────────
 
-describe('Cursor.getMovementDirectionType', () => {
-    it('returns DownLeft for dy=+1, dx=0', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(5, 6))).toBe(CursorType.DownLeft);
+describe("Cursor.getMovementDirectionType", () => {
+    it("returns DownLeft for dy=+1, dx=0", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(5, 6),
+            ),
+        ).toBe(CursorType.DownLeft);
     });
 
-    it('returns Down for dy=+1, dx=+1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(6, 6))).toBe(CursorType.Down);
+    it("returns Down for dy=+1, dx=+1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(6, 6),
+            ),
+        ).toBe(CursorType.Down);
     });
 
-    it('returns DownRight for dy=0, dx=+1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(6, 5))).toBe(CursorType.DownRight);
+    it("returns DownRight for dy=0, dx=+1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(6, 5),
+            ),
+        ).toBe(CursorType.DownRight);
     });
 
-    it('returns Right for dy=-1, dx=+1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(6, 4))).toBe(CursorType.Right);
+    it("returns Right for dy=-1, dx=+1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(6, 4),
+            ),
+        ).toBe(CursorType.Right);
     });
 
-    it('returns UpRight for dy=-1, dx=0', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(5, 4))).toBe(CursorType.UpRight);
+    it("returns UpRight for dy=-1, dx=0", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(5, 4),
+            ),
+        ).toBe(CursorType.UpRight);
     });
 
-    it('returns Up for dy=-1, dx=-1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(4, 4))).toBe(CursorType.Up);
+    it("returns Up for dy=-1, dx=-1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(4, 4),
+            ),
+        ).toBe(CursorType.Up);
     });
 
-    it('returns UpLeft for dy=0, dx=-1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(4, 5))).toBe(CursorType.UpLeft);
+    it("returns UpLeft for dy=0, dx=-1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(4, 5),
+            ),
+        ).toBe(CursorType.UpLeft);
     });
 
-    it('returns Left for dy=+1, dx=-1', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(4, 6))).toBe(CursorType.Left);
+    it("returns Left for dy=+1, dx=-1", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(4, 6),
+            ),
+        ).toBe(CursorType.Left);
     });
 
-    it('clamps large positive deltas to unit steps — (0,0) to (10,10) → Down', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(0, 0), new Geom.Point(10, 10))).toBe(CursorType.Down);
+    it("clamps large positive deltas to unit steps — (0,0) to (10,10) → Down", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(0, 0),
+                new Geom.Point(10, 10),
+            ),
+        ).toBe(CursorType.Down);
     });
 
-    it('clamps large negative deltas — (10,10) to (0,0) → Up', () => {
-        expect(Cursor.getMovementDirectionType(new Geom.Point(10, 10), new Geom.Point(0, 0))).toBe(CursorType.Up);
+    it("clamps large negative deltas — (10,10) to (0,0) → Up", () => {
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(10, 10),
+                new Geom.Point(0, 0),
+            ),
+        ).toBe(CursorType.Up);
     });
 
-    it('returns CursorType.Invalid when from and to are the same tile (0,0 delta)', () => {
+    it("returns CursorType.Invalid when from and to are the same tile (0,0 delta)", () => {
         // "0,0" is not a key in DIRECTION_MAP so the nullish fallback gives Invalid
-        expect(Cursor.getMovementDirectionType(new Geom.Point(5, 5), new Geom.Point(5, 5))).toBe(CursorType.Invalid);
+        expect(
+            Cursor.getMovementDirectionType(
+                new Geom.Point(5, 5),
+                new Geom.Point(5, 5),
+            ),
+        ).toBe(CursorType.Invalid);
     });
 });
 
 // ─── Constructor & basic accessors ───────────────────────────────────────────
 
-describe('Cursor constructor', () => {
-    it('creates an instance without throwing', () => {
+describe("Cursor constructor", () => {
+    it("creates an instance without throwing", () => {
         expect(() => makeCursor()).not.toThrow();
     });
 
     it('requests an image from scene.add.image with the "cursors" texture', () => {
         const { board } = makeCursor();
-        expect(board.scene.add.image).toHaveBeenCalledWith(0, 0, 'cursors', 'idle');
+        expect(board.scene.add.image).toHaveBeenCalledWith(
+            0,
+            0,
+            "cursors",
+            "idle",
+        );
     });
 
-    it('adds the cursor image to the layer returned by getLayer', () => {
+    it("adds the cursor image to the layer returned by getLayer", () => {
         const { board } = makeCursor();
-        const layer = (board.getLayer as ReturnType<typeof vi.fn>).mock.results[0].value;
+        const layer = (board.getLayer as ReturnType<typeof vi.fn>).mock
+            .results[0].value;
         expect(layer.add).toHaveBeenCalled();
     });
 
     it('registers a "pointermove" listener on scene.input', () => {
         const { board } = makeCursor();
-        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock.calls;
-        expect(calls.some((c: unknown[]) => c[0] === 'pointermove')).toBe(true);
+        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock
+            .calls;
+        expect(calls.some((c: unknown[]) => c[0] === "pointermove")).toBe(true);
     });
 
     it('registers a "pointerup" listener on scene.input', () => {
         const { board } = makeCursor();
-        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock.calls;
-        expect(calls.some((c: unknown[]) => c[0] === 'pointerup')).toBe(true);
+        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock
+            .calls;
+        expect(calls.some((c: unknown[]) => c[0] === "pointerup")).toBe(true);
     });
 
     it('registers a "keyup" listener on scene.input.keyboard', () => {
         const { board } = makeCursor();
-        const calls = (board.scene.input.keyboard.on as ReturnType<typeof vi.fn>).mock.calls;
-        expect(calls.some((c: unknown[]) => c[0] === 'keyup')).toBe(true);
+        const calls = (
+            board.scene.input.keyboard.on as ReturnType<typeof vi.fn>
+        ).mock.calls;
+        expect(calls.some((c: unknown[]) => c[0] === "keyup")).toBe(true);
     });
 
-    it('registers a listener on scene.game.events for the cancel event', () => {
+    it("registers a listener on scene.game.events for the cancel event", () => {
         const { board } = makeCursor();
         expect(board.scene.game.events.on).toHaveBeenCalled();
     });
 
-    it('starts enabled by default', () => {
+    it("starts enabled by default", () => {
         const { cursor } = makeCursor();
         expect(cursor.enabled).toBe(true);
     });
 
-    it('initial cursor type is Idle', () => {
+    it("initial cursor type is Idle", () => {
         const { cursor } = makeCursor();
         expect(cursor.type).toBe(CursorType.Idle);
     });
 
-    it('initial position is (0, 0)', () => {
+    it("initial position is (0, 0)", () => {
         const { cursor } = makeCursor();
         expect(cursor.position.x).toBe(0);
         expect(cursor.position.y).toBe(0);
@@ -378,14 +444,14 @@ describe('Cursor constructor', () => {
 
 // ─── enabled getter / setter ──────────────────────────────────────────────────
 
-describe('Cursor.enabled', () => {
-    it('can be set to false', () => {
+describe("Cursor.enabled", () => {
+    it("can be set to false", () => {
         const { cursor } = makeCursor();
         cursor.enabled = false;
         expect(cursor.enabled).toBe(false);
     });
 
-    it('can be toggled back to true after being disabled', () => {
+    it("can be toggled back to true after being disabled", () => {
         const { cursor } = makeCursor();
         cursor.enabled = false;
         cursor.enabled = true;
@@ -395,21 +461,21 @@ describe('Cursor.enabled', () => {
 
 // ─── type getter / setter ─────────────────────────────────────────────────────
 
-describe('Cursor.type setter/getter', () => {
-    it('returns the type that was set', () => {
+describe("Cursor.type setter/getter", () => {
+    it("returns the type that was set", () => {
         const { cursor } = makeCursor();
         cursor.type = CursorType.Attack;
         expect(cursor.type).toBe(CursorType.Attack);
     });
 
-    it('calls setFrame with the cursor type string', () => {
+    it("calls setFrame with the cursor type string", () => {
         const { cursor, board } = makeCursor();
         const image = getImage(board);
         cursor.type = CursorType.Cast;
         expect(image.setFrame).toHaveBeenCalledWith(CursorType.Cast);
     });
 
-    it('sets depth to (y - 8) when type is Idle', () => {
+    it("sets depth to (y - 8) when type is Idle", () => {
         const { cursor, board } = makeCursor();
         const image = getImage(board);
         image.y = 100;
@@ -417,7 +483,7 @@ describe('Cursor.type setter/getter', () => {
         expect(image.setDepth).toHaveBeenCalledWith(92); // 100 - 8
     });
 
-    it('sets depth to (y + 8) when type is Attack (non-Idle)', () => {
+    it("sets depth to (y + 8) when type is Attack (non-Idle)", () => {
         const { cursor, board } = makeCursor();
         const image = getImage(board);
         image.y = 100;
@@ -425,23 +491,25 @@ describe('Cursor.type setter/getter', () => {
         expect(image.setDepth).toHaveBeenCalledWith(108); // 100 + 8
     });
 
-    it('setting each defined CursorType does not throw', () => {
+    it("setting each defined CursorType does not throw", () => {
         const { cursor } = makeCursor();
         for (const t of Object.values(CursorType)) {
-            expect(() => { cursor.type = t; }).not.toThrow();
+            expect(() => {
+                cursor.type = t;
+            }).not.toThrow();
         }
     });
 });
 
 // ─── position getter ──────────────────────────────────────────────────────────
 
-describe('Cursor.position', () => {
-    it('returns a Geom.Point instance', () => {
+describe("Cursor.position", () => {
+    it("returns a Geom.Point instance", () => {
         const { cursor } = makeCursor();
         expect(cursor.position).toBeInstanceOf(Geom.Point);
     });
 
-    it('returns the same object reference on successive calls (no copy)', () => {
+    it("returns the same object reference on successive calls (no copy)", () => {
         const { cursor } = makeCursor();
         expect(cursor.position).toBe(cursor.position);
     });
@@ -449,37 +517,39 @@ describe('Cursor.position', () => {
 
 // ─── update() — guard clauses ─────────────────────────────────────────────────
 
-describe('Cursor.update()', () => {
-    it('returns ActionType.None immediately when cursor is disabled', async () => {
+describe("Cursor.update()", () => {
+    it("returns ActionType.None immediately when cursor is disabled", async () => {
         const { cursor } = makeCursor();
         cursor.enabled = false;
         expect(await cursor.update()).toBe(ActionType.None);
     });
 
-    it('returns ActionType.None immediately when board state is Busy', async () => {
+    it("returns ActionType.None immediately when board state is Busy", async () => {
         const board = makeMockBoard({ state: BoardState.Busy });
         const cursor = new Cursor(board);
         expect(await cursor.update()).toBe(ActionType.None);
     });
 
-    it('does not call processIntent when cursor is disabled', async () => {
+    it("does not call processIntent when cursor is disabled", async () => {
         const { cursor, board } = makeCursor();
         cursor.enabled = false;
         await cursor.update();
         expect(board.rules.processIntent).not.toHaveBeenCalled();
     });
 
-    it('does not call processIntent when board is Busy', async () => {
+    it("does not call processIntent when board is Busy", async () => {
         const board = makeMockBoard({ state: BoardState.Busy });
         const cursor = new Cursor(board);
         await cursor.update();
         expect(board.rules.processIntent).not.toHaveBeenCalled();
     });
 
-    it('returns ActionType.None and hides the image when pointer is out of bounds', async () => {
+    it("returns ActionType.None and hides the image when pointer is out of bounds", async () => {
         // OUT_OF_BOUNDS_POINTER (0,0) translates to a tile with very negative coords
         const board = makeMockBoard();
-        (board.scene.input as any).activePointer.position = { ...OUT_OF_BOUNDS_POINTER };
+        (board.scene.input as any).activePointer.position = {
+            ...OUT_OF_BOUNDS_POINTER,
+        };
         const cursor = new Cursor(board);
 
         const result = await cursor.update(true);
@@ -488,44 +558,62 @@ describe('Cursor.update()', () => {
         expect(getImage(board).setVisible).toHaveBeenCalledWith(false);
     });
 
-    it('does not call processIntent when pointer is out of bounds', async () => {
+    it("does not call processIntent when pointer is out of bounds", async () => {
         const board = makeMockBoard();
-        (board.scene.input as any).activePointer.position = { ...OUT_OF_BOUNDS_POINTER };
+        (board.scene.input as any).activePointer.position = {
+            ...OUT_OF_BOUNDS_POINTER,
+        };
         const cursor = new Cursor(board);
         await cursor.update(true);
         expect(board.rules.processIntent).not.toHaveBeenCalled();
     });
 
-    it('skips the intent check on the second call to the same tile without force', async () => {
+    it("skips the intent check on the second call to the same tile without force", async () => {
         // First call (non-forced) sets position; second call to same tile is a no-op
         const board = makeMockBoard();
-        (board.scene.input as any).activePointer.position = { ...IN_BOUNDS_POINTER };
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Idle);
+        (board.scene.input as any).activePointer.position = {
+            ...IN_BOUNDS_POINTER,
+        };
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
         const cursor = new Cursor(board);
 
-        await cursor.update();       // sets position to (5,5); calls processIntent
-        const callsAfterFirst = (board.rules.processIntent as ReturnType<typeof vi.fn>).mock.calls.length;
+        await cursor.update(); // sets position to (5,5); calls processIntent
+        const callsAfterFirst = (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mock.calls.length;
 
-        await cursor.update();       // same pointer → same tile → no-op
-        expect((board.rules.processIntent as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterFirst);
+        await cursor.update(); // same pointer → same tile → no-op
+        expect(
+            (board.rules.processIntent as ReturnType<typeof vi.fn>).mock.calls
+                .length,
+        ).toBe(callsAfterFirst);
     });
 
-    it('calls processIntent again when force=true even if position has not changed', async () => {
+    it("calls processIntent again when force=true even if position has not changed", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Idle);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
         const cursor = new Cursor(board);
 
         await cursor.update(true);
         await cursor.update(true);
 
-        expect((board.rules.processIntent as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+        expect(
+            (board.rules.processIntent as ReturnType<typeof vi.fn>).mock.calls
+                .length,
+        ).toBe(2);
     });
 
     // ─── switch branches when processIntent returns a non-None action ─────────
 
-    it('hides the image and returns ActionType.None when processIntent returns ActionType.None', async () => {
+    it("hides the image and returns ActionType.None when processIntent returns ActionType.None", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
 
         const cursor = new Cursor(board);
         const result = await cursor.update(true);
@@ -534,9 +622,11 @@ describe('Cursor.update()', () => {
         expect(getImage(board).setVisible).toHaveBeenCalledWith(false);
     });
 
-    it('sets cursor type to Idle when processIntent returns ActionType.Idle', async () => {
+    it("sets cursor type to Idle when processIntent returns ActionType.Idle", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Idle);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -544,9 +634,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.Idle);
     });
 
-    it('returns ActionType.Idle when processIntent returns ActionType.Idle', async () => {
+    it("returns ActionType.Idle when processIntent returns ActionType.Idle", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Idle);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
 
         const cursor = new Cursor(board);
         const result = await cursor.update(true);
@@ -554,9 +646,11 @@ describe('Cursor.update()', () => {
         expect(result).toBe(ActionType.Idle);
     });
 
-    it('sets cursor type to Info when processIntent returns ActionType.Info', async () => {
+    it("sets cursor type to Info when processIntent returns ActionType.Info", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Info);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Info);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -564,9 +658,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.Info);
     });
 
-    it('sets cursor type to Invalid when processIntent returns ActionType.Invalid', async () => {
+    it("sets cursor type to Invalid when processIntent returns ActionType.Invalid", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Invalid);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Invalid);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -574,9 +670,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.Invalid);
     });
 
-    it('sets cursor type to Select when processIntent returns ActionType.Select', async () => {
+    it("sets cursor type to Select when processIntent returns ActionType.Select", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Select);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Select);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -584,9 +682,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.Select);
     });
 
-    it('sets cursor type to Cast when processIntent returns ActionType.Cast', async () => {
+    it("sets cursor type to Cast when processIntent returns ActionType.Cast", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Cast);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Cast);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -594,9 +694,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.Cast);
     });
 
-    it('sets cursor type to RangedAttack when processIntent returns ActionType.RangedAttack', async () => {
+    it("sets cursor type to RangedAttack when processIntent returns ActionType.RangedAttack", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.RangedAttack);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.RangedAttack);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -604,9 +706,11 @@ describe('Cursor.update()', () => {
         expect(cursor.type).toBe(CursorType.RangedAttack);
     });
 
-    it('sets cursor type to Dismount when processIntent returns ActionType.Dismount', async () => {
+    it("sets cursor type to Dismount when processIntent returns ActionType.Dismount", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Dismount);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Dismount);
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -616,10 +720,15 @@ describe('Cursor.update()', () => {
 
     // ─── Image position is updated after processing ───────────────────────────
 
-    it('assigns isoPosition coordinates to the image after a successful update', async () => {
+    it("assigns isoPosition coordinates to the image after a successful update", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Idle);
-        (board.getIsoPosition as ReturnType<typeof vi.fn>).mockReturnValue({ x: 42, y: 84 });
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
+        (board.getIsoPosition as ReturnType<typeof vi.fn>).mockReturnValue({
+            x: 42,
+            y: 84,
+        });
 
         const cursor = new Cursor(board);
         await cursor.update(true);
@@ -631,16 +740,18 @@ describe('Cursor.update()', () => {
 
     // ─── ActionType.Move branch ───────────────────────────────────────────────
 
-    describe('ActionType.Move branch', () => {
-        it('does not throw when processIntent returns Move but board.selected is null', async () => {
+    describe("ActionType.Move branch", () => {
+        it("does not throw when processIntent returns Move but board.selected is null", async () => {
             const board = makeMockBoard({ selected: null });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
 
             const cursor = new Cursor(board);
             await expect(cursor.update(true)).resolves.toBe(ActionType.Move);
         });
 
-        it('shows Warning cursor when an adjacent piece can be engaged', async () => {
+        it("shows Warning cursor when an adjacent piece can be engaged", async () => {
             const neighbour = { canEngagePiece: vi.fn().mockReturnValue(true) };
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
@@ -649,8 +760,12 @@ describe('Cursor.update()', () => {
                 canEngagePiece: vi.fn().mockReturnValue(true),
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-            (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([neighbour]);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
+            (
+                board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>
+            ).mockReturnValue([neighbour]);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -658,8 +773,10 @@ describe('Cursor.update()', () => {
             expect(cursor.type).toBe(CursorType.Warning);
         });
 
-        it('calls rangeGizmo.showPath when the Move action is processed', async () => {
-            const neighbour = { canEngagePiece: vi.fn().mockReturnValue(false) };
+        it("calls rangeGizmo.showPath when the Move action is processed", async () => {
+            const neighbour = {
+                canEngagePiece: vi.fn().mockReturnValue(false),
+            };
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 hasStatus: vi.fn().mockReturnValue(false),
@@ -667,8 +784,12 @@ describe('Cursor.update()', () => {
                 canEngagePiece: vi.fn().mockReturnValue(false),
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-            (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([neighbour]);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
+            (
+                board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>
+            ).mockReturnValue([neighbour]);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -676,7 +797,7 @@ describe('Cursor.update()', () => {
             expect(board.rangeGizmo.showPath).toHaveBeenCalled();
         });
 
-        it('shows Fly cursor when selected piece has Flying status and no engageable neighbours', async () => {
+        it("shows Fly cursor when selected piece has Flying status and no engageable neighbours", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 hasStatus: vi.fn().mockReturnValue(true), // Flying is true
@@ -684,8 +805,12 @@ describe('Cursor.update()', () => {
                 canEngagePiece: vi.fn().mockReturnValue(false),
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-            (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([]);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
+            (
+                board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>
+            ).mockReturnValue([]);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -693,16 +818,20 @@ describe('Cursor.update()', () => {
             expect(cursor.type).toBe(CursorType.Fly);
         });
 
-        it('shows Dismount cursor when selected piece has a currentMount but no Flying status', async () => {
+        it("shows Dismount cursor when selected piece has a currentMount but no Flying status", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 hasStatus: vi.fn().mockReturnValue(false), // no Flying
-                currentMount: { id: 99 },                  // has a mount
+                currentMount: { id: 99 }, // has a mount
                 canEngagePiece: vi.fn().mockReturnValue(false),
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-            (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([]);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
+            (
+                board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>
+            ).mockReturnValue([]);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -710,7 +839,7 @@ describe('Cursor.update()', () => {
             expect(cursor.type).toBe(CursorType.Dismount);
         });
 
-        it('shows a directional cursor when selected piece has no special conditions', async () => {
+        it("shows a directional cursor when selected piece has no special conditions", async () => {
             // Piece is at tile (4,4); cursor lands at (5,5) → dx=+1, dy=+1 → Down
             const selectedPiece = {
                 position: new Geom.Point(4, 4),
@@ -720,9 +849,16 @@ describe('Cursor.update()', () => {
             };
             const board = makeMockBoard({ selected: selectedPiece });
             // Pointer (400, 126) translates to tile (5,5)
-            (board.scene.input as any).activePointer.position = { x: 400, y: 126 };
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-            (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([]);
+            (board.scene.input as any).activePointer.position = {
+                x: 400,
+                y: 126,
+            };
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Move);
+            (
+                board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>
+            ).mockReturnValue([]);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -734,14 +870,16 @@ describe('Cursor.update()', () => {
 
     // ─── ActionType.Mount branch ──────────────────────────────────────────────
 
-    describe('ActionType.Mount branch', () => {
-        it('calls rangeGizmo.showPath when selected piece movement > 1', async () => {
+    describe("ActionType.Mount branch", () => {
+        it("calls rangeGizmo.showPath when selected piece movement > 1", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 stats: { movement: 2 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Mount);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Mount);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -749,13 +887,15 @@ describe('Cursor.update()', () => {
             expect(board.rangeGizmo.showPath).toHaveBeenCalled();
         });
 
-        it('does not call rangeGizmo.showPath when selected piece movement is 1', async () => {
+        it("does not call rangeGizmo.showPath when selected piece movement is 1", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Mount);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Mount);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -763,13 +903,15 @@ describe('Cursor.update()', () => {
             expect(board.rangeGizmo.showPath).not.toHaveBeenCalled();
         });
 
-        it('sets cursor type to Mount', async () => {
+        it("sets cursor type to Mount", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Mount);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Mount);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -777,13 +919,15 @@ describe('Cursor.update()', () => {
             expect(cursor.type).toBe(CursorType.Mount);
         });
 
-        it('calls image.setFlipX based on relative isometric positions', async () => {
+        it("calls image.setFlipX based on relative isometric positions", async () => {
             const selectedPiece = {
                 position: new Geom.Point(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Mount);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Mount);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -795,11 +939,13 @@ describe('Cursor.update()', () => {
 
     // ─── ActionType.Attack branch ─────────────────────────────────────────────
 
-    describe('ActionType.Attack branch', () => {
-        it('calls rangeGizmo.showPath when selected piece movement > 1', async () => {
+    describe("ActionType.Attack branch", () => {
+        it("calls rangeGizmo.showPath when selected piece movement > 1", async () => {
             const selectedPiece = { stats: { movement: 3 } };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Attack);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Attack);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -807,10 +953,12 @@ describe('Cursor.update()', () => {
             expect(board.rangeGizmo.showPath).toHaveBeenCalled();
         });
 
-        it('does not call rangeGizmo.showPath when selected piece movement is 1', async () => {
+        it("does not call rangeGizmo.showPath when selected piece movement is 1", async () => {
             const selectedPiece = { stats: { movement: 1 } };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Attack);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Attack);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -818,10 +966,12 @@ describe('Cursor.update()', () => {
             expect(board.rangeGizmo.showPath).not.toHaveBeenCalled();
         });
 
-        it('sets cursor type to Attack', async () => {
+        it("sets cursor type to Attack", async () => {
             const selectedPiece = { stats: { movement: 1 } };
             const board = makeMockBoard({ selected: selectedPiece });
-            (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Attack);
+            (
+                board.rules.processIntent as ReturnType<typeof vi.fn>
+            ).mockResolvedValue(ActionType.Attack);
 
             const cursor = new Cursor(board);
             await cursor.update(true);
@@ -833,25 +983,29 @@ describe('Cursor.update()', () => {
 
 // ─── action() — guard clauses and dispatch ────────────────────────────────────
 
-describe('Cursor.action()', () => {
-    it('returns without calling processAction when cursor is disabled', async () => {
+describe("Cursor.action()", () => {
+    it("returns without calling processAction when cursor is disabled", async () => {
         const { cursor, board } = makeCursor();
         cursor.enabled = false;
         await cursor.action(InputType.Click);
         expect(board.rules.processAction).not.toHaveBeenCalled();
     });
 
-    it('returns without calling processAction when board state is Busy', async () => {
+    it("returns without calling processAction when board state is Busy", async () => {
         const board = makeMockBoard({ state: BoardState.Busy });
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
         expect(board.rules.processAction).not.toHaveBeenCalled();
     });
 
-    it('calls processAction with the board, the intended action, and the input type', async () => {
+    it("calls processAction with the board, the intended action, and the input type", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Select);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Select);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -859,14 +1013,18 @@ describe('Cursor.action()', () => {
         expect(board.rules.processAction).toHaveBeenCalledWith(
             board,
             ActionType.Select,
-            InputType.Click
+            InputType.Click,
         );
     });
 
-    it('returns early after processAction returns ActionType.None — deselectPiece is not called', async () => {
+    it("returns early after processAction returns ActionType.None — deselectPiece is not called", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Select);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Select);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -874,10 +1032,14 @@ describe('Cursor.action()', () => {
         expect(board.deselectPiece).not.toHaveBeenCalled();
     });
 
-    it('does not call sound.play when no piece is selected after processAction', async () => {
+    it("does not call sound.play when no piece is selected after processAction", async () => {
         const board = makeMockBoard({ selected: null });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Select);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Select);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Select);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Select);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -885,11 +1047,15 @@ describe('Cursor.action()', () => {
         expect(board.sound.play).not.toHaveBeenCalled();
     });
 
-    it('does not call deselectPiece when selected piece has not moved', async () => {
+    it("does not call deselectPiece when selected piece has not moved", async () => {
         const selectedPiece = makeMovePiece({ moved: false });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -897,11 +1063,15 @@ describe('Cursor.action()', () => {
         expect(board.deselectPiece).not.toHaveBeenCalled();
     });
 
-    it('sets turnOver and calls deselectPiece when piece has moved, no rider, and cannot attack', async () => {
+    it("sets turnOver and calls deselectPiece when piece has moved, no rider, and cannot attack", async () => {
         const selectedPiece = makeMovePiece({ moved: true });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -910,11 +1080,15 @@ describe('Cursor.action()', () => {
         expect(board.deselectPiece).toHaveBeenCalled();
     });
 
-    it('returns early without deselectPiece when piece has moved and canAttack is true', async () => {
+    it("returns early without deselectPiece when piece has moved and canAttack is true", async () => {
         const selectedPiece = makeMovePiece({ moved: true, canAttack: true });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -923,57 +1097,72 @@ describe('Cursor.action()', () => {
         expect(selectedPiece.turnOver).toBe(false);
     });
 
-    it('plays bowselecta sound and calls showSimpleRange when piece has moved and canRangedAttack', async () => {
+    it("plays bowselecta sound and calls showSimpleRange when piece has moved and canRangedAttack", async () => {
         const selectedPiece = makeMovePiece({
             moved: true,
             canRangedAttack: true,
-            name: 'Archer',
+            name: "Archer",
             position: new Geom.Point(3, 3),
             stats: { range: 4 },
         });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
 
-        expect(board.sound.play).toHaveBeenCalledWith('bowselecta');
+        expect(board.sound.play).toHaveBeenCalledWith("bowselecta");
         expect(board.rangeGizmo.showSimpleRange).toHaveBeenCalledWith(
             selectedPiece.position,
             4,
             CursorType.RangeRangedAttack,
-            true
+            true,
         );
     });
 
-    it('logs the ranged-attack message with Yellow colour when canRangedAttack', async () => {
+    it("logs the ranged-attack message with Yellow colour when canRangedAttack", async () => {
         const selectedPiece = makeMovePiece({
             moved: true,
             canRangedAttack: true,
-            name: 'Legolas',
+            name: "Legolas",
             position: new Geom.Point(3, 3),
             stats: { range: 4 },
         });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
 
         expect(board.logger.log).toHaveBeenCalledWith(
             "Legolas's turn to ranged attack",
-            Colour.Yellow
+            Colour.Yellow,
         );
     });
 
-    it('does not deselect when piece has moved but its rider has not yet moved', async () => {
+    it("does not deselect when piece has moved but its rider has not yet moved", async () => {
         const rider = { moved: false };
-        const selectedPiece = makeMovePiece({ moved: true, currentRider: rider });
+        const selectedPiece = makeMovePiece({
+            moved: true,
+            currentRider: rider,
+        });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -982,12 +1171,19 @@ describe('Cursor.action()', () => {
         expect(board.deselectPiece).not.toHaveBeenCalled();
     });
 
-    it('sets turnOver and deselectPiece when piece has moved and its rider has also moved', async () => {
+    it("sets turnOver and deselectPiece when piece has moved and its rider has also moved", async () => {
         const rider = { moved: true };
-        const selectedPiece = makeMovePiece({ moved: true, currentRider: rider });
+        const selectedPiece = makeMovePiece({
+            moved: true,
+            currentRider: rider,
+        });
         const board = makeMockBoard({ selected: selectedPiece });
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Move);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
@@ -996,10 +1192,14 @@ describe('Cursor.action()', () => {
         expect(board.deselectPiece).toHaveBeenCalled();
     });
 
-    it('passes InputType.Cancel through to processAction when action is called with Cancel', async () => {
+    it("passes InputType.Cancel through to processAction when action is called with Cancel", async () => {
         const board = makeMockBoard();
-        (board.rules.processIntent as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.None);
-        (board.rules.processAction as ReturnType<typeof vi.fn>).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
 
         const cursor = new Cursor(board);
         await cursor.action(InputType.Cancel);
@@ -1007,7 +1207,7 @@ describe('Cursor.action()', () => {
         expect(board.rules.processAction).toHaveBeenCalledWith(
             board,
             ActionType.None,
-            InputType.Cancel
+            InputType.Cancel,
         );
     });
 });

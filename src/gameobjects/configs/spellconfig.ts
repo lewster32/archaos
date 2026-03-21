@@ -72,7 +72,7 @@ export interface SpellConfig {
      * The target type of this spell
      */
     target?: SpellTarget;
-    
+
     /**
      * The projectile used by this spell (if any)
      */
@@ -99,7 +99,7 @@ export interface SpellConfig {
     castOnWizard?: boolean;
 
     /**
-     * If true and cast on a wizard, will destroy all creatures owned by that 
+     * If true and cast on a wizard, will destroy all creatures owned by that
      * wizard instead of the wizard themselves
      */
     destroyWizardCreatures?: boolean;

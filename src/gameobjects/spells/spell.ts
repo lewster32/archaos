@@ -14,6 +14,7 @@ import type { SpellConfig } from "../configs/spellconfig";
 import type { Player } from "../player";
 
 import { CursorType } from "../enums/cursortype";
+import type { IRNG } from "../rng";
 import { Math as PMath, Geom } from "phaser";
 import { SpellCastTarget } from "../services/rules";
 
@@ -21,11 +22,11 @@ import { SpellCastTarget } from "../services/rules";
  * A spell that can be cast by a player's wizard.
  */
 export class Spell extends Model {
-
     /**
      * All spell configurations loaded from JSON.
      */
-    public static readonly spells: { [key: string]: SpellConfig } = spellJsonData as any;
+    public static readonly spells: { [key: string]: SpellConfig } =
+        spellJsonData as any;
 
     /**
      * A reference to the game board.
@@ -69,16 +70,12 @@ export class Spell extends Model {
 
     /**
      * Create a new spell.
-     * 
+     *
      * @param board The game board
      * @param id The unique ID of this spell
      * @param config The configuration of this spell
      */
-    constructor(
-        board: Board,
-        id: number,
-        config: SpellConfig,
-    ) {
+    constructor(board: Board, id: number, config: SpellConfig) {
         super(id);
 
         if (!config) {
@@ -89,11 +86,9 @@ export class Spell extends Model {
         // Derive spell type from properties
         if (config.target === SpellTarget.Self && config.id !== "turmoil") {
             this._type = SpellType.Buff;
-        }
-        else if (config.id == "disbelieve") {
+        } else if (config.id == "disbelieve") {
             this._type = SpellType.Disbelieve;
-        }
-        else {
+        } else {
             this._type = SpellType.Misc;
         }
 
@@ -121,7 +116,7 @@ export class Spell extends Model {
      * The normalised chance of successfully casting this spell based on the
      * current balance of the game world. Clamped between 0.1 and 1 to prevent
      * situations where a spell is impossible to cast.
-     * 
+     *
      * @return The chance of successfully casting this spell
      */
     get chance(): number {
@@ -132,11 +127,7 @@ export class Spell extends Model {
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return PMath.Clamp(
-            this._properties.chance + balanceOffset,
-            0.1,
-            1
-        );
+        return PMath.Clamp(this._properties.chance + balanceOffset, 0.1, 1);
     }
 
     /**
@@ -226,8 +217,7 @@ export class Spell extends Model {
         this._owner = owner;
         if (this._owner.castingPiece) {
             this._castingPiece = this._owner.castingPiece;
-        }
-        else {
+        } else {
             throw new Error("Owner has no casting piece");
         }
     }
@@ -243,13 +233,11 @@ export class Spell extends Model {
         let description: string = "";
         if (this.chance < 0.3) {
             if (this.balance < 0) {
-                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting until the world is more chaotic.</span>`;   
-            }
-            else if (this.balance > 0) {
-                description += `<br /><span class='c-cyan'>Unlikely to succeed in casting until the world is more lawful.</span>`;   
-            }
-            else {
-                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting.</span>`;   
+                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting until the world is more chaotic.</span>`;
+            } else if (this.balance > 0) {
+                description += `<br /><span class='c-cyan'>Unlikely to succeed in casting until the world is more lawful.</span>`;
+            } else {
+                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting.</span>`;
             }
         }
         if (description) {
@@ -267,13 +255,11 @@ export class Spell extends Model {
 
     /**
      * Check if a point is within casting range of the casting piece.
-     * 
+     *
      * @param point The point to check
      * @returns Whether the point is within casting range
      */
-    protected inCastingRange(
-        point: Geom.Point
-    ): boolean {
+    protected inCastingRange(point: Geom.Point): boolean {
         if (this.range < 0) {
             return true;
         }
@@ -285,7 +271,7 @@ export class Spell extends Model {
             return false;
         }
         const casterPosition: Geom.Point = Geom.Point.Clone(
-            this._castingPiece.position
+            this._castingPiece.position,
         );
         if (Board.distance(casterPosition, point) > this.range) {
             return false;
@@ -295,17 +281,23 @@ export class Spell extends Model {
 
     /**
      * Check if the spell can be cast at the given position.
-     * 
+     *
      * @param point The position to check
      * @param showReason Whether to log the reason if the spell cannot be cast
      * @returns Whether the spell can be cast at the given position
      */
-    protected canCastAtPosition(point: Geom.Point, showReason?: boolean): boolean {
-        if (this.lineOfSight && !this._board.hasLineOfSight(this._castingPiece.position, point)) {
+    protected canCastAtPosition(
+        point: Geom.Point,
+        showReason?: boolean,
+    ): boolean {
+        if (
+            this.lineOfSight &&
+            !this._board.hasLineOfSight(this._castingPiece.position, point)
+        ) {
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} requires line of sight to target`,
-                    Colour.Magenta
+                    Colour.Magenta,
                 );
             }
             return false;
@@ -313,13 +305,13 @@ export class Spell extends Model {
         if (this._properties.tree) {
             const neighbourTrees: Piece[] =
                 this._board.getAdjacentPiecesAtPosition(point, (p: Piece) =>
-                    p.hasStatus(UnitStatus.Tree)
+                    p.hasStatus(UnitStatus.Tree),
                 );
             if (neighbourTrees.length > 0) {
                 if (showReason) {
                     this._board.logger.log(
                         `${this.name} cannot be cast adjacent to another tree`,
-                        Colour.Magenta
+                        Colour.Magenta,
                     );
                 }
                 return false;
@@ -330,20 +322,24 @@ export class Spell extends Model {
 
     /**
      * Validate the target for this spell.
-     * 
+     *
      * @param target The target point to validate
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    getValidTarget(target: Geom.Point | Piece, showReason?: boolean): SpellCastTarget {
-        const targetPoint: Geom.Point = target instanceof Geom.Point ? target : target.position;
+    getValidTarget(
+        target: Geom.Point | Piece,
+        showReason?: boolean,
+    ): SpellCastTarget {
+        const targetPoint: Geom.Point =
+            target instanceof Geom.Point ? target : target.position;
         const targetPiece: Piece = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
                 this._board.logger.log(
                     `${this.name} target is out of range`,
-                    Colour.Magenta
+                    Colour.Magenta,
                 );
             }
             return null;
@@ -352,21 +348,30 @@ export class Spell extends Model {
             return null;
         }
         // Only find actively targetable pieces
-        const targetPieces: Piece[] = (targetPiece ? [targetPiece] : this._board.getPiecesAtPosition(targetPoint))
-            .filter((piece: Piece) => {
-                return !piece.currentMount && // Cannot directly target mounted pieces
-                !piece.engulfed; // Nor engulfed pieces
-            });
+        const targetPieces: Piece[] = (
+            targetPiece
+                ? [targetPiece]
+                : this._board.getPiecesAtPosition(targetPoint)
+        ).filter((piece: Piece) => {
+            return (
+                !piece.currentMount && // Cannot directly target mounted pieces
+                !piece.engulfed
+            ); // Nor engulfed pieces
+        });
 
-        const targetLivingPiece: Piece = targetPieces.find((piece: Piece) => !piece.dead);
+        const targetLivingPiece: Piece = targetPieces.find(
+            (piece: Piece) => !piece.dead,
+        );
 
         if (this._properties.target === SpellTarget.Self) {
-            const wizard: Piece = targetPieces.find((piece: Piece) => piece.type === UnitType.Wizard);
+            const wizard: Piece = targetPieces.find(
+                (piece: Piece) => piece.type === UnitType.Wizard,
+            );
             if (wizard?.owner !== this._owner) {
                 if (showReason) {
                     this._board.logger.log(
                         `${this.name} can only be cast on your own wizard`,
-                        Colour.Magenta
+                        Colour.Magenta,
                     );
                 }
                 return null;
@@ -378,12 +383,15 @@ export class Spell extends Model {
         if (this._properties.target === SpellTarget.Corpse) {
             if (
                 targetLivingPiece || // Cannot target living pieces
-                this._board.getPiecesAtPosition(targetPoint, (p: Piece) => !p.dead).length > 0 // Cannot target if any living pieces are present on the same tile
+                this._board.getPiecesAtPosition(
+                    targetPoint,
+                    (p: Piece) => !p.dead,
+                ).length > 0 // Cannot target if any living pieces are present on the same tile
             ) {
                 if (showReason) {
                     this._board.logger.log(
                         `${this.name} must be cast on a corpse`,
-                        Colour.Magenta
+                        Colour.Magenta,
                     );
                 }
                 return null;
@@ -397,20 +405,24 @@ export class Spell extends Model {
                 if (targetPieces.filter((p: Piece) => p.dead).length === 0) {
                     this._board.logger.log(
                         `${this.name} cannot be cast on empty ground`,
-                        Colour.Magenta
+                        Colour.Magenta,
                     );
                 } else {
                     this._board.logger.log(
                         `${this.name} cannot be cast on a corpse`,
-                        Colour.Magenta
+                        Colour.Magenta,
                     );
                 }
             }
             return null;
         }
-        
-        const targetEnemyLivingPiece: Piece = targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
-        const targetEnemyWizard: Piece = targetEnemyLivingPiece?.type === UnitType.Wizard ? targetEnemyLivingPiece : null;
+
+        const targetEnemyLivingPiece: Piece =
+            targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
+        const targetEnemyWizard: Piece =
+            targetEnemyLivingPiece?.type === UnitType.Wizard
+                ? targetEnemyLivingPiece
+                : null;
 
         if (this._properties.target === SpellTarget.Piece) {
             if (this.properties.castOnEnemyUnit) {
@@ -418,7 +430,7 @@ export class Spell extends Model {
                     if (showReason) {
                         this._board.logger.log(
                             `${this.name} must be cast on an enemy unit`,
-                            Colour.Magenta
+                            Colour.Magenta,
                         );
                     }
                     return null;
@@ -427,18 +439,21 @@ export class Spell extends Model {
                     if (showReason) {
                         this._board.logger.log(
                             `${this.name} cannot be cast on a wizard`,
-                            Colour.Magenta
+                            Colour.Magenta,
                         );
                     }
                     return null;
                 }
                 if (this.type === SpellType.Disbelieve) {
-                    const disbelievableTarget: Piece = targetEnemyLivingPiece.canBeDisbelieved ? targetEnemyLivingPiece : null;
+                    const disbelievableTarget: Piece =
+                        targetEnemyLivingPiece.canBeDisbelieved
+                            ? targetEnemyLivingPiece
+                            : null;
                     if (!disbelievableTarget) {
                         if (showReason) {
                             this._board.logger.log(
                                 `${this.name} cannot be cast on this unit`,
-                                Colour.Magenta
+                                Colour.Magenta,
                             );
                         }
                         return null;
@@ -446,12 +461,15 @@ export class Spell extends Model {
                     return disbelievableTarget;
                 }
                 if (this.properties.id === "subversion") {
-                    const subversionTarget: Piece = targetEnemyLivingPiece.canBeSubverted ? targetEnemyLivingPiece : null;
+                    const subversionTarget: Piece =
+                        targetEnemyLivingPiece.canBeSubverted
+                            ? targetEnemyLivingPiece
+                            : null;
                     if (!subversionTarget) {
                         if (showReason) {
                             this._board.logger.log(
                                 `${this.name} cannot be cast on this unit`,
-                                Colour.Magenta
+                                Colour.Magenta,
                             );
                         }
                         return null;
@@ -459,11 +477,15 @@ export class Spell extends Model {
                     return subversionTarget;
                 }
                 if (this.properties.damage > 0) {
-                    if (targetEnemyLivingPiece?.hasStatus(UnitStatus.Invulnerable)) {
+                    if (
+                        targetEnemyLivingPiece?.hasStatus(
+                            UnitStatus.Invulnerable,
+                        )
+                    ) {
                         if (showReason) {
                             this._board.logger.log(
                                 `${this.name} cannot be cast on an invulnerable unit`,
-                                Colour.Magenta
+                                Colour.Magenta,
                             );
                         }
                         return null;
@@ -472,7 +494,7 @@ export class Spell extends Model {
                         if (showReason) {
                             this._board.logger.log(
                                 `${this.name} cannot be cast on a unit protected from magical attacks`,
-                                Colour.Magenta
+                                Colour.Magenta,
                             );
                         }
                         return null;
@@ -480,20 +502,18 @@ export class Spell extends Model {
                 }
 
                 return targetEnemyLivingPiece;
-            }
-            else if (this.properties.castOnFriendlyUnit) {
+            } else if (this.properties.castOnFriendlyUnit) {
                 if (targetEnemyLivingPiece) {
                     if (showReason) {
                         this._board.logger.log(
                             `${this.name} must be cast on a friendly unit`,
-                            Colour.Magenta
+                            Colour.Magenta,
                         );
                     }
                     return null;
                 }
                 return targetLivingPiece;
             }
-
         }
 
         return null;
@@ -501,7 +521,7 @@ export class Spell extends Model {
 
     /**
      * Roll to determine if the spell casting is successful.
-     * 
+     *
      * @returns Whether the spell casting is successful
      */
     protected roll(): boolean {
@@ -510,7 +530,7 @@ export class Spell extends Model {
 
     /**
      * Cast this spell.
-     * 
+     *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
      * @param target The target point or piece of the spell
@@ -548,20 +568,25 @@ export class Spell extends Model {
 
     /**
      * The actual implementation of the spell casting logic.
-     * 
+     *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
      * @param point The target point of the spell
      * @param targets The target pieces of the spell
      * @returns The result of the spell cast
      */
-    async doCast(_owner: Player, _castingPiece: Piece, _point?: Geom.Point, _targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(
+        _owner: Player,
+        _castingPiece: Piece,
+        _point?: Geom.Point,
+        _targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
         return false;
     }
 
     /**
      * Oh noes, the spell casting has failed.
-     * 
+     *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
      * @returns The result of the failed spell cast
@@ -573,7 +598,7 @@ export class Spell extends Model {
             EffectType.WizardCastFail,
             castingPiece.sprite.getCenter(),
             null,
-            castingPiece
+            castingPiece,
         );
     }
 
@@ -586,7 +611,7 @@ export class Spell extends Model {
                 this._castingPiece.position,
                 this.range,
                 CursorType.RangeCast,
-                this.lineOfSight
+                this.lineOfSight,
             );
             return;
         }
@@ -595,7 +620,7 @@ export class Spell extends Model {
 
     /**
      * Check if there are any valid targets in range for this spell.
-     * 
+     *
      * @returns True if there are valid targets in range, false otherwise
      */
     public hasValidTargetsInRange(): boolean {
@@ -619,18 +644,23 @@ export class Spell extends Model {
 
     /**
      * Get a random spell configuration.
-     * 
+     *
+     * @param rng the PRNG instance to use for selection
      * @param gifted Whether the spell is being gifted (allows certain spells)
      * @param filter Optional filter function to select spells
      * @returns A random spell configuration
      */
-    static getRandomSpell(gifted?: boolean, filter?: (spell: SpellConfig) => boolean): any {
+    static getRandomSpell(
+        rng: IRNG,
+        gifted?: boolean,
+        filter?: (spell: SpellConfig) => boolean,
+    ): any {
         if (!filter) {
             filter = () => true;
         }
         const spellNames: string[] = Object.values(Spell.spells)
             .filter(filter)
-            .filter((spell:SpellConfig) => {
+            .filter((spell: SpellConfig) => {
                 // Exclude persistent spells like Disbelieve
                 if (spell.persist) {
                     return false;
@@ -642,16 +672,14 @@ export class Spell extends Model {
                 // Exclude gift-only spells if not gifted
                 return !spell.giftOnly;
             })
-            .map(
-                (spell: SpellConfig) => spell.name
-            );
+            .map((spell: SpellConfig) => spell.name);
 
-        return Spell.getSpellProperties(PMath.RND.pick(spellNames));
+        return Spell.getSpellProperties(rng.pick(spellNames));
     }
 
     /**
      * Get all spell configurations.
-     * 
+     *
      * @returns All spell configurations
      */
     static getAllSpells(): SpellConfig[] {
@@ -660,7 +688,7 @@ export class Spell extends Model {
 
     /**
      * Get all spells of a given type.
-     * 
+     *
      * @param type The type of spells to get
      * @returns The spell configurations of the given type
      */
@@ -689,7 +717,7 @@ export class Spell extends Model {
 
     /**
      * Get the spell properties for a given spell name.
-     * 
+     *
      * @param name The name of the spell
      * @returns The properties of the spell
      */
@@ -731,6 +759,6 @@ export class Spell extends Model {
             target: spell.target || SpellTarget.Empty,
             group: spell.group || "classicspells",
             types: spell.types || [],
-        }
+        };
     }
 }

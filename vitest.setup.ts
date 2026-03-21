@@ -1,9 +1,9 @@
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Mock canvas context
 const mockCanvasContext = {
-    fillStyle: '',
-    strokeStyle: '',
+    fillStyle: "",
+    strokeStyle: "",
     fillRect: vi.fn(),
     strokeRect: vi.fn(),
     clearRect: vi.fn(),

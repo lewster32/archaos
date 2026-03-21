@@ -76,18 +76,18 @@ Model                     — base class; validates unique IDs
 
 ### Key Classes
 
-| Class | Role |
-|---|---|
-| `Board` | Central game state — grid, pieces, players, turn order. Delegates dice rolls to `Rules`, spell construction to `createSpell`, and wizard placement to `Wizard.createAll` |
-| `GameScene` | Phaser Scene; loads assets and bootstraps `Board` |
-| `Rules` | Singleton service — validates and executes all game actions; owns `roll`/`rollChance` (dice), `doSpread`/`doExpire` (turn automata) |
-| `Spell` | Spell handling and casting logic |
-| `Logger` | Singleton service — emits structured events consumed by Vue components |
-| `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting |
-| `SummonSpell` | Summon spells; owns AI auto-cast logic via `autoCast(player)` and private tile-selection helpers |
-| `Cursor` | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface |
-| `RangeGizmo` | Calculates and displays movement ranges and A* paths for pieces; owns `Node` (tile in range graph) and `Path` (ordered node sequence with cost) |
-| `EffectEmitter` | Config-driven particle effects (extends Phaser `ParticleEmitter`); definitions in `effects.json` |
+| Class            | Role                                                                                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Board`          | Central game state — grid, pieces, players, turn order. Owns the seedable `IRNG` instance (`board.rng`). Delegates dice rolls to `Rules`, spell construction to `createSpell`, and wizard placement to `Wizard.createAll` |
+| `GameScene`      | Phaser Scene; loads assets and bootstraps `Board`                                                                                                                                                                         |
+| `Rules`          | Singleton service — validates and executes all game actions; owns `roll`/`rollChance` (dice), `doSpread`/`doExpire` (turn automata)                                                                                       |
+| `Spell`          | Spell handling and casting logic                                                                                                                                                                                          |
+| `Logger`         | Singleton service — emits structured events consumed by Vue components                                                                                                                                                    |
+| `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting                                                                                                    |
+| `SummonSpell`    | Summon spells; owns AI auto-cast logic via `autoCast(player)` and private tile-selection helpers                                                                                                                          |
+| `Cursor`         | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface                                                                                                                 |
+| `RangeGizmo`     | Calculates and displays movement ranges and A\* paths for pieces; owns `Node` (tile in range graph) and `Path` (ordered node sequence with cost)                                                                          |
+| `EffectEmitter`  | Config-driven particle effects (extends Phaser `ParticleEmitter`); definitions in `effects.json`                                                                                                                          |
 
 ### Data Flow
 
@@ -102,14 +102,14 @@ Model                     — base class; validates unique IDs
 
 `Board` was reduced from ~2,450 to ~2,130 lines by extracting self-contained logic to the classes and services where it conceptually belongs. Board retains thin delegation wrappers (e.g. `board.roll()` → `rules.roll()`) so existing call sites remain unchanged.
 
-| Extracted to | What moved |
-|---|---|
-| `Wizard.createAll(board, players)` | 198-line wizard placement switch (static method) |
-| `createSpell()` in `spells/spellfactory.ts` | Spell subclass discriminator — priority-ordered `[predicate, Constructor][]` rule table |
-| `Rules.doSpread(board)` / `Rules.doExpire(board)` | Turn automata for spreading creatures and expiring structures |
-| `Rules.roll()` / `Rules.rollChance()` | Dice roll probability logic; Board keeps delegation wrappers |
-| `enums/rangetype.ts` | `RangeType` enum (was defined at the bottom of board.ts) |
-| `utils.ts` `delay()` | Generic setTimeout promise wrapper; `Board.delay` delegates to it |
+| Extracted to                                      | What moved                                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `Wizard.createAll(board, players)`                | 198-line wizard placement switch (static method)                                                         |
+| `createSpell()` in `spells/spellfactory.ts`       | Spell subclass discriminator — priority-ordered `[predicate, Constructor][]` rule table                  |
+| `Rules.doSpread(board)` / `Rules.doExpire(board)` | Turn automata for spreading creatures and expiring structures                                            |
+| `Rules.roll()` / `Rules.rollChance()`             | Dice roll probability logic (accept `IRNG` param); Board keeps delegation wrappers that pass `this._rng` |
+| `enums/rangetype.ts`                              | `RangeType` enum (was defined at the bottom of board.ts)                                                 |
+| `utils.ts` `delay()`                              | Generic setTimeout promise wrapper; `Board.delay` delegates to it                                        |
 
 ### RemotePlayer Interface
 
@@ -127,22 +127,25 @@ Model                     — base class; validates unique IDs
 
 The test suite is split into two projects via `vitest.config.ts`:
 
-| Project | Environment | Scope |
-|---|---|---|
-| `unit` | jsdom | `src/**/*.test.ts` (excludes `src/components/`) |
-| `components` | Real Chromium (Playwright) | `src/components/**/*.test.ts` |
+| Project      | Environment                | Scope                                           |
+| ------------ | -------------------------- | ----------------------------------------------- |
+| `unit`       | jsdom                      | `src/**/*.test.ts` (excludes `src/components/`) |
+| `components` | Real Chromium (Playwright) | `src/components/**/*.test.ts`                   |
 
 Run all tests:
+
 ```bash
 npm test
 ```
 
 Run only component tests (browser):
+
 ```bash
 npx vitest run --project=components
 ```
 
 Run with coverage (scoped to gameobjects):
+
 ```bash
 npm test -- --coverage --coverage.include="src/gameobjects/**"
 ```
@@ -157,7 +160,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 ### What's partially tested
 
 - `Wizard` (~64%) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
-- `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
+- `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A\* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
 - `TurmoilSpell` (~94%)
 - `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
 - `ComputerWizard` (~4%) — AI methods require `Board` + Phaser math context
@@ -166,25 +169,43 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 `SummonSpell.autoCast(player)` drives all summon-spell casting for both AI and human auto-place spells (e.g. Magic Wood). `ComputerWizard.autoCastSpell` delegates to it for `SpellType.Summon` and handles the other spell types directly. Private helpers on `SummonSpell`:
 
-| Method | Used for |
-|---|---|
-| `selectSpreadingTile` | Gooey Blob etc. — prefers tiles near enemies |
-| `selectMagicWoodTile` | Magic Wood — clusters near the casting wizard |
-| `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency |
-| `trySelectWallTile` | Wall — hard-filters adjacent tiles, scores by LoS + contiguity + run direction; returns `null` to cancel remaining casts |
-| `scoreLoSBlock` | Shared geometry: scores a tile by how closely it lies on the enemy→wizard line segment |
+| Method                 | Used for                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `selectSpreadingTile`  | Gooey Blob etc. — prefers tiles near enemies                                                                             |
+| `selectMagicWoodTile`  | Magic Wood — clusters near the casting wizard                                                                            |
+| `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency                                                                   |
+| `trySelectWallTile`    | Wall — hard-filters adjacent tiles, scores by LoS + contiguity + run direction; returns `null` to cancel remaining casts |
+| `scoreLoSBlock`        | Shared geometry: scores a tile by how closely it lies on the enemy→wizard line segment                                   |
+
+### Randomness architecture (`rng.ts`)
+
+All gameplay-affecting randomness goes through `board.rng`, a dependency-injectable `IRNG` instance:
+
+| Export                 | Role                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `IRNG`                 | Interface — `frac`, `pick`, `weightedPick`, `integerInRange`, `realInRange`, `between`, `shuffle`                                |
+| `GameRNG`              | Production implementation wrapping Phaser's `RandomDataGenerator`; optional seed via Board constructor                           |
+| `TestRNG`              | Deterministic stub for unit tests — `frac()` returns a configurable value (default 0.5), `pick`/`weightedPick` return `array[0]` |
+| `weightedRandomPick()` | Standalone function for biased array selection; also available as `IRNG.weightedRandomPick` instance method                      |
+
+**Convention:** Code with gameplay consequences (dice rolls, AI decisions, spell selection, spread actions) must use `board.rng`. Code with purely visual/audio effects (animation delays, particle colours, sound variants) must use `Math.random()`.
+
+Tests provide `rng: new TestRNG()` on mock board objects instead of stubbing `PMath.RND` globally.
 
 ### Improving testability
 
-The main blocker for the Phaser-coupled classes is that they create sprites and call Phaser math (`PMath.RND`, scene textures, etc.) in their constructors or early in methods. Improvements already made:
-- Removed direct `Phaser.Math.RND` calls from `Wizard.randomWizCode()` (replaced with `Math.random`)
+The main blocker for the Phaser-coupled classes is that they create sprites and call Phaser APIs (scene textures, etc.) in their constructors or early in methods. Improvements already made:
+
+- All gameplay randomness injected via `board.rng` (`IRNG` interface) — no direct `Phaser.Math.RND` calls remain outside `rng.ts`
+- `Wizard.randomWizCode()` uses `Math.random` (visual-only)
 - `EffectEmitter` tests use `vi.mock('phaser')` to replace the entire Phaser module with stubs (mock `ParticleEmitter` base class, `Curves.Path`, `Display.Color`, `BlendModes`, etc.), allowing full coverage of a class that extends a Phaser `GameObjects` class
 
-Remaining pattern to follow for further coverage: **inject** Phaser-dependent dependencies (scene, rng) rather than calling them directly, so tests can pass a stub/null. For classes that extend Phaser base classes, the `vi.mock('phaser')` approach (as used in `effectemitter.test.ts`) provides a viable alternative.
+Remaining pattern to follow for further coverage: **inject** Phaser-dependent dependencies (scene) rather than calling them directly, so tests can pass a stub/null. For classes that extend Phaser base classes, the `vi.mock('phaser')` approach (as used in `effectemitter.test.ts`) provides a viable alternative.
 
 ### Test setup
 
 `vitest.setup.ts` (unit project only) mocks:
+
 - `HTMLCanvasElement` methods (`getContext`, `fillRect`, `strokeRect`, etc.)
 - `requestAnimationFrame` / `cancelAnimationFrame`
 
@@ -193,6 +214,7 @@ Component tests use `vitest-browser-vue` as the setup file, which registers `ren
 ### Cheat flags (for manual debugging)
 
 `Board` exposes static booleans:
+
 - `Board.CHEAT_FORCE_HIT` — attacks always succeed
 - `Board.CHEAT_FORCE_CAST` — spells always succeed
 - `Board.CHEAT_SHORT_DELAY` — reduces animation/timing delays

@@ -1,16 +1,36 @@
 <template>
-    <div class="unitinfo" :style="unit?.owner?.colour ? `--tint-colour: ${cssColour(unit?.owner.colour)}` : ''">
+    <div
+        class="unitinfo"
+        :style="
+            unit?.owner?.colour
+                ? `--tint-colour: ${cssColour(unit?.owner.colour)}`
+                : ''
+        "
+    >
         <button class="unitinfo__close button button--small" @click="close()">
             &times;
         </button>
         <div class="unitinfo__inner callout">
-            <h2>{{ unit?.name }}<template v-if="unit?.dead">'s corpse</template></h2>
-            <UnitStats v-if="unit" :unit="unit?.unitConfig" :owner="unit.owner?.name" :isMount="Boolean(unit?.currentRider)" />
+            <h2>
+                {{ unit?.name }}<template v-if="unit?.dead">'s corpse</template>
+            </h2>
+            <UnitStats
+                v-if="unit"
+                :unit="unit?.unitConfig"
+                :owner="unit.owner?.name"
+                :isMount="Boolean(unit?.currentRider)"
+            />
             <div class="callout__buttons" v-if="unit">
-                <button class="spellinfo__select button button--green button--small" @click="highlightOwnedUnits(unit?.owner)">
+                <button
+                    class="spellinfo__select button button--green button--small"
+                    @click="highlightOwnedUnits(unit?.owner)"
+                >
                     Highlight
                 </button>
-                <button class="spellinfo__select button button--small" @click="close()">
+                <button
+                    class="spellinfo__select button button--small"
+                    @click="close()"
+                >
                     Dismiss
                 </button>
             </div>
@@ -20,7 +40,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Ref } from "vue";
-import type { Piece } from '../gameobjects/piece';
+import type { Piece } from "../gameobjects/piece";
 import UnitStats from "./UnitStats.vue";
 import { cssColour } from "../utils";
 import type { Player } from "../gameobjects/player";
@@ -30,8 +50,10 @@ const props = defineProps<{
 }>();
 
 const highlightOwnedUnits: (owner: Player) => void = (owner) => {
-    document.dispatchEvent(new CustomEvent("highlight-owned-units", { detail: owner }));
-}
+    document.dispatchEvent(
+        new CustomEvent("highlight-owned-units", { detail: owner }),
+    );
+};
 
 const emit = defineEmits<(e: "close") => void>();
 
@@ -61,7 +83,9 @@ const close: () => void = () => {
     max-width: 90%;
     translate: 0 100%;
     opacity: 0;
-    transition: translate 0.25s, opacity 0.25s;
+    transition:
+        translate 0.25s,
+        opacity 0.25s;
     &--show {
         translate: 0 0;
         opacity: 1;
@@ -83,7 +107,7 @@ const close: () => void = () => {
         outline-offset: -2px;
     }
     h2 {
-        font-size: 2rem;    
+        font-size: 2rem;
     }
 }
 </style>

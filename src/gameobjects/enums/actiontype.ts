@@ -10,5 +10,5 @@ export enum ActionType {
     Mount = "mount",
     Dismount = "dismount",
     Cast = "cast",
-    Cancel = "cancel"
+    Cancel = "cancel",
 }

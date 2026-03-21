@@ -12,20 +12,29 @@ import { Geom } from "phaser";
  * magic resistance.
  */
 export class SubversionSpell extends Spell {
-
-    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
-        const target: Piece = targets.find((p: Piece) => p.owner !== this.owner);
+    async doCast(
+        owner: Player,
+        castingPiece: Piece,
+        point?: Geom.Point,
+        targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
+        const target: Piece = targets.find(
+            (p: Piece) => p.owner !== this.owner,
+        );
         if (!target) {
             return false;
         }
 
-        const rollSuccess: boolean = this._board.roll(10, target.stats.magicResistance);
+        const rollSuccess: boolean = this._board.roll(
+            10,
+            target.stats.magicResistance,
+        );
 
         this._board.sound.play("castloop08");
         await this._board.playEffect(
             EffectType.SubversionBeam,
             castingPiece.sprite.getCenter(),
-            target.sprite.getCenter()
+            target.sprite.getCenter(),
         );
         if (rollSuccess && !target.illusion) {
             this._board.sound.play("spelleffect");
@@ -33,17 +42,16 @@ export class SubversionSpell extends Spell {
                 EffectType.SubversionHit,
                 target.sprite.getCenter(),
                 null,
-                target
+                target,
             );
             target.owner = this.owner;
             this._board.logger.log(
-                `${target.name} was subverted and now belongs to ${owner.name}`
+                `${target.name} was subverted and now belongs to ${owner.name}`,
             );
-        }
-        else {
+        } else {
             this._board.logger.log(
                 `${target.name} resisted ${this.name}`,
-                Colour.Magenta
+                Colour.Magenta,
             );
         }
         await this._board.idleDelay(Board.DEFAULT_DELAY);

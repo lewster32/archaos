@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // ─── Mock Phaser ────────────────────────────────────────────────────────────
 // buildParticleConfig constructs Curves.Path objects for emit zones.
@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const mockCircleTo = vi.fn().mockReturnThis();
 const mockLineTo = vi.fn().mockReturnThis();
 
-vi.mock('phaser', () => ({
+vi.mock("phaser", () => ({
     GameObjects: {
         Particles: {
             ParticleEmitter: class MockParticleEmitter {
@@ -39,7 +39,7 @@ vi.mock('phaser', () => ({
                 this.y = y;
             }
         },
-        RND: { pick: (arr: any[]) => arr[0] },
+        RND: {},
     },
     Curves: {
         Path: class MockPath {
@@ -56,14 +56,15 @@ vi.mock('phaser', () => ({
     BlendModes: { ADD: 1 },
     Display: {
         Color: {
-            GetColor: (r: number, g: number, b: number) => (r << 16) | (g << 8) | b,
+            GetColor: (r: number, g: number, b: number) =>
+                (r << 16) | (g << 8) | b,
         },
     },
     Scene: vi.fn(),
 }));
 
-import { EffectEmitter, EffectType } from './effectemitter';
-import type { Piece } from './piece';
+import { EffectEmitter, EffectType } from "./effectemitter";
+import type { Piece } from "./piece";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -108,27 +109,27 @@ function makeMockTarget(overrides: Partial<Record<string, any>> = {}): Piece {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe('EffectType', () => {
-    it('should have all expected effect types', () => {
-        expect(EffectType.WizardCasting).toBe('WizardCasting');
-        expect(EffectType.WizardCastFail).toBe('WizardCastFail');
-        expect(EffectType.WizardCastBeam).toBe('WizardCastBeam');
-        expect(EffectType.WizardDefeated).toBe('WizardDefeated');
-        expect(EffectType.ArrowBeam).toBe('ArrowBeam');
-        expect(EffectType.ArrowHit).toBe('ArrowHit');
-        expect(EffectType.SummonPiece).toBe('SummonPiece');
-        expect(EffectType.AttackHit).toBe('AttackHit');
-        expect(EffectType.NoCorpseDeath).toBe('NoCorpseDeath');
-        expect(EffectType.TurmoilBeam).toBe('TurmoilBeam');
+describe("EffectType", () => {
+    it("should have all expected effect types", () => {
+        expect(EffectType.WizardCasting).toBe("WizardCasting");
+        expect(EffectType.WizardCastFail).toBe("WizardCastFail");
+        expect(EffectType.WizardCastBeam).toBe("WizardCastBeam");
+        expect(EffectType.WizardDefeated).toBe("WizardDefeated");
+        expect(EffectType.ArrowBeam).toBe("ArrowBeam");
+        expect(EffectType.ArrowHit).toBe("ArrowHit");
+        expect(EffectType.SummonPiece).toBe("SummonPiece");
+        expect(EffectType.AttackHit).toBe("AttackHit");
+        expect(EffectType.NoCorpseDeath).toBe("NoCorpseDeath");
+        expect(EffectType.TurmoilBeam).toBe("TurmoilBeam");
     });
 
-    it('should have correct number of effect types', () => {
+    it("should have correct number of effect types", () => {
         const values = Object.values(EffectType);
         expect(values).toHaveLength(27);
     });
 });
 
-describe('EffectEmitter', () => {
+describe("EffectEmitter", () => {
     let scene: ReturnType<typeof makeMockScene>;
 
     beforeEach(() => {
@@ -142,50 +143,77 @@ describe('EffectEmitter', () => {
         vi.useRealTimers();
     });
 
-    describe('constructor and buildParticleConfig', () => {
-        it('should create an emitter for a simple origin-based effect', () => {
+    describe("constructor and buildParticleConfig", () => {
+        it("should create an emitter for a simple origin-based effect", () => {
             const resolve = vi.fn();
             const emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCastFail, point(100, 200), null, null, resolve
+                scene as any,
+                EffectType.WizardCastFail,
+                point(100, 200),
+                null,
+                null,
+                resolve,
             );
 
             expect(emitter).toBeInstanceOf(EffectEmitter);
             expect(scene.tweens.addCounter).toHaveBeenCalled();
         });
 
-        it('should create a circle emit zone for WizardCasting', () => {
+        it("should create a circle emit zone for WizardCasting", () => {
             const resolve = vi.fn();
-            const _emitter = new EffectEmitter(scene as any, EffectType.WizardCasting, point(50, 60), null, null, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.WizardCasting,
+                point(50, 60),
+                null,
+                null,
+                resolve,
+            );
 
             // WizardCasting has emitZone.shape === "circle" with radius 10
             expect(mockCircleTo).toHaveBeenCalledWith(10);
         });
 
-        it('should create a line emit zone for beam effects', () => {
+        it("should create a line emit zone for beam effects", () => {
             const resolve = vi.fn();
             const _emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCastBeam, point(10, 20), point(100, 200), null, resolve
+                scene as any,
+                EffectType.WizardCastBeam,
+                point(10, 20),
+                point(100, 200),
+                null,
+                resolve,
             );
 
             expect(mockLineTo).toHaveBeenCalledWith(100, 200);
         });
 
-        it('should set origin-offset x/y ranges when origin is defined', () => {
+        it("should set origin-offset x/y ranges when origin is defined", () => {
             const resolve = vi.fn();
             // WizardCastFail has origin: { x: [-7, 7], y: [-8, 8] }
             // We just verify it doesn't throw — the config is consumed by the parent class
             const emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCastFail, point(50, 60), null, null, resolve
+                scene as any,
+                EffectType.WizardCastFail,
+                point(50, 60),
+                null,
+                null,
+                resolve,
             );
             expect(emitter).toBeDefined();
         });
     });
 
-    describe('playEffect', () => {
-        it('should call resolve when the duration tween completes', () => {
+    describe("playEffect", () => {
+        it("should call resolve when the duration tween completes", () => {
             const resolve = vi.fn();
             const emitter = new EffectEmitter(
-                scene as any, EffectType.SummonPiece, point(0, 0), null, null, resolve
+                scene as any,
+                EffectType.SummonPiece,
+                point(0, 0),
+                null,
+                null,
+                resolve,
             );
 
             const durationTween = scene.tweenCounters.at(-1);
@@ -196,10 +224,15 @@ describe('EffectEmitter', () => {
             expect(emitter.stop).toHaveBeenCalled();
         });
 
-        it('should schedule destroy after duration tween completes', () => {
+        it("should schedule destroy after duration tween completes", () => {
             const resolve = vi.fn();
             const emitter = new EffectEmitter(
-                scene as any, EffectType.SummonPiece, point(0, 0), null, null, resolve
+                scene as any,
+                EffectType.SummonPiece,
+                point(0, 0),
+                null,
+                null,
+                resolve,
             );
 
             const durationTween = scene.tweenCounters.at(-1);
@@ -210,38 +243,70 @@ describe('EffectEmitter', () => {
             expect(emitter.destroy).toHaveBeenCalled();
         });
 
-        it('should trigger camera shake when cameraShake is defined', () => {
+        it("should trigger camera shake when cameraShake is defined", () => {
             const resolve = vi.fn();
             // MagicBoltHit has cameraShake: { duration: 150, intensity: 0.005 }
-            const _emitter = new EffectEmitter(scene as any, EffectType.MagicBoltHit, point(0, 0), null, null, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.MagicBoltHit,
+                point(0, 0),
+                null,
+                null,
+                resolve,
+            );
 
-            expect(scene.cameras.main.shake).toHaveBeenCalledWith(150, 0.005, true);
+            expect(scene.cameras.main.shake).toHaveBeenCalledWith(
+                150,
+                0.005,
+                true,
+            );
         });
 
-        it('should not trigger camera shake when cameraShake is not defined', () => {
+        it("should not trigger camera shake when cameraShake is not defined", () => {
             const resolve = vi.fn();
-            const _emitter = new EffectEmitter(scene as any, EffectType.SummonPiece, point(0, 0), null, null, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.SummonPiece,
+                point(0, 0),
+                null,
+                null,
+                resolve,
+            );
 
             expect(scene.cameras.main.shake).not.toHaveBeenCalled();
         });
 
-        it('should not call playTargetEffect when there is no target', () => {
+        it("should not call playTargetEffect when there is no target", () => {
             const resolve = vi.fn();
             // ArrowHit has targetEffect but we pass null target
-            const _emitter = new EffectEmitter(scene as any, EffectType.ArrowHit, point(0, 0), null, null, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.ArrowHit,
+                point(0, 0),
+                null,
+                null,
+                resolve,
+            );
 
             // Only the duration counter should be present (no target-effect counter)
             expect(scene.tweenCounters).toHaveLength(1);
         });
     });
 
-    describe('playTargetEffect — flash', () => {
-        it('should alternate tint fill on even/odd tween values', () => {
+    describe("playTargetEffect — flash", () => {
+        it("should alternate tint fill on even/odd tween values", () => {
             const resolve = vi.fn();
             const target = makeMockTarget({ defaultTint: 0xaabbcc });
 
             // ArrowHit has targetEffect: { type: "flash", to: 4 }
-            const _emitter = new EffectEmitter(scene as any, EffectType.ArrowHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.ArrowHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             const flashTween = scene.tweenCounters[0];
             expect(flashTween.to).toBe(4);
@@ -255,12 +320,19 @@ describe('EffectEmitter', () => {
             expect(target.sprite.setTint).toHaveBeenCalledWith(0xaabbcc);
         });
 
-        it('should restore default tint on flash complete', () => {
+        it("should restore default tint on flash complete", () => {
             const resolve = vi.fn();
             const target = makeMockTarget({ defaultTint: 0x112233 });
 
             // AttackHit has targetEffect: { type: "flash", to: 4 }
-            const _emitter = new EffectEmitter(scene as any, EffectType.AttackHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.AttackHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             const flashTween = scene.tweenCounters[0];
             flashTween.onComplete();
@@ -268,13 +340,20 @@ describe('EffectEmitter', () => {
         });
     });
 
-    describe('playTargetEffect — cycleTint', () => {
-        it('should cycle through tint colors based on tween value', () => {
+    describe("playTargetEffect — cycleTint", () => {
+        it("should cycle through tint colors based on tween value", () => {
             const resolve = vi.fn();
             const target = makeMockTarget();
 
             // DragonFireHit has targetEffect: { type: "cycleTint", to: 10, colors: ["ff0000", "ff7700", "000000"] }
-            const _emitter = new EffectEmitter(scene as any, EffectType.DragonFireHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.DragonFireHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             const cycleTween = scene.tweenCounters[0];
             expect(cycleTween.to).toBe(10);
@@ -292,11 +371,18 @@ describe('EffectEmitter', () => {
             expect(target.sprite.setTintFill).toHaveBeenCalledWith(0xff0000);
         });
 
-        it('should restore default tint on cycleTint complete', () => {
+        it("should restore default tint on cycleTint complete", () => {
             const resolve = vi.fn();
             const target = makeMockTarget({ defaultTint: 0xdddddd });
 
-            const _emitter = new EffectEmitter(scene as any, EffectType.DragonFireHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.DragonFireHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             const cycleTween = scene.tweenCounters[0];
             cycleTween.onComplete();
@@ -304,13 +390,20 @@ describe('EffectEmitter', () => {
         });
     });
 
-    describe('playTargetEffect — fadeToWhite', () => {
-        it('should tint fill with increasing white values and fade out sprite', () => {
+    describe("playTargetEffect — fadeToWhite", () => {
+        it("should tint fill with increasing white values and fade out sprite", () => {
             const resolve = vi.fn();
             const target = makeMockTarget();
 
             // DisbelieveHit has targetEffect: { type: "fadeToWhite" }, duration: 500
-            const _emitter = new EffectEmitter(scene as any, EffectType.DisbelieveHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.DisbelieveHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             // First counter: fadeToWhite tint counter
             const fadeTween = scene.tweenCounters[0];
@@ -325,20 +418,30 @@ describe('EffectEmitter', () => {
             // Should also add a sprite+shadow fade-out tween
             expect(scene.tweens.add).toHaveBeenCalled();
             const fadeOutTween = scene.tweenAdds[0];
-            expect(fadeOutTween.targets).toEqual([target.sprite, target.shadow]);
+            expect(fadeOutTween.targets).toEqual([
+                target.sprite,
+                target.shadow,
+            ]);
             expect(fadeOutTween.alpha).toEqual({ from: 1, to: 0 });
             expect(fadeOutTween.duration).toBe(500);
             expect(fadeOutTween.delay).toBe(250);
         });
     });
 
-    describe('playTargetEffect — explode', () => {
-        it('should apply random tint colors on every 5th step and fade out', () => {
+    describe("playTargetEffect — explode", () => {
+        it("should apply random tint colors on every 5th step and fade out", () => {
             const resolve = vi.fn();
             const target = makeMockTarget();
 
             // WizardDefeated has targetEffect: { type: "explode", colors: [...] }
-            const _emitter = new EffectEmitter(scene as any, EffectType.WizardDefeated, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.WizardDefeated,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             const explodeTween = scene.tweenCounters[0];
             expect(explodeTween.to).toBe(64);
@@ -364,13 +467,20 @@ describe('EffectEmitter', () => {
         });
     });
 
-    describe('playTargetEffect — no target effect defined', () => {
-        it('should not add any target tween when effect has no targetEffect', () => {
+    describe("playTargetEffect — no target effect defined", () => {
+        it("should not add any target tween when effect has no targetEffect", () => {
             const resolve = vi.fn();
             const target = makeMockTarget();
 
             // SummonPiece has no targetEffect
-            const _emitter = new EffectEmitter(scene as any, EffectType.SummonPiece, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.SummonPiece,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
             // Only the duration tween should be present
             expect(scene.tweenCounters).toHaveLength(1);
@@ -378,12 +488,17 @@ describe('EffectEmitter', () => {
         });
     });
 
-    describe('buildParticleConfig details', () => {
-        it('should parse hex tint strings to numbers without throwing', () => {
+    describe("buildParticleConfig details", () => {
+        it("should parse hex tint strings to numbers without throwing", () => {
             const resolve = vi.fn();
             // WizardCastFail has tint: ["7744ff", "333388", "6666cc"]
             const emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCastFail, point(0, 0), null, null, resolve
+                scene as any,
+                EffectType.WizardCastFail,
+                point(0, 0),
+                null,
+                null,
+                resolve,
             );
             expect(emitter).toBeDefined();
         });
@@ -392,44 +507,70 @@ describe('EffectEmitter', () => {
             const resolve = vi.fn();
             // WizardCasting has blendMode: "ADD"
             const emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCasting, point(0, 0), null, null, resolve
+                scene as any,
+                EffectType.WizardCasting,
+                point(0, 0),
+                null,
+                null,
+                resolve,
             );
             expect(emitter).toBeDefined();
         });
 
-        it('should wrap anim string into Phaser format', () => {
+        it("should wrap anim string into Phaser format", () => {
             const resolve = vi.fn();
             // WizardCasting has anim: "sparkle"
             const emitter = new EffectEmitter(
-                scene as any, EffectType.WizardCasting, point(0, 0), null, null, resolve
+                scene as any,
+                EffectType.WizardCasting,
+                point(0, 0),
+                null,
+                null,
+                resolve,
             );
             expect(emitter).toBeDefined();
         });
 
-        it('should handle effects with no emitZone and no origin', () => {
+        it("should handle effects with no emitZone and no origin", () => {
             const resolve = vi.fn();
             // RaiseDeadHit has origin but no emitZone
             const emitter = new EffectEmitter(
-                scene as any, EffectType.RaiseDeadHit, point(30, 40), null, null, resolve
+                scene as any,
+                EffectType.RaiseDeadHit,
+                point(30, 40),
+                null,
+                null,
+                resolve,
             );
             expect(emitter).toBeDefined();
         });
     });
 
-    describe('combined behaviours', () => {
-        it('should play target effect and camera shake simultaneously', () => {
+    describe("combined behaviours", () => {
+        it("should play target effect and camera shake simultaneously", () => {
             const resolve = vi.fn();
             const target = makeMockTarget();
 
             // LightningHit has both targetEffect (cycleTint) and cameraShake
-            const _emitter = new EffectEmitter(scene as any, EffectType.LightningHit, point(0, 0), null, target, resolve);
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.LightningHit,
+                point(0, 0),
+                null,
+                target,
+                resolve,
+            );
 
-            expect(scene.cameras.main.shake).toHaveBeenCalledWith(300, 0.0125, true);
+            expect(scene.cameras.main.shake).toHaveBeenCalledWith(
+                300,
+                0.0125,
+                true,
+            );
             // cycleTint counter + duration counter
             expect(scene.tweenCounters).toHaveLength(2);
         });
 
-        it('should work with all beam effect types', () => {
+        it("should work with all beam effect types", () => {
             const beamEffects = [
                 EffectType.WizardCastBeam,
                 EffectType.DragonFireBeam,
@@ -449,7 +590,12 @@ describe('EffectEmitter', () => {
                 mockLineTo.mockClear();
 
                 const emitter = new EffectEmitter(
-                    localScene as any, effectType, point(0, 0), point(100, 100), null, resolve
+                    localScene as any,
+                    effectType,
+                    point(0, 0),
+                    point(100, 100),
+                    null,
+                    resolve,
                 );
                 expect(emitter).toBeDefined();
                 expect(mockLineTo).toHaveBeenCalledWith(100, 100);

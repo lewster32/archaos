@@ -53,7 +53,7 @@ export class RangeGizmo {
      * Create a new RangeGizmo for the given board. RangeGizmo is responsible
      * for calculating and displaying movement ranges and paths for pieces. It's
      * a single instance per board, and is reused for each piece as needed.
-     * 
+     *
      * @param board The board to create the RangeGizmo for
      */
     constructor(board: Board) {
@@ -64,7 +64,7 @@ export class RangeGizmo {
 
     /**
      * First pass - determine if node is traversable or terminal
-     * 
+     *
      * @param node The node to check
      * @returns The updated node
      */
@@ -72,7 +72,7 @@ export class RangeGizmo {
         // If the node is empty, it's traversable
         const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
             new Geom.Point(node.x, node.y),
-            (piece: Piece) => !piece.dead
+            (piece: Piece) => !piece.dead,
         );
         if (livePiecesAtPosition.length) {
             // If one of the pieces here is the piece itself, it's traversable
@@ -85,18 +85,19 @@ export class RangeGizmo {
             // There's at least one piece here, check if we can mount or attack
             // any of them - if so, mark as terminal, otherwise not traversable
             for (const livePiece of livePiecesAtPosition) {
-                if (this._piece.canMountPiece(livePiece) || this._piece.canAttackPiece(livePiece)) {
+                if (
+                    this._piece.canMountPiece(livePiece) ||
+                    this._piece.canAttackPiece(livePiece)
+                ) {
                     // If any of the live pieces can be mounted or attacked, mark as
                     // terminal
                     node.terminal = true;
-                }
-                else {
+                } else {
                     // Otherwise, not traversable
                     node.traversable = false;
                 }
             }
-        }
-        else {
+        } else {
             // No pieces here, so it's traversable
             node.traversable = true;
             node.terminal = false;
@@ -108,7 +109,7 @@ export class RangeGizmo {
     /**
      * Generate the range gizmo for the given unit - calculates valid nodes
      * and paths to them
-     * 
+     *
      * @param unit The unit to generate the range gizmo for
      * @returns A promise that resolves when generation is complete
      */
@@ -125,26 +126,29 @@ export class RangeGizmo {
         const potentiallyValidNodes: Map<string, Node> = new Map();
 
         // Get all points in range
-        this._board.getPointsInRange(
-            unit.position,
-            unit.stats.movement,
-            true,
-            unit.hasStatus(UnitStatus.Flying) ? RangeType.Fly : RangeType.Foot
-        )
-        // Create nodes from those points
-        .map((pt: Geom.Point) => new Node(pt.x, pt.y))
-        // Filter out non-traversable nodes
-        .filter((node: Node) => {
-            node = this.checkNodeTraversal(node);
-            if (!node.traversable) {
-                return false;
-            }
-            return true;
-        })
-        // Add to potentially valid nodes
-        .forEach((node: Node) => {
-            potentiallyValidNodes.set(node.x + "," + node.y, node);
-        });
+        this._board
+            .getPointsInRange(
+                unit.position,
+                unit.stats.movement,
+                true,
+                unit.hasStatus(UnitStatus.Flying)
+                    ? RangeType.Fly
+                    : RangeType.Foot,
+            )
+            // Create nodes from those points
+            .map((pt: Geom.Point) => new Node(pt.x, pt.y))
+            // Filter out non-traversable nodes
+            .filter((node: Node) => {
+                node = this.checkNodeTraversal(node);
+                if (!node.traversable) {
+                    return false;
+                }
+                return true;
+            })
+            // Add to potentially valid nodes
+            .forEach((node: Node) => {
+                potentiallyValidNodes.set(node.x + "," + node.y, node);
+            });
 
         // Now for each potentially valid node, check the warning status of the
         // node - that is, whether there are any engageable enemy pieces
@@ -155,30 +159,28 @@ export class RangeGizmo {
                     node.pos,
                     (piece: Piece) => {
                         return piece.canEngagePiece(this._piece);
-                    }
-                )
+                    },
+                ),
             );
             if (!potentialEnemies.size) {
                 return;
             }
             // Mark adjacent nodes as warning
             potentialEnemies.forEach((enemy: Piece) => {
-                this._board.getAdjacentPoints(
-                    enemy.position,
-                    false
-                ).forEach((adjPt: Geom.Point) => {
-                    const adjNodeKey = adjPt.x + "," + adjPt.y;
-                    if (potentiallyValidNodes.has(adjNodeKey)) {
-                        potentiallyValidNodes.get(adjNodeKey).warning = true
-                    }
-                });
+                this._board
+                    .getAdjacentPoints(enemy.position, false)
+                    .forEach((adjPt: Geom.Point) => {
+                        const adjNodeKey = adjPt.x + "," + adjPt.y;
+                        if (potentiallyValidNodes.has(adjNodeKey)) {
+                            potentiallyValidNodes.get(adjNodeKey).warning =
+                                true;
+                        }
+                    });
             });
         });
 
         // Set valid nodes to potentially valid nodes for now
-        this._validNodes = Array.from(
-            potentiallyValidNodes.values()
-        );
+        this._validNodes = Array.from(potentiallyValidNodes.values());
 
         // If we're flying we can just take all potentially valid nodes
         if (this._piece.hasStatus(UnitStatus.Flying)) {
@@ -200,7 +202,7 @@ export class RangeGizmo {
     /**
      * Render a debug grid to the console showing traversable, terminal, and
      * warning nodes
-     * 
+     *
      * @param board the board
      * @param nodes the nodes to show
      */
@@ -241,7 +243,7 @@ export class RangeGizmo {
         return new Promise((resolve: Function) => {
             this._piece = null;
             if (force) {
-                this._rangeLayer.removeAll()
+                this._rangeLayer.removeAll();
                 this._pathLayer.removeAll();
                 resolve(this);
                 return;
@@ -255,7 +257,7 @@ export class RangeGizmo {
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "last",
-                    }
+                    },
                 ),
                 onComplete: () => {
                     this._rangeLayer.removeAll();
@@ -265,7 +267,6 @@ export class RangeGizmo {
                     }, 50);
                 },
             });
-            
         });
     }
 
@@ -299,14 +300,14 @@ export class RangeGizmo {
                                 isoPosition.x,
                                 isoPosition.y,
                                 "cursors",
-                                CursorType.RangeMoveWarning
+                                CursorType.RangeMoveWarning,
                             );
                         } else {
                             cursorImage = this._board.scene.add.image(
                                 isoPosition.x,
                                 isoPosition.y,
                                 "cursors",
-                                CursorType.RangeMove
+                                CursorType.RangeMove,
                             );
                         }
                         cursorImage.setOrigin(0.5, 0.5);
@@ -323,7 +324,7 @@ export class RangeGizmo {
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "first",
-                    }
+                    },
                 ),
                 onComplete: () => {
                     resolve();
@@ -332,10 +333,7 @@ export class RangeGizmo {
         });
     }
 
-    private lastSimplePosition: Geom.Point = new Geom.Point(
-        -1,
-        -1
-    );
+    private lastSimplePosition: Geom.Point = new Geom.Point(-1, -1);
     private lastDistance: number = -1;
     private lastCursor: CursorType;
     private lastLoS: boolean;
@@ -355,7 +353,7 @@ export class RangeGizmo {
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
-        force?: boolean
+        force?: boolean,
     ): Promise<void> {
         if (
             !force &&
@@ -381,7 +379,7 @@ export class RangeGizmo {
                 for (let xx: number = 0; xx < this._board.width; xx++) {
                     const currentDistance: number = Board.distance(
                         startPosition,
-                        new Geom.Point(xx, yy)
+                        new Geom.Point(xx, yy),
                     );
                     if (currentDistance > distance) {
                         continue;
@@ -390,21 +388,20 @@ export class RangeGizmo {
                         lineOfSight &&
                         !this._board.hasLineOfSight(
                             startPosition,
-                            new Geom.Point(xx, yy)
+                            new Geom.Point(xx, yy),
                         )
                     ) {
                         continue;
                     }
-                    const isoPosition: Geom.Point =
-                        this._board.getIsoPosition(
-                            new Geom.Point(xx, yy)
-                        );
+                    const isoPosition: Geom.Point = this._board.getIsoPosition(
+                        new Geom.Point(xx, yy),
+                    );
                     const cursorImage: GameObjects.Image =
                         this._board.scene.add.image(
                             isoPosition.x,
                             isoPosition.y,
                             "cursors",
-                            cursor
+                            cursor,
                         );
                     cursorImage.setOrigin(0.5, 0.5);
                     if (!force) {
@@ -429,7 +426,7 @@ export class RangeGizmo {
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "first",
-                    }
+                    },
                 ),
                 onComplete: () => {
                     resolve();
@@ -459,9 +456,9 @@ export class RangeGizmo {
             distance,
             cursor,
             lineOfSight,
-            true
+            true,
         );
-        
+
         this._rangeLayer.getChildren().forEach((child: GameObjects.Image) => {
             child.setAlpha(0);
         });
@@ -474,8 +471,8 @@ export class RangeGizmo {
                 RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                 {
                     from: "first",
-                }
-            )
+                },
+            ),
         });
     }
 
@@ -488,7 +485,7 @@ export class RangeGizmo {
         if (this._rangeLayer.length === 0) {
             return;
         }
-        
+
         this._board.scene.tweens.add({
             targets: this._rangeLayer.getChildren(),
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
@@ -497,7 +494,7 @@ export class RangeGizmo {
                 RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                 {
                     from: "last",
-                }
+                },
             ),
         });
     }
@@ -514,8 +511,9 @@ export class RangeGizmo {
             this._validNodes
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
-                    const isoPosition: Geom.Point =
-                        this._board.getIsoPosition(node.pos);
+                    const isoPosition: Geom.Point = this._board.getIsoPosition(
+                        node.pos,
+                    );
                     let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
@@ -523,14 +521,14 @@ export class RangeGizmo {
                             isoPosition.x,
                             isoPosition.y,
                             "cursors",
-                            CursorType.RangeMoveWarning
+                            CursorType.RangeMoveWarning,
                         );
                     } else {
                         cursorImage = this._board.scene.add.image(
                             isoPosition.x,
                             isoPosition.y,
                             "cursors",
-                            CursorType.RangeMove
+                            CursorType.RangeMove,
                         );
                     }
                     cursorImage.setOrigin(0.5, 0.5);
@@ -546,7 +544,7 @@ export class RangeGizmo {
                     RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
                     {
                         from: "first",
-                    }
+                    },
                 ),
                 onComplete: () => {
                     resolve();
@@ -563,12 +561,9 @@ export class RangeGizmo {
      * @param toPt The destination point
      * @returns An integer 0–7 representing the octant direction
      */
-    private static getAngle(
-        fromPt: Geom.Point,
-        toPt: Geom.Point
-    ): number {
+    private static getAngle(fromPt: Geom.Point, toPt: Geom.Point): number {
         let a: number = Math.floor(
-            Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI)
+            Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI),
         );
         a += 22.5;
         a = a < 0 ? a + 360 : a;
@@ -586,7 +581,8 @@ export class RangeGizmo {
         return (
             this._validNodes.find(
                 (node: Node) =>
-                    Geom.Point.Equals(node.pos, pt) && (node.traversable || node.terminal)
+                    Geom.Point.Equals(node.pos, pt) &&
+                    (node.traversable || node.terminal),
             ) || null
         );
     }
@@ -619,7 +615,7 @@ export class RangeGizmo {
     /**
      * Get all valid paths from the piece's current position to valid nodes.
      * Used for AI movement calculations.
-     * 
+     *
      * @param ignoreTerminal Whether to ignore terminal nodes when finding paths
      * @returns A map of node positions to paths
      */
@@ -639,7 +635,7 @@ export class RangeGizmo {
     /**
      * Get all valid paths from the piece's current position to terminal nodes.
      * Used for AI movement calculations.
-     * 
+     *
      * @returns A map of node positions to paths
      */
     public getAllTerminalPaths(): Set<Path> {
@@ -679,20 +675,21 @@ export class RangeGizmo {
         // If the original destination was terminal, the path ends one node
         // before it, so we need to show the path including the last node
         const destinationNode = this.getNode(toPt);
-        const endIndex = destinationNode?.terminal ? path.nodes.length : path.nodes.length - 1;
+        const endIndex = destinationNode?.terminal
+            ? path.nodes.length
+            : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
             const isoPosition: Geom.Point = this._board.getIsoPosition(
-                path.nodes[n].pos
+                path.nodes[n].pos,
             );
 
-            const cursorImage: GameObjects.Image =
-                this._board.scene.add.image(
-                    isoPosition.x,
-                    isoPosition.y,
-                    "cursors",
-                    Cursor.getCursorAngle(path.angles[n])
-                );
+            const cursorImage: GameObjects.Image = this._board.scene.add.image(
+                isoPosition.x,
+                isoPosition.y,
+                "cursors",
+                Cursor.getCursorAngle(path.angles[n]),
+            );
             cursorImage.setOrigin(0.5, 0.5);
             this._pathLayer.add(cursorImage);
         }
@@ -745,7 +742,7 @@ export class RangeGizmo {
         currentNode.h = RangeGizmo.diagonalHeuristic(
             currentNode,
             destinationNode,
-            travelCost
+            travelCost,
         );
         currentNode.f = currentNode.g + currentNode.h;
 
@@ -755,10 +752,13 @@ export class RangeGizmo {
             l = connectedNodes.length;
 
             for (i = 0; i < l; ++i) {
-                testNode = connectedNodes[i];    
+                testNode = connectedNodes[i];
                 // Can't traverse to self or non-traversable nodes except
                 // terminal
-                if (testNode === currentNode || (!testNode.traversable && !testNode.terminal)) {
+                if (
+                    testNode === currentNode ||
+                    (!testNode.traversable && !testNode.terminal)
+                ) {
                     continue;
                 }
                 g =
@@ -766,12 +766,12 @@ export class RangeGizmo {
                     RangeGizmo.diagonalHeuristic(
                         currentNode,
                         testNode,
-                        travelCost
+                        travelCost,
                     );
                 h = RangeGizmo.diagonalHeuristic(
                     testNode,
                     destinationNode,
-                    travelCost
+                    travelCost,
                 );
                 f = g + h;
 
@@ -818,16 +818,10 @@ export class RangeGizmo {
         const output: Node[] = [];
 
         for (const validNode of this._validNodes) {
-            if (
-                node.x < validNode.x - 1 ||
-                node.x > validNode.x + 1
-            ) {
+            if (node.x < validNode.x - 1 || node.x > validNode.x + 1) {
                 continue;
             }
-            if (
-                node.y < validNode.y - 1 ||
-                node.y > validNode.y + 1
-            ) {
+            if (node.y < validNode.y - 1 || node.y > validNode.y + 1) {
                 continue;
             }
             if (node === validNode) {
@@ -867,7 +861,9 @@ export class RangeGizmo {
         // movement, so try to avoid it if possible
         if (node.warning || node.terminal) {
             return (
-                diagonalCost * diag + cost * (straight - 2 * diag) + terminalCost
+                diagonalCost * diag +
+                cost * (straight - 2 * diag) +
+                terminalCost
             );
         }
 
@@ -1041,9 +1037,7 @@ export class Path {
 
     /** Convert the path's nodes into an array of cloned Phaser Points. */
     public toPoints(): Geom.Point[] {
-        return this._nodes.map((node: Node) =>
-            Geom.Point.Clone(node.pos)
-        );
+        return this._nodes.map((node: Node) => Geom.Point.Clone(node.pos));
     }
 
     /** Total movement cost of the path */

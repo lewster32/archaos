@@ -15,5 +15,5 @@ export enum UnitAttackType {
     /**
      * Engulfed attack type (e.g., gooey blob)
      */
-    Engulfed = "engulfed"
+    Engulfed = "engulfed",
 }

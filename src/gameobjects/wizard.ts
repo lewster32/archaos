@@ -19,7 +19,7 @@ import { Math as PMath, Geom, GameObjects, BlendModes, Tweens } from "phaser";
 /**
  * Get the Wizard unit configuration
  */
-const wizardUnitData = units['1'];
+const wizardUnitData = units["1"];
 
 /**
  * A wizard piece on the game board, controlled by a player. Wizards can cast
@@ -67,7 +67,7 @@ export class Wizard extends Piece {
     /**
      * Create a new Wizard instance with the given configuration. The config is
      * merged atop the default wizard config so it can be partial.
-     * 
+     *
      * @param board The board this wizard belongs to.
      * @param id The unique identifier for this wizard.
      * @param config The configuration for this wizard.
@@ -78,7 +78,7 @@ export class Wizard extends Piece {
             ...config,
         });
         this._wizCode = Wizard.parseWizCode(
-            config.wizCode || Wizard.randomWizCode()
+            config.wizCode || Wizard.randomWizCode(),
         );
         if (this.owner) {
             this.owner.castingPiece = this;
@@ -115,7 +115,7 @@ export class Wizard extends Piece {
     /**
      * Set the direction of this wizard. Some extra logic is needed to flip
      * effect sprites as well.
-     * 
+     *
      * @param direction The new direction.
      */
     set direction(direction: UnitDirection) {
@@ -126,9 +126,7 @@ export class Wizard extends Piece {
                 this._sprite.x +
                 (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                     (this._direction === UnitDirection.Left ? -1 : 1);
-            sprite.setFlipX(
-                this._direction === UnitDirection.Left
-            );
+            sprite.setFlipX(this._direction === UnitDirection.Left);
         });
     }
 
@@ -142,12 +140,12 @@ export class Wizard extends Piece {
     /**
      * Update the position of this wizard's sprite on screen to match its
      * logical position on the board.
-     * 
+     *
      * @param duration The duration of the move animation in milliseconds.
      * @returns A promise that resolves when the animation is complete.
      */
     async updatePosition(
-        duration: number = Piece.DEFAULT_MOVE_DURATION
+        duration: number = Piece.DEFAULT_MOVE_DURATION,
     ): Promise<void> {
         return new Promise((resolve) => {
             // No sprite, nothing to animate. Just how much punishment did you
@@ -157,12 +155,12 @@ export class Wizard extends Piece {
             }
 
             const isoPosition: Geom.Point = this.board.getIsoPosition(
-                this.position
+                this.position,
             );
 
             const difference: number = Board.distance(
                 new Geom.Point(this._sprite.x, this._sprite.y),
-                isoPosition
+                isoPosition,
             );
 
             // Animate the wizard and its effects together.
@@ -247,7 +245,7 @@ export class Wizard extends Piece {
             EffectType.WizardDefeated,
             this.sprite.getCenter(),
             null,
-            this
+            this,
         );
         await this.destroy();
         await this.owner?.defeat();
@@ -263,7 +261,7 @@ export class Wizard extends Piece {
 
     /**
      * Add a status to this wizard, applying any visual effects as needed.
-     * 
+     *
      * @param status The status to add.
      * @returns True if the status was added, false if it was already present.
      */
@@ -274,26 +272,32 @@ export class Wizard extends Piece {
         // Mutually exclusive statuses - can't have a shield and armour at once,
         // nor knife and sword.
         if (status === UnitStatus.MagicShield) {
-            console.debug("Removing Magic Armour due to Magic Shield being added");
+            console.debug(
+                "Removing Magic Armour due to Magic Shield being added",
+            );
             this.removeStatus(UnitStatus.MagicArmour);
-        }
-        else if (status === UnitStatus.MagicArmour) {
-            console.debug("Removing Magic Shield due to Magic Armour being added");
+        } else if (status === UnitStatus.MagicArmour) {
+            console.debug(
+                "Removing Magic Shield due to Magic Armour being added",
+            );
             this.removeStatus(UnitStatus.MagicShield);
         }
         if (status === UnitStatus.MagicKnife) {
-            console.debug("Removing Magic Sword due to Magic Knife being added");
+            console.debug(
+                "Removing Magic Sword due to Magic Knife being added",
+            );
             this.removeStatus(UnitStatus.MagicSword);
-        }
-        else if (status === UnitStatus.MagicSword) {
-            console.debug("Removing Magic Knife due to Magic Sword being added");
+        } else if (status === UnitStatus.MagicSword) {
+            console.debug(
+                "Removing Magic Knife due to Magic Sword being added",
+            );
             this.removeStatus(UnitStatus.MagicKnife);
         }
 
         const isoPosition: Geom.Point = this.board.getIsoPosition(
-            this.position
+            this.position,
         );
-        let effectSprite:GameObjects.Sprite | GameObjects.Image;
+        let effectSprite: GameObjects.Sprite | GameObjects.Image;
         switch (status) {
             // Visual effects
             case UnitStatus.ShadowForm:
@@ -306,29 +310,24 @@ export class Wizard extends Piece {
             case UnitStatus.MagicShield:
             case UnitStatus.MagicWings:
                 // Add an animated effect sprite at the appropriate offset. This
-                // is a change to how the original game worked, which just 
+                // is a change to how the original game worked, which just
                 // replaced the wizard sprite entirely. This way multiple
                 // effects can be shown at once and the wizard's appearance
                 // remains consistent.
-                effectSprite =
-                    this.board.scene.add.sprite(
-                        isoPosition.x +
-                            (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
-                                (this._direction === UnitDirection.Left
-                                    ? -1
-                                    : 1),
-                        isoPosition.y +
-                            (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
-                        "effects"
-                    ) ;
+                effectSprite = this.board.scene.add.sprite(
+                    isoPosition.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    "effects",
+                );
                 (effectSprite as GameObjects.Sprite).anims.play({
                     key: status.toLowerCase(),
                     repeat: -1,
                 });
                 effectSprite.setOrigin(0.5, 0.5);
-                effectSprite.setFlipX(
-                    this._direction === UnitDirection.Left
-                );
+                effectSprite.setFlipX(this._direction === UnitDirection.Left);
                 effectSprite.setBlendMode(BlendModes.ADD);
                 this.board.getLayer(BoardLayer.Pieces).add(effectSprite);
                 this._effects.set(status, effectSprite);
@@ -340,31 +339,30 @@ export class Wizard extends Piece {
                 // via a tween.
                 effectSprite = this.board.scene.add.image(
                     isoPosition.x +
-                    (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
-                        (this._direction === UnitDirection.Left
-                            ? -1
-                            : 1),
-                isoPosition.y +
-                    (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     "magic-armour",
-                    this._wizCode.wiz
+                    this._wizCode.wiz,
                 );
                 effectSprite.setOrigin(0.5, 0.6);
-                effectSprite.setFlipX(
-                    this._direction === UnitDirection.Left
-                );
+                effectSprite.setFlipX(this._direction === UnitDirection.Left);
                 effectSprite.setBlendMode(BlendModes.ADD);
                 this.board.getLayer(BoardLayer.Pieces).add(effectSprite);
                 this._effects.set(status, effectSprite);
-                effectSprite.setData('_effectTween', this.board.scene.tweens.add({
-                    targets: [effectSprite],
-                    duration: 500,
-                    yoyo: true,
-                    ease: "Stepped",
-                    easeParams: [3],
-                    alpha: {from: 0.2, to: 1},
-                    loop: -1
-                }));
+                effectSprite.setData(
+                    "_effectTween",
+                    this.board.scene.tweens.add({
+                        targets: [effectSprite],
+                        duration: 500,
+                        yoyo: true,
+                        ease: "Stepped",
+                        easeParams: [3],
+                        alpha: { from: 0.2, to: 1 },
+                        loop: -1,
+                    }),
+                );
                 this.updateDepth();
                 break;
         }
@@ -396,7 +394,7 @@ export class Wizard extends Piece {
      * attacking with Shadow Form causing it to be lost, or the use of a
      * mutually exclusive spell (e.g., Magic Shield vs Magic Armour). Still, we
      * need to handle it properly anyway.
-     * 
+     *
      * @param status The status to remove.
      * @returns True if the status was removed, false if it was not present.
      */
@@ -414,27 +412,32 @@ export class Wizard extends Piece {
             case UnitStatus.MagicBow:
             case UnitStatus.MagicShield:
             case UnitStatus.MagicWings:
-            case UnitStatus.MagicArmour:
+            case UnitStatus.MagicArmour: {
                 // All of these have effect sprites, so get rid of the
                 // appropriate one from the map.
-                {
-                    if (!this._effects.has(status)) {
-                        break;
-                    }
-                    const sprite: GameObjects.Sprite | GameObjects.Image = this._effects.get(status);
-                    if (sprite) {
-                        try {
-                            if (sprite.getData('_effectTween') instanceof Tweens.Tween) {
-                                (sprite.getData('_effectTween') as Tweens.Tween)?.stop()?.destroy();
-                            }
-                        } catch {
-                            // Ignore - probably doesn't have a tween?
-                        }
-                        sprite.destroy();
-                    }
-                    this._effects.delete(status);
+                if (!this._effects.has(status)) {
                     break;
                 }
+                const sprite: GameObjects.Sprite | GameObjects.Image =
+                    this._effects.get(status);
+                if (sprite) {
+                    try {
+                        if (
+                            sprite.getData("_effectTween") instanceof
+                            Tweens.Tween
+                        ) {
+                            (sprite.getData("_effectTween") as Tweens.Tween)
+                                ?.stop()
+                                ?.destroy();
+                        }
+                    } catch {
+                        // Ignore - probably doesn't have a tween?
+                    }
+                    sprite.destroy();
+                }
+                this._effects.delete(status);
+                break;
+            }
         }
 
         // We stop flying now.
@@ -446,13 +449,11 @@ export class Wizard extends Piece {
         // undead.
         if (Wizard.MAGIC_WEAPONS.includes(status)) {
             this.removeStatus(status);
-            if (
-                Wizard.MAGIC_WEAPONS.some(s => this.hasStatus(s)) === false
-            ) {
+            if (Wizard.MAGIC_WEAPONS.some((s) => this.hasStatus(s)) === false) {
                 this.removeStatus(UnitStatus.AttackUndead);
             }
         }
-        
+
         return true;
     }
 
@@ -486,7 +487,7 @@ export class Wizard extends Piece {
 
     /**
      * Create the sprite for this wizard on the board.
-     * 
+     *
      * @returns The created Phaser sprite.
      */
     createSprite(): GameObjects.Sprite {
@@ -495,14 +496,14 @@ export class Wizard extends Piece {
         }
 
         const isoPosition: Geom.Point = this.board.getIsoPosition(
-            this.position
+            this.position,
         );
 
         this._sprite = new WizardSprite(
             this.board.scene,
             isoPosition.x,
             isoPosition.y,
-            this._wizCode
+            this._wizCode,
         );
 
         this.updateDepth();
@@ -522,13 +523,13 @@ export class Wizard extends Piece {
             return this._shadow;
         }
         const isoPosition: Geom.Point = this.board.getIsoPosition(
-            this.position
+            this.position,
         );
 
         this._shadow = this.board.scene.add.image(
             isoPosition.x,
             isoPosition.y,
-            "unit-glow"
+            "unit-glow",
         );
 
         // Tint the glow to match the wizard's owner colour.
@@ -544,7 +545,7 @@ export class Wizard extends Piece {
             yoyo: true,
             ease: "Stepped",
             easeParams: [5],
-            alpha: {from: 0, to: 1},
+            alpha: { from: 0, to: 1 },
             loop: -1,
         });
 
@@ -560,7 +561,7 @@ export class Wizard extends Piece {
      * Parse a WizCode string into its components. Any out-of-bounds values are
      * clamped to the maximum allowed for that component at time of writing,
      * allowing for forwards compatibility.
-     * 
+     *
      * @param wizCode The WizCode string to parse.
      * @returns The parsed wizard configuration object.
      */
@@ -579,14 +580,26 @@ export class Wizard extends Piece {
 
         return {
             code: wizCode,
-            wiz: Math.min(Number.parseInt(wizCode.slice(0, 2), 16), wizcodes.max.wiz),
-            pri: Math.min(Number.parseInt(wizCode.slice(2, 4), 16), wizcodes.max.pri),
-            sec: Math.min(Number.parseInt(wizCode.slice(4, 6), 16), wizcodes.max.sec),
+            wiz: Math.min(
+                Number.parseInt(wizCode.slice(0, 2), 16),
+                wizcodes.max.wiz,
+            ),
+            pri: Math.min(
+                Number.parseInt(wizCode.slice(2, 4), 16),
+                wizcodes.max.pri,
+            ),
+            sec: Math.min(
+                Number.parseInt(wizCode.slice(4, 6), 16),
+                wizcodes.max.sec,
+            ),
             skin: Math.min(
                 Number.parseInt(wizCode.slice(6, 8), 16),
-                wizcodes.max.skin
+                wizcodes.max.skin,
             ),
-            hat: Math.min(Number.parseInt(wizCode.slice(8, 10), 16), wizcodes.max.hat),
+            hat: Math.min(
+                Number.parseInt(wizCode.slice(8, 10), 16),
+                wizcodes.max.hat,
+            ),
         };
     }
 
@@ -668,12 +681,14 @@ export class Wizard extends Piece {
                 for (let i: number = 0; i < 5; i++) {
                     const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
-                        -0.5 + board.width / 2 +
-                            (board.width / 2) * Math.cos(angle)
+                        -0.5 +
+                            board.width / 2 +
+                            (board.width / 2) * Math.cos(angle),
                     );
                     const y: number = Math.round(
-                        -0.5 + board.height / 2 +
-                            (board.height / 2) * Math.sin(angle)
+                        -0.5 +
+                            board.height / 2 +
+                            (board.height / 2) * Math.sin(angle),
                     );
                     // Index is offset by 2 to start on board left
                     board.addWizard({
@@ -689,12 +704,14 @@ export class Wizard extends Piece {
                 for (let i: number = 0; i < 6; i++) {
                     const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
-                        -0.6 + board.width / 2 +
-                            (board.width / 2 + 0.5) * Math.cos(angle)
+                        -0.6 +
+                            board.width / 2 +
+                            (board.width / 2 + 0.5) * Math.cos(angle),
                     );
                     const y: number = Math.round(
-                        -0.5 + board.height / 2 +
-                            (board.height / 2 - 0.5) * Math.sin(angle)
+                        -0.5 +
+                            board.height / 2 +
+                            (board.height / 2 - 0.5) * Math.sin(angle),
                     );
                     board.addWizard({
                         owner: players[(i + 2) % 6],
@@ -717,12 +734,14 @@ export class Wizard extends Piece {
                 for (let i: number = 1; i < 7; i++) {
                     const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
-                        -0.6 + board.width / 2 +
-                            (board.width / 2 + 0.5) * Math.cos(angle)
+                        -0.6 +
+                            board.width / 2 +
+                            (board.width / 2 + 0.5) * Math.cos(angle),
                     );
                     const y: number = Math.round(
-                        -0.5 + board.height / 2 +
-                            (board.height / 2 - 0.5) * Math.sin(angle)
+                        -0.5 +
+                            board.height / 2 +
+                            (board.height / 2 - 0.5) * Math.sin(angle),
                     );
                     board.addWizard({
                         owner: players[((i + 2) % 6) + 1],
@@ -736,9 +755,20 @@ export class Wizard extends Piece {
                 // All corners and middles
                 {
                     let playerIndex: number = 0;
-                    for (const xx of [0, Math.floor(board.width / 2), board.width - 1]) {
-                        for (const yy of [board.height - 1, Math.floor(board.height / 2), 0]) {
-                            if (xx === Math.floor(board.width / 2) && yy === Math.floor(board.height / 2)) {
+                    for (const xx of [
+                        0,
+                        Math.floor(board.width / 2),
+                        board.width - 1,
+                    ]) {
+                        for (const yy of [
+                            board.height - 1,
+                            Math.floor(board.height / 2),
+                            0,
+                        ]) {
+                            if (
+                                xx === Math.floor(board.width / 2) &&
+                                yy === Math.floor(board.height / 2)
+                            ) {
                                 continue;
                             }
                             board.addWizard({
@@ -763,10 +793,7 @@ export class Wizard extends Piece {
                         }
                     }
                     // Shuffle available positions.
-                    for (let i = availablePositions.length - 1; i > 0; i--) {
-                        const j = Math.floor(PMath.RND.frac() * (i + 1));
-                        [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
-                    }
+                    board.rng.shuffle(availablePositions);
                     // Assign positions to players.
                     players.forEach((player, index) => {
                         const pos = availablePositions[index];
@@ -804,6 +831,8 @@ export class Wizard extends Piece {
             Math.floor(Math.random() * (wizcodes.max.hat + 1))
                 .toString(16)
                 .padStart(2, "0"),
-        ].join("").toLowerCase();
+        ]
+            .join("")
+            .toLowerCase();
     }
 }

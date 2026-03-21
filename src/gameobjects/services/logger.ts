@@ -6,8 +6,10 @@ import { Events } from "phaser";
 // Vue components that subscribed to it will continue to receive events.
 const EMITTER_KEY = "__archaos_logger_emitter__";
 const _emitter: Events.EventEmitter =
-    (globalThis as Record<string, unknown>)[EMITTER_KEY] as Events.EventEmitter
-    ?? (() => {
+    ((globalThis as Record<string, unknown>)[
+        EMITTER_KEY
+    ] as Events.EventEmitter) ??
+    (() => {
         const e = new Events.EventEmitter();
         (globalThis as Record<string, unknown>)[EMITTER_KEY] = e;
         return e;
@@ -43,7 +45,7 @@ export class Logger {
             message,
             id: ++this._currentLogId,
             timestamp: new Date(),
-            colour
+            colour,
         });
         console.log(`${message}`);
     }

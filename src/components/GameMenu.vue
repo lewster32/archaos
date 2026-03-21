@@ -1,21 +1,34 @@
 <template>
     <div class="menu">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
-        <div class="callout__inner" v-if="setup" :style="{ columns: setup.playerCount > 4 ? 2 : 1 }">
+        <div
+            class="callout__inner"
+            v-if="setup"
+            :style="{ columns: setup.playerCount > 4 ? 2 : 1 }"
+        >
             <div class="callout__row">
                 <label for="playercount">Number of players:</label>
                 <select v-model="setup.playerCount" id="playercount">
-                    <option v-for="n in 7" :key="n" :value="n + 1">{{ n + 1 }} Players</option>
+                    <option v-for="n in 7" :key="n" :value="n + 1">
+                        {{ n + 1 }} Players
+                    </option>
                 </select>
             </div>
             <div
                 class="callout__row"
-                v-for="(name, index) in setup.players.slice(0, setup.playerCount)"
+                v-for="(name, index) in setup.players.slice(
+                    0,
+                    setup.playerCount,
+                )"
                 :key="index"
                 style="margin-left: 1em"
             >
                 <label :for="`player${index}`" style="width: 20ch"
-                    >{{ setup.players[index].computerControlled ? 'Computer' : 'Human' }}
+                    >{{
+                        setup.players[index].computerControlled
+                            ? "Computer"
+                            : "Human"
+                    }}
                     {{ index + 1 }}'s name:</label
                 >
                 <input
@@ -25,7 +38,14 @@
                     maxlength="20"
                     style="width: 23ch"
                 />
-                <div style="width: 3ch; display: flex; align-items: center; justify-content: flex-end">
+                <div
+                    style="
+                        width: 3ch;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                    "
+                >
                     <input
                         type="checkbox"
                         v-model="setup.players[index].computerControlled"
@@ -37,7 +57,9 @@
             <div class="callout__row">
                 <label for="boardsize">Board size:</label>
                 <select v-model="setup.boardSize" id="boardsize">
-                    <option value="9" :disabled="setup.playerCount > 4">Small Board</option>
+                    <option value="9" :disabled="setup.playerCount > 4">
+                        Small Board
+                    </option>
                     <option value="13">Medium Board</option>
                     <option value="17">Large Board</option>
                 </select>
@@ -64,7 +86,10 @@
                 </label>
             </div>
             <div class="callout__row">
-                <button class="button button--green start-game" @click="startGame">
+                <button
+                    class="button button--green start-game"
+                    @click="startGame"
+                >
                     Start Game
                 </button>
             </div>
@@ -73,35 +98,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { SetupData, GameSetupData, SetupPlayer } from '../gameobjects/interfaces/ui';
+import { ref, watch } from "vue";
+import type {
+    SetupData,
+    GameSetupData,
+    SetupPlayer,
+} from "../gameobjects/interfaces/ui";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
 }>();
 
 const defaultPlayers: SetupPlayer[] = [
-    { name: 'Gandalf' },
-    { name: 'Glinda', computerControlled: true },
-    { name: 'Merlin', computerControlled: true },
-    { name: 'Morgana', computerControlled: true },
-    { name: 'Rincewind', computerControlled: true },
-    { name: 'Saruman', computerControlled: true },
-    { name: 'Elminster', computerControlled: true },
-    { name: 'Mordenkainen', computerControlled: true },
+    { name: "Gandalf" },
+    { name: "Glinda", computerControlled: true },
+    { name: "Merlin", computerControlled: true },
+    { name: "Morgana", computerControlled: true },
+    { name: "Rincewind", computerControlled: true },
+    { name: "Saruman", computerControlled: true },
+    { name: "Elminster", computerControlled: true },
+    { name: "Mordenkainen", computerControlled: true },
 ];
 
 const setup = ref<SetupData | null>(null);
 
 // Load setup from localStorage if available.
 if (globalThis.localStorage) {
-    const saved = globalThis.localStorage.getItem('setup');
+    const saved = globalThis.localStorage.getItem("setup");
     if (saved) {
         setup.value = JSON.parse(saved);
         // Expand legacy 4-player saves to the full 8-player list.
         if (setup.value.players?.length === 4) {
             const existing = setup.value.players;
-            setup.value.players = defaultPlayers.map((p, i) => (i < existing.length ? existing[i] : p));
+            setup.value.players = defaultPlayers.map((p, i) =>
+                i < existing.length ? existing[i] : p,
+            );
         }
     }
 }
@@ -117,12 +148,14 @@ if (!setup.value) {
 }
 
 while (setup.value.players.length < setup.value.playerCount) {
-    setup.value.players.push(defaultPlayers[setup.value.players.length % defaultPlayers.length]);
+    setup.value.players.push(
+        defaultPlayers[setup.value.players.length % defaultPlayers.length],
+    );
 }
 
 watch(
     () => setup.value?.playerCount,
-    newCount => {
+    (newCount) => {
         if (setup.value?.boardSize <= 9 && newCount > 4) {
             setup.value.boardSize = 13;
         }
@@ -131,9 +164,12 @@ watch(
 );
 
 function startGame(): void {
-    globalThis.localStorage?.setItem('setup', JSON.stringify(setup.value));
-    emit('start', {
-        players: setup.value!.players.slice(0, Math.abs(setup.value!.playerCount) || 2),
+    globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    emit("start", {
+        players: setup.value!.players.slice(
+            0,
+            Math.abs(setup.value!.playerCount) || 2,
+        ),
         board: {
             width: Math.abs(setup.value!.boardSize) || 13,
             height: Math.abs(setup.value!.boardSize) || 13,
@@ -168,6 +204,6 @@ function startGame(): void {
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: 0.5rem;
 }
 </style>

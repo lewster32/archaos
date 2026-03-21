@@ -6,13 +6,19 @@
             </p>
             <div class="callout__buttons">
                 <button
-                    class="
-                        spellinfo__select
-                        button button--yellow
-                    "
+                    class="spellinfo__select button button--yellow"
                     @click="select(currentSpell, true)"
                 >
-                    {{ ['Select', 'Ignore', 'Confirm', 'YOLO', 'Whatever', 'Lemme at \'em'].at(Math.floor(Math.random() * 6)) }}
+                    {{
+                        [
+                            "Select",
+                            "Ignore",
+                            "Confirm",
+                            "YOLO",
+                            "Whatever",
+                            "Lemme at 'em",
+                        ].at(Math.floor(Math.random() * 6))
+                    }}
                 </button>
                 <button
                     class="spellinfo__select button button--green button--important"
@@ -30,19 +36,13 @@
             </p>
             <div class="callout__buttons">
                 <button
-                    class="
-                        spellinfo__select
-                        button button--green button--important
-                    "
+                    class="spellinfo__select button button--green button--important"
                     @click="selectIllusion(true)"
                 >
                     Yes
                 </button>
                 <button
-                    class="
-                        spellinfo__select
-                        button button--red button--important
-                    "
+                    class="spellinfo__select button button--red button--important"
                     @click="selectIllusion(false)"
                 >
                     No
@@ -59,10 +59,7 @@
     <div class="spellbook" v-if="show && data">
         <button
             v-if="minimised"
-            class="
-                spellbook__toggle spellbook__toggle--closed
-                button button--green button--flashing
-            "
+            class="spellbook__toggle spellbook__toggle--closed button button--green button--flashing"
             @click="toggle()"
             title="Open spellbook"
         >
@@ -104,11 +101,11 @@
                         >
                         <span
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
-                                spell.chance
+                                spell.chance,
                             )})`"
                             class="spell__chance"
                             :title="`This has a ${chancePercent(
-                                spell.chance
+                                spell.chance,
                             )}% chance of casting.`"
                             >{{ chancePercent(spell.chance) }}%</span
                         >
@@ -116,10 +113,7 @@
                             i
                         </button>
                         <button
-                            class="
-                                spell__select
-                                button button--green button--important
-                            "
+                            class="spell__select button button--green button--important"
                             @click="select(spell)"
                         >
                             Select
@@ -147,7 +141,12 @@ import SpellInfo from "./SpellInfo.vue";
 import SpellImage from "./SpellImage.vue";
 import { ref, computed, watch, nextTick } from "vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
-import { balanceIndicator, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import {
+    balanceIndicator,
+    chancePercent,
+    chanceRounded,
+    friendlyBalance,
+} from "../gameobjects/spells/spellutils";
 import type { Spell } from "../gameobjects/spells/spell";
 import type { SummonSpell } from "../gameobjects/spells/summonspell";
 import type { SpellbookData } from "../gameobjects/interfaces/ui";
@@ -208,19 +207,19 @@ watch(
         if (newSpells !== oldSpells) {
             props.data.minimised = true;
             nextTick(() => {
-                const scrollElement = (scroll.value as HTMLDivElement);
+                const scrollElement = scroll.value as HTMLDivElement;
                 if (scrollElement) {
                     scrollElement.scrollTop = 0;
                 }
             });
         }
-    }
+    },
 );
 
 /**
  * Selects whether to cast the summon spell as an illusion or not. This sets
  * the illusion flag on the summon spell before emitting the selection event.
- * 
+ *
  * @param illusion Whether to cast as an illusion or not.
  */
 const selectIllusion: (illusion: boolean) => void = (illusion: boolean) => {
@@ -242,10 +241,13 @@ const closeIllusion: () => void = () => {
 
 /**
  * Selects a spell from the spellbook.
- * 
+ *
  * @param spell The spell to select, or null to skip selection.
  */
-const select: (spell: Spell | null, force?: boolean) => void = (spell: Spell | null, force?: boolean) => {
+const select: (spell: Spell | null, force?: boolean) => void = (
+    spell: Spell | null,
+    force?: boolean,
+) => {
     props.data.minimised = true;
     if (!spell) {
         emit("select", null);
@@ -274,7 +276,7 @@ const select: (spell: Spell | null, force?: boolean) => void = (spell: Spell | n
 
 /**
  * Shows the spell info for a spell.
- * 
+ *
  * @param spell The spell to show info for.
  */
 const info: (spell: Spell) => void = (spell: Spell) => {
@@ -340,7 +342,9 @@ body:has(.unitinfo--show) {
     &__inner {
         display: flex;
         flex-direction: column;
-        transition: translate 0.25s, opacity 0.25s;
+        transition:
+            translate 0.25s,
+            opacity 0.25s;
         max-width: 500px;
         height: 100%;
         &--minimised {

@@ -9,13 +9,14 @@ This is a project that has been many, many years in the making. The oldest piece
 Nearly 25 years on, what we have now is a completely new, and far less grandiose version of the game written largely from scratch using modern web tech. Most of the graphics, sounds and many of the routines such as the pathfinding, wizard customisation etc. were already lying around, and were relatively easy to dust off and make use of. Some surprises (which probably shouldn't have been in hindsight) included how easy it was to convert some of the old ActionScript 3 code to TypeScript (aside from some extra built-in objects and some Java-esque boilerplate, they're pretty much interchangeable).
 
 ## Features
+
 - Isometric perspective
 - Pixel art based on the original graphics
 - Crunchy beeper sounds faithfully brought over from the 48K Spectrum
 - Quality of life features:
-  - Modernised mouse-driven UI
-  - Descriptions and inline help on most things
-  - Safeguards, such as warning you if you try to cast a spell with no valid targets in range
+    - Modernised mouse-driven UI
+    - Descriptions and inline help on most things
+    - Safeguards, such as warning you if you try to cast a spell with no valid targets in range
 - Up to 8 players (local only)
 - Computer-controlled opponents (they're a bit dim right now, but getting better)
 - All of the original spells and units
@@ -24,10 +25,12 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 <p align="center"><img src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
 
 ### Not yet features
+
 - Online multiplayer
 - All planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
 
 ## Play now! 🔥
+
 You can play the latest build in your browser here: https://www.archaos.co.uk/2021/
 
 You can also build a standalone version of the game with `npm run tauri:build`
@@ -35,6 +38,7 @@ You can also build a standalone version of the game with `npm run tauri:build`
 ## Installing and building
 
 ### Requirements:
+
 - NodeJS (I'm using 24 at time of writing)
 - A desktop browser (mobile is _sorta_ supported, but not quite there yet)
 

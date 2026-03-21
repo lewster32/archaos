@@ -20,5 +20,5 @@ export enum SpellTarget {
     /**
      * Target a corpse (a dead unit - not to be confused with an undead unit)
      */
-    Corpse = "corpse"
+    Corpse = "corpse",
 }

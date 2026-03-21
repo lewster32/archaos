@@ -1,6 +1,6 @@
 export enum CursorType {
     Idle = "idle",
-    
+
     Select = "select",
     Info = "info",
     Invalid = "invalid",
@@ -13,7 +13,7 @@ export enum CursorType {
     Warning = "warning",
 
     Fly = "fly",
-    
+
     Up = "up",
     UpRight = "up-right",
     Right = "right",
@@ -27,5 +27,4 @@ export enum CursorType {
     RangeCast = "range-cast",
     RangeRangedAttack = "range-rangedattack",
     RangeMoveWarning = "range-move-warning",
-
 }

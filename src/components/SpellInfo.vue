@@ -4,7 +4,11 @@
             &times;
         </button>
         <div class="spellinfo__inner callout">
-            <SpellImage class="spellinfo__image" :spell="spell" style="--zoom: 5" />
+            <SpellImage
+                class="spellinfo__image"
+                :spell="spell"
+                style="--zoom: 5"
+            />
             <div class="spellinfo__stats spell-stats">
                 <p class="spell-stats__item">
                     <span class="spell-stats__label">Name:</span>
@@ -20,18 +24,26 @@
                     <span class="spell-stats__label">Chance:</span>
                     <span
                         :style="`color: var(--spell-chance-colour-${chanceRounded(
-                            spell.chance
+                            spell.chance,
                         )})`"
                         class="spell-stats__Value"
                         :title="`This has a ${chancePercent(
-                            spell.chance
+                            spell.chance,
                         )}% chance of casting.`"
                         >{{ chancePercent(spell.chance) }}%</span
                     >
                 </p>
-                <p v-if="spell.type == SpellType.Attack && (spell as AttackSpell).damage" class="spell-stats__item">
+                <p
+                    v-if="
+                        spell.type == SpellType.Attack &&
+                        (spell as AttackSpell).damage
+                    "
+                    class="spell-stats__item"
+                >
                     <span class="spell-stats__label">Damage:</span>
-                    <span class="spell-stats__value">{{ (spell as AttackSpell).damage }}</span>
+                    <span class="spell-stats__value">{{
+                        (spell as AttackSpell).damage
+                    }}</span>
                 </p>
                 <p v-if="spell.range > 1.5" class="spell-stats__item">
                     <span class="spell-stats__label">Range:</span>
@@ -56,13 +68,24 @@
                     }}</span>
                 </p>
                 <div v-if="spell.description">
-                    <p class="spellinfo__description" v-html="spell.description"></p>
+                    <p
+                        class="spellinfo__description"
+                        v-html="spell.description"
+                    ></p>
                 </div>
-                <div v-if="spell.type === SpellType.Summon && (spell as SummonSpell).unitProperties">
+                <div
+                    v-if="
+                        spell.type === SpellType.Summon &&
+                        (spell as SummonSpell).unitProperties
+                    "
+                >
                     <UnitStats :unit="(spell as SummonSpell).unitProperties" />
                 </div>
                 <div class="callout__buttons">
-                    <button class="spellinfo__select button button--green button--important" @click="select()">
+                    <button
+                        class="spellinfo__select button button--green button--important"
+                        @click="select()"
+                    >
                         Select
                     </button>
                     <button class="spellinfo__select button" @click="close()">
@@ -79,7 +102,12 @@ import UnitStats from "./UnitStats.vue";
 import SpellImage from "./SpellImage.vue";
 import { SpellType } from "../gameobjects/enums/spelltype";
 import { computed } from "vue";
-import { balanceIndicator, chancePercent, chanceRounded, friendlyBalance } from "../gameobjects/spells/spellutils";
+import {
+    balanceIndicator,
+    chancePercent,
+    chanceRounded,
+    friendlyBalance,
+} from "../gameobjects/spells/spellutils";
 import type { Spell } from "../gameobjects/spells/spell";
 import type { AttackSpell } from "../gameobjects/spells/attackspell";
 import type { SummonSpell } from "../gameobjects/spells/summonspell";
@@ -103,7 +131,7 @@ const show: Ref<boolean> = computed(() => {
 
 /**
  * Gets the image URL for a spell.
- * 
+ *
  * @param spell The spell to get the image URL for.
  */
 const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
@@ -119,13 +147,16 @@ const close: () => void = () => {
 
 /**
  * Gets the friendly name of a spell's type.
- * 
+ *
  * @param spell The spell to get the type name for.
  * @returns The friendly type name.
  */
 const spellType: (spell: Spell) => string = (spell: Spell) => {
-    return Object.keys(SpellType)
-        .find((key => SpellType[key as keyof typeof SpellType] === spell.type)) ?? "Unknown";
+    return (
+        Object.keys(SpellType).find(
+            (key) => SpellType[key as keyof typeof SpellType] === spell.type,
+        ) ?? "Unknown"
+    );
 };
 
 /**
@@ -136,7 +167,6 @@ const select: () => void = () => {
 };
 </script>
 <style lang="scss" scoped>
-
 :host {
     position: relative;
     z-index: 51;
@@ -162,7 +192,7 @@ const select: () => void = () => {
         align-items: flex-start;
     }
     &__select {
-        margin-top: .5em;
+        margin-top: 0.5em;
     }
     &__close {
         position: absolute;
@@ -171,7 +201,7 @@ const select: () => void = () => {
         top: 2em;
     }
     &__description {
-        margin: .5em 0;
+        margin: 0.5em 0;
     }
 }
 
@@ -191,5 +221,4 @@ const select: () => void = () => {
         flex: 1 1 auto;
     }
 }
-
 </style>

@@ -1,164 +1,160 @@
 {
-  "resources": [
-    "chaossounds.ogg",
-    "chaossounds.mp3",
-    "chaossounds.m4a"
-  ],
-  "spritemap": {
-    "lightning4": {
-      "start": 0,
-      "end": 0.341,
-      "loop": false
-    },
-    "killcreature": {
-      "start": 0.441,
-      "end": 0.869,
-      "loop": false
-    },
-    "keypress": {
-      "start": 0.969,
-      "end": 1.064,
-      "loop": false
-    },
-    "justicesuccessful": {
-      "start": 1.164,
-      "end": 3.021,
-      "loop": false
-    },
-    "justice": {
-      "start": 3.121,
-      "end": 5.499,
-      "loop": false
-    },
-    "fly": {
-      "start": 5.599,
-      "end": 5.93,
-      "loop": false
-    },
-    "engaged": {
-      "start": 6.03,
-      "end": 6.335,
-      "loop": false
-    },
-    "endturn": {
-      "start": 6.435,
-      "end": 6.992,
-      "loop": false
-    },
-    "dragonfireexplosion": {
-      "start": 7.092,
-      "end": 8.17,
-      "loop": false
-    },
-    "dragonfire6": {
-      "start": 8.27,
-      "end": 8.998,
-      "loop": false
-    },
-    "disbelieve": {
-      "start": 9.098,
-      "end": 9.844,
-      "loop": false
-    },
-    "deadwizard2": {
-      "start": 9.944,
-      "end": 11.406,
-      "loop": false
-    },
-    "deadwizard1": {
-      "start": 11.506,
-      "end": 12.468,
-      "loop": false
-    },
-    "castloop08": {
-      "start": 12.568,
-      "end": 13.211,
-      "loop": false
-    },
-    "cancel": {
-      "start": 13.311,
-      "end": 13.42,
-      "loop": false
-    },
-    "bowselecta": {
-      "start": 13.52,
-      "end": 14.579,
-      "loop": false
-    },
-    "bowhit": {
-      "start": 14.679,
-      "end": 15.053,
-      "loop": false
-    },
-    "bowfire6": {
-      "start": 15.153,
-      "end": 15.667,
-      "loop": false
-    },
-    "blob2": {
-      "start": 15.767,
-      "end": 15.786,
-      "loop": false
-    },
-    "blob1": {
-      "start": 15.886,
-      "end": 15.912,
-      "loop": false
-    },
-    "attackonly": {
-      "start": 16.012,
-      "end": 16.912,
-      "loop": false
-    },
-    "newspell": {
-      "start": 17.012,
-      "end": 17.212,
-      "loop": false
-    },
-    "casting": {
-      "start": 17.312,
-      "end": 17.413,
-      "loop": false
-    },
-    "undead": {
-      "start": 17.513,
-      "end": 18.078,
-      "loop": false
-    },
-    "spelleffect": {
-      "start": 18.178,
-      "end": 18.605,
-      "loop": false
-    },
-    "select": {
-      "start": 18.705,
-      "end": 19.011,
-      "loop": false
-    },
-    "screenactive": {
-      "start": 19.111,
-      "end": 19.259,
-      "loop": false
-    },
-    "move": {
-      "start": 19.359,
-      "end": 19.43,
-      "loop": false
-    },
-    "magicboltexplode": {
-      "start": 19.53,
-      "end": 19.905,
-      "loop": false
-    },
-    "magicbolt6": {
-      "start": 20.005,
-      "end": 20.602,
-      "loop": false
-    },
-    "lightningexplode": {
-      "start": 20.702,
-      "end": 21.078,
-      "loop": false
+    "resources": ["chaossounds.ogg", "chaossounds.mp3", "chaossounds.m4a"],
+    "spritemap": {
+        "lightning4": {
+            "start": 0,
+            "end": 0.341,
+            "loop": false
+        },
+        "killcreature": {
+            "start": 0.441,
+            "end": 0.869,
+            "loop": false
+        },
+        "keypress": {
+            "start": 0.969,
+            "end": 1.064,
+            "loop": false
+        },
+        "justicesuccessful": {
+            "start": 1.164,
+            "end": 3.021,
+            "loop": false
+        },
+        "justice": {
+            "start": 3.121,
+            "end": 5.499,
+            "loop": false
+        },
+        "fly": {
+            "start": 5.599,
+            "end": 5.93,
+            "loop": false
+        },
+        "engaged": {
+            "start": 6.03,
+            "end": 6.335,
+            "loop": false
+        },
+        "endturn": {
+            "start": 6.435,
+            "end": 6.992,
+            "loop": false
+        },
+        "dragonfireexplosion": {
+            "start": 7.092,
+            "end": 8.17,
+            "loop": false
+        },
+        "dragonfire6": {
+            "start": 8.27,
+            "end": 8.998,
+            "loop": false
+        },
+        "disbelieve": {
+            "start": 9.098,
+            "end": 9.844,
+            "loop": false
+        },
+        "deadwizard2": {
+            "start": 9.944,
+            "end": 11.406,
+            "loop": false
+        },
+        "deadwizard1": {
+            "start": 11.506,
+            "end": 12.468,
+            "loop": false
+        },
+        "castloop08": {
+            "start": 12.568,
+            "end": 13.211,
+            "loop": false
+        },
+        "cancel": {
+            "start": 13.311,
+            "end": 13.42,
+            "loop": false
+        },
+        "bowselecta": {
+            "start": 13.52,
+            "end": 14.579,
+            "loop": false
+        },
+        "bowhit": {
+            "start": 14.679,
+            "end": 15.053,
+            "loop": false
+        },
+        "bowfire6": {
+            "start": 15.153,
+            "end": 15.667,
+            "loop": false
+        },
+        "blob2": {
+            "start": 15.767,
+            "end": 15.786,
+            "loop": false
+        },
+        "blob1": {
+            "start": 15.886,
+            "end": 15.912,
+            "loop": false
+        },
+        "attackonly": {
+            "start": 16.012,
+            "end": 16.912,
+            "loop": false
+        },
+        "newspell": {
+            "start": 17.012,
+            "end": 17.212,
+            "loop": false
+        },
+        "casting": {
+            "start": 17.312,
+            "end": 17.413,
+            "loop": false
+        },
+        "undead": {
+            "start": 17.513,
+            "end": 18.078,
+            "loop": false
+        },
+        "spelleffect": {
+            "start": 18.178,
+            "end": 18.605,
+            "loop": false
+        },
+        "select": {
+            "start": 18.705,
+            "end": 19.011,
+            "loop": false
+        },
+        "screenactive": {
+            "start": 19.111,
+            "end": 19.259,
+            "loop": false
+        },
+        "move": {
+            "start": 19.359,
+            "end": 19.43,
+            "loop": false
+        },
+        "magicboltexplode": {
+            "start": 19.53,
+            "end": 19.905,
+            "loop": false
+        },
+        "magicbolt6": {
+            "start": 20.005,
+            "end": 20.602,
+            "loop": false
+        },
+        "lightningexplode": {
+            "start": 20.702,
+            "end": 21.078,
+            "loop": false
+        }
     }
-  }
 }

@@ -2,7 +2,7 @@ import { Display } from "phaser";
 
 /**
  * Converts a numeric colour to a hex string.
- * 
+ *
  * @param colourNum  The numeric colour.
  * @returns The hex colour string.
  */
@@ -21,7 +21,6 @@ export async function delay(time: number): Promise<void> {
 
 export const cssColour = (colourNum: number = 0xffffff) => {
     colourNum ??= 0xffffff; // Default to white if no colour is provided
-    const colour: Display.Color =
-        Display.Color.ValueToColor(colourNum);
+    const colour: Display.Color = Display.Color.ValueToColor(colourNum);
     return `${colour.rgba}`;
 };

@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Rules } from './rules';
-import { ActionType } from '../enums/actiontype';
-import { BoardState } from '../enums/boardstate';
-import { InputType } from '../enums/inputtype';
-import { UnitStatus } from '../enums/unitstatus';
-import type { Board } from '../board';
-import type { Piece } from '../piece';
-import { Geom } from 'phaser';
+import { describe, it, expect, vi } from "vitest";
+import { Rules } from "./rules";
+import { ActionType } from "../enums/actiontype";
+import { BoardState } from "../enums/boardstate";
+import { InputType } from "../enums/inputtype";
+import { UnitStatus } from "../enums/unitstatus";
+import type { Board } from "../board";
+import type { Piece } from "../piece";
+import { Geom } from "phaser";
 
 function createMockPiece(overrides: Record<string, any> = {}): Piece {
     return {
@@ -46,13 +46,13 @@ function createMockBoard(overrides: Record<string, any> = {}): Board {
     } as unknown as Board;
 }
 
-describe('Rules', () => {
+describe("Rules", () => {
     const rules = Rules.getInstance();
 
     // ─── processIntent ────────────────────────────────────────────────────
 
-    describe('processIntent', () => {
-        it('returns Attack for a flying unit with an enemy in attack range', async () => {
+    describe("processIntent", () => {
+        it("returns Attack for a flying unit with an enemy in attack range", async () => {
             const attacker = createMockPiece({
                 id: 1,
                 position: new Geom.Point(0, 0),
@@ -72,23 +72,27 @@ describe('Rules', () => {
 
             const result = await rules.processIntent(board);
             expect(result).toBe(ActionType.Attack);
-            expect(attacker.inAttackRange).toHaveBeenCalledWith(defender.position);
+            expect(attacker.inAttackRange).toHaveBeenCalledWith(
+                defender.position,
+            );
         });
     });
 
     // ─── processAction (Click → processClick) ────────────────────────────
 
-    describe('processAction (Click)', () => {
-        describe('Attack action', () => {
-            it('flying unit attacks enemy in movement range', async () => {
+    describe("processAction (Click)", () => {
+        describe("Attack action", () => {
+            it("flying unit attacks enemy in movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(true),
-                    hasStatus: vi.fn().mockImplementation(
-                        (s: UnitStatus) => s === UnitStatus.Flying
-                    ),
+                    hasStatus: vi
+                        .fn()
+                        .mockImplementation(
+                            (s: UnitStatus) => s === UnitStatus.Flying,
+                        ),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -105,27 +109,29 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.Attack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Attack);
                 expect(board.attackPiece).toHaveBeenCalledWith(
                     attacker.id,
-                    defender.id
+                    defender.id,
                 );
                 // Should NOT have moved first (flying units attack from position)
                 expect(board.movePiece).not.toHaveBeenCalled();
             });
 
-            it('flying unit cannot attack enemy outside movement range', async () => {
+            it("flying unit cannot attack enemy outside movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(false),
-                    hasStatus: vi.fn().mockImplementation(
-                        (s: UnitStatus) => s === UnitStatus.Flying
-                    ),
+                    hasStatus: vi
+                        .fn()
+                        .mockImplementation(
+                            (s: UnitStatus) => s === UnitStatus.Flying,
+                        ),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -141,14 +147,14 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.Attack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.attackPiece).not.toHaveBeenCalled();
             });
 
-            it('ground unit walks to attack distant enemy within movement range', async () => {
+            it("ground unit walks to attack distant enemy within movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
@@ -170,21 +176,21 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.Attack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Attack);
                 expect(board.movePiece).toHaveBeenCalledWith(
                     attacker.id,
-                    defender.position
+                    defender.position,
                 );
                 expect(board.attackPiece).toHaveBeenCalledWith(
                     attacker.id,
-                    defender.id
+                    defender.id,
                 );
             });
 
-            it('adjacent attack succeeds without moving', async () => {
+            it("adjacent attack succeeds without moving", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
@@ -207,18 +213,18 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.Attack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Attack);
                 expect(board.movePiece).not.toHaveBeenCalled();
                 expect(board.attackPiece).toHaveBeenCalledWith(
                     attacker.id,
-                    defender.id
+                    defender.id,
                 );
             });
 
-            it('returns Invalid when canAttackPiece is false', async () => {
+            it("returns Invalid when canAttackPiece is false", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
@@ -238,7 +244,7 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.Attack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Invalid);
@@ -246,8 +252,8 @@ describe('Rules', () => {
             });
         });
 
-        describe('RangedAttack action', () => {
-            it('ranged attack succeeds when canRangedAttackPiece is true', async () => {
+        describe("RangedAttack action", () => {
+            it("ranged attack succeeds when canRangedAttackPiece is true", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
@@ -267,17 +273,17 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.RangedAttack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.RangedAttack);
                 expect(board.rangedAttackPiece).toHaveBeenCalledWith(
                     attacker.id,
-                    defender.id
+                    defender.id,
                 );
             });
 
-            it('ranged attack returns Invalid when canRangedAttackPiece is false', async () => {
+            it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
                 const attacker = createMockPiece({
                     id: 1,
                     position: new Geom.Point(0, 0),
@@ -297,7 +303,7 @@ describe('Rules', () => {
                 const result = await rules.processAction(
                     board,
                     ActionType.RangedAttack,
-                    InputType.Click
+                    InputType.Click,
                 );
 
                 expect(result).toBe(ActionType.Invalid);

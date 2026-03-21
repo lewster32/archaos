@@ -44,7 +44,7 @@ export interface IUnitStats {
      * How likely a unit is to disengage from an enemy (higher is more likely).
      */
     maneuverability: number;
-    
+
     /**
      * How likely a unit will resist magic attacks or spells like Subversion (higher is more likely).
      */

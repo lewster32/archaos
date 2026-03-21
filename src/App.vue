@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
-import LoadingScreen from './components/LoadingScreen.vue';
+import { defineAsyncComponent } from "vue";
+import LoadingScreen from "./components/LoadingScreen.vue";
 
-const Game = defineAsyncComponent(() => import('./components/Game.vue'));
+const Game = defineAsyncComponent(() => import("./components/Game.vue"));
 </script>

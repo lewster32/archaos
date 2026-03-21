@@ -8,5 +8,5 @@ export enum BoardState {
     Attack = "attack",
     RangedAttack = "ranged-attack",
     Dismount = "dismount",
-    GameOver = "game-over"
+    GameOver = "game-over",
 }

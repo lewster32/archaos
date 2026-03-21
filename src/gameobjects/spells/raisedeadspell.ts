@@ -11,8 +11,12 @@ import { Geom } from "phaser";
  * casting wizard.
  */
 export class RaiseDeadSpell extends Spell {
-
-    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(
+        owner: Player,
+        castingPiece: Piece,
+        point?: Geom.Point,
+        targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
         const target: Piece = targets.find((p: Piece) => p.dead);
         if (!target) {
             return false;
@@ -21,19 +25,19 @@ export class RaiseDeadSpell extends Spell {
         await this._board.playEffect(
             EffectType.RaiseDeadBeam,
             castingPiece.sprite.getCenter(),
-            target.sprite.getCenter()
+            target.sprite.getCenter(),
         );
         this._board.sound.play("spelleffect");
         await this._board.playEffect(
             EffectType.RaiseDeadHit,
             target.sprite.getCenter(),
             null,
-            target
+            target,
         );
         await target.raiseDead(this.owner);
         this._board.logger.log(
             `${target.name} was reanimated and now belongs to ${owner.name}`,
-            Colour.LightBlue
+            Colour.LightBlue,
         );
 
         // Raised dead units are not illusionary, since they came from a

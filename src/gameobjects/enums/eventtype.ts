@@ -60,5 +60,5 @@ export enum EventType {
     /**
      * A new turn has started.
      */
-    NewTurn = "new-turn"
+    NewTurn = "new-turn",
 }

@@ -16,7 +16,7 @@ export class RemoteWizard implements RemotePlayer {
 
     /**
      * Create a new RemoteWizard controller for the given player.
-     * 
+     *
      * @param board a reference to the game board
      * @param player the player this remote instance is controlling
      */
@@ -27,7 +27,7 @@ export class RemoteWizard implements RemotePlayer {
 
     /**
      * Selects a spell for the player to cast.
-     * 
+     *
      * @returns whether a spell was successfully selected
      */
     async selectSpell(): Promise<boolean> {
@@ -37,7 +37,7 @@ export class RemoteWizard implements RemotePlayer {
 
     /**
      * Casts the currently selected spell.
-     * 
+     *
      * @returns whether the spell was successfully cast
      */
     async castSpell(): Promise<boolean> {
@@ -47,14 +47,14 @@ export class RemoteWizard implements RemotePlayer {
 
     /**
      * Moves all units controlled by the player.
-     * 
+     *
      * @returns a promise that resolves when all units have been moved
      */
     async moveAllUnits(): Promise<void> {
         // Dummy implementation
         return;
     }
-    
+
     /**
      * Moves a single unit controlled by the player.
      *

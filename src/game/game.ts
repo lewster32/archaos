@@ -1,5 +1,5 @@
-import { GameScene } from '../game-scene';
-import { Game, Scale, AUTO } from 'phaser';
+import { GameScene } from "../game-scene";
+import { Game, Scale, AUTO } from "phaser";
 
 export const launch = (containerId: string) => {
     return new Game({
@@ -30,5 +30,5 @@ export const launch = (containerId: string) => {
             fullscreenTarget: containerId,
             zoom: 2,
         },
-    })
-}
+    });
+};

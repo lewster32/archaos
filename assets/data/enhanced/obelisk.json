@@ -21,9 +21,7 @@
                 "mnv": 0,
                 "res": 5
             },
-            "status": [
-                "attackUndead", "noCorpse"
-            ],
+            "status": ["attackUndead", "noCorpse"],
             "name": "Obelisk",
             "indefiniteArticle": "an",
             "animFrames": [0, 1, 2, 3],

@@ -115,7 +115,11 @@ export function phaserAssetSizesPlugin() {
                 if (file) {
                     const size = sizeOf(file);
                     total += size;
-                    counted.push({ file, size, note: "audio (preferred format)" });
+                    counted.push({
+                        file,
+                        size,
+                        note: "audio (preferred format)",
+                    });
                 }
             }
 

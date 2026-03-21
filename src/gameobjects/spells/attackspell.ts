@@ -23,13 +23,17 @@ export class AttackSpell extends Spell {
         return this._properties.damage || 0;
     }
 
-    async doCast(owner: Player, castingPiece: Piece, point?: Geom.Point, targets?: Piece[]): Promise<Piece | boolean | null> {
+    async doCast(
+        owner: Player,
+        castingPiece: Piece,
+        point?: Geom.Point,
+        targets?: Piece[],
+    ): Promise<Piece | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
         }
         // Find the first valid target from the list of potential targets
-        const target: Piece = targets
-            .find(t => this.getValidTarget(t));
+        const target: Piece = targets.find((t) => this.getValidTarget(t));
         if (!target) {
             throw new Error("No valid target for attack spell");
         }
@@ -70,13 +74,13 @@ export class AttackSpell extends Spell {
                 beamEffect,
                 castingPiece.sprite.getCenter(),
                 target.sprite.getCenter(),
-                target
+                target,
             );
         }
 
         const rollSuccess: boolean = this._board.roll(
             this._properties.damage,
-            target.stats.magicResistance
+            target.stats.magicResistance,
         );
 
         let targetKilled: boolean = false;
@@ -85,21 +89,28 @@ export class AttackSpell extends Spell {
             this._board.sound.play(hitSound);
         }
         if (hitEffect) {
-            await this._board.playEffect(hitEffect, target.sprite.getCenter(), null, target);
+            await this._board.playEffect(
+                hitEffect,
+                target.sprite.getCenter(),
+                null,
+                target,
+            );
         }
 
         if (rollSuccess) {
-            if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
+            if (
+                this.properties.destroyWizardCreatures &&
+                target.hasStatus(UnitStatus.Wizard)
+            ) {
                 await this._board.sound.playAsync("justicesuccessful", {
-                    delay: Board.DEFAULT_DELAY
+                    delay: Board.DEFAULT_DELAY,
                 });
                 await target.owner.destroyCreations();
                 this._board.logger.log(
-                    `${target.fullName}'s creations were dispelled by ${this.name}`
+                    `${target.fullName}'s creations were dispelled by ${this.name}`,
                 );
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
-            }
-            else {
+            } else {
                 this._board.sound.play("killcreature");
                 await target.kill();
                 targetKilled = true;
@@ -109,7 +120,7 @@ export class AttackSpell extends Spell {
         if (targetKilled) {
             this._board.logger.log(
                 `${target.fullName} was defeated by ${this.name}`,
-                Colour.Red
+                Colour.Red,
             );
         }
 
@@ -120,7 +131,8 @@ export class AttackSpell extends Spell {
         let description = ` Attack with ${this.name}.`;
 
         if (this.properties.destroyWizardCreatures) {
-            description += " If successfully cast on a wizard, it will destroy their creations.";
+            description +=
+                " If successfully cast on a wizard, it will destroy their creations.";
         }
 
         return (description + " " + super.description).trim();

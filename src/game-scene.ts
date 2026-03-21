@@ -24,7 +24,11 @@ import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { BoardPhase } from "./gameobjects/enums/boardphase";
-import { GameScenarioData, GameSetupData, GameSetupPlayerType } from "./gameobjects/interfaces/ui";
+import {
+    GameScenarioData,
+    GameSetupData,
+    GameSetupPlayerType,
+} from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
 
 import { Scene } from "phaser";
@@ -40,7 +44,9 @@ export class GameScene extends Scene {
      * randomly picking difficulty for computer players. Values are between 0.1
      * and 1.0, where 1.0 is the hardest difficulty.
      */
-    private static readonly DIFFICULTY_DISTRIBUTION: number[] = [.5, .6, .4, .7, .3, .8, .2, .9, .1, 1];
+    private static readonly DIFFICULTY_DISTRIBUTION: number[] = [
+        0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 1,
+    ];
 
     constructor() {
         super({
@@ -84,16 +90,12 @@ export class GameScene extends Scene {
             this.load.plugin(
                 "rexcolorreplacepipelineplugin",
                 rexcolorreplacepipelineplugin,
-                true
+                true,
             );
         }
 
         if (!this.plugins.get("rexperlinplugin")) {
-            this.load.plugin(
-                "rexperlinplugin",
-                rexperlinplugin,
-                true
-            );
+            this.load.plugin("rexperlinplugin", rexperlinplugin, true);
         }
 
         this.load.audioSprite("classicsounds", classicSoundsJson, [
@@ -106,26 +108,30 @@ export class GameScene extends Scene {
         this.loadEnhancedData();
     }
 
-
     async loadEnhancedData(): Promise<void> {
         // Scan the assets/data/enhanced folder and load all JSON files to find
         // any additional spells and their associated units and textures
-        const enhancedSpells: Record<string, any> = import.meta.glob("../assets/data/enhanced/*.json", { eager: true });
+        const enhancedSpells: Record<string, any> = import.meta.glob(
+            "../assets/data/enhanced/*.json",
+            { eager: true },
+        );
         for (let [path, spellData] of Object.entries(enhancedSpells)) {
             const textures: any[] = spellData.spell?.unit?.textures || [];
-            console.debug(`Loading enhanced spell ${spellData.spell.name}: ${path}`);
-            
+            console.debug(
+                `Loading enhanced spell ${spellData.spell.name}: ${path}`,
+            );
+
             if (textures.length) {
                 // Load any additional textures for this unit
                 const textureKey: string = spellData.spell.unit.id;
                 for (let texture of textures) {
-                    const texturePath: string = import.meta.resolve(`../images/units/enhanced/${texture.image}`);
-                    console.debug(`  Loading texture for unit ${textureKey}: ${texturePath}`);
-                    this.load.atlas(
-                        textureKey,
-                        texturePath,
-                        texture
+                    const texturePath: string = import.meta.resolve(
+                        `../images/units/enhanced/${texture.image}`,
                     );
+                    console.debug(
+                        `  Loading texture for unit ${textureKey}: ${texturePath}`,
+                    );
+                    this.load.atlas(textureKey, texturePath, texture);
                 }
             }
 
@@ -134,27 +140,30 @@ export class GameScene extends Scene {
 
             // Register the unit (if any)
             if (spellData.spell.unit) {
-                Spell.spells[spellData.spell.id].unitId = spellData.spell.unit.id;
+                Spell.spells[spellData.spell.id].unitId =
+                    spellData.spell.unit.id;
                 Piece.units[spellData.spell.unit.id] = spellData.spell.unit;
-                Piece.units[spellData.spell.unit.id].group = spellData.spell.group;
+                Piece.units[spellData.spell.unit.id].group =
+                    spellData.spell.group;
             }
         }
     }
 
     create(): void {
-
         for (let [key, unit] of Object.entries(Piece.units)) {
             for (let direction of ["l", "r"]) {
                 this.anims.create({
                     key: `${key}_${direction}`,
                     frames: ((unit as any).animFrames || []).map(
                         (frame: any) => {
-                            const group: string = unit.group ? unit.id : "classicunits";
+                            const group: string = unit.group
+                                ? unit.id
+                                : "classicunits";
                             return {
                                 key: group,
                                 frame: `${key}_${direction}_${frame}`,
                             };
-                        }
+                        },
                     ),
                     frameRate: 9 - ((unit as any).animSpeed || 3),
                     repeat: -1,
@@ -226,14 +235,17 @@ export class GameScene extends Scene {
         });
 
         // Start a scenario (a predefined board state)
-        this.game.events.on("start-scenario", async (scenarioData: GameScenarioData) => {
-            await this.startScenario(scenarioData);
-        });
+        this.game.events.on(
+            "start-scenario",
+            async (scenarioData: GameScenarioData) => {
+                await this.startScenario(scenarioData);
+            },
+        );
     }
 
     /**
      * Start a new game with the given initialisation data.
-     * 
+     *
      * @param data Initialisation data for the game.
      */
     async startGame(data: GameSetupData): Promise<void> {
@@ -244,7 +256,7 @@ export class GameScene extends Scene {
             this,
             1,
             data?.board?.width,
-            data?.board?.height
+            data?.board?.height,
         );
 
         if (data.classicSpells) {
@@ -255,12 +267,11 @@ export class GameScene extends Scene {
             console.debug(
                 "The following spells will be excluded from random selection:",
                 Spell.getAllSpells()
-                    .filter(spell => !this.board.spellFilter(spell))
-                    .map(spell => spell.name)
-                    .join(", ")
+                    .filter((spell) => !this.board.spellFilter(spell))
+                    .map((spell) => spell.name)
+                    .join(", "),
             );
-        }
-        else {
+        } else {
             this.board.spellFilter = () => true;
             console.debug("All spells will be included in random selection.");
         }
@@ -268,15 +279,18 @@ export class GameScene extends Scene {
         for (let player of data.players) {
             // Get distributed difficulty between 0.1 and 1.0, favouring
             // middle values
-            const difficulty: number = player.difficulty ||
-                Board.weightedRandomPick(
+            const difficulty: number =
+                player.difficulty ||
+                this.board.rng.weightedRandomPick(
                     GameScene.DIFFICULTY_DISTRIBUTION,
-                    -3
+                    -3,
                 );
 
             this.board.addPlayer({
                 name: player.name,
-                type: player.computerControlled ? GameSetupPlayerType.Computer : GameSetupPlayerType.Local,
+                type: player.computerControlled
+                    ? GameSetupPlayerType.Computer
+                    : GameSetupPlayerType.Local,
                 difficulty: player.difficulty || difficulty,
             });
         }
@@ -285,7 +299,14 @@ export class GameScene extends Scene {
 
         for (let i = 0; i < (data?.spellCount ?? 12) - 1; i++) {
             this.board.players.forEach((player: Player) => {
-                this.board.addSpell(player, Spell.getRandomSpell(false, this.board.spellFilter));
+                this.board.addSpell(
+                    player,
+                    Spell.getRandomSpell(
+                        this.board.rng,
+                        false,
+                        this.board.spellFilter,
+                    ),
+                );
             });
         }
 
@@ -300,7 +321,7 @@ export class GameScene extends Scene {
 
     /**
      * Start a predefined scenario.
-     * 
+     *
      * @param scenarioData Scenario data to load.
      */
     async startScenario(scenarioData: GameScenarioData): Promise<void> {
@@ -311,14 +332,16 @@ export class GameScene extends Scene {
             this,
             1,
             scenarioData.board.width,
-            scenarioData.board.height
+            scenarioData.board.height,
         );
         if (!scenarioData.players?.length) {
             throw new Error("Scenario data must include players array");
         }
         if (scenarioData.corpses?.length) {
             for (let corpseData of scenarioData.corpses) {
-                const pieceProperties = Piece.getPieceProperties(corpseData.type);
+                const pieceProperties = Piece.getPieceProperties(
+                    corpseData.type,
+                );
                 const piece: Piece = await this.board.addPiece({
                     ...pieceProperties,
                     owner: null,
@@ -326,41 +349,52 @@ export class GameScene extends Scene {
                     y: corpseData.position.y,
                     unitType: pieceProperties.unitType || UnitType.Creature,
                 });
-                console.debug(`Adding corpse of type ${corpseData.type} at (${corpseData.position.x}, ${corpseData.position.y})`);
+                console.debug(
+                    `Adding corpse of type ${corpseData.type} at (${corpseData.position.x}, ${corpseData.position.y})`,
+                );
                 if (corpseData.statuses?.length) {
                     for (let statusName of corpseData.statuses) {
-                        const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                        const status: UnitStatus =
+                            UnitStatus[statusName as keyof typeof UnitStatus];
                         piece.addStatus(status);
                     }
                 }
                 if (piece.hasStatus(UnitStatus.NoCorpse)) {
                     this.board.removePiece(piece.id);
-                    console.debug(`  Piece type ${corpseData.type} has NoCorpse status; removing piece after creation`);
-                }
-                else {
+                    console.debug(
+                        `  Piece type ${corpseData.type} has NoCorpse status; removing piece after creation`,
+                    );
+                } else {
                     piece.kill(true);
-                    console.debug(`  Piece type ${corpseData.type} marked as dead to represent corpse`);
+                    console.debug(
+                        `  Piece type ${corpseData.type} marked as dead to represent corpse`,
+                    );
                 }
             }
         }
         for (let player of scenarioData.players) {
             const currentPlayer: Player = this.board.addPlayer({
                 name: player.name,
-                type: player.computerControlled ? GameSetupPlayerType.Computer : GameSetupPlayerType.Local,
-                difficulty: player.difficulty || Board.weightedRandomPick(
-                    GameScene.DIFFICULTY_DISTRIBUTION,
-                    -3
-                ),
-            })
+                type: player.computerControlled
+                    ? GameSetupPlayerType.Computer
+                    : GameSetupPlayerType.Local,
+                difficulty:
+                    player.difficulty ||
+                    this.board.rng.weightedRandomPick(
+                        GameScene.DIFFICULTY_DISTRIBUTION,
+                        -3,
+                    ),
+            });
             const wizard: Wizard = this.board.addWizard({
                 owner: currentPlayer,
                 x: player.position.x,
                 y: player.position.y,
-                wizCode: player.wizCode || Wizard.randomWizCode()
+                wizCode: player.wizCode || Wizard.randomWizCode(),
             });
             if (player.statuses?.length) {
                 for (let statusName of player.statuses) {
-                    const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
+                    const status: UnitStatus =
+                        UnitStatus[statusName as keyof typeof UnitStatus];
                     wizard.addStatus(status);
                 }
             }
@@ -372,48 +406,69 @@ export class GameScene extends Scene {
                         // If spell is just '*', get all types
                         if (spellName === "*") {
                             const allSpells = Spell.getAllSpells();
-                            console.log(`Adding all ${allSpells.length} spells to player ${currentPlayer.name}`);
+                            console.log(
+                                `Adding all ${allSpells.length} spells to player ${currentPlayer.name}`,
+                            );
                             for (let spell of allSpells) {
                                 this.board.addSpell(
                                     currentPlayer,
-                                    Spell.getSpellProperties(spell.name)
+                                    Spell.getSpellProperties(spell.name),
                                 );
                             }
-                        }
-                        else {
-                            const spellType: string = spellName.substring(1).toLowerCase();
-                            const spellsToAdd = Spell.getSpellsByType(Object.values(SpellType).includes(spellType as SpellType) ? spellType as SpellType : SpellType.Summon);
-                            console.log(`Adding ${spellsToAdd.length} ${spellType} spells to player ${currentPlayer.name}`);
+                        } else {
+                            const spellType: string = spellName
+                                .substring(1)
+                                .toLowerCase();
+                            const spellsToAdd = Spell.getSpellsByType(
+                                Object.values(SpellType).includes(
+                                    spellType as SpellType,
+                                )
+                                    ? (spellType as SpellType)
+                                    : SpellType.Summon,
+                            );
+                            console.log(
+                                `Adding ${spellsToAdd.length} ${spellType} spells to player ${currentPlayer.name}`,
+                            );
                             for (let spell of spellsToAdd) {
                                 this.board.addSpell(
                                     currentPlayer,
-                                    Spell.getSpellProperties(spell)
+                                    Spell.getSpellProperties(spell),
                                 );
                             }
                         }
                     } else {
                         this.board.addSpell(
                             currentPlayer,
-                            Spell.getSpellProperties(spellName)
+                            Spell.getSpellProperties(spellName),
                         );
                     }
                 }
             }
             if (player.pieces?.length) {
                 for (let pieceData of player.pieces) {
-                    const pieceProperties = Piece.getPieceProperties(pieceData.type);
+                    const pieceProperties = Piece.getPieceProperties(
+                        pieceData.type,
+                    );
                     const piece: Piece = await this.board.addPiece({
                         ...pieceProperties,
                         owner: currentPlayer,
                         x: pieceData.position.x,
                         y: pieceData.position.y,
-                        unitType: pieceProperties.unitType || UnitType.Creature
+                        unitType: pieceProperties.unitType || UnitType.Creature,
                     });
                     if (pieceData.statuses?.length) {
                         for (let statusName of pieceData.statuses) {
-                            const status: UnitStatus = UnitStatus[statusName as keyof typeof UnitStatus];
-                            if (status === UnitStatus.Undead && !piece.hasStatus(UnitStatus.Undead)) {
-                                console.log(`Setting piece ${piece.name} as raised undead`);
+                            const status: UnitStatus =
+                                UnitStatus[
+                                    statusName as keyof typeof UnitStatus
+                                ];
+                            if (
+                                status === UnitStatus.Undead &&
+                                !piece.hasStatus(UnitStatus.Undead)
+                            ) {
+                                console.log(
+                                    `Setting piece ${piece.name} as raised undead`,
+                                );
                                 piece.raisedDead = true;
                             }
                             piece.addStatus(status);
@@ -426,7 +481,8 @@ export class GameScene extends Scene {
         if (scenarioData.cheats) {
             Board.CHEAT_FORCE_HIT = scenarioData.cheats.forceHit ?? null;
             Board.CHEAT_FORCE_CAST = scenarioData.cheats.forceCast ?? null;
-            Board.CHEAT_SHORT_DELAY = scenarioData.cheats.shortDelay ?? Board.CHEAT_SHORT_DELAY;
+            Board.CHEAT_SHORT_DELAY =
+                scenarioData.cheats.shortDelay ?? Board.CHEAT_SHORT_DELAY;
         }
 
         setTimeout(async () => {
@@ -436,7 +492,7 @@ export class GameScene extends Scene {
             }
             await this.board.resumeGame(
                 scenarioData.currentPlayerIndex || 0,
-                phase
+                phase,
             );
         }, Board.DEFAULT_DELAY);
     }

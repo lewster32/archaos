@@ -6,5 +6,5 @@ export enum BoardLayer {
     FloorCursors,
     PathCursors,
     Pieces,
-    Effects
+    Effects,
 }

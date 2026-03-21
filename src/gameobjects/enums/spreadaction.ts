@@ -7,7 +7,7 @@ export enum SpreadAction {
      * No action taken.
      */
     None = "none",
-    
+
     /**
      * Shrink away to nothing.
      */
@@ -16,5 +16,5 @@ export enum SpreadAction {
     /**
      * Spread to adjacent tiles.
      */
-    Spread = "spread"
+    Spread = "spread",
 }

@@ -3,5 +3,5 @@ export enum BoardPhase {
     Spellbook = "spellbook",
     Casting = "casting",
     Spreading = "spreading",
-    Moving = "moving"
+    Moving = "moving",
 }

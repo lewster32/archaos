@@ -10,7 +10,11 @@
     />
     <LoadingScreen v-if="loadingProgress < 1" />
     <GameMenu v-else-if="!gameStarted" @start="onGameStart" />
-    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted && spellbook" />
+    <Spellbook
+        :data="spellbook"
+        @select="spellSelect"
+        v-if="gameStarted && spellbook"
+    />
     <Log :logs="logs" />
     <Minimap
         :pieces="pieces"
@@ -37,23 +41,23 @@
 
 <script setup lang="ts">
 // Components
-import Spellbook from './Spellbook.vue';
-import Log from './Log.vue';
-import Minimap from './Minimap.vue';
-import GameMenu from './GameMenu.vue';
-import GameControls from './GameControls.vue';
-import LoadingScreen from './LoadingScreen.vue';
-import UnitInfo from './UnitInfo.vue';
+import Spellbook from "./Spellbook.vue";
+import Log from "./Log.vue";
+import Minimap from "./Minimap.vue";
+import GameMenu from "./GameMenu.vue";
+import GameControls from "./GameControls.vue";
+import LoadingScreen from "./LoadingScreen.vue";
+import UnitInfo from "./UnitInfo.vue";
 
 // Phaser game launcher
-import { launch } from '../game/game';
-import { loadingProgress } from '../game/loading-state';
+import { launch } from "../game/game";
+import { loadingProgress } from "../game/loading-state";
 
 // Vue and types
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
-import type { Ref } from 'vue';
-import type { Game, Events } from 'phaser';
-import type { Spell } from '../gameobjects/spells/spell';
+import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
+import type { Ref } from "vue";
+import type { Game, Events } from "phaser";
+import type { Spell } from "../gameobjects/spells/spell";
 import type {
     SpellbookData,
     Box,
@@ -61,15 +65,15 @@ import type {
     SpellbookOpenEventData,
     GameSetupData,
     GameScenarioData,
-} from '../gameobjects/interfaces/ui';
-import { Logger } from '../gameobjects/services/logger';
-import type { Log as LogEntry } from '../gameobjects/services/logger';
-import { EventType } from '../gameobjects/enums/eventtype';
-import { Piece } from '../gameobjects/piece';
+} from "../gameobjects/interfaces/ui";
+import { Logger } from "../gameobjects/services/logger";
+import type { Log as LogEntry } from "../gameobjects/services/logger";
+import { EventType } from "../gameobjects/enums/eventtype";
+import { Piece } from "../gameobjects/piece";
 
 const container: Ref<HTMLDivElement | null> = ref(null);
 const gameInstance: Ref<Game | null> = ref(null);
-const containerId: Ref<string> = ref('game-container');
+const containerId: Ref<string> = ref("game-container");
 const eventEmitter: Ref<Events.EventEmitter | null> = ref(null);
 
 const canCancel: Ref<boolean> = ref(false);
@@ -114,7 +118,7 @@ const dismount = () => {
 };
 
 const onGameStart = (data: GameSetupData) => {
-    eventEmitter.value?.emit('start-game', data);
+    eventEmitter.value?.emit("start-game", data);
     gameStarted.value = true;
 };
 
@@ -129,7 +133,7 @@ const closeUnitInfo = () => {
 onMounted(async () => {
     await nextTick();
 
-    container.value?.addEventListener('transitionend', () => {
+    container.value?.addEventListener("transitionend", () => {
         setTimeout(() => {
             gameInstance.value!.scale.updateBounds();
         }, 10);
@@ -139,7 +143,7 @@ onMounted(async () => {
     eventEmitter.value = gameInstance.value.events;
 
     // Listen for logs via Logger's own stable emitter (survives HMR game restarts)
-    Logger.getEventEmitter().on('log', (log: LogEntry) => {
+    Logger.getEventEmitter().on("log", (log: LogEntry) => {
         logs.value.push({
             message: log.message,
             id: logs.value.length,
@@ -148,17 +152,20 @@ onMounted(async () => {
         });
     });
 
-    eventEmitter.value.on(EventType.SpellbookOpen, (event: SpellbookOpenEventData) => {
-        spellbook.value.show = true;
-        spellbook.value.spells = event.data.spells;
-        spellbook.value.caster = event.data.caster;
-        spellbook.value.onSelect = event.callback;
-        if (event.data.soloMode) {
-            nextTick(() => {
-                spellbook.value.minimised = false;
-            });
-        }
-    });
+    eventEmitter.value.on(
+        EventType.SpellbookOpen,
+        (event: SpellbookOpenEventData) => {
+            spellbook.value.show = true;
+            spellbook.value.spells = event.data.spells;
+            spellbook.value.caster = event.data.caster;
+            spellbook.value.onSelect = event.callback;
+            if (event.data.soloMode) {
+                nextTick(() => {
+                    spellbook.value.minimised = false;
+                });
+            }
+        },
+    );
 
     eventEmitter.value.on(EventType.SpellbookClose, () => {
         spellbook.value.show = false;
@@ -167,12 +174,15 @@ onMounted(async () => {
         spellbook.value.onSelect = null;
     });
 
-    eventEmitter.value.on(EventType.BoardUpdate, (data: BoardUpdateEventData) => {
-        pieces.value = data.pieces;
-        board.value = data.board;
-        balance.value = data.balance;
-        balanceShift.value = data.balanceShift;
-    });
+    eventEmitter.value.on(
+        EventType.BoardUpdate,
+        (data: BoardUpdateEventData) => {
+            pieces.value = data.pieces;
+            board.value = data.board;
+            balance.value = data.balance;
+            balanceShift.value = data.balanceShift;
+        },
+    );
 
     eventEmitter.value.on(EventType.CancelAvailable, (state: boolean) => {
         canCancel.value = state;
@@ -193,7 +203,7 @@ onMounted(async () => {
 
     // Check for query params to auto-start a game scenario
     const urlParams = new URLSearchParams(globalThis.location.search);
-    const scenario = urlParams.get('scenario');
+    const scenario = urlParams.get("scenario");
 
     if (scenario) {
         console.log(`Auto-starting scenario: ${scenario}`);
@@ -201,13 +211,16 @@ onMounted(async () => {
             `${import.meta.env.BASE_URL}scenarios/${scenario.toLowerCase().trim()}.json`,
         );
         if (scenarioResponse.ok) {
-            const scenarioData: GameScenarioData = await scenarioResponse.json();
+            const scenarioData: GameScenarioData =
+                await scenarioResponse.json();
             gameStarted.value = true;
             setTimeout(() => {
-                eventEmitter.value?.emit('start-scenario', scenarioData);
+                eventEmitter.value?.emit("start-scenario", scenarioData);
             }, 500);
         } else {
-            console.error(`Failed to load scenario data for scenario: ${scenario}`);
+            console.error(
+                `Failed to load scenario data for scenario: ${scenario}`,
+            );
         }
     }
 
@@ -218,14 +231,16 @@ onMounted(async () => {
 
 onUnmounted(() => {
     eventEmitter.value?.removeAllListeners();
-    Logger.getEventEmitter().removeAllListeners('log');
+    Logger.getEventEmitter().removeAllListeners("log");
     gameInstance.value?.destroy(false);
 });
 </script>
 
 <style lang="scss" scoped>
 .container {
-    transition: margin-right 0.33s ease-in-out, filter 0.5s;
+    transition:
+        margin-right 0.33s ease-in-out,
+        filter 0.5s;
     &--nudge {
         margin-right: 350px;
     }

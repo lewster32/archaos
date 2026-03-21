@@ -34,7 +34,7 @@ export class Player extends Model {
      * A map of this player's spells, keyed by spell ID. This is used to manage
      */
     private readonly _spells: Map<number, Spell>;
-    
+
     /**
      * The colour of this player, represented as a hexadecimal RGB value. This
      * is used to tint the background, the wizard marker, the outlines on pieces
@@ -48,7 +48,7 @@ export class Player extends Model {
     private _castingPiece: Piece | null;
 
     /**
-     * The currently selected spell for this player, if any. This is set when 
+     * The currently selected spell for this player, if any. This is set when
      * the player picks a spell from their spell list.
      */
     private _selectedSpell: Spell | null;
@@ -92,13 +92,18 @@ export class Player extends Model {
 
     /**
      * Creates a new Player instance.
-     * 
+     *
      * @param board A reference to the game board.
      * @param id The unique ID for this player.
      * @param config The configuration for this player, including their name, type, and difficulty (if applicable).
      * @param colour The colour of this player, represented as a hexadecimal RGB value.
      */
-    constructor(board: Board, id: number, config: PlayerConfig, colour: number) {
+    constructor(
+        board: Board,
+        id: number,
+        config: PlayerConfig,
+        colour: number,
+    ) {
         super(id);
         if (!config) {
             throw new Error("Player must be given a config");
@@ -112,8 +117,14 @@ export class Player extends Model {
         this._defeated = false;
         this._wizcode = config.wizcode || Wizard.randomWizCode();
         if (config.type === GameSetupPlayerType.Computer) {
-            this._remote = new ComputerWizard(board, this, config.difficulty ?? 0.5);
-            console.log(`${this.name} will be controlled by AI, with difficulty ${this.ai.difficulty}.`);
+            this._remote = new ComputerWizard(
+                board,
+                this,
+                config.difficulty ?? 0.5,
+            );
+            console.log(
+                `${this.name} will be controlled by AI, with difficulty ${this.ai.difficulty}.`,
+            );
         }
     }
 
@@ -144,14 +155,16 @@ export class Player extends Model {
     get castingPiece(): Piece | null {
         return this._castingPiece;
     }
-    
+
     set castingPiece(piece: Piece | null) {
         if (piece && piece.owner !== this) {
-            throw new Error("Cannot set casting piece to a piece not owned by this player");
+            throw new Error(
+                "Cannot set casting piece to a piece not owned by this player",
+            );
         }
         this._castingPiece = piece;
     }
-    
+
     get remote(): RemotePlayer | null {
         return this._remote;
     }
@@ -162,12 +175,9 @@ export class Player extends Model {
      */
     async defeat(): Promise<void> {
         this._defeated = true;
-        this.board.logger.log(
-            `Game over for ${this.name}`,
-            Colour.Red
-        );
+        this.board.logger.log(`Game over for ${this.name}`, Colour.Red);
         await this.board.sound.playAsync("deadwizard2", {
-            delay: Board.DEFAULT_DELAY
+            delay: Board.DEFAULT_DELAY,
         });
         await this.destroyCreations();
         // Let's really dwell on this for a bit
@@ -177,29 +187,39 @@ export class Player extends Model {
     /**
      * Destroys all non-wizard pieces owned by this player, with a short delay
      * and effect for each.
-     * 
+     *
      * @returns A promise that resolves when all non-wizard pieces owned by this player have been destroyed.
      */
     async destroyCreations(): Promise<any[]> {
         return Promise.all(
-            this.board.getPiecesByOwner(this)
-                .filter(p => !p.hasStatus(UnitStatus.Wizard))
+            this.board
+                .getPiecesByOwner(this)
+                .filter((p) => !p.hasStatus(UnitStatus.Wizard))
                 .map((piece: Piece) => {
                     return new Promise((resolve) => {
-                        setTimeout(async () => {
-                            this.board.sound.play("disbelieve");
-                            await this.board.playEffect(EffectType.DisbelieveHit, piece.sprite.getCenter(), null, piece);
-                            await piece.destroy();
-                            resolve(true);
-                        }, 250 + Math.random() * 500);
-                    })
-                }));
+                        setTimeout(
+                            async () => {
+                                this.board.sound.play("disbelieve");
+                                await this.board.playEffect(
+                                    EffectType.DisbelieveHit,
+                                    piece.sprite.getCenter(),
+                                    null,
+                                    piece,
+                                );
+                                await piece.destroy();
+                                resolve(true);
+                            },
+                            250 + Math.random() * 500,
+                        );
+                    });
+                }),
+        );
     }
 
     /**
      * Adds a spell to this player's spell list. The spell's owner will be set
      * to this player.
-     * 
+     *
      * @param spell The spell to add to this player's spell list.
      */
     addSpell(spell: Spell) {
@@ -209,7 +229,7 @@ export class Player extends Model {
 
     /**
      * Gets the currently selected spell for this player.
-     * 
+     *
      * @returns The currently selected spell, or null if no spell is selected.
      */
     get selectedSpell(): Spell | null {
@@ -219,7 +239,7 @@ export class Player extends Model {
     /**
      * Selects a spell from this player's spell list by its ID. The selected
      * spell will be set as the currently selected spell for this player.
-     * 
+     *
      * @param id The ID of the spell to select.
      * @returns A promise that resolves to the selected spell.
      */
@@ -234,7 +254,7 @@ export class Player extends Model {
 
     /**
      * Uses the currently selected spell, if any.
-     * 
+     *
      * @returns A promise that resolves to the used spell, or null if no spell is selected or the spell cannot be used.
      */
     async useSpell(): Promise<Spell | null> {
@@ -254,7 +274,7 @@ export class Player extends Model {
      * Discards the currently selected spell, if any. This will remove the spell
      * from the player's spell list if it does not persist, or reset its cast
      * times if it does.
-     * 
+     *
      * @returns A promise that resolves to the discarded spell, or null if no spell is selected.
      */
     async discardSpell(): Promise<Spell | null> {
@@ -262,8 +282,7 @@ export class Player extends Model {
             const spell: Spell = this._selectedSpell;
             if (spell.persist) {
                 spell.resetCastTimes();
-            }
-            else {
+            } else {
                 this._spells.delete(this._selectedSpell.id);
             }
             this._selectedSpell = null;
@@ -275,7 +294,7 @@ export class Player extends Model {
     /**
      * Returns a string representation of this player, which is simply their
      * name.
-     * 
+     *
      * @returns A string representation of this player.
      */
     toString(): string {

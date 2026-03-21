@@ -62,7 +62,7 @@ export class Cursor {
 
     /**
      * Create a new Cursor instance.
-     * 
+     *
      * @param board The board the cursor is associated with
      */
     constructor(board: Board) {
@@ -88,8 +88,7 @@ export class Cursor {
             async (event: KeyboardEvent) => {
                 if (event.key === Cursor.CANCEL_KEY) {
                     await this.action(InputType.Cancel);
-                }
-                else {
+                } else {
                     // Bind 1-8 keys to highlight owned units
                     const keyNumber: number = Number.parseInt(event.key, 10);
                     if (
@@ -97,10 +96,12 @@ export class Cursor {
                         keyNumber >= 1 &&
                         keyNumber <= 8
                     ) {
-                        this._board.highlightOwnedUnitsForPlayerIndex(keyNumber - 1);
+                        this._board.highlightOwnedUnitsForPlayerIndex(
+                            keyNumber - 1,
+                        );
                     }
                 }
-            }
+            },
         );
 
         this._board.scene.game.events.on(EventType.Cancel, async () => {
@@ -121,20 +122,20 @@ export class Cursor {
 
     /**
      * Update the cursor position and type based on the current pointer location.
-     * 
+     *
      * @param force Whether to force an update even if the position hasn't changed
      * @returns A promise that resolves to the type of action allowed at the new cursor position
      */
     async update(force?: boolean): Promise<ActionType> {
-        if (!this._enabled ||this._board.state === BoardState.Busy) {
+        if (!this._enabled || this._board.state === BoardState.Busy) {
             return ActionType.None;
         }
 
-        const pointer: Input.Pointer =
-            this._board.scene.input.activePointer;
+        const pointer: Input.Pointer = this._board.scene.input.activePointer;
 
-        const translatedIsoPosition: Geom.Point =
-            this.translateCursorPosition(pointer.position);
+        const translatedIsoPosition: Geom.Point = this.translateCursorPosition(
+            pointer.position,
+        );
 
         // Only perform one intent check per tile (unless forced)
         if (
@@ -160,7 +161,7 @@ export class Cursor {
         this._image.setVisible(true);
 
         const allowedAction: ActionType = await this._board.rules.processIntent(
-            this._board
+            this._board,
         );
 
         const selectedPiece: Piece | null = this._board.selected;
@@ -190,11 +191,11 @@ export class Cursor {
                     const neighbours: Piece[] =
                         this._board.getAdjacentPiecesAtPosition(
                             this._position,
-                            (piece: Piece) => piece !== selectedPiece
+                            (piece: Piece) => piece !== selectedPiece,
                         );
                     if (
                         neighbours?.some((neighbour: Piece) =>
-                            selectedPiece.canEngagePiece(neighbour)
+                            selectedPiece.canEngagePiece(neighbour),
                         )
                     ) {
                         this.type = CursorType.Warning;
@@ -210,7 +211,7 @@ export class Cursor {
                     }
                     this.type = Cursor.getMovementDirectionType(
                         selectedPiece?.position,
-                        this._position
+                        this._position,
                     );
                 }
                 break;
@@ -219,7 +220,8 @@ export class Cursor {
                     this._board.rangeGizmo.showPath(this._position);
                 }
                 this._image.setFlipX(
-                    Board.toIsometric(this._position).x < Board.toIsometric(selectedPiece.position).x
+                    Board.toIsometric(this._position).x <
+                        Board.toIsometric(selectedPiece.position).x,
                 );
                 this.type = CursorType.Mount;
                 break;
@@ -238,10 +240,7 @@ export class Cursor {
         }
 
         const isoPosition: Geom.Point = this._board.getIsoPosition(
-            new Geom.Point(
-                translatedIsoPosition.x,
-                translatedIsoPosition.y
-            )
+            new Geom.Point(translatedIsoPosition.x, translatedIsoPosition.y),
         );
 
         this._image.x = isoPosition.x + Cursor.OFFSET.x;
@@ -252,7 +251,7 @@ export class Cursor {
 
     /**
      * Perform an action based on the current cursor position and input type.
-     * 
+     *
      * @param input The type of input that triggered the action, e.g. click or cancel
      * @returns A promise that resolves when the action is complete
      */
@@ -266,7 +265,7 @@ export class Cursor {
         const actionState: ActionType = await this._board.rules.processAction(
             this._board,
             intendedAction,
-            input
+            input,
         );
 
         if (actionState === ActionType.None) {
@@ -283,20 +282,20 @@ export class Cursor {
                     return;
                 }
                 // TODO: This is problematic - if the unit successfully attacks
-                // and kills the target, we have to wait for the move before we 
+                // and kills the target, we have to wait for the move before we
                 // can check for ranged attack. This logic doesn't belong in
                 // the cursor class.
                 if (selected.canRangedAttack) {
                     this._board.sound.play("bowselecta");
                     this._board.logger.log(
                         `${selected.name}'s turn to ranged attack`,
-                        Colour.Yellow
+                        Colour.Yellow,
                     );
                     await this._board.rangeGizmo.showSimpleRange(
                         this._board.selected.position,
                         this._board.selected.stats.range,
                         CursorType.RangeRangedAttack,
-                        true
+                        true,
                     );
                 } else {
                     selected.turnOver = true;
@@ -316,8 +315,7 @@ export class Cursor {
         this._image.setFrame(type);
         if (type === CursorType.Idle) {
             this._image.setDepth(this._image.y - 8);
-        }
-        else {
+        } else {
             this._image.setDepth(this._image.y + 8);
         }
     }
@@ -349,17 +347,11 @@ export class Cursor {
      * @param vector
      * @returns
      */
-    private translateCursorPosition(
-        vector: PMath.Vector2
-    ): Geom.Point {
-        const point: PMath.Vector2 = new PMath.Vector2(
-            vector.x,
-            vector.y
-        );
+    private translateCursorPosition(vector: PMath.Vector2): Geom.Point {
+        const point: PMath.Vector2 = new PMath.Vector2(vector.x, vector.y);
 
         point.x -=
-            this._board.scene.game.scale.width / 2 -
-            Board.DEFAULT_CELLSIZE;
+            this._board.scene.game.scale.width / 2 - Board.DEFAULT_CELLSIZE;
         point.y -= Board.DEFAULT_CELLSIZE * 1.5;
 
         point.x -= this._board.scene.cameras.main.x;
@@ -378,9 +370,9 @@ export class Cursor {
 
     /**
      * Get the cursor angle type from a direction index.
-     * 
+     *
      * @param angle Direction index (0-8) where 0 is down-right and increases clockwise back to 8
-     * @returns 
+     * @returns
      */
     static getCursorAngle(angle: number = 0): CursorType {
         switch (angle) {
@@ -407,14 +399,14 @@ export class Cursor {
 
     /**
      * Get the movement direction type from two points.
-     * 
+     *
      * @param fromPoint the starting point
      * @param toPoint the ending point
      * @returns the cursor type representing the direction
      */
     static getMovementDirectionType(
         fromPoint: Geom.Point,
-        toPoint: Geom.Point
+        toPoint: Geom.Point,
     ): CursorType {
         const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);
