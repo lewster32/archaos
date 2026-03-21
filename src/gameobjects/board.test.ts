@@ -45,12 +45,12 @@ describe("weightedRandomPick", () => {
         array: number[],
         weight: number,
         N: number,
-        logarithmic = false,
+        exponential = false,
     ): { counts: number[]; mean: number } {
         const counts = Array.from({ length: array.length }, () => 0);
         let total = 0;
         for (let i = 0; i < N; i++) {
-            const result = weightedRandomPick(rng, array, weight, logarithmic);
+            const result = weightedRandomPick(rng, array, weight, exponential);
             counts[result]++;
             total += result;
         }
@@ -136,41 +136,41 @@ describe("weightedRandomPick", () => {
         }
     });
 
-    describe("logarithmic mode", () => {
-        // Theoretical probabilities for n=4, weight=+2, logarithmic=true:
+    describe("exponential mode", () => {
+        // Theoretical probabilities for n=4, weight=+2, exponential=true:
         //   slot weights: exp(0), exp(2/3), exp(4/3), exp(2) ≈ [1, 1.948, 3.794, 7.389]
         //   total ≈ 14.131
         //   P ≈ [0.0708, 0.1378, 0.2685, 0.5230]
         //   mean ≈ 2.244  (vs linear mean ≈ 1.917 for the same weight)
 
-        it("logarithmic=false matches the default behaviour", () => {
+        it("exponential=false matches the default behaviour", () => {
             const lin = sample(indices, 2, N, false);
             const def = sample(indices, 2, N);
             // Both should produce a similar mean — within noise of each other
             expect(Math.abs(lin.mean - def.mean)).toBeLessThan(0.15);
         });
 
-        it("logarithmic mode biases more strongly than linear for positive weight", () => {
+        it("exponential mode biases more strongly than linear for positive weight", () => {
             const lin = sample(indices, 2, N, false);
             const log = sample(indices, 2, N, true);
             // Log mean ≈ 2.24, linear mean ≈ 1.92 — log should be clearly higher
             expect(log.mean).toBeGreaterThan(lin.mean + 0.1);
         });
 
-        it("logarithmic mode biases more strongly than linear for negative weight", () => {
+        it("exponential mode biases more strongly than linear for negative weight", () => {
             const lin = sample(indices, -2, N, false);
             const log = sample(indices, -2, N, true);
             // Log mean ≈ 0.76, linear mean ≈ 1.08 — log should be clearly lower
             expect(log.mean).toBeLessThan(lin.mean - 0.1);
         });
 
-        it("logarithmic positive and negative weights are mirrored", () => {
+        it("exponential positive and negative weights are mirrored", () => {
             const pos = sample(indices, 2, N, true);
             const neg = sample(indices, -2, N, true);
             expect(Math.abs(pos.mean + neg.mean - 3)).toBeLessThan(0.3);
         });
 
-        it("matches expected probabilities for logarithmic weight=+2", () => {
+        it("matches expected probabilities for exponential weight=+2", () => {
             const total =
                 Math.exp(0) + Math.exp(2 / 3) + Math.exp(4 / 3) + Math.exp(2);
             const expected = [
@@ -187,14 +187,14 @@ describe("weightedRandomPick", () => {
             }
         });
 
-        it("all elements are reachable in logarithmic mode", () => {
+        it("all elements are reachable in exponential mode", () => {
             const { counts } = sample(indices, 3, N, true);
             for (const count of counts) {
                 expect(count).toBeGreaterThan(0);
             }
         });
 
-        it("single-element array returns the only element in logarithmic mode", () => {
+        it("single-element array returns the only element in exponential mode", () => {
             expect(weightedRandomPick(rng, ["only"], 2, true)).toBe("only");
             expect(weightedRandomPick(rng, ["only"], -2, true)).toBe("only");
         });
