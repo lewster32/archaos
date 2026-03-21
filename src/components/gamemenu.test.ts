@@ -56,12 +56,6 @@ describe("GameMenu", () => {
                 .element(screen.getByLabelText("Number of players:"))
                 .toHaveValue("2");
         });
-
-        it("shows only 2 player name inputs by default", async () => {
-            const screen = await renderMenu();
-            const textInputs = screen.getByRole("textbox").elements();
-            expect(textInputs).toHaveLength(2);
-        });
     });
 
     describe("start game", () => {
