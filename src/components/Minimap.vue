@@ -282,7 +282,8 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
 }
 
 .minimap-info {
-    max-width: 400px;
+    max-width: calc(100vw - 2em);
+    width: 400px;
     &__close {
         position: absolute;
         z-index: 100;

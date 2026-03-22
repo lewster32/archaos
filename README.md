@@ -20,6 +20,8 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Up to 8 players (local only)
 - Computer-controlled opponents (they're a bit dim right now, but getting better)
 - All of the original spells and units
+- Some new spells and units!
+- Mobile support
 - Standalone client (via Tauri - not yet released, but can be built from source)
 
 <p align="center"><img src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
@@ -27,7 +29,8 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 ### Not yet features
 
 - Online multiplayer
-- All planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
+- Tutorials
+- The rest of the planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
 
 ## Play now! 🔥
 
@@ -40,7 +43,7 @@ You can also build a standalone version of the game with `npm run tauri:build`
 ### Requirements:
 
 - NodeJS (I'm using 24 at time of writing)
-- A desktop browser (mobile is _sorta_ supported, but not quite there yet)
+- A modern browser (desktop or mobile)
 
 You should be able to clone this repo to a local directory, and then just run `npm install` from the directory to install dependencies. Starting up a live development server is as simple as running `npm start` and to build, `npm run build` should do the job.
 

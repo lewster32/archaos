@@ -10,6 +10,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - Crunchy beeper sounds faithfully ported from the 48K Spectrum
 - Up to 8 local players with computer-controlled opponents
 - All original spells and units, plus new content in `assets/data/enhanced/`
+- Mobile support: responsive viewport resizing via media query, auto-pan to current wizard on turn start, horizontal drag-to-pan on narrow viewports
 - Quality-of-life: mouse-driven UI, inline help, safeguards (e.g. warns if no valid targets in range)
 - AI with difficulty-scaled tactical behaviour: threat-aware wizard movement, smart summon placement (general summons towards highest threat, spreading units near enemies, Magic Wood near wizard, Shadow Wood blocking LoS, Wall building contiguous barriers), illusion-suspicion Disbelieve preference (suspects high-strength low-cast-chance units; dampened by distance, boosted by threat proximity; tempered by world balance and known-non-illusion memory)
 
@@ -27,11 +28,13 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - **typescript-fsm** — FSM library used by `StateManager` to drive game phase transitions (not yet implemented in-game)
 - **Tauri 2** — standalone desktop packaging (uses system WebView2 on Windows); Steam integration planned
 - **Vitest + @vitest/coverage-v8** — unit testing and coverage reporting
+- **Playwright** — e2e testing (mobile camera panning scenarios)
 - **jsdom** — DOM environment for tests (mocks Canvas API and rAF in `vitest.setup.ts`)
 
 ## Project Structure
 
 ```
+e2e/                  Playwright e2e tests (mobile panning scenarios)
 src/
   components/       Vue UI components (Game, Spellbook, Log, Minimap, UnitInfo, SpellInfo)
   game/             Phaser GameScene initialisation
@@ -85,7 +88,7 @@ Model                     — base class; validates unique IDs
 | `Logger`         | Singleton service — emits structured events consumed by Vue components                                                                                                                                                    |
 | `ComputerWizard` | AI controller implementing the `RemotePlayer` interface; `autoCastSpell` dispatches to spell-class methods for casting                                                                                                    |
 | `SummonSpell`    | Summon spells; owns AI auto-cast logic via `autoCast(player)` and private tile-selection helpers                                                                                                                          |
-| `Cursor`         | Translates Phaser pointer input into game actions, and displays context-sensitive UI on the board surface                                                                                                                 |
+| `Cursor`         | Translates Phaser pointer input into game actions, displays context-sensitive UI on the board surface, and handles drag-to-pan on narrow viewports                                                                        |
 | `RangeGizmo`     | Calculates and displays movement ranges and A\* paths for pieces; owns `Node` (tile in range graph) and `Path` (ordered node sequence with cost)                                                                          |
 | `EffectEmitter`  | Config-driven particle effects (extends Phaser `ParticleEmitter`); definitions in `effects.json`                                                                                                                          |
 
@@ -125,17 +128,24 @@ Model                     — base class; validates unique IDs
 
 ## Testing
 
-The test suite is split into two projects via `vitest.config.ts`:
+The test suite is split into unit tests (Vitest) and e2e tests (Playwright):
 
-| Project      | Environment                | Scope                                           |
+| Suite        | Environment                | Scope                                           |
 | ------------ | -------------------------- | ----------------------------------------------- |
 | `unit`       | jsdom                      | `src/**/*.test.ts` (excludes `src/components/`) |
 | `components` | Real Chromium (Playwright) | `src/components/**/*.test.ts`                   |
+| `e2e`        | Chromium (Playwright)      | `e2e/**/*.spec.ts` — mobile panning scenarios   |
 
-Run all tests:
+Run all unit/component tests:
 
 ```bash
 npm test
+```
+
+Run e2e tests:
+
+```bash
+npm run test:e2e
 ```
 
 Run only component tests (browser):
@@ -159,6 +169,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 ### What's partially tested
 
+- `Cursor` — `translateCursorPosition`, `update`, `action`, drag-to-pan (including `panningEnabled` setter) fully tested via mock board; remaining gaps are Phaser-coupled visual methods
 - `Wizard` (~64%) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
 - `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A\* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
 - `TurmoilSpell` (~94%)
@@ -226,7 +237,7 @@ Component tests use `vitest-browser-vue` as the setup file, which registers `ren
 
 ## Build & Deploy
 
-**Requirements:** Node.js 24+, a desktop browser (mobile is partially supported). Standalone builds also require Rust 1.77.2+.
+**Requirements:** Node.js 24+, a modern browser (desktop or mobile). Standalone builds also require Rust 1.77.2+.
 
 ```bash
 npm install        # install dependencies

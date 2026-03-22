@@ -45,6 +45,7 @@
 
 dialog.callout {
     color: var(--color-foreground);
+    max-width: calc(100vw - 2em);
     &::backdrop {
         // checkerboard pattern
         background-image:

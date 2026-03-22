@@ -262,6 +262,13 @@ export class Board extends Model implements Box {
      */
     private _spellFilter: (spell: SpellConfig) => boolean = () => true;
 
+    /**
+     * Abort controller for the viewport media query listener.
+     * Used to clean up the listener when the board is destroyed.
+     */
+    private readonly _viewportListenerAbort: AbortController =
+        new AbortController();
+
     constructor(
         scene: Scene,
         id: number,
@@ -289,12 +296,17 @@ export class Board extends Model implements Box {
             this._height * Board.DEFAULT_CELLSIZE + Board.DEFAULT_CELLSIZE * 6,
         );
 
+        // Camera bounds cover the full board regardless of viewport size.
+        const boardPixelWidth: number = this._scene.game.scale.width;
+        const boardPixelHeight: number = this._scene.game.scale.height;
         this._scene.cameras.main.setBounds(
-            this._scene.game.scale.width / -2,
+            boardPixelWidth / -2,
             Board.DEFAULT_CELLSIZE * -3,
-            this._scene.game.scale.width,
-            this._scene.game.scale.height,
+            boardPixelWidth,
+            boardPixelHeight,
         );
+
+        this.setupViewportResizing(boardPixelWidth, boardPixelHeight);
 
         this._pieces = new Map<number, Piece>();
         this._players = new Map<number, Player>();
@@ -1419,6 +1431,10 @@ export class Board extends Model implements Box {
                 break;
         }
 
+        await this.centreOnPieces(
+            units.filter((p) => p.type === UnitType.Wizard),
+        );
+
         return new Promise<void>((resolve) => {
             this.scene.tweens.addCounter({
                 from: 0,
@@ -1516,11 +1532,10 @@ export class Board extends Model implements Box {
      * @returns A promise that resolves when the camera has centred.
      */
     async centreOnPieces(pieces: Piece[]): Promise<void> {
-        if (!pieces?.length) {
+        if (!pieces?.length || !this.needsPanning) {
             return;
         }
 
-        // Get the centroid of all pieces
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
         const avgX: number =
             pieces.reduce((sum, piece) => sum + piece.position.x, 0) /
@@ -1528,17 +1543,15 @@ export class Board extends Model implements Box {
         const avgY: number =
             pieces.reduce((sum, piece) => sum + piece.position.y, 0) /
             pieces.length;
-        const targetPosition: Geom.Point = this.getScreenPosition(
+        const isoPos: Geom.Point = this.getIsoPosition(
             new Geom.Point(avgX, avgY),
         );
-        console.log(
-            `Centring camera on pieces at ${targetPosition.x}, ${targetPosition.y}`,
-        );
+        const targetScrollX: number = isoPos.x - camera.width / 2;
 
         return new Promise<void>((resolve) => {
             this.scene.tweens.add({
                 targets: camera,
-                x: -targetPosition.x - camera.width / 2,
+                scrollX: targetScrollX,
                 duration: Board.DEFAULT_DELAY,
                 ease: "Power2",
                 onComplete: () => {
@@ -1887,6 +1900,19 @@ export class Board extends Model implements Box {
     }
 
     /**
+     * Whether the camera viewport is narrower than the board, enabling
+     * horizontal panning.
+     */
+    get needsPanning(): boolean {
+        const camera: Cameras.Scene2D.Camera = this._scene.cameras.main;
+        if (!camera) {
+            return false;
+        }
+        const bounds = camera.getBounds();
+        return camera.width < (bounds?.width ?? camera.width);
+    }
+
+    /**
      * Get a specific layer of the board.
      *
      * @param layer The layer to get.
@@ -2128,9 +2154,65 @@ export class Board extends Model implements Box {
     }
 
     /**
+     * Set up a media-query listener that resizes the game canvas whenever the
+     * viewport becomes narrower (or wider) than the full board.  This keeps
+     * the canvas correctly sized after device rotation, browser resize, etc.
+     */
+    private setupViewportResizing(
+        boardPixelWidth: number,
+        boardPixelHeight: number,
+    ): void {
+        const zoom: number = this._scene.game.scale.zoom;
+        const query: MediaQueryList = globalThis.matchMedia(
+            `(max-width: ${boardPixelWidth * zoom}px)`,
+        );
+
+        const handler = (): void => {
+            if (query.matches) {
+                const viewportWidth: number = Math.floor(
+                    globalThis.innerWidth / zoom,
+                );
+                this._scene.game.scale.resize(viewportWidth, boardPixelHeight);
+                console.log(
+                    `Viewport narrower than board, resizing canvas to ${viewportWidth}x${boardPixelHeight}`,
+                );
+                // If a player is awaiting their turn, center on them, otherwise
+                // center the board
+                if (this.currentPlayer) {
+                    this.centreOnPieces(
+                        this.pieces.filter(
+                            (piece: Piece) =>
+                                piece.owner === this.currentPlayer ||
+                                piece.currentRider?.owner === this.currentPlayer,
+                        ),
+                    );
+                }
+                
+            } else {
+                this._scene.game.scale.resize(
+                    boardPixelWidth,
+                    boardPixelHeight,
+                );
+            }
+            if (this._cursor) {
+                this._cursor.panningEnabled = query.matches;
+            }
+        };
+
+        query.addEventListener("change", handler, {
+            signal: this._viewportListenerAbort.signal,
+        });
+
+        // Run once immediately so the canvas is sized correctly on load.
+        handler();
+    }
+
+    /**
      * Destroy the board and all its pieces and layers.
      */
     destroy() {
+        this._viewportListenerAbort.abort();
+
         this.pieces?.forEach((piece: Piece) => {
             piece.destroy();
         });

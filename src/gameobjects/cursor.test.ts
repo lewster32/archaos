@@ -16,7 +16,7 @@ import type { Board } from "./board";
 // blocked by the bounds guard.
 //
 //   pointerForTile(tx, ty) gives the pointer coordinates that translate exactly
-//   to board tile (tx, ty) when scene.game.scale.width=800 and cameras.main.x=0.
+//   to board tile (tx, ty) when cameras.main.scrollX=-400 and scrollY=-42.
 //
 // Key values (verified by running the formula in isolation):
 //   tile (5,5)  →  pointer (400, 126)
@@ -29,7 +29,7 @@ import type { Board } from "./board";
 const IN_BOUNDS_POINTER = { x: 400, y: 126 };
 
 /** Pointer position that maps to tile (0,0) — i.e. out-of-bounds negative */
-// With width=800, camX=0: pointer (0,0) → tile far negative
+// With scrollX=-400, scrollY=-42: pointer (0,0) → tile far negative
 const OUT_OF_BOUNDS_POINTER = { x: 0, y: 0 };
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ function makeMockBoard(overrides: Record<string, unknown> = {}): Board {
                 },
             },
             cameras: {
-                main: { x: 0 },
+                main: { x: 0, scrollX: -400, scrollY: -42 },
             },
             game: {
                 events: { on: vi.fn() },
@@ -84,6 +84,7 @@ function makeMockBoard(overrides: Record<string, unknown> = {}): Board {
             },
         },
         // --- Board API ---
+        needsPanning: false,
         getLayer: vi.fn().mockReturnValue(layer),
         state: BoardState.Idle,
         width: 16,
@@ -396,6 +397,15 @@ describe("Cursor constructor", () => {
         const layer = (board.getLayer as ReturnType<typeof vi.fn>).mock
             .results[0].value;
         expect(layer.add).toHaveBeenCalled();
+    });
+
+    it('registers a "pointerdown" listener on scene.input', () => {
+        const { board } = makeCursor();
+        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock
+            .calls;
+        expect(calls.some((c: unknown[]) => c[0] === "pointerdown")).toBe(
+            true,
+        );
     });
 
     it('registers a "pointermove" listener on scene.input', () => {
@@ -1209,5 +1219,147 @@ describe("Cursor.action()", () => {
             ActionType.None,
             InputType.Cancel,
         );
+    });
+});
+
+// ─── Drag-to-pan ─────────────────────────────────────────────────────────────
+
+describe("Cursor drag-to-pan", () => {
+    /**
+     * Helper to extract a registered scene.input.on handler by event name.
+     */
+    function getInputHandler(
+        board: Board,
+        eventName: string,
+    ): (...args: unknown[]) => void {
+        const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock
+            .calls;
+        const match = calls.find((c: unknown[]) => c[0] === eventName);
+        return match?.[1] as (...args: unknown[]) => void;
+    }
+
+    it("does not enter drag mode when panning is disabled", () => {
+        const { board } = makeCursor({ needsPanning: false });
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        pointermove({ position: { x: 200, y: 100 }, isDown: true });
+
+        // scrollX should not have changed
+        expect(board.scene.cameras.main.scrollX).toBe(-400);
+    });
+
+    it("enters drag mode when panning is enabled and delta exceeds threshold", () => {
+        const { board } = makeCursor({ needsPanning: true });
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        // Drag 50px to the left (delta exceeds DRAG_THRESHOLD of 5)
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+
+        // scrollX should have shifted: startScrollX - dx = -400 - (50-100) = -400 + 50 = -350
+        expect(board.scene.cameras.main.scrollX).toBe(-350);
+    });
+
+    it("does not call processIntent during a drag", () => {
+        const { board } = makeCursor({ needsPanning: true });
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+
+        // processIntent should not have been called by the drag pointermove
+        expect(board.rules.processIntent).not.toHaveBeenCalled();
+    });
+
+    it("suppresses click action on pointerup after a drag", () => {
+        const { board } = makeCursor({ needsPanning: true });
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.Idle);
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+
+        const pointerup = getInputHandler(board, "pointerup");
+        pointerup();
+
+        // processAction should NOT have been called — the drag swallowed the click
+        expect(board.rules.processAction).not.toHaveBeenCalled();
+    });
+
+    it("fires normal click when pointer moves less than the drag threshold", async () => {
+        const { board } = makeCursor({ needsPanning: true });
+        (
+            board.rules.processIntent as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
+        (
+            board.rules.processAction as ReturnType<typeof vi.fn>
+        ).mockResolvedValue(ActionType.None);
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        // Move only 2px — below the 5px threshold
+        pointermove({ position: { x: 102, y: 100 }, isDown: true });
+
+        const pointerup = getInputHandler(board, "pointerup");
+        await pointerup();
+
+        // processAction SHOULD have been called — it was a tap, not a drag
+        expect(board.rules.processAction).toHaveBeenCalled();
+    });
+
+    it("panningEnabled setter enables drag after construction", () => {
+        const { cursor, board } = makeCursor({ needsPanning: false });
+
+        // Initially panning is disabled — drag should not work
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+        const pointermove = getInputHandler(board, "pointermove");
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+        expect(board.scene.cameras.main.scrollX).toBe(-400);
+
+        // Enable panning via setter (simulates viewport narrowing)
+        cursor.panningEnabled = true;
+
+        // Reset scrollX for clarity
+        board.scene.cameras.main.scrollX = -400;
+        pointerdown({ position: { x: 100, y: 100 } });
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+        expect(board.scene.cameras.main.scrollX).toBe(-350);
+    });
+
+    it("panningEnabled setter disables drag after construction", () => {
+        const { cursor, board } = makeCursor({ needsPanning: true });
+
+        // Initially panning is enabled
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+        const pointermove = getInputHandler(board, "pointermove");
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+        expect(board.scene.cameras.main.scrollX).toBe(-350);
+
+        // Disable panning via setter (simulates viewport widening)
+        cursor.panningEnabled = false;
+
+        board.scene.cameras.main.scrollX = -400;
+        pointerdown({ position: { x: 100, y: 100 } });
+        pointermove({ position: { x: 50, y: 100 }, isDown: true });
+        expect(board.scene.cameras.main.scrollX).toBe(-400);
+    });
+
+    it("DRAG_THRESHOLD static constant is 5", () => {
+        expect(Cursor.DRAG_THRESHOLD).toBe(5);
     });
 });

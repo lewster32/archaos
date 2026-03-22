@@ -60,12 +60,12 @@
                         />
                     </label>
                 </div>
-                <div class="callout__row callout__row--difficulty">
+                <div class="callout__row callout__row--difficulty difficulty" :class="{ 'difficulty--disabled': !hasComputerPlayers }">
                     <label for="difficulty"
                     title="The difficulty of computer-controlled players. Higher produces more challenging and aggressive opponents.">Difficulty:</label>
-                    <input type="range" min="0.1" max="1" step="0.1" v-model="setup.difficulty"
+                    <input type="range" min="0.1" max="1" step="0.1" v-model="setup.difficulty" class="difficulty__input"
                     :disabled="!hasComputerPlayers"/>
-                    <span class="c-cyan text-shadow">{{ Math.round(setup.difficulty * 10) }}</span>
+                    <span class="difficulty__value">{{ Math.round(setup.difficulty * 10) }}</span>
                 </div>
                 <div class="callout__row">
                     <button
@@ -245,6 +245,7 @@ function startGame(): void {
 
 .human-computer-toggle {
     width: 2.5em;
+    max-width: 2.5em;
     height: 1.5em;
     padding-block: .25em;
     display: flex;
@@ -295,6 +296,35 @@ function startGame(): void {
 .is-computer {
     input[type="text"] {
         color: var(--color-cyan);
+    }
+}
+
+.difficulty {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    &__input[type="range"] {
+        
+    }
+    &__value {
+        color: var(--color-cyan);
+        text-shadow: var(--text-shadow);
+        max-width: 2.5em;
+    }
+    &--disabled {
+        color: var(--color-grey);
+        .difficulty__value {
+            color: var(--color-grey);
+        }
+    }
+}
+
+@media (max-width: 484px) {
+    .callout__row {
+        row-gap: 0;
+        label {
+            width: 100% !important;
+        }
     }
 }
 

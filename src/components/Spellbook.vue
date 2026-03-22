@@ -56,7 +56,7 @@
             </div>
         </div>
     </div>
-    <div class="spellbook" v-if="show && data">
+    <div class="spellbook" v-if="show && data" :class="{ 'spellbook--minimised': minimised }">
         <button
             v-if="minimised"
             class="spellbook__toggle spellbook__toggle--closed button button--green button--flashing"
@@ -332,13 +332,16 @@ body:has(.unitinfo--show) {
 .spellbook {
     position: fixed;
     right: 0;
-    width: 418px;
+    width: min(418px, 100vw);
     top: 0;
     bottom: var(--spellbook-bottom, 0);
     transition: bottom 0.25s;
     z-index: 30;
     padding: 1em;
     justify-content: right;
+    &--minimised {
+        width: 0;
+    }
     &__inner {
         display: flex;
         flex-direction: column;

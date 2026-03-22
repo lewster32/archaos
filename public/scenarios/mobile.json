@@ -1,0 +1,39 @@
+{
+    "name": "Test Scenario",
+    "description": "A scenario for testing mobile stuff.",
+    "board": {
+        "width": 15,
+        "height": 15
+    },
+    "players": [
+        {
+            "id": 1,
+            "name": "Player 1",
+            "position": { "x": 14, "y": 0 },
+            "computerControlled": false,
+            "statuses": [],
+            "pieces": [
+
+            ],
+            "spells": []
+        },
+        {
+            "id": 2,
+            "name": "Player 2",
+            "position": { "x": 0, "y": 14 },
+            "computerControlled": false,
+            "statuses": [],
+            "pieces": [
+
+            ],
+            "spells": []
+        }
+    ],
+    "corpses": [],
+    "phase": "moving",
+    "cheats": {
+        "forceHit": false,
+        "forceCast": true,
+        "shortDelay": true
+    }
+}

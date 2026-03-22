@@ -115,3 +115,4 @@ dist
 # Playwright / vitest-browser failure screenshots
 src/**/__screenshots__/
 .vitest-attachments/
+test-results/.last-run.json

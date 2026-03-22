@@ -37,9 +37,34 @@ export class Cursor {
     private _type: CursorType;
 
     /**
+     * Whether a drag gesture is currently in progress.
+     */
+    private _dragging: boolean = false;
+
+    /**
+     * Screen-space X where the current drag started.
+     */
+    private _dragStartX: number = 0;
+
+    /**
+     * Camera scrollX at the start of the current drag.
+     */
+    private _dragStartScrollX: number = 0;
+
+    /**
+     * Whether drag-to-pan is currently enabled (set by Board on viewport changes).
+     */
+    private _panningEnabled: boolean = false;
+
+    /**
      * Key to use for cancel actions.
      */
     static readonly CANCEL_KEY: string = "Escape";
+
+    /**
+     * Minimum pixel distance before a pointerdown becomes a drag.
+     */
+    static readonly DRAG_THRESHOLD: number = 5;
 
     /**
      * Offset to apply to cursor image position.
@@ -74,12 +99,42 @@ export class Cursor {
         this._type = CursorType.Idle;
 
         this._position = new Geom.Point(0, 0);
+        this._panningEnabled = this._board.needsPanning;
 
-        this._board.scene.input.on("pointermove", async () => {
-            await this.update();
-        });
+        this._board.scene.input.on(
+            "pointerdown",
+            (pointer: Input.Pointer) => {
+                if (this._panningEnabled) {
+                    this._dragStartX = pointer.position.x;
+                    this._dragStartScrollX =
+                        this._board.scene.cameras.main.scrollX;
+                    this._dragging = false;
+                }
+            },
+        );
+
+        this._board.scene.input.on(
+            "pointermove",
+            async (pointer: Input.Pointer) => {
+                if (this._panningEnabled && pointer.isDown) {
+                    const dx: number =
+                        pointer.position.x - this._dragStartX;
+                    if (Math.abs(dx) >= Cursor.DRAG_THRESHOLD) {
+                        this._dragging = true;
+                        this._board.scene.cameras.main.scrollX =
+                            this._dragStartScrollX - dx;
+                        return;
+                    }
+                }
+                await this.update();
+            },
+        );
 
         this._board.scene.input.on("pointerup", async () => {
+            if (this._dragging) {
+                this._dragging = false;
+                return;
+            }
             await this.action(InputType.Click);
         });
 
@@ -118,6 +173,13 @@ export class Cursor {
      */
     get position(): Geom.Point {
         return this._position;
+    }
+
+    /**
+     * Enable or disable drag-to-pan (called by Board when viewport changes).
+     */
+    set panningEnabled(value: boolean) {
+        this._panningEnabled = value;
     }
 
     /**
@@ -348,13 +410,11 @@ export class Cursor {
      * @returns
      */
     private translateCursorPosition(vector: PMath.Vector2): Geom.Point {
-        const point: PMath.Vector2 = new PMath.Vector2(vector.x, vector.y);
-
-        point.x -=
-            this._board.scene.game.scale.width / 2 - Board.DEFAULT_CELLSIZE;
-        point.y -= Board.DEFAULT_CELLSIZE * 1.5;
-
-        point.x -= this._board.scene.cameras.main.x;
+        const camera = this._board.scene.cameras.main;
+        const point: PMath.Vector2 = new PMath.Vector2(
+            vector.x + camera.scrollX + Board.DEFAULT_CELLSIZE,
+            vector.y + camera.scrollY + Board.DEFAULT_CELLSIZE * 1.5,
+        );
 
         const ly: number = (2 * point.y - point.x) / 2 - Board.DEFAULT_CELLSIZE;
         const lx: number = point.x + ly - Board.DEFAULT_CELLSIZE;

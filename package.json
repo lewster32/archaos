@@ -1,6 +1,6 @@
 {
     "name": "archaos-vite",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "scripts": {
         "start": "vite",
         "build": "vue-tsc --noEmit && vite build",
@@ -9,6 +9,7 @@
         "manifest": "node ./.deploy/manifest.js",
         "release": "npm run test -- --run && npm run manifest && npm run build && npm run deploy",
         "test": "vitest",
+        "test:e2e": "npx playwright test",
         "lint": "oxlint",
         "lint:fix": "oxlint --fix",
         "fmt": "oxfmt --write .",
@@ -21,6 +22,7 @@
     "author": "Lewis 'SEPTiMUS' Lane",
     "license": "ISC",
     "devDependencies": {
+        "@playwright/test": "^1.58.2",
         "@tauri-apps/cli": "^2.10.1",
         "@vitejs/plugin-vue": "^6.0.5",
         "@vitest/browser-playwright": "^4.1.0",
