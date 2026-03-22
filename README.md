@@ -34,7 +34,7 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 
 ## Play now! 🔥
 
-You can play the latest build in your browser here: https://www.archaos.co.uk/2021/
+You can play the latest build in your browser here: https://www.archaos.co.uk/
 
 You can also build a standalone version of the game with `npm run tauri:build`
 

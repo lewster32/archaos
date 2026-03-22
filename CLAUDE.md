@@ -2,7 +2,7 @@
 
 A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/Chaos:_The_Battle_of_Wizards), an original Sinclair Spectrum game from 1985 by Julian Gollop. This version uses web technology such as Vite, Phaser and Vue and runs in a browser. It includes modern amenities such as a mouse-driven interface, improved graphics (most notably an isometric perspective instead of the original's top-down view) and quality-of-life improvements to make the game more accessible to new players.
 
-**Live build:** https://www.archaos.co.uk/2021/
+**Live build:** https://www.archaos.co.uk/
 
 ## Game Features
 
