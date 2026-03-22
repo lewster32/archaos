@@ -14,8 +14,22 @@ describe("GameMenu", () => {
     });
 
     describe("initial render", () => {
-        it("renders the player count select", async () => {
+        it("renders the Configure players button", async () => {
             const screen = await renderMenu();
+            await expect
+                .element(
+                    screen.getByRole("button", {
+                        name: /Configure players/,
+                    }),
+                )
+                .toBeVisible();
+        });
+
+        it("reveals the player count select when Configure players is clicked", async () => {
+            const screen = await renderMenu();
+            await screen
+                .getByRole("button", { name: /Configure players/ })
+                .click();
             await expect
                 .element(screen.getByLabelText("Number of players:"))
                 .toBeVisible();
@@ -127,9 +141,10 @@ describe("GameMenu", () => {
 
         it("disables the small board option for more than 4 players", async () => {
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByLabelText("Number of players:"))
-                .toBeVisible();
+            // Open the player config dialog to access the player count select
+            await screen
+                .getByRole("button", { name: /Configure players/ })
+                .click();
             // Switch to 5 players
             await userEvent.selectOptions(
                 screen.getByLabelText("Number of players:"),
