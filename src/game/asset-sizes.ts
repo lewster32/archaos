@@ -20,11 +20,11 @@
 //   chaossounds.ogg                                     147151 B  (audio (preferred format))
 //   Game.css                                             15520 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     1223 B  (lazy CSS bundle)
-//   Game.js                                             227958 B  (lazy JS bundle)
+//   Game.js                                             228039 B  (lazy JS bundle)
 //   LoadingScreen.js                                     69387 B  (lazy JS bundle)
 //   phaser.js                                          1198735 B  (lazy JS bundle)
 //   window.js                                            14825 B  (lazy JS bundle)
-//   TOTAL                                              1978352 B
+//   TOTAL                                              1978433 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 1978352;
+export const TOTAL_GAME_ASSET_BYTES = 1978433;

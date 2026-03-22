@@ -1248,6 +1248,7 @@ describe("ComputerWizard", () => {
                 sound: { play: vi.fn() },
                 rng: new TestRNG(),
                 rules: { doCastSpell },
+                centreOnPieces: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);
@@ -1296,6 +1297,7 @@ describe("ComputerWizard", () => {
                 sound: { play: vi.fn() },
                 rng: new TestRNG(),
                 rules: { doCastSpell },
+                centreOnPieces: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);

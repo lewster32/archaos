@@ -19,6 +19,7 @@ vi.mock("phaser", () => {
             };
         }
     }
+    // @ts-ignore
     MockSprite.prototype.destroy = mockSuperDestroy;
 
     return {

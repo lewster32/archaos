@@ -5,15 +5,6 @@
             v-if="setup"
         >
             <div class="callout__row">
-                <label for="playercount"
-                    title="The number of players in the game.">Number of players:</label>
-                <select v-model="setup.playerCount" id="playercount">
-                    <option v-for="n in 7" :key="n" :value="n + 1">
-                        {{ n + 1 }} Players
-                    </option>
-                </select>
-            </div>
-            <div class="callout__row">
                 <button
                     class="button"
                     @click="($refs.playerConfigDialog as HTMLDialogElement)?.showModal()"
@@ -23,6 +14,15 @@
                 v-if="setup.playerCount > 0"
                 class="callout"
                 ref="playerConfigDialog">
+                <div class="callout__row">
+                    <label for="playercount"
+                        title="The number of players in the game.">Number of players:</label>
+                    <select v-model="setup.playerCount" id="playercount">
+                        <option v-for="n in 7" :key="n" :value="n + 1">
+                            {{ n + 1 }} Players
+                        </option>
+                    </select>
+                </div>
                 <div
                     class="callout__row"
                     v-for="(name, index) in setup.players.slice(
@@ -85,6 +85,7 @@
                     </option>
                     <option value="13">Medium Board</option>
                     <option value="17">Large Board</option>
+                    <option value="21">Huge Board</option>
                 </select>
             </div>
             <div class="callout__row">
@@ -95,6 +96,7 @@
                     <option value="15">15</option>
                     <option value="20">20</option>
                     <option value="25">25</option>
+                    <option value="30">30</option>
                 </select>
             </div>
             <div class="callout__row">
@@ -105,8 +107,17 @@
                         style="--accent-color: var(--color-green)"
                         id="classicspells"
                     />
-                    <span class="c-green">Classic spells</span
-                    ><span>(only use spells from original)</span>
+                    <span class="c-green" title="only use spells from original">Classic spells</span>
+                </label>
+            </div>
+            <div class="callout__row">
+                <label for="mute" class="checkbox-label">
+                    <input
+                        type="checkbox"
+                        id="mute"
+                        v-model="setup.muteAudio"
+                    />
+                    <span>Mute audio</span>
                 </label>
             </div>
             <div class="callout__row">
@@ -172,6 +183,7 @@ if (!setup.value) {
         players: defaultPlayers,
         classicSpells: false,
         difficulty: 0.5,
+        muteAudio: false,
     };
 }
 
@@ -212,6 +224,7 @@ function startGame(): void {
         spellCount: Math.abs(setup.value!.spellCount) || 15,
         classicSpells: Boolean(setup.value!.classicSpells),
         difficulty: setup.value!.difficulty || 0.5,
+        muteAudio: Boolean(setup.value!.muteAudio),
     });
 }
 </script>

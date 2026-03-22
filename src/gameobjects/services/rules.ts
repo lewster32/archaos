@@ -665,6 +665,7 @@ export class Rules {
             const spreadPieces: Piece[] = board.pieces.filter((piece) =>
                 piece.hasStatus(UnitStatus.Spreads),
             );
+            board.centreOnPieces(spreadPieces);
             for (const piece of spreadPieces) {
                 await piece.spread();
             }

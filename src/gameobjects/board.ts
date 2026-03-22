@@ -1431,7 +1431,7 @@ export class Board extends Model implements Box {
                 break;
         }
 
-        await this.centreOnPieces(
+        this.centreOnPieces(
             units.filter((p) => p.type === UnitType.Wizard),
         );
 
@@ -1526,26 +1526,38 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Centre the camera on a given piece.
+     * Centre the camera on a given piece(s).
      *
-     * @param piece The piece to centre the camera on.
+     * @param pieces The piece(s) to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
     async centreOnPieces(pieces: Piece[]): Promise<void> {
-        if (!pieces?.length || !this.needsPanning) {
+        if (!pieces?.length) {
             return;
         }
 
-        const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
         const avgX: number =
             pieces.reduce((sum, piece) => sum + piece.position.x, 0) /
             pieces.length;
         const avgY: number =
             pieces.reduce((sum, piece) => sum + piece.position.y, 0) /
             pieces.length;
-        const isoPos: Geom.Point = this.getIsoPosition(
-            new Geom.Point(avgX, avgY),
-        );
+        return this.centreOnPosition(new Geom.Point(avgX, avgY));
+    }
+
+    /**
+     * Centre the camera on a given board position.
+     *
+     * @param position The board position to centre the camera on.
+     * @returns A promise that resolves when the camera has centred.
+     */
+    async centreOnPosition(position: Geom.Point): Promise<void> {
+        if (!this.needsPanning) {
+            return;
+        }
+
+        const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
+        const isoPos: Geom.Point = this.getIsoPosition(position);
         const targetScrollX: number = isoPos.x - camera.width / 2;
 
         return new Promise<void>((resolve) => {

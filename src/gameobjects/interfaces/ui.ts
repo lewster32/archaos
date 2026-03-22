@@ -44,6 +44,7 @@ export interface SetupData {
     players: SetupPlayer[];
     classicSpells: boolean;
     difficulty: number;
+    muteAudio: boolean;
 }
 
 /**
@@ -55,6 +56,7 @@ export interface GameSetupData {
     spellCount: number;
     classicSpells: boolean;
     difficulty?: number;
+    muteAudio?: boolean;
 }
 
 export enum GameSetupPlayerType {

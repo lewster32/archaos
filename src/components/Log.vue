@@ -106,7 +106,7 @@ defineExpose({ showTimestamps });
     left: 0;
     bottom: 0;
     width: 60%;
-    min-width: 400px;
+    min-width: min(400px, calc(100vw - 2em));
     margin: 0 1em;
     height: 17.5vh;
     line-height: 1.5;
@@ -157,9 +157,11 @@ defineExpose({ showTimestamps });
         + .game-log__item {
             margin-top: 0.5em;
         }
-        &:first-child {
-            .game-log__message {
-                font-size: 2rem;
+        @media (min-width: 600px) {
+            &:first-child {
+                .game-log__message {
+                    font-size: 2rem;
+                }
             }
         }
     }

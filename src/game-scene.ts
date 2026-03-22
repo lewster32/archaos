@@ -259,6 +259,10 @@ export class GameScene extends Scene {
             data?.board?.height,
         );
 
+        if (data.muteAudio) {
+            this.sound.mute = true;
+        }
+
         if (data.classicSpells) {
             // Set spell filter to exclude enhanced spells
             this.board.spellFilter = (spell: SpellConfig) => {

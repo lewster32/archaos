@@ -620,6 +620,7 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );
+                        await board.centreOnPieces([target]);
                         await board.rules.doCastSpell(board, target);
                         successfullyCast = true;
                     }
@@ -656,6 +657,7 @@ export class ComputerWizard implements RemotePlayer {
                                 (p) => p.id === preferredTargetId,
                             ) ?? board.rng.pick(potentialTargets);
                     }
+                    await board.centreOnPieces([target]);
                     await board.rules.doCastSpell(board, target);
                     return true;
                 } else if (spell.type === SpellType.Misc) {
@@ -692,6 +694,7 @@ export class ComputerWizard implements RemotePlayer {
                             preferredTargetId == null
                                 ? board.rng.pick(potentialTargets)
                                 : board.rng.weightedPick(miscReordered);
+                        await board.centreOnPieces([target]);
                         await board.rules.doCastSpell(board, target);
                         return true;
                     }
@@ -724,6 +727,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns true if the unit was moved successfully, false otherwise
      */
     async moveUnit(piece: Piece): Promise<boolean> {
+        this._board.centreOnPieces([piece]);
         await this._board.selectPiece(piece.id);
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
@@ -1107,6 +1111,7 @@ export class ComputerWizard implements RemotePlayer {
             console.debug(
                 `${piece.fullName} moves to (${movePt.x}, ${movePt.y})`,
             );
+            this._board.centreOnPosition(movePt);
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
                 console.debug(`${piece.fullName} is now engaged after moving`);
@@ -1159,6 +1164,7 @@ export class ComputerWizard implements RemotePlayer {
                     true,
                 );
 
+                await this._board.centreOnPieces([target]);
                 await Board.delay(Board.DEFAULT_DELAY * 1.5);
                 console.debug(
                     `${piece.fullName} performs ranged attack on ${target.fullName}`,

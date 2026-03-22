@@ -278,6 +278,11 @@ export class Piece extends Entity {
     set turnOver(state: boolean) {
         this.moved = this.attacked = this.rangedAttacked = state;
 
+        // Don't apply the turn over tint if the piece has no valid actions;
+        // prevents Magic Fire, Dark Citadel etc. from always being shaded
+        if (!this.canPerformActions) {
+            return;
+        }
         if (state) {
             if (this._raisedDead) {
                 this._sprite.setTint(
@@ -991,6 +996,26 @@ export class Piece extends Entity {
     }
 
     /**
+     * Check if this piece has any of the specified status effects.
+     * 
+     * @param statuses The status effects to check for.
+     * @returns True if the piece has any of the status effects, false otherwise.
+     */
+    hasAnyStatus(statuses: UnitStatus[]): boolean {
+        return statuses.some((status) => this.hasStatus(status));
+    }
+
+    /**
+     * Check if this piece has all of the specified status effects.
+     * 
+     * @param statuses The status effects to check for.
+     * @returns True if the piece has all of the status effects, false otherwise.
+     */
+    hasAllStatuses(statuses: UnitStatus[]): boolean {
+        return statuses.every((status) => this.hasStatus(status));
+    }
+
+    /**
      * Check if a point is within this piece's movement range.
      *
      * @param point The point to check.
@@ -1088,6 +1113,25 @@ export class Piece extends Entity {
         });
 
         return threatPieces;
+    }
+
+    /**
+     * Check if this piece can perform any valid actions this turn, i.e., it is
+     * not dead or engulfed, and has at least one of movement, combat, or ranged
+     * combat stats greater than zero.
+     */
+    get canPerformActions(): boolean {
+        if (this.dead || this.engulfed) {
+            return false;
+        }
+        if (
+            this.stats.movement > 0 ||
+            this.stats.combat > 0 ||
+            this.stats.rangedCombat > 0
+        ) {
+            return true;
+        }
+        return false;
     }
 
     /**

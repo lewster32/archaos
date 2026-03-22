@@ -394,6 +394,9 @@ export class Cursor {
      */
     set enabled(value: boolean) {
         this._enabled = value;
+        if (!this._enabled) {
+            this._image.setVisible(false);
+        }
     }
 
     /**

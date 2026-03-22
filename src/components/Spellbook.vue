@@ -30,7 +30,7 @@
         </div>
     </div>
     <div class="modal" v-if="illusionPrompt">
-        <div class="callout">
+        <div class="callout" style="width: min(90vw, 300px)">
             <p class="callout__title">
                 Cast {{ currentSpell.name }} as illusion?
             </p>
@@ -365,6 +365,7 @@ body:has(.unitinfo--show) {
         white-space: nowrap;
         overflow: hidden;
         flex: 0 0 1em;
+        text-wrap: balance;
     }
     &__scroll {
         border-top: 2px solid var(--color-black);
