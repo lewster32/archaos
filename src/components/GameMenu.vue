@@ -99,6 +99,17 @@
                     <option value="30">30</option>
                 </select>
             </div>
+            <!-- TODO: hidden for now - will make this a dialog with a nicer list in future
+            <div class="callout__row">
+                <label for="tutorials"
+                    title="Select a tutorial to play">Tutorial:</label>
+                <select v-model="setup.tutorial" id="tutorials">
+                    <option v-for="(tutorial, index) in tutorials" :key="tutorial.config.id" :value="tutorial.config.id">
+                        {{ index + 1 }}. {{ tutorial.config.name }}
+                    </option>
+                </select>
+            </div>
+            -->
             <div class="callout__row">
                 <label for="classicspells" class="checkbox-label">
                     <input
@@ -133,12 +144,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, reactive } from "vue";
 import type {
     SetupData,
     GameSetupData,
     SetupPlayer,
 } from "../gameobjects/interfaces/ui";
+import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
@@ -156,6 +168,8 @@ const defaultPlayers: SetupPlayer[] = [
 ];
 
 const setup = ref<SetupData | null>(null);
+
+const tutorials = reactive(getTutorials());
 
 // Load setup from localStorage if available.
 if (globalThis.localStorage) {

@@ -45,6 +45,7 @@ export interface SetupData {
     classicSpells: boolean;
     difficulty: number;
     muteAudio: boolean;
+    tutorial?: string;
 }
 
 /**
