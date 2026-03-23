@@ -7,7 +7,7 @@
                 :class="itemNumClass(unit.properties?.mov)"
                 :title="'Movement range: ' + unit.properties?.mov"
             >
-                <span>{{ unit.properties?.mov }}</span>
+                <span>{{ clampedNum(unit.properties?.mov) }}</span>
             </div>
             <div
                 v-else
@@ -15,14 +15,14 @@
                 :class="itemNumClass(unit.properties?.mov)"
                 :title="'Flying range: ' + unit.properties?.mov"
             >
-                <span>{{ unit.properties?.mov }}</span>
+                <span>{{ clampedNum(unit.properties?.mov) }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--com"
                 :class="itemNumClass(unit.properties?.com)"
                 :title="'Combat rating: ' + unit.properties?.com"
             >
-                <span>{{ unit.properties?.com }}</span>
+                <span>{{ clampedNum(unit.properties?.com) }}</span>
             </div>
             <div
                 v-if="unit.properties?.rcm"
@@ -30,7 +30,7 @@
                 :class="itemNumClass(unit.properties?.rcm)"
                 :title="'Ranged combat rating: ' + unit.properties?.rcm"
             >
-                <span>{{ unit.properties?.rcm }}</span>
+                <span>{{ clampedNum(unit.properties?.rcm) }}</span>
             </div>
             <div
                 v-if="unit.properties?.rng"
@@ -38,33 +38,33 @@
                 :class="itemNumClass(unit.properties?.rng)"
                 :title="'Ranged combat range: ' + unit.properties?.rng"
             >
-                <span>{{ unit.properties?.rng }}</span>
+                <span>{{ clampedNum(unit.properties?.rng) }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--def"
                 :class="itemNumClass(unit.properties?.def)"
                 :title="'Defense rating: ' + unit.properties?.def"
             >
-                <span>{{ unit.properties?.def }}</span>
+                <span>{{ clampedNum(unit.properties?.def) }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--mnv"
                 :class="itemNumClass(unit.properties?.mnv)"
                 :title="'Maneuverability: ' + unit.properties?.mnv"
             >
-                <span>{{ unit.properties?.mnv }}</span>
+                <span>{{ clampedNum(unit.properties?.mnv) }}</span>
             </div>
             <div
                 class="unit-properties__item unit-properties__item--res"
                 :class="itemNumClass(unit.properties?.res)"
                 :title="'Magic resistance: ' + unit.properties?.res"
             >
-                <span>{{ unit.properties?.res }}</span>
+                <span>{{ clampedNum(unit.properties?.res) }}</span>
             </div>
         </div>
         <div class="unit-stats__status unit-statuses">
             <span v-if="owner && !isWizard" class="unit-statuses__item">
-                {{ isMount ? "Mounted" : "Owned" }} by
+                Owned by
                 <span
                     :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`"
                     >{{ owner }}</span
@@ -214,10 +214,23 @@ const isDead = computed(() => {
  */
 const itemNumClass = (num: number) => {
     // Only return classes for numbers 1-10
-    if (!num || num < 1 || num > 10) {
+    if (!num || num < 1) {
         return "";
     }
+    if (num > 10) {
+        num = 10;
+    }
     return `unit-properties__item--num-${num}`;
+};
+
+const clampedNum = (num: number | undefined) => {
+    if (!num || num < 1) {
+        return "-";
+    }
+    if (num > 10) {
+        return "!";
+    }
+    return num.toString();
 };
 </script>
 <style lang="scss" scoped>

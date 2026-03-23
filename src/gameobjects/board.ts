@@ -820,6 +820,8 @@ export class Board extends Model implements Box {
             if (firstEngagingPiece) {
                 if (
                     this._selected.engaged ||
+                    this._selected.properties.maneuverability < 0 || // A negative maneuverability means the unit stays engaged if near engageable enemies
+                    firstEngagingPiece.properties.maneuverability === Infinity || // An infinite maneuverability means the unit always engages nearby enemies
                     this.roll(
                         firstEngagingPiece.stats.maneuverability,
                         this._selected.stats.maneuverability,

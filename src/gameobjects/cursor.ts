@@ -340,7 +340,7 @@ export class Cursor {
             input,
         );
 
-        if (actionState === ActionType.None) {
+        if (actionState === ActionType.None || actionState === ActionType.Invalid || actionState === ActionType.Idle) {
             return;
         }
 

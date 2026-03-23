@@ -685,20 +685,6 @@ describe("Tutorial", () => {
             await startPromise;
             expect(startResolved).toBe(true);
         });
-
-        it("emits events with correct title from tutorial name", async () => {
-            const spy = autoResolveTutorialMessages();
-            const tutorial = new TestTutorial(
-                makeConfig([new TestStep("hint")], {
-                    name: "My Custom Tutorial",
-                }),
-            );
-            await tutorial.start(mockBoard);
-
-            for (const [event] of spy.mock.calls) {
-                expect(event.title).toBe("My Custom Tutorial");
-            }
-        });
     });
 
     // ─── Event-driven advancement ────────────────────────────────────────

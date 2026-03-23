@@ -119,8 +119,8 @@ export class Piece extends Entity {
         this._unitId = config.properties.id;
 
         this._owner = config.owner ?? null;
-        this._properties = {
-            ...(config.properties ?? {
+        this._properties = Object.assign(
+            {
                 id: "",
                 name: "Unnamed Unit",
                 movement: 1,
@@ -135,8 +135,9 @@ export class Piece extends Entity {
                 status: [] as UnitStatus[],
                 group:
                     Piece.units[config.properties.id]?.group || "classicunits",
-            }),
-        };
+            } as UnitProperties,
+            config.properties ?? {},
+        ) as UnitProperties;
 
         this._properties.status = [...(this.properties.status ?? [])];
 
@@ -1675,8 +1676,8 @@ export class Piece extends Entity {
         if (!silent) {
             this.board.sound.play("killcreature");
         }
-        this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
         if (!this._sprite) {
+            this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
             return;
         }
         if (
@@ -1691,6 +1692,7 @@ export class Piece extends Entity {
         }
         this.board.emitBoardUpdateEvent();
         await Board.delay(Board.DEFAULT_DELAY);
+        this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
     }
 
     /**

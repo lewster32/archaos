@@ -5,6 +5,7 @@
 
 import type { Spell } from "../../gameobjects/spells/spell";
 import type { Piece } from "../piece";
+import { UnitProperties } from "./unitproperties";
 
 /**
  * Spellbook UI component data.
@@ -93,6 +94,7 @@ export interface GameScenarioPlayer {
     id: number;
     name: string;
     position: { x: number; y: number };
+    wizardProperties?: Partial<UnitProperties>;
     wizCode?: string; // A random code will be generated if empty.
     pieces?: GameScenarioPiece[];
     spells?: string[]; // A simple list of spell names for now.

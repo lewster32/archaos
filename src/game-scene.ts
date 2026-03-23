@@ -432,6 +432,7 @@ export class GameScene extends Scene {
                 x: player.position.x,
                 y: player.position.y,
                 wizCode: player.wizCode || Wizard.randomWizCode(),
+                properties: player.wizardProperties,
             });
             if (player.statuses?.length) {
                 for (let statusName of player.statuses) {

@@ -84,6 +84,11 @@ export interface TutorialData extends GameScenarioData {
 export type TutorialMessageType = "intro" | "hint" | "outro";
 
 /**
+ * The position for tutorial messages.
+ */
+export type TutorialMessagePosition = "top" | "bottom" | "left" | "right" | "center";
+
+/**
  * Event payload emitted via Logger's global emitter when the tutorial needs
  * to show a modal dialog. The Vue UI layer listens for
  * {@link EventType.TutorialMessage} events and renders the appropriate modal.
@@ -98,6 +103,10 @@ export interface TutorialMessageEvent {
     title: string;
     /** Rich HTML content to display in the modal body. */
     text: string;
+    /** Optional position hint for the modal. */
+    position?: TutorialMessagePosition;
+    /** Optional z-index override for the modal. */
+    zIndex?: number;
     /** Call this when the user dismisses the modal. */
     resolve: () => void;
 }
@@ -111,8 +120,28 @@ export abstract class TutorialStep {
      */
     private readonly _hint: string;
 
-    constructor(hint?: string) {
+    /**
+     * The name associated with this tutorial step. Shown in the UI as the title
+     * of the hint modal. Not all steps will have names; if absent, the
+     * tutorial's name will be used instead.
+     */
+    private readonly _name?: string;
+
+    /**
+     * Where to position the hint modal for this step.
+     */
+    private readonly _position: TutorialMessagePosition;
+
+    /**
+     * Optional z-index override for the hint modal shown for this step.
+     */
+    private readonly _zIndex?: number;
+
+    constructor(hint?: string, name?: string, position: TutorialMessagePosition = "center", zIndex?: number) {
         this._hint = hint ?? "";
+        this._name = name ?? "";
+        this._position = position;
+        this._zIndex = zIndex;
     }
 
     /**
@@ -122,6 +151,31 @@ export abstract class TutorialStep {
      */
     get hint(): string {
         return this._hint;
+    }
+
+    /**
+     * The name associated with this tutorial step. Shown in the UI once the
+     * step becomes the current step. Returns an empty string if no name was
+     * provided.
+     */
+    get name(): string {
+        return this._name;
+    }
+
+    /**
+     * Where to position the hint modal for this step. Defaults to "center" if
+     * not provided.
+     */
+    get position(): TutorialMessagePosition {
+        return this._position;
+    }
+
+    /**
+     * Optional z-index override for the hint modal shown for this step. If not
+     * provided, the modal will be displayed on top of all other UI elements.
+     */
+    get zIndex(): number | undefined {
+        return this._zIndex;
     }
 
     /**
@@ -308,7 +362,7 @@ export abstract class Tutorial {
         }
         await this.showIntro();
         this._steps[0]?.onEnter?.(board);
-        await this.showStepHint();
+        await this.showStepHint(this.currentStep?.position, this.currentStep?.zIndex);
         this.onStart(board);
     }
 
@@ -368,7 +422,7 @@ export abstract class Tutorial {
             this._board.endGame();
         } else {
             this._steps[this._currentStepIndex].onEnter?.(this._board);
-            await this.showStepHint();
+            await this.showStepHint(this.currentStep?.position);
         }
         return true;
     }
@@ -379,22 +433,22 @@ export abstract class Tutorial {
      * Shows the tutorial intro modal and waits for the user to dismiss it.
      */
     showIntro(): Promise<void> {
-        return this.showMessage("intro", this.intro);
+        return this.showMessage("intro", "center", this.intro);
     }
 
     /**
      * Shows the tutorial outro modal and waits for the user to dismiss it.
      */
     showOutro(): Promise<void> {
-        return this.showMessage("outro", this.outro);
+        return this.showMessage("outro", "center", this.outro);
     }
 
     /**
      * Shows the current step's hint modal and waits for the user to dismiss
      * it. Resolves immediately if the current step has no hint text.
      */
-    showStepHint(): Promise<void> {
-        return this.showMessage("hint", this.currentStep?.hint ?? "");
+    showStepHint(position: TutorialMessagePosition = "center", zIndex?: number): Promise<void> {
+        return this.showMessage("hint", position, this.currentStep?.hint ?? "", this.currentStep?.name ?? this.name, zIndex);
     }
 
     /**
@@ -406,10 +460,14 @@ export abstract class Tutorial {
      *
      * @param type  The kind of tutorial modal to show.
      * @param text  Rich HTML content for the modal body.
+     * @param zIndex Optional z-index override for the modal. If not provided, the default z-index will be used.
      */
     protected showMessage(
         type: TutorialMessageType,
-        text: string,
+        position: TutorialMessagePosition = "center",
+        text: string = "",
+        title: string = this.name,
+        zIndex?: number
     ): Promise<void> {
         if (!text) {
             return Promise.resolve();
@@ -417,8 +475,10 @@ export abstract class Tutorial {
         return new Promise<void>((resolve) => {
             Logger.getEventEmitter().emit(EventType.TutorialMessage, {
                 type,
-                title: this.name,
+                title,
                 text,
+                position,
+                zIndex,
                 resolve,
             } as TutorialMessageEvent);
         });

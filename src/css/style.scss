@@ -232,3 +232,62 @@ p {
 .text-shadow {
     text-shadow: var(--text-shadow);
 }
+
+.text-shadow-inverted {
+    text-shadow: var(--text-shadow-inverted);
+}
+
+.text-large {
+    font-size: 2em;
+}
+
+.text-small {
+    color: var(--color-grey);
+    font-size: 0.95em;
+    letter-spacing: .5px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+em {
+    font-style: normal;
+    color: var(--color-yellow);
+}
+
+sup {
+    font-size: 0.75em;
+    vertical-align: super;
+}
+
+.text-rainbow {
+    animation: rainbow steps(7) 1s infinite;
+}
+
+@keyframes rainbow {
+    0% {
+        color: var(--color-blue);
+    }
+    14.28% {
+        color: var(--color-red);
+    }
+    28.56% {
+        color: var(--color-magenta);
+    }
+    42.84% {
+        color: var(--color-green);
+    }
+    57.12% {
+        color: var(--color-cyan);
+    }
+    71.4% {
+        color: var(--color-yellow);
+    }
+    85.68% {
+        color: var(--color-white);
+    } 
+    100% {
+        color: var(--color-blue);
+    }
+}

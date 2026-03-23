@@ -112,7 +112,7 @@ dist
 # Claude files
 .claude/
 
-# Playwright / vitest-browser failure screenshots
+# Playwright / vitest-browser
 src/**/__screenshots__/
 .vitest-attachments/
-test-results/.last-run.json
+test-results/

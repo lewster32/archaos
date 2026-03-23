@@ -6,11 +6,11 @@ interface UnitConfig {
     x: number;
     y: number;
     owner?: Player;
+    properties?: Partial<UnitProperties>;
 }
 
 export interface PieceConfig extends UnitConfig {
     type: UnitType;
-    properties?: UnitProperties;
     shadowScale?: number;
     offsetY?: number;
     illusion?: boolean;
