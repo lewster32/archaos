@@ -3,6 +3,7 @@ import { Board } from "./board";
 import { RangeType } from "./enums/rangetype";
 import { EffectType } from "./effectemitter";
 import { Entity } from "./entity";
+import { BoardEvent } from "./enums/boardevent";
 import { BoardLayer } from "./enums/boardlayer";
 import { Colour } from "./enums/colour";
 import { SpreadAction } from "./enums/spreadaction";
@@ -1474,6 +1475,7 @@ export class Piece extends Entity {
             const rollSuccess: boolean = this.board.roll(
                 this.stats.combat,
                 piece.stats.defense,
+                this.owner,
             );
 
             this.board.sound.play("attackonly");
@@ -1603,6 +1605,7 @@ export class Piece extends Entity {
             const rollSuccess: boolean = this.board.roll(
                 this.stats.rangedCombat,
                 piece.stats.defense,
+                this.owner,
             );
 
             this.board.logger.log(
@@ -1650,8 +1653,8 @@ export class Piece extends Entity {
             this.currentEngulfed.engulfed = false;
             this.currentEngulfed = null;
         }
-        this.owner = null;
         this._dead = true;
+        this.owner = null;
         if (this.illusion) {
             await this.board.playEffect(
                 EffectType.DisbelieveHit,
@@ -1672,6 +1675,7 @@ export class Piece extends Entity {
         if (!silent) {
             this.board.sound.play("killcreature");
         }
+        this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
         if (!this._sprite) {
             return;
         }

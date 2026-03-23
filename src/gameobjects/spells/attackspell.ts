@@ -81,6 +81,7 @@ export class AttackSpell extends Spell {
         const rollSuccess: boolean = this._board.roll(
             this._properties.damage,
             target.stats.magicResistance,
+            this._owner,
         );
 
         let targetKilled: boolean = false;

@@ -98,6 +98,20 @@ export interface GameScenarioPlayer {
     computerControlled?: boolean;
     statuses?: string[];
     difficulty?: number;
+
+    /**
+     * Per-player attack outcome override. When set, all attacks by this
+     * player's units will be forced to hit (true) or miss (false), bypassing
+     * normal dice rolls. Null or undefined uses normal rolls.
+     */
+    forceHit?: boolean | null;
+
+    /**
+     * Per-player spell cast outcome override. When set, all spells cast by
+     * this player will be forced to succeed (true) or fail (false), bypassing
+     * normal chance rolls. Null or undefined uses normal rolls.
+     */
+    forceCast?: boolean | null;
 }
 
 /**
@@ -107,6 +121,22 @@ export interface GameScenarioPiece {
     type: string; // The piece's name, e.g. 'Golden Dragon'
     position: { x: number; y: number };
     statuses?: string[];
+
+    /**
+     * Optional overrides for the unit's base properties. Any values provided
+     * here will replace the defaults loaded from the unit's JSON config. Useful
+     * for tutorials and scenarios that need custom unit stats (e.g. an orc
+     * with combat set to 0).
+     */
+    propertyOverrides?: {
+        mov?: number;
+        com?: number;
+        rcm?: number;
+        rng?: number;
+        def?: number;
+        mnv?: number;
+        res?: number;
+    };
 }
 
 /**

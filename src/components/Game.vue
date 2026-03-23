@@ -37,6 +37,7 @@
         :unit="currentUnit"
         @close="closeUnitInfo()"
     />
+    <TutorialMessage />
 </template>
 
 <script setup lang="ts">
@@ -48,6 +49,7 @@ import GameMenu from "./GameMenu.vue";
 import GameControls from "./GameControls.vue";
 import LoadingScreen from "./LoadingScreen.vue";
 import UnitInfo from "./UnitInfo.vue";
+import TutorialMessage from "./TutorialMessage.vue";
 
 // Phaser game launcher
 import { launch } from "../game/game";
@@ -66,6 +68,7 @@ import type {
     GameSetupData,
     GameScenarioData,
 } from "../gameobjects/interfaces/ui";
+import { getTutorial } from "../gameobjects/tutorials/tutorialregistry";
 import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
@@ -221,6 +224,20 @@ onMounted(async () => {
             console.error(
                 `Failed to load scenario data for scenario: ${scenario}`,
             );
+        }
+    }
+
+    const tutorialId = urlParams.get("tutorial");
+    if (!scenario && tutorialId) {
+        const tutorial = getTutorial(tutorialId.toLowerCase().trim());
+        if (tutorial) {
+            console.log(`Auto-starting tutorial: ${tutorialId}`);
+            gameStarted.value = true;
+            setTimeout(() => {
+                eventEmitter.value?.emit("start-tutorial", tutorial);
+            }, 500);
+        } else {
+            console.error(`Unknown tutorial: ${tutorialId}`);
         }
     }
 

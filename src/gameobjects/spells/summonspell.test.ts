@@ -213,6 +213,26 @@ describe("SummonSpell.allowIllusion", () => {
         );
         expect(s.allowIllusion).toBe(false);
     });
+
+    it("is false when board.disableIllusions is true, even if spell allows it", () => {
+        board.disableIllusions = true;
+        const s = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ allowIllusion: true }),
+        );
+        expect(s.allowIllusion).toBe(false);
+    });
+
+    it("is false when board.disableIllusions is true and allowIllusion is undefined", () => {
+        board.disableIllusions = true;
+        const s = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ allowIllusion: undefined }),
+        );
+        expect(s.allowIllusion).toBe(false);
+    });
 });
 
 // ─── roll() override ─────────────────────────────────────────────────────────

@@ -324,6 +324,16 @@ export class Cursor {
 
         const intendedAction: ActionType = await this.update(true);
 
+        // Handle disabled end turn and cancel actions in tutorials
+        if (
+            (input === InputType.Cancel &&
+                this._board.disableCancelSpell && (this._board.state === BoardState.CastSpell || this._board.state === BoardState.SelectSpell)) ||
+            (input === InputType.Cancel &&
+                this._board.disableEndTurn)
+        ) {
+            return;
+        }
+
         const actionState: ActionType = await this._board.rules.processAction(
             this._board,
             intendedAction,

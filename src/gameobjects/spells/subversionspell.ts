@@ -28,6 +28,7 @@ export class SubversionSpell extends Spell {
         const rollSuccess: boolean = this._board.roll(
             10,
             target.stats.magicResistance,
+            this._owner,
         );
 
         this._board.sound.play("castloop08");

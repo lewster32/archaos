@@ -3,6 +3,7 @@ import { PlayerConfig } from "./configs/playerconfig";
 import { SpellConfig } from "./configs/spellconfig";
 import { Cursor } from "./cursor";
 import { EffectEmitter, EffectType } from "./effectemitter";
+import { BoardEvent } from "./enums/boardevent";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
@@ -31,8 +32,10 @@ import { createSpell } from "./spells/spellfactory";
 import { Events, StateManager, States } from "./statemanager";
 import { Wizard } from "./wizard";
 import { IRNG, GameRNG } from "./rng";
+import type { Tutorial } from "./tutorials/tutorial";
 import {
     Display,
+    Events as PhaserEvents,
     Geom,
     GameObjects,
     Scene,
@@ -263,6 +266,36 @@ export class Board extends Model implements Box {
     private _spellFilter: (spell: SpellConfig) => boolean = () => true;
 
     /**
+     * When true, the illusion casting option is suppressed for all summon
+     * spells. Used by tutorials to simplify the casting flow.
+     */
+    private _disableIllusions: boolean = false;
+
+    /**
+     * When true, the cancel button is suppressed for all spells. Used by
+     * tutorials to simplify the casting flow.
+     */
+    private _disableCancelSpell: boolean = false;
+
+    /**
+     * When true, the player is not allowed to end their turn. Used by
+     * tutorials to enforce specific turn-based actions.
+     */
+    private _disableEndTurn: boolean = false;
+
+    /**
+     * Event emitter for board game events (turns, phase changes, attacks,
+     * piece deaths, etc.). Tutorials and other observers subscribe here.
+     */
+    private readonly _boardEvents: PhaserEvents.EventEmitter =
+        new PhaserEvents.EventEmitter();
+
+    /**
+     * The active tutorial, if any.
+     */
+    private _tutorial: Tutorial | null = null;
+
+    /**
      * Abort controller for the viewport media query listener.
      * Used to clean up the listener when the board is destroyed.
      */
@@ -406,6 +439,7 @@ export class Board extends Model implements Box {
             return;
         }
         this._state = state;
+        this._boardEvents.emit(BoardEvent.StateChange, state);
         switch (state) {
             case BoardState.Idle:
             case BoardState.GameOver:
@@ -464,6 +498,7 @@ export class Board extends Model implements Box {
                 this._logger.log(`Movement phase`, Colour.Green);
                 break;
         }
+        this._boardEvents.emit(BoardEvent.PhaseChange, phase);
     }
 
     /**
@@ -546,6 +581,7 @@ export class Board extends Model implements Box {
                 piece.reset();
             });
             this._logger.log(`New turn`, Colour.Green);
+            this._boardEvents.emit(BoardEvent.NewTurn);
             if (this._balanceShift !== 0) {
                 this._balance += this._balanceShift;
                 this._balance = Number.parseFloat(this._balance.toFixed(2));
@@ -565,9 +601,32 @@ export class Board extends Model implements Box {
             this.state = BoardState.SelectSpell;
             await this.idleDelay(Board.END_TURN_DELAY);
         } else if (this.phase === BoardPhase.Spellbook) {
-            this.phase = BoardPhase.Casting;
-            this.state = BoardState.CastSpell;
-            await this.idleDelay(Board.END_TURN_DELAY);
+            // Skip casting phase if no player has a spell to cast
+            const anySpellSelected = this.players.some(
+                (p) => !p.defeated && p.selectedSpell,
+            );
+            if (!anySpellSelected) {
+                this._logger.log(
+                    `No spells to cast, skipping to movement`,
+                    Colour.Green,
+                );
+                this.phase = BoardPhase.Spreading;
+                this.state = BoardState.Idle;
+
+                const previousPlayer: Player = this.currentPlayer;
+                this.currentPlayer = null;
+                this.updateBackgroundColour();
+
+                await this.rules.doSpread(this);
+                await this.rules.doExpire(this);
+
+                this.currentPlayer = previousPlayer;
+                this.emitBoardUpdateEvent();
+            } else {
+                this.phase = BoardPhase.Casting;
+                this.state = BoardState.CastSpell;
+                await this.idleDelay(Board.END_TURN_DELAY);
+            }
         } else if (this.phase === BoardPhase.Casting) {
             this.phase = BoardPhase.Spreading;
             this.state = BoardState.Idle;
@@ -642,6 +701,14 @@ export class Board extends Model implements Box {
      * @param data
      */
     emitUIEvent(eventType: EventType, data: any): void {
+        if (this._disableEndTurn && eventType === EventType.EndTurnAvailable) {
+            console.log("End turn disabled, ignoring event");
+            return;
+        }
+        if (this._disableCancelSpell && eventType === EventType.CancelAvailable && (this._state === BoardState.CastSpell || this._state === BoardState.SelectSpell)) {
+            console.log("Cancel spell disabled, ignoring event");
+            return;
+        }
         this.scene.game.events.emit(eventType, data);
     }
 
@@ -863,11 +930,13 @@ export class Board extends Model implements Box {
      * @param id The ID of the piece to remove.
      */
     removePiece(id: number): void {
-        if (!id || !this.getPiece(id)) {
+        const piece = this.getPiece(id);
+        if (!id || !piece) {
             console.warn(`No piece with ID ${id} found to remove`);
             return;
         }
         this._pieces.delete(id);
+        this._boardEvents.emit(BoardEvent.PieceDestroyed, piece);
     }
 
     /**
@@ -1082,6 +1151,7 @@ export class Board extends Model implements Box {
         }
         await this.rangeGizmo.reset();
         piece.moved = true;
+        this._boardEvents.emit(BoardEvent.PieceMoved, piece);
         this.cursor.enabled = true;
 
         if (!piece.currentMount && !piece.engaged) {
@@ -1129,6 +1199,12 @@ export class Board extends Model implements Box {
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean =
                 await attackingPiece.attack(defendingPiece);
+            this._boardEvents.emit(
+                BoardEvent.PieceAttacked,
+                attackingPiece,
+                defendingPiece,
+                attackResult,
+            );
             this.state = oldState;
             if (attackResult) {
                 await this.rangeGizmo.reset();
@@ -1162,6 +1238,12 @@ export class Board extends Model implements Box {
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean =
                 await attackingPiece.rangedAttack(defendingPiece);
+            this._boardEvents.emit(
+                BoardEvent.PieceRangedAttacked,
+                attackingPiece,
+                defendingPiece,
+                attackResult,
+            );
             this.state = oldState;
             if (attackResult) {
                 await this.rangeGizmo.reset();
@@ -1286,6 +1368,58 @@ export class Board extends Model implements Box {
      */
     set spellFilter(filter: (config: SpellConfig) => boolean) {
         this._spellFilter = filter;
+    }
+
+    /**
+     * Whether illusion casting is disabled for all summon spells on this board.
+     */
+    get disableIllusions(): boolean {
+        return this._disableIllusions;
+    }
+
+    set disableIllusions(value: boolean) {
+        this._disableIllusions = value;
+    }
+
+    /**
+     * Whether cancelling spells is disabled for all spells on this board.
+     */
+    get disableCancelSpell(): boolean {
+        return this._disableCancelSpell;
+    }
+
+    set disableCancelSpell(value: boolean) {
+        this._disableCancelSpell = value;
+    }
+
+    /**
+     * Whether ending the turn is disabled for all players on this board.
+     */
+    get disableEndTurn(): boolean {
+        return this._disableEndTurn;
+    }
+
+    set disableEndTurn(value: boolean) {
+        this._disableEndTurn = value;
+    }
+
+    /**
+     * Event emitter for board game events. Tutorials and other observers
+     * can subscribe to {@link BoardEvent} values on this emitter.
+     */
+    get boardEvents(): PhaserEvents.EventEmitter {
+        return this._boardEvents;
+    }
+
+    /**
+     * The active tutorial, or null if no tutorial is running.
+     */
+    get tutorial(): Tutorial | null {
+        return this._tutorial;
+    }
+
+    set tutorial(tutorial: Tutorial | null) {
+        this._tutorial = tutorial;
     }
 
     /**
@@ -1645,9 +1779,21 @@ export class Board extends Model implements Box {
                 );
             }
             this.emitUIEvent(EventType.GameOver, true);
+            this._boardEvents.emit(BoardEvent.GameOver);
             return true;
         }
         return false;
+    }
+
+    /**
+     * End the game immediately, without checking win conditions. Used for
+     * scenarios and tutorials where the game needs to end without a clear
+     * winner.
+     */
+    endGame(): void {
+        this.state = BoardState.GameOver;
+        this.emitUIEvent(EventType.GameOver, true);
+        this._boardEvents.emit(BoardEvent.GameOver);
     }
 
     /**
@@ -1680,7 +1826,13 @@ export class Board extends Model implements Box {
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    if (!(await this.currentPlayer.remote.selectSpell())) {
+                    if (await this.currentPlayer.remote.selectSpell()) {
+                        this._boardEvents.emit(
+                            BoardEvent.SpellSelected,
+                            this.currentPlayer,
+                            this.currentPlayer.selectedSpell,
+                        );
+                    } else {
                         console.log(
                             "Remote player could not select spell, skipping...",
                         );
@@ -1702,6 +1854,11 @@ export class Board extends Model implements Box {
                             callback: async (spell: Spell | null) => {
                                 if (spell) {
                                     this.currentPlayer?.pickSpell(spell.id);
+                                    this._boardEvents.emit(
+                                        BoardEvent.SpellSelected,
+                                        this.currentPlayer,
+                                        spell,
+                                    );
                                 }
                                 this.emitUIEvent(
                                     EventType.SpellbookClose,
@@ -1975,14 +2132,16 @@ export class Board extends Model implements Box {
      *
      * @param attack the attack value
      * @param defense the defense value
+     * @param attackingPlayer optional player whose units are attacking; used
+     *        for per-player forceHit overrides (e.g. in tutorials)
      * @returns true if the attack is greater than the defense, false otherwise
      */
-    roll(attack: number, defense: number): boolean {
-        return this._rules.roll(attack, defense, this._rng);
+    roll(attack: number, defense: number, attackingPlayer?: Player): boolean {
+        return this._rules.roll(attack, defense, this._rng, attackingPlayer);
     }
 
-    rollChance(attack: number): boolean {
-        return this._rules.rollChance(attack, this._rng);
+    rollChance(attack: number, castingPlayer?: Player): boolean {
+        return this._rules.rollChance(attack, this._rng, castingPlayer);
     }
 
     /**
@@ -2224,6 +2383,7 @@ export class Board extends Model implements Box {
      */
     destroy() {
         this._viewportListenerAbort.abort();
+        this._boardEvents.removeAllListeners();
 
         this.pieces?.forEach((piece: Piece) => {
             piece.destroy();

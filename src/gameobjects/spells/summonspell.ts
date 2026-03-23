@@ -46,6 +46,9 @@ export class SummonSpell extends Spell {
     }
 
     get allowIllusion(): boolean {
+        if (this._board?.disableIllusions) {
+            return false;
+        }
         return (
             this._properties.allowIllusion === undefined || // Default to true
             this._properties.allowIllusion === true
@@ -81,7 +84,7 @@ export class SummonSpell extends Spell {
     }
 
     protected roll(): boolean {
-        return this.illusion || this._board.rollChance(this.chance);
+        return this.illusion || this._board.rollChance(this.chance, this._owner);
     }
 
     getValidTarget(

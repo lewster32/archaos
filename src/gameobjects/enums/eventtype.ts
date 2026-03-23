@@ -61,4 +61,10 @@ export enum EventType {
      * A new turn has started.
      */
     NewTurn = "new-turn",
+
+    /**
+     * A tutorial message (intro, step hint, or outro) should be displayed.
+     * The event payload is a {@link TutorialMessageEvent}.
+     */
+    TutorialMessage = "tutorial-message",
 }

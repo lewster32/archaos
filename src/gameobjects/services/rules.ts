@@ -1,6 +1,7 @@
 import { Board } from "../board";
 import { ComputerWizard } from "../computerwizard";
 import { ActionType } from "../enums/actiontype";
+import { BoardEvent } from "../enums/boardevent";
 import { BoardState } from "../enums/boardstate";
 import { Colour } from "../enums/colour";
 import { CursorType } from "../enums/cursortype";
@@ -245,6 +246,11 @@ export class Rules {
         board.state = BoardState.Idle;
         board.logger.log(`${board.currentPlayer.name} casts '${casted.name}'`);
         await casted.cast(board.currentPlayer, board.selected, currentTarget);
+        board.boardEvents.emit(
+            BoardEvent.SpellCast,
+            board.currentPlayer,
+            casted,
+        );
         board.state = BoardState.CastSpell;
         if (casted.castTimes <= 0) {
             await board.currentPlayer.discardSpell();
@@ -609,14 +615,25 @@ export class Rules {
     }
 
     /**
-     * Roll an attack vs defense check.
+     * Roll an attack vs defense check. Per-player overrides are checked first,
+     * then the global cheat flag, then normal dice rolls.
      *
      * @param attack the attack value
      * @param defense the defense value
      * @param rng the PRNG instance to use for the roll
+     * @param attackingPlayer optional player whose units are attacking; used
+     *        for per-player forceHit overrides (e.g. in tutorials)
      * @returns true if the attack is greater than the defense, false otherwise
      */
-    roll(attack: number, defense: number, rng: IRNG): boolean {
+    roll(
+        attack: number,
+        defense: number,
+        rng: IRNG,
+        attackingPlayer?: Player,
+    ): boolean {
+        if (attackingPlayer?.forceHit != null) {
+            return attackingPlayer.forceHit;
+        }
         if (Board.CHEAT_FORCE_HIT !== null) {
             return Board.CHEAT_FORCE_HIT;
         }
@@ -631,13 +648,19 @@ export class Rules {
     }
 
     /**
-     * Roll a chance check for spell casting.
+     * Roll a chance check for spell casting. Per-player overrides are checked
+     * first, then the global cheat flag, then normal chance rolls.
      *
      * @param attack the chance value (0 to 1)
      * @param rng the PRNG instance to use for the roll
+     * @param castingPlayer optional player who is casting; used for per-player
+     *        forceCast overrides (e.g. in tutorials)
      * @returns true if the chance check succeeds (i.e., the `attack` value is greater than the saving roll), false otherwise
      */
-    rollChance(attack: number, rng: IRNG): boolean {
+    rollChance(attack: number, rng: IRNG, castingPlayer?: Player): boolean {
+        if (castingPlayer?.forceCast != null) {
+            return castingPlayer.forceCast;
+        }
         if (Board.CHEAT_FORCE_CAST !== null) {
             return Board.CHEAT_FORCE_CAST;
         }

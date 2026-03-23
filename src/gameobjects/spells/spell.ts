@@ -525,7 +525,7 @@ export class Spell extends Model {
      * @returns Whether the spell casting is successful
      */
     protected roll(): boolean {
-        return this._board.rollChance(this.chance);
+        return this._board.rollChance(this.chance, this._owner);
     }
 
     /**

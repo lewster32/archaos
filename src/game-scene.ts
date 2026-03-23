@@ -30,6 +30,7 @@ import {
     GameSetupPlayerType,
 } from "./gameobjects/interfaces/ui";
 import { SpellType } from "./gameobjects/enums/spelltype";
+import { Tutorial } from "./gameobjects/tutorials/tutorial";
 
 import { Scene } from "phaser";
 import { UnitStatus } from "./gameobjects/enums/unitstatus";
@@ -241,6 +242,14 @@ export class GameScene extends Scene {
                 await this.startScenario(scenarioData);
             },
         );
+
+        // Start a tutorial
+        this.game.events.on(
+            "start-tutorial",
+            async (tutorial: Tutorial) => {
+                await this.startTutorial(tutorial);
+            },
+        );
     }
 
     /**
@@ -327,6 +336,27 @@ export class GameScene extends Scene {
     }
 
     /**
+     * Start a tutorial. This sets up the board using the tutorial's config
+     * (which extends GameScenarioData), then calls the tutorial's start hook.
+     *
+     * @param tutorial The tutorial instance to start.
+     */
+    async startTutorial(tutorial: Tutorial): Promise<void> {
+        await this.startScenario(tutorial.config);
+        if (tutorial.config.disableIllusions) {
+            this.board.disableIllusions = true;
+        }
+        if (tutorial.config.disableCancelSpell) {
+            this.board.disableCancelSpell = true;
+        }
+        if (tutorial.config.disableEndTurn) {
+            this.board.disableEndTurn = true;
+        }
+        this.board.tutorial = tutorial;
+        await tutorial.start(this.board);
+    }
+
+    /**
      * Start a predefined scenario.
      *
      * @param scenarioData Scenario data to load.
@@ -349,6 +379,9 @@ export class GameScene extends Scene {
                 const pieceProperties = Piece.getPieceProperties(
                     corpseData.type,
                 );
+                if (corpseData.propertyOverrides) {
+                    Object.assign(pieceProperties.properties, corpseData.propertyOverrides);
+                }
                 const piece: Piece = await this.board.addPiece({
                     ...pieceProperties,
                     owner: null,
@@ -391,6 +424,8 @@ export class GameScene extends Scene {
                         GameScene.DIFFICULTY_DISTRIBUTION,
                         -3,
                     ),
+                forceHit: player.forceHit ?? null,
+                forceCast: player.forceCast ?? null,
             });
             const wizard: Wizard = this.board.addWizard({
                 owner: currentPlayer,
@@ -456,6 +491,9 @@ export class GameScene extends Scene {
                     const pieceProperties = Piece.getPieceProperties(
                         pieceData.type,
                     );
+                    if (pieceData.propertyOverrides) {
+                        Object.assign(pieceProperties.properties, pieceData.propertyOverrides);
+                    }
                     const piece: Piece = await this.board.addPiece({
                         ...pieceProperties,
                         owner: currentPlayer,

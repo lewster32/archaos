@@ -59,6 +59,18 @@ export class Player extends Model {
     private _defeated: boolean;
 
     /**
+     * Per-player attack outcome override. When set, all attacks by this
+     * player's units will be forced to hit (true) or miss (false).
+     */
+    private _forceHit: boolean | null = null;
+
+    /**
+     * Per-player spell cast outcome override. When set, all spells cast by
+     * this player will be forced to succeed (true) or fail (false).
+     */
+    private _forceCast: boolean | null = null;
+
+    /**
      * The remote player controller for this player, if any. This will be set if
      * this player is controlled by a remote player (either a human over the
      * network or a computer wizard).
@@ -116,6 +128,8 @@ export class Player extends Model {
         this._selectedSpell = null;
         this._defeated = false;
         this._wizcode = config.wizcode || Wizard.randomWizCode();
+        this._forceHit = config.forceHit ?? null;
+        this._forceCast = config.forceCast ?? null;
         if (config.type === GameSetupPlayerType.Computer) {
             this._remote = new ComputerWizard(
                 board,
@@ -150,6 +164,22 @@ export class Player extends Model {
 
     get wizcode(): string {
         return this._wizcode;
+    }
+
+    get forceHit(): boolean | null {
+        return this._forceHit;
+    }
+
+    set forceHit(value: boolean | null) {
+        this._forceHit = value;
+    }
+
+    get forceCast(): boolean | null {
+        return this._forceCast;
+    }
+
+    set forceCast(value: boolean | null) {
+        this._forceCast = value;
     }
 
     get castingPiece(): Piece | null {
