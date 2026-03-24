@@ -268,6 +268,10 @@ export abstract class Tutorial {
         this._currentStepIndex = 0;
     }
 
+    get id(): string {
+        return this._config.id;
+    }
+
     /**
      * Get the configuration data for this tutorial.
      */

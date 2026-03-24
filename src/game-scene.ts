@@ -235,6 +235,10 @@ export class GameScene extends Scene {
             await this.startGame(data);
         });
 
+        this.game.events.on("start-tutorial", async (tutorial: Tutorial) => {
+            await this.startTutorial(tutorial);
+        });
+
         // Start a scenario (a predefined board state)
         this.game.events.on(
             "start-scenario",

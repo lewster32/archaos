@@ -4,6 +4,7 @@
     image-rendering: pixelated;
     border-style: solid;
     border-width: 6px;
+    min-width: 280px;
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
@@ -206,6 +207,11 @@ input[type="range"] {
     &--add {
         background-image: url("../../assets/images/ui/icon-add.png");
         width: 20px;
+        height: 20px;
+    }
+    &--tick {
+        background-image: url("../../assets/images/ui/icon-tick.png");
+        width: 22px;
         height: 20px;
     }
 }

@@ -48,8 +48,8 @@ class GettingStarted10 extends TutorialStep {
             <p>
             If you look on the board next to your wizard<sup>*</sup>, you should see a <span class="c-magenta">magenta dot</span>.
             This shows valid positions for your spell to be cast. Click or tap this position to cast the spell.
-            <p class="text-small"><sup>*</sup> the blue one on the left with the fetching hat, not the one on the right in a red t-shirt and jeans,
-            who clearly didn't read the dress-code sign.`,
+            <p class="text-small"><sup>*</sup>The blue one on the left with the fetching hat, not the one on the right in a red t-shirt and jeans,
+            who clearly didn't pay attention to the dress-code.`,
             "Cast your spell",
             "left",
         );

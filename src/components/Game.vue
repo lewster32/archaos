@@ -9,7 +9,7 @@
         ref="container"
     />
     <LoadingScreen v-if="loadingProgress < 1" />
-    <GameMenu v-else-if="!gameStarted" @start="onGameStart" />
+    <GameMenu v-else-if="!gameStarted" @start="onGameStart" @start-tutorial="onGameStartTutorial" />
     <Spellbook
         :data="spellbook"
         @select="spellSelect"
@@ -123,6 +123,16 @@ const dismount = () => {
 const onGameStart = (data: GameSetupData) => {
     eventEmitter.value?.emit("start-game", data);
     gameStarted.value = true;
+};
+
+const onGameStartTutorial = (tutorialId: string) => {
+    const tutorial = getTutorial(tutorialId);
+    if (tutorial) {
+        eventEmitter.value?.emit("start-tutorial", tutorial);
+        gameStarted.value = true;
+    } else {
+        console.error(`Unknown tutorial ID: ${tutorialId}`);
+    }
 };
 
 const spellbookOpen = computed(() => {

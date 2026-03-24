@@ -6,6 +6,12 @@
         >
             <div class="callout__row">
                 <button
+                    class="button button--yellow"
+                    @click="($refs.tutorialDialog as HTMLDialogElement)?.showModal()"
+                    >Play a tutorial</button>
+            </div>
+            <div class="callout__row">
+                <button
                     class="button"
                     @click="($refs.playerConfigDialog as HTMLDialogElement)?.showModal()"
                     >Configure players <i class="icon icon--settings"></i></button>
@@ -76,6 +82,39 @@
                     </button>
                 </div>
             </dialog>
+            <dialog
+                v-if="tutorials.length > 0"
+                class="callout"
+                ref="tutorialDialog">
+                <h2 class="callout__title">
+                    Tutorials
+                </h2>
+                <div
+                    class="callout__row"
+                    v-for="(tut, index) in tutorials"
+                    :key="index"
+                >
+                    <button
+                        class="button tutorial-button"
+                        @click="
+                            emit('startTutorial', tut.id);
+                            ($refs.tutorialDialog as HTMLDialogElement)?.close();
+                        "
+                    >
+                        <span class="tutorial-button__index">{{ index + 1 }}.</span>
+                        <span class="tutorial-button__name">{{ tut.name }}</span>
+                        <i title="You have completed this tutorial" class="tutorial-button__icon icon icon--tick"></i>
+                    </button>
+                </div>
+                <div class="callout__row">
+                    <button
+                        class="button button--red"
+                        @click="($refs.tutorialDialog as HTMLDialogElement)?.close()"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </dialog>
             <div class="callout__row">
                 <label for="boardsize"
                 title="The size of the play area. If there are more than 4 players, the small board is disabled to prevent overcrowding.">Board size:</label>
@@ -99,17 +138,6 @@
                     <option value="30">30</option>
                 </select>
             </div>
-            <!-- TODO: hidden for now - will make this a dialog with a nicer list in future
-            <div class="callout__row">
-                <label for="tutorials"
-                    title="Select a tutorial to play">Tutorial:</label>
-                <select v-model="setup.tutorial" id="tutorials">
-                    <option v-for="(tutorial, index) in tutorials" :key="tutorial.config.id" :value="tutorial.config.id">
-                        {{ index + 1 }}. {{ tutorial.config.name }}
-                    </option>
-                </select>
-            </div>
-            -->
             <div class="callout__row">
                 <label for="classicspells" class="checkbox-label">
                     <input
@@ -154,6 +182,7 @@ import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
+    startTutorial: [tutorialId: string];
 }>();
 
 const defaultPlayers: SetupPlayer[] = [
@@ -317,6 +346,20 @@ function startGame(): void {
     gap: 1em;
     &--difficulty {
         margin-block: 1em;
+    }
+}
+
+.tutorial-button {
+    display: flex;
+    align-items: center;
+    &__index {
+        margin-inline-end: auto;
+    }
+    &__name {
+        color: var(--color-yellow);
+    }
+    &__icon {
+        margin-inline-start: auto;
     }
 }
 
