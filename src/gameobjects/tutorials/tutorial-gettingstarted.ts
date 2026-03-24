@@ -72,7 +72,7 @@ class GettingStarted15 extends TutorialStep {
     constructor() {
         super(
             `<p>
-            Behold, your majestic <em>${RANDOM_PLAYER_SPELL}</em>! But alas, your opponent has also summoned a fearsome
+            Behold, your majestic <em>${RANDOM_PLAYER_SPELL}</em>! But alas, your opponent has summoned a fearsome
             <em class="c-cyan">${RANDOM_OPPONENT_SPELL}</em> to the board.
             <p>
             It's time to move your piece. These two creatures can only move one space per turn, and need to be next to
