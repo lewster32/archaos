@@ -280,4 +280,10 @@ onUnmounted(() => {
 #game-container {
     filter: drop-shadow(-2.5rem 5rem rgb(0 0 0 / 0.75));
 }
+
+@media (min-width: 1920px) {
+    #game-container {
+        scale: 1.5;
+    }
+}
 </style>
