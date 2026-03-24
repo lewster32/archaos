@@ -597,9 +597,25 @@ export class Board extends Model implements Box {
                 this._balanceShift = 0;
                 await this.idleDelay(Board.DEFAULT_DELAY);
             }
-            this.phase = BoardPhase.Spellbook;
-            this.state = BoardState.SelectSpell;
-            await this.idleDelay(Board.END_TURN_DELAY);
+            const anySpellsLeft= this.players.some(
+                (p) => !p.defeated && p.spells.length > 0,
+            );
+            // Skip spell selection phase if no player has a spell to cast and
+            // we're in a tutorial, for brevity.
+            if (!anySpellsLeft && this.tutorial != null) {
+                this._logger.log(
+                    `No spells to cast, skipping to movement`,
+                    Colour.Green,
+                );
+                this.phase = BoardPhase.Spreading;
+                this.state = BoardState.Idle;
+                return await this.newTurn();
+            }
+            else {
+                this.phase = BoardPhase.Spellbook;
+                this.state = BoardState.SelectSpell;
+                await this.idleDelay(Board.END_TURN_DELAY);
+            }
         } else if (this.phase === BoardPhase.Spellbook) {
             // Skip casting phase if no player has a spell to cast
             const anySpellSelected = this.players.some(

@@ -10,8 +10,8 @@ const RANDOM_PLAYER_SPELL: string = [
     "Gorilla",
     "Crocodile",
 ][Math.floor(Math.random() * 4)];
-const RANDOM_OPPONENT_SPELL: string = ["Orc", "Goblin", "Ogre", "Troll"][
-    Math.floor(Math.random() * 4)
+const RANDOM_OPPONENT_SPELL: string = ["Orc", "Goblin", "Ogre"][
+    Math.floor(Math.random() * 3)
 ];
 class GettingStarted5 extends TutorialStep {
     constructor() {
@@ -144,6 +144,12 @@ class GettingStarted20 extends TutorialStep {
         // Any death counts as a win, as the player always hits, and the
         // opponent always misses.
         return event === BoardEvent.PieceDied;
+    }
+
+    onComplete(board: Board): void {
+        // End the game immediately so the player doesn't have to wait for the
+        // opponent to finish their turn
+        board.endGame();
     }
 }
 
