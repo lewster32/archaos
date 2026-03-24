@@ -607,9 +607,9 @@ export class Board extends Model implements Box {
                     `No spells to cast, skipping to movement`,
                     Colour.Green,
                 );
-                this.phase = BoardPhase.Spreading;
-                this.state = BoardState.Idle;
-                return await this.newTurn();
+                this.phase = BoardPhase.Moving;
+                this.state = BoardState.Move;
+                await this.idleDelay(Board.END_TURN_DELAY);
             }
             else {
                 this.phase = BoardPhase.Spellbook;
@@ -1883,7 +1883,7 @@ export class Board extends Model implements Box {
                                     true,
                                 );
                                 resolve();
-                                await this.nextPlayer();
+                                void this.nextPlayer();
                             },
                         });
                     });
@@ -1958,7 +1958,7 @@ export class Board extends Model implements Box {
                 this.currentPlayer?.remote
             ) {
                 await this.currentPlayer.remote.moveAllUnits();
-                await this.nextPlayer();
+                continue;
             }
 
             // Exit loop - player's turn is ready

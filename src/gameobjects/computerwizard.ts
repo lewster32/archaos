@@ -520,6 +520,12 @@ export class ComputerWizard implements RemotePlayer {
                 spells,
             ) as SummonSpell;
 
+            if (!pickedSpell) {
+                console.debug(`${this._player.name} failed to pick a spell`);
+                this._board.sound.play("cancel");
+                return false;
+            }
+
             // The lower the spell's cast chance, the more likely we are to cast
             // it as an illusion
             if (pickedSpell.allowIllusion) {
