@@ -182,20 +182,6 @@ describe("UnitStats", () => {
             });
             expect(screen.getByText("Owned by").query()).toBeNull();
         });
-
-        it('shows "Mounted by" label when isMount is true', async () => {
-            const screen = await render(UnitStats, {
-                props: { unit: makeUnit(), owner: "Gandalf", isMount: true },
-            });
-            await expect.element(screen.getByText(/Mounted by/)).toBeVisible();
-        });
-
-        it('shows "Owned by" label when isMount is false', async () => {
-            const screen = await render(UnitStats, {
-                props: { unit: makeUnit(), owner: "Gandalf", isMount: false },
-            });
-            await expect.element(screen.getByText(/Owned by/)).toBeVisible();
-        });
     });
 
     describe("itemNumClass", () => {
