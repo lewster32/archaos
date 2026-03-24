@@ -84,7 +84,7 @@
             </dialog>
             <dialog
                 v-if="tutorials.length > 0"
-                class="callout"
+                class="callout callout--min-width"
                 ref="tutorialDialog">
                 <h2 class="callout__title">
                     Tutorials
@@ -101,9 +101,12 @@
                             ($refs.tutorialDialog as HTMLDialogElement)?.close();
                         "
                     >
-                        <span class="tutorial-button__index">{{ index + 1 }}.</span>
-                        <span class="tutorial-button__name">{{ tut.name }}</span>
-                        <i title="You have completed this tutorial" class="tutorial-button__icon icon icon--tick"></i>
+                        <span class="tutorial-button__name">
+                            <span class="tutorial-button__index">{{ index + 1 }}.</span>
+                            {{ tut.name }}
+                        </span>
+                        <i v-if="tut.done" title="You have completed this tutorial" class="tutorial-button__icon icon icon--tick"></i>
+                        <i v-else title="You have not completed this tutorial yet" class="tutorial-button__icon icon icon--right"></i>
                     </button>
                 </div>
                 <div class="callout__row">
@@ -352,14 +355,9 @@ function startGame(): void {
 .tutorial-button {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     &__index {
-        margin-inline-end: auto;
-    }
-    &__name {
-        color: var(--color-yellow);
-    }
-    &__icon {
-        margin-inline-start: auto;
+        color: var(--color-grey);
     }
 }
 

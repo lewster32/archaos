@@ -4,7 +4,6 @@
     image-rendering: pixelated;
     border-style: solid;
     border-width: 6px;
-    min-width: 280px;
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
@@ -17,6 +16,10 @@
 
     &:hover {
         border-image-source: url("../../assets/images/ui/callout-hover.png");
+    }
+
+    &--min-width {
+        min-width: 280px;
     }
 
     &__buttons {
@@ -201,6 +204,11 @@ input[type="range"] {
     }
     &--left {
         background-image: url("../../assets/images/ui/icon-left.png");
+        width: 12px;
+        height: 20px;
+    }
+    &--right {
+        background-image: url("../../assets/images/ui/icon-right.png");
         width: 12px;
         height: 20px;
     }

@@ -259,6 +259,11 @@ export abstract class Tutorial {
      */
     private _currentStepIndex: number = 0;
 
+    /**
+     * Has the tutorial been completed by the player?
+     */
+    private _done: boolean = false;
+
     constructor(config: TutorialData) {
         if (!config?.steps?.length) {
             throw new Error("Tutorial config must include at least one step.");
@@ -268,6 +273,9 @@ export abstract class Tutorial {
         this._currentStepIndex = 0;
     }
 
+    /**
+     * Get the unique identifier for this tutorial.
+     */
     get id(): string {
         return this._config.id;
     }
@@ -344,6 +352,33 @@ export abstract class Tutorial {
      */
     get isComplete(): boolean {
         return this._currentStepIndex >= this._steps.length;
+    }
+
+    /**
+     * Whether the player has completed this tutorial before. This is persisted
+     * in localStorage, and cached once in memory for the session.
+     */
+    get done(): boolean {
+        if (this._done) {
+            return true;
+        }
+        try {
+            const progress = JSON.parse(localStorage.getItem("tutorialProgress") || "{}");
+            return !!progress[this.id];
+        } catch {
+            return false;
+        }
+    }
+
+    set done(value: boolean) {
+        this._done = value;
+        try {
+            const progress = JSON.parse(localStorage.getItem("tutorialProgress") || "{}");
+            progress[this.id] = value;
+            localStorage.setItem("tutorialProgress", JSON.stringify(progress));
+        } catch {
+            // Ignore localStorage errors
+        }
     }
 
     // ─── Lifecycle ──────────────────────────────────────────────────────
@@ -444,6 +479,7 @@ export abstract class Tutorial {
      * Shows the tutorial outro modal and waits for the user to dismiss it.
      */
     showOutro(): Promise<void> {
+        this.done = true;
         return this.showMessage("outro", "center", this.outro);
     }
 
