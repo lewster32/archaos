@@ -3,6 +3,7 @@ import { BoardEvent } from "../enums/boardevent";
 import { EventType } from "../enums/eventtype";
 import { GameScenarioData, GameScenarioPlayer } from "../interfaces/ui";
 import { Logger } from "../services/logger";
+import * as storage from "../storage";
 
 /**
  * A player in a tutorial. This extends the GameScenarioPlayer with any
@@ -376,7 +377,7 @@ export abstract class Tutorial {
         }
         try {
             const progress = JSON.parse(
-                localStorage.getItem("tutorialProgress") || "{}",
+                storage.getItem("tutorialProgress") || "{}",
             );
             return !!progress[this.id];
         } catch {
@@ -388,12 +389,12 @@ export abstract class Tutorial {
         this._done = value;
         try {
             const progress = JSON.parse(
-                localStorage.getItem("tutorialProgress") || "{}",
+                storage.getItem("tutorialProgress") || "{}",
             );
             progress[this.id] = value;
-            localStorage.setItem("tutorialProgress", JSON.stringify(progress));
+            storage.setItem("tutorialProgress", JSON.stringify(progress));
         } catch {
-            // Ignore localStorage errors
+            // Ignore storage errors
         }
     }
 

@@ -3,6 +3,7 @@ import { render } from "vitest-browser-vue";
 import { userEvent } from "vitest/browser";
 
 import GameMenu from "./GameMenu.vue";
+import { acceptConsent } from "../gameobjects/storage";
 
 function renderMenu(menuProps: Record<string, unknown> = {}) {
     return render(GameMenu, { props: menuProps });
@@ -11,6 +12,7 @@ function renderMenu(menuProps: Record<string, unknown> = {}) {
 describe("GameMenu", () => {
     beforeEach(() => {
         globalThis.localStorage.clear();
+        acceptConsent();
     });
 
     describe("initial render", () => {

@@ -1800,7 +1800,7 @@ export class Board extends Model implements Box {
         this.state = BoardState.Idle;
         this.phase = phase || BoardPhase.Idle;
 
-        this.stateManager.sendEvent(Events.StartGame);
+        // this.stateManager.sendEvent(Events.StartGame);
         console.log(
             `Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`,
         );

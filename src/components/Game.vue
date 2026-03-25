@@ -42,6 +42,11 @@
         @close="closeUnitInfo()"
     />
     <TutorialMessage />
+    <ConsentBanner
+        v-if="showConsentBanner"
+        @accept="onConsentAccept"
+        @decline="onConsentDecline"
+    />
 </template>
 
 <script setup lang="ts">
@@ -54,6 +59,7 @@ import GameControls from "./GameControls.vue";
 import LoadingScreen from "./LoadingScreen.vue";
 import UnitInfo from "./UnitInfo.vue";
 import TutorialMessage from "./TutorialMessage.vue";
+import ConsentBanner from "./ConsentBanner.vue";
 
 // Phaser game launcher
 import { launch } from "../game/game";
@@ -77,6 +83,7 @@ import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
 import { EventType } from "../gameobjects/enums/eventtype";
 import { Piece } from "../gameobjects/piece";
+import * as storage from "../gameobjects/storage";
 
 const container: Ref<HTMLDivElement | null> = ref(null);
 const gameInstance: Ref<Game | null> = ref(null);
@@ -104,6 +111,27 @@ const gameStarted: Ref<boolean> = ref(false);
 const gameOver: Ref<boolean> = ref(false);
 const pieces: Ref<any[]> = ref([]);
 const currentUnit: Ref<Piece | null> = ref(null);
+
+// ─── Storage consent ─────────────────────────────────────────────────────────
+
+storage.loadConsent();
+const showConsentBanner = ref(!storage.hasAnswered());
+
+const onConsentAccept = () => {
+    storage.acceptConsent();
+    // If localStorage already has saved data, reload so components pick it up
+    // (they read storage at initialisation time, before consent was granted).
+    if (globalThis.localStorage?.getItem("setup") || globalThis.localStorage?.getItem("tutorialProgress")) {
+        globalThis.location.reload();
+        return;
+    }
+    showConsentBanner.value = false;
+};
+
+const onConsentDecline = () => {
+    storage.declineConsent();
+    showConsentBanner.value = false;
+};
 
 const spellSelect = (spell: Spell) => {
     closeUnitInfo();

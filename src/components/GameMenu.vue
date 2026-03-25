@@ -231,6 +231,7 @@ import type {
     SetupPlayer,
 } from "../gameobjects/interfaces/ui";
 import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
+import * as storage from "../gameobjects/storage";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
@@ -252,21 +253,19 @@ const setup = ref<SetupData | null>(null);
 
 const tutorials = reactive(getTutorials());
 
-// Load setup from localStorage if available.
-if (globalThis.localStorage) {
-    const saved = globalThis.localStorage.getItem("setup");
-    if (saved) {
-        setup.value = JSON.parse(saved);
-        // Expand legacy 4-player saves to the full 8-player list.
-        if (setup.value.players?.length === 4) {
-            const existing = setup.value.players;
-            setup.value.players = defaultPlayers.map((p, i) =>
-                i < existing.length ? existing[i] : p,
-            );
-        }
-        if (!setup.value.difficulty) {
-            setup.value.difficulty = 0.5;
-        }
+// Load setup from localStorage if consent was given.
+const saved = storage.getItem("setup");
+if (saved) {
+    setup.value = JSON.parse(saved);
+    // Expand legacy 4-player saves to the full 8-player list.
+    if (setup.value.players?.length === 4) {
+        const existing = setup.value.players;
+        setup.value.players = defaultPlayers.map((p, i) =>
+            i < existing.length ? existing[i] : p,
+        );
+    }
+    if (!setup.value.difficulty) {
+        setup.value.difficulty = 0.5;
     }
 }
 
@@ -309,7 +308,7 @@ const hasComputerPlayers = computed(
 );
 
 function startGame(): void {
-    globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    storage.setItem("setup", JSON.stringify(setup.value));
     emit("start", {
         players: setup.value!.players.slice(
             0,
@@ -327,7 +326,7 @@ function startGame(): void {
 }
 
 function startTutorial(tutorialId: string): void {
-    globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    storage.setItem("setup", JSON.stringify(setup.value));
     emit("startTutorial", tutorialId, {
         muteAudio: Boolean(setup.value!.muteAudio),
     });
