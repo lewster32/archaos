@@ -101,24 +101,19 @@ export class Cursor {
         this._position = new Geom.Point(0, 0);
         this._panningEnabled = this._board.needsPanning;
 
-        this._board.scene.input.on(
-            "pointerdown",
-            (pointer: Input.Pointer) => {
-                if (this._panningEnabled) {
-                    this._dragStartX = pointer.position.x;
-                    this._dragStartScrollX =
-                        this._board.scene.cameras.main.scrollX;
-                    this._dragging = false;
-                }
-            },
-        );
+        this._board.scene.input.on("pointerdown", (pointer: Input.Pointer) => {
+            if (this._panningEnabled) {
+                this._dragStartX = pointer.position.x;
+                this._dragStartScrollX = this._board.scene.cameras.main.scrollX;
+                this._dragging = false;
+            }
+        });
 
         this._board.scene.input.on(
             "pointermove",
             async (pointer: Input.Pointer) => {
                 if (this._panningEnabled && pointer.isDown) {
-                    const dx: number =
-                        pointer.position.x - this._dragStartX;
+                    const dx: number = pointer.position.x - this._dragStartX;
                     if (Math.abs(dx) >= Cursor.DRAG_THRESHOLD) {
                         this._dragging = true;
                         this._board.scene.cameras.main.scrollX =
@@ -327,11 +322,16 @@ export class Cursor {
         // Handle disabled end turn and cancel actions in tutorials
         if (
             (input === InputType.Cancel &&
-                this._board.disableCancelSpell && (this._board.state === BoardState.CastSpell || this._board.state === BoardState.SelectSpell)) ||
+                this._board.disableCancelSpell &&
+                (this._board.state === BoardState.CastSpell ||
+                    this._board.state === BoardState.SelectSpell)) ||
             (input === InputType.Cancel &&
-                this._board.disableCancelAction && (this._board.state === BoardState.Move || this._board.state === BoardState.Attack || this._board.state === BoardState.RangedAttack || this._board.state === BoardState.Dismount)) ||
-            (input === InputType.Cancel &&
-                this._board.disableEndTurn)
+                this._board.disableCancelAction &&
+                (this._board.state === BoardState.Move ||
+                    this._board.state === BoardState.Attack ||
+                    this._board.state === BoardState.RangedAttack ||
+                    this._board.state === BoardState.Dismount)) ||
+            (input === InputType.Cancel && this._board.disableEndTurn)
         ) {
             return;
         }
@@ -342,7 +342,11 @@ export class Cursor {
             input,
         );
 
-        if (actionState === ActionType.None || actionState === ActionType.Invalid || actionState === ActionType.Idle) {
+        if (
+            actionState === ActionType.None ||
+            actionState === ActionType.Invalid ||
+            actionState === ActionType.Idle
+        ) {
             return;
         }
 

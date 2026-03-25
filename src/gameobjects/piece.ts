@@ -999,7 +999,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece has any of the specified status effects.
-     * 
+     *
      * @param statuses The status effects to check for.
      * @returns True if the piece has any of the status effects, false otherwise.
      */
@@ -1009,7 +1009,7 @@ export class Piece extends Entity {
 
     /**
      * Check if this piece has all of the specified status effects.
-     * 
+     *
      * @param statuses The status effects to check for.
      * @returns True if the piece has all of the status effects, false otherwise.
      */

@@ -9,9 +9,7 @@ import { Logger } from "../services/logger";
  * additional fields or methods that are specific to tutorial players. Per-player
  * cheat overrides (forceHit, forceCast) are inherited from GameScenarioPlayer.
  */
-export interface TutorialPlayer extends GameScenarioPlayer {
-
-}
+export interface TutorialPlayer extends GameScenarioPlayer {}
 
 export interface TutorialData extends GameScenarioData {
     /**
@@ -92,7 +90,12 @@ export type TutorialMessageType = "intro" | "hint" | "outro";
 /**
  * The position for tutorial messages.
  */
-export type TutorialMessagePosition = "top" | "bottom" | "left" | "right" | "center";
+export type TutorialMessagePosition =
+    | "top"
+    | "bottom"
+    | "left"
+    | "right"
+    | "center";
 
 /**
  * Event payload emitted via Logger's global emitter when the tutorial needs
@@ -143,7 +146,12 @@ export abstract class TutorialStep {
      */
     private readonly _zIndex?: number;
 
-    constructor(hint?: string, name?: string, position: TutorialMessagePosition = "center", zIndex?: number) {
+    constructor(
+        hint?: string,
+        name?: string,
+        position: TutorialMessagePosition = "center",
+        zIndex?: number,
+    ) {
         this._hint = hint ?? "";
         this._name = name ?? "";
         this._position = position;
@@ -255,10 +263,8 @@ export abstract class Tutorial {
      * Per-event listener references so we can unsubscribe the exact same
      * functions in `end()`.
      */
-    private readonly _eventListeners: Map<
-        string,
-        (...args: any[]) => void
-    > = new Map();
+    private readonly _eventListeners: Map<string, (...args: any[]) => void> =
+        new Map();
 
     /**
      * Where are we currently at in the tutorial steps?
@@ -369,7 +375,9 @@ export abstract class Tutorial {
             return true;
         }
         try {
-            const progress = JSON.parse(localStorage.getItem("tutorialProgress") || "{}");
+            const progress = JSON.parse(
+                localStorage.getItem("tutorialProgress") || "{}",
+            );
             return !!progress[this.id];
         } catch {
             return false;
@@ -379,7 +387,9 @@ export abstract class Tutorial {
     set done(value: boolean) {
         this._done = value;
         try {
-            const progress = JSON.parse(localStorage.getItem("tutorialProgress") || "{}");
+            const progress = JSON.parse(
+                localStorage.getItem("tutorialProgress") || "{}",
+            );
             progress[this.id] = value;
             localStorage.setItem("tutorialProgress", JSON.stringify(progress));
         } catch {
@@ -400,14 +410,16 @@ export abstract class Tutorial {
         this._board = board;
         for (const event of Object.values(BoardEvent)) {
             const boardEvent = event as BoardEvent;
-            const listener = (...args: any[]) =>
-                this.advance(boardEvent, args);
+            const listener = (...args: any[]) => this.advance(boardEvent, args);
             this._eventListeners.set(boardEvent, listener);
             board.boardEvents.on(boardEvent, listener);
         }
         await this.showIntro();
         this._steps[0]?.onEnter?.(board);
-        await this.showStepHint(this.currentStep?.position, this.currentStep?.zIndex);
+        await this.showStepHint(
+            this.currentStep?.position,
+            this.currentStep?.zIndex,
+        );
         this.onStart(board);
     }
 
@@ -449,10 +461,7 @@ export abstract class Tutorial {
      *          advanced (or completed). false if the condition was not met or
      *          the tutorial was already complete.
      */
-    async advance(
-        event?: BoardEvent,
-        args: any[] = [],
-    ): Promise<boolean> {
+    async advance(event?: BoardEvent, args: any[] = []): Promise<boolean> {
         if (this.isComplete || !this._board) {
             return false;
         }
@@ -493,8 +502,17 @@ export abstract class Tutorial {
      * Shows the current step's hint modal and waits for the user to dismiss
      * it. Resolves immediately if the current step has no hint text.
      */
-    showStepHint(position: TutorialMessagePosition = "center", zIndex?: number): Promise<void> {
-        return this.showMessage("hint", position, this.currentStep?.hint ?? "", this.currentStep?.name ?? this.name, zIndex);
+    showStepHint(
+        position: TutorialMessagePosition = "center",
+        zIndex?: number,
+    ): Promise<void> {
+        return this.showMessage(
+            "hint",
+            position,
+            this.currentStep?.hint ?? "",
+            this.currentStep?.name ?? this.name,
+            zIndex,
+        );
     }
 
     /**
@@ -513,7 +531,7 @@ export abstract class Tutorial {
         position: TutorialMessagePosition = "center",
         text: string = "",
         title: string = this.name,
-        zIndex?: number
+        zIndex?: number,
     ): Promise<void> {
         if (!text) {
             return Promise.resolve();

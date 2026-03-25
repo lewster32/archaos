@@ -591,10 +591,7 @@ describe("ComputerWizard", () => {
         it("increases chance for a lawful spell on a lawful board", () => {
             inject({ chance: 0.3, balance: 2 });
             expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    0.2,
-                ),
+                (ComputerWizard as any).getSpellChanceForUnit("test-unit", 0.2),
             ).toBeCloseTo(0.5);
         });
 
@@ -611,10 +608,7 @@ describe("ComputerWizard", () => {
         it("clamps the adjusted chance to a maximum of 1", () => {
             inject({ chance: 0.5, balance: -2 });
             expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    -1,
-                ),
+                (ComputerWizard as any).getSpellChanceForUnit("test-unit", -1),
             ).toBe(1);
         });
 
@@ -639,10 +633,7 @@ describe("ComputerWizard", () => {
             delete (Spell.spells as any)[TEST_KEY];
         });
 
-        function injectDragonSpell(
-            chance: number = 0.1,
-            balance: number = -2,
-        ) {
+        function injectDragonSpell(chance: number = 0.1, balance: number = -2) {
             (Spell.spells as any)[TEST_KEY] = {
                 chance,
                 balance,
@@ -747,9 +738,7 @@ describe("ComputerWizard", () => {
                 findThreatPieces: vi
                     .fn()
                     .mockReturnValue(
-                        threatening && dragon
-                            ? new Set([dragon])
-                            : new Set(),
+                        threatening && dragon ? new Set([dragon]) : new Set(),
                     ),
             });
 
@@ -788,16 +777,13 @@ describe("ComputerWizard", () => {
                 cw as any,
                 "evaluateEnemyPlayerPriorities",
             ).mockImplementation(() => {});
-            vi.spyOn(
-                cw as any,
-                "forgetIllusionKnowledge",
-            ).mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
+                () => {},
+            );
 
             // findSpellTargets: return the dragon as a target for Disbelieve
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
-                dragon
-                    ? new Map([[disbelieve, [dragon]]])
-                    : new Map(),
+                dragon ? new Map([[disbelieve, [dragon]]]) : new Map(),
             );
 
             if (knownNonIllusion && dragon) {
@@ -826,18 +812,14 @@ describe("ComputerWizard", () => {
                 knownNonIllusion: true,
             });
             await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(
-                disbelieve.id,
-            );
+            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
         });
 
         it("never prefers Disbelieve at difficulty 0", async () => {
             const { cw, player, disbelieve } = setup({ difficulty: 0 });
             await cw.selectSpell();
             // preference = suspicion/25 * 0 = 0, rollChance(0) → false
-            expect(player.pickSpell).not.toHaveBeenCalledWith(
-                disbelieve.id,
-            );
+            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
         });
 
         it("falls through to normal selection when the suspicion roll fails", async () => {
@@ -845,9 +827,7 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(
-                disbelieve.id,
-            );
+            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
             // Should have picked normally via the weighted-pick path
             expect(player.pickSpell).toHaveBeenCalled();
         });
@@ -855,9 +835,7 @@ describe("ComputerWizard", () => {
         it("does not prefer Disbelieve for raised-dead pieces", async () => {
             const { cw, player, disbelieve } = setup({ raisedDead: true });
             await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(
-                disbelieve.id,
-            );
+            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
         });
 
         it("threat boost increases the suspicion preference", async () => {
@@ -937,9 +915,7 @@ describe("ComputerWizard", () => {
             // Remove the test spell so the lookup returns null
             delete (Spell.spells as any)[TEST_KEY];
             await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(
-                disbelieve.id,
-            );
+            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
         });
     });
 
@@ -1099,10 +1075,9 @@ describe("ComputerWizard", () => {
                 cw as any,
                 "evaluateEnemyPlayerPriorities",
             ).mockImplementation(() => {});
-            vi.spyOn(
-                cw as any,
-                "forgetIllusionKnowledge",
-            ).mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
+                () => {},
+            );
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
                 new Map([[disbelieve, [dragon]]]),
             );
@@ -1181,9 +1156,7 @@ describe("ComputerWizard", () => {
                 cursor: { enabled: true },
                 sound: { play: vi.fn() },
                 // Low suspicion → preference ≈ 0.032 → this threshold rejects it
-                rollChance: vi
-                    .fn()
-                    .mockImplementation((c: number) => c > 0.5),
+                rollChance: vi.fn().mockImplementation((c: number) => c > 0.5),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
             } as unknown as Board;
@@ -1193,10 +1166,9 @@ describe("ComputerWizard", () => {
                 cw as any,
                 "evaluateEnemyPlayerPriorities",
             ).mockImplementation(() => {});
-            vi.spyOn(
-                cw as any,
-                "forgetIllusionKnowledge",
-            ).mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
+                () => {},
+            );
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
                 new Map([[disbelieve, [goblin]]]),
             );

@@ -173,18 +173,22 @@ input[type="range"] {
     background: #171717;
     border-radius: 6px;
     cursor: pointer;
-    &::-webkit-slider-thumb, &::-moz-range-thumb {
+    &::-webkit-slider-thumb,
+    &::-moz-range-thumb {
         border: none;
         -webkit-appearance: none;
         appearance: none;
         width: 24px;
         height: 24px;
-        background: url("../../assets/images/ui/button-cyan.png") no-repeat center center / 100% 100%;
+        background: url("../../assets/images/ui/button-cyan.png") no-repeat
+            center center / 100% 100%;
     }
     &:disabled {
         pointer-events: none;
-        &::-webkit-slider-thumb, &::-moz-range-thumb {
-            background: url("../../assets/images/ui/button-header.png") no-repeat center center / 100% 100%;
+        &::-webkit-slider-thumb,
+        &::-moz-range-thumb {
+            background: url("../../assets/images/ui/button-header.png")
+                no-repeat center center / 100% 100%;
         }
     }
 }

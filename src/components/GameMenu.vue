@@ -1,28 +1,40 @@
 <template>
     <div class="menu">
         <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
-        <div
-            v-if="setup"
-        >
+        <div v-if="setup">
             <div class="callout__row">
                 <button
                     class="button button--yellow"
-                    @click="($refs.tutorialDialog as HTMLDialogElement)?.showModal()"
-                    >Play a tutorial</button>
+                    @click="
+                        ($refs.tutorialDialog as HTMLDialogElement)?.showModal()
+                    "
+                >
+                    Play a tutorial
+                </button>
             </div>
             <div class="callout__row">
                 <button
                     class="button"
-                    @click="($refs.playerConfigDialog as HTMLDialogElement)?.showModal()"
-                    >Configure players <i class="icon icon--settings"></i></button>
+                    @click="
+                        (
+                            $refs.playerConfigDialog as HTMLDialogElement
+                        )?.showModal()
+                    "
+                >
+                    Configure players <i class="icon icon--settings"></i>
+                </button>
             </div>
             <dialog
                 v-if="setup.playerCount > 0"
                 class="callout"
-                ref="playerConfigDialog">
+                ref="playerConfigDialog"
+            >
                 <div class="callout__row">
-                    <label for="playercount"
-                        title="The number of players in the game.">Number of players:</label>
+                    <label
+                        for="playercount"
+                        title="The number of players in the game."
+                        >Number of players:</label
+                    >
                     <select v-model="setup.playerCount" id="playercount">
                         <option v-for="n in 7" :key="n" :value="n + 1">
                             {{ n + 1 }} Players
@@ -36,7 +48,9 @@
                         setup.playerCount,
                     )"
                     :key="index"
-                    :class="{ 'is-computer': setup.players[index].computerControlled }"
+                    :class="{
+                        'is-computer': setup.players[index].computerControlled,
+                    }"
                 >
                     <label :for="`player${index}`" style="width: 20ch"
                         >{{
@@ -51,7 +65,7 @@
                         type="text"
                         :id="`player${index}`"
                         maxlength="20"
-                        style="width: 23ch;"
+                        style="width: 23ch"
                     />
                     <label
                         class="human-computer-toggle"
@@ -66,17 +80,36 @@
                         />
                     </label>
                 </div>
-                <div class="callout__row callout__row--difficulty difficulty" :class="{ 'difficulty--disabled': !hasComputerPlayers }">
-                    <label for="difficulty"
-                    title="The difficulty of computer-controlled players. Higher produces more challenging and aggressive opponents.">Difficulty:</label>
-                    <input type="range" min="0.1" max="1" step="0.1" v-model="setup.difficulty" class="difficulty__input"
-                    :disabled="!hasComputerPlayers"/>
-                    <span class="difficulty__value">{{ Math.round(setup.difficulty * 10) }}</span>
+                <div
+                    class="callout__row callout__row--difficulty difficulty"
+                    :class="{ 'difficulty--disabled': !hasComputerPlayers }"
+                >
+                    <label
+                        for="difficulty"
+                        title="The difficulty of computer-controlled players. Higher produces more challenging and aggressive opponents."
+                        >Difficulty:</label
+                    >
+                    <input
+                        type="range"
+                        min="0.1"
+                        max="1"
+                        step="0.1"
+                        v-model="setup.difficulty"
+                        class="difficulty__input"
+                        :disabled="!hasComputerPlayers"
+                    />
+                    <span class="difficulty__value">{{
+                        Math.round(setup.difficulty * 10)
+                    }}</span>
                 </div>
                 <div class="callout__row">
                     <button
                         class="button button--green"
-                        @click="($refs.playerConfigDialog as HTMLDialogElement)?.close()"
+                        @click="
+                            (
+                                $refs.playerConfigDialog as HTMLDialogElement
+                            )?.close()
+                        "
                     >
                         Done
                     </button>
@@ -85,10 +118,9 @@
             <dialog
                 v-if="tutorials.length > 0"
                 class="callout callout--min-width"
-                ref="tutorialDialog">
-                <h2 class="callout__title">
-                    Tutorials
-                </h2>
+                ref="tutorialDialog"
+            >
+                <h2 class="callout__title">Tutorials</h2>
                 <div
                     class="callout__row"
                     v-for="(tut, index) in tutorials"
@@ -99,25 +131,40 @@
                         @click="startTutorial(tut.id)"
                     >
                         <span class="tutorial-button__name">
-                            <span class="tutorial-button__index">{{ index + 1 }}.</span>
+                            <span class="tutorial-button__index"
+                                >{{ index + 1 }}.</span
+                            >
                             {{ tut.name }}
                         </span>
-                        <i v-if="tut.done" title="You have completed this tutorial" class="tutorial-button__icon icon icon--tick"></i>
-                        <i v-else title="You have not completed this tutorial yet" class="tutorial-button__icon icon icon--right"></i>
+                        <i
+                            v-if="tut.done"
+                            title="You have completed this tutorial"
+                            class="tutorial-button__icon icon icon--tick"
+                        ></i>
+                        <i
+                            v-else
+                            title="You have not completed this tutorial yet"
+                            class="tutorial-button__icon icon icon--right"
+                        ></i>
                     </button>
                 </div>
                 <div class="callout__row">
                     <button
                         class="button button--red"
-                        @click="($refs.tutorialDialog as HTMLDialogElement)?.close()"
+                        @click="
+                            ($refs.tutorialDialog as HTMLDialogElement)?.close()
+                        "
                     >
                         Cancel
                     </button>
                 </div>
             </dialog>
             <div class="callout__row">
-                <label for="boardsize"
-                title="The size of the play area. If there are more than 4 players, the small board is disabled to prevent overcrowding.">Board size:</label>
+                <label
+                    for="boardsize"
+                    title="The size of the play area. If there are more than 4 players, the small board is disabled to prevent overcrowding."
+                    >Board size:</label
+                >
                 <select v-model="setup.boardSize" id="boardsize">
                     <option value="9" :disabled="setup.playerCount > 4">
                         Small Board
@@ -128,8 +175,11 @@
                 </select>
             </div>
             <div class="callout__row">
-                <label for="spellcount"
-                    title="The number of spells each player starts with.">Spell count:</label>
+                <label
+                    for="spellcount"
+                    title="The number of spells each player starts with."
+                    >Spell count:</label
+                >
                 <select v-model="setup.spellCount" id="spellcount">
                     <option value="10">10</option>
                     <option value="15">15</option>
@@ -146,7 +196,9 @@
                         style="--accent-color: var(--color-green)"
                         id="classicspells"
                     />
-                    <span class="c-green" title="only use spells from original">Classic spells</span>
+                    <span class="c-green" title="only use spells from original"
+                        >Classic spells</span
+                    >
                 </label>
             </div>
             <div class="callout__row">
@@ -250,7 +302,10 @@ watch(
  * Check any of the active players are computer-controlled.
  */
 const hasComputerPlayers = computed(
-    () => setup.value?.players.slice(0, setup.value.playerCount).some(p => p.computerControlled) || false
+    () =>
+        setup.value?.players
+            .slice(0, setup.value.playerCount)
+            .some((p) => p.computerControlled) || false,
 );
 
 function startGame(): void {
@@ -277,7 +332,6 @@ function startTutorial(tutorialId: string): void {
         muteAudio: Boolean(setup.value!.muteAudio),
     });
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -311,7 +365,7 @@ function startTutorial(tutorialId: string): void {
     width: 2.5em;
     max-width: 2.5em;
     height: 1.5em;
-    padding-block: .25em;
+    padding-block: 0.25em;
     display: flex;
     aspect-ratio: auto;
     margin: 0;
@@ -377,7 +431,6 @@ function startTutorial(tutorialId: string): void {
     align-items: center;
     gap: 1em;
     &__input[type="range"] {
-        
     }
     &__value {
         color: var(--color-cyan);
@@ -400,5 +453,4 @@ function startTutorial(tutorialId: string): void {
         }
     }
 }
-
 </style>

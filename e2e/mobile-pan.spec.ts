@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 declare global {
     // biome-ignore lint: var is required for global augmentation
     var currentBoard: // eslint-disable-line no-var
-        import("../src/gameobjects/board").Board & Record<string, any>;
+    import("../src/gameobjects/board").Board & Record<string, any>;
 }
 
 /**
@@ -192,13 +192,16 @@ test.describe("Viewport transition panning", () => {
 
         await page.mouse.move(startX, startY);
         await page.mouse.down();
-        await page.mouse.move(startX - 80, startY, { steps: 10 });
+        // Drag right — after auto-centering on Player 1 (far right of the
+        // board) scrollX is already at the camera's right bound, so drag
+        // right to scroll left (decrease scrollX) where there is room.
+        await page.mouse.move(startX + 80, startY, { steps: 10 });
         await page.mouse.up();
 
         const newScrollX: number = await page.evaluate(
             () => globalThis.currentBoard.scene.cameras.main.scrollX,
         );
 
-        expect(newScrollX).toBeGreaterThan(initialScrollX);
+        expect(newScrollX).toBeLessThan(initialScrollX);
     });
 });

@@ -84,7 +84,9 @@ export class SummonSpell extends Spell {
     }
 
     protected roll(): boolean {
-        return this.illusion || this._board.rollChance(this.chance, this._owner);
+        return (
+            this.illusion || this._board.rollChance(this.chance, this._owner)
+        );
     }
 
     getValidTarget(

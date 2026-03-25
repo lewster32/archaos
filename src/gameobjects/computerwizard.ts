@@ -442,8 +442,7 @@ export class ComputerWizard implements RemotePlayer {
                 } else {
                     // Score each potential target by how suspicious it looks:
                     // high strength + low casting chance = likely an illusion
-                    const wizardPiece: Piece | null =
-                        this._player.castingPiece;
+                    const wizardPiece: Piece | null = this._player.castingPiece;
                     if (wizardPiece) {
                         const wizardThreats: Set<Piece> =
                             wizardPiece.findThreatPieces();
@@ -488,9 +487,7 @@ export class ComputerWizard implements RemotePlayer {
                                 1,
                             );
 
-                            if (
-                                this._board.rollChance(disbelievePreference)
-                            ) {
+                            if (this._board.rollChance(disbelievePreference)) {
                                 console.debug(
                                     `${this._player.name} suspects ${bestTarget.fullName} may be an illusion (suspicion: ${bestSuspicion.toFixed(1)}) and prefers Disbelieve`,
                                 );
@@ -616,13 +613,12 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} has ${targets.length} valid targets to cast ${spell.name}`,
                         );
-                        const target: Piece =
-                            board.rng.weightedPick(
-                                ComputerWizard.withPreferredFirst(
-                                    targets,
-                                    preferredTargetId,
-                                ),
-                            );
+                        const target: Piece = board.rng.weightedPick(
+                            ComputerWizard.withPreferredFirst(
+                                targets,
+                                preferredTargetId,
+                            ),
+                        );
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );

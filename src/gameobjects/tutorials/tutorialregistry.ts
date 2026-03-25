@@ -31,7 +31,7 @@ export function getTutorial(id: string): Tutorial | null {
 
 /**
  * Get the tutorials as an array ordered by the `order` field in their config.
- * 
+ *
  * @returns An array of Tutorial instances for all registered tutorials, sorted by order.
  */
 export function getTutorials(): Tutorial[] {

@@ -248,12 +248,9 @@ export class GameScene extends Scene {
         );
 
         // Start a tutorial
-        this.game.events.on(
-            "start-tutorial",
-            async (tutorial: Tutorial) => {
-                await this.startTutorial(tutorial);
-            },
-        );
+        this.game.events.on("start-tutorial", async (tutorial: Tutorial) => {
+            await this.startTutorial(tutorial);
+        });
     }
 
     /**
@@ -296,15 +293,14 @@ export class GameScene extends Scene {
         for (let player of data.players) {
             // Get the data.difficulty clamped between 0.1 and 1.0, and with +-3
             // random variation
-            const modifiedDifficulty: number =
-                Math.min(
-                    1,
-                    Math.max(
-                        0.1,
-                        (Number.parseFloat(data.difficulty?.toString() ?? "0.5") || 0.5) +
-                            this.board.rng.realInRange(-0.3, 0.3),
-                    ),
-                );
+            const modifiedDifficulty: number = Math.min(
+                1,
+                Math.max(
+                    0.1,
+                    (Number.parseFloat(data.difficulty?.toString() ?? "0.5") ||
+                        0.5) + this.board.rng.realInRange(-0.3, 0.3),
+                ),
+            );
 
             this.board.addPlayer({
                 name: player.name,
@@ -390,7 +386,10 @@ export class GameScene extends Scene {
                     corpseData.type,
                 );
                 if (corpseData.propertyOverrides) {
-                    Object.assign(pieceProperties.properties, corpseData.propertyOverrides);
+                    Object.assign(
+                        pieceProperties.properties,
+                        corpseData.propertyOverrides,
+                    );
                 }
                 const piece: Piece = await this.board.addPiece({
                     ...pieceProperties,
@@ -442,7 +441,9 @@ export class GameScene extends Scene {
                 x: player.position.x,
                 y: player.position.y,
                 wizCode: player.wizCode || Wizard.randomWizCode(),
-                properties: player.wizardProperties,
+                ...(player.wizardProperties && {
+                    properties: player.wizardProperties,
+                }),
             });
             if (player.statuses?.length) {
                 for (let statusName of player.statuses) {
@@ -503,7 +504,10 @@ export class GameScene extends Scene {
                         pieceData.type,
                     );
                     if (pieceData.propertyOverrides) {
-                        Object.assign(pieceProperties.properties, pieceData.propertyOverrides);
+                        Object.assign(
+                            pieceProperties.properties,
+                            pieceData.propertyOverrides,
+                        );
                     }
                     const piece: Piece = await this.board.addPiece({
                         ...pieceProperties,

@@ -456,7 +456,11 @@ export class Board extends Model implements Box {
             case BoardState.Move:
             case BoardState.SelectSpell:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableEndTurn) {
+                    if (
+                        this.currentPlayer &&
+                        !this.currentPlayer.remote &&
+                        !this.tutorial?.config.disableEndTurn
+                    ) {
                         this.emitUIEvent(EventType.EndTurnAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.EndTurnAvailable, false);
@@ -465,7 +469,11 @@ export class Board extends Model implements Box {
                 break;
             default:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableCancelSpell) {
+                    if (
+                        this.currentPlayer &&
+                        !this.currentPlayer.remote &&
+                        !this.tutorial?.config.disableCancelSpell
+                    ) {
                         this.emitUIEvent(EventType.CancelAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.CancelAvailable, false);
@@ -603,7 +611,7 @@ export class Board extends Model implements Box {
                 this._balanceShift = 0;
                 await this.idleDelay(Board.DEFAULT_DELAY);
             }
-            const anySpellsLeft= this.players.some(
+            const anySpellsLeft = this.players.some(
                 (p) => !p.defeated && p.spells.length > 0,
             );
             // Skip spell selection phase if no player has a spell to cast and
@@ -616,8 +624,7 @@ export class Board extends Model implements Box {
                 this.phase = BoardPhase.Moving;
                 this.state = BoardState.Move;
                 await this.idleDelay(Board.END_TURN_DELAY);
-            }
-            else {
+            } else {
                 this.phase = BoardPhase.Spellbook;
                 this.state = BoardState.SelectSpell;
                 await this.idleDelay(Board.END_TURN_DELAY);
@@ -728,11 +735,23 @@ export class Board extends Model implements Box {
             console.log("End turn disabled, ignoring event");
             return;
         }
-        if (this._disableCancelSpell && eventType === EventType.CancelAvailable && (this._state === BoardState.CastSpell || this._state === BoardState.SelectSpell)) {
+        if (
+            this._disableCancelSpell &&
+            eventType === EventType.CancelAvailable &&
+            (this._state === BoardState.CastSpell ||
+                this._state === BoardState.SelectSpell)
+        ) {
             console.log("Cancel spell disabled, ignoring event");
             return;
         }
-        if (this._disableCancelAction && eventType === EventType.CancelAvailable && (this._state === BoardState.Move || this._state === BoardState.Attack || this._state === BoardState.RangedAttack || this._state === BoardState.Dismount)) {
+        if (
+            this._disableCancelAction &&
+            eventType === EventType.CancelAvailable &&
+            (this._state === BoardState.Move ||
+                this._state === BoardState.Attack ||
+                this._state === BoardState.RangedAttack ||
+                this._state === BoardState.Dismount)
+        ) {
             console.log("Cancel action disabled, ignoring event");
             return;
         }
@@ -848,7 +867,8 @@ export class Board extends Model implements Box {
                 if (
                     this._selected.engaged ||
                     this._selected.properties.maneuverability < 0 || // A negative maneuverability means the unit stays engaged if near engageable enemies
-                    firstEngagingPiece.properties.maneuverability === Infinity || // An infinite maneuverability means the unit always engages nearby enemies
+                    firstEngagingPiece.properties.maneuverability ===
+                        Infinity || // An infinite maneuverability means the unit always engages nearby enemies
                     this.roll(
                         firstEngagingPiece.stats.maneuverability,
                         this._selected.stats.maneuverability,
@@ -1605,9 +1625,7 @@ export class Board extends Model implements Box {
                 break;
         }
 
-        this.centreOnPieces(
-            units.filter((p) => p.type === UnitType.Wizard),
-        );
+        this.centreOnPieces(units.filter((p) => p.type === UnitType.Wizard));
 
         return new Promise<void>((resolve) => {
             this.scene.tweens.addCounter({
@@ -1786,7 +1804,7 @@ export class Board extends Model implements Box {
         console.log(
             `Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`,
         );
-        this.nextPlayer();
+        await this.nextPlayer();
     }
 
     /**
@@ -1846,7 +1864,10 @@ export class Board extends Model implements Box {
     async nextPlayer(): Promise<void> {
         this.emitBoardUpdateEvent();
         while (true) {
-            if (this.state == BoardState.GameOver || await this.checkWinCondition()) {
+            if (
+                this.state == BoardState.GameOver ||
+                (await this.checkWinCondition())
+            ) {
                 return;
             }
 
@@ -1894,7 +1915,9 @@ export class Board extends Model implements Box {
                                     this.players.filter(
                                         (p) => !p.defeated && !p.remote,
                                     ).length === 1,
-                                preventSkip: this.tutorial?.config.disableCancelSpell ?? false,
+                                preventSkip:
+                                    this.tutorial?.config.disableCancelSpell ??
+                                    false,
                             },
                             callback: async (spell: Spell | null) => {
                                 if (spell) {
@@ -2399,11 +2422,11 @@ export class Board extends Model implements Box {
                         this.pieces.filter(
                             (piece: Piece) =>
                                 piece.owner === this.currentPlayer ||
-                                piece.currentRider?.owner === this.currentPlayer,
+                                piece.currentRider?.owner ===
+                                    this.currentPlayer,
                         ),
                     );
                 }
-                
             } else {
                 this._scene.game.scale.resize(
                     boardPixelWidth,
@@ -2416,6 +2439,13 @@ export class Board extends Model implements Box {
         };
 
         query.addEventListener("change", handler, {
+            signal: this._viewportListenerAbort.signal,
+        });
+
+        // Also track viewport size changes within the matched range, since
+        // the media query "change" event only fires when crossing the
+        // threshold, not when the viewport resizes within the same state.
+        globalThis.addEventListener("resize", handler, {
             signal: this._viewportListenerAbort.signal,
         });
 

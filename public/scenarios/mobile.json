@@ -12,9 +12,7 @@
             "position": { "x": 14, "y": 0 },
             "computerControlled": false,
             "statuses": [],
-            "pieces": [
-
-            ],
+            "pieces": [],
             "spells": []
         },
         {
@@ -23,9 +21,7 @@
             "position": { "x": 0, "y": 14 },
             "computerControlled": false,
             "statuses": [],
-            "pieces": [
-
-            ],
+            "pieces": [],
             "spells": []
         }
     ],

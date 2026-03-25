@@ -56,7 +56,11 @@
             </div>
         </div>
     </div>
-    <div class="spellbook" v-if="show && data" :class="{ 'spellbook--minimised': minimised }">
+    <div
+        class="spellbook"
+        v-if="show && data"
+        :class="{ 'spellbook--minimised': minimised }"
+    >
         <button
             v-if="minimised"
             class="spellbook__toggle spellbook__toggle--closed button button--green button--flashing"
@@ -123,7 +127,11 @@
             </div>
             <button
                 :disabled="data.preventSkip"
-                :title="data.preventSkip ? 'Skipping spells is currently disabled' : 'Skip selecting a spell'"
+                :title="
+                    data.preventSkip
+                        ? 'Skipping spells is currently disabled'
+                        : 'Skip selecting a spell'
+                "
                 class="spellbook__skip button button--red"
                 @click="select(null)"
             >

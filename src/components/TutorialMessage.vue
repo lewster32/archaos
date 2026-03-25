@@ -4,10 +4,7 @@
             <p class="callout__title">{{ message.title }}</p>
             <div class="tutorial-message__body" v-html="message.text"></div>
             <div class="callout__buttons">
-                <button
-                    class="button button--green"
-                    @click="dismiss"
-                >
+                <button class="button button--green" @click="dismiss">
                     {{ buttonLabel }}
                 </button>
             </div>

@@ -9,7 +9,11 @@
         ref="container"
     />
     <LoadingScreen v-if="loadingProgress < 1" />
-    <GameMenu v-else-if="!gameStarted" @start="onGameStart" @start-tutorial="onGameStartTutorial" />
+    <GameMenu
+        v-else-if="!gameStarted"
+        @start="onGameStart"
+        @start-tutorial="onGameStartTutorial"
+    />
     <Spellbook
         :data="spellbook"
         @select="spellSelect"
@@ -126,7 +130,10 @@ const onGameStart = (data: GameSetupData) => {
     gameStarted.value = true;
 };
 
-const onGameStartTutorial = (tutorialId: string, data: { muteAudio: boolean }) => {
+const onGameStartTutorial = (
+    tutorialId: string,
+    data: { muteAudio: boolean },
+) => {
     const tutorial = getTutorial(tutorialId);
     tutorial.config.muteAudio = data.muteAudio;
     if (tutorial) {

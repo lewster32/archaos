@@ -162,19 +162,41 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 ### What's tested (and at 100% coverage)
 
-- `Model`, `Entity`, `StateManager`, `Player`, `Logger`
-- All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `SpellUtils`, `createSpell` (spell factory)
-- `EffectEmitter` (100% lines/functions, ~99% statements, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
+- `Model`, `Entity`, `StateManager`, `Logger`, `SoundEffects`
+- All spell classes: `Spell`, `AttackSpell`, `SummonSpell`, `DisbelieveSpell`, `RaiseDeadSpell`, `StatusEffectSpell`, `SubversionSpell`, `TurmoilSpell`, `SpellUtils`, `createSpell` (spell factory)
+- All enums (100% across the board)
 - Vue components: `GameMenu`, `LoadingScreen`, `Log`, `GameControls`, `UnitStats` — tested in real Chromium via `vitest-browser-vue`
+
+### What's well tested (>90% lines)
+
+- `EffectEmitter` (~99% stmts, 100% lines/functions, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
+- `WizardSprite` (~97% stmts, 100% funcs) — Phaser sprite logic tested via mocks
+- `Tutorial` (~97% lines, ~89% branches, ~93% funcs) — tutorial framework well covered; individual tutorial scenarios (`tutorial-gettingstarted.ts` ~29%) are the gap
+- `Cursor` (~94% stmts, ~86% branches, 80% funcs) — `translateCursorPosition`, `update`, `action`, drag-to-pan fully tested; remaining gaps are Phaser-coupled visual methods
+- `Player` (~95% stmts, 100% branches, ~85% funcs)
 
 ### What's partially tested
 
-- `Cursor` — `translateCursorPosition`, `update`, `action`, drag-to-pan (including `panningEnabled` setter) fully tested via mock board; remaining gaps are Phaser-coupled visual methods
-- `Wizard` (~64%) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
-- `RangeGizmo` (~59%) — `Node`, `Path`, static helpers, A\* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
-- `TurmoilSpell` (~94%)
-- `Piece` (~26%) — heavily Phaser-coupled (sprites, tweens, scene references)
-- `ComputerWizard` (~33%) — `getSpellChanceForUnit`, `selectSpell` illusion-suspicion logic, `withPreferredFirst`, `preferredTargetId`, `findSpellTargets`, `evaluateEnemyPlayerPriorities`, `rememberNonIllusionPiece`/`forgetIllusionKnowledge` tested; remaining gaps are `autoCastSpell`, `moveUnit`/`moveAllUnits` (Phaser-coupled movement and combat)
+- `RangeGizmo` (~59% stmts) — `Node`, `Path`, static helpers, A\* pathfinding, and `checkNodeTraversal` fully tested; visual methods (tween-based reveal/hide) are the remaining gap
+- `rng.ts` (~59% stmts) — `TestRNG` and standalone helpers covered; `GameRNG` (Phaser `RandomDataGenerator` wrapper) is the gap
+- `utils.ts` (~57% stmts)
+- `Wizard` (~54% stmts, ~81% funcs) — remaining gaps are Phaser-coupled methods (sprite creation, animations)
+- `Piece` (~52% stmts, ~71% funcs) — heavily Phaser-coupled (sprites, tweens, scene references)
+- `ComputerWizard` (~38% stmts, ~53% funcs) — `getSpellChanceForUnit`, `selectSpell` illusion-suspicion logic, `withPreferredFirst`, `preferredTargetId`, `findSpellTargets`, `evaluateEnemyPlayerPriorities`, `rememberNonIllusionPiece`/`forgetIllusionKnowledge` tested; remaining gaps are `autoCastSpell`, `moveUnit`/`moveAllUnits` (Phaser-coupled movement and combat)
+- `Rules` (~19% stmts) — large service with many Phaser-coupled code paths
+- `Board` (~2% stmts) — massive class, heavily Phaser-coupled
+- `TutorialRegistry` (~77% stmts)
+
+### E2E tests (Playwright)
+
+Mobile camera panning scenarios in `e2e/mobile-pan.spec.ts`, run against a live dev server with `devices["Pixel 5"]` viewport:
+
+- Camera viewport detection (narrower than board on mobile)
+- Auto-pan to current wizard on turn start
+- Pan to next wizard after skipping turn
+- Drag gesture pans camera horizontally
+- Canvas resize on viewport narrowing past media-query threshold
+- Drag-to-pan works after two-step viewport narrowing
 
 ### AI spell-selection architecture
 
@@ -184,14 +206,14 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 `SummonSpell.autoCast(player)` drives all summon-spell casting for both AI and human auto-place spells (e.g. Magic Wood). `ComputerWizard.autoCastSpell` delegates to it for `SpellType.Summon` and handles the other spell types directly. Private helpers on `SummonSpell`:
 
-| Method                 | Used for                                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Method                 | Used for                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `selectDefaultTile`    | General summons — finds highest-threat enemy (strength / distance), places unit nearby; gated by `rollChance(difficulty)` |
-| `selectSpreadingTile`  | Gooey Blob etc. — prefers tiles near enemies                                                                             |
-| `selectMagicWoodTile`  | Magic Wood — clusters near the casting wizard                                                                            |
-| `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency                                                                   |
-| `trySelectWallTile`    | Wall — hard-filters adjacent tiles, scores by LoS + contiguity + run direction; returns `null` to cancel remaining casts |
-| `scoreLoSBlock`        | Shared geometry: scores a tile by how closely it lies on the enemy→wizard line segment                                   |
+| `selectSpreadingTile`  | Gooey Blob etc. — prefers tiles near enemies                                                                              |
+| `selectMagicWoodTile`  | Magic Wood — clusters near the casting wizard                                                                             |
+| `selectShadowWoodTile` | Shadow Wood — scores by LoS blocking + enemy adjacency                                                                    |
+| `trySelectWallTile`    | Wall — hard-filters adjacent tiles, scores by LoS + contiguity + run direction; returns `null` to cancel remaining casts  |
+| `scoreLoSBlock`        | Shared geometry: scores a tile by how closely it lies on the enemy→wizard line segment                                    |
 
 ### Randomness architecture (`rng.ts`)
 

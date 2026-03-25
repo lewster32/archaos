@@ -705,10 +705,7 @@ describe("Tutorial", () => {
             const eventValues = Object.values(BoardEvent);
             expect(onSpy).toHaveBeenCalledTimes(eventValues.length);
             for (const event of eventValues) {
-                expect(onSpy).toHaveBeenCalledWith(
-                    event,
-                    expect.any(Function),
-                );
+                expect(onSpy).toHaveBeenCalledWith(event, expect.any(Function));
             }
         });
 

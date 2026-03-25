@@ -403,9 +403,7 @@ describe("Cursor constructor", () => {
         const { board } = makeCursor();
         const calls = (board.scene.input.on as ReturnType<typeof vi.fn>).mock
             .calls;
-        expect(calls.some((c: unknown[]) => c[0] === "pointerdown")).toBe(
-            true,
-        );
+        expect(calls.some((c: unknown[]) => c[0] === "pointerdown")).toBe(true);
     });
 
     it('registers a "pointermove" listener on scene.input', () => {
