@@ -122,6 +122,8 @@
                 </ul>
             </div>
             <button
+                :disabled="data.preventSkip"
+                :title="data.preventSkip ? 'Skipping spells is currently disabled' : 'Skip selecting a spell'"
                 class="spellbook__skip button button--red"
                 @click="select(null)"
             >

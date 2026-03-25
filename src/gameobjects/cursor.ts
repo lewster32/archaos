@@ -329,6 +329,8 @@ export class Cursor {
             (input === InputType.Cancel &&
                 this._board.disableCancelSpell && (this._board.state === BoardState.CastSpell || this._board.state === BoardState.SelectSpell)) ||
             (input === InputType.Cancel &&
+                this._board.disableCancelAction && (this._board.state === BoardState.Move || this._board.state === BoardState.Attack || this._board.state === BoardState.RangedAttack || this._board.state === BoardState.Dismount)) ||
+            (input === InputType.Cancel &&
                 this._board.disableEndTurn)
         ) {
             return;

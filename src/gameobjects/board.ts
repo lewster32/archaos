@@ -278,6 +278,12 @@ export class Board extends Model implements Box {
     private _disableCancelSpell: boolean = false;
 
     /**
+     * When true, the cancel action is suppressed for move/attack/ranged attack
+     * actions. Used by tutorials to enforce specific turn-based actions.
+     */
+    private _disableCancelAction: boolean = false;
+
+    /**
      * When true, the player is not allowed to end their turn. Used by
      * tutorials to enforce specific turn-based actions.
      */
@@ -450,7 +456,7 @@ export class Board extends Model implements Box {
             case BoardState.Move:
             case BoardState.SelectSpell:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.remote) {
+                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableEndTurn) {
                         this.emitUIEvent(EventType.EndTurnAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.EndTurnAvailable, false);
@@ -459,7 +465,7 @@ export class Board extends Model implements Box {
                 break;
             default:
                 setTimeout(() => {
-                    if (this.currentPlayer && !this.currentPlayer.remote) {
+                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableCancelSpell) {
                         this.emitUIEvent(EventType.CancelAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.CancelAvailable, false);
@@ -717,12 +723,17 @@ export class Board extends Model implements Box {
      * @param data
      */
     emitUIEvent(eventType: EventType, data: any): void {
+        console.log(`Emitting UI event: ${eventType}`, data);
         if (this._disableEndTurn && eventType === EventType.EndTurnAvailable) {
             console.log("End turn disabled, ignoring event");
             return;
         }
         if (this._disableCancelSpell && eventType === EventType.CancelAvailable && (this._state === BoardState.CastSpell || this._state === BoardState.SelectSpell)) {
             console.log("Cancel spell disabled, ignoring event");
+            return;
+        }
+        if (this._disableCancelAction && eventType === EventType.CancelAvailable && (this._state === BoardState.Move || this._state === BoardState.Attack || this._state === BoardState.RangedAttack || this._state === BoardState.Dismount)) {
+            console.log("Cancel action disabled, ignoring event");
             return;
         }
         this.scene.game.events.emit(eventType, data);
@@ -1411,6 +1422,17 @@ export class Board extends Model implements Box {
     }
 
     /**
+     * Whether cancelling actions is disabled for all actions on this board.
+     */
+    get disableCancelAction(): boolean {
+        return this._disableCancelAction;
+    }
+
+    set disableCancelAction(value: boolean) {
+        this._disableCancelAction = value;
+    }
+
+    /**
      * Whether ending the turn is disabled for all players on this board.
      */
     get disableEndTurn(): boolean {
@@ -1868,6 +1890,7 @@ export class Board extends Model implements Box {
                                     this.players.filter(
                                         (p) => !p.defeated && !p.remote,
                                     ).length === 1,
+                                preventSkip: this.tutorial?.config.disableCancelSpell ?? false,
                             },
                             callback: async (spell: Spell | null) => {
                                 if (spell) {

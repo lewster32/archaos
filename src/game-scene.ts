@@ -353,6 +353,9 @@ export class GameScene extends Scene {
         if (tutorial.config.disableCancelSpell) {
             this.board.disableCancelSpell = true;
         }
+        if (tutorial.config.disableCancelAction) {
+            this.board.disableCancelAction = true;
+        }
         if (tutorial.config.disableEndTurn) {
             this.board.disableEndTurn = true;
         }

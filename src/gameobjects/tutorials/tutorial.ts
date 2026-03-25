@@ -71,6 +71,12 @@ export interface TutorialData extends GameScenarioData {
     disableCancelSpell?: boolean;
 
     /**
+     * If true, the cancel button is suppressed for all move/attack/ranged
+     * attack actions in this tutorial.
+     */
+    disableCancelAction?: boolean;
+
+    /**
      * If true, the player is not allowed to end their turn.
      */
     disableEndTurn?: boolean;

@@ -16,6 +16,7 @@ export interface SpellbookData {
     caster: string | null;
     spells: Spell[] | null;
     onSelect: ((spell: Spell) => void) | null;
+    preventSkip?: boolean;
 }
 
 /**
@@ -193,6 +194,10 @@ export interface SpellbookEventData {
      * If true, the spellbook will immediately show on opening.
      */
     soloMode: boolean;
+    /**
+     * If true, the player must select a spell before proceeding.
+     */
+    preventSkip?: boolean;
 }
 
 /**

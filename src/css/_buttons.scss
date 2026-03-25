@@ -22,6 +22,14 @@
     justify-content: center;
     gap: 1ch;
 
+    &:disabled {
+        cursor: not-allowed;
+        --border-image-source: url("../../assets/images/ui/button-disabled.png");
+        --border-image-source-hover: url("../../assets/images/ui/button-disabled.png");
+        text-shadow: none;
+        color: var(--color-black);
+    }
+
     &:hover {
         border-image-source: var(--border-image-source-hover);
     }

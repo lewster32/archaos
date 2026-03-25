@@ -89,6 +89,7 @@ const spellbook: Ref<SpellbookData> = ref({
     caster: null,
     spells: null,
     onSelect: null,
+    preventSkip: false,
 });
 
 const logs: Ref<LogEntry[]> = ref([]);
@@ -177,6 +178,9 @@ onMounted(async () => {
                 nextTick(() => {
                     spellbook.value.minimised = false;
                 });
+            }
+            if (event.data.preventSkip) {
+                spellbook.value.preventSkip = true;
             }
         },
     );

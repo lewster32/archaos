@@ -185,6 +185,7 @@ export class GettingStartedTutorial extends Tutorial {
             },
             disableIllusions: true,
             disableCancelSpell: true,
+            disableCancelAction: true,
             disableEndTurn: true,
             order: 0,
             players: [
