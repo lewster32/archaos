@@ -24,8 +24,14 @@ function setCookie(name: string, value: string): void {
     document.cookie = `${name}=${encodeURIComponent(value)};max-age=${COOKIE_MAX_AGE};path=/;SameSite=Lax`;
 }
 
-/** Read the persisted consent cookie on startup. */
+/** Read the persisted consent cookie on startup.
+ *  Auto-accepts when running inside Tauri (standalone desktop build). */
 export function loadConsent(): ConsentState {
+    // Standalone desktop app — no cookie banner needed.
+    if ("__TAURI_INTERNALS__" in globalThis) {
+        _consent = "accepted";
+        return _consent;
+    }
     const raw = getCookie(COOKIE_NAME);
     if (raw === "accepted" || raw === "declined") {
         _consent = raw;
