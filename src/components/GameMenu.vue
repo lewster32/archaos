@@ -96,10 +96,7 @@
                 >
                     <button
                         class="button tutorial-button"
-                        @click="
-                            emit('startTutorial', tut.id);
-                            ($refs.tutorialDialog as HTMLDialogElement)?.close();
-                        "
+                        @click="startTutorial(tut.id)"
                     >
                         <span class="tutorial-button__name">
                             <span class="tutorial-button__index">{{ index + 1 }}.</span>
@@ -185,7 +182,7 @@ import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
-    startTutorial: [tutorialId: string];
+    startTutorial: [tutorialId: string, data: { muteAudio: boolean }];
 }>();
 
 const defaultPlayers: SetupPlayer[] = [
@@ -273,6 +270,14 @@ function startGame(): void {
         muteAudio: Boolean(setup.value!.muteAudio),
     });
 }
+
+function startTutorial(tutorialId: string): void {
+    globalThis.localStorage?.setItem("setup", JSON.stringify(setup.value));
+    emit("startTutorial", tutorialId, {
+        muteAudio: Boolean(setup.value!.muteAudio),
+    });
+}
+
 </script>
 
 <style lang="scss" scoped>

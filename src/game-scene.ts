@@ -378,6 +378,9 @@ export class GameScene extends Scene {
         if (!scenarioData.players?.length) {
             throw new Error("Scenario data must include players array");
         }
+        if (scenarioData.muteAudio) {
+            this.sound.mute = true;
+        }
         if (scenarioData.corpses?.length) {
             for (let corpseData of scenarioData.corpses) {
                 const pieceProperties = Piece.getPieceProperties(

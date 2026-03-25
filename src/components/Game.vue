@@ -125,8 +125,9 @@ const onGameStart = (data: GameSetupData) => {
     gameStarted.value = true;
 };
 
-const onGameStartTutorial = (tutorialId: string) => {
+const onGameStartTutorial = (tutorialId: string, data: { muteAudio: boolean }) => {
     const tutorial = getTutorial(tutorialId);
+    tutorial.config.muteAudio = data.muteAudio;
     if (tutorial) {
         eventEmitter.value?.emit("start-tutorial", tutorial);
         gameStarted.value = true;

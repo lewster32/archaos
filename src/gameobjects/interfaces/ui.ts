@@ -85,6 +85,7 @@ export interface GameScenarioData {
     phase?: string;
     currentPlayerIndex?: number;
     corpses?: GameScenarioPiece[];
+    muteAudio?: boolean;
 }
 
 /**
