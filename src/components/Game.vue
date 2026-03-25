@@ -277,7 +277,7 @@ onUnmounted(() => {
         margin-right: 350px;
     }
     &--disabled {
-        filter: brightness(0.25);
+        filter: brightness(0.1) drop-shadow(-2.5rem 5rem rgb(0 0 0 / 0.75)) !important;
         pointer-events: none;
     }
 }

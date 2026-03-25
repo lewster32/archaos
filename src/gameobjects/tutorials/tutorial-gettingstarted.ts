@@ -149,7 +149,7 @@ class GettingStarted20 extends TutorialStep {
     onComplete(board: Board): void {
         // End the game immediately so the player doesn't have to wait for the
         // opponent to finish their turn
-        board.endGame();
+        board.endGame("A winner is you!");
     }
 }
 

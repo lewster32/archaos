@@ -253,7 +253,7 @@ export class Wizard extends Piece {
         this.board.sound.play("disbelieve");
         return new Promise<void>((resolve) => {
             setTimeout(async () => {
-                this.board.checkWinCondition();
+                await this.board.checkWinCondition();
                 resolve();
             }, Board.END_TURN_DELAY / 2);
         });

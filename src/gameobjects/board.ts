@@ -1795,7 +1795,7 @@ export class Board extends Model implements Box {
      *
      * @returns True if the game is over, false otherwise.
      */
-    checkWinCondition(): boolean {
+    async checkWinCondition(): Promise<boolean> {
         if (this.state === BoardState.GameOver) {
             return true;
         }
@@ -1818,6 +1818,7 @@ export class Board extends Model implements Box {
                     Colour.Yellow,
                 );
             }
+            await Board.delay(2000);
             this.emitUIEvent(EventType.GameOver, true);
             this._boardEvents.emit(BoardEvent.GameOver);
             return true;
@@ -1830,8 +1831,11 @@ export class Board extends Model implements Box {
      * scenarios and tutorials where the game needs to end without a clear
      * winner.
      */
-    endGame(): void {
+    endGame(message?: string): void {
         this.state = BoardState.GameOver;
+        if (message) {
+            this.logger.log(message, Colour.Yellow);
+        }
         this.emitUIEvent(EventType.GameOver, true);
         this._boardEvents.emit(BoardEvent.GameOver);
     }
@@ -1842,7 +1846,7 @@ export class Board extends Model implements Box {
     async nextPlayer(): Promise<void> {
         this.emitBoardUpdateEvent();
         while (true) {
-            if (this.state == BoardState.GameOver || this.checkWinCondition()) {
+            if (this.state == BoardState.GameOver || await this.checkWinCondition()) {
                 return;
             }
 
