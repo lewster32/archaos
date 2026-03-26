@@ -21,6 +21,9 @@ const mockBoard = vi.mocked({
     getPiecesByOwner: vi.fn().mockReturnValue([]),
     idleDelay: vi.fn().mockResolvedValue(undefined),
     playEffect: vi.fn().mockResolvedValue(undefined),
+    boardEvents: {
+        emit: vi.fn(),
+    },
 } as unknown as Board);
 
 /**
