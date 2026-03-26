@@ -124,7 +124,6 @@ class GettingStarted15 extends TutorialStep {
         );
     }
 }
-
 class GettingStarted20 extends TutorialStep {
     constructor() {
         super(
@@ -146,12 +145,92 @@ class GettingStarted20 extends TutorialStep {
         return event === BoardEvent.PieceDied;
     }
 
+}
+
+class GettingStarted30 extends TutorialStep {
+    /**
+     * Keep track of the rounds for this step, so we can prevent the player from
+     * stalling indefinitely on this step by just not attacking the opponent and
+     * waiting for them to die of old age or something. If the player reaches
+     * the round limit, just let them win regardless of the state of the board.
+     */
+    private roundCount: number = 0;
+
+    /**
+     * The round limit for this step.
+     */
+    private readonly roundLimit: number = 7;
+
+    public getOutro(): string {
+        console.log(`${this.roundCount} rounds of ${this.roundLimit} limit reached.`);
+        // Pacifist ending
+        if (this.roundCount > this.roundLimit) {
+            return `<p>
+            <span class="text-rainbow">Congratulations...?</span> Your opponent died of boredom before you could finish
+            them off, but hey, a win's a win.
+            <p>
+            Pacifism probably won't get you very far in Archaos, and you'll face opponents yet whose feet aren't
+            irreparably shattered, so try to be a bit more... proactive.
+            <p>
+            There's a lot more to learn young sorcerer, so check out the other tutorials when you're ready for more!`;
+        }
+        // Murdered opponent ending
+        return `<p>
+            <span class="text-rainbow">Congratulations!</span> You murked that wizard like the utter arcane gangster you
+            sometimes tell your uninterested friends you are.
+            <p>
+            There's a lot more to learn though young sorcerer, so check out the other tutorials when you're ready for
+            more!`;
+    };
+
+    constructor() {
+        super(
+            `<p>
+            The <em class="c-cyan">${RANDOM_OPPONENT_SPELL}</em> is dead. Notice that your
+            <em class="c-yellow">${RANDOM_PLAYER_SPELL}</em> has moved over the top of the fallen enemy. No, it's not an
+            opportunity to teabag, it's just how the game works.
+            <p>
+            Now, finish off that opponent wizard to win this game. Move your
+            <em class="c-yellow">${RANDOM_PLAYER_SPELL}</em> next to the enemy wizard; your piece will become
+            <span class="c-yellow">engaged</span> - this means the piece is locked in combat for this turn, and must
+            either attack or cancel. And since you can't cancel in this tutorial, there's only one thing left to do...
+            <p>
+            Do it.
+            `,
+            "Finish the opponent",
+            "left",
+        );
+    }
+
+    public checkCondition(_board: Board, event?: BoardEvent): boolean {
+        if (event === BoardEvent.NewTurn) {
+            this.roundCount++;
+        }
+        if (this.roundCount > this.roundLimit) {
+            return true;
+        }
+
+        return event === BoardEvent.PlayerDefeated || event === BoardEvent.GameOver;
+    }
+
+    onEnter(_: Board): void {
+        this.roundCount = 0;
+    }
+
+    /**
+     * If the player reaches the round limit, just end the game regardless of the state
+     * of the board, to prevent stalling.
+     * 
+     * @param board The current state of the board.
+     */
     onComplete(board: Board): void {
-        // End the game immediately so the player doesn't have to wait for the
-        // opponent to finish their turn
-        board.endGame("A winner is you!");
+        if (this.roundCount > this.roundLimit && board.state !== BoardState.GameOver) {
+            board.endGame();
+        }
     }
 }
+
+const lastStep: GettingStarted30 = new GettingStarted30();
 
 export class GettingStartedTutorial extends Tutorial {
     constructor() {
@@ -171,14 +250,9 @@ export class GettingStartedTutorial extends Tutorial {
                 new GettingStarted10(),
                 new GettingStarted15(),
                 new GettingStarted20(),
+                lastStep,
             ],
-            outro: `<p>
-            <span class="text-rainbow">Congratulations!</span> You murked that 
-            <span class="c-cyan">${RANDOM_OPPONENT_SPELL}</span> like the utter arcane gangster you sometimes tell your
-            uninterested friends you are.
-            <p>
-            There's a lot more to learn though young sorcerer, so check out the other tutorials when you're ready for
-            more!`,
+            outro: lastStep.getOutro.bind(lastStep),
             board: {
                 width: 6,
                 height: 1,

@@ -10,6 +10,7 @@ import { ComputerWizard } from "./computerwizard";
 import { Colour } from "./enums/colour";
 import { RemotePlayer } from "./interfaces/remoteplayer";
 import { GameSetupPlayerType } from "./interfaces/ui";
+import { BoardEvent } from "./enums/boardevent";
 
 export class Player extends Model {
     /**
@@ -212,6 +213,7 @@ export class Player extends Model {
         await this.destroyCreations();
         // Let's really dwell on this for a bit
         await this.board.idleDelay(Board.END_TURN_DELAY);
+        this.board.boardEvents.emit(BoardEvent.PlayerDefeated, this);
     }
 
     /**

@@ -34,6 +34,9 @@ export enum BoardEvent {
     /** A spell was cast. */
     SpellCast = "board:spell-cast",
 
+    /** A player was defeated (all pieces dead, or conceded). */
+    PlayerDefeated = "board:player-defeated",
+
     /** The game ended. */
     GameOver = "board:game-over",
 }
