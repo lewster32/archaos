@@ -2,29 +2,29 @@
 // Run `npm run build` to update. Do not edit manually.
 //
 // Assets counted (bytes, uncompressed):
-//   board.json                                            4529 B  (Phaser preload)
+//   board.json                                            4654 B  (Phaser preload)
 //   board.png                                             2158 B  (Phaser preload)
-//   chaossounds.json                                      3675 B  (Phaser preload)
+//   chaossounds.json                                      3835 B  (Phaser preload)
 //   classicunits.json                                   188359 B  (Phaser preload)
 //   classicunits.png                                     32187 B  (Phaser preload)
-//   cursors.json                                         15653 B  (Phaser preload)
+//   cursors.json                                         16156 B  (Phaser preload)
 //   cursors.png                                           2507 B  (Phaser preload)
-//   effects.json                                         20239 B  (Phaser preload)
+//   effects.json                                         20889 B  (Phaser preload)
 //   effects.png                                            758 B  (Phaser preload)
 //   hats.png                                              5101 B  (Phaser preload)
 //   magic-armour.png                                      2702 B  (Phaser preload)
-//   rexcolorreplacepipelineplugin.min.js                 14374 B  (Phaser preload)
-//   rexperlinplugin.min.js                                9826 B  (Phaser preload)
+//   rexcolorreplacepipelineplugin.min.js                 14737 B  (Phaser preload)
+//   rexperlinplugin.min.js                               10068 B  (Phaser preload)
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)
 //   chaossounds.ogg                                     147151 B  (audio (preferred format))
 //   Game.css                                             16831 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     1223 B  (lazy CSS bundle)
-//   Game.js                                             246596 B  (lazy JS bundle)
+//   Game.js                                             248438 B  (lazy JS bundle)
 //   LoadingScreen.js                                     69464 B  (lazy JS bundle)
 //   phaser.js                                          1198735 B  (lazy JS bundle)
 //   window.js                                            14825 B  (lazy JS bundle)
-//   TOTAL                                              1998378 B
+//   TOTAL                                              2002263 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 1998378;
+export const TOTAL_GAME_ASSET_BYTES = 2002263;
