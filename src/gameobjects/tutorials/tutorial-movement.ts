@@ -162,8 +162,8 @@ class Movement30 extends TutorialStep {
             harm<sup>*</sup>, as your mount must be attacked and defeated before your wizard can be targeted.
             <p>
             Mounting a creature will use up their movement for the turn, so you'll have to wait for the next movement
-            phase to be able to ride your horse around. For now, <em>continue moving your other pieces</em.. Maybe try
-            to whack the opponent wizard with some of your pieces?
+            phase to be able to ride your horse around. For now, <em>continue moving your other pieces</em>. Maybe try
+            to whack the opponent wizard with some of them?
             <p class="text-small">
             <sup>*</sup>Most harm anyway. There're a couple of things that can still get you, but we'll discuss those
             later.`,
