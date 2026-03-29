@@ -5,6 +5,8 @@ import { UnitType } from "../enums/unittype";
 import '../wizard';
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep } from "./tutorial";
+import statMove from "../../../assets/images/ui/stat-move.png?url";
+import statFly from "../../../assets/images/ui/stat-fly.png?url";
 
 class Movement5 extends TutorialStep {
     constructor() {
@@ -44,8 +46,8 @@ class Movement6 extends TutorialStep {
             <em>movement range</em> stat being 3, instead of 1.
             <p>
             When you select a piece, its stats appear at the bottom of the screen. The first stat icon
-            (<img src="/assets/images/ui/stat-move.png" style="width:36px;vertical-align:middle" alt="Movement icon"> or
-            <img src="/assets/images/ui/stat-fly.png" style="width:36px;vertical-align:middle" alt="Flying icon">)
+            (<img src="${statMove}" style="width:36px;vertical-align:middle" alt="Movement icon"> or
+            <img src="${statFly}" style="width:36px;vertical-align:middle" alt="Flying icon">)
             is the movement range.
             <p>
             For the Dire Wolf, this means it can move up to 3 spaces in a single turn, but it must move through every
