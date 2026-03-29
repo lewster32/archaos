@@ -76,6 +76,10 @@ export class Wizard extends Piece {
         super(board, id, {
             ...Wizard.DEFAULT_WIZARD_CONFIG,
             ...config,
+            properties: {
+                ...Wizard.DEFAULT_WIZARD_CONFIG.properties,
+                ...config.properties,
+            },
         });
         this._wizCode = Wizard.parseWizCode(
             config.wizCode || Wizard.randomWizCode(),

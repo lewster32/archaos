@@ -65,7 +65,7 @@ assets/
 Model                     — base class; validates unique IDs
 ├── Entity                — board-positioned object with x/y coordinates
 │   ├── Piece             — game units and creatures on the board
-│   │   └── Wizard        — player-controlled wizard; extends Piece
+│   │   └── Wizard        — player-controlled wizard; extends Piece; constructor deep-merges `properties` with defaults
 ├── Spell                 — base class
 │   ├── AttackSpell       — direct-attack spells
 │   ├── DisbelieveSpell   — Disbelieve spell
@@ -81,7 +81,7 @@ Model                     — base class; validates unique IDs
 
 | Class            | Role                                                                                                                                                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Board`          | Central game state — grid, pieces, players, turn order. Owns the seedable `IRNG` instance (`board.rng`). Delegates dice rolls to `Rules`, spell construction to `createSpell`, and wizard placement to `Wizard.createAll` |
+| `Board`          | Central game state — grid, pieces, players, turn order. Owns the seedable `IRNG` instance (`board.rng`). Delegates dice rolls to `Rules`, spell construction to `createSpell`, and wizard placement to `Wizard.createAll`. `endGame()` is idempotent |
 | `GameScene`      | Phaser Scene; loads assets and bootstraps `Board`                                                                                                                                                                         |
 | `Rules`          | Singleton service — validates and executes all game actions; owns `roll`/`rollChance` (dice), `doSpread`/`doExpire` (turn automata)                                                                                       |
 | `Spell`          | Spell handling and casting logic                                                                                                                                                                                          |
@@ -171,7 +171,7 @@ npm test -- --coverage --coverage.include="src/gameobjects/**"
 
 - `EffectEmitter` (~99% stmts, 100% lines/functions, ~93% branches) — Phaser `ParticleEmitter` base class mocked via `vi.mock('phaser')`
 - `WizardSprite` (~97% stmts, 100% funcs) — Phaser sprite logic tested via mocks
-- `Tutorial` (~97% lines, ~89% branches, ~93% funcs) — tutorial framework well covered; individual tutorial scenarios (`tutorial-gettingstarted.ts` ~29%) are the gap
+- `Tutorial` (~97% lines, ~89% branches, ~93% funcs) — tutorial framework well covered; `advance()` calls `board.endGame()` on completion; individual tutorial scenarios (`tutorial-gettingstarted.ts` ~29%) are the gap
 - `Cursor` (~94% stmts, ~86% branches, 80% funcs) — `translateCursorPosition`, `update`, `action`, drag-to-pan fully tested; remaining gaps are Phaser-coupled visual methods
 - `Player` (~95% stmts, 100% branches, ~85% funcs)
 

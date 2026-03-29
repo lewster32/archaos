@@ -246,11 +246,6 @@ export class GameScene extends Scene {
                 await this.startScenario(scenarioData);
             },
         );
-
-        // Start a tutorial
-        this.game.events.on("start-tutorial", async (tutorial: Tutorial) => {
-            await this.startTutorial(tutorial);
-        });
     }
 
     /**

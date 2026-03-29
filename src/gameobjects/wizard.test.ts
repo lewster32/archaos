@@ -292,6 +292,27 @@ describe("Wizard instance methods", () => {
             expect(owner.castingPiece).toBe(wiz);
         });
 
+        it("should deep-merge config properties with defaults, preserving Wizard status", () => {
+            const owner = makeMockPlayer();
+            const wiz = new MockWizard(makeMockBoard(), 0, {
+                wizCode: "010203040f",
+                x: 0,
+                y: 0,
+                owner,
+                properties: { movement: 0 },
+            });
+            // The overridden property should be applied
+            expect(wiz.properties.movement).toBe(0);
+            // Default wizard properties should be preserved
+            expect(wiz.hasStatus(UnitStatus.Wizard)).toBe(true);
+            expect(wiz.properties.combat).toBe(
+                Wizard.DEFAULT_WIZARD_CONFIG.properties.combat,
+            );
+            expect(wiz.properties.defense).toBe(
+                Wizard.DEFAULT_WIZARD_CONFIG.properties.defense,
+            );
+        });
+
         it("should throw if the owner is missing", () => {
             expect(
                 () =>

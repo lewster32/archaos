@@ -220,7 +220,7 @@ export abstract class TutorialStep {
      * superseded by the next step (or the tutorial ends). Override to clean
      * up any step-specific state.
      */
-    onComplete?(board: Board): void;
+    onComplete?(board: Board): void;        
 }
 
 // ─── Tutorial ───────────────────────────────────────────────────────────────

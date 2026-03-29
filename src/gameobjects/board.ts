@@ -730,7 +730,6 @@ export class Board extends Model implements Box {
      * @param data
      */
     emitUIEvent(eventType: EventType, data: any): void {
-        console.log(`Emitting UI event: ${eventType}`, data);
         if (this._disableEndTurn && eventType === EventType.EndTurnAvailable) {
             console.log("End turn disabled, ignoring event");
             return;
@@ -1850,6 +1849,10 @@ export class Board extends Model implements Box {
      * winner.
      */
     endGame(message?: string): void {
+        // Idempotent - if the game is already over, do nothing
+        if (this.state === BoardState.GameOver) {
+            return;
+        }
         this.state = BoardState.GameOver;
         if (message) {
             this.logger.log(message, Colour.Yellow);

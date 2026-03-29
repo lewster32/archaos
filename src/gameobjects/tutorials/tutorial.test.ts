@@ -610,6 +610,18 @@ describe("Tutorial", () => {
             expect(hintCall![0].text).toBe("Now do this");
         });
 
+        it("advance calls endGame when the tutorial completes", async () => {
+            autoResolveTutorialMessages();
+            const step = new TestStep();
+            step.conditionMet = true;
+            const tutorial = new TestTutorial(makeConfig([step]));
+            await tutorial.start(mockBoard);
+
+            await tutorial.advance();
+
+            expect((mockBoard as any).endGame).toHaveBeenCalled();
+        });
+
         it("advance emits an outro when the tutorial completes", async () => {
             const spy = autoResolveTutorialMessages();
             const step = new TestStep();
