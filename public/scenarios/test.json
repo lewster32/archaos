@@ -11,7 +11,7 @@
             "name": "Player 1",
             "position": { "x": 0, "y": 0 },
             "computerControlled": false,
-            "statuses": ["MagicKnife"],
+            "statuses": [],
             "pieces": [
                 {
                     "type": "Dwarf",
@@ -23,25 +23,26 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 5, "y": 0 },
-            "computerControlled": true,
+            "position": { "x": 2, "y": 0 },
+            "computerControlled": false,
             "difficulty": 0.5,
-            "statuses": ["ShadowForm"],
+            "statuses": [],
             "pieces": [
                 {
-                    "type": "Dwarf",
-                    "position": { "x": 4, "y": 0 }
-                },
-                {
-                    "type": "Bat",
-                    "position": { "x": 4, "y": 1 }
+                    "type": "Magic Wood",
+                    "position": { "x": 1, "y": 0 }
                 }
             ],
             "spells": []
         }
     ],
-    "corpses": [],
-    "phase": "casting",
+    "corpses": [
+        {
+            "type": "Dwarf",
+            "position": { "x": 1, "y": 1 }
+        }
+    ],
+    "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

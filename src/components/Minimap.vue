@@ -36,6 +36,7 @@
                         'map__piece--wizard': piece.hasStatus(
                             UnitStatus.Wizard,
                         ),
+                        'map__piece--corpse': piece.dead
                     }"
                     v-for="piece in pieces"
                     :key="piece.id"
@@ -256,6 +257,9 @@ const getPieceStyles = (piece: Piece): CSSProperties => {
         height: calc(1px * var(--map-scale));
         transition: all 0.25s;
         transform: scale(0.75);
+        &--corpse {
+            z-index: 5;
+        }
         &--wizard {
             z-index: 20;
             transform: scale(1);
