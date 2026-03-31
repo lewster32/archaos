@@ -17,6 +17,7 @@ const PHASER_ASSET_FILES = new Set([
     "wizards.png",
     "magic-armour.png",
     "hats.png",
+    "pointer-arrow.png",
     "unit-glow.png",
     "chaossounds.json",
     "rexcolorreplacepipelineplugin.min.js",
