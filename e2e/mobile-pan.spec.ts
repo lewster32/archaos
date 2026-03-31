@@ -50,6 +50,22 @@ test.describe("Mobile camera panning", () => {
         expect(result.cameraWidth).toBeLessThan(result.boundsWidth);
     });
 
+    test("camera viewport is shorter than board on mobile", async ({
+        page,
+    }) => {
+        const result = await page.evaluate(() => {
+            const board = globalThis.currentBoard;
+            const camera = board.scene.cameras.main;
+            const bounds = camera.getBounds();
+            return {
+                cameraHeight: camera.height,
+                boundsHeight: bounds.height,
+            };
+        });
+
+        expect(result.cameraHeight).toBeLessThan(result.boundsHeight);
+    });
+
     test("auto-pans to first player's wizard on turn start", async ({
         page,
     }) => {
@@ -62,7 +78,7 @@ test.describe("Mobile camera panning", () => {
             () => globalThis.currentBoard.scene.cameras.main.scrollX,
         );
 
-        // Player 1 wizard is at grid (14, 0) → iso x = 196.
+        // Player 1 wizard is at grid (34, 0) → iso x ≈ 476.
         // Camera should have scrolled right, so scrollX should be positive
         // or near the right bound.
         expect(scrollX).toBeGreaterThan(-100);
@@ -85,7 +101,7 @@ test.describe("Mobile camera panning", () => {
 
         // Wait for second player's turn
         await page.waitForFunction(
-            () => globalThis.currentBoard?.currentPlayer?.name === "Player 2",
+            () => globalThis.currentBoard?.currentPlayer?.name === "Left",
             { timeout: 15_000 },
         );
         await page.waitForTimeout(500);
@@ -94,9 +110,9 @@ test.describe("Mobile camera panning", () => {
             () => globalThis.currentBoard.scene.cameras.main.scrollX,
         );
 
-        // Player 2 wizard is at grid (0, 14) → iso x = -196 (far left).
+        // "Left" wizard is at grid (0, 34) → iso x ≈ -476 (far left).
         // Camera should have scrolled left, so scrollX should be much less
-        // than it was for Player 1.
+        // than it was for "Right".
         expect(secondScrollX).toBeLessThan(firstScrollX);
         expect(secondScrollX).toBeLessThan(-100);
     });
@@ -132,6 +148,35 @@ test.describe("Mobile camera panning", () => {
 
         // Dragging right should decrease scrollX (panning the view left)
         expect(newScrollX).toBeLessThan(initialScrollX);
+    });
+
+    test("drag gesture pans the camera vertically", async ({ page }) => {
+        await waitForPlayerTurn(page);
+        await page.waitForTimeout(500);
+
+        const initialScrollY: number = await page.evaluate(
+            () => globalThis.currentBoard.scene.cameras.main.scrollY,
+        );
+
+        const canvas = page.locator("canvas");
+        const box = await canvas.boundingBox();
+        expect(box).not.toBeNull();
+
+        const startX = box!.x + box!.width / 2;
+        const startY = box!.y + box!.height / 2;
+
+        await page.mouse.move(startX, startY);
+        await page.mouse.down();
+        // Drag up — this increases scrollY, panning the view downward.
+        await page.mouse.move(startX, startY - 40, { steps: 10 });
+        await page.mouse.up();
+
+        const newScrollY: number = await page.evaluate(
+            () => globalThis.currentBoard.scene.cameras.main.scrollY,
+        );
+
+        // Dragging up should increase scrollY (panning the view down)
+        expect(newScrollY).toBeGreaterThan(initialScrollY);
     });
 });
 

@@ -1357,6 +1357,38 @@ describe("Cursor drag-to-pan", () => {
         expect(board.scene.cameras.main.scrollX).toBe(-400);
     });
 
+    it("enters drag mode with vertical delta and updates scrollY", () => {
+        const { board } = makeCursor({ needsPanning: true });
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        // Drag 30px upward (negative dy, exceeds threshold)
+        pointermove({ position: { x: 100, y: 70 }, isDown: true });
+
+        // scrollY should shift: startScrollY - dy = -42 - (70-100) = -42 + 30 = -12
+        expect(board.scene.cameras.main.scrollY).toBe(-12);
+        // scrollX should be unchanged (no horizontal movement)
+        expect(board.scene.cameras.main.scrollX).toBe(-400);
+    });
+
+    it("updates both scrollX and scrollY when dragging diagonally", () => {
+        const { board } = makeCursor({ needsPanning: true });
+
+        const pointerdown = getInputHandler(board, "pointerdown");
+        pointerdown({ position: { x: 100, y: 100 } });
+
+        const pointermove = getInputHandler(board, "pointermove");
+        // Drag diagonally: 50px left, 30px up
+        pointermove({ position: { x: 50, y: 70 }, isDown: true });
+
+        // scrollX: -400 - (50-100) = -350
+        expect(board.scene.cameras.main.scrollX).toBe(-350);
+        // scrollY: -42 - (70-100) = -12
+        expect(board.scene.cameras.main.scrollY).toBe(-12);
+    });
+
     it("DRAG_THRESHOLD static constant is 5", () => {
         expect(Cursor.DRAG_THRESHOLD).toBe(5);
     });

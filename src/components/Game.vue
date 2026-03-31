@@ -214,9 +214,7 @@ onMounted(async () => {
                     spellbook.value.minimised = false;
                 });
             }
-            if (event.data.preventSkip) {
-                spellbook.value.preventSkip = true;
-            }
+            spellbook.value.preventSkip = event.data.preventSkip ?? false;
         },
     );
 

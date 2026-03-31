@@ -2,14 +2,14 @@
     "name": "Test Scenario",
     "description": "A scenario for testing mobile stuff.",
     "board": {
-        "width": 15,
-        "height": 15
+        "width": 35,
+        "height": 35
     },
     "players": [
         {
             "id": 1,
-            "name": "Player 1",
-            "position": { "x": 14, "y": 0 },
+            "name": "Right",
+            "position": { "x": 34, "y": 0 },
             "computerControlled": false,
             "statuses": [],
             "pieces": [],
@@ -17,9 +17,36 @@
         },
         {
             "id": 2,
-            "name": "Player 2",
-            "position": { "x": 0, "y": 14 },
+            "name": "Left",
+            "position": { "x": 0, "y": 34 },
             "computerControlled": false,
+            "statuses": [],
+            "pieces": [],
+            "spells": []
+        },
+        {
+            "id": 3,
+            "name": "Middle",
+            "position": { "x": 17, "y": 17 },
+            "computerControlled": false,
+            "statuses": [],
+            "pieces": [],
+            "spells": []
+        },
+        {
+            "id": 4,
+            "name": "Top",
+            "position": { "x": 0, "y": 0 },
+            "computerControlled": true,
+            "statuses": [],
+            "pieces": [],
+            "spells": []
+        },
+        {
+            "id": 5,
+            "name": "Bottom",
+            "position": { "x": 34, "y": 34 },
+            "computerControlled": true,
             "statuses": [],
             "pieces": [],
             "spells": []

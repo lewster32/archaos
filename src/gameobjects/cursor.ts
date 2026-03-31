@@ -52,6 +52,16 @@ export class Cursor {
     private _dragStartScrollX: number = 0;
 
     /**
+     * Screen-space Y where the current drag started.
+     */
+    private _dragStartY: number = 0;
+
+    /**
+     * Camera scrollY at the start of the current drag.
+     */
+    private _dragStartScrollY: number = 0;
+
+    /**
      * Whether drag-to-pan is currently enabled (set by Board on viewport changes).
      */
     private _panningEnabled: boolean = false;
@@ -105,6 +115,8 @@ export class Cursor {
             if (this._panningEnabled) {
                 this._dragStartX = pointer.position.x;
                 this._dragStartScrollX = this._board.scene.cameras.main.scrollX;
+                this._dragStartY = pointer.position.y;
+                this._dragStartScrollY = this._board.scene.cameras.main.scrollY;
                 this._dragging = false;
             }
         });
@@ -114,10 +126,16 @@ export class Cursor {
             async (pointer: Input.Pointer) => {
                 if (this._panningEnabled && pointer.isDown) {
                     const dx: number = pointer.position.x - this._dragStartX;
-                    if (Math.abs(dx) >= Cursor.DRAG_THRESHOLD) {
+                    const dy: number = pointer.position.y - this._dragStartY;
+                    if (
+                        Math.abs(dx) >= Cursor.DRAG_THRESHOLD ||
+                        Math.abs(dy) >= Cursor.DRAG_THRESHOLD
+                    ) {
                         this._dragging = true;
                         this._board.scene.cameras.main.scrollX =
                             this._dragStartScrollX - dx;
+                        this._board.scene.cameras.main.scrollY =
+                            this._dragStartScrollY - dy;
                         return;
                     }
                 }

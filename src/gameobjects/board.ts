@@ -126,6 +126,18 @@ export class Board extends Model implements Box {
     static readonly DEFAULT_CELLSIZE: number = 14;
 
     /**
+     * Empty space in cells added to the left and right of the board.
+     */
+    static readonly HORIZONTAL_PAD_CELLS: number = 6;
+
+    /**
+     * Empty space in cells added above and below the board.
+     * Larger than HORIZONTAL_PAD_CELLS to keep edge pieces clear of top/bottom
+     * UI elements when panning.
+     */
+    static readonly VERTICAL_PAD_CELLS: number = 9;
+
+    /**
      * Default delay for actions in milliseconds.
      */
     static get DEFAULT_DELAY(): number {
@@ -331,8 +343,9 @@ export class Board extends Model implements Box {
 
         this._scene.game.scale.resize(
             this._width * Board.DEFAULT_CELLSIZE * 2 +
-                Board.DEFAULT_CELLSIZE * 6,
-            this._height * Board.DEFAULT_CELLSIZE + Board.DEFAULT_CELLSIZE * 6,
+                Board.DEFAULT_CELLSIZE * Board.HORIZONTAL_PAD_CELLS * 2,
+            this._height * Board.DEFAULT_CELLSIZE +
+                Board.DEFAULT_CELLSIZE * Board.VERTICAL_PAD_CELLS * 2,
         );
 
         // Camera bounds cover the full board regardless of viewport size.
@@ -340,7 +353,7 @@ export class Board extends Model implements Box {
         const boardPixelHeight: number = this._scene.game.scale.height;
         this._scene.cameras.main.setBounds(
             boardPixelWidth / -2,
-            Board.DEFAULT_CELLSIZE * -3,
+            Board.DEFAULT_CELLSIZE * -Board.VERTICAL_PAD_CELLS,
             boardPixelWidth,
             boardPixelHeight,
         );
@@ -1749,12 +1762,20 @@ export class Board extends Model implements Box {
 
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
         const isoPos: Geom.Point = this.getIsoPosition(position);
-        const targetScrollX: number = isoPos.x - camera.width / 2;
+        const bounds = camera.getBounds();
+
+        const tweenProps: { scrollX?: number; scrollY?: number } = {};
+        if (camera.width < bounds.width) {
+            tweenProps.scrollX = isoPos.x - camera.width / 2;
+        }
+        if (camera.height < bounds.height) {
+            tweenProps.scrollY = isoPos.y - camera.height / 2;
+        }
 
         return new Promise<void>((resolve) => {
             this.scene.tweens.add({
                 targets: camera,
-                scrollX: targetScrollX,
+                ...tweenProps,
                 duration: Board.DEFAULT_DELAY,
                 ease: "Power2",
                 onComplete: () => {
@@ -2140,8 +2161,8 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Whether the camera viewport is narrower than the board, enabling
-     * horizontal panning.
+     * Whether the camera viewport is smaller than the board in either
+     * dimension, enabling panning.
      */
     get needsPanning(): boolean {
         const camera: Cameras.Scene2D.Camera = this._scene.cameras.main;
@@ -2149,7 +2170,10 @@ export class Board extends Model implements Box {
             return false;
         }
         const bounds = camera.getBounds();
-        return camera.width < (bounds?.width ?? camera.width);
+        return (
+            camera.width < (bounds?.width ?? camera.width) ||
+            camera.height < (bounds?.height ?? camera.height)
+        );
     }
 
     /**
@@ -2405,18 +2429,24 @@ export class Board extends Model implements Box {
         boardPixelHeight: number,
     ): void {
         const zoom: number = this._scene.game.scale.zoom;
-        const query: MediaQueryList = globalThis.matchMedia(
+        const widthQuery: MediaQueryList = globalThis.matchMedia(
             `(max-width: ${boardPixelWidth * zoom}px)`,
+        );
+        const heightQuery: MediaQueryList = globalThis.matchMedia(
+            `(max-height: ${boardPixelHeight * zoom}px)`,
         );
 
         const handler = (): void => {
-            if (query.matches) {
-                const viewportWidth: number = Math.floor(
-                    globalThis.innerWidth / zoom,
-                );
-                this._scene.game.scale.resize(viewportWidth, boardPixelHeight);
+            const targetWidth: number = widthQuery.matches
+                ? Math.floor(globalThis.innerWidth / zoom)
+                : boardPixelWidth;
+            const targetHeight: number = heightQuery.matches
+                ? Math.floor(globalThis.innerHeight / zoom)
+                : boardPixelHeight;
+            this._scene.game.scale.resize(targetWidth, targetHeight);
+            if (widthQuery.matches || heightQuery.matches) {
                 console.log(
-                    `Viewport narrower than board, resizing canvas to ${viewportWidth}x${boardPixelHeight}`,
+                    `Viewport smaller than board, resizing canvas to ${targetWidth}x${targetHeight}`,
                 );
                 // If a player is awaiting their turn, center on them, otherwise
                 // center the board
@@ -2430,24 +2460,23 @@ export class Board extends Model implements Box {
                         ),
                     );
                 }
-            } else {
-                this._scene.game.scale.resize(
-                    boardPixelWidth,
-                    boardPixelHeight,
-                );
             }
             if (this._cursor) {
-                this._cursor.panningEnabled = query.matches;
+                this._cursor.panningEnabled =
+                    widthQuery.matches || heightQuery.matches;
             }
         };
 
-        query.addEventListener("change", handler, {
+        widthQuery.addEventListener("change", handler, {
+            signal: this._viewportListenerAbort.signal,
+        });
+        heightQuery.addEventListener("change", handler, {
             signal: this._viewportListenerAbort.signal,
         });
 
         // Also track viewport size changes within the matched range, since
-        // the media query "change" event only fires when crossing the
-        // threshold, not when the viewport resizes within the same state.
+        // media query "change" events only fire when crossing the threshold,
+        // not when the viewport resizes within the same state.
         globalThis.addEventListener("resize", handler, {
             signal: this._viewportListenerAbort.signal,
         });
