@@ -1867,4 +1867,31 @@ describe("Piece", () => {
             expect(Piece.SHADOW_FORM_ALPHA).toBeLessThan(1);
         });
     });
+
+    describe("screenPosition", () => {
+        it("returns the center of the sprite when sprite exists", () => {
+            const piece = makePiece();
+            // MockPiece initialises sprites synchronously; makeMockSprite
+            // returns getCenter: () => ({ x: 0, y: 0 })
+            const pos = piece.screenPosition;
+            expect(pos).not.toBeNull();
+            expect(pos).toEqual({ x: 0, y: 0 });
+        });
+
+        it("returns {x: 0, y: 0} when no sprite has been created", () => {
+            const piece = makePiece();
+            // Remove the sprite to simulate the no-sprite state
+            (piece as any)._sprite = undefined;
+            expect(piece.screenPosition).toEqual({ x: 0, y: 0 });
+        });
+
+        it("delegates to sprite.getCenter()", () => {
+            const piece = makePiece();
+            const getCenterSpy = vi
+                .spyOn((piece as any)._sprite, "getCenter")
+                .mockReturnValue({ x: 42, y: 99 });
+            expect(piece.screenPosition).toEqual({ x: 42, y: 99 });
+            expect(getCenterSpy).toHaveBeenCalled();
+        });
+    });
 });

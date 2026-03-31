@@ -1,8 +1,9 @@
+import { Geom } from "phaser";
 import type { Board } from "../board";
 import { BoardEvent } from "../enums/boardevent";
 import { BoardState } from "../enums/boardstate";
 import { Piece } from "../piece";
-import { Tutorial, TutorialStep } from "./tutorial";
+import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";
 
 const RANDOM_PLAYER_SPELL: string = [
     "King Cobra",
@@ -47,12 +48,20 @@ class GettingStarted10 extends TutorialStep {
             means it will bring forth a friendly creature or object onto the board.
             <p>
             If you look on the board next to your wizard<sup>*</sup>, you should see a <span class="c-magenta">magenta dot</span>.
-            This shows valid positions for your spell to be cast. Click or tap this position to cast the spell.
+            This shows valid positions for your spell to be cast. ${clickOrTap(true)} this position to cast the spell.
             <p class="text-small"><sup>*</sup>The blue one on the left with the fetching hat, not the one on the right in a red t-shirt and jeans,
             who clearly didn't pay attention to the dress-code.`,
             "Cast your spell",
             "left",
         );
+    }
+
+    onDismissHint(board: Board): void {
+        const validPosition: Geom.Point = board.getIsoPosition(
+            new Geom.Point(1, 0),
+        );
+        validPosition.y += 10;
+        TutorialStep.pointAtPosition(board, validPosition, 3000);
     }
 
     public checkCondition(
@@ -69,6 +78,8 @@ class GettingStarted10 extends TutorialStep {
 }
 
 class GettingStarted15 extends TutorialStep {
+    private playerPiece: Piece | null = null;
+    private enemyPiece: Piece | null = null;
     constructor() {
         super(
             `<p>
@@ -81,7 +92,7 @@ class GettingStarted15 extends TutorialStep {
             Normally the wizards can also move around the board, but in this tutorial, we have (magically) broken their
             ankles.
             <p>
-            Click or tap your <em>${RANDOM_PLAYER_SPELL}</em> on the board, then select a position to move to. You don't
+            ${clickOrTap(true)} on your <em>${RANDOM_PLAYER_SPELL}</em> on the board, then select a position to move to. You don't
             really have much of a choice but to advance towards the <em class="c-cyan">${RANDOM_OPPONENT_SPELL}</em>...`,
             "Move your piece",
             "left",
@@ -89,26 +100,38 @@ class GettingStarted15 extends TutorialStep {
     }
 
     onEnter(board: Board): void {
-        // Nerf the King Cobra's mnv so it stays engaged with the Orc once near
-        const cobra: Piece | null =
+        // Nerf the player's piece's mnv so it stays engaged with the opponent's
+        // piece once near
+        this.playerPiece =
             board.pieces?.find((p) => p.name === RANDOM_PLAYER_SPELL) ?? null;
-        if (cobra) {
-            cobra.properties.maneuverability = -1;
+        if (this.playerPiece) {
+            this.playerPiece.properties.maneuverability = -1;
         } else {
             console.warn(
                 `Couldn't find ${RANDOM_PLAYER_SPELL} piece to nerf maneuverability. This may cause the tutorial to not work as intended.`,
                 board,
             );
         }
-        // Buff the Orc's mnv to Infinity so it also stays engaged with the King Cobra
-        const orc: Piece | null =
+        // Buff the enemy player's piece's mnv to Infinity so it also stays
+        // engaged with the player's piece
+        this.enemyPiece =
             board.pieces?.find((p) => p.name === RANDOM_OPPONENT_SPELL) ?? null;
-        if (orc) {
-            orc.properties.maneuverability = Infinity;
+        if (this.enemyPiece) {
+            this.enemyPiece.properties.maneuverability = Infinity;
         } else {
             console.warn(
                 `Couldn't find ${RANDOM_OPPONENT_SPELL} piece to buff maneuverability. This may cause the tutorial to not work as intended.`,
                 board,
+            );
+        }
+    }
+
+    onDismissHint(board: Board): void {
+        if (this.playerPiece) {
+            TutorialStep.pointAtPosition(
+                board,
+                this.playerPiece.screenPosition,
+                2000,
             );
         }
     }
@@ -132,7 +155,7 @@ class GettingStarted20 extends TutorialStep {
             <em class="c-yellow">${RANDOM_PLAYER_SPELL}</em>'s impenetrable plot armour! Seize the opportunity and
             strike back!
             <p>
-            Click or tap your <em class="c-yellow">${RANDOM_PLAYER_SPELL}</em> again, then select the adjacent
+            ${clickOrTap(true)} on your <em class="c-yellow">${RANDOM_PLAYER_SPELL}</em> again, then select the adjacent
             <em class="c-cyan">${RANDOM_OPPONENT_SPELL}</em> to attack it.`,
             "Win your first battle",
             "left",
@@ -144,7 +167,6 @@ class GettingStarted20 extends TutorialStep {
         // opponent always misses.
         return event === BoardEvent.PieceDied;
     }
-
 }
 
 class GettingStarted30 extends TutorialStep {
@@ -162,7 +184,9 @@ class GettingStarted30 extends TutorialStep {
     private readonly roundLimit: number = 7;
 
     public getOutro(): string {
-        console.log(`${this.roundCount} rounds of ${this.roundLimit} limit reached.`);
+        console.log(
+            `${this.roundCount} rounds of ${this.roundLimit} limit reached.`,
+        );
         // Pacifist ending
         if (this.roundCount > this.roundLimit) {
             return `<p>
@@ -181,7 +205,7 @@ class GettingStarted30 extends TutorialStep {
             <p>
             There's a lot more to learn though young sorcerer, so check out the other tutorials when you're ready for
             more!`;
-    };
+    }
 
     constructor() {
         super(
@@ -210,7 +234,9 @@ class GettingStarted30 extends TutorialStep {
             return true;
         }
 
-        return event === BoardEvent.PlayerDefeated || event === BoardEvent.GameOver;
+        return (
+            event === BoardEvent.PlayerDefeated || event === BoardEvent.GameOver
+        );
     }
 
     onEnter(_: Board): void {
@@ -220,11 +246,14 @@ class GettingStarted30 extends TutorialStep {
     /**
      * If the player reaches the round limit, just end the game regardless of the state
      * of the board, to prevent stalling.
-     * 
+     *
      * @param board The current state of the board.
      */
     onComplete(board: Board): void {
-        if (this.roundCount > this.roundLimit && board.state !== BoardState.GameOver) {
+        if (
+            this.roundCount > this.roundLimit &&
+            board.state !== BoardState.GameOver
+        ) {
             board.endGame();
         }
     }

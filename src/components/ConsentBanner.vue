@@ -1,7 +1,9 @@
 <template>
     <div class="consent-banner callout">
         <p class="consent-banner__text">
-            Archaos can save your preferences (player setup, tutorial progress) in your browser. If you'd prefer it didn't do that, you can decline below.
+            Archaos can save your preferences (player setup, tutorial progress)
+            in your browser. If you'd prefer it didn't do that, you can decline
+            below.
         </p>
         <div class="callout__buttons consent-banner__buttons">
             <button class="button button--green" @click="$emit('accept')">

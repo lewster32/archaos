@@ -36,7 +36,7 @@
                         'map__piece--wizard': piece.hasStatus(
                             UnitStatus.Wizard,
                         ),
-                        'map__piece--corpse': piece.dead
+                        'map__piece--corpse': piece.dead,
                     }"
                     v-for="piece in pieces"
                     :key="piece.id"

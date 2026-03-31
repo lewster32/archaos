@@ -121,7 +121,10 @@ const onConsentAccept = () => {
     storage.acceptConsent();
     // If localStorage already has saved data, reload so components pick it up
     // (they read storage at initialisation time, before consent was granted).
-    if (globalThis.localStorage?.getItem("setup") || globalThis.localStorage?.getItem("tutorialProgress")) {
+    if (
+        globalThis.localStorage?.getItem("setup") ||
+        globalThis.localStorage?.getItem("tutorialProgress")
+    ) {
         globalThis.location.reload();
         return;
     }

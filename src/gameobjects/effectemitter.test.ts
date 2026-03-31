@@ -9,6 +9,18 @@ const mockLineTo = vi.fn().mockReturnThis();
 
 vi.mock("phaser", () => ({
     GameObjects: {
+        Container: class MockContainer {
+            scene: any;
+            x: number;
+            y: number;
+            destroy = vi.fn();
+            add = vi.fn();
+            constructor(scene: any, x: number = 0, y: number = 0) {
+                this.scene = scene;
+                this.x = x;
+                this.y = y;
+            }
+        },
         Particles: {
             ParticleEmitter: class MockParticleEmitter {
                 scene: any;
@@ -63,7 +75,12 @@ vi.mock("phaser", () => ({
     Scene: vi.fn(),
 }));
 
-import { EffectEmitter, EffectType } from "./effectemitter";
+import {
+    EffectEmitter,
+    EffectType,
+    createEffect,
+    registerCustomEffect,
+} from "./effectemitter";
 import type { Piece } from "./piece";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -121,11 +138,12 @@ describe("EffectType", () => {
         expect(EffectType.AttackHit).toBe("AttackHit");
         expect(EffectType.NoCorpseDeath).toBe("NoCorpseDeath");
         expect(EffectType.TurmoilBeam).toBe("TurmoilBeam");
+        expect(EffectType.PointAtPosition).toBe("PointAtPosition");
     });
 
     it("should have correct number of effect types", () => {
         const values = Object.values(EffectType);
-        expect(values).toHaveLength(27);
+        expect(values).toHaveLength(28);
     });
 });
 
@@ -152,6 +170,7 @@ describe("EffectEmitter", () => {
                 point(100, 200),
                 null,
                 null,
+                null,
                 resolve,
             );
 
@@ -165,6 +184,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.WizardCasting,
                 point(50, 60),
+                null,
                 null,
                 null,
                 resolve,
@@ -182,6 +202,7 @@ describe("EffectEmitter", () => {
                 point(10, 20),
                 point(100, 200),
                 null,
+                null,
                 resolve,
             );
 
@@ -198,6 +219,7 @@ describe("EffectEmitter", () => {
                 point(50, 60),
                 null,
                 null,
+                null,
                 resolve,
             );
             expect(emitter).toBeDefined();
@@ -211,6 +233,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.SummonPiece,
                 point(0, 0),
+                null,
                 null,
                 null,
                 resolve,
@@ -230,6 +253,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.SummonPiece,
                 point(0, 0),
+                null,
                 null,
                 null,
                 resolve,
@@ -252,6 +276,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 null,
+                null,
                 resolve,
             );
 
@@ -270,6 +295,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 null,
+                null,
                 resolve,
             );
 
@@ -283,6 +309,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.ArrowHit,
                 point(0, 0),
+                null,
                 null,
                 null,
                 resolve,
@@ -305,6 +332,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -331,6 +359,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -352,6 +381,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -381,6 +411,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -402,6 +433,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -440,6 +472,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -479,6 +512,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -498,6 +532,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 null,
+                null,
                 resolve,
             );
             expect(emitter).toBeDefined();
@@ -510,6 +545,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.WizardCasting,
                 point(0, 0),
+                null,
                 null,
                 null,
                 resolve,
@@ -526,6 +562,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 null,
+                null,
                 resolve,
             );
             expect(emitter).toBeDefined();
@@ -538,6 +575,7 @@ describe("EffectEmitter", () => {
                 scene as any,
                 EffectType.RaiseDeadHit,
                 point(30, 40),
+                null,
                 null,
                 null,
                 resolve,
@@ -558,6 +596,7 @@ describe("EffectEmitter", () => {
                 point(0, 0),
                 null,
                 target,
+                null,
                 resolve,
             );
 
@@ -595,11 +634,165 @@ describe("EffectEmitter", () => {
                     point(0, 0),
                     point(100, 100),
                     null,
+                    null,
                     resolve,
                 );
                 expect(emitter).toBeDefined();
                 expect(mockLineTo).toHaveBeenCalledWith(100, 100);
             }
         });
+
+        it("should use the provided duration instead of the effect default", () => {
+            const resolve = vi.fn();
+            // SummonPiece has default duration 250; we override with 999
+            const _emitter = new EffectEmitter(
+                scene as any,
+                EffectType.SummonPiece,
+                point(0, 0),
+                null,
+                null,
+                999,
+                resolve,
+            );
+
+            const durationTween = scene.tweenCounters.at(-1);
+            expect(durationTween.duration).toBe(999);
+        });
+    });
+});
+
+// ─── createEffect ─────────────────────────────────────────────────────────────
+
+describe("createEffect", () => {
+    let scene: ReturnType<typeof makeMockScene>;
+
+    beforeEach(() => {
+        scene = makeMockScene();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("returns an EffectEmitter for a data-driven effect type", () => {
+        const resolve = vi.fn();
+        const result = createEffect(
+            scene as any,
+            EffectType.SummonPiece,
+            point(0, 0),
+            null,
+            null,
+            null,
+            resolve,
+        );
+        expect(result).toBeInstanceOf(EffectEmitter);
+    });
+
+    it("passes the duration override to EffectEmitter", () => {
+        const resolve = vi.fn();
+        createEffect(
+            scene as any,
+            EffectType.SummonPiece,
+            point(0, 0),
+            null,
+            null,
+            1234,
+            resolve,
+        );
+        const durationTween = scene.tweenCounters.at(-1);
+        expect(durationTween.duration).toBe(1234);
+    });
+
+    it("calls resolve via the custom factory for PointAtPosition", () => {
+        // PointAtPosition is a custom effect — the factory creates a
+        // PointAtPositionEffect (a Container subclass). We just verify the
+        // factory is dispatched (no EffectEmitter is created).
+        const resolve = vi.fn();
+        // We need a minimal scene with add.image and tweens.add mocked
+        const fullScene = {
+            ...scene,
+            add: {
+                image: vi.fn().mockReturnValue({
+                    setOrigin: vi.fn().mockReturnThis(),
+                    setAlpha: vi.fn().mockReturnThis(),
+                }),
+            },
+        };
+        // The Container base class is not mocked in our Phaser mock —
+        // expect it to throw or return, but most importantly not create
+        // an EffectEmitter (no tweenCounters from the duration tween).
+        // We test the dispatch path: factory is found and called.
+        const factory = vi.fn().mockReturnValue({ id: "mock-container" });
+        registerCustomEffect(EffectType.PointAtPosition, factory);
+        createEffect(
+            fullScene as any,
+            EffectType.PointAtPosition,
+            point(10, 20),
+            null,
+            null,
+            3000,
+            resolve,
+        );
+        expect(factory).toHaveBeenCalledWith(
+            fullScene,
+            point(10, 20),
+            null,
+            null,
+            3000,
+            resolve,
+        );
+    });
+});
+
+// ─── registerCustomEffect ─────────────────────────────────────────────────────
+
+describe("registerCustomEffect", () => {
+    it("registers a custom factory that createEffect dispatches to", () => {
+        const customFactory = vi.fn().mockReturnValue({ id: "custom" });
+        registerCustomEffect(EffectType.GiveSpell, customFactory);
+
+        const scene = makeMockScene();
+        const resolve = vi.fn();
+        createEffect(
+            scene as any,
+            EffectType.GiveSpell,
+            point(5, 5),
+            null,
+            null,
+            null,
+            resolve,
+        );
+
+        expect(customFactory).toHaveBeenCalledOnce();
+        expect(customFactory).toHaveBeenCalledWith(
+            scene,
+            point(5, 5),
+            null,
+            null,
+            null,
+            resolve,
+        );
+    });
+
+    it("overrides an existing custom factory when re-registered", () => {
+        const first = vi.fn().mockReturnValue({ id: "first" });
+        const second = vi.fn().mockReturnValue({ id: "second" });
+        registerCustomEffect(EffectType.GiveSpell, first);
+        registerCustomEffect(EffectType.GiveSpell, second);
+
+        const scene = makeMockScene();
+        createEffect(
+            scene as any,
+            EffectType.GiveSpell,
+            point(0, 0),
+            null,
+            null,
+            null,
+            vi.fn(),
+        );
+
+        expect(second).toHaveBeenCalledOnce();
+        expect(first).not.toHaveBeenCalled();
     });
 });

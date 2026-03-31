@@ -729,6 +729,15 @@ export class Piece extends Entity {
     }
 
     /**
+     * Get the current screen position of this piece's sprite. This is used for
+     * targeting effects, projectiles, etc. that need to know where the piece is
+     * on the screen.
+     */
+    get screenPosition(): Geom.Point | null {
+        return this.sprite?.getCenter() || null;
+    }
+
+    /**
      * Update the depth of this piece's sprite based on its current Y position.
      */
     protected updateDepth() {

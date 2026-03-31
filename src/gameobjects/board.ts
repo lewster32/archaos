@@ -2,7 +2,7 @@ import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { PlayerConfig } from "./configs/playerconfig";
 import { SpellConfig } from "./configs/spellconfig";
 import { Cursor } from "./cursor";
-import { EffectEmitter, EffectType } from "./effectemitter";
+import { createEffect, EffectType } from "./effectemitter";
 import { BoardEvent } from "./enums/boardevent";
 import { BoardLayer } from "./enums/boardlayer";
 import { BoardPhase } from "./enums/boardphase";
@@ -857,7 +857,7 @@ export class Board extends Model implements Box {
         if (!this._selected) {
             throw new Error(`No piece with ID ${id} found to select`);
         }
-
+        this._boardEvents.emit(BoardEvent.PieceSelected, this._selected);
         if (this.phase === BoardPhase.Moving) {
             if (!silent) {
                 this.sound.play("select");
@@ -2105,17 +2105,19 @@ export class Board extends Model implements Box {
         startPosition: PMath.Vector2 | Geom.Point,
         endPosition?: PMath.Vector2 | Geom.Point,
         target?: Piece,
+        duration?: number,
     ): Promise<void> {
         return new Promise((resolve) => {
-            const emitter = new EffectEmitter(
+            const effect = createEffect(
                 this.scene,
                 type,
                 startPosition,
-                endPosition,
-                target,
+                endPosition ?? null,
+                target ?? null,
+                duration ?? null,
                 resolve,
             );
-            this.scene.add.existing(emitter);
+            this.scene.add.existing(effect);
         });
     }
 

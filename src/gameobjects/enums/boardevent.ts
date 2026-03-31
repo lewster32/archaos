@@ -13,6 +13,9 @@ export enum BoardEvent {
     /** The board state changed (Move, CastSpell, Busy, etc.). */
     StateChange = "board:state-change",
 
+    /** A player selected a piece on the board. */
+    PieceSelected = "board:piece-selected",
+
     /** A piece finished moving to a new position. */
     PieceMoved = "board:piece-moved",
 

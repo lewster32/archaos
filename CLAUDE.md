@@ -28,6 +28,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 4. Player input (or `ComputerWizard` AI) calls into `Rules`
 5. `Rules` mutates board state and calls `Logger`
 6. `Logger` emits events that Vue components react to for text-based UI updates
+
 ### RemotePlayer Interface
 
 `RemotePlayer` abstracts human vs. AI vs. (future) network players — `selectSpell`, `castSpell`, `moveUnit`. `ComputerWizard` is the current AI implementation.

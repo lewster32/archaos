@@ -12,6 +12,19 @@ import {
 
 import effectsData from "../../assets/data/effects.json";
 
+/**
+ * Factory function for effects defined in code rather than via effects.json.
+ * Must call `resolve` when the effect is complete so callers can await it.
+ */
+export type CustomEffectFactory = (
+    scene: Scene,
+    startPosition: PMath.Vector2 | Geom.Point,
+    endPosition: PMath.Vector2 | Geom.Point | null,
+    target: Piece | null,
+    duration: number | null,
+    resolve: Function,
+) => GameObjects.GameObject;
+
 interface EffectDefinition {
     duration: number;
     particle: Record<string, any>;
@@ -98,6 +111,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
         startPosition: PMath.Vector2 | Geom.Point,
         endPosition: PMath.Vector2 | Geom.Point | null,
         target: Piece | null,
+        duration: number | null,
         resolve: Function,
     ) {
         const def = (effectsData as Record<string, EffectDefinition>)[type];
@@ -110,7 +124,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
         );
         this._def = def;
         this._target = target;
-        this.playEffect(resolve);
+        this.playEffect(resolve, duration ?? def.duration);
     }
 
     private playTargetEffect(duration: number): void {
@@ -205,8 +219,8 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
         }
     }
 
-    private playEffect(resolve: Function) {
-        const duration = this._def.duration;
+    private playEffect(resolve: Function, effectDuration: number | null) {
+        const duration = effectDuration ?? this._def.duration;
 
         if (this._def.cameraShake) {
             this.scene.cameras.main.shake(
@@ -230,6 +244,58 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                 setTimeout(() => {
                     this.destroy();
                 }, duration * 2);
+            },
+        });
+    }
+}
+
+/**
+ * A pulsing downward arrow that draws attention to a specific board position.
+ * Used by tutorial steps to point the player towards the relevant position.
+ */
+class PointAtPositionEffect extends GameObjects.Container {
+    constructor(
+        scene: Scene,
+        startPosition: PMath.Vector2 | Geom.Point,
+        duration: number = 3500,
+        resolve: Function = () => {},
+    ) {
+        super(scene, startPosition.x, startPosition.y);
+
+        const arrow: GameObjects.Image = scene.add
+            .image(0, -30, "pointer-arrow")
+            .setOrigin(0.5, 0)
+            .setAlpha(0);
+        this.add(arrow);
+
+        scene.tweens.add({
+            targets: arrow,
+            alpha: 1,
+            duration: 300,
+            ease: "Sine.easeOut",
+        });
+
+        const bobDuration: number = duration; // yoyo * (repeat + 1) = 3500ms
+        const fadeOutDuration: number = duration - 500;
+
+        scene.tweens.add({
+            targets: arrow,
+            y: { from: -30, to: -20 },
+            duration: 350,
+            yoyo: true,
+            repeat: 4,
+            ease: "Sine.easeInOut",
+        });
+
+        scene.tweens.add({
+            targets: arrow,
+            alpha: 0,
+            duration: fadeOutDuration,
+            delay: bobDuration - fadeOutDuration,
+            ease: "Sine.easeIn",
+            onComplete: () => {
+                resolve();
+                setTimeout(() => this.destroy(), 50);
             },
         });
     }
@@ -263,4 +329,66 @@ export enum EffectType {
     AttackHit = "AttackHit",
     NoCorpseDeath = "NoCorpseDeath",
     TurmoilBeam = "TurmoilBeam",
+    // Non-config effects for tutorial hints
+    PointAtPosition = "PointAtPosition",
 }
+
+/**
+ * Registry of code-defined effects. Each entry maps an EffectType to a
+ * factory that creates the corresponding GameObject. Checked by createEffect
+ * before falling back to the data-driven EffectEmitter.
+ */
+const CUSTOM_EFFECT_REGISTRY = new Map<EffectType, CustomEffectFactory>([
+    [
+        EffectType.PointAtPosition,
+        (scene, startPos, _endPos, _target, duration, resolve) =>
+            new PointAtPositionEffect(scene, startPos, duration, resolve),
+    ],
+]);
+
+/**
+ * Registers an additional custom effect factory. Use this to add code-defined
+ * effects without modifying this file.
+ */
+export const registerCustomEffect = (
+    type: EffectType,
+    factory: CustomEffectFactory,
+): void => {
+    CUSTOM_EFFECT_REGISTRY.set(type, factory);
+};
+
+/**
+ * Creates an effect for the given type. Custom effects registered in
+ * CUSTOM_EFFECT_REGISTRY take precedence; all other types fall through to the
+ * data-driven EffectEmitter (effects.json).
+ */
+export const createEffect = (
+    scene: Scene,
+    type: EffectType,
+    startPosition: PMath.Vector2 | Geom.Point,
+    endPosition: PMath.Vector2 | Geom.Point | null,
+    target: Piece | null,
+    duration: number | null,
+    resolve: Function,
+): GameObjects.GameObject => {
+    const factory = CUSTOM_EFFECT_REGISTRY.get(type);
+    if (factory) {
+        return factory(
+            scene,
+            startPosition,
+            endPosition,
+            target,
+            duration,
+            resolve,
+        );
+    }
+    return new EffectEmitter(
+        scene,
+        type,
+        startPosition,
+        endPosition,
+        target,
+        duration,
+        resolve,
+    );
+};

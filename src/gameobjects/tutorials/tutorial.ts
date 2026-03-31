@@ -1,9 +1,11 @@
+import { Geom } from "phaser";
 import type { Board } from "../board";
 import { BoardEvent } from "../enums/boardevent";
 import { EventType } from "../enums/eventtype";
 import { GameScenarioData, GameScenarioPlayer } from "../interfaces/ui";
 import { Logger } from "../services/logger";
 import * as storage from "../storage";
+import { EffectType } from "../effectemitter";
 
 /**
  * A player in a tutorial. This extends the GameScenarioPlayer with any
@@ -212,6 +214,8 @@ export abstract class TutorialStep {
     /**
      * Called when this step becomes the current active step. Override to
      * perform setup such as highlighting UI elements or panning the camera.
+     *
+     * @param board The game board, providing access to the current game state.
      */
     onEnter?(board: Board): void;
 
@@ -219,8 +223,42 @@ export abstract class TutorialStep {
      * Called when this step's condition has been met and it is about to be
      * superseded by the next step (or the tutorial ends). Override to clean
      * up any step-specific state.
+     *
+     * @param board The game board, providing access to the current game state.
      */
-    onComplete?(board: Board): void;        
+    onComplete?(board: Board): void;
+
+    /**
+     * Called when the hint for this step is dismissed by the user. Override to
+     * perform any actions that should happen after the user has read the hint
+     * and closed the modal.
+     *
+     * @param board The game board, providing access to the current game state.
+     */
+    onDismissHint?(board: Board): void;
+
+    /**
+     * Displays a pointer at the board position.
+     *
+     * @param board The game board, providing access to the current game state.
+     * @param x The x-coordinate of the board position.
+     * @param y The y-coordinate of the board position.
+     * @param duration Optional duration in milliseconds for how long the pointer should be shown (default `2000`)
+     * @returns A point representing the board position.
+     */
+    protected static pointAtPosition(
+        board: Board,
+        pos: Geom.Point,
+        duration: number = 2000,
+    ): void {
+        board.playEffect(
+            EffectType.PointAtPosition,
+            pos,
+            undefined,
+            undefined,
+            duration,
+        );
+    }
 }
 
 // ─── Tutorial ───────────────────────────────────────────────────────────────
@@ -509,17 +547,21 @@ export abstract class Tutorial {
      * Shows the current step's hint modal and waits for the user to dismiss
      * it. Resolves immediately if the current step has no hint text.
      */
-    showStepHint(
+    async showStepHint(
         position: TutorialMessagePosition = "center",
         zIndex?: number,
     ): Promise<void> {
-        return this.showMessage(
+        const step = this.currentStep;
+        await this.showMessage(
             "hint",
             position,
-            this.currentStep?.hint ?? "",
-            this.currentStep?.name ?? this.name,
+            step?.hint ?? "",
+            step?.name ?? this.name,
             zIndex,
         );
+        if (step?.hint && this._board) {
+            step.onDismissHint?.(this._board);
+        }
     }
 
     /**
@@ -555,3 +597,16 @@ export abstract class Tutorial {
         });
     }
 }
+
+/**
+ * Utility function to determine whether to use "click" or "tap" in tutorial
+ * text, based on the user's device capabilities.
+ */
+export const clickOrTap = (capitalised: boolean = false): string => {
+    const matchMedia: boolean =
+        globalThis.matchMedia("(pointer: coarse)").matches;
+    if (capitalised) {
+        return matchMedia ? "Tap" : "Click";
+    }
+    return matchMedia ? "tap" : "click";
+};

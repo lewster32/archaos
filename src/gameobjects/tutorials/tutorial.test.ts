@@ -4,6 +4,7 @@ import {
     TutorialStep,
     TutorialData,
     TutorialMessageEvent,
+    clickOrTap,
 } from "./tutorial";
 import type { Board } from "../board";
 import { BoardEvent } from "../enums/boardevent";
@@ -116,6 +117,55 @@ describe("TutorialStep", () => {
         });
     });
 
+    describe("name", () => {
+        it("returns the name when provided", () => {
+            const step = new TestStep("hint", "Step Name");
+            expect(step.name).toBe("Step Name");
+        });
+
+        it("returns an empty string when no name is provided", () => {
+            const step = new TestStep("hint");
+            expect(step.name).toBe("");
+        });
+    });
+
+    describe("position", () => {
+        it("defaults to center when not provided", () => {
+            const step = new TestStep("hint");
+            expect(step.position).toBe("center");
+        });
+
+        it("returns the configured position", () => {
+            const step = new TestStep("hint", "name", "left");
+            expect(step.position).toBe("left");
+        });
+
+        it("accepts all valid positions", () => {
+            for (const pos of [
+                "top",
+                "bottom",
+                "left",
+                "right",
+                "center",
+            ] as const) {
+                const step = new TestStep("hint", "name", pos);
+                expect(step.position).toBe(pos);
+            }
+        });
+    });
+
+    describe("zIndex", () => {
+        it("returns undefined when not provided", () => {
+            const step = new TestStep("hint");
+            expect(step.zIndex).toBeUndefined();
+        });
+
+        it("returns the configured zIndex", () => {
+            const step = new TestStep("hint", "name", "center", 999);
+            expect(step.zIndex).toBe(999);
+        });
+    });
+
     describe("checkCondition", () => {
         it("returns false when condition is not met", () => {
             const step = new TestStep("hint");
@@ -141,6 +191,11 @@ describe("TutorialStep", () => {
             expect(step.onComplete).toBeUndefined();
         });
 
+        it("does not have onDismissHint by default", () => {
+            const step = new TestStep();
+            expect(step.onDismissHint).toBeUndefined();
+        });
+
         it("calls onEnter when defined", () => {
             const step = new TestStep();
             step.onEnter = vi.fn();
@@ -153,6 +208,63 @@ describe("TutorialStep", () => {
             step.onComplete = vi.fn();
             step.onComplete(mockBoard);
             expect(step.onComplete).toHaveBeenCalledWith(mockBoard);
+        });
+
+        it("calls onDismissHint when defined", () => {
+            const step = new TestStep();
+            step.onDismissHint = vi.fn();
+            step.onDismissHint(mockBoard);
+            expect(step.onDismissHint).toHaveBeenCalledWith(mockBoard);
+        });
+    });
+
+    describe("pointAtPosition", () => {
+        it("calls board.playEffect with PointAtPosition effect type", () => {
+            const board = {
+                ...createMockBoard(),
+                playEffect: vi.fn(),
+            } as unknown as Board;
+
+            // Access the protected static via a concrete subclass
+            class PointingStep extends TestStep {
+                triggerPoint(b: Board, pos: any, duration?: number) {
+                    TutorialStep.pointAtPosition(b, pos, duration);
+                }
+            }
+            const step = new PointingStep();
+            const pos = { x: 10, y: 20 };
+            step.triggerPoint(board, pos as any, 3000);
+
+            expect((board as any).playEffect).toHaveBeenCalledWith(
+                "PointAtPosition",
+                pos,
+                undefined,
+                undefined,
+                3000,
+            );
+        });
+
+        it("uses default duration of 2000 when not specified", () => {
+            const board = {
+                ...createMockBoard(),
+                playEffect: vi.fn(),
+            } as unknown as Board;
+
+            class PointingStep extends TestStep {
+                triggerPoint(b: Board, pos: any) {
+                    TutorialStep.pointAtPosition(b, pos);
+                }
+            }
+            const step = new PointingStep();
+            step.triggerPoint(board, { x: 0, y: 0 } as any);
+
+            expect((board as any).playEffect).toHaveBeenCalledWith(
+                "PointAtPosition",
+                { x: 0, y: 0 },
+                undefined,
+                undefined,
+                2000,
+            );
         });
     });
 });
@@ -570,8 +682,8 @@ describe("Tutorial", () => {
 
             const introCall = findMessage(spy, "intro");
             expect(introCall).toBeDefined();
-            expect(introCall![0].text).toBe("<p>Hello!</p>");
-            expect(introCall![0].title).toBe("Test Tutorial");
+            expect(introCall[0].text).toBe("<p>Hello!</p>");
+            expect(introCall[0].title).toBe("Test Tutorial");
         });
 
         it("start emits a hint message for the first step", async () => {
@@ -582,7 +694,7 @@ describe("Tutorial", () => {
 
             const hintCall = findMessage(spy, "hint");
             expect(hintCall).toBeDefined();
-            expect(hintCall![0].text).toBe("Do this first");
+            expect(hintCall[0].text).toBe("Do this first");
         });
 
         it("start does not emit a hint when the first step has no hint", async () => {
@@ -607,7 +719,7 @@ describe("Tutorial", () => {
 
             const hintCall = findMessage(spy, "hint");
             expect(hintCall).toBeDefined();
-            expect(hintCall![0].text).toBe("Now do this");
+            expect(hintCall[0].text).toBe("Now do this");
         });
 
         it("advance calls endGame when the tutorial completes", async () => {
@@ -636,7 +748,7 @@ describe("Tutorial", () => {
 
             const outroCall = findMessage(spy, "outro");
             expect(outroCall).toBeDefined();
-            expect(outroCall![0].text).toBe("<p>Finished!</p>");
+            expect(outroCall[0].text).toBe("<p>Finished!</p>");
         });
 
         it("advance does not emit a hint when the next step has no hint", async () => {
@@ -686,14 +798,14 @@ describe("Tutorial", () => {
             expect(savedResolve).not.toBeNull();
 
             // Resolve the intro
-            savedResolve!();
+            savedResolve();
             // Now the hint message is pending
             await Promise.resolve();
             expect(startResolved).toBe(false);
             expect(savedResolve).not.toBeNull();
 
             // Resolve the hint
-            savedResolve!();
+            savedResolve();
             await startPromise;
             expect(startResolved).toBe(true);
         });
@@ -799,5 +911,130 @@ describe("Tutorial", () => {
             expect(tutorial.currentStepIndex).toBe(0);
             expect(tutorial.isComplete).toBe(false);
         });
+    });
+
+    // ─── onDismissHint ──────────────────────────────────────────────────
+
+    describe("onDismissHint", () => {
+        it("is called after the hint modal is dismissed when step has a hint", async () => {
+            const step = new TestStep("some hint text");
+            step.onDismissHint = vi.fn();
+            const tutorial = new TestTutorial(makeConfig([step]));
+
+            // Auto-resolve all messages
+            autoResolveTutorialMessages();
+            await tutorial.start(mockBoard);
+
+            expect(step.onDismissHint).toHaveBeenCalledWith(mockBoard);
+        });
+
+        it("is not called when the step has no hint text", async () => {
+            const step = new TestStep(); // no hint
+            step.onDismissHint = vi.fn();
+            const tutorial = new TestTutorial(makeConfig([step]));
+
+            autoResolveTutorialMessages();
+            await tutorial.start(mockBoard);
+
+            expect(step.onDismissHint).not.toHaveBeenCalled();
+        });
+
+        it("is called after the hint is dismissed when advancing to a new step with a hint", async () => {
+            const step1 = new TestStep();
+            step1.conditionMet = true;
+            const step2 = new TestStep("second hint");
+            step2.onDismissHint = vi.fn();
+            const tutorial = new TestTutorial(makeConfig([step1, step2]));
+
+            autoResolveTutorialMessages();
+            await tutorial.start(mockBoard);
+            await tutorial.advance();
+
+            expect(step2.onDismissHint).toHaveBeenCalledWith(mockBoard);
+        });
+
+        it("is not called when the tutorial is complete (outro shown, not a hint)", async () => {
+            const step = new TestStep("final hint");
+            step.conditionMet = true;
+            step.onDismissHint = vi.fn();
+            const tutorial = new TestTutorial(makeConfig([step]));
+
+            autoResolveTutorialMessages();
+            await tutorial.start(mockBoard);
+
+            // onDismissHint fires during start (for the first step's hint)
+            const callsAfterStart = (
+                step.onDismissHint as ReturnType<typeof vi.fn>
+            ).mock.calls.length;
+
+            await tutorial.advance(); // completes tutorial — shows outro, not a hint
+
+            // Should not have been called again during advance
+            expect(
+                (step.onDismissHint as ReturnType<typeof vi.fn>).mock.calls
+                    .length,
+            ).toBe(callsAfterStart);
+        });
+    });
+
+    // ─── outro as a function ─────────────────────────────────────────────
+
+    describe("outro as a function", () => {
+        it("calls the outro function and returns its result", async () => {
+            const outroFn = vi.fn().mockReturnValue("<p>Dynamic outro</p>");
+            const step = new TestStep();
+            step.conditionMet = true;
+            const tutorial = new TestTutorial(
+                makeConfig([step], { outro: outroFn }),
+            );
+
+            expect(tutorial.outro).toBe("<p>Dynamic outro</p>");
+            expect(outroFn).toHaveBeenCalled();
+        });
+
+        it("emits the function result as outro text", async () => {
+            const spy = autoResolveTutorialMessages();
+            const step = new TestStep();
+            step.conditionMet = true;
+            const tutorial = new TestTutorial(
+                makeConfig([step], { outro: () => "<p>Computed!</p>" }),
+            );
+            await tutorial.start(mockBoard);
+
+            spy.mockClear();
+            await tutorial.advance();
+
+            const outroCall = findMessage(spy, "outro");
+            expect(outroCall).toBeDefined();
+            expect(outroCall[0].text).toBe("<p>Computed!</p>");
+        });
+    });
+});
+
+// ─── clickOrTap ──────────────────────────────────────────────────────────────
+
+describe("clickOrTap", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("returns 'click' when pointer is not coarse (desktop)", () => {
+        vi.stubGlobal("matchMedia", () => ({ matches: false }));
+        expect(clickOrTap()).toBe("click");
+    });
+
+    it("returns 'tap' when pointer is coarse (touch device)", () => {
+        vi.stubGlobal("matchMedia", () => ({ matches: true }));
+        expect(clickOrTap()).toBe("tap");
+    });
+
+    it("returns 'Click' (capitalised) when pointer is not coarse", () => {
+        vi.stubGlobal("matchMedia", () => ({ matches: false }));
+        expect(clickOrTap(true)).toBe("Click");
+    });
+
+    it("returns 'Tap' (capitalised) when pointer is coarse", () => {
+        vi.stubGlobal("matchMedia", () => ({ matches: true }));
+        expect(clickOrTap(true)).toBe("Tap");
     });
 });

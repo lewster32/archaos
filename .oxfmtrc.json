@@ -4,5 +4,6 @@
     "useTabs": false,
     "printWidth": 80,
     "sortPackageJson": false,
+    "endOfLine": "crlf",
     "ignorePatterns": []
 }
