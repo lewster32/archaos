@@ -219,6 +219,7 @@ class Movement20 extends TutorialStep {
         ) {
             return true;
         }
+        return false;
     }
 }
 
