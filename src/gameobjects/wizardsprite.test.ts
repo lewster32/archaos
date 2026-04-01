@@ -84,6 +84,7 @@ function makeMockScene(textureExists = false) {
             manager: { exists: vi.fn().mockReturnValue(textureExists) },
         },
         textures: {
+            exists: vi.fn().mockReturnValue(textureExists),
             createCanvas: vi.fn().mockReturnValue(canvas),
             remove: vi.fn((key: string) => removedKeys.push(key)),
             _removedKeys: removedKeys,
@@ -356,8 +357,8 @@ describe("WizardSprite", () => {
     // ── destroy ─────────────────────────────────────────────────────────
 
     describe("destroy", () => {
-        it("removes all three textures and calls super.destroy", () => {
-            const scene = makeMockScene();
+        it("removes texture and calls super.destroy", () => {
+            const scene = makeMockScene(true);
             const wizCode = makeWizCode({ code: "dz" });
             const sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
@@ -369,9 +370,20 @@ describe("WizardSprite", () => {
                 (c: any[]) => c[0],
             );
             expect(removed).toContain("dz");
-            expect(removed).toContain("dz_r");
-            expect(removed).toContain("dz_l");
             expect(mockSuperDestroy).toHaveBeenCalled();
         });
     });
+
+    it("does not attempt to remove textures that do not exist", () => {
+        const scene = makeMockScene(false);
+        const wizCode = makeWizCode({ code: "nonexistent" });
+        const sprite = new WizardSprite(scene as any, 0, 0, wizCode);
+
+        scene.textures.remove.mockClear();
+        mockSuperDestroy.mockClear();
+        sprite.destroy();
+        expect(scene.textures.remove).not.toHaveBeenCalled();
+        expect(mockSuperDestroy).toHaveBeenCalled();
+    });
+
 });

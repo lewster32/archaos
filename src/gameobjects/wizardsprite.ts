@@ -125,14 +125,8 @@ export class WizardSprite extends GameObjects.Sprite {
     }
 
     public destroy(fromScene?: boolean) {
-        if (this.scene?.textures) {
-            try {
-                this.scene.textures.remove(this._wizCode.code);
-                this.scene.textures.remove(`${this._wizCode.code}_r`);
-                this.scene.textures.remove(`${this._wizCode.code}_l`);
-            } catch (e) {
-                console.error("Error removing textures:", e);
-            }
+        if (this.scene?.textures?.exists(this._wizCode.code)) {
+            this.scene.textures.remove(this._wizCode.code);
         }
         super.destroy(fromScene);
     }

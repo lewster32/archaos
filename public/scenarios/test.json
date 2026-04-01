@@ -14,38 +14,49 @@
             "statuses": [],
             "pieces": [
                 {
-                    "type": "Dwarf",
-                    "position": { "x": 0, "y": 1 }
-                }
-            ],
-            "spells": ["*"]
-        },
-        {
-            "id": 2,
-            "name": "Player 2",
-            "position": { "x": 2, "y": 0 },
-            "computerControlled": false,
-            "difficulty": 0.5,
-            "statuses": [],
-            "pieces": [
-                {
-                    "type": "Magic Wood",
+                    "type": "Pegasus",
                     "position": { "x": 1, "y": 0 }
                 }
             ],
             "spells": []
-        }
-    ],
-    "corpses": [
+        },
         {
-            "type": "Dwarf",
-            "position": { "x": 1, "y": 1 }
+            "id": 2,
+            "name": "Player 2",
+            "position": { "x": 3, "y": 0 },
+            "computerControlled": true,
+            "difficulty": 0.5,
+            "statuses": [],
+            "pieces": [
+                {
+                    "type": "Gooey Blob",
+                    "position": { "x": 2, "y": 0 }
+                }
+            ],
+            "wizardProperties": {
+                "movement": 0
+            },
+            "spells": []
+        },
+        {
+            "id": 3,
+            "name": "Player 3",
+            "position": { "x": 5, "y": 0 },
+            "computerControlled": true,
+            "difficulty": 0.5,
+            "statuses": [],
+            "pieces": [],
+            "wizardProperties": {
+                "movement": 0
+            },
+            "spells": []
         }
     ],
+    "corpses": [],
     "phase": "moving",
     "cheats": {
         "forceHit": false,
         "forceCast": true,
-        "shortDelay": false
+        "shortDelay": true
     }
 }

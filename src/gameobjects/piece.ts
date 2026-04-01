@@ -804,16 +804,11 @@ export class Piece extends Entity {
         if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
             throw new Error("Cannot spread a non-spreading or dead piece");
         }
-        const spreadAction: SpreadAction = this.board.rng.pick([
-            SpreadAction.Spread,
-            SpreadAction.Spread,
-            SpreadAction.Spread,
-            SpreadAction.Spread,
-            SpreadAction.Spread,
-            SpreadAction.None,
-            SpreadAction.None,
+        const spreadAction: SpreadAction = this.board.rng.weightedRandomPick([
             SpreadAction.Shrink,
-        ]);
+            SpreadAction.None,
+            SpreadAction.Spread,
+        ], 1.75, true);
         if (spreadAction === SpreadAction.None) {
             return;
         }

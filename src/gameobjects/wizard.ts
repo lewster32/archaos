@@ -251,6 +251,13 @@ export class Wizard extends Piece {
             null,
             this,
         );
+        // If the wizard is mounted, silently clear the relationship before
+        // destroy() so that destroyCreations() killing the mount later doesn't
+        // call dismount() on an already-dead wizard.
+        if (this._currentMount) {
+            this._currentMount.currentRider = null;
+            this._currentMount = null;
+        }
         await this.destroy();
         await this.owner?.defeat();
         // PCHOWWW
