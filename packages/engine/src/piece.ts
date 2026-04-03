@@ -125,13 +125,14 @@ export class Piece extends Entity {
             this._direction = UnitDirection.Right;
         } else {
             this._direction =
-                Math.random() < 0.5
+                this.board.rng.frac() < 0.5
                     ? UnitDirection.Left
                     : UnitDirection.Right;
         }
 
         this._dead = false;
         this._engulfed = false;
+        this._raisedDead = false;
         this._moved = false;
         this._attacked = false;
         this._rangedAttacked = false;
