@@ -33,12 +33,12 @@ export enum UnitStatus {
     Sanctity = "sanctity",
 
     /**
-     * Mountable by wizards
+     * Mountable by the owning wizard
      */
     Mount = "mount",
 
     /**
-     * Mountable by any unit - not currently used
+     * Mountable by any wizard, not just the owner, e.g. Magic Wood
      */
     MountAny = "mountAny",
 
