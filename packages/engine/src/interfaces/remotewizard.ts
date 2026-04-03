@@ -1,5 +1,5 @@
 import { Board } from "../../../../src/gameobjects/board";
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 import { Player } from "../../../../src/gameobjects/player";
 import { RemotePlayer } from "./remoteplayer";
 

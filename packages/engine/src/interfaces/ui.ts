@@ -4,7 +4,7 @@
  */
 
 import type { Spell } from "../spells/spell";
-import type { Piece } from "../../../../src/gameobjects/piece";
+import type { Piece } from "../piece";
 import { UnitProperties } from "./unitproperties";
 
 /**

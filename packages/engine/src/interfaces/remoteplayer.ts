@@ -1,4 +1,4 @@
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 
 export interface RemotePlayer {
     /**

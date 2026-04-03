@@ -99,6 +99,9 @@ export {
     type UnitConfig,
 } from "./interfaces/ui";
 
+// Piece
+export { Piece, PieceState } from "./piece";
+
 // Spells
 export { Spell } from "./spells/spell";
 export { AttackSpell } from "./spells/attackspell";
