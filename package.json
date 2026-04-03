@@ -11,6 +11,7 @@
         "manifest": "node ./.deploy/manifest.js",
         "release": "npm run test -- --run && npm run manifest && npm run build && npm run deploy",
         "test": "vitest",
+        "test:engine": "npm test --workspace=packages/engine",
         "test:e2e": "npx playwright test",
         "lint": "oxlint",
         "lint:fix": "oxlint --fix",
