@@ -50,7 +50,7 @@
             <div
                 class="unit-properties__item unit-properties__item--mnv"
                 :class="itemNumClass(unit.properties?.mnv)"
-                :title="'Maneuverability: ' + unit.properties?.mnv"
+                :title="'Manoeuvrability: ' + unit.properties?.mnv"
             >
                 <span>{{ clampedNum(unit.properties?.mnv) }}</span>
             </div>

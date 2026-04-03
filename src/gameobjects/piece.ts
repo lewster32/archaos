@@ -128,7 +128,7 @@ export class Piece extends Entity {
                 rangedCombat: 0,
                 range: 0,
                 defense: 3,
-                maneuverability: 3,
+                manoeuvrability: 3,
                 magicResistance: 3,
                 attackType: "hit",
                 rangedType: "shot",
@@ -557,7 +557,7 @@ export class Piece extends Entity {
             rangedCombat: this._properties.rangedCombat,
             range: this._properties.range,
             defense: this._properties.defense,
-            maneuverability: this._properties.maneuverability,
+            manoeuvrability: this._properties.manoeuvrability,
             magicResistance: this._properties.magicResistance,
         };
 
@@ -911,7 +911,7 @@ export class Piece extends Entity {
                     rangedCombat: unit.properties.rcm,
                     range: unit.properties.rng,
                     defense: unit.properties.def,
-                    maneuverability: unit.properties.mnv,
+                    manoeuvrability: unit.properties.mnv,
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
                     rangedType: unit.rangedType || "shot",
@@ -1396,8 +1396,8 @@ export class Piece extends Entity {
             this.engulfed || // Cannot engage when engulfed
             piece.engulfed || // Cannot engage engulfed pieces
             piece.dead || // Cannot engage dead pieces
-            this.stats.maneuverability === 0 || // Cannot engage with zero maneuverability
-            piece.stats.maneuverability === 0 || // Cannot engage pieces with zero maneuverability
+            this.stats.manoeuvrability === 0 || // Cannot engage with zero manoeuvrability
+            piece.stats.manoeuvrability === 0 || // Cannot engage pieces with zero manoeuvrability
             this.currentMount || // Cannot engage when mounted
             piece.currentMount || // Cannot engage mounted pieces
             this.owner === piece.owner
@@ -1949,7 +1949,7 @@ export class Piece extends Entity {
                 rcm: this.stats.rangedCombat,
                 rng: this.stats.range,
                 def: this.stats.defense,
-                mnv: this.stats.maneuverability,
+                mnv: this.stats.manoeuvrability,
                 res: this.stats.magicResistance,
             },
             status: [...this.properties.status],
@@ -1999,7 +1999,7 @@ export class Piece extends Entity {
             rangedCombat: unit.properties.rcm,
             range: unit.properties.rng,
             defense: unit.properties.def,
-            maneuverability: unit.properties.mnv,
+            manoeuvrability: unit.properties.mnv,
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
@@ -2041,7 +2041,7 @@ export class Piece extends Entity {
                 rangedCombat: unit.properties.rcm,
                 range: unit.properties.rng,
                 defense: unit.properties.def,
-                maneuverability: unit.properties.mnv,
+                manoeuvrability: unit.properties.mnv,
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",

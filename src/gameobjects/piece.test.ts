@@ -108,7 +108,7 @@ const BASE_PROPERTIES = {
     rangedCombat: 0,
     range: 0,
     defense: 4,
-    maneuverability: 2,
+    manoeuvrability: 2,
     magicResistance: 3,
     attackType: "hit",
     rangedType: "shot",
@@ -1325,12 +1325,12 @@ describe("Piece", () => {
             expect(piece.canEngagePiece(enemy)).toBe(false);
         });
 
-        it("returns false when piece maneuverability is 0", () => {
+        it("returns false when piece manoeuvrability is 0", () => {
             const piece = makePiece({
                 owner: makeMockPlayer("a"),
                 properties: {
                     ...BASE_PROPERTIES,
-                    maneuverability: 0,
+                    manoeuvrability: 0,
                     status: [],
                 },
             });
@@ -1338,13 +1338,13 @@ describe("Piece", () => {
             expect(piece.canEngagePiece(enemy)).toBe(false);
         });
 
-        it("returns false when target maneuverability is 0", () => {
+        it("returns false when target manoeuvrability is 0", () => {
             const piece = makePiece({ owner: makeMockPlayer("a") });
             const enemy = makePiece({
                 owner: makeMockPlayer("b"),
                 properties: {
                     ...BASE_PROPERTIES,
-                    maneuverability: 0,
+                    manoeuvrability: 0,
                     status: [],
                 },
             });

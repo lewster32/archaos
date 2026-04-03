@@ -105,10 +105,10 @@ class GettingStarted15 extends TutorialStep {
         this.playerPiece =
             board.pieces?.find((p) => p.name === RANDOM_PLAYER_SPELL) ?? null;
         if (this.playerPiece) {
-            this.playerPiece.properties.maneuverability = -1;
+            this.playerPiece.properties.manoeuvrability = -1;
         } else {
             console.warn(
-                `Couldn't find ${RANDOM_PLAYER_SPELL} piece to nerf maneuverability. This may cause the tutorial to not work as intended.`,
+                `Couldn't find ${RANDOM_PLAYER_SPELL} piece to nerf manoeuvrability. This may cause the tutorial to not work as intended.`,
                 board,
             );
         }
@@ -117,10 +117,10 @@ class GettingStarted15 extends TutorialStep {
         this.enemyPiece =
             board.pieces?.find((p) => p.name === RANDOM_OPPONENT_SPELL) ?? null;
         if (this.enemyPiece) {
-            this.enemyPiece.properties.maneuverability = Infinity;
+            this.enemyPiece.properties.manoeuvrability = Infinity;
         } else {
             console.warn(
-                `Couldn't find ${RANDOM_OPPONENT_SPELL} piece to buff maneuverability. This may cause the tutorial to not work as intended.`,
+                `Couldn't find ${RANDOM_OPPONENT_SPELL} piece to buff manoeuvrability. This may cause the tutorial to not work as intended.`,
                 board,
             );
         }

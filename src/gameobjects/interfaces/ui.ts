@@ -211,7 +211,7 @@ export interface UnitStats {
     rangedCombat: number;
     range: number;
     defense: number;
-    maneuverability: number;
+    manoeuvrability: number;
     magicResistance: number;
     attackType: string;
     rangedType: string;
