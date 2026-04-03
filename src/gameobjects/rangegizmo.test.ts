@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Geom } from "phaser";
-import { RangeGizmo, Node, Path } from "./rangegizmo";
+import { RangeGizmo } from "./rangegizmo";
+import {
+    Node,
+    Path,
+    diagonalHeuristic,
+    isOpen,
+    isClosed,
+    buildPath,
+} from "@archaos/engine";
 import type { Board } from "./board";
 import type { Piece } from "./piece";
 
@@ -244,61 +252,61 @@ describe("RangeGizmo", () => {
     describe("diagonalHeuristic", () => {
         it("returns 0 for identical nodes", () => {
             const node = makeNode(5, 5);
-            expect(RangeGizmo.diagonalHeuristic(node, node)).toBe(0);
+            expect(diagonalHeuristic(node, node)).toBe(0);
         });
 
         it("returns cost for adjacent cardinal step", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
             // dx=1, dy=0 → diag=0, straight=1 → 1.5*0 + 1*1 = 1
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1);
+            expect(diagonalHeuristic(a, b)).toBe(1);
         });
 
         it("returns diagonalCost for adjacent diagonal step", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             // dx=1, dy=1 → diag=1, straight=2 → 1.5*1 + 1*(2-2) = 1.5
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1.5);
+            expect(diagonalHeuristic(a, b)).toBe(1.5);
         });
 
         it("returns correct cost for multi-step path", () => {
             const a = makeNode(0, 0);
             const b = makeNode(3, 1);
             // dx=3, dy=1 → diag=1, straight=4 → 1.5*1 + 1*(4-2) = 3.5
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(3.5);
+            expect(diagonalHeuristic(a, b)).toBe(3.5);
         });
 
         it("adds terminalCost when node is terminal", () => {
             const a = makeNode(0, 0, { terminal: true });
             const b = makeNode(1, 0);
             // 1 + 100 = 101
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(101);
+            expect(diagonalHeuristic(a, b)).toBe(101);
         });
 
         it("adds terminalCost when node is warning", () => {
             const a = makeNode(0, 0, { warning: true });
             const b = makeNode(1, 0);
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(101);
+            expect(diagonalHeuristic(a, b)).toBe(101);
         });
 
         it("does not add terminalCost for normal nodes", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 0);
-            expect(RangeGizmo.diagonalHeuristic(a, b)).toBe(1);
+            expect(diagonalHeuristic(a, b)).toBe(1);
         });
 
         it("uses custom cost parameters", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
             // diag=1, straight=2 → 2*1 + 3*(2-2) = 2
-            expect(RangeGizmo.diagonalHeuristic(a, b, 3, 2, 50)).toBe(2);
+            expect(diagonalHeuristic(a, b, 3, 2, 50)).toBe(2);
         });
 
         it("uses custom terminalCost for warning nodes", () => {
             const a = makeNode(0, 0, { warning: true });
             const b = makeNode(1, 1);
             // 2*1 + 3*(2-2) + 50 = 52
-            expect(RangeGizmo.diagonalHeuristic(a, b, 3, 2, 50)).toBe(52);
+            expect(diagonalHeuristic(a, b, 3, 2, 50)).toBe(52);
         });
     });
 
@@ -306,34 +314,34 @@ describe("RangeGizmo", () => {
         it("returns true when node is in the open set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
-            expect(RangeGizmo.isOpen(a, [a, b])).toBe(true);
+            expect(isOpen(a, [a, b])).toBe(true);
         });
 
         it("returns false when node is not in the open set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
-            expect(RangeGizmo.isOpen(a, [b])).toBe(false);
+            expect(isOpen(a, [b])).toBe(false);
         });
 
         it("returns false for empty set", () => {
-            expect(RangeGizmo.isOpen(makeNode(0, 0), [])).toBe(false);
+            expect(isOpen(makeNode(0, 0), [])).toBe(false);
         });
     });
 
     describe("isClosed", () => {
         it("returns true when node is in the closed set", () => {
             const a = makeNode(0, 0);
-            expect(RangeGizmo.isClosed(a, [a])).toBe(true);
+            expect(isClosed(a, [a])).toBe(true);
         });
 
         it("returns false when node is not in the closed set", () => {
             const a = makeNode(0, 0);
             const b = makeNode(1, 1);
-            expect(RangeGizmo.isClosed(a, [b])).toBe(false);
+            expect(isClosed(a, [b])).toBe(false);
         });
 
         it("returns false for empty set", () => {
-            expect(RangeGizmo.isClosed(makeNode(0, 0), [])).toBe(false);
+            expect(isClosed(makeNode(0, 0), [])).toBe(false);
         });
     });
 
@@ -343,7 +351,7 @@ describe("RangeGizmo", () => {
             const end = makeNode(1, 0);
             end.parentNode = start;
 
-            const path = RangeGizmo.buildPath(end, start);
+            const path = buildPath(end, start);
             expect(path.nodes).toHaveLength(2);
             expect(path.nodes[0]).toBe(start);
             expect(path.nodes[1]).toBe(end);
@@ -357,7 +365,7 @@ describe("RangeGizmo", () => {
             b.parentNode = a;
             c.parentNode = b;
 
-            const path = RangeGizmo.buildPath(c, a);
+            const path = buildPath(c, a);
             expect(path.nodes).toHaveLength(3);
             expect(path.nodes[0]).toBe(a);
             expect(path.nodes[1]).toBe(b);
@@ -371,7 +379,7 @@ describe("RangeGizmo", () => {
             b.parentNode = a;
             c.parentNode = b;
 
-            RangeGizmo.buildPath(c, a);
+            buildPath(c, a);
             // c should be marked non-traversable because b is terminal
             expect(c.traversable).toBe(false);
             // b itself remains as-is (traversable by default, terminal true)
@@ -385,7 +393,7 @@ describe("RangeGizmo", () => {
             b.parentNode = a;
             c.parentNode = b;
 
-            RangeGizmo.buildPath(c, a);
+            buildPath(c, a);
             expect(c.traversable).toBe(false);
         });
 
@@ -394,7 +402,7 @@ describe("RangeGizmo", () => {
             const b = makeNode(1, 0);
             b.parentNode = a;
 
-            const path = RangeGizmo.buildPath(b, a);
+            const path = buildPath(b, a);
             expect(path.angles).toBeDefined();
             expect(path.angles.length).toBeGreaterThan(0);
         });

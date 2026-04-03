@@ -99,8 +99,21 @@ export {
     type UnitConfig,
 } from "./interfaces/ui";
 
+// Logger
+export {
+    Logger,
+    _resetLoggerForTesting,
+    type Log,
+} from "./logger";
+
+// Player
+export { Player, type PlayerAI } from "./player";
+
 // Piece
 export { Piece, PieceState } from "./piece";
+
+// Wizard
+export { Wizard, type WizCodeMax } from "./wizard";
 
 // Spells
 export { Spell } from "./spells/spell";
@@ -118,3 +131,15 @@ export {
     balanceIndicator,
     friendlyBalance,
 } from "./spells/spellutils";
+
+// Pathfinding
+export {
+    Node,
+    Path,
+    distance,
+    getAngle,
+    diagonalHeuristic,
+    buildPath,
+    isOpen,
+    isClosed,
+} from "./pathfinding";

@@ -3,7 +3,7 @@ import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Colour } from "../enums/colour";
 import { Spell } from "./spell";
 import type { Piece } from "../../../../src/gameobjects/piece";
-import type { Player } from "../../../../src/gameobjects/player";
+import type { Player } from "../player";
 import { Point } from "../point";
 
 /**

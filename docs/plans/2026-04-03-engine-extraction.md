@@ -981,18 +981,17 @@ The client's `WizardView` extends `PieceView` and adds:
 - Shadow form animations
 - Stun/headstrike animations
 
-- [ ] **Step 1: Create engine Wizard class**
+- [x] **Step 1: Create engine Wizard class**
 
-Create `packages/engine/src/wizard.ts` extending engine `Piece`. Move WizCode parsing, properties, and game logic. Remove all Phaser imports.
+Created `packages/engine/src/wizard.ts` extending engine `Piece`. Contains WizCode parsing, randomWizCode, createAll placement, MAGIC_WEAPONS, addStatus/removeStatus mutual exclusion logic, DEFAULT_WIZARD_CONFIG. No Phaser imports. Exported from engine barrel with `WizCodeMax` interface.
 
-- [ ] **Step 2: Create WizardView in client**
+- [x] **Step 2: Refactor client Wizard**
 
-Create `src/gameobjects/wizardview.ts` extending `PieceView`, holding rendering code.
+Client Wizard (`src/gameobjects/wizard.ts`) extends client Piece (not engine Wizard) to preserve `instanceof` compatibility with board's `Map<number, Piece>`. Delegates statics (parseWizCode, randomWizCode, createAll, DEFAULT_WIZARD_CONFIG, MAGIC_WEAPONS) to engine Wizard. Keeps all Phaser rendering code. Note: plan's `wizardview.ts` naming deferred — client Wizard stays at same path to avoid import churn across the codebase.
 
-- [ ] **Step 3: Move tests and verify**
+- [x] **Step 3: Tests verified**
 
-Run: `npm run test:engine -- --run src/wizard.test.ts`
-Expected: WizCode and property tests pass.
+All 61 wizard tests pass. All 312 related tests (piece, player, computerwizard) pass. Added `getPiecesByOwner` mock to test board fixture for kill() tests.
 
 - [ ] **Step 4: Commit**
 
@@ -1010,44 +1009,21 @@ git commit -m "refactor: extract Wizard logic to engine, create WizardView in cl
 - Move: `src/gameobjects/services/logger.ts` → `packages/engine/src/logger.ts`
 - Move: corresponding test files
 
-- [ ] **Step 1: Move Player**
+- [x] **Step 1: Move Player**
 
-Player has zero Phaser imports. Move as-is. Update import paths for Wizard, Spell, RemotePlayer to engine-internal paths.
+Created engine Player (`packages/engine/src/player.ts`) extending Model with pure state logic. Client Player extends engine Player and overrides `defeat()`/`destroyCreations()` for rendering. Added `PlayerAI` interface so engine spells can access AI difficulty without importing ComputerWizard. Updated all 12 engine files that imported Player from client path to use `./player`. Constructor accepts optional `remote` parameter; client Player creates ComputerWizard after `super()`.
 
-```bash
-git mv src/gameobjects/player.ts packages/engine/src/player.ts
-git mv src/gameobjects/player.test.ts packages/engine/src/player.test.ts
-```
+- [x] **Step 2: Move and modify Logger**
 
-The `defeat()` method currently calls `board.sound.play()` and `board.playEffect()` — these are rendering orchestration calls. In the engine, `defeat()` should perform the game state change (mark defeated, destroy creations) and emit a `playerDefeated` event. The sound/effect playback moves to the client's board view.
+Created engine Logger (`packages/engine/src/logger.ts`) using engine `EventEmitter` instead of Phaser's. Removed HMR block (client concern). Client `services/logger.ts` is now a re-export shim. Engine logger test passes standalone (10/10).
 
-- [ ] **Step 2: Move and modify Logger**
+- [x] **Step 3: Run tests**
 
-```bash
-git mv src/gameobjects/services/logger.ts packages/engine/src/logger.ts
-git mv src/gameobjects/services/logger.test.ts packages/engine/src/logger.test.ts
-```
+All 383 client tests pass (player 35, wizard 61, piece 103, computerwizard 174, logger 10). Engine: 162 tests pass, 9 pre-existing Phaser-dependency failures (spells importing Board from client).
 
-Edit `packages/engine/src/logger.ts` — replace `Phaser.Events.EventEmitter` with the engine's `EventEmitter`:
+Also: Added engine project to root `vitest.config.ts` and removed standalone `packages/engine/vitest.config.ts` to fix workspace test discovery.
 
-```typescript
-// BEFORE
-import { Events } from "phaser";
-const _emitter: Events.EventEmitter = ...
-
-// AFTER
-import { EventEmitter } from "./events";
-const _emitter: EventEmitter = ...
-```
-
-Remove the HMR disposal block (`import.meta.hot`) — that's a Vite/client concern. The client can re-add HMR handling in its own wrapper if needed.
-
-- [ ] **Step 3: Run tests**
-
-Run: `npm run test:engine -- --run src/player.test.ts src/logger.test.ts`
-Expected: PASS.
-
-- [ ] **Step 4: Update barrel export and commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -1065,7 +1041,7 @@ git commit -m "refactor: move Player and Logger to engine package"
 
 The current `RangeGizmo` contains both A* pathfinding (pure logic) and Phaser visualisation (layers, tweens). Extract the logic.
 
-- [ ] **Step 1: Identify pathfinding code in RangeGizmo**
+- [x] **Step 1: Identify pathfinding code in RangeGizmo**
 
 Read `src/gameobjects/rangegizmo.ts`. The pure logic includes:
 - `Node` class (position, cost, parent, status)
@@ -1074,20 +1050,17 @@ Read `src/gameobjects/rangegizmo.ts`. The pure logic includes:
 - `checkNodeTraversal()` — movement validation against board state
 - Movement range generation
 
-- [ ] **Step 2: Create engine pathfinding module**
+- [x] **Step 2: Create engine pathfinding module**
 
-Create `packages/engine/src/pathfinding.ts` with the extracted `Node`, `Path`, and pathfinding algorithm. Replace `Geom.Point` with engine `Point`.
+Created `packages/engine/src/pathfinding.ts` with Node, Path, distance, getAngle, diagonalHeuristic, buildPath, isOpen, isClosed. Replaced `Geom.Point` with engine `Point`. Also extracted `Board.distance()` as standalone `distance()` function.
 
-- [ ] **Step 3: Move pathfinding tests**
+- [x] **Step 3: Move pathfinding tests**
 
-Move the Node/Path/A* tests from `rangegizmo.test.ts` to `packages/engine/src/pathfinding.test.ts`.
+Created `packages/engine/src/pathfinding.test.ts` with 43 tests (Node, Path, distance, getAngle, diagonalHeuristic, isOpen/isClosed, buildPath). All pass.
 
-Run: `npm run test:engine -- --run src/pathfinding.test.ts`
-Expected: PASS.
+- [x] **Step 4: Update RangeGizmo to import from engine**
 
-- [ ] **Step 4: Update RangeGizmo to import from engine**
-
-Modify `src/gameobjects/rangegizmo.ts` to import `Node`, `Path`, and pathfinding functions from `@archaos/engine` instead of defining them inline. The visual-only code (layers, tweens, gizmo rendering) stays.
+Updated `rangegizmo.ts`, `rangegizmo.test.ts`, `board.ts`, and `computerwizard.ts` to import Node/Path/helpers from `@archaos/engine`. Removed local class definitions and static methods from RangeGizmo. All 61 rangegizmo tests still pass.
 
 - [ ] **Step 5: Commit**
 

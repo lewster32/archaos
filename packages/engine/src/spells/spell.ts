@@ -14,7 +14,7 @@ import { Board } from "../../../../src/gameobjects/board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Piece } from "../../../../src/gameobjects/piece";
 
-import type { Player } from "../../../../src/gameobjects/player";
+import type { Player } from "../player";
 import {
     SpellCastTarget,
 } from "../../../../src/gameobjects/services/rules";

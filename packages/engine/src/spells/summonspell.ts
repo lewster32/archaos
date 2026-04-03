@@ -12,7 +12,7 @@ import { Point } from "../point";
 import { Board } from "../../../../src/gameobjects/board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Piece } from "../../../../src/gameobjects/piece";
-import { Player } from "../../../../src/gameobjects/player";
+import { Player } from "../player";
 import { Spell } from "./spell";
 /**
  * A spell that summons a unit onto the board.

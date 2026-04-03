@@ -1,6 +1,6 @@
 import { Board } from "../../../../src/gameobjects/board";
 import { Piece } from "../piece";
-import { Player } from "../../../../src/gameobjects/player";
+import { Player } from "../player";
 import { RemotePlayer } from "./remoteplayer";
 
 export class RemoteWizard implements RemotePlayer {

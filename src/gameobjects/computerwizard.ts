@@ -9,7 +9,7 @@ import {
     RemotePlayer,
 } from "@archaos/engine";
 import { Piece } from "./piece";
-import { Path } from "./rangegizmo";
+import { Path } from "@archaos/engine";
 import { AttackSpell, Spell } from "@archaos/engine";
 import type { SummonSpell } from "@archaos/engine";
 import { Board } from "./board";

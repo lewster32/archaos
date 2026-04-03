@@ -9,7 +9,7 @@ import type {
     IUnitStats,
 } from "./interfaces/unitproperties";
 import type { UnitConfig, UnitStats } from "./interfaces/ui";
-import type { Player } from "../../../src/gameobjects/player";
+import type { Player } from "./player";
 
 // Board is imported only as a type to avoid a circular
 // dependency at runtime (Board → client Piece → engine

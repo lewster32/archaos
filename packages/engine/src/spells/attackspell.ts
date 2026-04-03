@@ -10,7 +10,7 @@ import { Board } from "../../../../src/gameobjects/board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Spell } from "./spell";
 import type { Piece } from "../../../../src/gameobjects/piece";
-import type { Player } from "../../../../src/gameobjects/player";
+import type { Player } from "../player";
 /**
  * A spell that attacks one or more target pieces.
  */
