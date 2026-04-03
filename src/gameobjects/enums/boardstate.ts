@@ -1,5 +1,4 @@
 export enum BoardState {
-    Busy = "busy",
     Idle = "idle",
     View = "view",
     SelectSpell = "select-spell",

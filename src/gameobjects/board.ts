@@ -29,7 +29,25 @@ import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
 import { Spell } from "./spells/spell";
 import { createSpell } from "./spells/spellfactory";
-import { Events, StateManager, States } from "./statemanager";
+import {
+    PhaseMachine,
+    StartGame,
+    SpellbookReady,
+    SkipSpellbook,
+    SpellsDone,
+    NoSpellsCast,
+    CastingReady,
+    CastingDone,
+    SpreadingDone,
+    MovingReady,
+    MovingDone,
+    GameEnd,
+    SelectPiece,
+    PieceDeselected,
+    RequestDismount,
+    CompleteDismount,
+    SpellTargeting,
+} from "./statemanager";
 import { Wizard } from "./wizard";
 import { IRNG, GameRNG } from "./rng";
 import type { Tutorial } from "./tutorials/tutorial";
@@ -174,10 +192,22 @@ export class Board extends Model implements Box {
     ];
 
     /**
-     * The current phase of the board. The phase is the broader stage of
-     * the game, such as spell selection or movement.
+     * Tracks the last emitted phase to avoid duplicate BoardEvent.PhaseChange
+     * emissions. Not the source of truth — use the computed `phase` getter.
      */
-    private _phase: BoardPhase;
+    private _lastPhase: BoardPhase;
+
+    /**
+     * Tracks the last emitted state to avoid duplicate BoardEvent.StateChange
+     * emissions during the movement phase (piece interaction states).
+     */
+    private _lastState: BoardState;
+
+    /**
+     * Whether the board is busy (e.g. during attack animations).
+     * When true, cursor input is blocked.
+     */
+    private _busy = false;
 
     /**
      * The current state of the board. The state is the specific mode the
@@ -249,7 +279,7 @@ export class Board extends Model implements Box {
      * The state manager for this board. The state manager handles the finite
      * state machine for the game's phases and states.
      */
-    private readonly _stateManager: StateManager;
+    private readonly _stateManager: PhaseMachine;
 
     /**
      * The logger for this board. The logger handles logging alerts to the
@@ -363,7 +393,8 @@ export class Board extends Model implements Box {
         this._pieces = new Map<number, Piece>();
         this._players = new Map<number, Player>();
         this._state = BoardState.Idle;
-        this._phase = BoardPhase.Idle;
+        this._lastPhase = BoardPhase.Idle;
+        this._lastState = BoardState.Idle;
         this._balance = 0;
         this._balanceShift = 0;
 
@@ -374,10 +405,127 @@ export class Board extends Model implements Box {
         this._currentPlayer = null;
 
         this._rules = Rules.getInstance();
-        this._stateManager = new StateManager(this, (newState: States) => {
-            console.log(`Board: State changed to: ${States[newState]}`);
-        });
         this._logger = Logger.getInstance();
+        this._stateManager = new PhaseMachine((activeState: string) => {
+            // --- Phase change side effects ---
+            let newPhase: BoardPhase | null = null;
+            switch (activeState) {
+                case "spellbookSetup":
+                case "spellbookPlayer":
+                    newPhase = BoardPhase.Spellbook;
+                    break;
+                case "castingSetup":
+                case "castingPlayer":
+                    newPhase = BoardPhase.Casting;
+                    break;
+                case "spreading":
+                    newPhase = BoardPhase.Spreading;
+                    break;
+                case "movingSetup":
+                case "movingPlayer":
+                case "pieceIdle":
+                case "pieceMoving":
+                case "pieceAttacking":
+                case "pieceRangedAttacking":
+                case "pieceDismounting":
+                    newPhase = BoardPhase.Moving;
+                    break;
+            }
+            if (newPhase !== null && newPhase !== this._lastPhase) {
+                this._lastPhase = newPhase;
+                switch (newPhase) {
+                    case BoardPhase.Spellbook:
+                        this._logger.log(
+                            `Spell selection phase`,
+                            Colour.Green,
+                        );
+                        break;
+                    case BoardPhase.Casting:
+                        this._logger.log(
+                            `Spell casting phase`,
+                            Colour.Green,
+                        );
+                        break;
+                    case BoardPhase.Moving:
+                        this._logger.log(`Movement phase`, Colour.Green);
+                        break;
+                }
+                this._boardEvents.emit(BoardEvent.PhaseChange, newPhase);
+            }
+
+            // --- Piece state change side effects (movement phase) ---
+            let newState: BoardState | null = null;
+            switch (activeState) {
+                case "pieceIdle":
+                case "pieceMoving":
+                    newState = BoardState.Move;
+                    break;
+                case "pieceAttacking":
+                    newState = BoardState.Attack;
+                    break;
+                case "pieceRangedAttacking":
+                    newState = BoardState.RangedAttack;
+                    break;
+                case "pieceDismounting":
+                    newState = BoardState.Dismount;
+                    break;
+                case "castIdle":
+                case "castTargeting":
+                    newState = BoardState.CastSpell;
+                    break;
+                case "spellbookPlayer":
+                    newState = BoardState.SelectSpell;
+                    break;
+                case "spreading":
+                    newState = BoardState.Idle;
+                    break;
+            }
+            if (newState !== null && newState !== this._lastState) {
+                this._lastState = newState;
+                this._boardEvents.emit(BoardEvent.StateChange, newState);
+                if (
+                    newState === BoardState.Move ||
+                    newState === BoardState.SelectSpell
+                ) {
+                    setTimeout(() => {
+                        if (
+                            this.currentPlayer &&
+                            !this.currentPlayer.remote &&
+                            !this.tutorial?.config.disableEndTurn
+                        ) {
+                            this.emitUIEvent(
+                                EventType.EndTurnAvailable,
+                                true,
+                            );
+                        } else {
+                            this.emitUIEvent(
+                                EventType.EndTurnAvailable,
+                                false,
+                            );
+                        }
+                    });
+                } else {
+                    setTimeout(() => {
+                        if (
+                            this.currentPlayer &&
+                            !this.currentPlayer.remote &&
+                            !this.tutorial?.config.disableCancelSpell
+                        ) {
+                            this.emitUIEvent(
+                                EventType.CancelAvailable,
+                                true,
+                            );
+                        } else {
+                            this.emitUIEvent(
+                                EventType.CancelAvailable,
+                                false,
+                            );
+                        }
+                        this.emitUIEvent(EventType.EndTurnAvailable, false);
+                    });
+                }
+            }
+        });
 
         this.scene.game.events.on(EventType.EndTurn, async () => {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {
@@ -404,7 +552,7 @@ export class Board extends Model implements Box {
                     Colour.Yellow,
                 );
                 this.selectPiece(this.selected.currentRider.id);
-                this.state = BoardState.Dismount;
+                this.stateManager.evaluate(new RequestDismount());
                 await this.rangeGizmo.generate(this.selected);
             }
         });
@@ -433,18 +581,35 @@ export class Board extends Model implements Box {
      * Get the state manager for this board. The state manager handles the
      * finite state machine for the game's phases and states.
      */
-    get stateManager(): StateManager {
+    get stateManager(): PhaseMachine {
         return this._stateManager;
     }
 
     /**
-     * Get the current state of the board. The state is the specific mode the
-     * board is in within a phase, such as moving or casting a spell. It mostly
-     * affects what user inputs are valid.
-     *
-     * @deprecated Use `stateManager` instead.
+     * Get the current state of the board, computed from FSM during the
+     * movement phase. Outside movement, reads from the stored `_state`.
      */
     get state(): BoardState {
+        if (this._state === BoardState.GameOver) return BoardState.GameOver;
+        const pm = this._stateManager;
+        // Movement phase
+        if (pm.isActive(pm.states.movingPlayer)) {
+            if (pm.isActive(pm.states.pieceAttacking))
+                return BoardState.Attack;
+            if (pm.isActive(pm.states.pieceRangedAttacking))
+                return BoardState.RangedAttack;
+            if (pm.isActive(pm.states.pieceDismounting))
+                return BoardState.Dismount;
+            return BoardState.Move;
+        }
+        // Casting phase
+        if (pm.isActive(pm.states.castingPlayer))
+            return BoardState.CastSpell;
+        // Spellbook phase
+        if (pm.isActive(pm.states.spellbookPlayer))
+            return BoardState.SelectSpell;
+        // Spreading phase
+        if (pm.isActive(pm.states.spreading)) return BoardState.Idle;
         return this._state;
     }
 
@@ -498,34 +663,22 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Get the current phase of the board. The phase is the broader stage of
-     * the game, such as spell selection or movement.
-     *
-     * @deprecated Use `stateManager` instead.
+     * Get the current phase of the board, computed from the FSM state.
      */
     get phase(): BoardPhase {
-        return this._phase;
+        const pm = this._stateManager;
+        if (pm.isActive(pm.states.spellbook)) return BoardPhase.Spellbook;
+        if (pm.isActive(pm.states.casting)) return BoardPhase.Casting;
+        if (pm.isActive(pm.states.spreading)) return BoardPhase.Spreading;
+        if (pm.isActive(pm.states.moving)) return BoardPhase.Moving;
+        return BoardPhase.Idle;
     }
 
     /**
-     * Set the current phase of the board.
-     *
-     * @deprecated Use `stateManager` instead.
+     * Whether the board is currently busy (e.g. during attack animations).
      */
-    set phase(phase: BoardPhase) {
-        this._phase = phase;
-        switch (this._phase) {
-            case BoardPhase.Spellbook:
-                this._logger.log(`Spell selection phase`, Colour.Green);
-                break;
-            case BoardPhase.Casting:
-                this._logger.log(`Spell casting phase`, Colour.Green);
-                break;
-            case BoardPhase.Moving:
-                this._logger.log(`Movement phase`, Colour.Green);
-                break;
-        }
-        this._boardEvents.emit(BoardEvent.PhaseChange, phase);
+    get busy(): boolean {
+        return this._busy;
     }
 
     /**
@@ -600,10 +753,17 @@ export class Board extends Model implements Box {
             return;
         }
 
-        if (
-            this.phase === BoardPhase.Idle ||
-            this.phase === BoardPhase.Moving
-        ) {
+        const pm = this._stateManager;
+
+        if (pm.isActive(pm.states.idle) || pm.isActive(pm.states.moving)) {
+            // First call: transition FSM from idle into playing
+            if (pm.isActive(pm.states.idle)) {
+                pm.evaluate(new StartGame());
+            } else {
+                // End of moving phase → new turn cycle
+                pm.evaluate(new MovingDone());
+            }
+
             this.pieces.forEach((piece) => {
                 piece.reset();
             });
@@ -634,15 +794,14 @@ export class Board extends Model implements Box {
                     `No spells to cast, skipping to movement`,
                     Colour.Green,
                 );
-                this.phase = BoardPhase.Moving;
-                this.state = BoardState.Move;
+                pm.evaluate(new SkipSpellbook());
+                pm.evaluate(new MovingReady());
                 await this.idleDelay(Board.END_TURN_DELAY);
             } else {
-                this.phase = BoardPhase.Spellbook;
-                this.state = BoardState.SelectSpell;
+                pm.evaluate(new SpellbookReady());
                 await this.idleDelay(Board.END_TURN_DELAY);
             }
-        } else if (this.phase === BoardPhase.Spellbook) {
+        } else if (pm.isActive(pm.states.spellbook)) {
             // Skip casting phase if no player has a spell to cast
             const anySpellSelected = this.players.some(
                 (p) => !p.defeated && p.selectedSpell,
@@ -652,8 +811,7 @@ export class Board extends Model implements Box {
                     `No spells to cast, skipping to movement`,
                     Colour.Green,
                 );
-                this.phase = BoardPhase.Spreading;
-                this.state = BoardState.Idle;
+                pm.evaluate(new NoSpellsCast());
 
                 const previousPlayer: Player = this.currentPlayer;
                 this.currentPlayer = null;
@@ -665,13 +823,12 @@ export class Board extends Model implements Box {
                 this.currentPlayer = previousPlayer;
                 this.emitBoardUpdateEvent();
             } else {
-                this.phase = BoardPhase.Casting;
-                this.state = BoardState.CastSpell;
+                pm.evaluate(new SpellsDone());
+                pm.evaluate(new CastingReady());
                 await this.idleDelay(Board.END_TURN_DELAY);
             }
-        } else if (this.phase === BoardPhase.Casting) {
-            this.phase = BoardPhase.Spreading;
-            this.state = BoardState.Idle;
+        } else if (pm.isActive(pm.states.casting)) {
+            pm.evaluate(new CastingDone());
 
             const previousPlayer: Player = this.currentPlayer;
             this.currentPlayer = null;
@@ -682,9 +839,9 @@ export class Board extends Model implements Box {
 
             this.currentPlayer = previousPlayer;
             this.emitBoardUpdateEvent();
-        } else if (this.phase === BoardPhase.Spreading) {
-            this.phase = BoardPhase.Moving;
-            this.state = BoardState.Move;
+        } else if (pm.isActive(pm.states.spreading)) {
+            pm.evaluate(new SpreadingDone());
+            pm.evaluate(new MovingReady());
             await this.idleDelay(Board.END_TURN_DELAY);
         }
         this.emitBoardUpdateEvent();
@@ -900,6 +1057,12 @@ export class Board extends Model implements Box {
             } else if (!this._selected.moved) {
                 await this.rangeGizmo.generate(this._selected);
             }
+
+            const pm = this._stateManager;
+            if (pm.isActive(pm.states.pieceDismounting)) {
+                pm.evaluate(new CompleteDismount());
+            }
+            pm.evaluate(new SelectPiece());
         }
 
         switch (this.state) {
@@ -941,6 +1104,7 @@ export class Board extends Model implements Box {
                 await this.cursor.action(InputType.None);
                 return;
             }
+            this.stateManager.evaluate(new PieceDeselected());
         }
         this.emitUIEvent(EventType.DismountAvailable, false);
         this.emitUIEvent(EventType.CancelAvailable, false);
@@ -1255,8 +1419,7 @@ export class Board extends Model implements Box {
         if (!defendingPiece) {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
-        const oldState: BoardState = this.state;
-        this.state = BoardState.Busy;
+        this._busy = true;
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean =
                 await attackingPiece.attack(defendingPiece);
@@ -1266,12 +1429,13 @@ export class Board extends Model implements Box {
                 defendingPiece,
                 attackResult,
             );
-            this.state = oldState;
+            this._busy = false;
             if (attackResult) {
                 await this.rangeGizmo.reset();
             }
             return attackingPiece;
         }
+        this._busy = false;
         return null;
     }
 
@@ -1294,8 +1458,7 @@ export class Board extends Model implements Box {
         if (!defendingPiece) {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
-        const oldState: BoardState = this.state;
-        this.state = BoardState.Busy;
+        this._busy = true;
         if (attackingPiece && defendingPiece) {
             const attackResult: boolean =
                 await attackingPiece.rangedAttack(defendingPiece);
@@ -1305,12 +1468,13 @@ export class Board extends Model implements Box {
                 defendingPiece,
                 attackResult,
             );
-            this.state = oldState;
+            this._busy = false;
             if (attackResult) {
                 await this.rangeGizmo.reset();
             }
             return attackingPiece;
         }
+        this._busy = false;
         return null;
     }
 
@@ -1802,9 +1966,8 @@ export class Board extends Model implements Box {
         this._currentPlayerIndex = -1;
         this.currentPlayer = null;
         this.state = BoardState.Idle;
-        this.phase = BoardPhase.Idle;
+        this.stateManager.reset();
 
-        this.stateManager.sendEvent(Events.StartGame);
         await this.nextPlayer();
     }
 
@@ -1818,9 +1981,17 @@ export class Board extends Model implements Box {
         this._currentPlayerIndex = playerIndex - 1;
         this.currentPlayer = null;
         this.state = BoardState.Idle;
-        this.phase = phase || BoardPhase.Idle;
+        this.stateManager.reset();
 
-        // this.stateManager.sendEvent(Events.StartGame);
+        // Fast-forward FSM to the requested phase
+        if (phase === BoardPhase.Spreading) {
+            this.stateManager.evaluate(new StartGame());
+            this.stateManager.evaluate(new SpellbookReady());
+            this.stateManager.evaluate(new SpellsDone());
+            this.stateManager.evaluate(new CastingReady());
+            this.stateManager.evaluate(new CastingDone());
+        }
+
         console.log(
             `Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`,
         );
@@ -1843,6 +2014,7 @@ export class Board extends Model implements Box {
         // If less than 2 players remain undefeated, the game is over
         if (undefeated?.length < 2) {
             this.state = BoardState.GameOver;
+            this.stateManager.evaluate(new GameEnd());
             if (undefeated.length === 1) {
                 this.logger.log(
                     `Game over! ${undefeated[0].name} wins!`,
@@ -1875,6 +2047,7 @@ export class Board extends Model implements Box {
             return;
         }
         this.state = BoardState.GameOver;
+        this.stateManager.evaluate(new GameEnd());
         if (message) {
             this.logger.log(message, Colour.Yellow);
         }
@@ -1903,14 +2076,14 @@ export class Board extends Model implements Box {
                 await this.newTurn();
             }
 
-            await this.selectPlayer(
-                Array.from(this._players.keys())[this._currentPlayerIndex],
-            );
-
-            // Skip defeated players
-            if (this.currentPlayer?.defeated) {
+            // Skip defeated players before selecting them
+            const playerId =
+                Array.from(this._players.keys())[this._currentPlayerIndex];
+            if (this.getPlayer(playerId)?.defeated) {
                 continue;
             }
+
+            await this.selectPlayer(playerId);
 
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
@@ -1967,23 +2140,25 @@ export class Board extends Model implements Box {
             }
 
             // Skip if no spells available in spellbook phase
-            if (this._phase === BoardPhase.Spellbook) {
+            if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.spells.length === 0) {
                     continue;
                 }
             }
 
             // Handle casting phase
-            if (this._phase === BoardPhase.Casting) {
+            if (this.phase === BoardPhase.Casting) {
                 await this.selectWizard(this.currentPlayer);
 
                 if (this.selected) {
                     const spell: Spell = this.currentPlayer?.selectedSpell;
                     if (spell?.properties?.autoPlace) {
+                        this.stateManager.evaluate(new SpellTargeting());
                         await this.rules.doAutoCastSpell(this);
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range === 0) {
+                        this.stateManager.evaluate(new SpellTargeting());
                         await this.rules.doCastSpell(
                             this,
                             this.currentPlayer.castingPiece,
@@ -1991,6 +2166,7 @@ export class Board extends Model implements Box {
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
+                        this.stateManager.evaluate(new SpellTargeting());
                         await this.rangeGizmo.showSimpleRange(
                             this.selected.position,
                             spell.range,
@@ -2361,18 +2537,6 @@ export class Board extends Model implements Box {
     async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Idle;
-        await Board.delay(time);
-        this.state = oldState;
-    }
-
-    /**
-     * Delay the board state to Busy for a given time.
-     *
-     * @param time The delay time in milliseconds.
-     */
-    async busyDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
-        const oldState: BoardState = this.state;
-        this.state = BoardState.Busy;
         await Board.delay(time);
         this.state = oldState;
     }

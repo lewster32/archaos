@@ -87,6 +87,8 @@ function makeMockBoard(overrides: Record<string, unknown> = {}): Board {
         needsPanning: false,
         getLayer: vi.fn().mockReturnValue(layer),
         state: BoardState.Idle,
+        busy: false,
+        stateManager: { evaluate: vi.fn() },
         width: 16,
         height: 16,
         selected: null,
@@ -532,8 +534,8 @@ describe("Cursor.update()", () => {
         expect(await cursor.update()).toBe(ActionType.None);
     });
 
-    it("returns ActionType.None immediately when board state is Busy", async () => {
-        const board = makeMockBoard({ state: BoardState.Busy });
+    it("returns ActionType.None immediately when board is busy", async () => {
+        const board = makeMockBoard({ busy: true });
         const cursor = new Cursor(board);
         expect(await cursor.update()).toBe(ActionType.None);
     });
@@ -545,8 +547,8 @@ describe("Cursor.update()", () => {
         expect(board.rules.processIntent).not.toHaveBeenCalled();
     });
 
-    it("does not call processIntent when board is Busy", async () => {
-        const board = makeMockBoard({ state: BoardState.Busy });
+    it("does not call processIntent when board is busy", async () => {
+        const board = makeMockBoard({ busy: true });
         const cursor = new Cursor(board);
         await cursor.update();
         expect(board.rules.processIntent).not.toHaveBeenCalled();
@@ -999,8 +1001,8 @@ describe("Cursor.action()", () => {
         expect(board.rules.processAction).not.toHaveBeenCalled();
     });
 
-    it("returns without calling processAction when board state is Busy", async () => {
-        const board = makeMockBoard({ state: BoardState.Busy });
+    it("returns without calling processAction when board is busy", async () => {
+        const board = makeMockBoard({ busy: true });
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
         expect(board.rules.processAction).not.toHaveBeenCalled();

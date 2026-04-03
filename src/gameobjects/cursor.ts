@@ -8,6 +8,7 @@ import { EventType } from "./enums/eventtype";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
+import { AdvanceToAttack, AdvanceToRangedAttack } from "./statemanager";
 import { Geom, GameObjects, Input, Math as PMath } from "phaser";
 
 export class Cursor {
@@ -202,7 +203,7 @@ export class Cursor {
      * @returns A promise that resolves to the type of action allowed at the new cursor position
      */
     async update(force?: boolean): Promise<ActionType> {
-        if (!this._enabled || this._board.state === BoardState.Busy) {
+        if (!this._enabled || this._board.busy) {
             return ActionType.None;
         }
 
@@ -331,7 +332,7 @@ export class Cursor {
      * @returns A promise that resolves when the action is complete
      */
     async action(input: InputType): Promise<void> {
-        if (!this._enabled || this._board.state === BoardState.Busy) {
+        if (!this._enabled || this._board.busy) {
             return;
         }
 
@@ -375,6 +376,9 @@ export class Cursor {
         if (selected?.moved) {
             if (!selected.currentRider || selected.currentRider.moved) {
                 if (selected.canAttack) {
+                    this._board.stateManager.evaluate(
+                        new AdvanceToAttack(),
+                    );
                     return;
                 }
                 // TODO: This is problematic - if the unit successfully attacks
@@ -382,6 +386,9 @@ export class Cursor {
                 // can check for ranged attack. This logic doesn't belong in
                 // the cursor class.
                 if (selected.canRangedAttack) {
+                    this._board.stateManager.evaluate(
+                        new AdvanceToRangedAttack(),
+                    );
                     this._board.sound.play("bowselecta");
                     this._board.logger.log(
                         `${selected.name}'s turn to ranged attack`,

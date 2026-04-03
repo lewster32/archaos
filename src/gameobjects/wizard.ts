@@ -258,16 +258,19 @@ export class Wizard extends Piece {
             this._currentMount.currentRider = null;
             this._currentMount = null;
         }
+        const ownedPieceCount: number = this.board.getPiecesByOwner(this.owner).length;
         await this.destroy();
         await this.owner?.defeat();
-        // PCHOWWW
-        this.board.sound.play("disbelieve");
-        return new Promise<void>((resolve) => {
-            setTimeout(async () => {
-                await this.board.checkWinCondition();
-                resolve();
-            }, Board.END_TURN_DELAY / 2);
-        });
+        if (ownedPieceCount > 1) {
+            await Board.delay(Board.END_TURN_DELAY);
+        }
+        else {
+            // PCHOWWW if the wizard didn't own any PCHOWWWable pieces,
+            // otherwise the effect is a bit flat
+            this.board.sound.play("disbelieve");
+            await Board.delay(Board.DEFAULT_DELAY);
+        }
+        await this.board.checkWinCondition();
     }
 
     /**

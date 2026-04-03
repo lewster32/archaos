@@ -41,9 +41,9 @@
         "vue-tsc": "^3.2.5"
     },
     "dependencies": {
+        "@steelbreeze/state": "^8.3.1",
         "@tauri-apps/api": "^2.10.1",
         "phaser": "^3.90.0",
-        "typescript-fsm": "^1.6.0",
         "vue": "^3.5.30"
     }
 }

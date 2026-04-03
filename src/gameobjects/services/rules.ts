@@ -13,6 +13,11 @@ import type { Player } from "../player";
 import { Spell } from "../spells/spell";
 import { EffectType } from "../effectemitter";
 import type { IRNG } from "../rng";
+import {
+    CancelDismount,
+    RequestDismount,
+    SpellCastComplete,
+} from "../statemanager";
 
 import { Geom } from "phaser";
 
@@ -106,7 +111,9 @@ export class Rules {
         }
         if (
             board.state === BoardState.Move ||
-            board.state === BoardState.Dismount
+            board.state === BoardState.Dismount ||
+            board.state === BoardState.Attack ||
+            board.state === BoardState.RangedAttack
         ) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
@@ -253,6 +260,7 @@ export class Rules {
         );
         board.state = BoardState.CastSpell;
         if (casted.castTimes <= 0) {
+            board.stateManager.evaluate(new SpellCastComplete());
             await board.currentPlayer.discardSpell();
             if (casted.failed) {
                 board.logger.log(
@@ -534,6 +542,7 @@ export class Rules {
 
             if (board.state === BoardState.CastSpell) {
                 if (board.currentPlayer?.selectedSpell) {
+                    board.stateManager.evaluate(new SpellCastComplete());
                     const wasted: Spell | null =
                         await board.currentPlayer.discardSpell();
                     if (wasted) {
@@ -577,8 +586,8 @@ export class Rules {
                 }
                 board.logger.log(`Dismount cancelled`, Colour.Magenta);
                 if (selectedPiece.currentMount?.canSelect) {
+                    board.stateManager.evaluate(new CancelDismount());
                     await board.selectPiece(selectedPiece.currentMount.id);
-                    board.state = BoardState.Move;
                     return ActionType.Move;
                 } else {
                     board.emitUIEvent(EventType.DismountAvailable, false);
@@ -590,7 +599,7 @@ export class Rules {
                 selectedPiece.currentRider &&
                 !selectedPiece.currentRider.moved
             ) {
-                board.state = BoardState.Dismount;
+                board.stateManager.evaluate(new RequestDismount());
                 return ActionType.Dismount;
             }
 
@@ -690,6 +699,7 @@ export class Rules {
             );
             board.centreOnPieces(spreadPieces);
             for (const piece of spreadPieces) {
+                if (piece.dead) continue;
                 await piece.spread();
             }
             board.emitBoardUpdateEvent();

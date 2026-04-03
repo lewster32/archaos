@@ -14,7 +14,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - **Vue 3** — reactive UI components overlaid on the canvas
 - **TypeScript 5** — language; strict mode is off but `noImplicitReturns` is on
 - **Vite 8** — build tool; Phaser and Vue are split into separate manual chunks
-- **typescript-fsm** — FSM library used by `StateManager` to drive game phase transitions (not yet implemented in-game)
+- **@steelbreeze/state** — hierarchical FSM library used by `PhaseMachine` to drive game phase transitions
 - **Tauri 2** — standalone desktop packaging (uses system WebView2 on Windows); Steam integration planned
 - **Vitest + @vitest/coverage-v8** — unit testing and coverage reporting
 - **Playwright** — e2e testing (mobile camera panning scenarios)
