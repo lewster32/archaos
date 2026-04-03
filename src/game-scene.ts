@@ -30,7 +30,7 @@ import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
 
 import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
-import { Spell } from "./gameobjects/spells/spell";
+import { Spell } from "@archaos/engine";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { Tutorial } from "./gameobjects/tutorials/tutorial";
