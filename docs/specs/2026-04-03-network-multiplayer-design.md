@@ -299,7 +299,7 @@ The server is the only place that holds full game truth. Clients receive a filte
 |-------------|-----------|----------------|
 | **Illusion flag** | Server only. Not even the caster's client. | Never included in `PieceSnapshot`. Piece looks identical to a real summon. Only revealed via Disbelieve result. |
 | **Disbelieve result memory** | Per-player. Each player (and each AI) tracks independently. | Server maintains per-player `knownIllusions: Set<pieceId>`. Only relevant for AI decisions; Disbelieve outcomes are broadcast to all as they happen. |
-| **Other players' spell lists** | Only the owning player | `PlayerSnapshot` for other clients omits the `spells` array. Only includes `spellCount: number`. |
+| **Other players' spell lists** | Only the owning player | `PlayerSnapshot` for other clients omits the `spells` array entirely. No spell count. |
 | **Selected spell details** | Only the owning player (until cast) | Others receive `spellSelected { playerId }` with no spell ID. Cast result is public. |
 | **AI decision internals** | Server only | Targeting weights, threat scores, spell priorities — never sent to any client. |
 
@@ -337,7 +337,7 @@ function filterForPlayer(
         players: fullState.players.map(p =>
             p.id === playerId
                 ? p
-                : { ...p, spells: undefined, spellCount: p.spells.length }
+                : { ...p, spells: undefined }
         ),
     };
 }
