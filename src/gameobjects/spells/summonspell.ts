@@ -171,7 +171,7 @@ export class SummonSpell extends Spell {
                 combat: unit.properties.com,
                 rangedCombat: unit.properties.rcm,
                 range: unit.properties.rng,
-                defense: unit.properties.def,
+                defence: unit.properties.def,
                 manoeuvrability: unit.properties.mnv,
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",

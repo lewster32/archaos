@@ -615,19 +615,19 @@ export class Rules {
     }
 
     /**
-     * Roll an attack vs defense check. Per-player overrides are checked first,
+     * Roll an attack vs defence check. Per-player overrides are checked first,
      * then the global cheat flag, then normal dice rolls.
      *
      * @param attack the attack value
-     * @param defense the defense value
+     * @param defence the defence value
      * @param rng the PRNG instance to use for the roll
      * @param attackingPlayer optional player whose units are attacking; used
      *        for per-player forceHit overrides (e.g. in tutorials)
-     * @returns true if the attack is greater than the defense, false otherwise
+     * @returns true if the attack is greater than the defence, false otherwise
      */
     roll(
         attack: number,
-        defense: number,
+        defence: number,
         rng: IRNG,
         attackingPlayer?: Player,
     ): boolean {
@@ -638,13 +638,13 @@ export class Rules {
             return Board.CHEAT_FORCE_HIT;
         }
         const attackRoll: number = rng.between(0, 10 + attack);
-        const defenseRoll: number = rng.between(0, 10 + defense);
+        const defenceRoll: number = rng.between(0, 10 + defence);
         console.debug(
-            `Rolled ${attackRoll} vs ${defenseRoll}; attack ${
-                attackRoll > defenseRoll ? "succeeds" : "fails"
+            `Rolled ${attackRoll} vs ${defenceRoll}; attack ${
+                attackRoll > defenceRoll ? "succeeds" : "fails"
             }`,
         );
-        return attackRoll > defenseRoll;
+        return attackRoll > defenceRoll;
     }
 
     /**
@@ -664,7 +664,7 @@ export class Rules {
         if (Board.CHEAT_FORCE_CAST !== null) {
             return Board.CHEAT_FORCE_CAST;
         }
-        const defenseRoll: number = rng.frac();
+        const defenceRoll: number = rng.frac();
         if (attack < 0 || attack > 1) {
             console.warn(
                 `Chance value ${attack} is out of bounds, clamping to 0-1`,
@@ -672,11 +672,11 @@ export class Rules {
             attack = Math.max(0, Math.min(1, attack));
         }
         console.debug(
-            `Rolled ${attack} vs ${defenseRoll}; chance ${
-                attack > defenseRoll ? "succeeds" : "fails"
+            `Rolled ${attack} vs ${defenceRoll}; chance ${
+                attack > defenceRoll ? "succeeds" : "fails"
             }`,
         );
-        return attack > defenseRoll;
+        return attack > defenceRoll;
     }
 
     /**

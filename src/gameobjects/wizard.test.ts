@@ -308,8 +308,8 @@ describe("Wizard instance methods", () => {
             expect(wiz.properties.combat).toBe(
                 Wizard.DEFAULT_WIZARD_CONFIG.properties.combat,
             );
-            expect(wiz.properties.defense).toBe(
-                Wizard.DEFAULT_WIZARD_CONFIG.properties.defense,
+            expect(wiz.properties.defence).toBe(
+                Wizard.DEFAULT_WIZARD_CONFIG.properties.defence,
             );
         });
 

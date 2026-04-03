@@ -36,9 +36,9 @@ export interface IUnitStats {
     range: number;
 
     /**
-     * The defense rating of the unit.
+     * The defence rating of the unit.
      */
-    defense: number;
+    defence: number;
 
     /**
      * How likely a unit is to disengage from an enemy (higher is more likely).

@@ -2225,16 +2225,16 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Roll an attack vs defense check.
+     * Roll an attack vs defence check.
      *
      * @param attack the attack value
-     * @param defense the defense value
+     * @param defence the defence value
      * @param attackingPlayer optional player whose units are attacking; used
      *        for per-player forceHit overrides (e.g. in tutorials)
-     * @returns true if the attack is greater than the defense, false otherwise
+     * @returns true if the attack is greater than the defence, false otherwise
      */
-    roll(attack: number, defense: number, attackingPlayer?: Player): boolean {
-        return this._rules.roll(attack, defense, this._rng, attackingPlayer);
+    roll(attack: number, defence: number, attackingPlayer?: Player): boolean {
+        return this._rules.roll(attack, defence, this._rng, attackingPlayer);
     }
 
     rollChance(attack: number, castingPlayer?: Player): boolean {

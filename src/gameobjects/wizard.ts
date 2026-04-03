@@ -40,7 +40,7 @@ export class Wizard extends Piece {
             combat: wizardUnitData.properties.com,
             rangedCombat: wizardUnitData.properties.rcm,
             range: wizardUnitData.properties.rng,
-            defense: wizardUnitData.properties.def,
+            defence: wizardUnitData.properties.def,
             manoeuvrability: wizardUnitData.properties.mnv,
             magicResistance: wizardUnitData.properties.res,
             attackType: wizardUnitData.attackType,

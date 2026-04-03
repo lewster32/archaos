@@ -107,7 +107,7 @@ const BASE_PROPERTIES = {
     combat: 3,
     rangedCombat: 0,
     range: 0,
-    defense: 4,
+    defence: 4,
     manoeuvrability: 2,
     magicResistance: 3,
     attackType: "hit",
@@ -389,17 +389,17 @@ describe("Piece", () => {
             const stats = makePiece().stats;
             expect(stats.movement).toBe(BASE_PROPERTIES.movement);
             expect(stats.combat).toBe(BASE_PROPERTIES.combat);
-            expect(stats.defense).toBe(BASE_PROPERTIES.defense);
+            expect(stats.defence).toBe(BASE_PROPERTIES.defence);
             expect(stats.rangedCombat).toBe(BASE_PROPERTIES.rangedCombat);
             expect(stats.range).toBe(BASE_PROPERTIES.range);
         });
 
-        it("ShadowForm sets movement to 3 and increases defense", () => {
+        it("ShadowForm sets movement to 3 and increases defence", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.ShadowForm);
             expect(piece.stats.movement).toBe(3);
-            expect(piece.stats.defense).toBe(
-                Math.min(BASE_PROPERTIES.defense + 3, 9),
+            expect(piece.stats.defence).toBe(
+                Math.min(BASE_PROPERTIES.defence + 3, 9),
             );
         });
 
@@ -428,28 +428,28 @@ describe("Piece", () => {
             );
         });
 
-        it("MagicArmour increases defense (capped at 9)", () => {
+        it("MagicArmour increases defence (capped at 9)", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicArmour);
-            expect(piece.stats.defense).toBe(
-                Math.min(BASE_PROPERTIES.defense + 6, 9),
+            expect(piece.stats.defence).toBe(
+                Math.min(BASE_PROPERTIES.defence + 6, 9),
             );
         });
 
-        it("MagicShield increases defense", () => {
+        it("MagicShield increases defence", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicShield);
-            expect(piece.stats.defense).toBe(
-                Math.min(BASE_PROPERTIES.defense + 3, 9),
+            expect(piece.stats.defence).toBe(
+                Math.min(BASE_PROPERTIES.defence + 3, 9),
             );
         });
 
-        it("MagicArmour takes priority over MagicShield for defense boost", () => {
+        it("MagicArmour takes priority over MagicShield for defence boost", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicArmour);
             piece.addStatus(UnitStatus.MagicShield);
-            expect(piece.stats.defense).toBe(
-                Math.min(BASE_PROPERTIES.defense + 6, 9),
+            expect(piece.stats.defence).toBe(
+                Math.min(BASE_PROPERTIES.defence + 6, 9),
             );
         });
 
@@ -470,7 +470,7 @@ describe("Piece", () => {
     describe("strength getter", () => {
         it("returns a positive number based on base stats", () => {
             const piece = makePiece();
-            // combat(3) + movement(2) + defense(4) + magicResistance/2(1.5) = 10.5
+            // combat(3) + movement(2) + defence(4) + magicResistance/2(1.5) = 10.5
             expect(piece.strength).toBe(10.5);
         });
 
@@ -497,7 +497,7 @@ describe("Piece", () => {
 
         it("includes rangedCombat and range in calculation when ranged stats are non-zero", () => {
             const piece = makeRangedPiece();
-            // combat(3) + rangedCombat(4) + range(6) + movement(2) + defense(4) + magicResistance/2(1.5) = 20.5
+            // combat(3) + rangedCombat(4) + range(6) + movement(2) + defence(4) + magicResistance/2(1.5) = 20.5
             expect(piece.strength).toBe(20.5);
         });
     });
@@ -1528,7 +1528,7 @@ describe("Piece", () => {
             const config = piece.unitConfig;
             expect(config.properties.mov).toBe(BASE_PROPERTIES.movement);
             expect(config.properties.com).toBe(BASE_PROPERTIES.combat);
-            expect(config.properties.def).toBe(BASE_PROPERTIES.defense);
+            expect(config.properties.def).toBe(BASE_PROPERTIES.defence);
             expect(config.name).toBe(BASE_PROPERTIES.name);
             expect(config.dead).toBe(false);
             expect(config.wizard).toBe(false);

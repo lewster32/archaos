@@ -43,7 +43,7 @@
             <div
                 class="unit-properties__item unit-properties__item--def"
                 :class="itemNumClass(unit.properties?.def)"
-                :title="'Defense rating: ' + unit.properties?.def"
+                :title="'Defence rating: ' + unit.properties?.def"
             >
                 <span>{{ clampedNum(unit.properties?.def) }}</span>
             </div>
@@ -314,7 +314,7 @@ const clampedNum = (num: number | undefined) => {
             --stat-icon: url("../../assets/images/ui/stat-ranged-combat-range.png");
         }
         &--def {
-            --stat-icon: url("../../assets/images/ui/stat-defense.png");
+            --stat-icon: url("../../assets/images/ui/stat-defence.png");
         }
         &--mnv {
             --stat-icon: url("../../assets/images/ui/stat-manoeuvre.png");

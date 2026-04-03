@@ -127,7 +127,7 @@ export class Piece extends Entity {
                 combat: 3,
                 rangedCombat: 0,
                 range: 0,
-                defense: 3,
+                defence: 3,
                 manoeuvrability: 3,
                 magicResistance: 3,
                 attackType: "hit",
@@ -556,7 +556,7 @@ export class Piece extends Entity {
             combat: this._properties.combat,
             rangedCombat: this._properties.rangedCombat,
             range: this._properties.range,
-            defense: this._properties.defense,
+            defence: this._properties.defence,
             manoeuvrability: this._properties.manoeuvrability,
             magicResistance: this._properties.magicResistance,
         };
@@ -565,7 +565,7 @@ export class Piece extends Entity {
         // layering additional modifiers on top of the base stats.
         if (this.hasStatus(UnitStatus.ShadowForm)) {
             stats.movement = 3;
-            stats.defense = Math.min(stats.defense + 3, 9);
+            stats.defence = Math.min(stats.defence + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicSword)) {
             stats.combat = Math.min(stats.combat + 6, 9);
@@ -573,9 +573,9 @@ export class Piece extends Entity {
             stats.combat = Math.min(stats.combat + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicArmour)) {
-            stats.defense = Math.min(stats.defense + 6, 9);
+            stats.defence = Math.min(stats.defence + 6, 9);
         } else if (this.hasStatus(UnitStatus.MagicShield)) {
-            stats.defense = Math.min(stats.defense + 3, 9);
+            stats.defence = Math.min(stats.defence + 3, 9);
         }
         if (this.hasStatus(UnitStatus.MagicBow)) {
             stats.rangedCombat = 3;
@@ -611,8 +611,8 @@ export class Piece extends Entity {
         // Add movement range
         strength += this.stats.movement;
 
-        // Higher defense increases strength
-        strength += this.stats.defense;
+        // Higher defence increases strength
+        strength += this.stats.defence;
 
         // Magic resistance doesn't have as big an impact as it's mainly only
         // relevant against wizards
@@ -910,7 +910,7 @@ export class Piece extends Entity {
                     combat: unit.properties.com,
                     rangedCombat: unit.properties.rcm,
                     range: unit.properties.rng,
-                    defense: unit.properties.def,
+                    defence: unit.properties.def,
                     manoeuvrability: unit.properties.mnv,
                     magicResistance: unit.properties.res,
                     attackType: unit.attackType || "attacked",
@@ -1479,7 +1479,7 @@ export class Piece extends Entity {
 
             const rollSuccess: boolean = this.board.roll(
                 this.stats.combat,
-                piece.stats.defense,
+                piece.stats.defence,
                 this.owner,
             );
 
@@ -1609,7 +1609,7 @@ export class Piece extends Entity {
 
             const rollSuccess: boolean = this.board.roll(
                 this.stats.rangedCombat,
-                piece.stats.defense,
+                piece.stats.defence,
                 this.owner,
             );
 
@@ -1948,7 +1948,7 @@ export class Piece extends Entity {
                 com: this.stats.combat,
                 rcm: this.stats.rangedCombat,
                 rng: this.stats.range,
-                def: this.stats.defense,
+                def: this.stats.defence,
                 mnv: this.stats.manoeuvrability,
                 res: this.stats.magicResistance,
             },
@@ -1998,7 +1998,7 @@ export class Piece extends Entity {
             combat: unit.properties.com,
             rangedCombat: unit.properties.rcm,
             range: unit.properties.rng,
-            defense: unit.properties.def,
+            defence: unit.properties.def,
             manoeuvrability: unit.properties.mnv,
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
@@ -2040,7 +2040,7 @@ export class Piece extends Entity {
                 combat: unit.properties.com,
                 rangedCombat: unit.properties.rcm,
                 range: unit.properties.rng,
-                defense: unit.properties.def,
+                defence: unit.properties.def,
                 manoeuvrability: unit.properties.mnv,
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",

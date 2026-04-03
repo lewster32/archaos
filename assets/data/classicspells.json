@@ -403,7 +403,7 @@
         "name": "Shadow Form",
         "projectile": "shadowform",
         "range": 0,
-        "description": "Increases the caster's defense and movement range, and breaks any engagement at the start of the caster's movement turn. If the caster physically attacks another unit, the effect is lost."
+        "description": "Increases the caster's defence and movement range, and breaks any engagement at the start of the caster's movement turn. If the caster physically attacks another unit, the effect is lost."
     },
     "magic-knife": {
         "balance": 1,
@@ -427,7 +427,7 @@
         "target": "self",
         "range": 0,
         "name": "Magic Shield",
-        "description": "Moderately increases the caster's defense rating."
+        "description": "Moderately increases the caster's defence rating."
     },
     "magic-armour": {
         "balance": 1,
@@ -435,7 +435,7 @@
         "target": "self",
         "range": 0,
         "name": "Magic Armour",
-        "description": "Greatly increases the caster's defense rating."
+        "description": "Greatly increases the caster's defence rating."
     },
     "magic-bow": {
         "balance": 1,
