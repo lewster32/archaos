@@ -1,8 +1,9 @@
-import { UnitType, SpellTarget } from "@archaos/engine";
+import { UnitType } from "../enums/unittype";
+import { SpellTarget } from "../enums/spelltarget";
 import { describe, it, expect, vi } from "vitest";
-import "../wizard";
+import "../../../../src/gameobjects/wizard";
 import { StatusEffectSpell } from "./statuseffectspell";
-import { Geom } from "phaser";
+import { Point } from "../point";
 import {
     makeMockBoard,
     makeMockPiece,
@@ -24,7 +25,7 @@ describe("StatusEffectSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [makeMockPiece({ type: UnitType.Creature })],
         );
         expect(result).toBe(false);
@@ -43,7 +44,7 @@ describe("StatusEffectSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [makeMockPiece({ type: UnitType.Wizard, owner: { id: 99 } })],
         );
         expect(result).toBe(false);
@@ -64,7 +65,7 @@ describe("StatusEffectSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [wizard],
         );
         expect(result).toBe(true);
@@ -91,7 +92,7 @@ describe("StatusEffectSpell.doCast", () => {
             name: "Zack",
         });
         wizard.addStatus = vi.fn().mockReturnValue(false);
-        await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [wizard]);
+        await s.doCast(owner, castingPiece, new Point(0, 0), [wizard]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("already has"),
             expect.anything(),
@@ -112,7 +113,7 @@ describe("StatusEffectSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [wizard],
         );
         expect(result).toBe(true);

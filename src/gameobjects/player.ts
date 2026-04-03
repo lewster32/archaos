@@ -11,7 +11,7 @@ import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
-import type { Spell } from "./spells/spell";
+import type { Spell } from "@archaos/engine";
 import { ComputerWizard } from "./computerwizard";
 export class Player extends Model {
     /**

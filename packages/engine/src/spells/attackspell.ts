@@ -1,16 +1,16 @@
+import { SpellType } from "../enums/spelltype";
 import {
-    SpellType,
     UnitRangedProjectileType,
-    UnitStatus,
-    Colour,
-} from "@archaos/engine";
-import type { SpellConfig } from "@archaos/engine";
-import { Board } from "../board";
-import { EffectType } from "../effectemitter";
+} from "../enums/unitrangedprojectiletype";
+import { UnitStatus } from "../enums/unitstatus";
+import { Colour } from "../enums/colour";
+import type { SpellConfig } from "../configs/spellconfig";
+import { Point } from "../point";
+import { Board } from "../../../../src/gameobjects/board";
+import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Spell } from "./spell";
-import type { Piece } from "../piece";
-import type { Player } from "../player";
-import { Geom } from "phaser";
+import type { Piece } from "../../../../src/gameobjects/piece";
+import type { Player } from "../../../../src/gameobjects/player";
 /**
  * A spell that attacks one or more target pieces.
  */
@@ -27,7 +27,7 @@ export class AttackSpell extends Spell {
     async doCast(
         owner: Player,
         castingPiece: Piece,
-        point?: Geom.Point,
+        point?: Point,
         targets?: Piece[],
     ): Promise<Piece | boolean | null> {
         if (!targets?.length) {

@@ -158,7 +158,7 @@ function _getTrimBounds(
 }
 </script>
 <script setup lang="ts">
-import { Spell } from "../gameobjects/spells/spell";
+import { Spell } from "@archaos/engine";
 import { onMounted, computed, ref, watch } from "vue";
 import type { Ref } from "vue";
 const props = defineProps<{

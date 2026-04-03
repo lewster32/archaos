@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Player } from "./player";
 import { ComputerWizard } from "./computerwizard";
 import type { Board } from "./board";
-import type { Spell } from "./spells/spell";
+import type { Spell } from "@archaos/engine";
 /**
  * A minimal Board-shaped mock object. We only include the properties and
  * methods that are actually used by the Player class.

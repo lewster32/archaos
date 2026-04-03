@@ -78,7 +78,7 @@ import { loadingProgress } from "../game/loading-state";
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import type { Ref } from "vue";
 import type { Game, Events } from "phaser";
-import type { Spell } from "../gameobjects/spells/spell";
+import type { Spell } from "@archaos/engine";
 import { getTutorial } from "../gameobjects/tutorials/tutorialregistry";
 import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";

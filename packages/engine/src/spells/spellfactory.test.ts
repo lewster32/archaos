@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-// Resolve circular dependency: Spell → Board → AttackSpell/SummonSpell → Spell
-import "../wizard";
+// Resolve circular dependency:
+// Spell -> Board -> AttackSpell/SummonSpell -> Spell
+import "../../../../src/gameobjects/wizard";
 import { createSpell } from "./spellfactory";
 import { AttackSpell } from "./attackspell";
 import { DisbelieveSpell } from "./disbelievespell";
@@ -10,7 +11,7 @@ import { StatusEffectSpell } from "./statuseffectspell";
 import { SubversionSpell } from "./subversionspell";
 import { SummonSpell } from "./summonspell";
 import { TurmoilSpell } from "./turmoilspell";
-import { SpellTarget } from "@archaos/engine";
+import { SpellTarget } from "../enums/spelltarget";
 import { makeMockBoard, makeConfig } from "./spell.testhelpers";
 
 describe("createSpell", () => {

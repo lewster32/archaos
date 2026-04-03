@@ -1,5 +1,6 @@
-import { SpellConfig, SpellTarget } from "@archaos/engine";
-import { Board } from "../board";
+import type { SpellConfig } from "../configs/spellconfig";
+import { SpellTarget } from "../enums/spelltarget";
+import { Board } from "../../../../src/gameobjects/board";
 import { AttackSpell } from "./attackspell";
 import { DisbelieveSpell } from "./disbelievespell";
 import { RaiseDeadSpell } from "./raisedeadspell";

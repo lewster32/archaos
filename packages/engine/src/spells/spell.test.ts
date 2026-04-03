@@ -1,16 +1,19 @@
-import { SpellType, SpellTarget, UnitType } from "@archaos/engine";
+import { SpellType } from "../enums/spelltype";
+import { SpellTarget } from "../enums/spelltarget";
+import { UnitType } from "../enums/unittype";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 // Wizard must be imported first to resolve the circular dependency chain:
-// Spell → Board → AttackSpell/SummonSpell → Spell (circular). Importing
-// Wizard first causes Board to be fully evaluated before Spell is imported,
-// so AttackSpell/SummonSpell can extend Spell without seeing it as undefined.
-import "../wizard";
+// Spell -> Board -> AttackSpell/SummonSpell -> Spell (circular).
+// Importing Wizard first causes Board to be fully evaluated before
+// Spell is imported, so AttackSpell/SummonSpell can extend Spell
+// without seeing it as undefined.
+import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
-import { Piece } from "../piece";
-import { Geom } from "phaser";
-import { TestRNG } from "@archaos/engine";
+import { Piece } from "../../../../src/gameobjects/piece";
+import { Point } from "../point";
+import { TestRNG } from "../rng";
 
-import type { Board } from "../board";
+import type { Board } from "../../../../src/gameobjects/board";
 
 import {
     makeMockBoard,
@@ -505,13 +508,13 @@ describe("Spell.getValidTarget", () => {
         it("returns null when target point is beyond range", () => {
             const s = new Spell(board, 1, makeConfig({ range: 1.5 }));
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(10, 10))).toBeNull();
+            expect(s.getValidTarget(new Point(10, 10))).toBeNull();
         });
 
         it("logs out-of-range reason when showReason=true", () => {
             const s = new Spell(board, 1, makeConfig({ range: 1.5 }));
             s.owner = owner;
-            s.getValidTarget(new Geom.Point(10, 10), true);
+            s.getValidTarget(new Point(10, 10), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("out of range"),
                 expect.anything(),
@@ -536,14 +539,14 @@ describe("Spell.getValidTarget", () => {
                 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(100, 100))).toBe(enemy);
+            expect(s.getValidTarget(new Point(100, 100))).toBe(enemy);
         });
 
         it("returns null for out-of-range point when range is exactly 0 and point differs", () => {
             const s = new Spell(board, 1, makeConfig({ range: 0 }));
             s.owner = owner;
             // Casting piece is at {0,0}; target is {1,0} → not equal
-            expect(s.getValidTarget(new Geom.Point(1, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(1, 0))).toBeNull();
         });
 
         it("returns null (via inCastingRange error path) when castingPiece is null and range > 0", () => {
@@ -551,7 +554,7 @@ describe("Spell.getValidTarget", () => {
             s.owner = owner;
             // Null out the casting piece after owner is set to exercise the guard
             (s as any)._castingPiece = null;
-            expect(s.getValidTarget(new Geom.Point(1, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(1, 0))).toBeNull();
         });
     });
 
@@ -564,7 +567,7 @@ describe("Spell.getValidTarget", () => {
                 makeConfig({ lineOfSight: true, range: -1 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs LOS reason when showReason=true", () => {
@@ -575,7 +578,7 @@ describe("Spell.getValidTarget", () => {
                 makeConfig({ lineOfSight: true, range: -1 }),
             );
             s.owner = owner;
-            s.getValidTarget(new Geom.Point(0, 0), true);
+            s.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("line of sight"),
                 expect.anything(),
@@ -601,7 +604,7 @@ describe("Spell.getValidTarget", () => {
                 makeConfig({ tree: true, range: -1 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs tree adjacency reason when showReason=true", () => {
@@ -620,7 +623,7 @@ describe("Spell.getValidTarget", () => {
                 makeConfig({ tree: true, range: -1 }),
             );
             s.owner = owner;
-            s.getValidTarget(new Geom.Point(0, 0), true);
+            s.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("adjacent"),
                 expect.anything(),
@@ -653,7 +656,7 @@ describe("Spell.getValidTarget", () => {
                 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(0, 0))).toBe(enemy);
+            expect(s.getValidTarget(new Point(0, 0))).toBe(enemy);
         });
     });
 
@@ -673,7 +676,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([wizard]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(wizard);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(wizard);
         });
 
         it("returns the wizard piece when multiple pieces are at the target position but only one is a wizard", () => {
@@ -682,17 +685,17 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([creature, wizard]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(wizard);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(wizard);
         });
 
         it("returns null when no wizard is at the target position", () => {
             (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs reason when showReason=true and no wizard found", () => {
             (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("own wizard"),
                 expect.anything(),
@@ -718,7 +721,7 @@ describe("Spell.getValidTarget", () => {
                 .mockImplementation((_pt: any, filter?: any) =>
                     filter ? [] : [corpse],
                 );
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(corpse);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(corpse);
         });
 
         it("returns null when a living piece is at the position", () => {
@@ -726,7 +729,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([living]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("returns null when a mounted living piece occupies the tile (filtered from targetPieces but found by secondary check)", () => {
@@ -749,12 +752,12 @@ describe("Spell.getValidTarget", () => {
                         ? [mountedLiving].filter((p) => filter(p))
                         : [mountedLiving],
                 );
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("returns falsy when position is empty (no corpse found)", () => {
             (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeFalsy();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeFalsy();
         });
 
         it("logs corpse reason when living piece present and showReason=true", () => {
@@ -762,7 +765,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([living]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("corpse"),
                 expect.anything(),
@@ -797,7 +800,7 @@ describe("Spell.getValidTarget", () => {
         });
 
         it("returns enemy piece", () => {
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(enemy);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(enemy);
         });
 
         it("returns null when targeting a friendly piece", () => {
@@ -805,23 +808,23 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([friendly]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("returns null when targeting a mounted piece", () => {
             enemy.currentMount = { id: 2 };
             // mounted pieces are filtered out → no living target
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("returns null when targeting an engulfed piece", () => {
             enemy.engulfed = true;
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it('returns null and logs "empty ground" when no pieces present', () => {
             (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("empty ground"),
                 expect.anything(),
@@ -833,7 +836,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([corpse]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("corpse"),
                 expect.anything(),
@@ -842,7 +845,7 @@ describe("Spell.getValidTarget", () => {
 
         it("returns null for invulnerable target and logs reason", () => {
             enemy.hasStatus = vi.fn().mockReturnValue(true);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("invulnerable"),
                 expect.anything(),
@@ -851,14 +854,14 @@ describe("Spell.getValidTarget", () => {
 
         it("returns null for invulnerable target without logging when showReason is absent", () => {
             enemy.hasStatus = vi.fn().mockReturnValue(true);
-            const result = spell.getValidTarget(new Geom.Point(0, 0));
+            const result = spell.getValidTarget(new Point(0, 0));
             expect(result).toBeNull();
             expect(board.logger.log).not.toHaveBeenCalled();
         });
 
         it("returns null for magic-immune target and logs reason", () => {
             enemy.canBeMagicAttacked = false;
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("magical attacks"),
                 expect.anything(),
@@ -884,7 +887,7 @@ describe("Spell.getValidTarget", () => {
                 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it('logs "cannot be cast on a wizard" reason when showReason=true and castOnWizard=false', () => {
@@ -906,7 +909,7 @@ describe("Spell.getValidTarget", () => {
                 }),
             );
             s.owner = owner;
-            s.getValidTarget(new Geom.Point(0, 0), true);
+            s.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("cannot be cast on a wizard"),
                 expect.anything(),
@@ -918,7 +921,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([friendly]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("enemy unit"),
                 expect.anything(),
@@ -951,7 +954,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([illusion]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(illusion);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(illusion);
         });
 
         it("returns null for a non-disbelievable piece", () => {
@@ -962,7 +965,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([solid]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs reason when showReason=true and piece is not disbelievable", () => {
@@ -973,7 +976,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([solid]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("cannot be cast on this unit"),
                 expect.anything(),
@@ -1006,7 +1009,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([target]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(target);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(target);
         });
 
         it("returns null for a non-subvertable piece", () => {
@@ -1017,7 +1020,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([target]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs reason when showReason=true and piece is not subvertable", () => {
@@ -1028,7 +1031,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([target]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("cannot be cast on this unit"),
                 expect.anything(),
@@ -1049,7 +1052,7 @@ describe("Spell.getValidTarget", () => {
                 makeConfig({ target: SpellTarget.Piece, range: -1 }),
             );
             s.owner = owner;
-            expect(s.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
     });
 
@@ -1074,7 +1077,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([friendly]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBe(friendly);
+            expect(spell.getValidTarget(new Point(0, 0))).toBe(friendly);
         });
 
         it("returns null when targeting an enemy piece", () => {
@@ -1085,7 +1088,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([enemy]);
-            expect(spell.getValidTarget(new Geom.Point(0, 0))).toBeNull();
+            expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs reason when targeting an enemy with showReason=true", () => {
@@ -1096,7 +1099,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockReturnValue([enemy]);
-            spell.getValidTarget(new Geom.Point(0, 0), true);
+            spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("friendly unit"),
                 expect.anything(),
@@ -1171,7 +1174,7 @@ describe("Spell.cast", () => {
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
         // doCast returns false for a bare Misc spell — just ensure no throw
-        const result = await s.cast(owner, castingPiece, new Geom.Point(2, 3));
+        const result = await s.cast(owner, castingPiece, new Point(2, 3));
         expect(result).toBe(false);
     });
 
@@ -1276,7 +1279,7 @@ describe("Spell.doCast — fallthrough", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [],
         );
         expect(result).toBe(false);

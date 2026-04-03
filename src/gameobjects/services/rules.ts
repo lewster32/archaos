@@ -13,7 +13,7 @@ import { Board } from "../board";
 import { ComputerWizard } from "../computerwizard";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
-import { Spell } from "../spells/spell";
+import { Spell } from "@archaos/engine";
 import { EffectType } from "../effectemitter";
 import {
     CancelDismount,

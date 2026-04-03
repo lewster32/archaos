@@ -4,7 +4,7 @@ import { ComputerWizard } from "./computerwizard";
 import type { Board } from "./board";
 import type { Player } from "./player";
 import type { Piece } from "./piece";
-import { Spell } from "./spells/spell";
+import { Spell } from "@archaos/engine";
 import { Geom } from "phaser";
 import { TestRNG } from "@archaos/engine";
 

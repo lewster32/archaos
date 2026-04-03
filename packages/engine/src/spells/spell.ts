@@ -1,22 +1,23 @@
+import { Colour } from "../enums/colour";
+import { SpellTarget } from "../enums/spelltarget";
+import { SpellType } from "../enums/spelltype";
+import { UnitStatus } from "../enums/unitstatus";
+import { UnitType } from "../enums/unittype";
+import { CursorType } from "../enums/cursortype";
+import { Model } from "../models/model";
+import type { SpellConfig } from "../configs/spellconfig";
+import type { IRNG } from "../rng";
+import { Point } from "../point";
+import spellJsonData from "../../../../assets/data/classicspells.json";
+
+import { Board } from "../../../../src/gameobjects/board";
+import { EffectType } from "../../../../src/gameobjects/effectemitter";
+import { Piece } from "../../../../src/gameobjects/piece";
+
+import type { Player } from "../../../../src/gameobjects/player";
 import {
-    Colour,
-    SpellTarget,
-    SpellType,
-    UnitStatus,
-    UnitType,
-    CursorType,
-    Model,
-} from "@archaos/engine";
-import type { SpellConfig, IRNG } from "@archaos/engine";
-import spellJsonData from "../../../assets/data/classicspells.json";
-
-import { Board } from "../board";
-import { EffectType } from "../effectemitter";
-import { Piece } from "../piece";
-
-import type { Player } from "../player";
-import { Math as PMath, Geom } from "phaser";
-import { SpellCastTarget } from "../services/rules";
+    SpellCastTarget,
+} from "../../../../src/gameobjects/services/rules";
 
 /**
  * A spell that can be cast by a player's wizard.
@@ -127,7 +128,9 @@ export class Spell extends Model {
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return PMath.Clamp(this._properties.chance + balanceOffset, 0.1, 1);
+        return Math.min(Math.max(
+            this._properties.chance + balanceOffset, 0.1,
+        ), 1);
     }
 
     /**
@@ -259,18 +262,18 @@ export class Spell extends Model {
      * @param point The point to check
      * @returns Whether the point is within casting range
      */
-    protected inCastingRange(point: Geom.Point): boolean {
+    protected inCastingRange(point: Point): boolean {
         if (this.range < 0) {
             return true;
         }
         if (this.range === 0) {
-            return Geom.Point.Equals(this._castingPiece.position, point);
+            return Point.equals(this._castingPiece.position, point);
         }
         if (!this._castingPiece) {
             console.error("Spell has no casting piece");
             return false;
         }
-        const casterPosition: Geom.Point = Geom.Point.Clone(
+        const casterPosition: Point = Point.clone(
             this._castingPiece.position,
         );
         if (Board.distance(casterPosition, point) > this.range) {
@@ -287,7 +290,7 @@ export class Spell extends Model {
      * @returns Whether the spell can be cast at the given position
      */
     protected canCastAtPosition(
-        point: Geom.Point,
+        point: Point,
         showReason?: boolean,
     ): boolean {
         if (
@@ -328,11 +331,11 @@ export class Spell extends Model {
      * @returns The valid target point or piece, or null if invalid
      */
     getValidTarget(
-        target: Geom.Point | Piece,
+        target: Point | Piece,
         showReason?: boolean,
     ): SpellCastTarget {
-        const targetPoint: Geom.Point =
-            target instanceof Geom.Point ? target : target.position;
+        const targetPoint: Point =
+            target instanceof Point ? target : target.position;
         const targetPiece: Piece = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
@@ -539,15 +542,15 @@ export class Spell extends Model {
     async cast(
         owner: Player,
         castingPiece: Piece,
-        target?: Geom.Point | Piece,
+        target?: Point | Piece,
     ): Promise<Piece | boolean | null> {
-        let castPoint: Geom.Point;
+        let castPoint: Point;
         let castPiece: Piece;
-        if (target instanceof Geom.Point) {
-            castPoint = Geom.Point.Clone(target);
+        if (target instanceof Point) {
+            castPoint = Point.clone(target);
         } else if (Piece.isPiece(target)) {
             castPiece = target;
-            castPoint = Geom.Point.Clone(target.position);
+            castPoint = Point.clone(target.position);
         }
 
         // We only want to check for failure on the first cast of multi-cast
@@ -578,7 +581,7 @@ export class Spell extends Model {
     async doCast(
         _owner: Player,
         _castingPiece: Piece,
-        _point?: Geom.Point,
+        _point?: Point,
         _targets?: Piece[],
     ): Promise<Piece | boolean | null> {
         return false;

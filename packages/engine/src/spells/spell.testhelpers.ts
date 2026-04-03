@@ -1,11 +1,11 @@
 /** @internal – only for use in unit tests */
 /* v8 ignore start */
-import { UnitType } from "@archaos/engine";
-import type { SpellConfig } from "@archaos/engine";
+import { UnitType } from "../enums/unittype";
+import type { SpellConfig } from "../configs/spellconfig";
 import { vi } from "vitest";
-import { Geom } from "phaser";
-import type { Board } from "../board";
-import { TestRNG } from "@archaos/engine";
+import { Point } from "../point";
+import type { Board } from "../../../../src/gameobjects/board";
+import { TestRNG } from "../rng";
 
 export function makeMockBoard(
     opts: {
@@ -80,7 +80,7 @@ export function makeMockPiece(
         canBeSubverted,
         canBeMagicAttacked,
         illusion,
-        position: new Geom.Point(x, y),
+        position: new Point(x, y),
         stats: { magicResistance: 0 },
         hasStatus: vi.fn().mockReturnValue(false),
         sprite: { getCenter: vi.fn().mockReturnValue({ x: 0, y: 0 }) },

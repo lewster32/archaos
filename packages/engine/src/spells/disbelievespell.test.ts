@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import "../wizard";
+import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { DisbelieveSpell } from "./disbelievespell";
-import { Geom } from "phaser";
-import type { Board } from "../board";
+import { Point } from "../point";
+import type { Board } from "../../../../src/gameobjects/board";
 import {
     makeMockBoard,
     makeMockPiece,
@@ -33,7 +33,7 @@ describe("DisbelieveSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [makeMockPiece({ canBeDisbelieved: false })],
         );
         expect(result).toBe(false);
@@ -47,7 +47,7 @@ describe("DisbelieveSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [illusion],
         );
         expect(result).toBe(true);
@@ -62,7 +62,7 @@ describe("DisbelieveSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [nonIllusion],
         );
         expect(result).toBe(true);
@@ -75,7 +75,7 @@ describe("DisbelieveSpell.doCast", () => {
             illusion: true,
             name: "Dragon",
         });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [
             illusion,
         ]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
@@ -89,7 +89,7 @@ describe("DisbelieveSpell.doCast", () => {
             illusion: false,
             name: "Lion",
         });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [
             nonIllusion,
         ]);
         expect(board.logger.log as any).toHaveBeenCalledWith(

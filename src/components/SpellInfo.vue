@@ -101,16 +101,18 @@
 import UnitStats from "./UnitStats.vue";
 import SpellImage from "./SpellImage.vue";
 import { SpellType } from "@archaos/engine";
-import { computed } from "vue";
 import {
     balanceIndicator,
     chancePercent,
     chanceRounded,
     friendlyBalance,
-} from "../gameobjects/spells/spellutils";
-import type { Spell } from "../gameobjects/spells/spell";
-import type { AttackSpell } from "../gameobjects/spells/attackspell";
-import type { SummonSpell } from "../gameobjects/spells/summonspell";
+} from "@archaos/engine";
+import type {
+    Spell,
+    AttackSpell,
+    SummonSpell,
+} from "@archaos/engine";
+import { computed } from "vue";
 import type { Ref } from "vue";
 
 const props = defineProps<{

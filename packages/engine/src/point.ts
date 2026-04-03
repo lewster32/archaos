@@ -20,4 +20,8 @@ export class Point {
     static equals(a: Point, b: Point): boolean {
         return a.x === b.x && a.y === b.y;
     }
+
+    static clone(p: Point): Point {
+        return new Point(p.x, p.y);
+    }
 }

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import "../wizard";
+import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { TurmoilSpell } from "./turmoilspell";
-import { UnitType } from "@archaos/engine";
-import { Geom } from "phaser";
+import { UnitType } from "../enums/unittype";
+import { Point } from "../point";
 import {
     makeMockBoard,
     makeMockPiece,
@@ -25,7 +25,7 @@ describe("TurmoilSpell.doCast", () => {
         wizard.owner = null;
         const owner = makeMockPlayer(wizard);
         wizard.owner = owner;
-        const randomSpace = new Geom.Point(5, 5);
+        const randomSpace = new Point(5, 5);
         const board = makeMockBoard();
         (board as any).pieces = [piece1, piece2, corpse, wizard];
         (board as any).getRandomEmptySpace = vi
@@ -37,7 +37,7 @@ describe("TurmoilSpell.doCast", () => {
         const spell = new TurmoilSpell(board, 1, turmoilConfig);
         spell.owner = owner;
 
-        const result = await spell.doCast(owner, wizard, new Geom.Point(0, 0), [
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [
             wizard,
         ]);
         expect(result).toBe(true);
@@ -71,7 +71,7 @@ describe("TurmoilSpell.doCast", () => {
         spell.owner = owner;
 
         // Pass creature (not a wizard) as the only target
-        const result = await spell.doCast(owner, wizard, new Geom.Point(0, 0), [
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [
             creature,
         ]);
         expect(result).toBe(false);
@@ -87,7 +87,7 @@ describe("TurmoilSpell.doCast", () => {
         const turmoilConfig = Spell.getSpellProperties("Turmoil");
         const spell = new TurmoilSpell(board, 1, turmoilConfig);
         spell.owner = owner;
-        await spell.doCast(owner, wizard, new Geom.Point(0, 0), [wizard]);
+        await spell.doCast(owner, wizard, new Point(0, 0), [wizard]);
         expect(wizard.moveTo).not.toHaveBeenCalled();
     });
 });

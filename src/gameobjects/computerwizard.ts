@@ -10,11 +10,10 @@ import {
 } from "@archaos/engine";
 import { Piece } from "./piece";
 import { Path } from "./rangegizmo";
-import { AttackSpell } from "./spells/attackspell";
+import { AttackSpell, Spell } from "@archaos/engine";
+import type { SummonSpell } from "@archaos/engine";
 import { Board } from "./board";
 import type { Player } from "./player";
-import { Spell } from "./spells/spell";
-import type { SummonSpell } from "./spells/summonspell";
 import { Geom } from "phaser";
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player

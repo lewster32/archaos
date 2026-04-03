@@ -1,10 +1,12 @@
-import { Colour, UnitStatus, UnitType } from "@archaos/engine";
-import { Board } from "../board";
-import { EffectType } from "../effectemitter";
+import { Colour } from "../enums/colour";
+import { UnitStatus } from "../enums/unitstatus";
+import { UnitType } from "../enums/unittype";
+import { Board } from "../../../../src/gameobjects/board";
+import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Spell } from "./spell";
-import type { Piece } from "../piece";
-import type { Player } from "../player";
-import { Geom } from "phaser";
+import type { Piece } from "../../../../src/gameobjects/piece";
+import type { Player } from "../../../../src/gameobjects/player";
+import { Point } from "../point";
 
 /**
  * A self-targeting spell that grants a status effect to the casting wizard.
@@ -24,7 +26,7 @@ export class StatusEffectSpell extends Spell {
     async doCast(
         owner: Player,
         castingPiece: Piece,
-        point?: Geom.Point,
+        point?: Point,
         targets?: Piece[],
     ): Promise<Piece | boolean | null> {
         const target: Piece = targets.find(

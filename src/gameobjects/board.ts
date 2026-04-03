@@ -30,8 +30,7 @@ import { Path, RangeGizmo } from "./rangegizmo";
 import { Logger } from "./services/logger";
 import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
-import { Spell } from "./spells/spell";
-import { createSpell } from "./spells/spellfactory";
+import { Spell, createSpell } from "@archaos/engine";
 import {
     PhaseMachine,
     StartGame,

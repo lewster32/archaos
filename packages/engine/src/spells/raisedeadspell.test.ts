@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import "../wizard";
+import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { RaiseDeadSpell } from "./raisedeadspell";
-import { Geom } from "phaser";
-import type { Board } from "../board";
+import { Point } from "../point";
+import type { Board } from "../../../../src/gameobjects/board";
 import {
     makeMockBoard,
     makeMockPiece,
@@ -34,7 +34,7 @@ describe("RaiseDeadSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [living],
         );
         expect(result).toBe(false);
@@ -45,7 +45,7 @@ describe("RaiseDeadSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [corpse],
         );
         expect(result).toBe(true);
@@ -54,7 +54,7 @@ describe("RaiseDeadSpell.doCast", () => {
 
     it("logs a reanimation message", async () => {
         const corpse = makeMockPiece({ dead: true, name: "Elf" });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [corpse]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("Elf"),
             expect.anything(),
@@ -63,7 +63,7 @@ describe("RaiseDeadSpell.doCast", () => {
 
     it("plays sound effects", async () => {
         const corpse = makeMockPiece({ dead: true });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [corpse]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
         expect((board as any).sound.play).toHaveBeenCalledWith("castloop08");
         expect((board as any).sound.play).toHaveBeenCalledWith("spelleffect");
     });

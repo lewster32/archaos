@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import "../wizard";
+import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { SubversionSpell } from "./subversionspell";
-import { Geom } from "phaser";
-import type { Board } from "../board";
+import { Point } from "../point";
+import type { Board } from "../../../../src/gameobjects/board";
 import {
     makeMockBoard,
     makeMockPiece,
@@ -32,7 +32,7 @@ describe("SubversionSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [],
         );
         expect(result).toBe(false);
@@ -43,7 +43,7 @@ describe("SubversionSpell.doCast", () => {
         const result = await spell.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [enemy],
         );
         expect(result).toBe(true);
@@ -52,7 +52,7 @@ describe("SubversionSpell.doCast", () => {
     it("transfers ownership on a successful roll against a real piece", async () => {
         (board as any).roll = vi.fn().mockReturnValue(true);
         const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(enemy.owner).toBe(owner);
     });
 
@@ -60,7 +60,7 @@ describe("SubversionSpell.doCast", () => {
         (board as any).roll = vi.fn().mockReturnValue(false);
         const originalOwner = { id: 99 };
         const enemy = makeMockPiece({ owner: originalOwner, illusion: false });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(enemy.owner).toBe(originalOwner);
     });
 
@@ -71,7 +71,7 @@ describe("SubversionSpell.doCast", () => {
             owner: originalOwner,
             illusion: true,
         });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [
             illusion,
         ]);
         expect(illusion.owner).toBe(originalOwner);
@@ -84,7 +84,7 @@ describe("SubversionSpell.doCast", () => {
             illusion: false,
             name: "Dragon",
         });
-        await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("Dragon"),
             expect.anything(),

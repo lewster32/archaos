@@ -98,3 +98,20 @@ export {
     type UnitStats,
     type UnitConfig,
 } from "./interfaces/ui";
+
+// Spells
+export { Spell } from "./spells/spell";
+export { AttackSpell } from "./spells/attackspell";
+export { SummonSpell } from "./spells/summonspell";
+export { DisbelieveSpell } from "./spells/disbelievespell";
+export { RaiseDeadSpell } from "./spells/raisedeadspell";
+export { StatusEffectSpell } from "./spells/statuseffectspell";
+export { SubversionSpell } from "./spells/subversionspell";
+export { TurmoilSpell } from "./spells/turmoilspell";
+export { createSpell } from "./spells/spellfactory";
+export {
+    chancePercent,
+    chanceRounded,
+    balanceIndicator,
+    friendlyBalance,
+} from "./spells/spellutils";

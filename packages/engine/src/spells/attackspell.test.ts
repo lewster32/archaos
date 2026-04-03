@@ -1,19 +1,20 @@
+import { SpellTarget } from "../enums/spelltarget";
+import { SpellType } from "../enums/spelltype";
+import { UnitStatus } from "../enums/unitstatus";
+import { UnitType } from "../enums/unittype";
 import {
-    SpellTarget,
-    SpellType,
-    UnitStatus,
-    UnitType,
     UnitRangedProjectileType,
-} from "@archaos/engine";
-import type { SpellConfig } from "@archaos/engine";
+} from "../enums/unitrangedprojectiletype";
+import type { SpellConfig } from "../configs/spellconfig";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-// Resolve circular dependency: Spell → Board → AttackSpell/SummonSpell → Spell
-import "../wizard";
+// Resolve circular dependency:
+// Spell -> Board -> AttackSpell/SummonSpell -> Spell
+import "../../../../src/gameobjects/wizard";
 import { AttackSpell } from "./attackspell";
 import { Spell } from "./spell";
-import { Geom } from "phaser";
-import type { Board } from "../board";
-import { TestRNG } from "@archaos/engine";
+import { Point } from "../point";
+import type { Board } from "../../../../src/gameobjects/board";
+import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ function makeMockPiece(
         currentMount,
         engulfed,
         canBeMagicAttacked,
-        position: new Geom.Point(x, y),
+        position: new Point(x, y),
         stats: { magicResistance: 0 },
         hasStatus: vi
             .fn()
@@ -225,7 +226,7 @@ describe("AttackSpell.doCast", () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
         await expect(
-            s.doCast(owner, castingPiece, new Geom.Point(0, 0), []),
+            s.doCast(owner, castingPiece, new Point(0, 0), []),
         ).rejects.toThrow("No targets");
     });
 
@@ -235,7 +236,7 @@ describe("AttackSpell.doCast", () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
         await expect(
-            s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]),
+            s.doCast(owner, castingPiece, new Point(0, 0), [enemy]),
         ).rejects.toThrow("No valid target");
     });
 
@@ -245,7 +246,7 @@ describe("AttackSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [enemy],
         );
         expect(result).toBe(true);
@@ -254,7 +255,7 @@ describe("AttackSpell.doCast", () => {
     it("kills the target when roll succeeds", async () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
-        await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(enemy.kill).toHaveBeenCalledTimes(1);
     });
 
@@ -262,7 +263,7 @@ describe("AttackSpell.doCast", () => {
         (board as any).roll = vi.fn().mockReturnValue(false);
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
-        await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(enemy.kill).not.toHaveBeenCalled();
     });
 
@@ -270,7 +271,7 @@ describe("AttackSpell.doCast", () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
         enemy.fullName = "Giant Rat";
-        await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+        await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("Giant Rat"),
             expect.anything(),
@@ -291,7 +292,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "lightning4" beam sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith(
@@ -300,7 +301,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "lightningexplode" hit sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith(
@@ -309,7 +310,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it("calls playEffect twice (beam + hit)", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect(board.playEffect).toHaveBeenCalledTimes(2);
@@ -330,7 +331,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "magicbolt6" beam sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith(
@@ -339,7 +340,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "magicboltexplode" hit sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith(
@@ -362,14 +363,14 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "justice" hit sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith("justice");
         });
 
         it("does not play a beam sound (no beamSound for Justice)", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             // Only hitSound played — no beam-specific sounds
@@ -381,7 +382,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it("calls playEffect once (hit only, no beam)", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect(board.playEffect).toHaveBeenCalledTimes(1);
@@ -402,14 +403,14 @@ describe("AttackSpell.doCast", () => {
         });
 
         it('plays "justice" hit sound', async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect((board as any).sound.play).toHaveBeenCalledWith("justice");
         });
 
         it("calls playEffect once (hit only, no beam)", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
             expect(board.playEffect).toHaveBeenCalledTimes(1);
@@ -425,7 +426,7 @@ describe("AttackSpell.doCast", () => {
             );
             s.owner = owner;
             (board as any).roll.mockReturnValue(false); // prevent "killcreature" sound
-            await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+            await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect((board as any).sound.play).not.toHaveBeenCalled();
         });
 
@@ -436,7 +437,7 @@ describe("AttackSpell.doCast", () => {
                 makeAttackConfig({ projectile: undefined }),
             );
             s.owner = owner;
-            await s.doCast(owner, castingPiece, new Geom.Point(0, 0), [enemy]);
+            await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect(board.playEffect).not.toHaveBeenCalled();
         });
     });
@@ -471,21 +472,21 @@ describe("AttackSpell.doCast", () => {
         });
 
         it("calls destroyCreations when roll succeeds on a wizard target", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 wizardTarget,
             ]);
             expect(wizardOwner.destroyCreations).toHaveBeenCalledTimes(1);
         });
 
         it("does not kill the wizard directly (creations are destroyed instead)", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 wizardTarget,
             ]);
             expect(wizardTarget.kill).not.toHaveBeenCalled();
         });
 
         it("logs a creations-dispelled message", async () => {
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 wizardTarget,
             ]);
             expect(board.logger.log as any).toHaveBeenCalledWith(
@@ -495,7 +496,7 @@ describe("AttackSpell.doCast", () => {
 
         it("does not call destroyCreations when roll fails", async () => {
             (board as any).roll = vi.fn().mockReturnValue(false);
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 wizardTarget,
             ]);
             expect(wizardOwner.destroyCreations).not.toHaveBeenCalled();
@@ -507,7 +508,7 @@ describe("AttackSpell.doCast", () => {
                 canBeMagicAttacked: true,
             });
             wireEnemy(board, creature);
-            await spell.doCast(owner, castingPiece, new Geom.Point(0, 0), [
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 creature,
             ]);
             expect(creature.kill).toHaveBeenCalledTimes(1);
@@ -521,7 +522,7 @@ describe("AttackSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [enemy],
         );
         expect(result).toBe(true);
@@ -535,7 +536,7 @@ describe("AttackSpell.doCast", () => {
         const result = await s.doCast(
             owner,
             castingPiece,
-            new Geom.Point(0, 0),
+            new Point(0, 0),
             [enemy],
         );
         expect(result).toBe(true);
