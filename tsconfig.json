@@ -18,5 +18,8 @@
         "allowSyntheticDefaultImports": true
     },
     "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
-    "exclude": ["src/**/*.test.ts"]
+    "exclude": ["src/**/*.test.ts"],
+    "references": [
+        { "path": "packages/engine" }
+    ]
 }

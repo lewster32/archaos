@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext"],
+        "moduleResolution": "Bundler",
+        "strict": false,
+        "sourceMap": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "noImplicitReturns": true,
+        "useDefineForClassFields": true,
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.test.ts"]
+}
