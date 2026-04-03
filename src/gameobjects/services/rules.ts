@@ -19,7 +19,7 @@ import {
     CancelDismount,
     RequestDismount,
     SpellCastComplete,
-} from "../statemanager";
+} from "@archaos/engine";
 
 import { Geom } from "phaser";
 

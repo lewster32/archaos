@@ -22,7 +22,7 @@ import {
     CancelDismount,
     SpellTargeting,
     SpellCastComplete,
-} from "./statemanager";
+} from "./phasemachine";
 
 describe("PhaseMachine", () => {
     let pm: PhaseMachine;

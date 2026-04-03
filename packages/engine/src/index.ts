@@ -45,6 +45,33 @@ export {
     weightedRandomPick,
 } from "./rng";
 
+// PhaseMachine
+export {
+    PhaseMachine,
+    type PhaseMachineStates,
+    StartGame,
+    GameEnd,
+    SpellbookReady,
+    SkipSpellbook,
+    SpellsDone,
+    NoSpellsCast,
+    CastingReady,
+    CastingDone,
+    SpreadingDone,
+    MovingReady,
+    MovingDone,
+    NextPlayer,
+    SelectPiece,
+    AdvanceToAttack,
+    AdvanceToRangedAttack,
+    PieceDeselected,
+    RequestDismount,
+    CompleteDismount,
+    CancelDismount,
+    SpellTargeting,
+    SpellCastComplete,
+} from "./phasemachine";
+
 // Interfaces
 export { type RemotePlayer } from "./interfaces/remoteplayer";
 export { RemoteWizard } from "./interfaces/remotewizard";

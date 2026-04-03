@@ -10,7 +10,7 @@ import {
 } from "@archaos/engine";
 import { Board } from "./board";
 import { Piece } from "./piece";
-import { AdvanceToAttack, AdvanceToRangedAttack } from "./statemanager";
+import { AdvanceToAttack, AdvanceToRangedAttack } from "@archaos/engine";
 import { Geom, GameObjects, Input, Math as PMath } from "phaser";
 
 export class Cursor {
