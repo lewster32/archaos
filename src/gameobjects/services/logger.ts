@@ -1,4 +1,4 @@
-import type { Colour } from "../enums/colour";
+import type { Colour } from "@archaos/engine";
 
 import { Events } from "phaser";
 

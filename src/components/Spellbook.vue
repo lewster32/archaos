@@ -147,10 +147,11 @@
     </div>
 </template>
 <script setup lang="ts">
+import { SpellType } from "@archaos/engine";
+import type { SpellbookData } from "@archaos/engine";
 import SpellInfo from "./SpellInfo.vue";
 import SpellImage from "./SpellImage.vue";
 import { ref, computed, watch, nextTick } from "vue";
-import { SpellType } from "../gameobjects/enums/spelltype";
 import {
     balanceIndicator,
     chancePercent,
@@ -159,7 +160,6 @@ import {
 } from "../gameobjects/spells/spellutils";
 import type { Spell } from "../gameobjects/spells/spell";
 import type { SummonSpell } from "../gameobjects/spells/summonspell";
-import type { SpellbookData } from "../gameobjects/interfaces/ui";
 import type { Ref } from "vue";
 
 const props = defineProps<{

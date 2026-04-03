@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { Logger } from "../gameobjects/services/logger";
-import { EventType } from "../gameobjects/enums/eventtype";
+import { EventType } from "@archaos/engine";
 import type { TutorialMessageEvent } from "../gameobjects/tutorials/tutorial";
 
 const message = ref<TutorialMessageEvent | null>(null);

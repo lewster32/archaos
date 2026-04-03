@@ -1,8 +1,7 @@
+import { UnitType, SpellTarget } from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 import "../wizard";
 import { StatusEffectSpell } from "./statuseffectspell";
-import { UnitType } from "../enums/unittype";
-import { SpellTarget } from "../enums/spelltarget";
 import { Geom } from "phaser";
 import {
     makeMockBoard,

@@ -1,3 +1,9 @@
+import {
+    PieceConfig,
+    UnitDirection,
+    UnitStatus,
+    UnitType,
+} from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 // Wizard must be imported first to resolve the circular dependency chain:
 // Piece → Board → Player → Wizard → (extends Piece). If Piece is imported
@@ -5,11 +11,7 @@ import { describe, it, expect, vi } from "vitest";
 import "./wizard";
 import { Piece } from "./piece";
 import { Board } from "./board";
-import { PieceConfig } from "./configs/piececonfig";
 import { Player } from "./player";
-import { UnitDirection } from "./enums/unitdirection";
-import { UnitStatus } from "./enums/unitstatus";
-import { UnitType } from "./enums/unittype";
 import { Geom } from "phaser";
 import { TestRNG } from "./rng";
 

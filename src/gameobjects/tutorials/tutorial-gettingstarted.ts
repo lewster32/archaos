@@ -1,7 +1,6 @@
+import { BoardEvent, BoardState } from "@archaos/engine";
 import { Geom } from "phaser";
 import type { Board } from "../board";
-import { BoardEvent } from "../enums/boardevent";
-import { BoardState } from "../enums/boardstate";
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";
 

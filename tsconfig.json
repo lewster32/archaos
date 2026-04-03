@@ -15,11 +15,13 @@
         "noUnusedParameters": false,
         "noImplicitReturns": true,
         "useDefineForClassFields": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "paths": {
+            "@archaos/engine": [
+                "./packages/engine/src/index.ts"
+            ]
+        }
     },
     "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
-    "exclude": ["src/**/*.test.ts"],
-    "references": [
-        { "path": "packages/engine" }
-    ]
+    "exclude": ["src/**/*.test.ts"]
 }

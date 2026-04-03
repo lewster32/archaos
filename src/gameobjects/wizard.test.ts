@@ -1,11 +1,10 @@
+import { UnitDirection, UnitStatus } from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 import { Wizard } from "./wizard";
 // Import the same JSON data used by Wizard to verify clamping behaviour
 import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
-import { UnitDirection } from "./enums/unitdirection";
-import { UnitStatus } from "./enums/unitstatus";
 import { Tweens } from "phaser";
 import { TestRNG } from "./rng";
 

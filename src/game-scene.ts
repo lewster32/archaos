@@ -1,3 +1,13 @@
+import {
+    UnitType,
+    BoardPhase,
+    GameScenarioData,
+    GameSetupData,
+    GameSetupPlayerType,
+    SpellType,
+    UnitStatus,
+    SpellConfig,
+} from "@archaos/engine";
 import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import rexperlinplugin from "../assets/plugins/rexperlinplugin.min.js?url";
 import boardJson from "../assets/spritesheets/board.json?url";
@@ -19,23 +29,13 @@ import classicSoundsMp3 from "../assets/sounds/chaossounds.mp3?url";
 import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
 
 import { Board } from "./gameobjects/board";
-import { UnitType } from "./gameobjects/enums/unittype";
 import { Player } from "./gameobjects/player";
 import { Spell } from "./gameobjects/spells/spell";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
-import { BoardPhase } from "./gameobjects/enums/boardphase";
-import {
-    GameScenarioData,
-    GameSetupData,
-    GameSetupPlayerType,
-} from "./gameobjects/interfaces/ui";
-import { SpellType } from "./gameobjects/enums/spelltype";
 import { Tutorial } from "./gameobjects/tutorials/tutorial";
 
 import { Scene } from "phaser";
-import { UnitStatus } from "./gameobjects/enums/unitstatus";
-import { SpellConfig } from "./gameobjects/configs/spellconfig";
 import { loadingProgress, debugLoading } from "./game/loading-state";
 
 export class GameScene extends Scene {

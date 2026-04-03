@@ -3,8 +3,8 @@
  * the Vue UI components. This may be broken out further in future if needed.
  */
 
-import type { Spell } from "../../gameobjects/spells/spell";
-import type { Piece } from "../piece";
+import type { Spell } from "../../../../src/gameobjects/spells/spell";
+import type { Piece } from "../../../../src/gameobjects/piece";
 import { UnitProperties } from "./unitproperties";
 
 /**

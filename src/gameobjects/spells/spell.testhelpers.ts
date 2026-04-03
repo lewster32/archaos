@@ -1,10 +1,10 @@
 /** @internal – only for use in unit tests */
 /* v8 ignore start */
+import { UnitType } from "@archaos/engine";
+import type { SpellConfig } from "@archaos/engine";
 import { vi } from "vitest";
-import { UnitType } from "../enums/unittype";
 import { Geom } from "phaser";
 import type { Board } from "../board";
-import type { SpellConfig } from "../configs/spellconfig";
 import { TestRNG } from "../rng";
 
 export function makeMockBoard(

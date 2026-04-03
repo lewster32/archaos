@@ -1,6 +1,6 @@
 import { Board } from "../board";
 import { EffectType } from "../effectemitter";
-import { Colour } from "../enums/colour";
+import { Colour } from "@archaos/engine";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
 import type { Player } from "../player";

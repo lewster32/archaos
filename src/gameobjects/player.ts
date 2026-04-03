@@ -1,17 +1,18 @@
+import {
+    UnitStatus,
+    Colour,
+    RemotePlayer,
+    GameSetupPlayerType,
+    BoardEvent,
+} from "@archaos/engine";
+import type { PlayerConfig } from "@archaos/engine";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import { UnitStatus } from "./enums/unitstatus";
 import { Model } from "./model";
 import { Wizard } from "./wizard";
-import type { PlayerConfig } from "./configs/playerconfig";
 import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";
 import { ComputerWizard } from "./computerwizard";
-import { Colour } from "./enums/colour";
-import { RemotePlayer } from "./interfaces/remoteplayer";
-import { GameSetupPlayerType } from "./interfaces/ui";
-import { BoardEvent } from "./enums/boardevent";
-
 export class Player extends Model {
     /**
      * The name of this player. This is optional in the constructor, and will

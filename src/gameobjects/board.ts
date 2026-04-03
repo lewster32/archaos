@@ -1,24 +1,25 @@
-import { PieceConfig, WizardConfig } from "./configs/piececonfig";
-import { PlayerConfig } from "./configs/playerconfig";
-import { SpellConfig } from "./configs/spellconfig";
-import { Cursor } from "./cursor";
-import { createEffect, EffectType } from "./effectemitter";
-import { BoardEvent } from "./enums/boardevent";
-import { BoardLayer } from "./enums/boardlayer";
-import { BoardPhase } from "./enums/boardphase";
-import { BoardState } from "./enums/boardstate";
-import { Colour } from "./enums/colour";
-import { CursorType } from "./enums/cursortype";
-import { EventType } from "./enums/eventtype";
-import { InputType } from "./enums/inputtype";
-import { UnitStatus } from "./enums/unitstatus";
-import { UnitType } from "./enums/unittype";
-import { RangeType } from "./enums/rangetype";
 import {
+    PieceConfig,
+    WizardConfig,
+    PlayerConfig,
+    SpellConfig,
+    BoardEvent,
+    BoardLayer,
+    BoardPhase,
+    BoardState,
+    Colour,
+    CursorType,
+    EventType,
+    InputType,
+    UnitStatus,
+    UnitType,
+    RangeType,
     BoardUpdateEventData,
     Box,
     SpellbookOpenEventData,
-} from "./interfaces/ui";
+} from "@archaos/engine";
+import { Cursor } from "./cursor";
+import { createEffect, EffectType } from "./effectemitter";
 import { Model } from "./model";
 import { delay as _delay } from "../utils";
 import { Piece } from "./piece";

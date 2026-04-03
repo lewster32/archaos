@@ -1,8 +1,11 @@
+import {
+    BoardEvent,
+    EventType,
+    GameScenarioData,
+    GameScenarioPlayer,
+} from "@archaos/engine";
 import { Geom } from "phaser";
 import type { Board } from "../board";
-import { BoardEvent } from "../enums/boardevent";
-import { EventType } from "../enums/eventtype";
-import { GameScenarioData, GameScenarioPlayer } from "../interfaces/ui";
 import { Logger } from "../services/logger";
 import * as storage from "../storage";
 import { EffectType } from "../effectemitter";

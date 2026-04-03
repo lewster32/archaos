@@ -1,12 +1,14 @@
+import {
+    ActionType,
+    BoardLayer,
+    BoardState,
+    Colour,
+    CursorType,
+    EventType,
+    InputType,
+    UnitStatus,
+} from "@archaos/engine";
 import { Board } from "./board";
-import { ActionType } from "./enums/actiontype";
-import { BoardLayer } from "./enums/boardlayer";
-import { BoardState } from "./enums/boardstate";
-import { Colour } from "./enums/colour";
-import { CursorType } from "./enums/cursortype";
-import { EventType } from "./enums/eventtype";
-import { InputType } from "./enums/inputtype";
-import { UnitStatus } from "./enums/unitstatus";
 import { Piece } from "./piece";
 import { AdvanceToAttack, AdvanceToRangedAttack } from "./statemanager";
 import { Geom, GameObjects, Input, Math as PMath } from "phaser";

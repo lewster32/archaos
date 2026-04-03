@@ -22,7 +22,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { Colour } from "../gameobjects/enums/colour";
+import { Colour } from "@archaos/engine";
 import { Log } from "../gameobjects/services/logger";
 import { ref, computed } from "vue";
 

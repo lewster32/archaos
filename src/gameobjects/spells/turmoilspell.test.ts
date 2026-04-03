@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import "../wizard";
 import { Spell } from "./spell";
 import { TurmoilSpell } from "./turmoilspell";
-import { UnitType } from "../enums/unittype";
+import { UnitType } from "@archaos/engine";
 import { Geom } from "phaser";
 import {
     makeMockBoard,

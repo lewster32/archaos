@@ -141,7 +141,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
-import { UnitConfig } from "../gameobjects/interfaces/ui";
+import { UnitConfig } from "@archaos/engine";
 
 const props = defineProps<{
     unit: UnitConfig | null;

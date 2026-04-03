@@ -1,17 +1,20 @@
 import {
+    PieceConfig,
+    WizardConfig,
+    BoardLayer,
+    UnitDirection,
+    UnitStatus,
+    UnitType,
+    WizCode,
+} from "@archaos/engine";
+import {
     wizcodes,
     effectOffsets,
 } from "../../assets/spritesheets/wizards.json";
 import units from "../../assets/data/classicunits.json";
 import { Board } from "./board";
-import { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import { Player } from "./player";
 import { EffectType } from "./effectemitter";
-import { BoardLayer } from "./enums/boardlayer";
-import { UnitDirection } from "./enums/unitdirection";
-import { UnitStatus } from "./enums/unitstatus";
-import { UnitType } from "./enums/unittype";
-import { WizCode } from "./interfaces/wizcode";
 import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
 import { Math as PMath, Geom, GameObjects, BlendModes, Tweens } from "phaser";

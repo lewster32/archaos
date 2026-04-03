@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Logger, _resetLoggerForTesting } from "./logger";
-import { Colour } from "../enums/colour";
+import { Colour } from "@archaos/engine";
 
 describe("Logger", () => {
     let emitSpy: ReturnType<typeof vi.spyOn>;

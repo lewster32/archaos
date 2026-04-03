@@ -51,6 +51,15 @@
 
 <script setup lang="ts">
 // Components
+import { EventType } from "@archaos/engine";
+import type {
+    SpellbookData,
+    Box,
+    BoardUpdateEventData,
+    SpellbookOpenEventData,
+    GameSetupData,
+    GameScenarioData,
+} from "@archaos/engine";
 import Spellbook from "./Spellbook.vue";
 import Log from "./Log.vue";
 import Minimap from "./Minimap.vue";
@@ -70,18 +79,9 @@ import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import type { Ref } from "vue";
 import type { Game, Events } from "phaser";
 import type { Spell } from "../gameobjects/spells/spell";
-import type {
-    SpellbookData,
-    Box,
-    BoardUpdateEventData,
-    SpellbookOpenEventData,
-    GameSetupData,
-    GameScenarioData,
-} from "../gameobjects/interfaces/ui";
 import { getTutorial } from "../gameobjects/tutorials/tutorialregistry";
 import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
-import { EventType } from "../gameobjects/enums/eventtype";
 import { Piece } from "../gameobjects/piece";
 import * as storage from "../gameobjects/storage";
 

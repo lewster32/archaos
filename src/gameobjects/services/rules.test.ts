@@ -1,9 +1,11 @@
+import {
+    ActionType,
+    BoardState,
+    InputType,
+    UnitStatus,
+} from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 import { Rules } from "./rules";
-import { ActionType } from "../enums/actiontype";
-import { BoardState } from "../enums/boardstate";
-import { InputType } from "../enums/inputtype";
-import { UnitStatus } from "../enums/unitstatus";
 import type { Board } from "../board";
 import type { Piece } from "../piece";
 import { Geom } from "phaser";

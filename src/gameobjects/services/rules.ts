@@ -1,13 +1,15 @@
+import {
+    ActionType,
+    BoardEvent,
+    BoardState,
+    Colour,
+    CursorType,
+    EventType,
+    InputType,
+    UnitStatus,
+} from "@archaos/engine";
 import { Board } from "../board";
 import { ComputerWizard } from "../computerwizard";
-import { ActionType } from "../enums/actiontype";
-import { BoardEvent } from "../enums/boardevent";
-import { BoardState } from "../enums/boardstate";
-import { Colour } from "../enums/colour";
-import { CursorType } from "../enums/cursortype";
-import { EventType } from "../enums/eventtype";
-import { InputType } from "../enums/inputtype";
-import { UnitStatus } from "../enums/unitstatus";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Spell } from "../spells/spell";

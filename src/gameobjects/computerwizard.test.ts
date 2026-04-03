@@ -1,11 +1,10 @@
+import { SpellType, UnitType } from "@archaos/engine";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { ComputerWizard } from "./computerwizard";
 import type { Board } from "./board";
 import type { Player } from "./player";
 import type { Piece } from "./piece";
 import { Spell } from "./spells/spell";
-import { SpellType } from "./enums/spelltype";
-import { UnitType } from "./enums/unittype";
 import { Geom } from "phaser";
 import { TestRNG } from "./rng";
 

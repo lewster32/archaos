@@ -1,14 +1,12 @@
+import { SpellTarget, SpellType, UnitStatus } from "@archaos/engine";
+import type { SpellConfig } from "@archaos/engine";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 // Resolve circular dependency: Spell → Board → AttackSpell/SummonSpell → Spell
 import "../wizard";
 import { SummonSpell } from "./summonspell";
 import { Piece } from "../piece";
-import { SpellTarget } from "../enums/spelltarget";
-import { SpellType } from "../enums/spelltype";
-import { UnitStatus } from "../enums/unitstatus";
 import { Geom } from "phaser";
 import { Board } from "../board";
-import type { SpellConfig } from "../configs/spellconfig";
 import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────

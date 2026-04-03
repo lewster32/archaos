@@ -1,19 +1,21 @@
+import {
+    Colour,
+    SpellTarget,
+    SpellType,
+    UnitStatus,
+    UnitType,
+    CursorType,
+} from "@archaos/engine";
+import type { SpellConfig } from "@archaos/engine";
 import spellJsonData from "../../../assets/data/classicspells.json";
 
 import { Board } from "../board";
 import { EffectType } from "../effectemitter";
-import { Colour } from "../enums/colour";
-import { SpellTarget } from "../enums/spelltarget";
-import { SpellType } from "../enums/spelltype";
-import { UnitStatus } from "../enums/unitstatus";
-import { UnitType } from "../enums/unittype";
 import { Model } from "../model";
 import { Piece } from "../piece";
 
-import type { SpellConfig } from "../configs/spellconfig";
 import type { Player } from "../player";
 
-import { CursorType } from "../enums/cursortype";
 import type { IRNG } from "../rng";
 import { Math as PMath, Geom } from "phaser";
 import { SpellCastTarget } from "../services/rules";

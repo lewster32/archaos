@@ -1,20 +1,21 @@
-import { SpellType } from "./enums/spelltype";
+import {
+    SpellType,
+    UnitType,
+    UnitStatus,
+    BoardState,
+    SpellTarget,
+    Colour,
+    CursorType,
+    RemotePlayer,
+} from "@archaos/engine";
 import { Piece } from "./piece";
 import { Path } from "./rangegizmo";
-import { UnitType } from "./enums/unittype";
-import { UnitStatus } from "./enums/unitstatus";
-import { BoardState } from "./enums/boardstate";
 import { AttackSpell } from "./spells/attackspell";
 import { Board } from "./board";
 import type { Player } from "./player";
 import { Spell } from "./spells/spell";
 import type { SummonSpell } from "./spells/summonspell";
-import { SpellTarget } from "./enums/spelltarget";
 import { Geom } from "phaser";
-import { Colour } from "./enums/colour";
-import { CursorType } from "./enums/cursortype";
-import { RemotePlayer } from "./interfaces/remoteplayer";
-
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.

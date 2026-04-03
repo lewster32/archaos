@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import UnitStats from "./UnitStats.vue";
 import SpellImage from "./SpellImage.vue";
-import { SpellType } from "../gameobjects/enums/spelltype";
+import { SpellType } from "@archaos/engine";
 import { computed } from "vue";
 import {
     balanceIndicator,

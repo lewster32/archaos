@@ -229,7 +229,7 @@ import type {
     SetupData,
     GameSetupData,
     SetupPlayer,
-} from "../gameobjects/interfaces/ui";
+} from "@archaos/engine";
 import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
 import * as storage from "../gameobjects/storage";
 

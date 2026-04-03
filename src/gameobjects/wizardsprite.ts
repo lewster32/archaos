@@ -4,7 +4,7 @@ import {
     replaceSkin,
     searchColors,
 } from "../../assets/spritesheets/wizards.json";
-import { WizCode } from "./interfaces/wizcode";
+import { WizCode } from "@archaos/engine";
 
 import { GameObjects, Textures, Scene } from "phaser";
 

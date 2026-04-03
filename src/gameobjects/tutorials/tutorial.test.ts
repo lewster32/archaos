@@ -1,3 +1,4 @@
+import { BoardEvent, EventType } from "@archaos/engine";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
     Tutorial,
@@ -7,8 +8,6 @@ import {
     clickOrTap,
 } from "./tutorial";
 import type { Board } from "../board";
-import { BoardEvent } from "../enums/boardevent";
-import { EventType } from "../enums/eventtype";
 import { Logger, _resetLoggerForTesting } from "../services/logger";
 import { Events } from "phaser";
 

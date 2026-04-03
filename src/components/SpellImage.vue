@@ -25,6 +25,7 @@
  * across all SpellImage instances. Built once from the same atlas data Phaser
  * uses so there is no duplication of asset loading logic.
  */
+import { SpellType, UnitStatus, UnitConfig } from "@archaos/engine";
 import classicunitsAtlas from "../../assets/spritesheets/classicunits.png";
 import classicunitsData from "../../assets/spritesheets/classicunits.json";
 
@@ -160,10 +161,6 @@ function _getTrimBounds(
 import { Spell } from "../gameobjects/spells/spell";
 import { onMounted, computed, ref, watch } from "vue";
 import type { Ref } from "vue";
-import { SpellType } from "../gameobjects/enums/spelltype";
-import { UnitStatus } from "../gameobjects/enums/unitstatus";
-import { UnitConfig } from "../gameobjects/interfaces/ui";
-
 const props = defineProps<{
     spell: Spell | null;
 }>();

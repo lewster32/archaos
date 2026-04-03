@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "vitest-browser-vue";
 import UnitStats from "./UnitStats.vue";
-import type { UnitConfig } from "../gameobjects/interfaces/ui";
+import type { UnitConfig } from "@archaos/engine";
 
 function makeUnit(overrides: Partial<UnitConfig> = {}): UnitConfig {
     return {

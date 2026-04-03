@@ -10,7 +10,7 @@ import { StatusEffectSpell } from "./statuseffectspell";
 import { SubversionSpell } from "./subversionspell";
 import { SummonSpell } from "./summonspell";
 import { TurmoilSpell } from "./turmoilspell";
-import { SpellTarget } from "../enums/spelltarget";
+import { SpellTarget } from "@archaos/engine";
 import { makeMockBoard, makeConfig } from "./spell.testhelpers";
 
 describe("createSpell", () => {

@@ -1,7 +1,5 @@
+import { BoardEvent, BoardPhase, UnitType } from "@archaos/engine";
 import { Board } from "../board";
-import { BoardEvent } from "../enums/boardevent";
-import { BoardPhase } from "../enums/boardphase";
-import { UnitType } from "../enums/unittype";
 import "../wizard";
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";

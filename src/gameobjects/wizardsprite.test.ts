@@ -30,7 +30,7 @@ vi.mock("phaser", () => {
 });
 
 import { WizardSprite } from "./wizardsprite";
-import type { WizCode } from "./interfaces/wizcode";
+import type { WizCode } from "@archaos/engine";
 import {
     searchColors,
     replaceColors,

@@ -136,7 +136,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from "vue";
 import { ref, computed } from "vue";
-import { UnitStatus } from "../../src/gameobjects/enums/unitstatus";
+import { UnitStatus } from "@archaos/engine";
 import { Piece } from "../gameobjects/piece";
 import { cssColour } from "../utils";
 

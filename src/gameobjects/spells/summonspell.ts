@@ -1,18 +1,19 @@
+import {
+    SpellConfig,
+    Colour,
+    SpellTarget,
+    SpellType,
+    UnitRangedProjectileType,
+    UnitType,
+    UnitConfig,
+    UnitStatus,
+} from "@archaos/engine";
 import { Board } from "../board";
-import { SpellConfig } from "../configs/spellconfig";
 import { EffectType } from "../effectemitter";
-import { Colour } from "../enums/colour";
-import { SpellTarget } from "../enums/spelltarget";
-import { SpellType } from "../enums/spelltype";
-import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
-import { UnitType } from "../enums/unittype";
-import { UnitConfig } from "../interfaces/ui";
 import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";
 import { Geom } from "phaser";
-import { UnitStatus } from "../enums/unitstatus";
-
 /**
  * A spell that summons a unit onto the board.
  */

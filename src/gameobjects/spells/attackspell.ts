@@ -1,15 +1,16 @@
+import {
+    SpellType,
+    UnitRangedProjectileType,
+    UnitStatus,
+    Colour,
+} from "@archaos/engine";
+import type { SpellConfig } from "@archaos/engine";
 import { Board } from "../board";
 import { EffectType } from "../effectemitter";
-import { SpellType } from "../enums/spelltype";
-import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
-import { UnitStatus } from "../enums/unitstatus";
 import { Spell } from "./spell";
-import type { SpellConfig } from "../configs/spellconfig";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Geom } from "phaser";
-import { Colour } from "../enums/colour";
-
 /**
  * A spell that attacks one or more target pieces.
  */

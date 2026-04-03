@@ -1,10 +1,12 @@
+import {
+    CursorType,
+    ActionType,
+    BoardState,
+    InputType,
+    Colour,
+} from "@archaos/engine";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Cursor } from "./cursor";
-import { CursorType } from "./enums/cursortype";
-import { ActionType } from "./enums/actiontype";
-import { BoardState } from "./enums/boardstate";
-import { InputType } from "./enums/inputtype";
-import { Colour } from "./enums/colour";
 import { Geom } from "phaser";
 import type { Board } from "./board";
 

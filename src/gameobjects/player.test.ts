@@ -1,11 +1,9 @@
+import { GameSetupPlayerType, Colour } from "@archaos/engine";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Player } from "./player";
 import { ComputerWizard } from "./computerwizard";
-import { GameSetupPlayerType } from "./interfaces/ui";
 import type { Board } from "./board";
 import type { Spell } from "./spells/spell";
-import { Colour } from "./enums/colour";
-
 /**
  * A minimal Board-shaped mock object. We only include the properties and
  * methods that are actually used by the Player class.

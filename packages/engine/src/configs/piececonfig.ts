@@ -1,6 +1,6 @@
 import { UnitType } from "../enums/unittype";
 import { UnitProperties } from "../interfaces/unitproperties";
-import { Player } from "../player";
+import { Player } from "../../../../src/gameobjects/player";
 
 interface UnitConfig {
     x: number;

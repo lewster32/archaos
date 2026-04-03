@@ -1,3 +1,4 @@
+import { SpellType, SpellTarget, UnitType } from "@archaos/engine";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 // Wizard must be imported first to resolve the circular dependency chain:
 // Spell → Board → AttackSpell/SummonSpell → Spell (circular). Importing
@@ -6,9 +7,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import "../wizard";
 import { Spell } from "./spell";
 import { Piece } from "../piece";
-import { SpellType } from "../enums/spelltype";
-import { SpellTarget } from "../enums/spelltarget";
-import { UnitType } from "../enums/unittype";
 import { Geom } from "phaser";
 import { TestRNG } from "../rng";
 
