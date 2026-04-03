@@ -4,11 +4,11 @@ import {
     RemotePlayer,
     GameSetupPlayerType,
     BoardEvent,
+    Model,
 } from "@archaos/engine";
 import type { PlayerConfig } from "@archaos/engine";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import { Model } from "./model";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
 import type { Spell } from "./spells/spell";

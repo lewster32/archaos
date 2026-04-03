@@ -11,12 +11,12 @@ import {
     UnitConfig,
     UnitStats,
     UnitRangedProjectileType,
+    Entity,
 } from "@archaos/engine";
 import type { UnitProperties, IUnitStats, PieceConfig } from "@archaos/engine";
 import unitJsonData from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import { Entity } from "./entity";
 import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";
 import type { Player } from "./player";
 import type { Types } from "phaser";

@@ -1,7 +1,6 @@
-import { Board } from "./board";
+import { Board } from "../../../../src/gameobjects/board";
+import { Point } from "../point";
 import { Model } from "./model";
-
-import { Geom } from "phaser";
 
 /**
  * A unique entity on the game board with gameplay relevance.
@@ -15,7 +14,7 @@ export class Entity extends Model {
     /**
      * The position of this entity on the board.
      */
-    private readonly _position: Geom.Point;
+    private readonly _position: Point;
 
     /**
      * Create a new Entity instance.
@@ -32,7 +31,7 @@ export class Entity extends Model {
         if (!Number.isInteger(x) || !Number.isInteger(y)) {
             throw new TypeError("Coordinates must be integers.");
         }
-        this._position = new Geom.Point(x, y);
+        this._position = new Point(x, y);
         this._board = board;
     }
 
@@ -46,7 +45,7 @@ export class Entity extends Model {
     /**
      * Get the position of this entity on the board.
      */
-    get position(): Geom.Point {
+    get position(): Point {
         return this._position;
     }
 
@@ -55,7 +54,7 @@ export class Entity extends Model {
      *
      * @param value The new position.
      */
-    set position(value: Geom.Point) {
+    set position(value: Point) {
         if (!Number.isInteger(value.x) || !Number.isInteger(value.y)) {
             throw new TypeError("Coordinates must be integers.");
         }

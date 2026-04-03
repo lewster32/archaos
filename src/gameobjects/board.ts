@@ -17,10 +17,12 @@ import {
     BoardUpdateEventData,
     Box,
     SpellbookOpenEventData,
+    Model,
+    IRNG,
+    GameRNG,
 } from "@archaos/engine";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
-import { Model } from "./model";
 import { delay as _delay } from "../utils";
 import { Piece } from "./piece";
 import { Player } from "./player";
@@ -50,7 +52,6 @@ import {
     SpellTargeting,
 } from "./statemanager";
 import { Wizard } from "./wizard";
-import { IRNG, GameRNG } from "./rng";
 import type { Tutorial } from "./tutorials/tutorial";
 import {
     Display,

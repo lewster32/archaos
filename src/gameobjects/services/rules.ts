@@ -8,13 +8,13 @@ import {
     InputType,
     UnitStatus,
 } from "@archaos/engine";
+import type { IRNG } from "@archaos/engine";
 import { Board } from "../board";
 import { ComputerWizard } from "../computerwizard";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Spell } from "../spells/spell";
 import { EffectType } from "../effectemitter";
-import type { IRNG } from "../rng";
 import {
     CancelDismount,
     RequestDismount,

@@ -13,7 +13,7 @@ import { AttackSpell } from "./attackspell";
 import { Spell } from "./spell";
 import { Geom } from "phaser";
 import type { Board } from "../board";
-import { TestRNG } from "../rng";
+import { TestRNG } from "@archaos/engine";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 

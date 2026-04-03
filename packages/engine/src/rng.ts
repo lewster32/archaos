@@ -1,5 +1,3 @@
-import { Math as PMath } from "phaser";
-
 /**
  * Interface for a seedable pseudo-random number generator used by gameplay
  * logic. Visual/audio code should use `Math.random()` instead.
@@ -25,48 +23,91 @@ export interface IRNG {
      * earlier. A weight of 0 picks uniformly. In exponential mode (default)
      * the bias is much stronger for the same weight value.
      */
-    weightedRandomPick<T>(array: T[], weight: number, exponential?: boolean): T;
+    weightedRandomPick<T>(
+        array: T[],
+        weight: number,
+        exponential?: boolean,
+    ): T;
 }
 
 /**
- * Production PRNG backed by Phaser's RandomDataGenerator.
- * When a seed is provided a fresh generator is created; otherwise the global
- * `Phaser.Math.RND` instance is reused (preserving current behaviour).
+ * Pure TypeScript seedable PRNG. Uses Mulberry32 — a fast
+ * 32-bit PRNG with good distribution. Replaces Phaser's
+ * RandomDataGenerator so the engine has no Phaser dependency.
  */
 export class GameRNG implements IRNG {
-    private readonly _rng: PMath.RandomDataGenerator;
+    private _state: number;
 
     constructor(seed?: string) {
-        this._rng = seed ? new PMath.RandomDataGenerator([seed]) : PMath.RND;
+        this._state = seed
+            ? GameRNG._hashSeed(seed)
+            : Date.now();
+    }
+
+    private static _hashSeed(seed: string): number {
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+            hash =
+                ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+        }
+        return hash >>> 0 || 1;
+    }
+
+    private _next(): number {
+        // Mulberry32
+        this._state += 0x6d2b79f5;
+        let t = this._state;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     }
 
     frac(): number {
-        return this._rng.frac();
+        return this._next();
     }
+
     pick<T>(array: T[]): T {
-        return this._rng.pick(array);
+        return array[Math.floor(this._next() * array.length)];
     }
+
     weightedPick<T>(array: T[]): T {
-        return this._rng.weightedPick(array);
+        return array[
+            Math.floor(
+                Math.pow(this._next(), 2) * array.length,
+            )
+        ];
     }
+
     integerInRange(min: number, max: number): number {
-        return this._rng.integerInRange(min, max);
+        return Math.floor(
+            this._next() * (max - min + 1) + min,
+        );
     }
+
     realInRange(min: number, max: number): number {
-        return this._rng.realInRange(min, max);
+        return this._next() * (max - min) + min;
     }
+
     between(min: number, max: number): number {
-        return this._rng.between(min, max);
+        return this.integerInRange(min, max);
     }
+
     shuffle<T>(array: T[]): T[] {
-        return this._rng.shuffle(array);
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(this._next() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     }
+
     weightedRandomPick<T>(
         array: T[],
         weight: number,
         exponential: boolean = true,
     ): T {
-        return weightedRandomPick(this, array, weight, exponential);
+        return weightedRandomPick(
+            this, array, weight, exponential,
+        );
     }
 }
 

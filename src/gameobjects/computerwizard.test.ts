@@ -6,7 +6,7 @@ import type { Player } from "./player";
 import type { Piece } from "./piece";
 import { Spell } from "./spells/spell";
 import { Geom } from "phaser";
-import { TestRNG } from "./rng";
+import { TestRNG } from "@archaos/engine";
 
 // ─── Shared stubs ────────────────────────────────────────────────────────────
 

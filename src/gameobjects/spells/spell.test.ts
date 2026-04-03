@@ -8,7 +8,7 @@ import "../wizard";
 import { Spell } from "./spell";
 import { Piece } from "../piece";
 import { Geom } from "phaser";
-import { TestRNG } from "../rng";
+import { TestRNG } from "@archaos/engine";
 
 import type { Board } from "../board";
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weightedRandomPick, TestRNG } from "./rng";
+import { weightedRandomPick, TestRNG } from "@archaos/engine";
 
 /**
  * A TestRNG variant that delegates frac() to Math.random() for statistical

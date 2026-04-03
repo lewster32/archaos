@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Entity } from "./entity";
-import { Board } from "./board";
-import { Geom } from "phaser";
+import { Board } from "../../../../src/gameobjects/board";
+import { Point } from "../point";
 
 describe("Entity", () => {
     let mockBoard: Board;
@@ -45,7 +45,7 @@ describe("Entity", () => {
 
     it("should update position using setter", () => {
         const entity = new Entity(mockBoard, 2, 5, 5);
-        const newPosition = new Geom.Point(15, 25);
+        const newPosition = new Point(15, 25);
         entity.position = newPosition;
         expect(entity.position.x).toBe(15);
         expect(entity.position.y).toBe(25);
@@ -54,10 +54,10 @@ describe("Entity", () => {
     it("should throw error when setting position to non-integer coordinates", () => {
         const entity = new Entity(mockBoard, 2, 5, 5);
         expect(() => {
-            entity.position = new Geom.Point(15.5, 25);
+            entity.position = new Point(15.5, 25);
         }).toThrow("Coordinates must be integers.");
         expect(() => {
-            entity.position = new Geom.Point(15, 25.5);
+            entity.position = new Point(15, 25.5);
         }).toThrow("Coordinates must be integers.");
     });
 

@@ -33,6 +33,18 @@ export {
 export { type PlayerConfig } from "./configs/playerconfig";
 export { type SpellConfig } from "./configs/spellconfig";
 
+// Models
+export { Model } from "./models/model";
+export { Entity } from "./models/entity";
+
+// RNG
+export {
+    type IRNG,
+    GameRNG,
+    TestRNG,
+    weightedRandomPick,
+} from "./rng";
+
 // Interfaces
 export { type RemotePlayer } from "./interfaces/remoteplayer";
 export { RemoteWizard } from "./interfaces/remotewizard";

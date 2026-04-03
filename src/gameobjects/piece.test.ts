@@ -13,7 +13,7 @@ import { Piece } from "./piece";
 import { Board } from "./board";
 import { Player } from "./player";
 import { Geom } from "phaser";
-import { TestRNG } from "./rng";
+import { TestRNG } from "@archaos/engine";
 
 // ─── Mock helpers ────────────────────────────────────────────────────────────
 

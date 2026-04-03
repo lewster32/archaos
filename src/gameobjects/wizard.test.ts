@@ -6,7 +6,7 @@ import { wizcodes } from "../../assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
 import { Tweens } from "phaser";
-import { TestRNG } from "./rng";
+import { TestRNG } from "@archaos/engine";
 
 function makeMockSprite() {
     return {

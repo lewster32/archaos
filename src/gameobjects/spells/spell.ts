@@ -5,18 +5,16 @@ import {
     UnitStatus,
     UnitType,
     CursorType,
+    Model,
 } from "@archaos/engine";
-import type { SpellConfig } from "@archaos/engine";
+import type { SpellConfig, IRNG } from "@archaos/engine";
 import spellJsonData from "../../../assets/data/classicspells.json";
 
 import { Board } from "../board";
 import { EffectType } from "../effectemitter";
-import { Model } from "../model";
 import { Piece } from "../piece";
 
 import type { Player } from "../player";
-
-import type { IRNG } from "../rng";
 import { Math as PMath, Geom } from "phaser";
 import { SpellCastTarget } from "../services/rules";
 

@@ -5,7 +5,7 @@ import type { SpellConfig } from "@archaos/engine";
 import { vi } from "vitest";
 import { Geom } from "phaser";
 import type { Board } from "../board";
-import { TestRNG } from "../rng";
+import { TestRNG } from "@archaos/engine";
 
 export function makeMockBoard(
     opts: {

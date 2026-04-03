@@ -7,7 +7,7 @@ import { SummonSpell } from "./summonspell";
 import { Piece } from "../piece";
 import { Geom } from "phaser";
 import { Board } from "../board";
-import { TestRNG } from "../rng";
+import { TestRNG } from "@archaos/engine";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
