@@ -1,3 +1,4 @@
+import { EngineEvent } from "./enums/engineevent";
 import { ActionType } from "./enums/actiontype";
 import { BoardEvent } from "./enums/boardevent";
 import { BoardState } from "./enums/boardstate";
@@ -338,7 +339,7 @@ export class Rules {
                     ` available)`,
             );
             if (casted.lineOfSight) {
-                board.events.emit("showCastRange", {
+                board.events.emit(EngineEvent.ShowCastRange, {
                     position: board.selected.position,
                     range: board.currentPlayer
                         ?.selectedSpell.range,
@@ -684,7 +685,7 @@ export class Rules {
             const selectedPiece: Piece | null =
                 board.selected;
 
-            board.events.emit("effectRequested", {
+            board.events.emit(EngineEvent.EffectRequested, {
                 sound: "cancel",
             });
 
@@ -907,7 +908,7 @@ export class Rules {
                 board.pieces.filter((piece) =>
                     piece.hasStatus(UnitStatus.Spreads),
                 );
-            board.events.emit("focusPieces", {
+            board.events.emit(EngineEvent.FocusPieces, {
                 pieceIds: spreadPieces.map(
                     (p) => p.id,
                 ),

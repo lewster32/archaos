@@ -1,3 +1,4 @@
+import { EngineEvent } from "../enums/engineevent";
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { UnitStatus } from "../enums/unitstatus";
@@ -382,7 +383,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns whether a spell was successfully selected
      */
     async selectSpell(): Promise<boolean> {
-        this._board.events.emit("aiThinking");
+        this._board.events.emit(EngineEvent.AiThinking);
 
         // Re-evaluate enemy player priorities as this may impact our spell
         // choices
@@ -395,7 +396,7 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!spells.length) {
                 console.debug(`${this._player.name} has no spells to cast`);
-                this._board.events.emit("effectRequested", { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
                 return false;
             }
 
@@ -517,7 +518,7 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!pickedSpell) {
                 console.debug(`${this._player.name} failed to pick a spell`);
-                this._board.events.emit("effectRequested", { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
                 return false;
             }
 
@@ -541,7 +542,7 @@ export class ComputerWizard implements RemotePlayer {
             );
             return false;
         } finally {
-            this._board.events.emit("aiActing");
+            this._board.events.emit(EngineEvent.AiActing);
         }
     }
 
@@ -555,7 +556,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns A promise that resolves to true if the spell was cast successfully, false otherwise.
      */
     static async autoCastSpell(board: Board, player: Player): Promise<boolean> {
-        board.events.emit("aiThinking");
+        board.events.emit(EngineEvent.AiThinking);
         try {
             // Capture and clear the preferred target set by selectSpell
             const preferredTargetId: number | null =
@@ -605,7 +606,7 @@ export class ComputerWizard implements RemotePlayer {
                             if (successfullyCast) {
                                 player.discardSpell();
                             }
-                            board.events.emit("effectRequested", {
+                            board.events.emit(EngineEvent.EffectRequested, {
                                 sound: "cancel",
                             });
                             return false;
@@ -622,7 +623,7 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );
-                        board.events.emit("focusPieces", {
+                        board.events.emit(EngineEvent.FocusPieces, {
                             pieceIds: [target.id],
                         });
                         await board.rules.doCastSpell(board, target);
@@ -646,7 +647,7 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} has no valid targets to cast Disbelieve`,
                         );
-                        board.events.emit("effectRequested", {
+                        board.events.emit(EngineEvent.EffectRequested, {
                             sound: "cancel",
                         });
                         return false;
@@ -663,7 +664,7 @@ export class ComputerWizard implements RemotePlayer {
                                 (p) => p.id === preferredTargetId,
                             ) ?? board.rng.pick(potentialTargets);
                     }
-                    board.events.emit("focusPieces", {
+                    board.events.emit(EngineEvent.FocusPieces, {
                         pieceIds: [target.id],
                     });
                     await board.rules.doCastSpell(board, target);
@@ -690,7 +691,7 @@ export class ComputerWizard implements RemotePlayer {
                             console.debug(
                                 `${player.name} has no valid targets to cast ${spell.name}`,
                             );
-                            board.events.emit("effectRequested", {
+                            board.events.emit(EngineEvent.EffectRequested, {
                                 sound: "cancel",
                             });
                             return false;
@@ -704,7 +705,7 @@ export class ComputerWizard implements RemotePlayer {
                             preferredTargetId == null
                                 ? board.rng.pick(potentialTargets)
                                 : board.rng.weightedPick(miscReordered);
-                        board.events.emit("focusPieces", {
+                        board.events.emit(EngineEvent.FocusPieces, {
                             pieceIds: [target.id],
                         });
                         await board.rules.doCastSpell(board, target);
@@ -712,13 +713,13 @@ export class ComputerWizard implements RemotePlayer {
                     }
                 }
             }
-            board.events.emit("effectRequested", { sound: "cancel" });
+            board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
             return false;
         } catch (error) {
             console.error(`Error casting spell for ${player.name}:`, error);
             return false;
         } finally {
-            board.events.emit("aiActing");
+            board.events.emit(EngineEvent.AiActing);
         }
     }
 
@@ -739,7 +740,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns true if the unit was moved successfully, false otherwise
      */
     async moveUnit(piece: Piece): Promise<boolean> {
-        this._board.events.emit("focusPieces", { pieceIds: [piece.id] });
+        this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [piece.id] });
         this._board.selectPiece(piece.id);
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
@@ -965,7 +966,7 @@ export class ComputerWizard implements RemotePlayer {
                 });
             if (reachableTiles.length === 0) {
                 console.debug(`No reachable tiles for ${piece.fullName}`);
-                this._board.events.emit("effectRequested", { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
                 return false;
             }
             // We're going to move to a point, but it may be random or it may
@@ -1112,7 +1113,7 @@ export class ComputerWizard implements RemotePlayer {
             console.debug(
                 `${piece.fullName} moves to (${movePt.x}, ${movePt.y})`,
             );
-            this._board.events.emit("focusPosition", { position: movePt });
+            this._board.events.emit(EngineEvent.FocusPosition, { position: movePt });
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
                 console.debug(`${piece.fullName} is now engaged after moving`);
@@ -1153,7 +1154,7 @@ export class ComputerWizard implements RemotePlayer {
                 const target: Piece =
                     this._board.rng.weightedPick(rangedTargets);
 
-                this._board.events.emit("focusPieces", {
+                this._board.events.emit(EngineEvent.FocusPieces, {
                     pieceIds: [target.id],
                 });
                 console.debug(
@@ -1180,7 +1181,7 @@ export class ComputerWizard implements RemotePlayer {
      * and ranged attacking as appropriate.
      */
     async moveAllUnits(): Promise<void> {
-        this._board.events.emit("aiThinking");
+        this._board.events.emit(EngineEvent.AiThinking);
 
         // Re-evaluate enemy players again, as that may have changed after
         // the spell casting round
@@ -1218,7 +1219,7 @@ export class ComputerWizard implements RemotePlayer {
                 piece.turnOver = true;
             }
         } finally {
-            this._board.events.emit("aiActing");
+            this._board.events.emit(EngineEvent.AiActing);
         }
     }
 }

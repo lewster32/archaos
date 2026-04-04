@@ -25,6 +25,7 @@ export {
 export { UnitStatus } from "./enums/unitstatus";
 export { UnitType } from "./enums/unittype";
 export { EffectType } from "./enums/effecttype";
+export { EngineEvent } from "./enums/engineevent";
 
 // Configs
 export {

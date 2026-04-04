@@ -1,6 +1,7 @@
 import {
     Board as EngineBoard,
     BoardEvent,
+    EngineEvent,
     BoardLayer,
     BoardPhase,
     BoardState,
@@ -181,19 +182,19 @@ export class Board extends EngineBoard {
         // Engine event subscriptions — the engine
         // emits these; the client handles rendering.
         this.events.on(
-            "aiThinking",
+            EngineEvent.AiThinking,
             () => {
                 this.cursor.enabled = false;
             },
         );
         this.events.on(
-            "aiActing",
+            EngineEvent.AiActing,
             () => {
                 this.cursor.enabled = true;
             },
         );
         this.events.on(
-            "focusPieces",
+            EngineEvent.FocusPieces,
             (data: { pieceIds: number[] }) => {
                 const pieces = data.pieceIds
                     .map((pid) => this.getPiece(pid))
@@ -202,7 +203,7 @@ export class Board extends EngineBoard {
             },
         );
         this.events.on(
-            "focusPosition",
+            EngineEvent.FocusPosition,
             (data: {
                 position: { x: number; y: number };
             }) => {
@@ -215,7 +216,7 @@ export class Board extends EngineBoard {
             },
         );
         this.events.on(
-            "effectRequested",
+            EngineEvent.EffectRequested,
             async (data: {
                 type?: EffectType;
                 pieceId?: number;
@@ -240,7 +241,7 @@ export class Board extends EngineBoard {
             },
         );
         this.events.on(
-            "showCastRange",
+            EngineEvent.ShowCastRange,
             async (data: {
                 position: Geom.Point;
                 range: number;
