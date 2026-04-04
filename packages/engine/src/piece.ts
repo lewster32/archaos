@@ -12,6 +12,7 @@ import type {
 } from "./interfaces/unitproperties";
 import type { UnitConfig, UnitStats } from "./interfaces/ui";
 import type { Player } from "./player";
+import { distance } from "./pathfinding";
 
 // Board is imported only as a type to avoid a circular
 // dependency at runtime (Board → Piece → Board).
@@ -1140,6 +1141,47 @@ export class Piece extends Entity {
             }
         }
         return null;
+    }
+
+    /**
+     * Find all pieces that pose a threat to this piece.
+     * Engine version uses distance checks only (no
+     * rangeGizmo path validation). The client overrides
+     * to add movement-path awareness.
+     */
+    findThreatPieces(): Set<Piece> {
+        const threats = new Set<Piece>();
+        for (const piece of this.board.pieces) {
+            if (
+                piece.owner === this.owner ||
+                piece.dead ||
+                piece.currentRider ||
+                piece.engulfed
+            ) {
+                continue;
+            }
+            const melee =
+                piece.canAttackPiece(this) &&
+                distance(
+                    piece.position,
+                    this.position,
+                ) <= 1.5;
+            const ranged =
+                piece.canRangedAttackPiece(this) &&
+                this.inRangedAttackRange(
+                    piece.position,
+                );
+            const spreads =
+                piece.hasStatus(UnitStatus.Spreads) &&
+                distance(
+                    piece.position,
+                    this.position,
+                ) <= 3;
+            if (melee || ranged || spreads) {
+                threats.add(piece);
+            }
+        }
+        return threats;
     }
 
     /**

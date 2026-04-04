@@ -137,7 +137,7 @@ export {
 export { Rules, _resetRulesForTesting } from "./rules";
 
 // Board
-export { Board } from "./board";
+export { Board, type RangeGizmoLike } from "./board";
 
 // Register the spell factory on Board to break the
 // circular dependency (board → spellfactory →
@@ -150,9 +150,7 @@ import {
 _B.registerSpellFactory(_cs);
 
 // AI
-// ComputerWizard not barrel-exported yet — still imports
-// client Board for rendering methods. Import directly from
-// ./ai/computerwizard instead.
+export { ComputerWizard } from "./ai/computerwizard";
 
 // Pathfinding
 export {

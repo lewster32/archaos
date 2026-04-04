@@ -2,9 +2,8 @@ import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { UnitStatus } from "../enums/unitstatus";
 import { BoardState } from "../enums/boardstate";
+import { RangeType } from "../enums/rangetype";
 import { SpellTarget } from "../enums/spelltarget";
-import { Colour } from "../enums/colour";
-import { CursorType } from "../enums/cursortype";
 import type { RemotePlayer } from "../interfaces/remoteplayer";
 import { Piece } from "../piece";
 import { Path } from "../pathfinding";
@@ -22,12 +21,7 @@ export class ComputerWizard implements RemotePlayer {
     /**
      * The board the computer wizard is playing on.
      */
-    // Typed as `any` because ComputerWizard bridges
-    // engine logic and client-side Board methods (cursor,
-    // sound, rules, movePiece, etc.) that are not on the
-    // engine Board type.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private readonly _board: any;
+    private readonly _board: Board;
 
     /**
      * The player this computer wizard is controlling.
@@ -388,7 +382,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns whether a spell was successfully selected
      */
     async selectSpell(): Promise<boolean> {
-        this._board.cursor.enabled = false;
+        this._board.events.emit("aiThinking");
 
         // Re-evaluate enemy player priorities as this may impact our spell
         // choices
@@ -401,7 +395,7 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!spells.length) {
                 console.debug(`${this._player.name} has no spells to cast`);
-                this._board.sound.play("cancel");
+                this._board.events.emit("effectRequested", { sound: "cancel" });
                 return false;
             }
 
@@ -523,7 +517,7 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!pickedSpell) {
                 console.debug(`${this._player.name} failed to pick a spell`);
-                this._board.sound.play("cancel");
+                this._board.events.emit("effectRequested", { sound: "cancel" });
                 return false;
             }
 
@@ -547,7 +541,7 @@ export class ComputerWizard implements RemotePlayer {
             );
             return false;
         } finally {
-            this._board.cursor.enabled = true;
+            this._board.events.emit("aiActing");
         }
     }
 
@@ -561,7 +555,7 @@ export class ComputerWizard implements RemotePlayer {
      * @returns A promise that resolves to true if the spell was cast successfully, false otherwise.
      */
     static async autoCastSpell(board: Board, player: Player): Promise<boolean> {
-        board.cursor.enabled = false;
+        board.events.emit("aiThinking");
         try {
             // Capture and clear the preferred target set by selectSpell
             const preferredTargetId: number | null =
@@ -611,7 +605,9 @@ export class ComputerWizard implements RemotePlayer {
                             if (successfullyCast) {
                                 player.discardSpell();
                             }
-                            board.sound.play("cancel");
+                            board.events.emit("effectRequested", {
+                                sound: "cancel",
+                            });
                             return false;
                         }
                         console.debug(
@@ -626,7 +622,9 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} is casting ${spell.name} on target ${target.name}`,
                         );
-                        await board.centreOnPieces([target]);
+                        board.events.emit("focusPieces", {
+                            pieceIds: [target.id],
+                        });
                         await board.rules.doCastSpell(board, target);
                         successfullyCast = true;
                     }
@@ -648,7 +646,9 @@ export class ComputerWizard implements RemotePlayer {
                         console.debug(
                             `${player.name} has no valid targets to cast Disbelieve`,
                         );
-                        board.sound.play("cancel");
+                        board.events.emit("effectRequested", {
+                            sound: "cancel",
+                        });
                         return false;
                     }
 
@@ -663,7 +663,9 @@ export class ComputerWizard implements RemotePlayer {
                                 (p) => p.id === preferredTargetId,
                             ) ?? board.rng.pick(potentialTargets);
                     }
-                    await board.centreOnPieces([target]);
+                    board.events.emit("focusPieces", {
+                        pieceIds: [target.id],
+                    });
                     await board.rules.doCastSpell(board, target);
                     return true;
                 } else if (spell.type === SpellType.Misc) {
@@ -688,7 +690,9 @@ export class ComputerWizard implements RemotePlayer {
                             console.debug(
                                 `${player.name} has no valid targets to cast ${spell.name}`,
                             );
-                            board.sound.play("cancel");
+                            board.events.emit("effectRequested", {
+                                sound: "cancel",
+                            });
                             return false;
                         }
                         const miscReordered: Piece[] =
@@ -700,19 +704,21 @@ export class ComputerWizard implements RemotePlayer {
                             preferredTargetId == null
                                 ? board.rng.pick(potentialTargets)
                                 : board.rng.weightedPick(miscReordered);
-                        await board.centreOnPieces([target]);
+                        board.events.emit("focusPieces", {
+                            pieceIds: [target.id],
+                        });
                         await board.rules.doCastSpell(board, target);
                         return true;
                     }
                 }
             }
-            board.sound.play("cancel");
+            board.events.emit("effectRequested", { sound: "cancel" });
             return false;
         } catch (error) {
             console.error(`Error casting spell for ${player.name}:`, error);
             return false;
         } finally {
-            board.cursor.enabled = true;
+            board.events.emit("aiActing");
         }
     }
 
@@ -733,8 +739,8 @@ export class ComputerWizard implements RemotePlayer {
      * @returns true if the unit was moved successfully, false otherwise
      */
     async moveUnit(piece: Piece): Promise<boolean> {
-        this._board.centreOnPieces([piece]);
-        await this._board.selectPiece(piece.id);
+        this._board.events.emit("focusPieces", { pieceIds: [piece.id] });
+        this._board.selectPiece(piece.id);
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
         if (piece.engaged) {
@@ -869,7 +875,7 @@ export class ComputerWizard implements RemotePlayer {
                         (mountable.canAttack && !mountable.attacked) ||
                         (mountable.canRangedAttack && !mountable.rangedAttacked)
                     ) {
-                        await this._board.selectPiece(mountable.id, true);
+                        this._board.selectPiece(mountable.id);
                     }
                     return true;
                 } else {
@@ -879,71 +885,60 @@ export class ComputerWizard implements RemotePlayer {
                 }
             }
 
-            // Special case: if there are any terminal paths and this is a
-            // flying unit, attack one of them with a greater chance the higher
-            // the difficulty level
+            // Special case: if this is a flying unit, search all positions
+            // within fly range for an attackable enemy and go for them with
+            // a greater chance the higher the difficulty level.
             if (
                 piece.hasStatus(UnitStatus.Flying) &&
                 this._board.rollChance(this.aggression)
             ) {
-                const terminalPaths: Set<Path> =
-                    this._board.rangeGizmo.getAllTerminalPaths();
-                if (terminalPaths.size > 0) {
-                    // Search the terminal paths for the first attackable target
-                    let targetPiece: Piece | null = null;
-                    for (const path of terminalPaths) {
-                        const terminalNode = path.nodes?.findLast(
-                            (node) => node.terminal,
-                        );
-                        if (terminalNode) {
-                            const pos: Point = terminalNode.pos;
-                            targetPiece =
-                                this._board.getPiecesAtPosition(
-                                    pos,
-                                    (p: Piece) => {
-                                        return (
-                                            p.owner !== this._player && // Enemy piece
-                                            piece.canAttackPossiblyUndeadPiece(
-                                                p,
-                                            ) && // Can attack target even if undead
-                                            piece.canAttackPiece(p)
-                                        ); // Can attack target
-                                    },
-                                )[0] || null;
-                            if (targetPiece) {
-                                break;
-                            }
-                        }
-                    }
-                    // If we found a target, go git it
-                    if (targetPiece) {
-                        console.debug(
-                            `${piece.fullName} flies to attack ${targetPiece.fullName}`,
-                        );
-                        piece.moved = true;
-                        await this._board.attackPiece(piece.id, targetPiece.id);
-                        if (!piece.currentMount && piece.engaged) {
-                            const firstEngagingPiece: Piece | null =
-                                piece.getFirstEngagingPiece();
-
-                            if (firstEngagingPiece) {
-                                console.debug(
-                                    `${piece.fullName} is now engaged after attacking`,
+                const flyPoints: Point[] = this._board.getPointsInRange(
+                    piece.position,
+                    piece.stats.movement,
+                    false,
+                    RangeType.Fly,
+                );
+                let targetPiece: Piece | null = null;
+                for (const pos of flyPoints) {
+                    targetPiece =
+                        this._board.getPiecesAtPosition(
+                            pos,
+                            (p: Piece) => {
+                                return (
+                                    p.owner !== this._player && // Enemy piece
+                                    piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
+                                    piece.canAttackPiece(p) // Can attack target
                                 );
-                                piece.attacked = false;
-                                await this.moveUnit(piece);
-                            }
-                        }
-                        piece.attacked = true;
-                        return true;
-                    } else {
-                        console.debug(
-                            `No attackable terminal targets found for ${piece.fullName}`,
-                        );
+                            },
+                        )[0] || null;
+                    if (targetPiece) {
+                        break;
                     }
+                }
+                // If we found a target, go get it
+                if (targetPiece) {
+                    console.debug(
+                        `${piece.fullName} flies to attack ${targetPiece.fullName}`,
+                    );
+                    piece.moved = true;
+                    this._board.attackPiece(piece.id, targetPiece.id);
+                    if (!piece.currentMount && piece.engaged) {
+                        const firstEngagingPiece: Piece | null =
+                            piece.getFirstEngagingPiece();
+
+                        if (firstEngagingPiece) {
+                            console.debug(
+                                `${piece.fullName} is now engaged after attacking`,
+                            );
+                            piece.attacked = false;
+                            await this.moveUnit(piece);
+                        }
+                    }
+                    piece.attacked = true;
+                    return true;
                 } else {
                     console.debug(
-                        `No terminal paths found for ${piece.fullName}`,
+                        `No attackable targets in fly range for ${piece.fullName}`,
                     );
                 }
             } else {
@@ -970,7 +965,7 @@ export class ComputerWizard implements RemotePlayer {
                 });
             if (reachableTiles.length === 0) {
                 console.debug(`No reachable tiles for ${piece.fullName}`);
-                this._board.sound.play("cancel");
+                this._board.events.emit("effectRequested", { sound: "cancel" });
                 return false;
             }
             // We're going to move to a point, but it may be random or it may
@@ -1117,7 +1112,7 @@ export class ComputerWizard implements RemotePlayer {
             console.debug(
                 `${piece.fullName} moves to (${movePt.x}, ${movePt.y})`,
             );
-            this._board.centreOnPosition(movePt);
+            this._board.events.emit("focusPosition", { position: movePt });
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
                 console.debug(`${piece.fullName} is now engaged after moving`);
@@ -1158,20 +1153,9 @@ export class ComputerWizard implements RemotePlayer {
                 const target: Piece =
                     this._board.rng.weightedPick(rangedTargets);
 
-                this._board.sound.play("bowselecta");
-                this._board.logger.log(
-                    `${piece.name}'s turn to ranged attack`,
-                    Colour.Yellow,
-                );
-                await this._board.rangeGizmo.showSimpleRange(
-                    piece.position,
-                    piece.stats.range,
-                    CursorType.RangeRangedAttack,
-                    true,
-                );
-
-                await this._board.centreOnPieces([target]);
-                await Board.delay(Board.DEFAULT_DELAY * 1.5);
+                this._board.events.emit("focusPieces", {
+                    pieceIds: [target.id],
+                });
                 console.debug(
                     `${piece.fullName} performs ranged attack on ${target.fullName}`,
                 );
@@ -1196,7 +1180,7 @@ export class ComputerWizard implements RemotePlayer {
      * and ranged attacking as appropriate.
      */
     async moveAllUnits(): Promise<void> {
-        this._board.cursor.enabled = false;
+        this._board.events.emit("aiThinking");
 
         // Re-evaluate enemy players again, as that may have changed after
         // the spell casting round
@@ -1234,7 +1218,7 @@ export class ComputerWizard implements RemotePlayer {
                 piece.turnOver = true;
             }
         } finally {
-            this._board.cursor.enabled = true;
+            this._board.events.emit("aiActing");
         }
     }
 }

@@ -16,6 +16,7 @@ function makeMockBoard(rollChanceResult: boolean = true) {
     return {
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         rng: new TestRNG(),
+        events: { emit: vi.fn() },
     } as unknown as Board;
 }
 
@@ -39,6 +40,7 @@ function makeBoardStub(
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         getPiecesByOwner: opts.getPiecesByOwner ?? vi.fn().mockReturnValue([]),
         rng: new TestRNG(),
+        events: { emit: vi.fn() },
     } as unknown as Board;
 }
 
@@ -761,11 +763,10 @@ describe("ComputerWizard", () => {
                 pieces,
                 players: [player, enemy],
                 balance: boardBalance,
-                cursor: { enabled: true },
-                sound: { play: vi.fn() },
                 rollChance: rollChanceFn,
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
+                events: { emit: vi.fn() },
             } as unknown as Board;
 
             injectDragonSpell(dragonChance, dragonBalance);
@@ -1056,11 +1057,10 @@ describe("ComputerWizard", () => {
                 pieces: [dragon],
                 players: [player, enemy],
                 balance: 0,
-                cursor: { enabled: true },
-                sound: { play: vi.fn() },
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
+                events: { emit: vi.fn() },
             } as unknown as Board;
 
             (Spell.spells as any)[TEST_KEY] = {
@@ -1153,12 +1153,11 @@ describe("ComputerWizard", () => {
                 pieces: [goblin],
                 players: [player, enemy],
                 balance: 0,
-                cursor: { enabled: true },
-                sound: { play: vi.fn() },
                 // Low suspicion → preference ≈ 0.032 → this threshold rejects it
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0.5),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
+                events: { emit: vi.fn() },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, player, 1);
@@ -1216,11 +1215,9 @@ describe("ComputerWizard", () => {
 
             const board = {
                 pieces: [goblin, dragon],
-                cursor: { enabled: true },
-                sound: { play: vi.fn() },
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                centreOnPieces: vi.fn().mockResolvedValue(undefined),
+                events: { emit: vi.fn() },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);
@@ -1265,11 +1262,9 @@ describe("ComputerWizard", () => {
 
             const board = {
                 pieces: [goblin],
-                cursor: { enabled: true },
-                sound: { play: vi.fn() },
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                centreOnPieces: vi.fn().mockResolvedValue(undefined),
+                events: { emit: vi.fn() },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);

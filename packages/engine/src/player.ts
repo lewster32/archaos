@@ -15,8 +15,10 @@ import type { Board } from "./board";
  */
 export interface PlayerAI {
     difficulty: number;
+    preferredTargetId: number | null;
     rememberNonIllusionPiece?(pieceId: number): void;
     forgetIllusionKnowledge?(): void;
+    knowsPieceIsNonIllusion?(pieceId: number): boolean;
 }
 
 /**
