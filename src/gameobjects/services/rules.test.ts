@@ -1,9 +1,4 @@
-import {
-    ActionType,
-    BoardState,
-    InputType,
-    UnitStatus,
-} from "@archaos/engine";
+import { ActionType, BoardState, InputType, UnitStatus } from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 import { Rules } from "./rules";
 import type { Board } from "../board";

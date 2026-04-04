@@ -27,11 +27,7 @@ export function distance(
         return Math.max(dx, dy);
     }
 
-    return (
-        Math.max(dx, dy) -
-        Math.min(dx, dy) +
-        Math.min(dx, dy) * 1.5
-    );
+    return Math.max(dx, dy) - Math.min(dx, dy) + Math.min(dx, dy) * 1.5;
 }
 
 /**
@@ -43,16 +39,9 @@ export function distance(
  * @param toPt The destination point
  * @returns An integer 0–7 representing the octant
  */
-export function getAngle(
-    fromPt: Point,
-    toPt: Point,
-): number {
+export function getAngle(fromPt: Point, toPt: Point): number {
     let a: number = Math.floor(
-        Math.atan2(
-            toPt.y - fromPt.y,
-            toPt.x - fromPt.x,
-        ) *
-            (180 / Math.PI),
+        Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI),
     );
     a += 22.5;
     a = a < 0 ? a + 360 : a;
@@ -79,28 +68,19 @@ export function diagonalHeuristic(
     diagonalCost: number = 1.5,
     terminalCost: number = 100,
 ): number {
-    const dx: number = Math.abs(
-        node.x - destinationNode.x,
-    );
-    const dy: number = Math.abs(
-        node.y - destinationNode.y,
-    );
+    const dx: number = Math.abs(node.x - destinationNode.x);
+    const dy: number = Math.abs(node.y - destinationNode.y);
 
     const diag: number = Math.min(dx, dy);
     const straight: number = dx + dy;
 
     if (node.warning || node.terminal) {
         return (
-            diagonalCost * diag +
-            cost * (straight - 2 * diag) +
-            terminalCost
+            diagonalCost * diag + cost * (straight - 2 * diag) + terminalCost
         );
     }
 
-    return (
-        diagonalCost * diag +
-        cost * (straight - 2 * diag)
-    );
+    return diagonalCost * diag + cost * (straight - 2 * diag);
 }
 
 /**
@@ -113,29 +93,19 @@ export function diagonalHeuristic(
  * @param startNode The start node
  * @returns A new Path with nodes, angles, and cost
  */
-export function buildPath(
-    destinationNode: Node,
-    startNode: Node,
-): Path {
+export function buildPath(destinationNode: Node, startNode: Node): Path {
     const angles: number[] = [];
     const path: Node[] = [];
     let node: Node = destinationNode;
     let cost: number = 0;
     path.push(node);
     while (node != startNode) {
-        cost += distance(
-            node.pos,
-            node.parentNode.pos,
-        );
-        angles.unshift(
-            getAngle(node.parentNode.pos, node.pos),
-        );
+        cost += distance(node.pos, node.parentNode.pos);
+        angles.unshift(getAngle(node.parentNode.pos, node.pos));
         node = node.parentNode;
         path.unshift(node);
     }
-    angles.unshift(
-        getAngle(startNode.pos, destinationNode.pos),
-    );
+    angles.unshift(getAngle(startNode.pos, destinationNode.pos));
 
     // Mark nodes after a blocking node as
     // non-traversable
@@ -143,10 +113,7 @@ export function buildPath(
     for (const pathNode of path) {
         if (foundBlockingNode) {
             pathNode.traversable = false;
-        } else if (
-            !pathNode.traversable ||
-            pathNode.terminal
-        ) {
+        } else if (!pathNode.traversable || pathNode.terminal) {
             foundBlockingNode = true;
         }
     }
@@ -161,10 +128,7 @@ export function buildPath(
  * @param openNodes The current open set
  * @returns True if the node is in the open set
  */
-export function isOpen(
-    node: Node,
-    openNodes: Node[],
-): boolean {
+export function isOpen(node: Node, openNodes: Node[]): boolean {
     const l: number = openNodes.length;
     for (let i: number = 0; i < l; ++i) {
         if (openNodes[i] == node) return true;
@@ -179,10 +143,7 @@ export function isOpen(
  * @param closedNodes The current closed set
  * @returns True if the node is in the closed set
  */
-export function isClosed(
-    node: Node,
-    closedNodes: Node[],
-): boolean {
+export function isClosed(node: Node, closedNodes: Node[]): boolean {
     const l: number = closedNodes.length;
     for (let i: number = 0; i < l; ++i) {
         if (closedNodes[i] == node) return true;
@@ -261,10 +222,7 @@ export class Node {
      * reached via flying movement.
      */
     isValid(): boolean {
-        if (
-            (this.path !== null || this.flying) &&
-            this.traversable
-        ) {
+        if ((this.path !== null || this.flying) && this.traversable) {
             return true;
         }
         return false;
@@ -286,11 +244,7 @@ export class Path {
      * @param angles Direction angle indices (0–7)
      * @param cost Total movement cost
      */
-    constructor(
-        nodes: Node[],
-        angles: number[],
-        cost: number,
-    ) {
+    constructor(nodes: Node[], angles: number[], cost: number) {
         if (nodes?.length && cost > 0) {
             this._nodes = nodes;
             this._angles = angles;
@@ -303,9 +257,7 @@ export class Path {
      * cloned Points.
      */
     public toPoints(): Point[] {
-        return this._nodes.map((node: Node) =>
-            Point.clone(node.pos),
-        );
+        return this._nodes.map((node: Node) => Point.clone(node.pos));
     }
 
     /** Total movement cost of the path */
@@ -330,8 +282,6 @@ export class Path {
 
     /** True if any node is a terminal node */
     get terminal(): boolean {
-        return this._nodes.some(
-            (n: Node) => n.terminal,
-        );
+        return this._nodes.some((n: Node) => n.terminal);
     }
 }

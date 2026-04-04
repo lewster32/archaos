@@ -1,7 +1,5 @@
 import { SpellType } from "../enums/spelltype";
-import {
-    UnitRangedProjectileType,
-} from "../enums/unitrangedprojectiletype";
+import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitStatus } from "../enums/unitstatus";
 import { Colour } from "../enums/colour";
 import type { SpellConfig } from "../configs/spellconfig";
@@ -15,9 +13,7 @@ import type { Player } from "../player";
 /**
  * A spell that attacks one or more target pieces.
  */
-export class AttackSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
     constructor(board: Board<P>, id: number, config: SpellConfig) {
         super(board, id, config);
         this._type = SpellType.Attack;
@@ -70,21 +66,17 @@ export class AttackSpell<
         }
 
         if (beamSound) {
-            this._board.events.emit(
-                EngineEvent.EffectRequested,
-                { sound: beamSound },
-            );
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: beamSound,
+            });
         }
 
         if (beamEffect) {
-            await this._board.events.emitAsync(
-                EngineEvent.EffectRequested,
-                {
-                    type: beamEffect,
-                    pieceId: target.id,
-                    startPieceId: castingPiece.id,
-                },
-            );
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: beamEffect,
+                pieceId: target.id,
+                startPieceId: castingPiece.id,
+            });
         }
 
         const rollSuccess: boolean = this._board.roll(
@@ -96,19 +88,15 @@ export class AttackSpell<
         let targetKilled: boolean = false;
 
         if (hitSound) {
-            this._board.events.emit(
-                EngineEvent.EffectRequested,
-                { sound: hitSound },
-            );
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: hitSound,
+            });
         }
         if (hitEffect) {
-            await this._board.events.emitAsync(
-                EngineEvent.EffectRequested,
-                {
-                    type: hitEffect,
-                    pieceId: target.id,
-                },
-            );
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: hitEffect,
+                pieceId: target.id,
+            });
         }
 
         if (rollSuccess) {
@@ -116,20 +104,18 @@ export class AttackSpell<
                 this.properties.destroyWizardCreatures &&
                 target.hasStatus(UnitStatus.Wizard)
             ) {
-                this._board.events.emit(
-                    EngineEvent.EffectRequested,
-                    { sound: "justicesuccessful" },
-                );
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "justicesuccessful",
+                });
                 await target.owner.destroyCreations();
                 this._board.logger.log(
                     `${target.fullName}'s creations were dispelled by ${this.name}`,
                 );
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
             } else {
-                this._board.events.emit(
-                    EngineEvent.EffectRequested,
-                    { sound: "killcreature" },
-                );
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "killcreature",
+                });
                 await target.kill();
                 targetKilled = true;
             }

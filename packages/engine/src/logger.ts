@@ -3,14 +3,10 @@ import { EventEmitter } from "./events";
 
 const EMITTER_KEY = "__archaos_logger_emitter__";
 const _emitter: EventEmitter =
-    ((globalThis as Record<string, unknown>)[
-        EMITTER_KEY
-    ] as EventEmitter) ??
+    ((globalThis as Record<string, unknown>)[EMITTER_KEY] as EventEmitter) ??
     (() => {
         const e = new EventEmitter();
-        (globalThis as Record<string, unknown>)[
-            EMITTER_KEY
-        ] = e;
+        (globalThis as Record<string, unknown>)[EMITTER_KEY] = e;
         return e;
     })();
 
@@ -41,10 +37,7 @@ export class Logger {
         return _emitter;
     }
 
-    public log(
-        message: string,
-        colour?: Colour,
-    ): void {
+    public log(message: string, colour?: Colour): void {
         _emitter.emit("log", {
             message,
             id: ++this._currentLogId,

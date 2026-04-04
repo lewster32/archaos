@@ -2,9 +2,7 @@ import type { SpellConfig } from "../configs/spellconfig";
 import { Colour } from "../enums/colour";
 import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
-import {
-    UnitRangedProjectileType,
-} from "../enums/unitrangedprojectiletype";
+import { UnitRangedProjectileType } from "../enums/unitrangedprojectiletype";
 import { UnitType } from "../enums/unittype";
 import type { UnitConfig } from "../interfaces/ui";
 import { UnitStatus } from "../enums/unitstatus";
@@ -18,9 +16,7 @@ import { Spell } from "./spell";
 /**
  * A spell that summons a unit onto the board.
  */
-export class SummonSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
     protected _illusion: boolean;
 
     constructor(board: Board<P>, id: number, config: SpellConfig) {
@@ -93,10 +89,7 @@ export class SummonSpell<
         );
     }
 
-    getValidTarget(
-        target: Point | P,
-        showReason?: boolean,
-    ): Point | null {
+    getValidTarget(target: Point | P, showReason?: boolean): Point | null {
         if (Piece.isPiece(target)) {
             if (showReason) {
                 this._board.logger.log(
@@ -144,36 +137,25 @@ export class SummonSpell<
         return null;
     }
 
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point: Point,
-    ): Promise<P> {
+    async doCast(owner: Player<P>, castingPiece: P, point: Point): Promise<P> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "castloop08" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCasting,
-                pieceId: castingPiece.id,
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "castloop08",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCasting,
+            pieceId: castingPiece.id,
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCastBeam,
+            pieceId: castingPiece.id,
+            startPieceId: castingPiece.id,
+            targetPosition: {
+                x: point.x,
+                y: point.y,
             },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCastBeam,
-                pieceId: castingPiece.id,
-                startPieceId: castingPiece.id,
-                targetPosition: {
-                    x: point.x,
-                    y: point.y,
-                },
-            },
-        );
+        });
 
         const newPiece: P = await this._board.addPiece({
             type: UnitType.Creature,
@@ -202,21 +184,17 @@ export class SummonSpell<
             group: unit.group || "classicunits",
         });
 
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "spelleffect" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.SummonPiece,
-                pieceId: newPiece.id,
-                targetPosition: {
-                    x: point.x,
-                    y: point.y,
-                },
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "spelleffect",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.SummonPiece,
+            pieceId: newPiece.id,
+            targetPosition: {
+                x: point.x,
+                y: point.y,
             },
-        );
+        });
 
         newPiece.turnOver = true;
 
@@ -243,8 +221,7 @@ export class SummonSpell<
         const isSpreading: boolean =
             this.unitProperties?.status?.includes(UnitStatus.Spreads) ?? false;
         const isWall: boolean = this.name === "Wall";
-        const wizardPos: Point | null =
-            player.castingPiece?.position ?? null;
+        const wizardPos: Point | null = player.castingPiece?.position ?? null;
         // Track the last two wall positions across casts to infer run direction.
         let lastWallPt: Point | null = null;
         let prevWallPt: Point | null = null;
@@ -270,10 +247,9 @@ export class SummonSpell<
                 if (successfullyCast) {
                     player.discardSpell();
                 }
-                this._board.events.emit(
-                    EngineEvent.EffectRequested,
-                    { sound: "cancel" },
-                );
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
                 return false;
             }
 
@@ -315,10 +291,9 @@ export class SummonSpell<
                     if (successfullyCast) {
                         player.discardSpell();
                     } else {
-                        this._board.events.emit(
-                    EngineEvent.EffectRequested,
-                    { sound: "cancel" },
-                );
+                        this._board.events.emit(EngineEvent.EffectRequested, {
+                            sound: "cancel",
+                        });
                     }
                     return successfullyCast;
                 }
@@ -596,11 +571,7 @@ export class SummonSpell<
      * than 1.5 grid units away from it. Used by Shadow Wood and Wall to rank
      * tiles for line-of-sight blocking.
      */
-    private scoreLoSBlock(
-        tile: Point,
-        fromPos: Point,
-        toPos: Point,
-    ): number {
+    private scoreLoSBlock(tile: Point, fromPos: Point, toPos: Point): number {
         const ewx = toPos.x - fromPos.x;
         const ewy = toPos.y - fromPos.y;
         const etx = tile.x - fromPos.x;

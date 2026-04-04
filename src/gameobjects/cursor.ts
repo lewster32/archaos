@@ -378,9 +378,7 @@ export class Cursor {
         if (selected?.moved) {
             if (!selected.currentRider || selected.currentRider.moved) {
                 if (selected.canAttack) {
-                    this._board.stateManager.evaluate(
-                        new AdvanceToAttack(),
-                    );
+                    this._board.stateManager.evaluate(new AdvanceToAttack());
                     return;
                 }
                 // TODO: This is problematic - if the unit successfully attacks

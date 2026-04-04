@@ -11,9 +11,7 @@ import { Point } from "../point";
  * Raise Dead — reanimates a target corpse and transfers ownership to the
  * casting wizard.
  */
-export class RaiseDeadSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
     async doCast(
         owner: Player<P>,
         castingPiece: P,
@@ -24,29 +22,21 @@ export class RaiseDeadSpell<
         if (!target) {
             return false;
         }
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "castloop08" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.RaiseDeadBeam,
-                pieceId: target.id,
-                startPieceId: castingPiece.id,
-            },
-        );
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "spelleffect" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.RaiseDeadHit,
-                pieceId: target.id,
-            },
-        );
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "castloop08",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.RaiseDeadBeam,
+            pieceId: target.id,
+            startPieceId: castingPiece.id,
+        });
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "spelleffect",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.RaiseDeadHit,
+            pieceId: target.id,
+        });
         await target.raiseDead(this.owner);
         this._board.logger.log(
             `${target.name} was reanimated and now belongs to ${owner.name}`,

@@ -21,16 +21,12 @@ import type { Player } from "../player";
  * A valid target for spell casting: a point on the
  * board, a piece, or null (for auto-targeting spells).
  */
-export type SpellCastTarget<
-    P extends Piece = Piece,
-> = Point | P | null;
+export type SpellCastTarget<P extends Piece = Piece> = Point | P | null;
 
 /**
  * A spell that can be cast by a player's wizard.
  */
-export class Spell<
-    P extends Piece = Piece,
-> extends Model {
+export class Spell<P extends Piece = Piece> extends Model {
     /**
      * All spell configurations loaded from JSON.
      */
@@ -136,9 +132,10 @@ export class Spell<
         if (this.balance < 0) {
             balanceOffset *= -1;
         }
-        return Math.min(Math.max(
-            this._properties.chance + balanceOffset, 0.1,
-        ), 1);
+        return Math.min(
+            Math.max(this._properties.chance + balanceOffset, 0.1),
+            1,
+        );
     }
 
     /**
@@ -281,9 +278,7 @@ export class Spell<
             console.error("Spell has no casting piece");
             return false;
         }
-        const casterPosition: Point = Point.clone(
-            this._castingPiece.position,
-        );
+        const casterPosition: Point = Point.clone(this._castingPiece.position);
         if (distance(casterPosition, point) > this.range) {
             return false;
         }
@@ -297,10 +292,7 @@ export class Spell<
      * @param showReason Whether to log the reason if the spell cannot be cast
      * @returns Whether the spell can be cast at the given position
      */
-    protected canCastAtPosition(
-        point: Point,
-        showReason?: boolean,
-    ): boolean {
+    protected canCastAtPosition(point: Point, showReason?: boolean): boolean {
         if (
             this.lineOfSight &&
             !this._board.hasLineOfSight(this._castingPiece.position, point)
@@ -314,10 +306,10 @@ export class Spell<
             return false;
         }
         if (this._properties.tree) {
-            const neighbourTrees: P[] =
-                this._board.getAdjacentPiecesAtPosition(point, (p: P) =>
-                    p.hasStatus(UnitStatus.Tree),
-                );
+            const neighbourTrees: P[] = this._board.getAdjacentPiecesAtPosition(
+                point,
+                (p: P) => p.hasStatus(UnitStatus.Tree),
+            );
             if (neighbourTrees.length > 0) {
                 if (showReason) {
                     this._board.logger.log(
@@ -342,8 +334,9 @@ export class Spell<
         target: Point | P,
         showReason?: boolean,
     ): SpellCastTarget<P> {
-        const targetPoint: Point =
-            Point.isPoint(target) ? target : target.position;
+        const targetPoint: Point = Point.isPoint(target)
+            ? target
+            : target.position;
         const targetPiece: P = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
@@ -394,10 +387,8 @@ export class Spell<
         if (this._properties.target === SpellTarget.Corpse) {
             if (
                 targetLivingPiece || // Cannot target living pieces
-                this._board.getPiecesAtPosition(
-                    targetPoint,
-                    (p: P) => !p.dead,
-                ).length > 0 // Cannot target if any living pieces are present on the same tile
+                this._board.getPiecesAtPosition(targetPoint, (p: P) => !p.dead)
+                    .length > 0 // Cannot target if any living pieces are present on the same tile
             ) {
                 if (showReason) {
                     this._board.logger.log(
@@ -602,19 +593,13 @@ export class Spell<
      * @param castingPiece The piece casting the spell
      * @returns The result of the failed spell cast
      */
-    async castFail(
-        owner: Player<P>,
-        castingPiece: P,
-    ): Promise<void> {
+    async castFail(owner: Player<P>, castingPiece: P): Promise<void> {
         this._failed = true;
         this._castTimes = 0;
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCastFail,
-                pieceId: castingPiece.id,
-            },
-        );
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCastFail,
+            pieceId: castingPiece.id,
+        });
     }
 
     /**
@@ -622,20 +607,14 @@ export class Spell<
      */
     async showRange(show: boolean): Promise<void> {
         if (show) {
-            this._board.events.emit(
-                EngineEvent.ShowCastRange,
-                {
-                    position:
-                        this._castingPiece.position,
-                    range: this.range,
-                    lineOfSight: this.lineOfSight,
-                },
-            );
+            this._board.events.emit(EngineEvent.ShowCastRange, {
+                position: this._castingPiece.position,
+                range: this.range,
+                lineOfSight: this.lineOfSight,
+            });
             return;
         }
-        this._board.events.emit(
-            EngineEvent.ResetCastRange,
-        );
+        this._board.events.emit(EngineEvent.ResetCastRange);
     }
 
     /**

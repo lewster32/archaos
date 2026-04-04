@@ -1,8 +1,4 @@
-import {
-    GameSetupPlayerType,
-    Colour,
-    ComputerWizard,
-} from "@archaos/engine";
+import { GameSetupPlayerType, Colour, ComputerWizard } from "@archaos/engine";
 import type { Board } from "./board";
 import type { Spell } from "@archaos/engine";
 import { describe, it, expect, beforeEach, vi } from "vitest";

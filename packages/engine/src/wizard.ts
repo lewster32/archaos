@@ -55,18 +55,13 @@ export class Wizard extends Piece {
             properties: {
                 movement: wizardUnit?.properties?.mov ?? 1,
                 combat: wizardUnit?.properties?.com ?? 3,
-                rangedCombat:
-                    wizardUnit?.properties?.rcm ?? 0,
+                rangedCombat: wizardUnit?.properties?.rcm ?? 0,
                 range: wizardUnit?.properties?.rng ?? 0,
                 defence: wizardUnit?.properties?.def ?? 3,
-                manoeuvrability:
-                    wizardUnit?.properties?.mnv ?? 3,
-                magicResistance:
-                    wizardUnit?.properties?.res ?? 3,
-                attackType:
-                    wizardUnit?.attackType ?? "hit",
-                rangedType:
-                    wizardUnit?.rangedType ?? "shot",
+                manoeuvrability: wizardUnit?.properties?.mnv ?? 3,
+                magicResistance: wizardUnit?.properties?.res ?? 3,
+                attackType: wizardUnit?.attackType ?? "hit",
+                rangedType: wizardUnit?.rangedType ?? "shot",
                 status: [UnitStatus.Wizard],
             },
         };
@@ -95,11 +90,7 @@ export class Wizard extends Piece {
      * @param id The unique identifier for this wizard.
      * @param config The configuration for this wizard.
      */
-    constructor(
-        board: Board,
-        id: number,
-        config: WizardConfig,
-    ) {
+    constructor(board: Board, id: number, config: WizardConfig) {
         super(board, id, {
             ...Wizard.DEFAULT_WIZARD_CONFIG,
             ...config,
@@ -165,16 +156,12 @@ export class Wizard extends Piece {
         // Mutually exclusive statuses
         if (status === UnitStatus.MagicShield) {
             this.removeStatus(UnitStatus.MagicArmour);
-        } else if (
-            status === UnitStatus.MagicArmour
-        ) {
+        } else if (status === UnitStatus.MagicArmour) {
             this.removeStatus(UnitStatus.MagicShield);
         }
         if (status === UnitStatus.MagicKnife) {
             this.removeStatus(UnitStatus.MagicSword);
-        } else if (
-            status === UnitStatus.MagicSword
-        ) {
+        } else if (status === UnitStatus.MagicSword) {
             this.removeStatus(UnitStatus.MagicKnife);
         }
 
@@ -213,14 +200,8 @@ export class Wizard extends Piece {
         // longer attack the undead.
         if (Wizard.MAGIC_WEAPONS.includes(status)) {
             this.removeStatus(status);
-            if (
-                Wizard.MAGIC_WEAPONS.some((s) =>
-                    this.hasStatus(s),
-                ) === false
-            ) {
-                this.removeStatus(
-                    UnitStatus.AttackUndead,
-                );
+            if (Wizard.MAGIC_WEAPONS.some((s) => this.hasStatus(s)) === false) {
+                this.removeStatus(UnitStatus.AttackUndead);
             }
         }
 
@@ -253,41 +234,11 @@ export class Wizard extends Piece {
 
         return {
             code: wizCode,
-            wiz: Math.min(
-                Number.parseInt(
-                    wizCode.slice(0, 2),
-                    16,
-                ),
-                max.wiz,
-            ),
-            pri: Math.min(
-                Number.parseInt(
-                    wizCode.slice(2, 4),
-                    16,
-                ),
-                max.pri,
-            ),
-            sec: Math.min(
-                Number.parseInt(
-                    wizCode.slice(4, 6),
-                    16,
-                ),
-                max.sec,
-            ),
-            skin: Math.min(
-                Number.parseInt(
-                    wizCode.slice(6, 8),
-                    16,
-                ),
-                max.skin,
-            ),
-            hat: Math.min(
-                Number.parseInt(
-                    wizCode.slice(8, 10),
-                    16,
-                ),
-                max.hat,
-            ),
+            wiz: Math.min(Number.parseInt(wizCode.slice(0, 2), 16), max.wiz),
+            pri: Math.min(Number.parseInt(wizCode.slice(2, 4), 16), max.pri),
+            sec: Math.min(Number.parseInt(wizCode.slice(4, 6), 16), max.sec),
+            skin: Math.min(Number.parseInt(wizCode.slice(6, 8), 16), max.skin),
+            hat: Math.min(Number.parseInt(wizCode.slice(8, 10), 16), max.hat),
         };
     }
 
@@ -300,10 +251,7 @@ export class Wizard extends Piece {
      * @param board   The board to place wizards on.
      * @param players The ordered list of players.
      */
-    static createAll(
-        board: Board,
-        players: Player[],
-    ): void {
+    static createAll(board: Board, players: Player[]): void {
         switch (players.length) {
             // Face-to-face
             case 2:
@@ -371,56 +319,44 @@ export class Wizard extends Piece {
             case 5:
                 // Pentagon
                 for (let i = 0; i < 5; i++) {
-                    const angle: number =
-                        (i / 5) * Math.PI * 2 -
-                        Math.PI / 2;
+                    const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
                         -0.5 +
                             board.width / 2 +
-                            (board.width / 2) *
-                                Math.cos(angle),
+                            (board.width / 2) * Math.cos(angle),
                     );
                     const y: number = Math.round(
                         -0.5 +
                             board.height / 2 +
-                            (board.height / 2) *
-                                Math.sin(angle),
+                            (board.height / 2) * Math.sin(angle),
                     );
                     board.addWizard({
                         owner: players[(i + 2) % 5],
                         x: x,
                         y: y,
-                        wizCode:
-                            players[(i + 2) % 5]
-                                .wizcode,
+                        wizCode: players[(i + 2) % 5].wizcode,
                     });
                 }
                 break;
             case 6:
                 // Hexagon
                 for (let i = 0; i < 6; i++) {
-                    const angle: number =
-                        (i / 6) * Math.PI * 2 -
-                        Math.PI / 2;
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
                         -0.6 +
                             board.width / 2 +
-                            (board.width / 2 + 0.5) *
-                                Math.cos(angle),
+                            (board.width / 2 + 0.5) * Math.cos(angle),
                     );
                     const y: number = Math.round(
                         -0.5 +
                             board.height / 2 +
-                            (board.height / 2 - 0.5) *
-                                Math.sin(angle),
+                            (board.height / 2 - 0.5) * Math.sin(angle),
                     );
                     board.addWizard({
                         owner: players[(i + 2) % 6],
                         x: x,
                         y: y,
-                        wizCode:
-                            players[(i + 2) % 6]
-                                .wizcode,
+                        wizCode: players[(i + 2) % 6].wizcode,
                     });
                 }
                 break;
@@ -433,31 +369,22 @@ export class Wizard extends Piece {
                     wizCode: players[0].wizcode,
                 });
                 for (let i = 1; i < 7; i++) {
-                    const angle: number =
-                        (i / 6) * Math.PI * 2 -
-                        Math.PI / 2;
+                    const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
                     const x: number = Math.round(
                         -0.6 +
                             board.width / 2 +
-                            (board.width / 2 + 0.5) *
-                                Math.cos(angle),
+                            (board.width / 2 + 0.5) * Math.cos(angle),
                     );
                     const y: number = Math.round(
                         -0.5 +
                             board.height / 2 +
-                            (board.height / 2 - 0.5) *
-                                Math.sin(angle),
+                            (board.height / 2 - 0.5) * Math.sin(angle),
                     );
                     board.addWizard({
-                        owner: players[
-                            ((i + 2) % 6) + 1
-                        ],
+                        owner: players[((i + 2) % 6) + 1],
                         x: x,
                         y: y,
-                        wizCode:
-                            players[
-                                ((i + 2) % 6) + 1
-                            ].wizcode,
+                        wizCode: players[((i + 2) % 6) + 1].wizcode,
                     });
                 }
                 break;
@@ -472,35 +399,20 @@ export class Wizard extends Piece {
                     ]) {
                         for (const yy of [
                             board.height - 1,
-                            Math.floor(
-                                board.height / 2,
-                            ),
+                            Math.floor(board.height / 2),
                             0,
                         ]) {
                             if (
-                                xx ===
-                                    Math.floor(
-                                        board.width /
-                                            2,
-                                    ) &&
-                                yy ===
-                                    Math.floor(
-                                        board.height /
-                                            2,
-                                    )
+                                xx === Math.floor(board.width / 2) &&
+                                yy === Math.floor(board.height / 2)
                             ) {
                                 continue;
                             }
                             board.addWizard({
-                                owner: players[
-                                    playerIndex
-                                ],
+                                owner: players[playerIndex],
                                 x: xx,
                                 y: yy,
-                                wizCode:
-                                    players[
-                                        playerIndex
-                                    ].wizcode,
+                                wizCode: players[playerIndex].wizcode,
                             });
                             playerIndex++;
                         }
@@ -514,16 +426,8 @@ export class Wizard extends Piece {
                         x: number;
                         y: number;
                     }[] = [];
-                    for (
-                        let x = 1;
-                        x < board.width - 1;
-                        x++
-                    ) {
-                        for (
-                            let y = 1;
-                            y < board.height - 1;
-                            y++
-                        ) {
+                    for (let x = 1; x < board.width - 1; x++) {
+                        for (let y = 1; y < board.height - 1; y++) {
                             candidates.push({
                                 x,
                                 y,
@@ -543,44 +447,28 @@ export class Wizard extends Piece {
                         };
 
                         if (placed.length === 0) {
-                            best =
-                                board.rng.pick(
-                                    candidates,
-                                );
+                            best = board.rng.pick(candidates);
                         } else {
                             let bestMinDist = -1;
                             best = candidates[0];
                             for (const c of candidates) {
-                                let minDist =
-                                    Infinity;
+                                let minDist = Infinity;
                                 for (const p of placed) {
-                                    const dx =
-                                        c.x - p.x;
-                                    const dy =
-                                        c.y - p.y;
-                                    const dist =
-                                        dx * dx +
-                                        dy * dy;
-                                    if (
-                                        dist < minDist
-                                    ) {
-                                        minDist =
-                                            dist;
+                                    const dx = c.x - p.x;
+                                    const dy = c.y - p.y;
+                                    const dist = dx * dx + dy * dy;
+                                    if (dist < minDist) {
+                                        minDist = dist;
                                     }
                                 }
-                                if (
-                                    minDist >
-                                    bestMinDist
-                                ) {
-                                    bestMinDist =
-                                        minDist;
+                                if (minDist > bestMinDist) {
+                                    bestMinDist = minDist;
                                     best = c;
                                 }
                             }
                         }
 
-                        const idx =
-                            candidates.indexOf(best);
+                        const idx = candidates.indexOf(best);
                         candidates.splice(idx, 1);
                         placed.push(best);
 
@@ -604,29 +492,19 @@ export class Wizard extends Piece {
     public static randomWizCode(): string {
         const max = Wizard.wizcodeMax;
         return [
-            Math.floor(
-                Math.random() * (max.wiz + 1),
-            )
+            Math.floor(Math.random() * (max.wiz + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            Math.floor(
-                Math.random() * (max.pri + 1),
-            )
+            Math.floor(Math.random() * (max.pri + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            Math.floor(
-                Math.random() * (max.sec + 1),
-            )
+            Math.floor(Math.random() * (max.sec + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            Math.floor(
-                Math.random() * (max.skin + 1),
-            )
+            Math.floor(Math.random() * (max.skin + 1))
                 .toString(16)
                 .padStart(2, "0"),
-            Math.floor(
-                Math.random() * (max.hat + 1),
-            )
+            Math.floor(Math.random() * (max.hat + 1))
                 .toString(16)
                 .padStart(2, "0"),
         ]

@@ -561,11 +561,7 @@ describe("SummonSpell.doCast", () => {
     it("returns the newly summoned piece", async () => {
         const newPiece = { turnOver: false, name: "Lion" };
         (board as any).addPiece = vi.fn().mockResolvedValue(newPiece);
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(2, 3),
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(2, 3));
         expect(result).toBe(newPiece);
     });
 
@@ -625,7 +621,10 @@ describe("SummonSpell.doCast", () => {
     it("emits WizardCasting, WizardCastBeam, and SummonPiece effects", async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
         const emitCalls = (board as any).events.emitAsync.mock.calls
-            .filter((c: any[]) => c[0] === EngineEvent.EffectRequested && c[1]?.type)
+            .filter(
+                (c: any[]) =>
+                    c[0] === EngineEvent.EffectRequested && c[1]?.type,
+            )
             .map((c: any[]) => c[1].type);
         expect(emitCalls).toHaveLength(3);
     });
@@ -665,9 +664,7 @@ describe("SummonSpell.scoreLoSBlock (private)", () => {
 
     it("returns 0 when fromPos equals toPos (zero-length segment)", () => {
         const pos = new Point(3, 3);
-        expect(
-            (spell as any).scoreLoSBlock(new Point(3, 3), pos, pos),
-        ).toBe(0);
+        expect((spell as any).scoreLoSBlock(new Point(3, 3), pos, pos)).toBe(0);
     });
 
     it("returns 0 when tile projects before the segment (proj <= 0.05)", () => {
@@ -872,10 +869,9 @@ describe("SummonSpell.selectMagicWoodTile (private)", () => {
 
     it("handles a single tile", () => {
         const only = new Point(2, 2);
-        const result = (spell as any).selectMagicWoodTile(
-            new Point(0, 0),
-            [only],
-        );
+        const result = (spell as any).selectMagicWoodTile(new Point(0, 0), [
+            only,
+        ]);
         expect(result).toBe(only);
     });
 });

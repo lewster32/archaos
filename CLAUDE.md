@@ -24,7 +24,7 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 
 The project is an npm workspaces monorepo (`"workspaces": ["packages/*"]`). The main package is the Phaser/Vue client in `src/`; headless game logic lives in `@archaos/engine` (`packages/engine/`).
 
-- **`@archaos/engine`** — framework-agnostic game logic: Board, Piece, Wizard, Player, Rules, Logger, PhaseMachine, ComputerWizard AI, all spell classes, RangeGizmo (A* pathfinding), enums, configs, interfaces, and RNG. Has no Phaser or Vue dependency. Uses its own Vitest config.
+- **`@archaos/engine`** — framework-agnostic game logic: Board, Piece, Wizard, Player, Rules, Logger, PhaseMachine, ComputerWizard AI, all spell classes, RangeGizmo (A\* pathfinding), enums, configs, interfaces, and RNG. Has no Phaser or Vue dependency. Uses its own Vitest config.
 - **Client (`src/`)** — Phaser rendering, Vue UI, and Tauri integration. Client classes (e.g. `src/gameobjects/piece.ts`) extend engine classes and add visual/audio behaviour.
 
 Engine classes use a generic `<P extends Piece>` type parameter so the engine works with its own `Piece` while the client substitutes its richer subclass.

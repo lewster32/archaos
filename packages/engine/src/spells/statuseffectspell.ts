@@ -13,9 +13,7 @@ import { Point } from "../point";
  * A self-targeting spell that grants a status effect to the casting wizard.
  * Covers shadow form and all magic equipment spells.
  */
-export class StatusEffectSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
     private static readonly STATUS_MAP: { [key: string]: UnitStatus } = {
         "shadow-form": UnitStatus.ShadowForm,
         "magic-knife": UnitStatus.MagicKnife,
@@ -39,17 +37,13 @@ export class StatusEffectSpell<
             return false;
         }
 
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "spelleffect" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCasting,
-                pieceId: target.id,
-            },
-        );
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "spelleffect",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCasting,
+            pieceId: target.id,
+        });
 
         if (this.properties.id in StatusEffectSpell.STATUS_MAP) {
             if (

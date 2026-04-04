@@ -1282,12 +1282,7 @@ describe("Spell.doCast — fallthrough", () => {
             makeConfig({ target: SpellTarget.Piece, castOnEnemyUnit: true }),
         );
         s.owner = owner;
-        const result = await s.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [],
-        );
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), []);
         expect(result).toBe(false);
     });
 });

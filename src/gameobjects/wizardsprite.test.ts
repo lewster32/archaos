@@ -31,10 +31,7 @@ vi.mock("phaser", () => {
 
 import { WizardSprite } from "./wizardsprite";
 import type { WizCode } from "@archaos/engine";
-import {
-    searchColors,
-    replaceColors,
-} from "@assets/spritesheets/wizards.json";
+import { searchColors, replaceColors } from "@assets/spritesheets/wizards.json";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -385,5 +382,4 @@ describe("WizardSprite", () => {
         expect(scene.textures.remove).not.toHaveBeenCalled();
         expect(mockSuperDestroy).toHaveBeenCalled();
     });
-
 });

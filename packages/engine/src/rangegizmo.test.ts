@@ -7,9 +7,7 @@ import type { Piece } from "./piece";
 
 // ─── Helpers ────────────────────────────────────
 
-function makeMockPiece(
-    overrides: Record<string, unknown> = {},
-): Piece {
+function makeMockPiece(overrides: Record<string, unknown> = {}): Piece {
     return {
         position: new Point(0, 0),
         dead: false,
@@ -22,9 +20,7 @@ function makeMockPiece(
     } as unknown as Piece;
 }
 
-function makeMockBoard(
-    overrides: Record<string, unknown> = {},
-): Board {
+function makeMockBoard(overrides: Record<string, unknown> = {}): Board {
     return {
         width: 10,
         height: 10,
@@ -76,9 +72,7 @@ describe("checkNodeTraversal", () => {
     });
 
     it("empty tile → traversable, not terminal", () => {
-        vi.mocked(board.getPiecesAtPosition).mockReturnValue(
-            [],
-        );
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
         const node = new Node(1, 1);
         gizmo.testCheckNodeTraversal(node);
         expect(node.traversable).toBe(true);
@@ -86,9 +80,7 @@ describe("checkNodeTraversal", () => {
     });
 
     it("tile contains only the moving piece → traversable", () => {
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([piece]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([piece]);
         const node = new Node(0, 0);
         gizmo.testCheckNodeTraversal(node);
         expect(node.traversable).toBe(true);
@@ -101,13 +93,10 @@ describe("checkNodeTraversal", () => {
         });
         // The piece under test should report canMountPiece
         // true for `other`.
-        (piece.canMountPiece as ReturnType<typeof vi.fn>)
-            .mockImplementation(
-                (p: Piece) => p === other,
-            );
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([other]);
+        (piece.canMountPiece as ReturnType<typeof vi.fn>).mockImplementation(
+            (p: Piece) => p === other,
+        );
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([other]);
         const node = new Node(2, 2);
         gizmo.testCheckNodeTraversal(node);
         expect(node.terminal).toBe(true);
@@ -115,13 +104,10 @@ describe("checkNodeTraversal", () => {
 
     it("attackable piece → terminal", () => {
         const enemy = makeMockPiece();
-        (piece.canAttackPiece as ReturnType<typeof vi.fn>)
-            .mockImplementation(
-                (p: Piece) => p === enemy,
-            );
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([enemy]);
+        (piece.canAttackPiece as ReturnType<typeof vi.fn>).mockImplementation(
+            (p: Piece) => p === enemy,
+        );
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([enemy]);
         const node = new Node(3, 3);
         gizmo.testCheckNodeTraversal(node);
         expect(node.terminal).toBe(true);
@@ -129,9 +115,7 @@ describe("checkNodeTraversal", () => {
 
     it("blocking piece (no mount/attack) → not traversable", () => {
         const blocker = makeMockPiece();
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([blocker]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([blocker]);
         const node = new Node(4, 4);
         gizmo.testCheckNodeTraversal(node);
         expect(node.traversable).toBe(false);
@@ -367,17 +351,14 @@ describe("findConnectedNodes", () => {
             }
         }
         gizmo.setValidNodes([centre, ...neighbours]);
-        const connected =
-            gizmo.findConnectedNodes(centre);
+        const connected = gizmo.findConnectedNodes(centre);
         expect(connected.length).toBe(8);
     });
 
     it("excludes the node itself", () => {
         const node = new Node(3, 3);
         gizmo.setValidNodes([node]);
-        expect(
-            gizmo.findConnectedNodes(node),
-        ).not.toContain(node);
+        expect(gizmo.findConnectedNodes(node)).not.toContain(node);
     });
 
     it("excludes nodes more than 1 tile away", () => {
@@ -393,14 +374,9 @@ describe("findConnectedNodes", () => {
 describe("findPath", () => {
     let gizmo: TestRangeGizmo;
 
-    function buildLinearNodes(
-        length: number,
-    ): Node[] {
+    function buildLinearNodes(length: number): Node[] {
         // Horizontal row: (0,0), (1,0), ..., (length-1, 0)
-        return Array.from(
-            { length },
-            (_, i) => new Node(i, 0),
-        );
+        return Array.from({ length }, (_, i) => new Node(i, 0));
     }
 
     beforeEach(() => {
@@ -410,30 +386,21 @@ describe("findPath", () => {
     it("returns null when start node not in validNodes", () => {
         const dest = new Node(2, 0);
         gizmo.setValidNodes([dest]);
-        const result = gizmo.findPath(
-            new Point(0, 0),
-            new Point(2, 0),
-        );
+        const result = gizmo.findPath(new Point(0, 0), new Point(2, 0));
         expect(result).toBeNull();
     });
 
     it("returns null when destination not in validNodes", () => {
         const start = new Node(0, 0);
         gizmo.setValidNodes([start]);
-        const result = gizmo.findPath(
-            new Point(0, 0),
-            new Point(2, 0),
-        );
+        const result = gizmo.findPath(new Point(0, 0), new Point(2, 0));
         expect(result).toBeNull();
     });
 
     it("finds straight-line path", () => {
         const nodes = buildLinearNodes(4);
         gizmo.setValidNodes(nodes);
-        const path = gizmo.findPath(
-            new Point(0, 0),
-            new Point(3, 0),
-        );
+        const path = gizmo.findPath(new Point(0, 0), new Point(3, 0));
         expect(path).not.toBeNull();
         expect(path.nodes.length).toBe(4);
     });
@@ -447,10 +414,7 @@ describe("findPath", () => {
             }
         }
         gizmo.setValidNodes(nodes);
-        const path = gizmo.findPath(
-            new Point(0, 0),
-            new Point(2, 2),
-        );
+        const path = gizmo.findPath(new Point(0, 0), new Point(2, 2));
         expect(path).not.toBeNull();
     });
 
@@ -460,10 +424,7 @@ describe("findPath", () => {
         // dest is far away with no connecting nodes
         const dest = new Node(9, 9);
         gizmo.setValidNodes([start, dest]);
-        const path = gizmo.findPath(
-            new Point(0, 0),
-            new Point(9, 9),
-        );
+        const path = gizmo.findPath(new Point(0, 0), new Point(9, 9));
         expect(path).toBeNull();
     });
 
@@ -482,10 +443,7 @@ describe("findPath", () => {
             }
         }
         gizmo.setValidNodes(nodes);
-        const path = gizmo.findPath(
-            new Point(0, 0),
-            new Point(2, 0),
-        );
+        const path = gizmo.findPath(new Point(0, 0), new Point(2, 0));
         // Should find a path via (0,1)→(1,1)→(2,0) or
         // similar detour.
         expect(path).not.toBeNull();
@@ -495,10 +453,7 @@ describe("findPath", () => {
         const nodes = buildLinearNodes(3);
         nodes[2].terminal = true;
         gizmo.setValidNodes(nodes);
-        const path = gizmo.findPath(
-            new Point(0, 0),
-            new Point(2, 0),
-        );
+        const path = gizmo.findPath(new Point(0, 0), new Point(2, 0));
         expect(path).not.toBeNull();
     });
 });
@@ -517,15 +472,9 @@ describe("generate", () => {
             stats: { movement: 1 },
             hasStatus: vi.fn(() => true), // flying
         });
-        vi.mocked(board.getPointsInRange).mockReturnValue([
-            new Point(5, 5),
-        ]);
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([]);
-        vi.mocked(
-            board.getAdjacentPiecesAtPosition,
-        ).mockReturnValue([]);
+        vi.mocked(board.getPointsInRange).mockReturnValue([new Point(5, 5)]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
+        vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
 
         await gizmo.generate(flyingPiece);
 
@@ -546,12 +495,8 @@ describe("generate", () => {
             new Point(1, 0),
             new Point(2, 0),
         ]);
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([]);
-        vi.mocked(
-            board.getAdjacentPiecesAtPosition,
-        ).mockReturnValue([]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
+        vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
 
         await gizmo.generate(flyingPiece);
 
@@ -579,12 +524,8 @@ describe("generate", () => {
             new Point(0, 0),
             new Point(1, 0),
         ]);
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([]);
-        vi.mocked(
-            board.getAdjacentPiecesAtPosition,
-        ).mockReturnValue([]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
+        vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
 
         await gizmo.generate(groundPiece);
 
@@ -615,16 +556,9 @@ describe("generate", () => {
             new Point(1, 0),
             new Point(2, 0),
         ]);
-        vi.mocked(
-            board.getPiecesAtPosition,
-        ).mockReturnValue([]);
-        vi.mocked(
-            board.getAdjacentPiecesAtPosition,
-        ).mockImplementation(
-            (
-                _pt: Point,
-                filter?: (p: Piece) => boolean,
-            ) => {
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
+        vi.mocked(board.getAdjacentPiecesAtPosition).mockImplementation(
+            (_pt: Point, filter?: (p: Piece) => boolean) => {
                 if (filter && filter(enemy)) {
                     return [enemy];
                 }
@@ -632,9 +566,7 @@ describe("generate", () => {
             },
         );
         // Adjacent points of the enemy position
-        vi.mocked(board.getAdjacentPoints).mockReturnValue([
-            new Point(1, 0),
-        ]);
+        vi.mocked(board.getAdjacentPoints).mockReturnValue([new Point(1, 0)]);
 
         await gizmo.generate(piece);
 

@@ -15,9 +15,7 @@ export default defineConfig({
                 resolve: { alias: assetsAlias },
                 test: {
                     name: "engine",
-                    include: [
-                        "packages/engine/src/**/*.test.ts",
-                    ],
+                    include: ["packages/engine/src/**/*.test.ts"],
                 },
             },
             {
@@ -29,9 +27,7 @@ export default defineConfig({
                     environment: "jsdom",
                     css: false,
                     include: ["src/**/*.test.ts"],
-                    exclude: [
-                        "src/components/**/*.test.ts",
-                    ],
+                    exclude: ["src/components/**/*.test.ts"],
                     setupFiles: ["./vitest.setup.ts"],
                 },
             },
@@ -41,18 +37,14 @@ export default defineConfig({
                 resolve: { alias: assetsAlias },
                 test: {
                     name: "components",
-                    include: [
-                        "src/components/**/*.test.ts",
-                    ],
+                    include: ["src/components/**/*.test.ts"],
                     // vitest-browser-vue injects render() onto page and registers cleanup.
                     setupFiles: ["vitest-browser-vue"],
                     browser: {
                         enabled: true,
                         headless: true,
                         provider: playwright(),
-                        instances: [
-                            { browser: "chromium" },
-                        ],
+                        instances: [{ browser: "chromium" }],
                     },
                 },
             },

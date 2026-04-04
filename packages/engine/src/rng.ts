@@ -23,11 +23,7 @@ export interface IRNG {
      * earlier. A weight of 0 picks uniformly. In exponential mode (default)
      * the bias is much stronger for the same weight value.
      */
-    weightedRandomPick<T>(
-        array: T[],
-        weight: number,
-        exponential?: boolean,
-    ): T;
+    weightedRandomPick<T>(array: T[], weight: number, exponential?: boolean): T;
 }
 
 /**
@@ -39,16 +35,13 @@ export class GameRNG implements IRNG {
     private _state: number;
 
     constructor(seed?: string) {
-        this._state = seed
-            ? GameRNG._hashSeed(seed)
-            : Date.now();
+        this._state = seed ? GameRNG._hashSeed(seed) : Date.now();
     }
 
     private static _hashSeed(seed: string): number {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
-            hash =
-                ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+            hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
         }
         return hash >>> 0 || 1;
     }
@@ -71,17 +64,11 @@ export class GameRNG implements IRNG {
     }
 
     weightedPick<T>(array: T[]): T {
-        return array[
-            Math.floor(
-                Math.pow(this._next(), 2) * array.length,
-            )
-        ];
+        return array[Math.floor(Math.pow(this._next(), 2) * array.length)];
     }
 
     integerInRange(min: number, max: number): number {
-        return Math.floor(
-            this._next() * (max - min + 1) + min,
-        );
+        return Math.floor(this._next() * (max - min + 1) + min);
     }
 
     realInRange(min: number, max: number): number {
@@ -105,9 +92,7 @@ export class GameRNG implements IRNG {
         weight: number,
         exponential: boolean = true,
     ): T {
-        return weightedRandomPick(
-            this, array, weight, exponential,
-        );
+        return weightedRandomPick(this, array, weight, exponential);
     }
 }
 

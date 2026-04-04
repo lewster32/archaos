@@ -27,9 +27,7 @@
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [
-
-            ],
+            "pieces": [],
             "wizardProperties": {
                 "movement": 0
             },

@@ -74,9 +74,7 @@ describe("DisbelieveSpell.doCast", () => {
             illusion: true,
             name: "Dragon",
         });
-        await spell.doCast(owner, castingPiece, new Point(0, 0), [
-            illusion,
-        ]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [illusion]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("Dragon"),
         );
@@ -88,9 +86,7 @@ describe("DisbelieveSpell.doCast", () => {
             illusion: false,
             name: "Lion",
         });
-        await spell.doCast(owner, castingPiece, new Point(0, 0), [
-            nonIllusion,
-        ]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [nonIllusion]);
         expect(board.logger.log as any).toHaveBeenCalledWith(
             expect.stringContaining("Lion"),
             expect.anything(),

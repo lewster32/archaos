@@ -80,10 +80,7 @@ export class RangeGizmo {
 
         // If the only piece here is the moving piece itself,
         // it's traversable (starting square).
-        if (
-            livePieces.length === 1 &&
-            livePieces[0] === this._piece
-        ) {
+        if (livePieces.length === 1 && livePieces[0] === this._piece) {
             node.traversable = true;
             node.terminal = false;
             return node;
@@ -125,13 +122,10 @@ export class RangeGizmo {
         this._paths = new Map<string, Path>();
         this._piece = unit;
 
-        const potentiallyValidNodes: Map<string, Node> =
-            new Map();
+        const potentiallyValidNodes: Map<string, Node> = new Map();
 
         // Determine range type based on flying status.
-        const rangeType: RangeType = unit.hasStatus(
-            UnitStatus.Flying,
-        )
+        const rangeType: RangeType = unit.hasStatus(UnitStatus.Flying)
             ? RangeType.Fly
             : RangeType.Foot;
 
@@ -149,53 +143,36 @@ export class RangeGizmo {
                 return node.traversable || node.terminal;
             })
             .forEach((node: Node) => {
-                potentiallyValidNodes.set(
-                    node.x + "," + node.y,
-                    node,
-                );
+                potentiallyValidNodes.set(node.x + "," + node.y, node);
             });
 
         // Apply warning flags: a node is a warning node if
         // there is an engageable enemy adjacent to it.
         potentiallyValidNodes.forEach((node: Node) => {
-            const enemies = this._board
-                .getAdjacentPiecesAtPosition(
-                    node.pos,
-                    (piece: Piece) =>
-                        piece.canEngagePiece(this._piece),
-                );
+            const enemies = this._board.getAdjacentPiecesAtPosition(
+                node.pos,
+                (piece: Piece) => piece.canEngagePiece(this._piece),
+            );
             if (!enemies.length) {
                 return;
             }
             enemies.forEach((enemy: Piece) => {
                 this._board
-                    .getAdjacentPoints(
-                        enemy.position,
-                        false,
-                    )
+                    .getAdjacentPoints(enemy.position, false)
                     .forEach((adjPt: Point) => {
-                        const key =
-                            adjPt.x + "," + adjPt.y;
-                        if (
-                            potentiallyValidNodes.has(key)
-                        ) {
-                            potentiallyValidNodes.get(
-                                key,
-                            ).warning = true;
+                        const key = adjPt.x + "," + adjPt.y;
+                        if (potentiallyValidNodes.has(key)) {
+                            potentiallyValidNodes.get(key).warning = true;
                         }
                     });
             });
         });
 
-        this._validNodes = Array.from(
-            potentiallyValidNodes.values(),
-        );
+        this._validNodes = Array.from(potentiallyValidNodes.values());
 
         // Flying units can reach all valid nodes directly.
         if (unit.hasStatus(UnitStatus.Flying)) {
-            this._validNodes.forEach(
-                (node: Node) => (node.flying = true),
-            );
+            this._validNodes.forEach((node: Node) => (node.flying = true));
             return;
         }
 
@@ -204,10 +181,7 @@ export class RangeGizmo {
         for (const node of this._validNodes) {
             const path: Path = this.getPathTo(node.pos);
             node.path = path;
-            if (
-                !path ||
-                path.cost > unit.stats.movement + 1
-            ) {
+            if (!path || path.cost > unit.stats.movement + 1) {
                 node.traversable = false;
             }
         }
@@ -232,9 +206,7 @@ export class RangeGizmo {
      * @param pt The board position to look up
      * @returns The matching Node, or null if none found
      */
-    public getNode(
-        pt: { x: number; y: number },
-    ): Node | null {
+    public getNode(pt: { x: number; y: number }): Node | null {
         return (
             this._validNodes.find(
                 (node: Node) =>
@@ -255,9 +227,7 @@ export class RangeGizmo {
      * @param pt The destination board position
      * @returns The computed Path, or null
      */
-    public getPathTo(
-        pt: { x: number; y: number },
-    ): Path | null {
+    public getPathTo(pt: { x: number; y: number }): Path | null {
         if (!this._piece) {
             return null;
         }
@@ -269,10 +239,7 @@ export class RangeGizmo {
         if (this._paths.has(key)) {
             return this._paths.get(key);
         }
-        const path = this.findPath(
-            this._piece.position,
-            new Point(pt.x, pt.y),
-        );
+        const path = this.findPath(this._piece.position, new Point(pt.x, pt.y));
         this._paths.set(key, path);
         return path ?? null;
     }
@@ -286,15 +253,10 @@ export class RangeGizmo {
      * @param ignoreTerminal Whether to skip terminal nodes
      * @returns Set of reachable paths
      */
-    public getAllValidPaths(
-        ignoreTerminal: boolean = true,
-    ): Set<Path> {
+    public getAllValidPaths(ignoreTerminal: boolean = true): Set<Path> {
         const output: Set<Path> = new Set();
         for (const node of this._validNodes) {
-            if (
-                node.isValid() &&
-                (!ignoreTerminal || !node.terminal)
-            ) {
+            if (node.isValid() && (!ignoreTerminal || !node.terminal)) {
                 const path = this.getPathTo(node.pos);
                 if (path) {
                     output.add(path);
@@ -333,24 +295,15 @@ export class RangeGizmo {
      * @param toPt The destination position
      * @returns The shortest Path, or null if unreachable
      */
-    public findPath(
-        fromPt: Point,
-        toPt: Point,
-    ): Path | null {
+    public findPath(fromPt: Point, toPt: Point): Path | null {
         let firstNode: Node | undefined;
         let destinationNode: Node | undefined;
 
         for (const node of this._validNodes) {
-            if (
-                node.x === fromPt.x &&
-                node.y === fromPt.y
-            ) {
+            if (node.x === fromPt.x && node.y === fromPt.y) {
                 firstNode = node;
             }
-            if (
-                node.x === toPt.x &&
-                node.y === toPt.y
-            ) {
+            if (node.x === toPt.x && node.y === toPt.y) {
                 destinationNode = node;
             }
         }
@@ -374,8 +327,7 @@ export class RangeGizmo {
         currentNode.f = currentNode.g + currentNode.h;
 
         while (currentNode !== destinationNode) {
-            const connectedNodes =
-                this.findConnectedNodes(currentNode);
+            const connectedNodes = this.findConnectedNodes(currentNode);
             const l: number = connectedNodes.length;
 
             for (let i: number = 0; i < l; ++i) {
@@ -383,19 +335,14 @@ export class RangeGizmo {
 
                 if (
                     testNode === currentNode ||
-                    (!testNode.traversable &&
-                        !testNode.terminal)
+                    (!testNode.traversable && !testNode.terminal)
                 ) {
                     continue;
                 }
 
                 const g: number =
                     currentNode.g +
-                    diagonalHeuristic(
-                        currentNode,
-                        testNode,
-                        travelCost,
-                    );
+                    diagonalHeuristic(currentNode, testNode, travelCost);
                 const h: number = diagonalHeuristic(
                     testNode,
                     destinationNode,
@@ -449,16 +396,10 @@ export class RangeGizmo {
     public findConnectedNodes(node: Node): Node[] {
         const output: Node[] = [];
         for (const validNode of this._validNodes) {
-            if (
-                node.x < validNode.x - 1 ||
-                node.x > validNode.x + 1
-            ) {
+            if (node.x < validNode.x - 1 || node.x > validNode.x + 1) {
                 continue;
             }
-            if (
-                node.y < validNode.y - 1 ||
-                node.y > validNode.y + 1
-            ) {
+            if (node.y < validNode.y - 1 || node.y > validNode.y + 1) {
                 continue;
             }
             if (node === validNode) {

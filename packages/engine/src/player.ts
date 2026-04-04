@@ -28,9 +28,7 @@ export interface PlayerAI {
  * The client Player extends this class and overrides
  * defeat()/destroyCreations() to add rendering.
  */
-export class Player<
-    P extends Piece = Piece,
-> extends Model {
+export class Player<P extends Piece = Piece> extends Model {
     protected readonly _name: string;
     protected readonly _board: Board<P>;
     protected readonly _wizcode: string;
@@ -79,13 +77,9 @@ export class Player<
     ) {
         super(id);
         if (!config) {
-            throw new Error(
-                "Player must be given a config",
-            );
+            throw new Error("Player must be given a config");
         }
-        this._name =
-            config.name?.toString().trim() ||
-            "Player " + id;
+        this._name = config.name?.toString().trim() || "Player " + id;
         this._board = board;
         this._colour = colour;
 
@@ -174,10 +168,7 @@ export class Player<
      */
     async defeat(): Promise<void> {
         this._defeated = true;
-        this.board.logger.log(
-            `Game over for ${this.name}`,
-            Colour.Red,
-        );
+        this.board.logger.log(`Game over for ${this.name}`, Colour.Red);
     }
 
     /**
@@ -205,15 +196,12 @@ export class Player<
      * Selects a spell by its ID.
      */
     async pickSpell(id: number): Promise<Spell<P>> {
-        const spell: Spell<P> | undefined =
-            this._spells.get(id);
+        const spell: Spell<P> | undefined = this._spells.get(id);
         if (spell) {
             this._selectedSpell = spell;
             return this._selectedSpell;
         }
-        throw new Error(
-            "This player does not have that spell",
-        );
+        throw new Error("This player does not have that spell");
     }
 
     /**
@@ -221,9 +209,7 @@ export class Player<
      */
     async useSpell(): Promise<Spell<P> | null> {
         if (this._selectedSpell) {
-            if (
-                this._selectedSpell.castTimes <= 0
-            ) {
+            if (this._selectedSpell.castTimes <= 0) {
                 this.discardSpell();
                 return null;
             } else {
@@ -238,14 +224,11 @@ export class Player<
      */
     async discardSpell(): Promise<Spell<P> | null> {
         if (this._selectedSpell) {
-            const spell: Spell<P> =
-                this._selectedSpell;
+            const spell: Spell<P> = this._selectedSpell;
             if (spell.persist) {
                 spell.resetCastTimes();
             } else {
-                this._spells.delete(
-                    this._selectedSpell.id,
-                );
+                this._spells.delete(this._selectedSpell.id);
             }
             this._selectedSpell = null;
             return spell;

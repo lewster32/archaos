@@ -8,13 +8,8 @@ describe("Logger", () => {
 
     beforeEach(() => {
         _resetLoggerForTesting();
-        emitSpy = vi.spyOn(
-            Logger.getEventEmitter(),
-            "emit",
-        );
-        consoleSpy = vi
-            .spyOn(console, "log")
-            .mockImplementation(() => {});
+        emitSpy = vi.spyOn(Logger.getEventEmitter(), "emit");
+        consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -44,10 +39,7 @@ describe("Logger", () => {
 
         it('emits a "log" event on the event emitter', () => {
             logger.log("hello");
-            expect(emitSpy).toHaveBeenCalledWith(
-                "log",
-                expect.any(Object),
-            );
+            expect(emitSpy).toHaveBeenCalledWith("log", expect.any(Object));
         });
 
         it("includes the message in the emitted payload", () => {
@@ -62,42 +54,24 @@ describe("Logger", () => {
 
         it("starts id at 1 on the first log call", () => {
             logger.log("first");
-            const payload = emitSpy.mock
-                .calls[0][1] as Record<
-                string,
-                unknown
-            >;
+            const payload = emitSpy.mock.calls[0][1] as Record<string, unknown>;
             expect(payload.id).toBe(1);
         });
 
         it("increments the id with each successive log call", () => {
             logger.log("first");
             logger.log("second");
-            const id1 = (
-                emitSpy.mock.calls[0][1] as Record<
-                    string,
-                    unknown
-                >
-            ).id;
-            const id2 = (
-                emitSpy.mock.calls[1][1] as Record<
-                    string,
-                    unknown
-                >
-            ).id;
+            const id1 = (emitSpy.mock.calls[0][1] as Record<string, unknown>)
+                .id;
+            const id2 = (emitSpy.mock.calls[1][1] as Record<string, unknown>)
+                .id;
             expect(id2).toBe((id1 as number) + 1);
         });
 
         it("includes a Date timestamp in the emitted payload", () => {
             logger.log("msg");
-            const payload = emitSpy.mock
-                .calls[0][1] as Record<
-                string,
-                unknown
-            >;
-            expect(payload.timestamp).toBeInstanceOf(
-                Date,
-            );
+            const payload = emitSpy.mock.calls[0][1] as Record<string, unknown>;
+            expect(payload.timestamp).toBeInstanceOf(Date);
         });
 
         it("includes colour in the emitted payload when provided", () => {
@@ -112,19 +86,13 @@ describe("Logger", () => {
 
         it("emits with colour undefined when not provided", () => {
             logger.log("msg");
-            const payload = emitSpy.mock
-                .calls[0][1] as Record<
-                string,
-                unknown
-            >;
+            const payload = emitSpy.mock.calls[0][1] as Record<string, unknown>;
             expect(payload.colour).toBeUndefined();
         });
 
         it("calls console.log with the message", () => {
             logger.log("hello world");
-            expect(consoleSpy).toHaveBeenCalledWith(
-                "hello world",
-            );
+            expect(consoleSpy).toHaveBeenCalledWith("hello world");
         });
     });
 });

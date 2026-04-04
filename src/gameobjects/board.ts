@@ -40,7 +40,7 @@ import type {
     SpreadBatchPayload,
     TurmoilBatchPayload,
 } from "@archaos/engine";
-import { Cursor} from "./cursor";
+import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
 import { Piece } from "./piece";
 import { Player } from "./player";
@@ -183,18 +183,12 @@ export class Board extends EngineBoard<Piece> {
 
         // Engine event subscriptions — the engine
         // emits these; the client handles rendering.
-        this.events.on(
-            EngineEvent.AiThinking,
-            () => {
-                this.cursor.enabled = false;
-            },
-        );
-        this.events.on(
-            EngineEvent.AiActing,
-            () => {
-                this.cursor.enabled = true;
-            },
-        );
+        this.events.on(EngineEvent.AiThinking, () => {
+            this.cursor.enabled = false;
+        });
+        this.events.on(EngineEvent.AiActing, () => {
+            this.cursor.enabled = true;
+        });
         this.events.on(
             EngineEvent.FocusPieces,
             (data: { pieceIds: number[] }) => {
@@ -206,14 +200,9 @@ export class Board extends EngineBoard<Piece> {
         );
         this.events.on(
             EngineEvent.FocusPosition,
-            (data: {
-                position: { x: number; y: number };
-            }) => {
+            (data: { position: { x: number; y: number } }) => {
                 this.centreOnPosition(
-                    new Geom.Point(
-                        data.position.x,
-                        data.position.y,
-                    ),
+                    new Geom.Point(data.position.x, data.position.y),
                 );
             },
         );
@@ -292,12 +281,9 @@ export class Board extends EngineBoard<Piece> {
                 );
             },
         );
-        this.events.on(
-            EngineEvent.ResetCastRange,
-            () => {
-                this.rangeGizmo.reset();
-            },
-        );
+        this.events.on(EngineEvent.ResetCastRange, () => {
+            this.rangeGizmo.reset();
+        });
         this.events.on(
             EngineEvent.SpreadBatch,
             async (payload: SpreadBatchPayload) => {
@@ -329,9 +315,7 @@ export class Board extends EngineBoard<Piece> {
                         if (newPiece && !newPiece.sprite) {
                             newPiece.initSprites();
                         }
-                        this.sound.play(
-                            `blob${Math.random() < 0.5 ? 1 : 2}`,
-                        );
+                        this.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
                         if (
                             result.killedPieceId != null ||
                             result.destroyedPieceIds.length > 0 ||
@@ -377,17 +361,11 @@ export class Board extends EngineBoard<Piece> {
                 await this.idleDelay(Board.DEFAULT_DELAY);
             },
         );
-        this.events.on(
-            EventType.PieceInfo,
-            (data: any) => {
-                globalThis.dispatchEvent(
-                    new CustomEvent(
-                        EventType.PieceInfo,
-                        { detail: data },
-                    ),
-                );
-            },
-        );
+        this.events.on(EventType.PieceInfo, (data: any) => {
+            globalThis.dispatchEvent(
+                new CustomEvent(EventType.PieceInfo, { detail: data }),
+            );
+        });
 
         // Debugging aid
         window["currentBoard"] = this;
@@ -398,9 +376,7 @@ export class Board extends EngineBoard<Piece> {
     /**
      * Override FSM state-change to emit UI button events.
      */
-    protected override onStateChange(
-        newState: BoardState,
-    ): void {
+    protected override onStateChange(newState: BoardState): void {
         if (
             newState === BoardState.Move ||
             newState === BoardState.SelectSpell
@@ -411,15 +387,9 @@ export class Board extends EngineBoard<Piece> {
                     !this.currentPlayer.remote &&
                     !this.tutorial?.config.disableEndTurn
                 ) {
-                    this.emitUIEvent(
-                        EventType.EndTurnAvailable,
-                        true,
-                    );
+                    this.emitUIEvent(EventType.EndTurnAvailable, true);
                 } else {
-                    this.emitUIEvent(
-                        EventType.EndTurnAvailable,
-                        false,
-                    );
+                    this.emitUIEvent(EventType.EndTurnAvailable, false);
                 }
             });
         } else {
@@ -429,15 +399,9 @@ export class Board extends EngineBoard<Piece> {
                     !this.currentPlayer.remote &&
                     !this.tutorial?.config.disableCancelSpell
                 ) {
-                    this.emitUIEvent(
-                        EventType.CancelAvailable,
-                        true,
-                    );
+                    this.emitUIEvent(EventType.CancelAvailable, true);
                 } else {
-                    this.emitUIEvent(
-                        EventType.CancelAvailable,
-                        false,
-                    );
+                    this.emitUIEvent(EventType.CancelAvailable, false);
                 }
                 this.emitUIEvent(EventType.EndTurnAvailable, false);
             });
@@ -912,7 +876,9 @@ export class Board extends EngineBoard<Piece> {
         includeCentre?: boolean,
     ): Piece[] {
         return super.getAdjacentPiecesAtPosition(
-            point, filter, includeCentre,
+            point,
+            filter,
+            includeCentre,
         ) as Piece[];
     }
 
@@ -1192,15 +1158,11 @@ export class Board extends EngineBoard<Piece> {
      * @param config The configuration for the spell to add.
      * @returns The newly added spell.
      */
-    override addSpell(
-        player: Player, config: SpellConfig,
-    ): Spell<Piece> {
+    override addSpell(player: Player, config: SpellConfig): Spell<Piece> {
         if (!config || !player) {
             throw new Error("No player or config provided");
         }
-        const spell = createSpell(
-            this as any, this._idCounter++, config,
-        );
+        const spell = createSpell(this as any, this._idCounter++, config);
         player.addSpell(spell as any);
         return spell as Spell<Piece>;
     }
@@ -1552,8 +1514,9 @@ export class Board extends EngineBoard<Piece> {
             }
 
             // Skip defeated players before selecting them
-            const playerId =
-                Array.from(this._players.keys())[this._currentPlayerIndex];
+            const playerId = Array.from(this._players.keys())[
+                this._currentPlayerIndex
+            ];
             if (this.getPlayer(playerId)?.defeated) {
                 continue;
             }
@@ -1860,7 +1823,6 @@ export class Board extends EngineBoard<Piece> {
 
         return screenPos;
     }
-
 
     /**
      * Convert a point to isometric coordinates.

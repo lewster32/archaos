@@ -6,10 +6,7 @@ import {
     WizCode,
     Wizard as EngineWizard,
 } from "@archaos/engine";
-import {
-    wizcodes,
-    effectOffsets,
-} from "@assets/spritesheets/wizards.json";
+import { wizcodes, effectOffsets } from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
 import { EffectType } from "./effectemitter";
@@ -36,14 +33,12 @@ export class Wizard extends Piece {
     /**
      * Default wizard configuration.
      */
-    static readonly DEFAULT_WIZARD_CONFIG =
-        EngineWizard.DEFAULT_WIZARD_CONFIG;
+    static readonly DEFAULT_WIZARD_CONFIG = EngineWizard.DEFAULT_WIZARD_CONFIG;
 
     /**
      * Magical weapon statuses.
      */
-    static readonly MAGIC_WEAPONS: UnitStatus[] =
-        EngineWizard.MAGIC_WEAPONS;
+    static readonly MAGIC_WEAPONS: UnitStatus[] = EngineWizard.MAGIC_WEAPONS;
 
     /**
      * The WizCode for this wizard. Defines their
@@ -60,17 +55,12 @@ export class Wizard extends Piece {
      * @param id The unique identifier.
      * @param config The configuration for this wizard.
      */
-    constructor(
-        board: Board,
-        id: number,
-        config: WizardConfig,
-    ) {
+    constructor(board: Board, id: number, config: WizardConfig) {
         super(board, id, {
             ...Wizard.DEFAULT_WIZARD_CONFIG,
             ...config,
             properties: {
-                ...Wizard.DEFAULT_WIZARD_CONFIG
-                    .properties,
+                ...Wizard.DEFAULT_WIZARD_CONFIG.properties,
                 ...config.properties,
             },
         });
@@ -80,9 +70,7 @@ export class Wizard extends Piece {
         if (this.owner) {
             this.owner.castingPiece = this;
         } else {
-            throw new Error(
-                "Wizard must have an owner",
-            );
+            throw new Error("Wizard must have an owner");
         }
         // Init the sprites again to use the
         // wizard-specific sprite.
@@ -126,18 +114,10 @@ export class Wizard extends Piece {
         this._effects.forEach((sprite, status) => {
             sprite.x =
                 this._sprite.x +
-                (effectOffsets[status]?.x[
-                    this._wizCode.wiz
-                ] ?? 0) *
-                    (this._direction ===
-                    UnitDirection.Left
-                        ? -1
-                        : 1);
-            (
-                sprite as GameObjects.Sprite
-            ).setFlipX(
-                this._direction ===
-                    UnitDirection.Left,
+                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                    (this._direction === UnitDirection.Left ? -1 : 1);
+            (sprite as GameObjects.Sprite).setFlipX(
+                this._direction === UnitDirection.Left,
             );
         });
     }
@@ -167,66 +147,43 @@ export class Wizard extends Piece {
                 return;
             }
 
-            const isoPosition: Geom.Point =
-                this.clientBoard.getIsoPosition(
-                    this.position,
-                );
+            const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+                this.position,
+            );
 
-            const difference: number =
-                Board.distance(
-                    new Geom.Point(
-                        this._sprite.x,
-                        this._sprite.y,
-                    ),
-                    isoPosition,
-                );
+            const difference: number = Board.distance(
+                new Geom.Point(this._sprite.x, this._sprite.y),
+                isoPosition,
+            );
 
             // Animate the wizard and its effects
             // together.
             this.clientBoard.scene.tweens.add({
-                targets: [
-                    this._sprite,
-                    ...this._effects.values(),
-                ],
+                targets: [this._sprite, ...this._effects.values()],
                 displayOriginY: `+${Math.min(120, difference * 1.5)}`,
                 duration: duration / 2,
                 yoyo: true,
             });
 
-            this._effects.forEach(
-                (sprite, status) => {
-                    this.clientBoard.scene.tweens.add({
-                        targets: [sprite],
-                        x:
-                            isoPosition.x +
-                            (effectOffsets[status]?.x[
-                                this._wizCode.wiz
-                            ] ?? 0) *
-                                (this._direction ===
-                                UnitDirection.Left
-                                    ? -1
-                                    : 1),
-                        y:
-                            isoPosition.y +
-                            (effectOffsets[status]?.y[
-                                this._wizCode.wiz
-                            ] ?? 0),
-                        duration: duration,
-                        ease: PMath.Easing.Cubic
-                            .InOut,
-                    });
-                },
-            );
+            this._effects.forEach((sprite, status) => {
+                this.clientBoard.scene.tweens.add({
+                    targets: [sprite],
+                    x:
+                        isoPosition.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    y:
+                        isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    duration: duration,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            });
 
             this.clientBoard.scene.tweens.add({
-                targets: [
-                    this._sprite,
-                    this._shadow,
-                ],
+                targets: [this._sprite, this._shadow],
                 x: isoPosition.x,
-                y:
-                    isoPosition.y -
-                    this._offsetY,
+                y: isoPosition.y - this._offsetY,
                 duration: duration,
                 onUpdateScope: this,
                 ease: PMath.Easing.Cubic.InOut,
@@ -248,9 +205,7 @@ export class Wizard extends Piece {
      * just a single static frame per direction.
      */
     playAnim() {
-        this._sprite?.setFrame(
-            `${this._wizCode.code}_${this._direction}`,
-        );
+        this._sprite?.setFrame(`${this._wizCode.code}_${this._direction}`);
     }
 
     /**
@@ -261,13 +216,9 @@ export class Wizard extends Piece {
         super.updateDepth();
         this._effects.forEach((sprite, status) => {
             if (status === UnitStatus.MagicWings) {
-                sprite.setDepth(
-                    this.sprite.depth - 1,
-                );
+                sprite.setDepth(this.sprite.depth - 1);
             } else {
-                sprite.setDepth(
-                    this.sprite.depth + 1,
-                );
+                sprite.setDepth(this.sprite.depth + 1);
             }
         });
     }
@@ -294,10 +245,9 @@ export class Wizard extends Piece {
             this._currentMount.currentRider = null;
             this._currentMount = null;
         }
-        const ownedPieceCount: number =
-            this.clientBoard
-                .getPiecesByOwner(this.owner as any)
-                .length;
+        const ownedPieceCount: number = this.clientBoard.getPiecesByOwner(
+            this.owner as any,
+        ).length;
         await this.destroy();
         await this.owner?.defeat();
         if (ownedPieceCount > 1) {
@@ -324,117 +274,64 @@ export class Wizard extends Piece {
         }
         // Mutually exclusive statuses
         if (status === UnitStatus.MagicShield) {
-            this.removeStatus(
-                UnitStatus.MagicArmour,
-            );
-        } else if (
-            status === UnitStatus.MagicArmour
-        ) {
-            this.removeStatus(
-                UnitStatus.MagicShield,
-            );
+            this.removeStatus(UnitStatus.MagicArmour);
+        } else if (status === UnitStatus.MagicArmour) {
+            this.removeStatus(UnitStatus.MagicShield);
         }
         if (status === UnitStatus.MagicKnife) {
-            this.removeStatus(
-                UnitStatus.MagicSword,
-            );
-        } else if (
-            status === UnitStatus.MagicSword
-        ) {
-            this.removeStatus(
-                UnitStatus.MagicKnife,
-            );
+            this.removeStatus(UnitStatus.MagicSword);
+        } else if (status === UnitStatus.MagicSword) {
+            this.removeStatus(UnitStatus.MagicKnife);
         }
 
-        const isoPosition: Geom.Point =
-            this.clientBoard.getIsoPosition(this.position);
-        let effectSprite:
-            | GameObjects.Sprite
-            | GameObjects.Image;
+        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            this.position,
+        );
+        let effectSprite: GameObjects.Sprite | GameObjects.Image;
         switch (status) {
             // Visual effects
             case UnitStatus.ShadowForm:
-                this.sprite?.setAlpha(
-                    Piece.SHADOW_FORM_ALPHA,
-                );
+                this.sprite?.setAlpha(Piece.SHADOW_FORM_ALPHA);
                 break;
             case UnitStatus.MagicKnife:
             case UnitStatus.MagicSword:
             case UnitStatus.MagicBow:
             case UnitStatus.MagicShield:
             case UnitStatus.MagicWings:
-                effectSprite =
-                    this.clientBoard.scene.add.sprite(
-                        isoPosition.x +
-                            (effectOffsets[status]?.x[
-                                this._wizCode.wiz
-                            ] ?? 0) *
-                                (this._direction ===
-                                UnitDirection.Left
-                                    ? -1
-                                    : 1),
-                        isoPosition.y +
-                            (effectOffsets[status]?.y[
-                                this._wizCode.wiz
-                            ] ?? 0),
-                        "effects",
-                    );
-                (
-                    effectSprite as GameObjects.Sprite
-                ).anims.play({
+                effectSprite = this.clientBoard.scene.add.sprite(
+                    isoPosition.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    "effects",
+                );
+                (effectSprite as GameObjects.Sprite).anims.play({
                     key: status.toLowerCase(),
                     repeat: -1,
                 });
                 effectSprite.setOrigin(0.5, 0.5);
-                effectSprite.setFlipX(
-                    this._direction ===
-                        UnitDirection.Left,
-                );
-                effectSprite.setBlendMode(
-                    BlendModes.ADD,
-                );
-                this.clientBoard
-                    .getLayer(BoardLayer.Pieces)
-                    .add(effectSprite);
-                this._effects.set(
-                    status,
-                    effectSprite,
-                );
+                effectSprite.setFlipX(this._direction === UnitDirection.Left);
+                effectSprite.setBlendMode(BlendModes.ADD);
+                this.clientBoard.getLayer(BoardLayer.Pieces).add(effectSprite);
+                this._effects.set(status, effectSprite);
                 this.updateDepth();
                 break;
             case UnitStatus.MagicArmour:
-                effectSprite =
-                    this.clientBoard.scene.add.image(
-                        isoPosition.x +
-                            (effectOffsets[status]?.x[
-                                this._wizCode.wiz
-                            ] ?? 0) *
-                                (this._direction ===
-                                UnitDirection.Left
-                                    ? -1
-                                    : 1),
-                        isoPosition.y +
-                            (effectOffsets[status]?.y[
-                                this._wizCode.wiz
-                            ] ?? 0),
-                        "magic-armour",
-                        this._wizCode.wiz,
-                    );
+                effectSprite = this.clientBoard.scene.add.image(
+                    isoPosition.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    isoPosition.y +
+                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    "magic-armour",
+                    this._wizCode.wiz,
+                );
                 effectSprite.setOrigin(0.5, 0.6);
-                effectSprite.setFlipX(
-                    this._direction ===
-                        UnitDirection.Left,
-                );
-                effectSprite.setBlendMode(
-                    BlendModes.ADD,
-                );
-                this.clientBoard
-                    .getLayer(BoardLayer.Pieces)
-                    .add(effectSprite);
-                this._effects.set(
-                    status,
-                    effectSprite,
-                );
+                effectSprite.setFlipX(this._direction === UnitDirection.Left);
+                effectSprite.setBlendMode(BlendModes.ADD);
+                this.clientBoard.getLayer(BoardLayer.Pieces).add(effectSprite);
+                this._effects.set(status, effectSprite);
                 effectSprite.setData(
                     "_effectTween",
                     this.clientBoard.scene.tweens.add({
@@ -458,9 +355,7 @@ export class Wizard extends Piece {
 
         // Any magical weapon lets us attack the
         // undead.
-        if (
-            Wizard.MAGIC_WEAPONS.includes(status)
-        ) {
+        if (Wizard.MAGIC_WEAPONS.includes(status)) {
             this.addStatus(UnitStatus.AttackUndead);
         }
 
@@ -500,22 +395,15 @@ export class Wizard extends Piece {
                 if (!this._effects.has(status)) {
                     break;
                 }
-                const sprite:
-                    | GameObjects.Sprite
-                    | GameObjects.Image =
+                const sprite: GameObjects.Sprite | GameObjects.Image =
                     this._effects.get(status);
                 if (sprite) {
                     try {
                         if (
-                            sprite.getData(
-                                "_effectTween",
-                            ) instanceof Tweens.Tween
+                            sprite.getData("_effectTween") instanceof
+                            Tweens.Tween
                         ) {
-                            (
-                                sprite.getData(
-                                    "_effectTween",
-                                ) as Tweens.Tween
-                            )
+                            (sprite.getData("_effectTween") as Tweens.Tween)
                                 ?.stop()
                                 ?.destroy();
                         }
@@ -536,18 +424,10 @@ export class Wizard extends Piece {
 
         // Losing all magical weapons means we can
         // no longer attack the undead.
-        if (
-            Wizard.MAGIC_WEAPONS.includes(status)
-        ) {
+        if (Wizard.MAGIC_WEAPONS.includes(status)) {
             this.removeStatus(status);
-            if (
-                Wizard.MAGIC_WEAPONS.some((s) =>
-                    this.hasStatus(s),
-                ) === false
-            ) {
-                this.removeStatus(
-                    UnitStatus.AttackUndead,
-                );
+            if (Wizard.MAGIC_WEAPONS.some((s) => this.hasStatus(s)) === false) {
+                this.removeStatus(UnitStatus.AttackUndead);
             }
         }
 
@@ -594,8 +474,9 @@ export class Wizard extends Piece {
             return this._sprite;
         }
 
-        const isoPosition: Geom.Point =
-            this.clientBoard.getIsoPosition(this.position);
+        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            this.position,
+        );
 
         this._sprite = new WizardSprite(
             this.clientBoard.scene,
@@ -608,9 +489,7 @@ export class Wizard extends Piece {
 
         this._sprite.setOrigin(0.5, 0.6);
 
-        this.clientBoard
-            .getLayer(BoardLayer.Pieces)
-            .add(this._sprite);
+        this.clientBoard.getLayer(BoardLayer.Pieces).add(this._sprite);
 
         this.playAnim();
 
@@ -623,15 +502,15 @@ export class Wizard extends Piece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: Geom.Point =
-            this.clientBoard.getIsoPosition(this.position);
+        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            this.position,
+        );
 
-        this._shadow =
-            this.clientBoard.scene.add.image(
-                isoPosition.x,
-                isoPosition.y,
-                "unit-glow",
-            );
+        this._shadow = this.clientBoard.scene.add.image(
+            isoPosition.x,
+            isoPosition.y,
+            "unit-glow",
+        );
 
         // Tint the glow to match the wizard's owner
         // colour.
@@ -651,9 +530,7 @@ export class Wizard extends Piece {
             loop: -1,
         });
 
-        this.clientBoard
-            .getLayer(BoardLayer.Shadows)
-            .add(this._shadow);
+        this.clientBoard.getLayer(BoardLayer.Shadows).add(this._shadow);
 
         this._shadow.setOrigin(0.5, 0.5);
         this._shadow.displayOriginY = -3;
@@ -673,13 +550,8 @@ export class Wizard extends Piece {
      * Create and place wizards for all players.
      * Delegates to engine Wizard.
      */
-    static createAll(
-        board: Board,
-        players: Player[],
-    ): void {
-        EngineWizard.createAll(
-            board as any, players as any,
-        );
+    static createAll(board: Board, players: Player[]): void {
+        EngineWizard.createAll(board as any, players as any);
     }
 
     /**

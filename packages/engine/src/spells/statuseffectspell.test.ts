@@ -21,12 +21,9 @@ describe("StatusEffectSpell.doCast", () => {
             makeConfig({ target: SpellTarget.Self, id: "shadow-form" }),
         );
         s.owner = owner;
-        const result = await s.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [makeMockPiece({ type: UnitType.Creature })],
-        );
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
+            makeMockPiece({ type: UnitType.Creature }),
+        ]);
         expect(result).toBe(false);
     });
 
@@ -40,12 +37,9 @@ describe("StatusEffectSpell.doCast", () => {
             makeConfig({ target: SpellTarget.Self, id: "shadow-form" }),
         );
         s.owner = owner;
-        const result = await s.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [makeMockPiece({ type: UnitType.Wizard, owner: { id: 99 } })],
-        );
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
+            makeMockPiece({ type: UnitType.Wizard, owner: { id: 99 } }),
+        ]);
         expect(result).toBe(false);
     });
 
@@ -61,12 +55,9 @@ describe("StatusEffectSpell.doCast", () => {
         s.owner = owner;
         const wizard = makeMockPiece({ type: UnitType.Wizard, owner });
         wizard.addStatus = vi.fn().mockReturnValue(true);
-        const result = await s.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [wizard],
-        );
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
+            wizard,
+        ]);
         expect(result).toBe(true);
         expect(wizard.addStatus).toHaveBeenCalled();
     });
@@ -109,12 +100,9 @@ describe("StatusEffectSpell.doCast", () => {
         );
         s.owner = owner;
         const wizard = makeMockPiece({ type: UnitType.Wizard, owner });
-        const result = await s.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [wizard],
-        );
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
+            wizard,
+        ]);
         expect(result).toBe(true);
         expect(wizard.addStatus).not.toHaveBeenCalled();
     });

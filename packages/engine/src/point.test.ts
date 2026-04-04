@@ -16,9 +16,7 @@ describe("Point", () => {
     });
 
     it("equals compares by value", () => {
-        expect(Point.equals(new Point(1, 2), new Point(1, 2)))
-            .toBe(true);
-        expect(Point.equals(new Point(1, 2), new Point(3, 4)))
-            .toBe(false);
+        expect(Point.equals(new Point(1, 2), new Point(1, 2))).toBe(true);
+        expect(Point.equals(new Point(1, 2), new Point(3, 4))).toBe(false);
     });
 });

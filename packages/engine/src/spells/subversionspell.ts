@@ -12,18 +12,14 @@ import { Point } from "../point";
  * Illusionary units always resist. Succeeds or fails based on the target's
  * magic resistance.
  */
-export class SubversionSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
     async doCast(
         owner: Player<P>,
         castingPiece: P,
         point?: Point,
         targets?: P[],
     ): Promise<P | boolean | null> {
-        const target: P = targets.find(
-            (p: P) => p.owner !== this.owner,
-        );
+        const target: P = targets.find((p: P) => p.owner !== this.owner);
         if (!target) {
             return false;
         }
@@ -34,30 +30,22 @@ export class SubversionSpell<
             this._owner,
         );
 
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "castloop08" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.SubversionBeam,
-                pieceId: target.id,
-                startPieceId: castingPiece.id,
-            },
-        );
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "castloop08",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.SubversionBeam,
+            pieceId: target.id,
+            startPieceId: castingPiece.id,
+        });
         if (rollSuccess && !target.illusion) {
-            this._board.events.emit(
-                EngineEvent.EffectRequested,
-                { sound: "spelleffect" },
-            );
-            await this._board.events.emitAsync(
-                EngineEvent.EffectRequested,
-                {
-                    type: EffectType.SubversionHit,
-                    pieceId: target.id,
-                },
-            );
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: "spelleffect",
+            });
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: EffectType.SubversionHit,
+                pieceId: target.id,
+            });
             target.owner = this.owner;
             this._board.logger.log(
                 `${target.name} was subverted and now belongs to ${owner.name}`,

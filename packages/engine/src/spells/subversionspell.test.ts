@@ -70,9 +70,7 @@ describe("SubversionSpell.doCast", () => {
             owner: originalOwner,
             illusion: true,
         });
-        await spell.doCast(owner, castingPiece, new Point(0, 0), [
-            illusion,
-        ]);
+        await spell.doCast(owner, castingPiece, new Point(0, 0), [illusion]);
         expect(illusion.owner).toBe(originalOwner);
     });
 

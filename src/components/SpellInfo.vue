@@ -107,11 +107,7 @@ import {
     chanceRounded,
     friendlyBalance,
 } from "@archaos/engine";
-import type {
-    Spell,
-    AttackSpell,
-    SummonSpell,
-} from "@archaos/engine";
+import type { Spell, AttackSpell, SummonSpell } from "@archaos/engine";
 import { computed } from "vue";
 import type { Ref } from "vue";
 

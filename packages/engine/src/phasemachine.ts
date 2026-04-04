@@ -215,9 +215,7 @@ function createModel(): {
     new PseudoState("initial", castingPlayer, PseudoStateKind.Initial).to(
         castIdle,
     );
-    new PseudoState("initial", moving, PseudoStateKind.Initial).to(
-        movingSetup,
-    );
+    new PseudoState("initial", moving, PseudoStateKind.Initial).to(movingSetup);
     new PseudoState("initial", movingPlayer, PseudoStateKind.Initial).to(
         pieceIdle,
     );
@@ -359,8 +357,8 @@ export class PhaseMachine {
 
         // Leaf states are simple states (no children). We check them in
         // order to find the deepest active one.
-        this._leafStates = Object.entries(states).filter(
-            ([, state]) => state.isSimple(),
+        this._leafStates = Object.entries(states).filter(([, state]) =>
+            state.isSimple(),
         );
 
         // Wire up entry actions for callback notification

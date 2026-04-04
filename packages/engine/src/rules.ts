@@ -75,10 +75,9 @@ export class Rules {
             return ActionType.None;
         }
 
-        const hoveredPieces: Piece[] =
-            board.getPiecesAtPosition(
-                board.cursorPosition,
-            );
+        const hoveredPieces: Piece[] = board.getPiecesAtPosition(
+            board.cursorPosition,
+        );
 
         if (
             board.state === BoardState.View ||
@@ -97,30 +96,20 @@ export class Rules {
         const currentAliveHoveredPiece: Piece | null =
             hoveredPieces.find(
                 (piece: Piece) =>
-                    !piece.dead &&
-                    !piece.currentMount &&
-                    !piece.engulfed,
+                    !piece.dead && !piece.currentMount && !piece.engulfed,
             ) || null;
 
-        const selectedPiece: Piece | null =
-            board.selected;
+        const selectedPiece: Piece | null = board.selected;
 
         if (board.state === BoardState.CastSpell) {
             const selectedSpell: Spell | null =
                 board.currentPlayer?.selectedSpell;
 
-            if (
-                selectedSpell &&
-                selectedSpell.castTimes > 0
-            ) {
+            if (selectedSpell && selectedSpell.castTimes > 0) {
                 const spellTarget: SpellCastTarget =
-                    selectedSpell.getValidTarget(
-                        board.cursorPosition,
-                    );
+                    selectedSpell.getValidTarget(board.cursorPosition);
 
-                return spellTarget
-                    ? ActionType.Cast
-                    : ActionType.Invalid;
+                return spellTarget ? ActionType.Cast : ActionType.Invalid;
             }
             return ActionType.Info;
         }
@@ -132,11 +121,7 @@ export class Rules {
         ) {
             if (selectedPiece) {
                 if (currentAliveHoveredPiece) {
-                    if (
-                        selectedPiece.canMountPiece(
-                            currentAliveHoveredPiece,
-                        )
-                    ) {
+                    if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
                         return ActionType.Mount;
                     }
                     if (
@@ -144,27 +129,22 @@ export class Rules {
                             currentAliveHoveredPiece,
                         ) &&
                         selectedPiece.inAttackRange(
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         )
                     ) {
                         return ActionType.Attack;
                     }
                     if (
-                        selectedPiece
-                            .canRangedAttackPiece(
-                                currentAliveHoveredPiece,
-                            )
+                        selectedPiece.canRangedAttackPiece(
+                            currentAliveHoveredPiece,
+                        )
                     ) {
                         return ActionType.RangedAttack;
                     }
                     if (selectedPiece.moved) {
                         return ActionType.Invalid;
                     }
-                    if (
-                        selectedPiece ===
-                        currentAliveHoveredPiece
-                    ) {
+                    if (selectedPiece === currentAliveHoveredPiece) {
                         return ActionType.Move;
                     } else {
                         return ActionType.Invalid;
@@ -172,9 +152,7 @@ export class Rules {
                 } else {
                     if (
                         !selectedPiece.moved &&
-                        selectedPiece.inMovementRange(
-                            board.cursorPosition,
-                        )
+                        selectedPiece.inMovementRange(board.cursorPosition)
                     ) {
                         return ActionType.Move;
                     }
@@ -183,14 +161,9 @@ export class Rules {
             } else {
                 if (currentAliveHoveredPiece) {
                     if (
-                        currentAliveHoveredPiece
-                            .owner ===
-                        board.currentPlayer
+                        currentAliveHoveredPiece.owner === board.currentPlayer
                     ) {
-                        if (
-                            currentAliveHoveredPiece
-                                .canSelect
-                        ) {
+                        if (currentAliveHoveredPiece.canSelect) {
                             return ActionType.Select;
                         } else {
                             return ActionType.Info;
@@ -227,25 +200,16 @@ export class Rules {
             return ActionType.None;
         }
 
-        const hoveredPieces: Piece[] =
-            board.getPiecesAtPosition(
-                board.cursorPosition,
-            );
+        const hoveredPieces: Piece[] = board.getPiecesAtPosition(
+            board.cursorPosition,
+        );
 
         if (input === InputType.Click) {
-            return await this.processClick(
-                board,
-                actionType,
-                hoveredPieces,
-            );
+            return await this.processClick(board, actionType, hoveredPieces);
         }
 
         if (input === InputType.Cancel) {
-            return await this.processCancel(
-                board,
-                actionType,
-                hoveredPieces,
-            );
+            return await this.processCancel(board, actionType, hoveredPieces);
         }
 
         return ActionType.Idle;
@@ -259,11 +223,7 @@ export class Rules {
      * @param data The event data
      * @param board The board whose event emitter to use
      */
-    public dispatchEvent(
-        type: EventType,
-        data: any,
-        board?: Board,
-    ) {
+    public dispatchEvent(type: EventType, data: any, board?: Board) {
         if (board) {
             board.events.emit(type, data);
         }
@@ -275,13 +235,8 @@ export class Rules {
      *
      * @param board The game board
      */
-    public async doAutoCastSpell(
-        board: Board,
-    ): Promise<boolean> {
-        return await ComputerWizard.autoCastSpell(
-            board,
-            board.currentPlayer,
-        );
+    public async doAutoCastSpell(board: Board): Promise<boolean> {
+        return await ComputerWizard.autoCastSpell(board, board.currentPlayer);
     }
 
     /**
@@ -296,21 +251,15 @@ export class Rules {
         board: Board,
         currentTarget: SpellCastTarget,
     ): Promise<boolean> {
-        const casted: Spell | null =
-            await board.currentPlayer.useSpell();
+        const casted: Spell | null = await board.currentPlayer.useSpell();
         if (!casted) {
             return false;
         }
         board.state = BoardState.Idle;
         board.logger.log(
-            `${board.currentPlayer.name} casts` +
-                ` '${casted.name}'`,
+            `${board.currentPlayer.name} casts` + ` '${casted.name}'`,
         );
-        await casted.cast(
-            board.currentPlayer,
-            board.selected,
-            currentTarget,
-        );
+        await casted.cast(board.currentPlayer, board.selected, currentTarget);
         board.boardEvents.emit(
             BoardEvent.SpellCast,
             board.currentPlayer,
@@ -318,9 +267,7 @@ export class Rules {
         );
         board.state = BoardState.CastSpell;
         if (casted.castTimes <= 0) {
-            board.stateManager.evaluate(
-                new SpellCastComplete(),
-            );
+            board.stateManager.evaluate(new SpellCastComplete());
             await board.currentPlayer.discardSpell();
             if (casted.failed) {
                 board.logger.log(
@@ -346,8 +293,7 @@ export class Rules {
             if (casted.lineOfSight) {
                 board.events.emit(EngineEvent.ShowCastRange, {
                     position: board.selected.position,
-                    range: board.currentPlayer
-                        ?.selectedSpell.range,
+                    range: board.currentPlayer?.selectedSpell.range,
                     lineOfSight: true,
                 });
             }
@@ -379,37 +325,24 @@ export class Rules {
                 // 1. Alive piece with a current rider
                 // 2. Alive piece
                 // 3. Any remaining piece
-                const pieceOfInterest: Piece =
-                    hoveredPieces
-                        .toSorted(
-                            (a: Piece, b: Piece) => {
-                                if (
-                                    !a.dead &&
-                                    a.currentRider
-                                ) {
-                                    return -1;
-                                }
-                                if (
-                                    !b.dead &&
-                                    b.currentRider
-                                ) {
-                                    return 1;
-                                }
-                                if (!a.dead && b.dead) {
-                                    return -1;
-                                }
-                                if (a.dead && !b.dead) {
-                                    return 1;
-                                }
-                                return 0;
-                            },
-                        )
-                        .at(0);
-                this.dispatchEvent(
-                    EventType.PieceInfo,
-                    pieceOfInterest,
-                    board,
-                );
+                const pieceOfInterest: Piece = hoveredPieces
+                    .toSorted((a: Piece, b: Piece) => {
+                        if (!a.dead && a.currentRider) {
+                            return -1;
+                        }
+                        if (!b.dead && b.currentRider) {
+                            return 1;
+                        }
+                        if (!a.dead && b.dead) {
+                            return -1;
+                        }
+                        if (a.dead && !b.dead) {
+                            return 1;
+                        }
+                        return 0;
+                    })
+                    .at(0);
+                this.dispatchEvent(EventType.PieceInfo, pieceOfInterest, board);
                 return ActionType.Info;
             }
         }
@@ -423,20 +356,14 @@ export class Rules {
                 board.currentPlayer.selectedSpell
             ) {
                 const currentTarget: SpellCastTarget =
-                    board.currentPlayer.selectedSpell
-                        .getValidTarget(
-                            board.cursorPosition,
-                            true,
-                        );
+                    board.currentPlayer.selectedSpell.getValidTarget(
+                        board.cursorPosition,
+                        true,
+                    );
                 if (currentTarget == null) {
                     return ActionType.Invalid;
                 }
-                if (
-                    await this.doCastSpell(
-                        board,
-                        currentTarget,
-                    )
-                ) {
+                if (await this.doCastSpell(board, currentTarget)) {
                     return ActionType.Cast;
                 } else {
                     await board.nextPlayer();
@@ -446,9 +373,7 @@ export class Rules {
         }
         if (actionType === ActionType.Select) {
             if (hoveredPieces.length > 0) {
-                const currentAliveHoveredPiece:
-                    | Piece
-                    | null =
+                const currentAliveHoveredPiece: Piece | null =
                     hoveredPieces.find(
                         (piece: Piece) =>
                             !piece.dead &&
@@ -456,76 +381,49 @@ export class Rules {
                             !piece.engulfed,
                     ) || null;
 
-                if (
-                    currentAliveHoveredPiece
-                        ?.currentRider?.canSelect
-                ) {
+                if (currentAliveHoveredPiece?.currentRider?.canSelect) {
                     this.dispatchEvent(
                         EventType.PieceInfo,
-                        currentAliveHoveredPiece
-                            .currentRider,
+                        currentAliveHoveredPiece.currentRider,
                         board,
                     );
-                    await board.selectPiece(
-                        currentAliveHoveredPiece.id,
-                    );
-                    board.emitUIEvent(
-                        EventType.DismountAvailable,
-                        true,
-                    );
+                    await board.selectPiece(currentAliveHoveredPiece.id);
+                    board.emitUIEvent(EventType.DismountAvailable, true);
                     return ActionType.Move;
-                } else if (
-                    currentAliveHoveredPiece?.canSelect
-                ) {
+                } else if (currentAliveHoveredPiece?.canSelect) {
                     this.dispatchEvent(
                         EventType.PieceInfo,
                         currentAliveHoveredPiece,
                         board,
                     );
-                    await board.selectPiece(
-                        currentAliveHoveredPiece.id,
-                    );
+                    await board.selectPiece(currentAliveHoveredPiece.id);
                     return ActionType.Select;
                 } else {
                     return ActionType.Invalid;
                 }
             }
         }
-        const selectedPiece: Piece | null =
-            board.selected;
+        const selectedPiece: Piece | null = board.selected;
         if (!selectedPiece) {
             return ActionType.None;
         }
         if (actionType === ActionType.Move) {
             if (
                 !selectedPiece.moved &&
-                selectedPiece.inMovementRange(
-                    board.cursorPosition,
-                )
+                selectedPiece.inMovementRange(board.cursorPosition)
             ) {
-                await board.movePiece(
-                    selectedPiece.id,
-                    board.cursorPosition,
-                );
-                this.dispatchEvent(
-                    EventType.PieceInfo,
-                    null,
-                    board,
-                );
+                await board.movePiece(selectedPiece.id, board.cursorPosition);
+                this.dispatchEvent(EventType.PieceInfo, null, board);
                 return ActionType.Move;
             } else {
                 return ActionType.Invalid;
             }
         }
         if (hoveredPieces.length > 0) {
-            const currentAliveHoveredPiece:
-                | Piece
-                | null =
+            const currentAliveHoveredPiece: Piece | null =
                 hoveredPieces.find(
                     (piece: Piece) =>
-                        !piece.dead &&
-                        !piece.currentMount &&
-                        !piece.engulfed,
+                        !piece.dead && !piece.currentMount && !piece.engulfed,
                 ) || null;
 
             if (!currentAliveHoveredPiece) {
@@ -533,32 +431,23 @@ export class Rules {
             }
 
             if (actionType === ActionType.Mount) {
-                if (
-                    selectedPiece.canMountPiece(
-                        currentAliveHoveredPiece,
-                    )
-                ) {
+                if (selectedPiece.canMountPiece(currentAliveHoveredPiece)) {
                     // If we're not flying and we're
                     // more than 1 tile away, we need
                     // to move first
                     if (
-                        !selectedPiece.hasStatus(
-                            UnitStatus.Flying,
-                        ) &&
+                        !selectedPiece.hasStatus(UnitStatus.Flying) &&
                         selectedPiece.inMovementRange(
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         ) &&
                         Board.distance(
                             selectedPiece.position,
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         ) > 1.5
                     ) {
                         await board.movePiece(
                             selectedPiece.id,
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         );
                         selectedPiece.moved = false;
                     }
@@ -567,8 +456,7 @@ export class Rules {
                     } else {
                         await board.mountPiece(
                             selectedPiece.id,
-                            currentAliveHoveredPiece
-                                .id,
+                            currentAliveHoveredPiece.id,
                         );
                         return ActionType.Mount;
                     }
@@ -577,38 +465,28 @@ export class Rules {
                 }
             }
             if (actionType === ActionType.Attack) {
-                if (
-                    selectedPiece.canAttackPiece(
-                        currentAliveHoveredPiece,
-                    )
-                ) {
+                if (selectedPiece.canAttackPiece(currentAliveHoveredPiece)) {
                     // If we're not flying and we're
                     // more than 1.5 tiles away, we
                     // need to move first
                     if (
-                        !selectedPiece.hasStatus(
-                            UnitStatus.Flying,
-                        ) &&
+                        !selectedPiece.hasStatus(UnitStatus.Flying) &&
                         selectedPiece.inMovementRange(
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         ) &&
                         Board.distance(
                             selectedPiece.position,
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         ) > 1.5
                     ) {
                         await board.movePiece(
                             selectedPiece.id,
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         );
                         selectedPiece.moved = false;
                     } else if (
                         !selectedPiece.inAttackRange(
-                            currentAliveHoveredPiece
-                                .position,
+                            currentAliveHoveredPiece.position,
                         )
                     ) {
                         return ActionType.Invalid;
@@ -625,9 +503,7 @@ export class Rules {
             }
             if (actionType === ActionType.RangedAttack) {
                 if (
-                    selectedPiece.canRangedAttackPiece(
-                        currentAliveHoveredPiece,
-                    )
+                    selectedPiece.canRangedAttackPiece(currentAliveHoveredPiece)
                 ) {
                     await board.rangedAttackPiece(
                         selectedPiece.id,
@@ -659,10 +535,7 @@ export class Rules {
     ): Promise<ActionType> {
         // Only allow cancel for the current human
         // player
-        if (
-            !board.currentPlayer ||
-            board.currentPlayer.remote
-        ) {
+        if (!board.currentPlayer || board.currentPlayer.remote) {
             return ActionType.None;
         }
 
@@ -687,23 +560,17 @@ export class Rules {
         this._cancelInProgress = true;
 
         try {
-            const selectedPiece: Piece | null =
-                board.selected;
+            const selectedPiece: Piece | null = board.selected;
 
             board.events.emit(EngineEvent.EffectRequested, {
                 sound: "cancel",
             });
 
             if (board.state === BoardState.CastSpell) {
-                if (
-                    board.currentPlayer?.selectedSpell
-                ) {
-                    board.stateManager.evaluate(
-                        new SpellCastComplete(),
-                    );
+                if (board.currentPlayer?.selectedSpell) {
+                    board.stateManager.evaluate(new SpellCastComplete());
                     const wasted: Spell | null =
-                        await board.currentPlayer
-                            .discardSpell();
+                        await board.currentPlayer.discardSpell();
                     if (wasted) {
                         board.logger.log(
                             `Discarded` +
@@ -716,9 +583,7 @@ export class Rules {
                         board.selected.turnOver = true;
                     }
                     board.deselectPlayer();
-                    await board.idleDelay(
-                        Board.DEFAULT_DELAY,
-                    );
+                    await board.idleDelay(Board.DEFAULT_DELAY);
                     await board.nextPlayer();
                 }
                 return ActionType.Cancel;
@@ -729,16 +594,11 @@ export class Rules {
                     selectedPiece.moved = true;
                     selectedPiece.turnOver = true;
                     if (selectedPiece.currentRider) {
-                        selectedPiece.currentRider
-                            .moved = true;
-                        selectedPiece.currentRider
-                            .turnOver = true;
+                        selectedPiece.currentRider.moved = true;
+                        selectedPiece.currentRider.turnOver = true;
                     }
                 }
-                board.emitUIEvent(
-                    EventType.DismountAvailable,
-                    false,
-                );
+                board.emitUIEvent(EventType.DismountAvailable, false);
                 await board.deselectPiece();
                 return ActionType.Cancel;
             }
@@ -751,29 +611,15 @@ export class Rules {
             if (board.state === BoardState.Dismount) {
                 if (selectedPiece.currentRider) {
                     selectedPiece.moved = true;
-                    selectedPiece.currentRider.moved =
-                        true;
+                    selectedPiece.currentRider.moved = true;
                 }
-                board.logger.log(
-                    `Dismount cancelled`,
-                    Colour.Magenta,
-                );
-                if (
-                    selectedPiece.currentMount
-                        ?.canSelect
-                ) {
-                    board.stateManager.evaluate(
-                        new CancelDismount(),
-                    );
-                    await board.selectPiece(
-                        selectedPiece.currentMount.id,
-                    );
+                board.logger.log(`Dismount cancelled`, Colour.Magenta);
+                if (selectedPiece.currentMount?.canSelect) {
+                    board.stateManager.evaluate(new CancelDismount());
+                    await board.selectPiece(selectedPiece.currentMount.id);
                     return ActionType.Move;
                 } else {
-                    board.emitUIEvent(
-                        EventType.DismountAvailable,
-                        false,
-                    );
+                    board.emitUIEvent(EventType.DismountAvailable, false);
                 }
             }
 
@@ -782,18 +628,14 @@ export class Rules {
                 selectedPiece.currentRider &&
                 !selectedPiece.currentRider.moved
             ) {
-                board.stateManager.evaluate(
-                    new RequestDismount(),
-                );
+                board.stateManager.evaluate(new RequestDismount());
                 return ActionType.Dismount;
             }
 
             if (selectedPiece.moved) {
                 if (selectedPiece.canAttack) {
                     selectedPiece.attacked = true;
-                } else if (
-                    selectedPiece.canRangedAttack
-                ) {
+                } else if (selectedPiece.canRangedAttack) {
                     selectedPiece.rangedAttacked = true;
                 }
                 if (!selectedPiece.canSelect) {
@@ -836,20 +678,12 @@ export class Rules {
         if (Board.CHEAT_FORCE_HIT !== null) {
             return Board.CHEAT_FORCE_HIT;
         }
-        const attackRoll: number = rng.between(
-            0,
-            10 + attack,
-        );
-        const defenceRoll: number = rng.between(
-            0,
-            10 + defence,
-        );
+        const attackRoll: number = rng.between(0, 10 + attack);
+        const defenceRoll: number = rng.between(0, 10 + defence);
         console.debug(
             `Rolled ${attackRoll} vs` +
                 ` ${defenceRoll}; attack ` +
-                `${attackRoll > defenceRoll
-                    ? "succeeds"
-                    : "fails"}`,
+                `${attackRoll > defenceRoll ? "succeeds" : "fails"}`,
         );
         return attackRoll > defenceRoll;
     }
@@ -866,11 +700,7 @@ export class Rules {
      *     overrides (e.g. in tutorials)
      * @returns true if the chance check succeeds
      */
-    rollChance(
-        attack: number,
-        rng: IRNG,
-        castingPlayer?: Player,
-    ): boolean {
+    rollChance(attack: number, rng: IRNG, castingPlayer?: Player): boolean {
         if (castingPlayer?.forceCast != null) {
             return castingPlayer.forceCast;
         }
@@ -880,20 +710,14 @@ export class Rules {
         const defenceRoll: number = rng.frac();
         if (attack < 0 || attack > 1) {
             console.warn(
-                `Chance value ${attack} is out of` +
-                    ` bounds, clamping to 0-1`,
+                `Chance value ${attack} is out of` + ` bounds, clamping to 0-1`,
             );
-            attack = Math.max(
-                0,
-                Math.min(1, attack),
-            );
+            attack = Math.max(0, Math.min(1, attack));
         }
         console.debug(
             `Rolled ${attack} vs` +
                 ` ${defenceRoll}; chance ` +
-                `${attack > defenceRoll
-                    ? "succeeds"
-                    : "fails"}`,
+                `${attack > defenceRoll ? "succeeds" : "fails"}`,
         );
         return attack > defenceRoll;
     }
@@ -908,38 +732,23 @@ export class Rules {
         const payload: SpreadBatchPayload = {
             iterations: [],
         };
-        for (
-            let i: number = 0;
-            i < Board.SPREAD_ITERATIONS;
-            i++
-        ) {
-            const spreadPieces: Piece[] =
-                board.pieces.filter(
-                    (piece) =>
-                        piece.hasStatus(
-                            UnitStatus.Spreads,
-                        ) && !piece.dead,
-                );
-            const iteration: SpreadIterationPayload =
-                {
-                    focusPieceIds: spreadPieces.map(
-                        (p) => p.id,
-                    ),
-                    results: [],
-                };
+        for (let i: number = 0; i < Board.SPREAD_ITERATIONS; i++) {
+            const spreadPieces: Piece[] = board.pieces.filter(
+                (piece) => piece.hasStatus(UnitStatus.Spreads) && !piece.dead,
+            );
+            const iteration: SpreadIterationPayload = {
+                focusPieceIds: spreadPieces.map((p) => p.id),
+                results: [],
+            };
             for (const piece of spreadPieces) {
                 if (piece.dead) continue;
-                const result: SpreadResult =
-                    await piece.spread();
+                const result: SpreadResult = await piece.spread();
                 iteration.results.push(result);
             }
             payload.iterations.push(iteration);
             board.emitBoardUpdateEvent();
         }
-        board.events.emit(
-            EngineEvent.SpreadBatch,
-            payload,
-        );
+        board.events.emit(EngineEvent.SpreadBatch, payload);
     }
 
     /**
@@ -948,25 +757,18 @@ export class Rules {
      * 'expires' status.
      */
     async doExpire(board: Board): Promise<void> {
-        const expirePieces: Piece[] =
-            board.pieces.filter((piece: Piece) =>
-                piece.hasStatus(UnitStatus.Expires),
-            );
+        const expirePieces: Piece[] = board.pieces.filter((piece: Piece) =>
+            piece.hasStatus(UnitStatus.Expires),
+        );
 
         for (const piece of expirePieces) {
-            if (
-                piece.hasStatus(UnitStatus.Structure)
-            ) {
+            if (piece.hasStatus(UnitStatus.Structure)) {
                 if (board.roll(2, 10)) {
-                    await board.events.emitAsync(
-                        EngineEvent.EffectRequested,
-                        {
-                            type: EffectType
-                                .DisbelieveHit,
-                            pieceId: piece.id,
-                            sound: "disbelieve",
-                        },
-                    );
+                    await board.events.emitAsync(EngineEvent.EffectRequested, {
+                        type: EffectType.DisbelieveHit,
+                        pieceId: piece.id,
+                        sound: "disbelieve",
+                    });
                     await piece.kill();
                     board.logger.log(
                         `${piece.name} has expired`,
@@ -974,40 +776,28 @@ export class Rules {
                     );
                 }
             } else if (
-                piece.hasStatus(
-                    UnitStatus.ExpiresGivesSpell,
-                ) &&
+                piece.hasStatus(UnitStatus.ExpiresGivesSpell) &&
                 piece.currentRider &&
                 board.roll(4, 10)
             ) {
-                const owner: Player =
-                    piece.currentRider.owner;
+                const owner: Player = piece.currentRider.owner;
                 board.logger.log(
                     `${piece.name} has expired and` +
                         ` gifted ${owner.name} a` +
                         ` new spell`,
                     Colour.Cyan,
                 );
-                await board.events.emitAsync(
-                    EngineEvent.EffectRequested,
-                    {
-                        type: EffectType.GiveSpell,
-                        pieceId: piece.id,
-                        sound: "newspell",
-                    },
-                );
+                await board.events.emitAsync(EngineEvent.EffectRequested, {
+                    type: EffectType.GiveSpell,
+                    pieceId: piece.id,
+                    sound: "newspell",
+                });
                 board.addSpell(
                     piece.currentRider.owner,
-                    Spell.getRandomSpell(
-                        board.rng,
-                        true,
-                        board.spellFilter,
-                    ),
+                    Spell.getRandomSpell(board.rng, true, board.spellFilter),
                 );
                 await piece.kill();
-                await board.idleDelay(
-                    Board.DEFAULT_DELAY,
-                );
+                await board.idleDelay(Board.DEFAULT_DELAY);
             }
         }
         board.emitBoardUpdateEvent();

@@ -31,10 +31,7 @@ import { RangeType } from "./enums/rangetype";
 import { UnitStatus } from "./enums/unitstatus";
 import type { IRNG } from "./rng";
 import { GameRNG } from "./rng";
-import type {
-    PieceConfig,
-    WizardConfig,
-} from "./configs/piececonfig";
+import type { PieceConfig, WizardConfig } from "./configs/piececonfig";
 import type { SpellConfig } from "./configs/spellconfig";
 import type { Box } from "./interfaces/ui";
 import { Rules } from "./rules";
@@ -53,9 +50,7 @@ type SimplePoint = { x: number; y: number };
  * The client Board extends this and adds rendering,
  * sound, camera, cursor, and visual effects.
  */
-export class Board<
-    P extends Piece = Piece,
-> extends Model implements Box {
+export class Board<P extends Piece = Piece> extends Model implements Box {
     /* ── Cheat flags ─────────────────────────────── */
 
     /**
@@ -167,9 +162,7 @@ export class Board<
     protected readonly _rules: Rules;
     protected _rangeGizmo: RangeGizmo;
 
-    protected _spellFilter: (
-        spell: SpellConfig,
-    ) => boolean = () => true;
+    protected _spellFilter: (spell: SpellConfig) => boolean = () => true;
     protected _disableIllusions: boolean = false;
     protected _disableCancelSpell: boolean = false;
     protected _disableCancelAction: boolean = false;
@@ -178,8 +171,7 @@ export class Board<
     /**
      * Event emitter for board game events.
      */
-    protected readonly _boardEvents: EventEmitter =
-        new EventEmitter();
+    protected readonly _boardEvents: EventEmitter = new EventEmitter();
 
     constructor(
         id: number,
@@ -207,11 +199,9 @@ export class Board<
         this._logger = Logger.getInstance();
         this._rules = Rules.getInstance();
         this._rangeGizmo = new RangeGizmo(this);
-        this._stateManager = new PhaseMachine(
-            (activeState: string) => {
-                this.onPhaseTransition(activeState);
-            },
-        );
+        this._stateManager = new PhaseMachine((activeState: string) => {
+            this.onPhaseTransition(activeState);
+        });
     }
 
     /* ── Phase transition handler ────────────────��─ */
@@ -221,9 +211,7 @@ export class Board<
      * the FSM. Called on every state transition.
      * Subclasses can override to add rendering.
      */
-    protected onPhaseTransition(
-        activeState: string,
-    ): void {
+    protected onPhaseTransition(activeState: string): void {
         let newPhase: BoardPhase | null = null;
         switch (activeState) {
             case "spellbookSetup":
@@ -247,35 +235,20 @@ export class Board<
                 newPhase = BoardPhase.Moving;
                 break;
         }
-        if (
-            newPhase !== null &&
-            newPhase !== this._lastPhase
-        ) {
+        if (newPhase !== null && newPhase !== this._lastPhase) {
             this._lastPhase = newPhase;
             switch (newPhase) {
                 case BoardPhase.Spellbook:
-                    this._logger.log(
-                        `Spell selection phase`,
-                        Colour.Green,
-                    );
+                    this._logger.log(`Spell selection phase`, Colour.Green);
                     break;
                 case BoardPhase.Casting:
-                    this._logger.log(
-                        `Spell casting phase`,
-                        Colour.Green,
-                    );
+                    this._logger.log(`Spell casting phase`, Colour.Green);
                     break;
                 case BoardPhase.Moving:
-                    this._logger.log(
-                        `Movement phase`,
-                        Colour.Green,
-                    );
+                    this._logger.log(`Movement phase`, Colour.Green);
                     break;
             }
-            this._boardEvents.emit(
-                BoardEvent.PhaseChange,
-                newPhase,
-            );
+            this._boardEvents.emit(BoardEvent.PhaseChange, newPhase);
         }
 
         let newState: BoardState | null = null;
@@ -304,15 +277,9 @@ export class Board<
                 newState = BoardState.Idle;
                 break;
         }
-        if (
-            newState !== null &&
-            newState !== this._lastState
-        ) {
+        if (newState !== null && newState !== this._lastState) {
             this._lastState = newState;
-            this._boardEvents.emit(
-                BoardEvent.StateChange,
-                newState,
-            );
+            this._boardEvents.emit(BoardEvent.StateChange, newState);
             this.onStateChange(newState);
         }
     }
@@ -321,9 +288,7 @@ export class Board<
      * Called when the board state changes. Override in
      * client to emit UI events (end turn, cancel, etc).
      */
-    protected onStateChange(
-        _newState: BoardState,
-    ): void {
+    protected onStateChange(_newState: BoardState): void {
         // no-op in engine; client adds UI event emission
     }
 
@@ -334,29 +299,21 @@ export class Board<
     }
 
     get state(): BoardState {
-        if (this._state === BoardState.GameOver)
-            return BoardState.GameOver;
+        if (this._state === BoardState.GameOver) return BoardState.GameOver;
 
         const pm = this._stateManager;
         if (pm.isActive(pm.states.movingPlayer)) {
-            if (pm.isActive(pm.states.pieceAttacking))
-                return BoardState.Attack;
-            if (
-                pm.isActive(
-                    pm.states.pieceRangedAttacking,
-                )
-            )
+            if (pm.isActive(pm.states.pieceAttacking)) return BoardState.Attack;
+            if (pm.isActive(pm.states.pieceRangedAttacking))
                 return BoardState.RangedAttack;
             if (pm.isActive(pm.states.pieceDismounting))
                 return BoardState.Dismount;
             return BoardState.Move;
         }
-        if (pm.isActive(pm.states.castingPlayer))
-            return BoardState.CastSpell;
+        if (pm.isActive(pm.states.castingPlayer)) return BoardState.CastSpell;
         if (pm.isActive(pm.states.spellbookPlayer))
             return BoardState.SelectSpell;
-        if (pm.isActive(pm.states.spreading))
-            return BoardState.Idle;
+        if (pm.isActive(pm.states.spreading)) return BoardState.Idle;
 
         return this._state;
     }
@@ -370,14 +327,10 @@ export class Board<
 
     get phase(): BoardPhase {
         const pm = this._stateManager;
-        if (pm.isActive(pm.states.spellbook))
-            return BoardPhase.Spellbook;
-        if (pm.isActive(pm.states.casting))
-            return BoardPhase.Casting;
-        if (pm.isActive(pm.states.spreading))
-            return BoardPhase.Spreading;
-        if (pm.isActive(pm.states.moving))
-            return BoardPhase.Moving;
+        if (pm.isActive(pm.states.spellbook)) return BoardPhase.Spellbook;
+        if (pm.isActive(pm.states.casting)) return BoardPhase.Casting;
+        if (pm.isActive(pm.states.spreading)) return BoardPhase.Spreading;
+        if (pm.isActive(pm.states.moving)) return BoardPhase.Moving;
         return BoardPhase.Idle;
     }
 
@@ -431,9 +384,7 @@ export class Board<
     }
 
     getPiecesByOwner(owner: Player<P>): P[] {
-        return this.pieces.filter(
-            (piece) => piece.owner === owner,
-        );
+        return this.pieces.filter((piece) => piece.owner === owner);
     }
 
     removePiece(id: number): void {
@@ -442,10 +393,7 @@ export class Board<
             return;
         }
         this._pieces.delete(id);
-        this._boardEvents.emit(
-            BoardEvent.PieceDestroyed,
-            piece,
-        );
+        this._boardEvents.emit(BoardEvent.PieceDestroyed, piece);
     }
 
     /* ── Players ─────────────────────────────────── */
@@ -477,11 +425,7 @@ export class Board<
      * attackspell → board).
      */
     private static _spellFactory:
-        | ((
-              board: Board,
-              id: number,
-              config: SpellConfig,
-          ) => Spell)
+        | ((board: Board, id: number, config: SpellConfig) => Spell)
         | null = null;
 
     /**
@@ -489,11 +433,7 @@ export class Board<
      * called once before `addSpell` is used.
      */
     static registerSpellFactory(
-        factory: (
-            board: Board,
-            id: number,
-            config: SpellConfig,
-        ) => Spell,
+        factory: (board: Board, id: number, config: SpellConfig) => Spell,
     ): void {
         Board._spellFactory = factory;
     }
@@ -501,14 +441,9 @@ export class Board<
     /**
      * Add a spell to a player's spellbook.
      */
-    addSpell(
-        player: Player<P>,
-        config: SpellConfig,
-    ): Spell<P> {
+    addSpell(player: Player<P>, config: SpellConfig): Spell<P> {
         if (!config || !player) {
-            throw new Error(
-                "No player or config provided",
-            );
+            throw new Error("No player or config provided");
         }
         if (!Board._spellFactory) {
             throw new Error(
@@ -531,9 +466,7 @@ export class Board<
         return this._spellFilter ?? (() => true);
     }
 
-    set spellFilter(
-        filter: (config: SpellConfig) => boolean,
-    ) {
+    set spellFilter(filter: (config: SpellConfig) => boolean) {
         this._spellFilter = filter;
     }
 
@@ -598,22 +531,11 @@ export class Board<
 
     /* ── Geometry / queries ───────────────────────── */
 
-    getAdjacentPoints(
-        point: Point,
-        includeCentre?: boolean,
-    ): Point[] {
+    getAdjacentPoints(point: Point, includeCentre?: boolean): Point[] {
         const points: Point[] = [];
 
-        for (
-            let x: number = point.x - 1;
-            x <= point.x + 1;
-            x++
-        ) {
-            for (
-                let y: number = point.y - 1;
-                y <= point.y + 1;
-                y++
-            ) {
+        for (let x: number = point.x - 1; x <= point.x + 1; x++) {
+            for (let y: number = point.y - 1; y <= point.y + 1; y++) {
                 if (
                     (x !== point.x || y !== point.y) &&
                     x >= 0 &&
@@ -621,11 +543,7 @@ export class Board<
                     x < this.width &&
                     y < this.height
                 ) {
-                    if (
-                        !includeCentre &&
-                        x === point.x &&
-                        y === point.y
-                    ) {
+                    if (!includeCentre && x === point.x && y === point.y) {
                         continue;
                     }
                     points.push(new Point(x, y));
@@ -643,36 +561,17 @@ export class Board<
         rangeType?: RangeType,
     ): Point[] {
         const points: Point[] = [];
-        for (
-            let x: number = point.x - range;
-            x <= point.x + range;
-            x++
-        ) {
-            for (
-                let y: number = point.y - range;
-                y <= point.y + range;
-                y++
-            ) {
+        for (let x: number = point.x - range; x <= point.x + range; x++) {
+            for (let y: number = point.y - range; y <= point.y + range; y++) {
                 if (
                     x >= 0 &&
                     y >= 0 &&
                     x < this.width &&
                     y < this.height &&
-                    Board.distance(
-                        point,
-                        new Point(x, y),
-                        rangeType,
-                    ) <=
-                        range +
-                            (rangeType === RangeType.Fly
-                                ? 0.5
-                                : 0)
+                    Board.distance(point, new Point(x, y), rangeType) <=
+                        range + (rangeType === RangeType.Fly ? 0.5 : 0)
                 ) {
-                    if (
-                        !includeCentre &&
-                        x === point.x &&
-                        y === point.y
-                    ) {
+                    if (!includeCentre && x === point.x && y === point.y) {
                         continue;
                     }
                     points.push(new Point(x, y));
@@ -690,36 +589,27 @@ export class Board<
         const neighbours: Set<P> = new Set();
         const position: Point = Point.clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
-            const directionNeighbours: P[] =
-                this.getPiecesAtPosition(
-                    new Point(
-                        position.x + direction.x,
-                        position.y + direction.y,
-                    ),
-                    filter,
-                );
+            const directionNeighbours: P[] = this.getPiecesAtPosition(
+                new Point(position.x + direction.x, position.y + direction.y),
+                filter,
+            );
             if (directionNeighbours) {
-                directionNeighbours.forEach((piece) =>
-                    neighbours.add(piece),
-                );
+                directionNeighbours.forEach((piece) => neighbours.add(piece));
             }
         }
         if (includeCentre) {
-            const centreNeighbours: P[] =
-                this.getPiecesAtPosition(position, filter);
+            const centreNeighbours: P[] = this.getPiecesAtPosition(
+                position,
+                filter,
+            );
             if (centreNeighbours) {
-                centreNeighbours.forEach((piece) =>
-                    neighbours.add(piece),
-                );
+                centreNeighbours.forEach((piece) => neighbours.add(piece));
             }
         }
         return Array.from(neighbours);
     }
 
-    getPiecesAtPosition(
-        point: Point,
-        filter?: (piece: P) => boolean,
-    ): P[] {
+    getPiecesAtPosition(point: Point, filter?: (piece: P) => boolean): P[] {
         return Array.from(
             this.pieces.filter((piece: P) => {
                 return (
@@ -731,29 +621,18 @@ export class Board<
     }
 
     isBlocker(point: Point): boolean {
-        const pieces: P[] = this.getPiecesAtPosition(
-            point,
-            (piece) => {
-                return (
-                    !piece.hasStatus(UnitStatus.Transparent) &&
-                    !piece.dead
-                );
-            },
-        );
+        const pieces: P[] = this.getPiecesAtPosition(point, (piece) => {
+            return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead;
+        });
         if (!pieces?.length) {
             return false;
         }
         return true;
     }
 
-    hasLineOfSight(
-        startPosition: Point,
-        endPosition: Point,
-    ): boolean {
-        let xDiff: number =
-            endPosition.x - startPosition.x;
-        let yDiff: number =
-            endPosition.y - startPosition.y;
+    hasLineOfSight(startPosition: Point, endPosition: Point): boolean {
+        let xDiff: number = endPosition.x - startPosition.x;
+        let yDiff: number = endPosition.y - startPosition.y;
 
         let xDir: number, yDir: number;
         let xVal: number, yVal: number;
@@ -764,60 +643,29 @@ export class Board<
 
         if (xDiff === 0 || yDiff === 0) {
             if (yDiff === 0) {
-                for (
-                    let a = 1;
-                    a < Math.abs(xDiff);
-                    a++
-                ) {
+                for (let a = 1; a < Math.abs(xDiff); a++) {
                     xVal = a * xDir + startPosition.x;
-                    if (
-                        this.isBlocker(
-                            new Point(
-                                xVal,
-                                startPosition.y,
-                            ),
-                        )
-                    ) {
+                    if (this.isBlocker(new Point(xVal, startPosition.y))) {
                         return false;
                     }
                 }
             } else {
-                for (
-                    let a = 1;
-                    a < Math.abs(yDiff);
-                    a++
-                ) {
+                for (let a = 1; a < Math.abs(yDiff); a++) {
                     yVal = a * yDir + startPosition.y;
-                    if (
-                        this.isBlocker(
-                            new Point(
-                                startPosition.x,
-                                yVal,
-                            ),
-                        )
-                    ) {
+                    if (this.isBlocker(new Point(startPosition.x, yVal))) {
                         return false;
                     }
                 }
             }
         } else {
-            numChecks = Math.max(
-                Math.abs(xDiff),
-                Math.abs(yDiff),
-            );
+            numChecks = Math.max(Math.abs(xDiff), Math.abs(yDiff));
             let yInc = yDiff / numChecks,
                 xInc = xDiff / numChecks;
 
             for (let a = 1; a < numChecks; a++) {
-                xVal =
-                    startPosition.x +
-                    Math.round(xInc * a);
-                yVal =
-                    startPosition.y +
-                    Math.round(yInc * a);
-                if (
-                    this.isBlocker(new Point(xVal, yVal))
-                ) {
+                xVal = startPosition.x + Math.round(xInc * a);
+                yVal = startPosition.y + Math.round(yInc * a);
+                if (this.isBlocker(new Point(xVal, yVal))) {
                     return false;
                 }
             }
@@ -853,17 +701,11 @@ export class Board<
     }
 
     static toIsometric(point: Point): Point {
-        return new Point(
-            point.x - point.y,
-            (point.x + point.y) / 2,
-        );
+        return new Point(point.x - point.y, (point.x + point.y) / 2);
     }
 
     static fromIsometric(point: Point): Point {
-        return new Point(
-            point.x + point.y / 2,
-            point.y - point.x / 2,
-        );
+        return new Point(point.x + point.y / 2, point.y - point.x / 2);
     }
 
     /* ── Piece actions ───────────────────────────── */
@@ -872,11 +714,7 @@ export class Board<
      * Add a piece to the board.
      */
     async addPiece(config: PieceConfig): Promise<P> {
-        const piece: Piece = new Piece(
-            this,
-            this._idCounter++,
-            config,
-        );
+        const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece as P);
         this.emitBoardUpdateEvent();
         return piece as P;
@@ -886,14 +724,8 @@ export class Board<
      * Add a wizard piece to the board.
      */
     async addWizard(config: WizardConfig): Promise<P> {
-        const wizard: Wizard = new Wizard(
-            this,
-            this._idCounter++,
-            config,
-        );
-        this._pieces.set(
-            wizard.id, wizard as unknown as P,
-        );
+        const wizard: Wizard = new Wizard(this, this._idCounter++, config);
+        this._pieces.set(wizard.id, wizard as unknown as P);
         this.emitBoardUpdateEvent();
         return wizard as unknown as P;
     }
@@ -907,13 +739,10 @@ export class Board<
             this.state === BoardState.GameOver ||
             this.state !== BoardState.Idle ||
             this.phase !== BoardPhase.Idle ||
-            this.pieces.some((piece: P) =>
-                piece.hasStatus(UnitStatus.Wizard),
-            )
+            this.pieces.some((piece: P) => piece.hasStatus(UnitStatus.Wizard))
         ) {
             throw new Error(
-                "Cannot create wizards - " +
-                    "game not in initialising state",
+                "Cannot create wizards - " + "game not in initialising state",
             );
         }
         Wizard.createAll(this, this.players);
@@ -929,15 +758,9 @@ export class Board<
         }
         this._selected = this.getPiece(id);
         if (!this._selected) {
-            throw new Error(
-                `No piece with ID ${id} found ` +
-                    `to select`,
-            );
+            throw new Error(`No piece with ID ${id} found ` + `to select`);
         }
-        this._boardEvents.emit(
-            BoardEvent.PieceSelected,
-            this._selected,
-        );
+        this._boardEvents.emit(BoardEvent.PieceSelected, this._selected);
     }
 
     /**
@@ -953,14 +776,10 @@ export class Board<
      * @returns The wizard piece, or null if not found.
      */
     async selectWizard(player: Player<P>): Promise<P | null> {
-        if (
-            !player ||
-            this._state === BoardState.GameOver
-        ) {
+        if (!player || this._state === BoardState.GameOver) {
             return null;
         }
-        const ownedPieces: P[] =
-            this.getPiecesByOwner(player);
+        const ownedPieces: P[] = this.getPiecesByOwner(player);
         for (const piece of ownedPieces) {
             if (piece.hasStatus(UnitStatus.Wizard)) {
                 this.selectPiece(piece.id);
@@ -977,16 +796,11 @@ export class Board<
     async movePiece(id: number, position: Point): Promise<P> {
         const piece: P | null = this.getPiece(id);
         if (!piece) {
-            throw new Error(
-                `Could not find piece with ID ${id}`,
-            );
+            throw new Error(`Could not find piece with ID ${id}`);
         }
         piece.position.setTo(position.x, position.y);
         piece.moved = true;
-        this._boardEvents.emit(
-            BoardEvent.PieceMoved,
-            piece,
-        );
+        this._boardEvents.emit(BoardEvent.PieceMoved, piece);
         this.emitBoardUpdateEvent();
         return piece;
     }
@@ -1000,20 +814,16 @@ export class Board<
         attackingPieceId: number,
         defendingPieceId: number,
     ): Promise<P | null> {
-        const attackingPiece =
-            this.getPiece(attackingPieceId);
-        const defendingPiece =
-            this.getPiece(defendingPieceId);
+        const attackingPiece = this.getPiece(attackingPieceId);
+        const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${attackingPieceId}`,
+                `Could not find piece with ` + `ID ${attackingPieceId}`,
             );
         }
         if (!defendingPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${defendingPieceId}`,
+                `Could not find piece with ` + `ID ${defendingPieceId}`,
             );
         }
 
@@ -1039,28 +849,22 @@ export class Board<
         attackingPieceId: number,
         defendingPieceId: number,
     ): Promise<P | null> {
-        const attackingPiece =
-            this.getPiece(attackingPieceId);
-        const defendingPiece =
-            this.getPiece(defendingPieceId);
+        const attackingPiece = this.getPiece(attackingPieceId);
+        const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${attackingPieceId}`,
+                `Could not find piece with ` + `ID ${attackingPieceId}`,
             );
         }
         if (!defendingPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${defendingPieceId}`,
+                `Could not find piece with ` + `ID ${defendingPieceId}`,
             );
         }
 
         this._busy = true;
         const attackResult: boolean =
-            await attackingPiece.rangedAttack(
-                defendingPiece,
-            );
+            await attackingPiece.rangedAttack(defendingPiece);
         this._boardEvents.emit(
             BoardEvent.PieceRangedAttacked,
             attackingPiece,
@@ -1080,20 +884,16 @@ export class Board<
         mountingPieceId: number,
         mountedPieceId: number,
     ): Promise<P | null> {
-        const mountingPiece =
-            this.getPiece(mountingPieceId);
-        const mountedPiece =
-            this.getPiece(mountedPieceId);
+        const mountingPiece = this.getPiece(mountingPieceId);
+        const mountedPiece = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${mountingPieceId}`,
+                `Could not find piece with ` + `ID ${mountingPieceId}`,
             );
         }
         if (!mountedPiece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${mountedPieceId}`,
+                `Could not find piece with ` + `ID ${mountedPieceId}`,
             );
         }
 
@@ -1117,15 +917,11 @@ export class Board<
     /**
      * Dismount a piece from its current mount.
      */
-    async dismountPiece(
-        dismountingPieceId: number,
-    ): Promise<P | null> {
-        const piece =
-            this.getPiece(dismountingPieceId);
+    async dismountPiece(dismountingPieceId: number): Promise<P | null> {
+        const piece = this.getPiece(dismountingPieceId);
         if (!piece) {
             throw new Error(
-                `Could not find piece with ` +
-                    `ID ${dismountingPieceId}`,
+                `Could not find piece with ` + `ID ${dismountingPieceId}`,
             );
         }
         piece.dismount();
@@ -1149,19 +945,11 @@ export class Board<
         if (Board.CHEAT_FORCE_HIT !== null) {
             return Board.CHEAT_FORCE_HIT;
         }
-        const attackRoll: number = this._rng.between(
-            0,
-            10 + attack,
-        );
-        const defenceRoll: number = this._rng.between(
-            0,
-            10 + defence,
-        );
+        const attackRoll: number = this._rng.between(0, 10 + attack);
+        const defenceRoll: number = this._rng.between(0, 10 + defence);
         console.debug(
             `Rolled ${attackRoll} vs ${defenceRoll}; attack ${
-                attackRoll > defenceRoll
-                    ? "succeeds"
-                    : "fails"
+                attackRoll > defenceRoll ? "succeeds" : "fails"
             }`,
         );
         return attackRoll > defenceRoll;
@@ -1170,10 +958,7 @@ export class Board<
     /**
      * Roll a chance check for spell casting.
      */
-    rollChance(
-        attack: number,
-        castingPlayer?: Player<P>,
-    ): boolean {
+    rollChance(attack: number, castingPlayer?: Player<P>): boolean {
         if (castingPlayer?.forceCast != null) {
             return castingPlayer.forceCast;
         }
@@ -1189,9 +974,7 @@ export class Board<
         }
         console.debug(
             `Rolled ${attack} vs ${defenceRoll}; chance ${
-                attack > defenceRoll
-                    ? "succeeds"
-                    : "fails"
+                attack > defenceRoll ? "succeeds" : "fails"
             }`,
         );
         return attack > defenceRoll;
@@ -1254,22 +1037,12 @@ export class Board<
         this.pieces
             .filter((piece: P) => !piece.dead)
             .forEach((piece: P) => {
-                occupiedSpaces.add(
-                    `${piece.position.x},${piece.position.y}`,
-                );
+                occupiedSpaces.add(`${piece.position.x},${piece.position.y}`);
             });
 
         const emptySpaces: Point[] = [];
-        for (
-            let x: number = 0;
-            x < this.width;
-            x++
-        ) {
-            for (
-                let y: number = 0;
-                y < this.height;
-                y++
-            ) {
+        for (let x: number = 0; x < this.width; x++) {
+            for (let y: number = 0; y < this.height; y++) {
                 const key: string = `${x},${y}`;
                 if (!occupiedSpaces.has(key)) {
                     emptySpaces.push(new Point(x, y));
@@ -1277,9 +1050,7 @@ export class Board<
             }
         }
         if (emptySpaces.length === 0) {
-            console.warn(
-                "No empty spaces available on the board!",
-            );
+            console.warn("No empty spaces available on the board!");
             return null;
         }
         return this._rng.pick(emptySpaces);
@@ -1288,20 +1059,14 @@ export class Board<
     /**
      * Delay for a given time.
      */
-    static async delay(
-        time: number = Board.DEFAULT_DELAY,
-    ): Promise<void> {
-        return new Promise((resolve) =>
-            setTimeout(resolve, time),
-        );
+    static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, time));
     }
 
     /**
      * Delay with an idle state then restore.
      */
-    async idleDelay(
-        time: number = Board.DEFAULT_DELAY,
-    ): Promise<void> {
+    async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Idle;
         await Board.delay(time);
@@ -1322,10 +1087,7 @@ export class Board<
      * Emit a UI event. Override in client to dispatch
      * via Phaser scene events.
      */
-    emitUIEvent(
-        _eventType: EventType,
-        _data: any,
-    ): void {
+    emitUIEvent(_eventType: EventType, _data: any): void {
         // no-op in engine; client overrides
     }
 
@@ -1335,10 +1097,7 @@ export class Board<
     deselectPlayer(): void {
         this.currentPlayer = null;
         this._selected = null;
-        this.emitUIEvent(
-            EventType.EndTurnAvailable,
-            false,
-        );
+        this.emitUIEvent(EventType.EndTurnAvailable, false);
     }
 
     /**
@@ -1366,10 +1125,7 @@ export class Board<
 
         const pm = this._stateManager;
 
-        if (
-            pm.isActive(pm.states.idle) ||
-            pm.isActive(pm.states.moving)
-        ) {
+        if (pm.isActive(pm.states.idle) || pm.isActive(pm.states.moving)) {
             // First call: transition FSM from idle into playing
             if (pm.isActive(pm.states.idle)) {
                 pm.evaluate(new StartGame());
@@ -1385,23 +1141,15 @@ export class Board<
             this._boardEvents.emit(BoardEvent.NewTurn);
             if (this._balanceShift !== 0) {
                 this._balance += this._balanceShift;
-                this._balance = Number.parseFloat(
-                    this._balance.toFixed(2),
-                );
+                this._balance = Number.parseFloat(this._balance.toFixed(2));
                 this._logger.log(
                     `World balance shifts towards ${
-                        this._balanceShift < 0
-                            ? "chaos"
-                            : "law"
+                        this._balanceShift < 0 ? "chaos" : "law"
                     } by ${Number.parseInt(
-                        Math.abs(
-                            this._balanceShift * 100,
-                        ).toFixed(2),
+                        Math.abs(this._balanceShift * 100).toFixed(2),
                         10,
                     )}%`,
-                    this._balanceShift < 0
-                        ? Colour.Magenta
-                        : Colour.Cyan,
+                    this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan,
                 );
                 this._balanceShift = 0;
                 await this.idleDelay(Board.DEFAULT_DELAY);
@@ -1484,8 +1232,7 @@ export class Board<
             }
 
             this._currentPlayerIndex =
-                (this._currentPlayerIndex + 1) %
-                this._players.size;
+                (this._currentPlayerIndex + 1) % this._players.size;
             this.deselectPlayer();
 
             if (this._currentPlayerIndex === 0) {
@@ -1493,9 +1240,9 @@ export class Board<
             }
 
             // Skip defeated players before selecting them
-            const playerId = Array.from(
-                this._players.keys(),
-            )[this._currentPlayerIndex];
+            const playerId = Array.from(this._players.keys())[
+                this._currentPlayerIndex
+            ];
             if (this.getPlayer(playerId)?.defeated) {
                 continue;
             }
@@ -1505,15 +1252,11 @@ export class Board<
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    if (
-                        await this.currentPlayer.remote
-                            .selectSpell()
-                    ) {
+                    if (await this.currentPlayer.remote.selectSpell()) {
                         this._boardEvents.emit(
                             BoardEvent.SpellSelected,
                             this.currentPlayer,
-                            this.currentPlayer
-                                .selectedSpell,
+                            this.currentPlayer.selectedSpell,
                         );
                     } else {
                         console.log(
@@ -1522,9 +1265,7 @@ export class Board<
                         );
                     }
                     continue;
-                } else if (
-                    this.currentPlayer?.spells?.length
-                ) {
+                } else if (this.currentPlayer?.spells?.length) {
                     // Return to allow the client override to
                     // open the spellbook UI.
                     return;
@@ -1533,9 +1274,7 @@ export class Board<
 
             // Skip if no spells available in spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
-                if (
-                    this.currentPlayer?.spells.length === 0
-                ) {
+                if (this.currentPlayer?.spells.length === 0) {
                     continue;
                 }
             }
@@ -1545,48 +1284,30 @@ export class Board<
                 this.selectWizard(this.currentPlayer);
 
                 if (this.selected) {
-                    const spell =
-                        this.currentPlayer?.selectedSpell;
+                    const spell = this.currentPlayer?.selectedSpell;
                     if (spell?.properties?.autoPlace) {
-                        this._stateManager.evaluate(
-                            new SpellTargeting(),
-                        );
-                        await this.rules.doAutoCastSpell(
-                            this,
-                        );
+                        this._stateManager.evaluate(new SpellTargeting());
+                        await this.rules.doAutoCastSpell(this);
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range === 0) {
-                        this._stateManager.evaluate(
-                            new SpellTargeting(),
-                        );
+                        this._stateManager.evaluate(new SpellTargeting());
                         await this.rules.doCastSpell(
                             this,
-                            this.currentPlayer
-                                .castingPiece,
+                            this.currentPlayer.castingPiece,
                         );
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
-                        this._stateManager.evaluate(
-                            new SpellTargeting(),
-                        );
-                        this._boardEvents.emit(
-                            EngineEvent.ShowCastRange,
-                            {
-                                position: this.selected
-                                    .position,
-                                range: spell.range,
-                                lineOfSight:
-                                    spell.lineOfSight,
-                            },
-                        );
-                        if (
-                            this.currentPlayer?.remote
-                        ) {
+                        this._stateManager.evaluate(new SpellTargeting());
+                        this._boardEvents.emit(EngineEvent.ShowCastRange, {
+                            position: this.selected.position,
+                            range: spell.range,
+                            lineOfSight: spell.lineOfSight,
+                        });
+                        if (this.currentPlayer?.remote) {
                             if (
-                                !(await this.currentPlayer
-                                    .remote.castSpell())
+                                !(await this.currentPlayer.remote.castSpell())
                             ) {
                                 console.log(
                                     "Remote player could" +
@@ -1597,12 +1318,9 @@ export class Board<
                             continue;
                         }
                     } else if (spell?.range === -1) {
-                        if (
-                            this.currentPlayer?.remote
-                        ) {
+                        if (this.currentPlayer?.remote) {
                             if (
-                                !(await this.currentPlayer
-                                    .remote.castSpell())
+                                !(await this.currentPlayer.remote.castSpell())
                             ) {
                                 console.log(
                                     "Remote player could" +
@@ -1625,8 +1343,7 @@ export class Board<
                 this.phase === BoardPhase.Moving &&
                 this.currentPlayer?.remote
             ) {
-                await this.currentPlayer.remote
-                    .moveAllUnits();
+                await this.currentPlayer.remote.moveAllUnits();
                 continue;
             }
 

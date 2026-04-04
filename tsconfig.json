@@ -17,9 +17,7 @@
         "useDefineForClassFields": true,
         "allowSyntheticDefaultImports": true,
         "paths": {
-            "@archaos/engine": [
-                "./packages/engine/src/index.ts"
-            ],
+            "@archaos/engine": ["./packages/engine/src/index.ts"],
             "@assets/*": ["./assets/*"]
         }
     },

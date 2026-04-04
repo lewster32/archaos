@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-    GameRNG,
-    TestRNG,
-    weightedRandomPick,
-} from "./rng";
+import { GameRNG, TestRNG, weightedRandomPick } from "./rng";
 
 describe("TestRNG", () => {
     it("frac returns the configured value", () => {
@@ -142,9 +138,7 @@ describe("GameRNG", () => {
         const rng = new GameRNG("wrp");
         const arr = [1, 2, 3, 4, 5];
         for (let i = 0; i < 20; i++) {
-            expect(arr).toContain(
-                rng.weightedRandomPick(arr, 2),
-            );
+            expect(arr).toContain(rng.weightedRandomPick(arr, 2));
         }
     });
 });

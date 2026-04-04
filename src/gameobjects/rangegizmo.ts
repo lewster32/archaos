@@ -23,8 +23,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * Stagger delay between gizmo reveal animations in
      * milliseconds
      */
-    private static readonly GIZMO_REVEAL_STAGGER_DELAY: number =
-        5;
+    private static readonly GIZMO_REVEAL_STAGGER_DELAY: number = 5;
 
     /**
      * Typed reference to the client board for Phaser access
@@ -41,8 +40,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      */
     private readonly _pathLayer: GameObjects.Layer;
 
-    private lastSimplePosition: Geom.Point =
-        new Geom.Point(-1, -1);
+    private lastSimplePosition: Geom.Point = new Geom.Point(-1, -1);
     private lastDistance: number = -1;
     private lastCursor: CursorType;
     private lastLoS: boolean;
@@ -58,12 +56,8 @@ export class RangeGizmo extends EngineRangeGizmo {
     constructor(board: Board) {
         super(board);
         this._clientBoard = board;
-        this._rangeLayer = board.getLayer(
-            BoardLayer.FloorCursors,
-        );
-        this._pathLayer = board.getLayer(
-            BoardLayer.PathCursors,
-        );
+        this._rangeLayer = board.getLayer(BoardLayer.FloorCursors);
+        this._pathLayer = board.getLayer(BoardLayer.PathCursors);
     }
 
     /**
@@ -74,9 +68,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * @returns A promise that resolves when generation is
      * complete
      */
-    public override async generate(
-        unit: Piece,
-    ): Promise<void> {
+    public override async generate(unit: Piece): Promise<void> {
         await super.generate(unit);
         if (this._piece?.hasStatus(UnitStatus.Flying)) {
             await this.generateVisualRange();
@@ -92,21 +84,12 @@ export class RangeGizmo extends EngineRangeGizmo {
      * @param board the board
      * @param nodes the nodes to show
      */
-    private static showDebugGrid(
-        board: Board,
-        nodes: Node[],
-    ): void {
+    private static showDebugGrid(board: Board, nodes: Node[]): void {
         let debugGrid: string = "";
         for (let yy: number = 0; yy < board.height; yy++) {
             let row: string = "";
-            for (
-                let xx: number = 0;
-                xx < board.width;
-                xx++
-            ) {
-                const node = nodes.find(
-                    (n: Node) => n.x === xx && n.y === yy,
-                );
+            for (let xx: number = 0; xx < board.width; xx++) {
+                const node = nodes.find((n: Node) => n.x === xx && n.y === yy);
                 if (node) {
                     if (node.terminal) {
                         row += "X ";
@@ -133,13 +116,8 @@ export class RangeGizmo extends EngineRangeGizmo {
      * @returns A promise resolving to this RangeGizmo once
      * cleared
      */
-    public override async reset(
-        force?: boolean,
-    ): Promise<RangeGizmo> {
-        if (
-            this._rangeLayer.length === 0 &&
-            this._pathLayer.length === 0
-        ) {
+    public override async reset(force?: boolean): Promise<RangeGizmo> {
+        if (this._rangeLayer.length === 0 && this._pathLayer.length === 0) {
             await super.reset();
             return this;
         }
@@ -152,16 +130,14 @@ export class RangeGizmo extends EngineRangeGizmo {
         return new Promise((resolve: Function) => {
             this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
-                duration:
-                    RangeGizmo.GIZMO_REVEAL_DURATION,
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
                 alpha: 0,
-                delay:
-                    this._clientBoard.scene.tweens.stagger(
-                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                        {
-                            from: "last",
-                        },
-                    ),
+                delay: this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "last",
+                    },
+                ),
                 onComplete: async () => {
                     this._rangeLayer.removeAll();
                     this._pathLayer.removeAll();
@@ -186,46 +162,34 @@ export class RangeGizmo extends EngineRangeGizmo {
         return new Promise((resolve: Function) => {
             this._validNodes
                 .filter(Boolean)
-                .filter(
-                    (node: Node) =>
-                        node.traversable || node.terminal,
-                )
+                .filter((node: Node) => node.traversable || node.terminal)
                 .forEach((node: Node) => {
-                    const path: Path = this.getPathTo(
-                        node.pos,
-                    );
+                    const path: Path = this.getPathTo(node.pos);
                     if (!path?.nodes?.length) {
                         return;
                     }
-                    if (
-                        path?.cost >
-                        this._piece.stats.movement + 1
-                    ) {
+                    if (path?.cost > this._piece.stats.movement + 1) {
                         node.traversable = false;
                     } else {
                         node.path = path;
                         const isoPosition: Geom.Point =
-                            this._clientBoard.getIsoPosition(
-                                node.pos,
-                            );
+                            this._clientBoard.getIsoPosition(node.pos);
                         let cursorImage: GameObjects.Image;
 
                         if (node.warning) {
-                            cursorImage =
-                                this._clientBoard.scene.add.image(
-                                    isoPosition.x,
-                                    isoPosition.y,
-                                    "cursors",
-                                    CursorType.RangeMoveWarning,
-                                );
+                            cursorImage = this._clientBoard.scene.add.image(
+                                isoPosition.x,
+                                isoPosition.y,
+                                "cursors",
+                                CursorType.RangeMoveWarning,
+                            );
                         } else {
-                            cursorImage =
-                                this._clientBoard.scene.add.image(
-                                    isoPosition.x,
-                                    isoPosition.y,
-                                    "cursors",
-                                    CursorType.RangeMove,
-                                );
+                            cursorImage = this._clientBoard.scene.add.image(
+                                isoPosition.x,
+                                isoPosition.y,
+                                "cursors",
+                                CursorType.RangeMove,
+                            );
                         }
                         cursorImage.setOrigin(0.5, 0.5);
                         cursorImage.setAlpha(0);
@@ -236,15 +200,13 @@ export class RangeGizmo extends EngineRangeGizmo {
             this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration:
-                    RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay:
-                    this._clientBoard.scene.tweens.stagger(
-                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                        {
-                            from: "first",
-                        },
-                    ),
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    },
+                ),
                 onComplete: () => {
                     resolve();
                 },
@@ -274,10 +236,7 @@ export class RangeGizmo extends EngineRangeGizmo {
     ): Promise<void> {
         if (
             !force &&
-            Geom.Point.Equals(
-                position,
-                this.lastSimplePosition,
-            ) &&
+            Geom.Point.Equals(position, this.lastSimplePosition) &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
             lineOfSight === this.lastLoS
@@ -295,21 +254,12 @@ export class RangeGizmo extends EngineRangeGizmo {
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
-            for (
-                let yy: number = 0;
-                yy < this._clientBoard.height;
-                yy++
-            ) {
-                for (
-                    let xx: number = 0;
-                    xx < this._clientBoard.width;
-                    xx++
-                ) {
-                    const currentDistance: number =
-                        gridDistance(
-                            startPosition,
-                            new Geom.Point(xx, yy),
-                        );
+            for (let yy: number = 0; yy < this._clientBoard.height; yy++) {
+                for (let xx: number = 0; xx < this._clientBoard.width; xx++) {
+                    const currentDistance: number = gridDistance(
+                        startPosition,
+                        new Geom.Point(xx, yy),
+                    );
                     if (currentDistance > distance) {
                         continue;
                     }
@@ -351,15 +301,13 @@ export class RangeGizmo extends EngineRangeGizmo {
             this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration:
-                    RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay:
-                    this._clientBoard.scene.tweens.stagger(
-                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                        {
-                            from: "first",
-                        },
-                    ),
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    },
+                ),
                 onComplete: () => {
                     resolve();
                 },
@@ -392,23 +340,20 @@ export class RangeGizmo extends EngineRangeGizmo {
             true,
         );
 
-        this._rangeLayer
-            .getChildren()
-            .forEach((child: GameObjects.Image) => {
-                child.setAlpha(0);
-            });
+        this._rangeLayer.getChildren().forEach((child: GameObjects.Image) => {
+            child.setAlpha(0);
+        });
 
         this._clientBoard.scene.tweens.add({
             targets: this._rangeLayer.getChildren(),
             alpha: 1,
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-            delay:
-                this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+            delay: this._clientBoard.scene.tweens.stagger(
+                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                {
+                    from: "first",
+                },
+            ),
         });
     }
 
@@ -426,13 +371,12 @@ export class RangeGizmo extends EngineRangeGizmo {
             targets: this._rangeLayer.getChildren(),
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
             alpha: 0,
-            delay:
-                this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "last",
-                    },
-                ),
+            delay: this._clientBoard.scene.tweens.stagger(
+                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                {
+                    from: "last",
+                },
+            ),
         });
     }
 
@@ -450,27 +394,23 @@ export class RangeGizmo extends EngineRangeGizmo {
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
                     const isoPosition: Geom.Point =
-                        this._clientBoard.getIsoPosition(
-                            node.pos,
-                        );
+                        this._clientBoard.getIsoPosition(node.pos);
                     let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
-                        cursorImage =
-                            this._clientBoard.scene.add.image(
-                                isoPosition.x,
-                                isoPosition.y,
-                                "cursors",
-                                CursorType.RangeMoveWarning,
-                            );
+                        cursorImage = this._clientBoard.scene.add.image(
+                            isoPosition.x,
+                            isoPosition.y,
+                            "cursors",
+                            CursorType.RangeMoveWarning,
+                        );
                     } else {
-                        cursorImage =
-                            this._clientBoard.scene.add.image(
-                                isoPosition.x,
-                                isoPosition.y,
-                                "cursors",
-                                CursorType.RangeMove,
-                            );
+                        cursorImage = this._clientBoard.scene.add.image(
+                            isoPosition.x,
+                            isoPosition.y,
+                            "cursors",
+                            CursorType.RangeMove,
+                        );
                     }
                     cursorImage.setOrigin(0.5, 0.5);
                     cursorImage.setAlpha(0);
@@ -480,15 +420,13 @@ export class RangeGizmo extends EngineRangeGizmo {
             this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration:
-                    RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay:
-                    this._clientBoard.scene.tweens.stagger(
-                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                        {
-                            from: "first",
-                        },
-                    ),
+                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay: this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    },
+                ),
                 onComplete: () => {
                     resolve();
                 },
@@ -527,10 +465,9 @@ export class RangeGizmo extends EngineRangeGizmo {
             : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
-            const isoPosition: Geom.Point =
-                this._clientBoard.getIsoPosition(
-                    path.nodes[n].pos,
-                );
+            const isoPosition: Geom.Point = this._clientBoard.getIsoPosition(
+                path.nodes[n].pos,
+            );
 
             const cursorImage: GameObjects.Image =
                 this._clientBoard.scene.add.image(

@@ -225,11 +225,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, reactive } from "vue";
-import type {
-    SetupData,
-    GameSetupData,
-    SetupPlayer,
-} from "@archaos/engine";
+import type { SetupData, GameSetupData, SetupPlayer } from "@archaos/engine";
 import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
 import * as storage from "../gameobjects/storage";
 

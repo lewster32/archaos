@@ -7,10 +7,7 @@ import {
     UnitRangedProjectileType,
     Piece as EnginePiece,
 } from "@archaos/engine";
-import type {
-    PieceConfig,
-    Player as EnginePlayer,
-} from "@archaos/engine";
+import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
@@ -701,7 +698,9 @@ export class Piece extends EnginePiece {
         this.currentMount = piece as Piece;
         piece.currentRider = this;
         await this.clientBoard.movePiece(this.id, piece.position);
-        this.clientBoard.logger.log(`${this.fullName} mounted ${piece.fullName}`);
+        this.clientBoard.logger.log(
+            `${this.fullName} mounted ${piece.fullName}`,
+        );
         (piece as unknown as Piece).createShaders(true, this.owner as any);
     }
 

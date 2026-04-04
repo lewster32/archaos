@@ -396,7 +396,9 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!spells.length) {
                 console.debug(`${this._player.name} has no spells to cast`);
-                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
                 return false;
             }
 
@@ -518,7 +520,9 @@ export class ComputerWizard implements RemotePlayer {
 
             if (!pickedSpell) {
                 console.debug(`${this._player.name} failed to pick a spell`);
-                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
                 return false;
             }
 
@@ -740,7 +744,9 @@ export class ComputerWizard implements RemotePlayer {
      * @returns true if the unit was moved successfully, false otherwise
      */
     async moveUnit(piece: Piece): Promise<boolean> {
-        this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [piece.id] });
+        this._board.events.emit(EngineEvent.FocusPieces, {
+            pieceIds: [piece.id],
+        });
         this._board.selectPiece(piece.id);
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
@@ -902,16 +908,13 @@ export class ComputerWizard implements RemotePlayer {
                 let targetPiece: Piece | null = null;
                 for (const pos of flyPoints) {
                     targetPiece =
-                        this._board.getPiecesAtPosition(
-                            pos,
-                            (p: Piece) => {
-                                return (
-                                    p.owner !== this._player && // Enemy piece
-                                    piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
-                                    piece.canAttackPiece(p) // Can attack target
-                                );
-                            },
-                        )[0] || null;
+                        this._board.getPiecesAtPosition(pos, (p: Piece) => {
+                            return (
+                                p.owner !== this._player && // Enemy piece
+                                piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
+                                piece.canAttackPiece(p) // Can attack target
+                            );
+                        })[0] || null;
                     if (targetPiece) {
                         break;
                     }
@@ -966,7 +969,9 @@ export class ComputerWizard implements RemotePlayer {
                 });
             if (reachableTiles.length === 0) {
                 console.debug(`No reachable tiles for ${piece.fullName}`);
-                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
                 return false;
             }
             // We're going to move to a point, but it may be random or it may
@@ -1113,7 +1118,9 @@ export class ComputerWizard implements RemotePlayer {
             console.debug(
                 `${piece.fullName} moves to (${movePt.x}, ${movePt.y})`,
             );
-            this._board.events.emit(EngineEvent.FocusPosition, { position: movePt });
+            this._board.events.emit(EngineEvent.FocusPosition, {
+                position: movePt,
+            });
             await this._board.movePiece(piece.id, movePt);
             if (piece.engaged) {
                 console.debug(`${piece.fullName} is now engaged after moving`);

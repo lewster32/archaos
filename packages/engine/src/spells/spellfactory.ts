@@ -42,9 +42,7 @@ const SPELL_RULES: [(config: SpellConfig) => boolean, SpellConstructor][] = [
  * @param config The configuration object that defines the spell's properties and behavior.
  * @returns An instance of a Spell subclass that matches the provided configuration, or a generic Spell if no specific match is found.
  */
-export function createSpell<
-    P extends Piece = Piece,
->(
+export function createSpell<P extends Piece = Piece>(
     board: Board<P>,
     id: number,
     config: SpellConfig,

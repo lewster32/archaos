@@ -11,9 +11,7 @@ import { Point } from "../point";
  * Disbelieve — reveals whether an enemy unit is an illusion and destroys it
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
-export class DisbelieveSpell<
-    P extends Piece = Piece,
-> extends Spell<P> {
+export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
     async doCast(
         owner: Player<P>,
         castingPiece: P,
@@ -24,23 +22,18 @@ export class DisbelieveSpell<
         if (!target) {
             return false;
         }
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "castloop08" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.DisbelieveBeam,
-                pieceId: target.id,
-                startPieceId: castingPiece.id,
-            },
-        );
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "castloop08",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.DisbelieveBeam,
+            pieceId: target.id,
+            startPieceId: castingPiece.id,
+        });
         if (target.illusion) {
-            this._board.events.emit(
-                EngineEvent.EffectRequested,
-                { sound: "disbelieve" },
-            );
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: "disbelieve",
+            });
             await target.kill();
             this._board.logger.log(
                 `Disbelieve succeeded on illusionary ${target.name}`,

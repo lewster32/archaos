@@ -26,16 +26,11 @@ function makeNode(
     }> = {},
 ): Node {
     const node = new Node(x, y);
-    if (opts.traversable !== undefined)
-        node.traversable = opts.traversable;
-    if (opts.terminal !== undefined)
-        node.terminal = opts.terminal;
-    if (opts.warning !== undefined)
-        node.warning = opts.warning;
-    if (opts.flying !== undefined)
-        node.flying = opts.flying;
-    if (opts.path !== undefined)
-        node.path = opts.path;
+    if (opts.traversable !== undefined) node.traversable = opts.traversable;
+    if (opts.terminal !== undefined) node.terminal = opts.terminal;
+    if (opts.warning !== undefined) node.warning = opts.warning;
+    if (opts.flying !== undefined) node.flying = opts.flying;
+    if (opts.path !== undefined) node.path = opts.path;
     return node;
 }
 
@@ -50,18 +45,14 @@ describe("distance", () => {
     it("uses Chebyshev for Foot range", () => {
         const a = new Point(0, 0);
         const b = new Point(3, 1);
-        expect(distance(a, b, RangeType.Foot)).toBe(
-            3,
-        );
+        expect(distance(a, b, RangeType.Foot)).toBe(3);
     });
 
     it("uses modified metric for Fly range", () => {
         const a = new Point(0, 0);
         const b = new Point(3, 1);
         // max=3, min=1 → (3-1) + 1*1.5 = 3.5
-        expect(distance(a, b, RangeType.Fly)).toBe(
-            3.5,
-        );
+        expect(distance(a, b, RangeType.Fly)).toBe(3.5);
     });
 
     it("defaults to Fly range type", () => {
@@ -76,39 +67,19 @@ describe("distance", () => {
 
 describe("getAngle", () => {
     it("returns 0 for due right", () => {
-        expect(
-            getAngle(
-                new Point(0, 0),
-                new Point(1, 0),
-            ),
-        ).toBe(0);
+        expect(getAngle(new Point(0, 0), new Point(1, 0))).toBe(0);
     });
 
     it("returns 2 for due down", () => {
-        expect(
-            getAngle(
-                new Point(0, 0),
-                new Point(0, 1),
-            ),
-        ).toBe(2);
+        expect(getAngle(new Point(0, 0), new Point(0, 1))).toBe(2);
     });
 
     it("returns 4 for due left", () => {
-        expect(
-            getAngle(
-                new Point(1, 0),
-                new Point(0, 0),
-            ),
-        ).toBe(4);
+        expect(getAngle(new Point(1, 0), new Point(0, 0))).toBe(4);
     });
 
     it("returns 6 for due up", () => {
-        expect(
-            getAngle(
-                new Point(0, 1),
-                new Point(0, 0),
-            ),
-        ).toBe(6);
+        expect(getAngle(new Point(0, 1), new Point(0, 0))).toBe(6);
     });
 });
 
@@ -147,11 +118,7 @@ describe("Node", () => {
             const n1 = makeNode(0, 0);
             const n2 = makeNode(1, 0);
             n2.parentNode = n1;
-            const path = new Path(
-                [n1, n2],
-                [0, 0],
-                1,
-            );
+            const path = new Path([n1, n2], [0, 0], 1);
 
             const node = new Node(1, 0);
             node.path = path;
@@ -168,11 +135,7 @@ describe("Node", () => {
             const n1 = makeNode(0, 0);
             const n2 = makeNode(1, 0);
             n2.parentNode = n1;
-            const path = new Path(
-                [n1, n2],
-                [0, 0],
-                1,
-            );
+            const path = new Path([n1, n2], [0, 0], 1);
 
             const node = new Node(1, 0);
             node.traversable = false;
@@ -188,11 +151,7 @@ describe("Path", () => {
     it("stores nodes, angles, and cost", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0);
-        const path = new Path(
-            [n1, n2],
-            [0, 1],
-            1.5,
-        );
+        const path = new Path([n1, n2], [0, 1], 1.5);
 
         expect(path.nodes).toHaveLength(2);
         expect(path.angles).toEqual([0, 1]);
@@ -220,11 +179,7 @@ describe("Path", () => {
     it("toPoints clones node positions", () => {
         const n1 = makeNode(2, 3);
         const n2 = makeNode(4, 5);
-        const path = new Path(
-            [n1, n2],
-            [0, 1],
-            1,
-        );
+        const path = new Path([n1, n2], [0, 1], 1);
         const points = path.toPoints();
 
         expect(points).toHaveLength(2);
@@ -240,21 +195,13 @@ describe("Path", () => {
         const n2 = makeNode(1, 0, {
             warning: true,
         });
-        const path = new Path(
-            [n1, n2],
-            [0, 0],
-            1,
-        );
+        const path = new Path([n1, n2], [0, 0], 1);
         expect(path.warning).toBe(true);
 
         const n3 = makeNode(2, 0, {
             warning: false,
         });
-        const path2 = new Path(
-            [n1, n3],
-            [0, 0],
-            1,
-        );
+        const path2 = new Path([n1, n3], [0, 0], 1);
         expect(path2.warning).toBe(false);
     });
 
@@ -264,22 +211,14 @@ describe("Path", () => {
             terminal: true,
         });
         const n3 = makeNode(2, 0);
-        const path = new Path(
-            [n1, n2, n3],
-            [0, 0, 0],
-            2,
-        );
+        const path = new Path([n1, n2, n3], [0, 0, 0], 2);
         expect(path.terminal).toBe(true);
     });
 
     it("terminal returns false if no node is terminal", () => {
         const n1 = makeNode(0, 0);
         const n2 = makeNode(1, 0);
-        const path = new Path(
-            [n1, n2],
-            [0, 0],
-            1,
-        );
+        const path = new Path([n1, n2], [0, 0], 1);
         expect(path.terminal).toBe(false);
     });
 });
@@ -289,9 +228,7 @@ describe("Path", () => {
 describe("diagonalHeuristic", () => {
     it("returns 0 for identical nodes", () => {
         const node = makeNode(5, 5);
-        expect(
-            diagonalHeuristic(node, node),
-        ).toBe(0);
+        expect(diagonalHeuristic(node, node)).toBe(0);
     });
 
     it("returns cost for adjacent cardinal step", () => {
@@ -335,17 +272,13 @@ describe("diagonalHeuristic", () => {
     it("uses custom cost parameters", () => {
         const a = makeNode(0, 0);
         const b = makeNode(1, 1);
-        expect(
-            diagonalHeuristic(a, b, 3, 2, 50),
-        ).toBe(2);
+        expect(diagonalHeuristic(a, b, 3, 2, 50)).toBe(2);
     });
 
     it("uses custom terminalCost for warning nodes", () => {
         const a = makeNode(0, 0, { warning: true });
         const b = makeNode(1, 1);
-        expect(
-            diagonalHeuristic(a, b, 3, 2, 50),
-        ).toBe(52);
+        expect(diagonalHeuristic(a, b, 3, 2, 50)).toBe(52);
     });
 });
 
@@ -365,9 +298,7 @@ describe("isOpen", () => {
     });
 
     it("returns false for empty set", () => {
-        expect(isOpen(makeNode(0, 0), [])).toBe(
-            false,
-        );
+        expect(isOpen(makeNode(0, 0), [])).toBe(false);
     });
 });
 
@@ -384,9 +315,7 @@ describe("isClosed", () => {
     });
 
     it("returns false for empty set", () => {
-        expect(
-            isClosed(makeNode(0, 0), []),
-        ).toBe(false);
+        expect(isClosed(makeNode(0, 0), [])).toBe(false);
     });
 });
 
@@ -453,8 +382,6 @@ describe("buildPath", () => {
 
         const path = buildPath(b, a);
         expect(path.angles).toBeDefined();
-        expect(
-            path.angles.length,
-        ).toBeGreaterThan(0);
+        expect(path.angles.length).toBeGreaterThan(0);
     });
 });
