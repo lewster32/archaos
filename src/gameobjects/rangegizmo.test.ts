@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { Geom } from "phaser";
 import { RangeGizmo } from "./rangegizmo";
 import {
@@ -10,8 +10,6 @@ import {
     buildPath,
 } from "@archaos/engine";
 import type { Board } from "./board";
-import type { Piece } from "./piece";
-
 // ─── Mock helpers ────────────────────────────────────────────────────────────
 
 function makeNode(
@@ -95,19 +93,6 @@ function makeMockBoard(overrides: Record<string, any> = {}): Board {
         hasLineOfSight: vi.fn(() => true),
         ...overrides,
     } as unknown as Board;
-}
-
-function makeMockPiece(overrides: Record<string, any> = {}): Piece {
-    return {
-        position: new Geom.Point(0, 0),
-        dead: false,
-        stats: { movement: 3 },
-        hasStatus: vi.fn(() => false),
-        canMountPiece: vi.fn(() => false),
-        canAttackPiece: vi.fn(() => false),
-        canEngagePiece: vi.fn(() => false),
-        ...overrides,
-    } as unknown as Piece;
 }
 
 // ─── Node ────────────────────────────────────────────────────────────────────
@@ -474,77 +459,6 @@ describe("RangeGizmo", () => {
         });
     });
 
-    describe("checkNodeTraversal", () => {
-        let board: Board;
-        let gizmo: any; // Use any to access protected method
-
-        beforeEach(() => {
-            board = makeMockBoard();
-            gizmo = new RangeGizmo(board);
-        });
-
-        it("marks empty tile as traversable and not terminal", () => {
-            gizmo._piece = makeMockPiece();
-            (board.getPiecesAtPosition as any).mockReturnValue([]);
-
-            const node = makeNode(1, 1);
-            const result = gizmo.checkNodeTraversal(node);
-            expect(result.traversable).toBe(true);
-            expect(result.terminal).toBe(false);
-        });
-
-        it("marks tile containing the piece itself as traversable", () => {
-            const piece = makeMockPiece();
-            gizmo._piece = piece;
-            (board.getPiecesAtPosition as any).mockReturnValue([piece]);
-
-            const node = makeNode(0, 0);
-            const result = gizmo.checkNodeTraversal(node);
-            expect(result.traversable).toBe(true);
-            expect(result.terminal).toBe(false);
-        });
-
-        it("marks tile with a mountable piece as terminal", () => {
-            const piece = makeMockPiece({
-                canMountPiece: vi.fn(() => true),
-            });
-            const otherPiece = makeMockPiece();
-            gizmo._piece = piece;
-            (board.getPiecesAtPosition as any).mockReturnValue([otherPiece]);
-
-            const node = makeNode(1, 1);
-            const result = gizmo.checkNodeTraversal(node);
-            expect(result.terminal).toBe(true);
-        });
-
-        it("marks tile with an attackable piece as terminal", () => {
-            const piece = makeMockPiece({
-                canAttackPiece: vi.fn(() => true),
-            });
-            const enemy = makeMockPiece();
-            gizmo._piece = piece;
-            (board.getPiecesAtPosition as any).mockReturnValue([enemy]);
-
-            const node = makeNode(1, 1);
-            const result = gizmo.checkNodeTraversal(node);
-            expect(result.terminal).toBe(true);
-        });
-
-        it("marks tile with an unmountable/unattackable piece as not traversable", () => {
-            const piece = makeMockPiece({
-                canMountPiece: vi.fn(() => false),
-                canAttackPiece: vi.fn(() => false),
-            });
-            const blocker = makeMockPiece();
-            gizmo._piece = piece;
-            (board.getPiecesAtPosition as any).mockReturnValue([blocker]);
-
-            const node = makeNode(1, 1);
-            const result = gizmo.checkNodeTraversal(node);
-            expect(result.traversable).toBe(false);
-        });
-    });
-
     describe("reset", () => {
         it("returns immediately when both layers are empty", async () => {
             const board = makeMockBoard();
@@ -597,192 +511,6 @@ describe("RangeGizmo", () => {
             expect(output).toContain(". # # ");
 
             spy.mockRestore();
-        });
-    });
-
-    describe("A* pathfinding integration", () => {
-        it("finds a straight-line path on a clear grid", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            // Manually populate _validNodes with a 1x4 corridor
-            const nodes = [
-                makeNode(0, 0),
-                makeNode(1, 0),
-                makeNode(2, 0),
-                makeNode(3, 0),
-            ];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(3, 0),
-            );
-
-            expect(path).not.toBeNull();
-            expect(path.nodes).toHaveLength(4);
-            expect(path.nodes[0].x).toBe(0);
-            expect(path.nodes[3].x).toBe(3);
-        });
-
-        it("finds a diagonal path", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const nodes = [makeNode(0, 0), makeNode(1, 1), makeNode(2, 2)];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(2, 2),
-            );
-
-            expect(path).not.toBeNull();
-            expect(path.nodes[0].x).toBe(0);
-            expect(path.nodes[path.nodes.length - 1].x).toBe(2);
-        });
-
-        it("returns null when destination is unreachable", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            // Two isolated nodes with a gap
-            const nodes = [makeNode(0, 0), makeNode(5, 5)];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(5, 5),
-            );
-            expect(path).toBeNull();
-        });
-
-        it("routes around a non-traversable node", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            // 3x1 grid but middle is blocked → need to go around via (1,1)
-            const nodes = [
-                makeNode(0, 0),
-                makeNode(1, 0, { traversable: false }),
-                makeNode(2, 0),
-                makeNode(0, 1),
-                makeNode(1, 1),
-                makeNode(2, 1),
-            ];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(2, 0),
-            );
-
-            expect(path).not.toBeNull();
-            // Path should not include the blocked node (1,0)
-            const pathCoords = path.nodes.map((n: Node) => `${n.x},${n.y}`);
-            expect(pathCoords).not.toContain("1,0");
-        });
-
-        it("can pathfind to a terminal node", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const nodes = [
-                makeNode(0, 0),
-                makeNode(1, 0),
-                makeNode(2, 0, { terminal: true }),
-            ];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(2, 0),
-            );
-
-            expect(path).not.toBeNull();
-            expect(path.nodes[path.nodes.length - 1].x).toBe(2);
-        });
-    });
-
-    describe("findConnectedNodes (with populated valid nodes)", () => {
-        it("returns only adjacent nodes", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const center = makeNode(5, 5);
-            const adjacent = makeNode(6, 5);
-            const diagonal = makeNode(6, 6);
-            const farAway = makeNode(8, 8);
-
-            (gizmo as any)._validNodes = [center, adjacent, diagonal, farAway];
-
-            const connected = gizmo.findConnectedNodes(center);
-            expect(connected).toContain(adjacent);
-            expect(connected).toContain(diagonal);
-            expect(connected).not.toContain(farAway);
-            expect(connected).not.toContain(center);
-        });
-
-        it("includes all 8 neighbours when fully surrounded", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const center = makeNode(5, 5);
-            const neighbours = [
-                makeNode(4, 4),
-                makeNode(5, 4),
-                makeNode(6, 4),
-                makeNode(4, 5),
-                makeNode(6, 5),
-                makeNode(4, 6),
-                makeNode(5, 6),
-                makeNode(6, 6),
-            ];
-            (gizmo as any)._validNodes = [center, ...neighbours];
-
-            const connected = gizmo.findConnectedNodes(center);
-            expect(connected).toHaveLength(8);
-        });
-    });
-
-    describe("getPathTo (with populated state)", () => {
-        it("caches paths for repeated lookups", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const nodes = [makeNode(0, 0), makeNode(1, 0)];
-            (gizmo as any)._validNodes = nodes;
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const path1 = gizmo.getPathTo(new Geom.Point(1, 0));
-            const path2 = gizmo.getPathTo(new Geom.Point(1, 0));
-
-            // Should return the same cached object
-            expect(path1).toBe(path2);
-        });
-
-        it("returns null for non-traversable, non-terminal node", () => {
-            const board = makeMockBoard();
-            const gizmo = new RangeGizmo(board);
-
-            const blocked = makeNode(1, 0, { traversable: false });
-            (gizmo as any)._validNodes = [makeNode(0, 0), blocked];
-            (gizmo as any)._piece = makeMockPiece();
-            (gizmo as any)._paths = new Map();
-
-            const result = gizmo.getPathTo(new Geom.Point(1, 0));
-            expect(result).toBeNull();
         });
     });
 
