@@ -1,16 +1,19 @@
-import { Board } from "../board";
 import { Colour } from "../enums/colour";
-import { EffectType } from "../enums/effecttype";
 import { EngineEvent } from "../enums/engineevent";
 import { UnitType } from "../enums/unittype";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Point } from "../point";
+import type {
+    TurmoilBatchPayload,
+    TurmoilMoveResult,
+} from "../actions";
 
 /**
- * Turmoil — teleports every piece on the board to a random empty space.
- * Only available as a gift spell.
+ * Turmoil — teleports every piece on the board to
+ * a random empty space. Only available as a gift
+ * spell.
  */
 export class TurmoilSpell<
     P extends Piece = Piece,
@@ -23,60 +26,59 @@ export class TurmoilSpell<
     ): Promise<P | boolean | null> {
         const target: P = targets.find(
             (p: P) =>
-                p.type === UnitType.Wizard && p.owner === this.owner,
+                p.type === UnitType.Wizard &&
+                p.owner === this.owner,
         );
         if (!target) {
             return false;
         }
 
-        this._board.events.emit(
-            EngineEvent.EffectRequested,
-            { sound: "spelleffect" },
-        );
-        await this._board.events.emitAsync(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCasting,
-                pieceId: target.id,
-            },
-        );
+        const moves: TurmoilMoveResult[] = [];
 
-        for (const piece of this._board.pieces.filter(
-            (p: P) => !p.dead && !p.currentMount && !p.engulfed,
-        )) {
+        for (const piece of this._board.pieces
+            .filter(
+                (p: P) =>
+                    !p.dead &&
+                    !p.currentMount &&
+                    !p.engulfed,
+            )) {
             const randomEmptySpace: Point =
                 this._board.getRandomEmptySpace();
             if (randomEmptySpace) {
-                this._board.events.emit(
-                    EngineEvent.EffectRequested,
-                    { sound: "spelleffect" },
-                );
-                const oldPosition = {
+                const from = {
                     x: piece.position.x,
                     y: piece.position.y,
                 };
-                await piece.moveTo(randomEmptySpace, 500);
-                await this._board.events.emitAsync(
-                    EngineEvent.EffectRequested,
-                    {
-                        type: EffectType.TurmoilBeam,
-                        pieceId: piece.id,
-                        startPosition: oldPosition,
-                        targetPosition: {
-                            x: randomEmptySpace.x,
-                            y: randomEmptySpace.y,
-                        },
-                    },
+                await piece.moveTo(
+                    randomEmptySpace,
+                    500,
                 );
+                moves.push({
+                    pieceId: piece.id,
+                    from,
+                    to: {
+                        x: randomEmptySpace.x,
+                        y: randomEmptySpace.y,
+                    },
+                });
             }
         }
 
+        const payload: TurmoilBatchPayload = {
+            castingPieceId: target.id,
+            moves,
+        };
+        this._board.events.emit(
+            EngineEvent.TurmoilBatch,
+            payload,
+        );
+
         this._board.logger.log(
-            `${target.name} successfully casts '${this.name}'`,
+            `${target.name} successfully casts` +
+                ` '${this.name}'`,
             Colour.Green,
         );
 
-        await this._board.idleDelay(Board.DEFAULT_DELAY);
         return true;
     }
 }
