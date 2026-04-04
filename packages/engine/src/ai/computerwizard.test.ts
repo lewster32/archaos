@@ -1,10 +1,8 @@
-// @vitest-environment jsdom
-// TODO: remove jsdom annotation once engine Board exists (Task 12)
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { ComputerWizard } from "./computerwizard";
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 import type { Player } from "../player";
 import type { Piece } from "../piece";
 import { Spell } from "../spells/spell";

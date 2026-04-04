@@ -2,12 +2,6 @@ import { SpellType } from "../enums/spelltype";
 import { SpellTarget } from "../enums/spelltarget";
 import { UnitType } from "../enums/unittype";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-// Wizard must be imported first to resolve the circular dependency chain:
-// Spell -> Board -> AttackSpell/SummonSpell -> Spell (circular).
-// Importing Wizard first causes Board to be fully evaluated before
-// Spell is imported, so AttackSpell/SummonSpell can extend Spell
-// without seeing it as undefined.
-import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { Piece } from "../piece";
 import { Point } from "../point";

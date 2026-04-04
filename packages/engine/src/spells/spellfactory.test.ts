@@ -1,7 +1,4 @@
 import { describe, it, expect } from "vitest";
-// Resolve circular dependency:
-// Spell -> Board -> AttackSpell/SummonSpell -> Spell
-import "../../../../src/gameobjects/wizard";
 import { createSpell } from "./spellfactory";
 import { AttackSpell } from "./attackspell";
 import { DisbelieveSpell } from "./disbelievespell";

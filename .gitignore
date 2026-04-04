@@ -116,3 +116,6 @@ dist
 src/**/__screenshots__/
 .vitest-attachments/
 test-results/
+
+# Superpowers
+.superpowers/

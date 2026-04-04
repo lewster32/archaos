@@ -7,9 +7,6 @@ import {
 } from "../enums/unitrangedprojectiletype";
 import type { SpellConfig } from "../configs/spellconfig";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-// Resolve circular dependency:
-// Spell -> Board -> AttackSpell/SummonSpell -> Spell
-import "../../../../src/gameobjects/wizard";
 import { AttackSpell } from "./attackspell";
 import { Spell } from "./spell";
 import { Point } from "../point";

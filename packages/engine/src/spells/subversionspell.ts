@@ -1,5 +1,5 @@
 import { Board } from "../board";
-import { EffectType } from "../../../../src/gameobjects/effectemitter";
+import { EffectType } from "../enums/effecttype";
 import { Colour } from "../enums/colour";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";

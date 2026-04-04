@@ -10,7 +10,7 @@ import type { UnitConfig } from "../interfaces/ui";
 import { UnitStatus } from "../enums/unitstatus";
 import { Point } from "../point";
 import { Board } from "../board";
-import { EffectType } from "../../../../src/gameobjects/effectemitter";
+import { EffectType } from "../enums/effecttype";
 import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";

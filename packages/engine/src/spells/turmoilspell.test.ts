@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { TurmoilSpell } from "./turmoilspell";
 import { UnitType } from "../enums/unittype";

@@ -3,9 +3,6 @@ import { SpellType } from "../enums/spelltype";
 import { UnitStatus } from "../enums/unitstatus";
 import type { SpellConfig } from "../configs/spellconfig";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-// Resolve circular dependency:
-// Spell -> Board -> AttackSpell/SummonSpell -> Spell
-import "../../../../src/gameobjects/wizard";
 import { SummonSpell } from "./summonspell";
 import { Piece } from "../piece";
 import { Point } from "../point";

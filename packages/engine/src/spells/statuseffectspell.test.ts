@@ -1,7 +1,6 @@
 import { UnitType } from "../enums/unittype";
 import { SpellTarget } from "../enums/spelltarget";
 import { describe, it, expect, vi } from "vitest";
-import "../../../../src/gameobjects/wizard";
 import { StatusEffectSpell } from "./statuseffectspell";
 import { Point } from "../point";
 import {

@@ -12,9 +12,8 @@ import type { UnitConfig, UnitStats } from "./interfaces/ui";
 import type { Player } from "./player";
 
 // Board is imported only as a type to avoid a circular
-// dependency at runtime (Board → client Piece → engine
-// Piece → Board).
-import type { Board } from "../../../src/gameobjects/board";
+// dependency at runtime (Board → Piece → Board).
+import type { Board } from "./board";
 
 export enum PieceState {
     Idle,

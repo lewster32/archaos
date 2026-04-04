@@ -24,6 +24,7 @@ export {
 } from "./enums/unitrangedprojectiletype";
 export { UnitStatus } from "./enums/unitstatus";
 export { UnitType } from "./enums/unittype";
+export { EffectType } from "./enums/effecttype";
 
 // Configs
 export {

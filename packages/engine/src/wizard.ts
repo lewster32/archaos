@@ -7,7 +7,7 @@ import type { Player } from "./player";
 
 // Board is imported only as a type to avoid a circular
 // dependency at runtime.
-import type { Board } from "../../../src/gameobjects/board";
+import type { Board } from "./board";
 
 /**
  * Maximum values for each WizCode component, populated

@@ -11,7 +11,7 @@ import { Point } from "../point";
 import spellJsonData from "../../../../assets/data/classicspells.json";
 
 import { Board } from "../board";
-import { EffectType } from "../../../../src/gameobjects/effectemitter";
+import { EffectType } from "../enums/effecttype";
 import { Piece } from "../piece";
 
 import type { Player } from "../player";

@@ -7,9 +7,7 @@ import type { Piece } from "./piece";
 
 // Board is imported only as a type to avoid a
 // circular dependency at runtime.
-import type {
-    Board,
-} from "../../../src/gameobjects/board";
+import type { Board } from "./board";
 
 /**
  * Minimal AI interface that engine code (spells)

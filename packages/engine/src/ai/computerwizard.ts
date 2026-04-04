@@ -11,7 +11,7 @@ import { Path } from "../pathfinding";
 import { AttackSpell } from "../spells/attackspell";
 import { Spell } from "../spells/spell";
 import type { SummonSpell } from "../spells/summonspell";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import type { Player } from "../player";
 import { Point } from "../point";
 /**
@@ -22,7 +22,12 @@ export class ComputerWizard implements RemotePlayer {
     /**
      * The board the computer wizard is playing on.
      */
-    private readonly _board: Board;
+    // Typed as `any` because ComputerWizard bridges
+    // engine logic and client-side Board methods (cursor,
+    // sound, rules, movePiece, etc.) that are not on the
+    // engine Board type.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private readonly _board: any;
 
     /**
      * The player this computer wizard is controlling.

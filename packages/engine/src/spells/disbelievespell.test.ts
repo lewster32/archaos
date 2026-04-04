@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { DisbelieveSpell } from "./disbelievespell";
 import { Point } from "../point";
