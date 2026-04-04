@@ -40,8 +40,7 @@ import type {
     SpreadBatchPayload,
     TurmoilBatchPayload,
 } from "@archaos/engine";
-import { UnitAttackType } from "@archaos/engine";
-import { Cursor } from "./cursor";
+import { Cursor} from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
 import { Piece } from "./piece";
 import { Player } from "./player";
@@ -312,37 +311,20 @@ export class Board extends EngineBoard<Piece> {
                     for (const result of iteration.results) {
                         if (result.action === "none") continue;
                         if (result.action === "shrink") {
+                            // Shrink animation is spread-specific
+                            // visual — not handled by kill()/destroy()
                             const piece = this.getPiece(result.pieceId);
                             if (piece) {
                                 await piece.playShrinkAnimation();
-                                await piece.destroy();
                             }
                             continue;
                         }
                         // result.action === "spread"
-                        for (const destroyedId of result.destroyedPieceIds) {
-                            const victim = this.getPiece(destroyedId);
-                            const spreader = this.getPiece(result.pieceId);
-                            if (victim && spreader) {
-                                if (
-                                    spreader.properties.attackType ===
-                                    UnitAttackType.Burned
-                                ) {
-                                    await this.playEffect(
-                                        EffectType.DragonFireHit,
-                                        victim.sprite.getCenter(),
-                                    );
-                                }
-                                await victim.destroy();
-                            }
-                        }
-                        if (result.killedPieceId != null) {
-                            const killed = this.getPiece(result.killedPieceId);
-                            if (killed) {
-                                this.sound.play("killcreature");
-                                await Board.delay(Board.DEFAULT_DELAY);
-                            }
-                        }
+                        // Kill/destroy visuals already fired via
+                        // polymorphic overrides during engine
+                        // spread(). Only handle spread-specific
+                        // visuals here: new piece sprites and
+                        // blob sounds.
                         const newPiece = this.getPiece(result.newPieceId);
                         if (newPiece && !newPiece.sprite) {
                             newPiece.initSprites();
