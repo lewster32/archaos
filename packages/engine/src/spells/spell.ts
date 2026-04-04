@@ -338,7 +338,7 @@ export class Spell extends Model {
         showReason?: boolean,
     ): SpellCastTarget {
         const targetPoint: Point =
-            target instanceof Point ? target : target.position;
+            Point.isPoint(target) ? target : target.position;
         const targetPiece: Piece = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
@@ -549,7 +549,7 @@ export class Spell extends Model {
     ): Promise<Piece | boolean | null> {
         let castPoint: Point;
         let castPiece: Piece;
-        if (target instanceof Point) {
+        if (Point.isPoint(target)) {
             castPoint = Point.clone(target);
         } else if (Piece.isPiece(target)) {
             castPiece = target;

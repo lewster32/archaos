@@ -23,6 +23,20 @@ export class Point {
         return this;
     }
 
+    /**
+     * Duck-type check for point-like objects. Returns true
+     * for engine Points, Phaser Geom.Points, or any object
+     * with numeric x and y properties.
+     */
+    static isPoint(value: unknown): value is Point {
+        return (
+            value != null &&
+            typeof value === "object" &&
+            typeof (value as Point).x === "number" &&
+            typeof (value as Point).y === "number"
+        );
+    }
+
     static equals(a: Point, b: Point): boolean {
         return a.x === b.x && a.y === b.y;
     }
