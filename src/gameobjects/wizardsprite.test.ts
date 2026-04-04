@@ -34,7 +34,7 @@ import type { WizCode } from "@archaos/engine";
 import {
     searchColors,
     replaceColors,
-} from "../../assets/spritesheets/wizards.json";
+} from "@assets/spritesheets/wizards.json";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

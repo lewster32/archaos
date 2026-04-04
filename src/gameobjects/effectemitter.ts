@@ -11,7 +11,7 @@ import {
     Display,
 } from "phaser";
 
-import effectsData from "../../assets/data/effects.json";
+import effectsData from "@assets/data/effects.json";
 
 /**
  * Factory function for effects defined in code rather than via effects.json.

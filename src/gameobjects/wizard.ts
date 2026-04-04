@@ -9,7 +9,7 @@ import {
 import {
     wizcodes,
     effectOffsets,
-} from "../../assets/spritesheets/wizards.json";
+} from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
 import { EffectType } from "./effectemitter";

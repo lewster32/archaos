@@ -1,3 +1,4 @@
+import path from "node:path";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { phaserAssetSizesPlugin } from "./vite-plugin-asset-sizes.mjs";
@@ -5,6 +6,11 @@ import { phaserAssetSizesPlugin } from "./vite-plugin-asset-sizes.mjs";
 export default defineConfig({
     plugins: [vue(), phaserAssetSizesPlugin()],
     base: "./",
+    resolve: {
+        alias: {
+            "@assets": path.resolve(import.meta.dirname, "assets"),
+        },
+    },
     server: {
         watch: {
             ignored: ["**/coverage/**"],

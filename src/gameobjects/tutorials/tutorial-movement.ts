@@ -3,8 +3,8 @@ import { Board } from "../board";
 import "../wizard";
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";
-import statMove from "../../../assets/images/ui/stat-move.png?url";
-import statFly from "../../../assets/images/ui/stat-fly.png?url";
+import statMove from "@assets/images/ui/stat-move.png?url";
+import statFly from "@assets/images/ui/stat-fly.png?url";
 import { EffectType } from "../effectemitter";
 
 class Movement5 extends TutorialStep {

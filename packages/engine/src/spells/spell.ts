@@ -8,7 +8,7 @@ import { Model } from "../models/model";
 import type { SpellConfig } from "../configs/spellconfig";
 import type { IRNG } from "../rng";
 import { Point } from "../point";
-import spellJsonData from "../../../../assets/data/classicspells.json";
+import spellJsonData from "@assets/data/classicspells.json";
 
 import type { Board } from "../board";
 import { distance } from "../pathfinding";

@@ -10,7 +10,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "noImplicitReturns": true,
-        "useDefineForClassFields": true
+        "useDefineForClassFields": true,
+        "paths": {
+            "@assets/*": ["../../assets/*"]
+        }
     },
     "include": ["src/**/*.ts"],
     "exclude": ["src/**/*.test.ts"]

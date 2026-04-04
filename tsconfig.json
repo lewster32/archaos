@@ -19,7 +19,8 @@
         "paths": {
             "@archaos/engine": [
                 "./packages/engine/src/index.ts"
-            ]
+            ],
+            "@assets/*": ["./assets/*"]
         }
     },
     "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

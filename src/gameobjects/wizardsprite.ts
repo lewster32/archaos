@@ -3,7 +3,7 @@ import {
     replaceColors,
     replaceSkin,
     searchColors,
-} from "../../assets/spritesheets/wizards.json";
+} from "@assets/spritesheets/wizards.json";
 import { WizCode } from "@archaos/engine";
 
 import { GameObjects, Textures, Scene } from "phaser";

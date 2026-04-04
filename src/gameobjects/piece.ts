@@ -14,7 +14,7 @@ import type {
     PieceConfig,
     Player as EnginePlayer,
 } from "@archaos/engine";
-import unitJsonData from "../../assets/data/classicunits.json";
+import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";

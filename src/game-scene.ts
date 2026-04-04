@@ -8,25 +8,25 @@ import {
     UnitStatus,
     SpellConfig,
 } from "@archaos/engine";
-import rexcolorreplacepipelineplugin from "../assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
-import rexperlinplugin from "../assets/plugins/rexperlinplugin.min.js?url";
-import boardJson from "../assets/spritesheets/board.json?url";
-import boardAtlas from "../assets/spritesheets/board.png";
-import classicunitsJson from "../assets/spritesheets/classicunits.json?url";
-import classicunitsAtlas from "../assets/spritesheets/classicunits.png";
-import cursorsJson from "../assets/spritesheets/cursors.json?url";
-import cursorsAtlas from "../assets/spritesheets/cursors.png";
-import effectsJson from "../assets/spritesheets/effects.json?url";
-import effectsAtlas from "../assets/spritesheets/effects.png";
-import hatsSheet from "../assets/spritesheets/hats.png";
-import wizardsSheet from "../assets/spritesheets/wizards.png";
-import magicArmourSheet from "../assets/spritesheets/magic-armour.png";
-import unitGlow from "../assets/spritesheets/unit-glow.png";
-import pointerArrow from "../assets/images/ui/pointer-arrow.png";
-import classicSoundsJson from "../assets/sounds/chaossounds.json?url";
-import classicSoundsM4a from "../assets/sounds/chaossounds.m4a?url";
-import classicSoundsMp3 from "../assets/sounds/chaossounds.mp3?url";
-import classicSoundsOgg from "../assets/sounds/chaossounds.ogg?url";
+import rexcolorreplacepipelineplugin from "@assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
+import rexperlinplugin from "@assets/plugins/rexperlinplugin.min.js?url";
+import boardJson from "@assets/spritesheets/board.json?url";
+import boardAtlas from "@assets/spritesheets/board.png";
+import classicunitsJson from "@assets/spritesheets/classicunits.json?url";
+import classicunitsAtlas from "@assets/spritesheets/classicunits.png";
+import cursorsJson from "@assets/spritesheets/cursors.json?url";
+import cursorsAtlas from "@assets/spritesheets/cursors.png";
+import effectsJson from "@assets/spritesheets/effects.json?url";
+import effectsAtlas from "@assets/spritesheets/effects.png";
+import hatsSheet from "@assets/spritesheets/hats.png";
+import wizardsSheet from "@assets/spritesheets/wizards.png";
+import magicArmourSheet from "@assets/spritesheets/magic-armour.png";
+import unitGlow from "@assets/spritesheets/unit-glow.png";
+import pointerArrow from "@assets/images/ui/pointer-arrow.png";
+import classicSoundsJson from "@assets/sounds/chaossounds.json?url";
+import classicSoundsM4a from "@assets/sounds/chaossounds.m4a?url";
+import classicSoundsMp3 from "@assets/sounds/chaossounds.mp3?url";
+import classicSoundsOgg from "@assets/sounds/chaossounds.ogg?url";
 
 import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
