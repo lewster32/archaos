@@ -116,7 +116,7 @@ export { Piece, PieceState } from "./piece";
 export { Wizard, type WizCodeMax } from "./wizard";
 
 // Spells
-export { Spell } from "./spells/spell";
+export { Spell, type SpellCastTarget } from "./spells/spell";
 export { AttackSpell } from "./spells/attackspell";
 export { SummonSpell } from "./spells/summonspell";
 export { DisbelieveSpell } from "./spells/disbelievespell";

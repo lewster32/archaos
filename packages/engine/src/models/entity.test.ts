@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Entity } from "./entity";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { Point } from "../point";
 
 describe("Entity", () => {

@@ -28,6 +28,14 @@ EnginePiece.units = unitJsonData as any;
  */
 export class Piece extends EnginePiece {
     /**
+     * Get the board this piece belongs to, narrowed
+     * to the client Board type.
+     */
+    override get board(): Board {
+        return this._board as Board;
+    }
+
+    /**
      * Duration of move animations (in ms).
      */
     static readonly DEFAULT_MOVE_DURATION: number = 750;

@@ -1,4 +1,4 @@
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { Point } from "../point";
 import { Model } from "./model";
 
@@ -9,7 +9,7 @@ export class Entity extends Model {
     /**
      * The parent board this entity is on.
      */
-    private readonly _board: Board;
+    protected readonly _board: Board;
 
     /**
      * The position of this entity on the board.

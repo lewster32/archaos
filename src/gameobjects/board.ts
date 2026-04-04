@@ -1,24 +1,18 @@
-// Import directly from engine submodules to avoid barrel-induced
-// circular dependency (engine barrel → spell.ts → client board).
-import { Board as EngineBoard } from "../../packages/engine/src/board";
-import type { PieceConfig, WizardConfig } from "../../packages/engine/src/configs/piececonfig";
-import type { PlayerConfig } from "../../packages/engine/src/configs/playerconfig";
-import type { SpellConfig } from "../../packages/engine/src/configs/spellconfig";
-import { BoardEvent } from "../../packages/engine/src/enums/boardevent";
-import { BoardLayer } from "../../packages/engine/src/enums/boardlayer";
-import { BoardPhase } from "../../packages/engine/src/enums/boardphase";
-import { BoardState } from "../../packages/engine/src/enums/boardstate";
-import { Colour } from "../../packages/engine/src/enums/colour";
-import { CursorType } from "../../packages/engine/src/enums/cursortype";
-import { EventType } from "../../packages/engine/src/enums/eventtype";
-import { InputType } from "../../packages/engine/src/enums/inputtype";
-import { UnitStatus } from "../../packages/engine/src/enums/unitstatus";
-import { UnitType } from "../../packages/engine/src/enums/unittype";
-import type { BoardUpdateEventData, SpellbookOpenEventData } from "../../packages/engine/src/interfaces/ui";
-import { Path } from "../../packages/engine/src/pathfinding";
-import { Spell } from "../../packages/engine/src/spells/spell";
-import { createSpell } from "../../packages/engine/src/spells/spellfactory";
 import {
+    Board as EngineBoard,
+    BoardEvent,
+    BoardLayer,
+    BoardPhase,
+    BoardState,
+    Colour,
+    CursorType,
+    EventType,
+    InputType,
+    UnitStatus,
+    UnitType,
+    Path,
+    Spell,
+    createSpell,
     StartGame,
     SpellbookReady,
     SkipSpellbook,
@@ -34,7 +28,15 @@ import {
     RequestDismount,
     CompleteDismount,
     SpellTargeting,
-} from "../../packages/engine/src/phasemachine";
+} from "@archaos/engine";
+import type {
+    PieceConfig,
+    WizardConfig,
+    PlayerConfig,
+    SpellConfig,
+    BoardUpdateEventData,
+    SpellbookOpenEventData,
+} from "@archaos/engine";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
 import { Piece } from "./piece";

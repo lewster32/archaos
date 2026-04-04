@@ -7,26 +7,21 @@ import {
     EventType,
     InputType,
     UnitStatus,
-} from "@archaos/engine";
-import type { IRNG } from "@archaos/engine";
-import { Board } from "../board";
-import { ComputerWizard } from "../../../packages/engine/src/ai/computerwizard";
-import type { Piece } from "../piece";
-import type { Player } from "../player";
-import { Spell } from "@archaos/engine";
-import { EffectType } from "../effectemitter";
-import {
+    Spell,
     CancelDismount,
     RequestDismount,
     SpellCastComplete,
 } from "@archaos/engine";
+import type { IRNG, SpellCastTarget } from "@archaos/engine";
+import { Board } from "../board";
+import { ComputerWizard } from "../../../packages/engine/src/ai/computerwizard";
+import type { Piece } from "../piece";
+import type { Player } from "../player";
+import { EffectType } from "../effectemitter";
 
 import { Geom } from "phaser";
 
-/**
- * A target for a cast spell can be either a board position or a piece, or null
- */
-export type SpellCastTarget = Geom.Point | Piece | null;
+export type { SpellCastTarget } from "@archaos/engine";
 
 /**
  * The 'brains' of the game live here. This is the beating heart of the game

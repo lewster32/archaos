@@ -15,9 +15,12 @@ import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Piece } from "../piece";
 
 import type { Player } from "../player";
-import {
-    SpellCastTarget,
-} from "../../../../src/gameobjects/services/rules";
+
+/**
+ * A valid target for spell casting: a point on the
+ * board, a piece, or null (for auto-targeting spells).
+ */
+export type SpellCastTarget = Point | Piece | null;
 
 /**
  * A spell that can be cast by a player's wizard.
