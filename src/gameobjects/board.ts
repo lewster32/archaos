@@ -37,7 +37,10 @@ import type {
     SpellConfig,
     BoardUpdateEventData,
     SpellbookOpenEventData,
+    SpreadBatchPayload,
+    TurmoilBatchPayload,
 } from "@archaos/engine";
+import { UnitAttackType } from "@archaos/engine";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
 import { Piece } from "./piece";
@@ -294,6 +297,102 @@ export class Board extends EngineBoard<Piece> {
             EngineEvent.ResetCastRange,
             () => {
                 this.rangeGizmo.reset();
+            },
+        );
+        this.events.on(
+            EngineEvent.SpreadBatch,
+            async (payload: SpreadBatchPayload) => {
+                for (const iteration of payload.iterations) {
+                    const focusPieces = iteration.focusPieceIds
+                        .map((pid) => this.getPiece(pid))
+                        .filter(Boolean) as Piece[];
+                    if (focusPieces.length) {
+                        this.centreOnPieces(focusPieces);
+                    }
+                    for (const result of iteration.results) {
+                        if (result.action === "none") continue;
+                        if (result.action === "shrink") {
+                            const piece = this.getPiece(result.pieceId);
+                            if (piece) {
+                                await piece.playShrinkAnimation();
+                                await piece.destroy();
+                            }
+                            continue;
+                        }
+                        // result.action === "spread"
+                        for (const destroyedId of result.destroyedPieceIds) {
+                            const victim = this.getPiece(destroyedId);
+                            const spreader = this.getPiece(result.pieceId);
+                            if (victim && spreader) {
+                                if (
+                                    spreader.properties.attackType ===
+                                    UnitAttackType.Burned
+                                ) {
+                                    await this.playEffect(
+                                        EffectType.DragonFireHit,
+                                        victim.sprite.getCenter(),
+                                    );
+                                }
+                                await victim.destroy();
+                            }
+                        }
+                        if (result.killedPieceId != null) {
+                            const killed = this.getPiece(result.killedPieceId);
+                            if (killed) {
+                                this.sound.play("killcreature");
+                                await Board.delay(Board.DEFAULT_DELAY);
+                            }
+                        }
+                        const newPiece = this.getPiece(result.newPieceId);
+                        if (newPiece && !newPiece.sprite) {
+                            newPiece.initSprites();
+                        }
+                        this.sound.play(
+                            `blob${Math.random() < 0.5 ? 1 : 2}`,
+                        );
+                        if (
+                            result.killedPieceId != null ||
+                            result.destroyedPieceIds.length > 0 ||
+                            result.newPieceEngulfedId != null
+                        ) {
+                            await this.idleDelay(Piece.DEFAULT_MOVE_DURATION);
+                        }
+                    }
+                    this.emitBoardUpdateEvent();
+                    await this.idleDelay(Board.SPREAD_DELAY);
+                }
+            },
+        );
+        this.events.on(
+            EngineEvent.TurmoilBatch,
+            async (payload: TurmoilBatchPayload) => {
+                const caster = this.getPiece(payload.castingPieceId);
+                if (caster) {
+                    this.sound.play("spelleffect");
+                    await this.playEffect(
+                        EffectType.WizardCasting,
+                        caster.sprite.getCenter(),
+                    );
+                }
+                for (const move of payload.moves) {
+                    const piece = this.getPiece(move.pieceId);
+                    if (!piece) continue;
+                    this.sound.play("spelleffect");
+                    const startPos = this.getIsoPosition(
+                        new Geom.Point(move.from.x, move.from.y),
+                    );
+                    const endPos = this.getIsoPosition(
+                        new Geom.Point(move.to.x, move.to.y),
+                    );
+                    await this.playEffect(
+                        EffectType.TurmoilBeam,
+                        startPos,
+                        endPos,
+                        piece,
+                    );
+                    await piece.updatePosition(500);
+                }
+                await this.idleDelay(Board.DEFAULT_DELAY);
             },
         );
         this.events.on(

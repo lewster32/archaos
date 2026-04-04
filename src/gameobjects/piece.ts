@@ -2,11 +2,8 @@ import {
     BoardEvent,
     BoardLayer,
     Colour,
-    SpreadAction,
-    UnitAttackType,
     UnitDirection,
     UnitStatus,
-    UnitType,
     UnitRangedProjectileType,
     Piece as EnginePiece,
 } from "@archaos/engine";
@@ -410,144 +407,18 @@ export class Piece extends EnginePiece {
     // ── Combat & actions (mixed logic + rendering) ──────────────────────────
 
     /**
-     * Spread this piece to adjacent squares.
+     * Play the shrink-away animation (tween scale
+     * to 0). Used by the spread batch replayer.
      */
-    async spread(): Promise<void> {
-        if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
-            throw new Error("Cannot spread a non-spreading or dead piece");
-        }
-        const spreadAction: SpreadAction = this.clientBoard.rng.weightedRandomPick([
-            SpreadAction.Shrink,
-            SpreadAction.None,
-            SpreadAction.Spread,
-        ], 1.75, true);
-        if (spreadAction === SpreadAction.None) {
-            return;
-        }
-        if (spreadAction === SpreadAction.Shrink) {
-            if (this.currentEngulfed) {
-                this.currentEngulfed.engulfed = false;
-                this.clientBoard.logger.log(
-                    `${this.currentEngulfed.fullName} was released from ${this.fullName}`,
-                    Colour.Green,
-                );
-            }
-            await new Promise((resolve) => {
-                this.clientBoard.scene.tweens.add({
-                    targets: this.sprite,
-                    duration: Piece.DEFAULT_MOVE_DURATION / 2,
-                    scale: { from: 1, to: 0 },
-                    onComplete: () => {
-                        resolve(0);
-                    },
-                });
+    async playShrinkAnimation(): Promise<void> {
+        await new Promise<void>((resolve) => {
+            this.clientBoard.scene.tweens.add({
+                targets: this.sprite,
+                duration: Piece.DEFAULT_MOVE_DURATION / 2,
+                scale: { from: 1, to: 0 },
+                onComplete: () => resolve(),
             });
-            await this.destroy();
-        }
-        if (spreadAction === SpreadAction.Spread) {
-            const adjacentPoints: Geom.Point[] = this.clientBoard.getAdjacentPoints(
-                this.position,
-            );
-            const spreadPoint: Geom.Point = this.clientBoard.rng.pick(adjacentPoints);
-            const spreadPieces: Piece[] = this.clientBoard.getPiecesAtPosition(
-                spreadPoint,
-                (piece: Piece) => !piece.dead,
-            );
-
-            if (spreadPieces.length > 0) {
-                if (
-                    spreadPieces.some(
-                        (piece) =>
-                            piece.owner === this.owner || !piece.canBeSpreadOn,
-                    )
-                ) {
-                    return;
-                }
-                if (
-                    spreadPieces.some((piece) =>
-                        piece.hasStatus(UnitStatus.Wizard),
-                    )
-                ) {
-                    const killedPiece: Piece = spreadPieces.find((piece) =>
-                        piece.hasStatus(UnitStatus.Wizard),
-                    );
-                    this.clientBoard.logger.log(
-                        `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
-                        Colour.Red,
-                    );
-                    await killedPiece.kill();
-                } else if (this.hasStatus(UnitStatus.Engulfs)) {
-                    this.clientBoard.logger.log(
-                        `${this.fullName} has engulfed ${spreadPieces[0].fullName}`,
-                        Colour.Yellow,
-                    );
-                    spreadPieces[0].engulfed = true;
-                } else {
-                    await Promise.all(
-                        spreadPieces.map(async (piece) => {
-                            this.clientBoard.logger.log(
-                                `${piece.fullName} was destroyed by ${this.fullName}`,
-                                Colour.Red,
-                            );
-                            switch (this.properties.attackType) {
-                                case UnitAttackType.Burned:
-                                    await this.clientBoard.playEffect(
-                                        EffectType.DragonFireHit,
-                                        piece.sprite.getCenter(),
-                                        null,
-                                        piece,
-                                    );
-                                    break;
-                            }
-                            return await piece.destroy();
-                        }),
-                    );
-                }
-            }
-
-            const unit: any = Piece.getUnitConfig(this.properties.id);
-
-            const newPiece: Piece = await this.clientBoard.addPiece({
-                type: UnitType.Creature,
-                x: spreadPoint.x,
-                y: spreadPoint.y,
-                properties: {
-                    id: this._unitId,
-                    name: unit.name,
-                    movement: unit.properties.mov,
-                    combat: unit.properties.com,
-                    rangedCombat: unit.properties.rcm,
-                    range: unit.properties.rng,
-                    defence: unit.properties.def,
-                    manoeuvrability: unit.properties.mnv,
-                    magicResistance: unit.properties.res,
-                    attackType: unit.attackType || "attacked",
-                    rangedType: unit.rangedType || "shot",
-                    projectileType:
-                        unit.projectileType || UnitRangedProjectileType.Arrow,
-                    status: [...(unit.status || [])],
-                },
-                shadowScale: unit.shadowScale,
-                offsetY: unit.offY,
-                owner: this.owner,
-                illusion: !!this._illusion,
-                group: unit.group || "classicunits",
-            } as PieceConfig);
-
-            this.clientBoard.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
-
-            if (spreadPieces.length) {
-                if (
-                    newPiece.hasStatus(UnitStatus.Engulfs) &&
-                    !spreadPieces[0].dead &&
-                    !spreadPieces[0].hasStatus(UnitStatus.Wizard)
-                ) {
-                    newPiece.currentEngulfed = spreadPieces[0];
-                } else {
-                    await this.clientBoard.idleDelay(Piece.DEFAULT_MOVE_DURATION);
-                }
-            }
-        }
+        });
     }
 
     /**
