@@ -1,7 +1,7 @@
 import { GameSetupPlayerType, Colour } from "@archaos/engine";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Player } from "./player";
-import { ComputerWizard } from "./computerwizard";
+import { ComputerWizard } from "../../packages/engine/src/ai/computerwizard";
 import type { Board } from "./board";
 import type { Spell } from "@archaos/engine";
 /**

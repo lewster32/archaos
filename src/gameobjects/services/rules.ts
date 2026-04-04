@@ -10,7 +10,7 @@ import {
 } from "@archaos/engine";
 import type { IRNG } from "@archaos/engine";
 import { Board } from "../board";
-import { ComputerWizard } from "../computerwizard";
+import { ComputerWizard } from "../../../packages/engine/src/ai/computerwizard";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Spell } from "@archaos/engine";

@@ -12,7 +12,7 @@ import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
-import { ComputerWizard } from "./computerwizard";
+import { ComputerWizard } from "../../packages/engine/src/ai/computerwizard";
 import { GameSetupPlayerType } from "@archaos/engine";
 
 export class Player extends EnginePlayer {
