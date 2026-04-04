@@ -190,6 +190,94 @@ export class Board extends EngineBoard {
             },
         );
 
+        // Engine event subscriptions — the engine
+        // emits these; the client handles rendering.
+        this.events.on(
+            "aiThinking",
+            () => {
+                this.cursor.enabled = false;
+            },
+        );
+        this.events.on(
+            "aiActing",
+            () => {
+                this.cursor.enabled = true;
+            },
+        );
+        this.events.on(
+            "focusPieces",
+            (data: { pieceIds: number[] }) => {
+                const pieces = data.pieceIds
+                    .map((pid) => this.getPiece(pid))
+                    .filter(Boolean) as Piece[];
+                this.centreOnPieces(pieces);
+            },
+        );
+        this.events.on(
+            "focusPosition",
+            (data: {
+                position: { x: number; y: number };
+            }) => {
+                this.centreOnPosition(
+                    new Geom.Point(
+                        data.position.x,
+                        data.position.y,
+                    ),
+                );
+            },
+        );
+        this.events.on(
+            "effectRequested",
+            async (data: {
+                type?: EffectType;
+                pieceId?: number;
+                sound?: string;
+            }) => {
+                if (data.sound) {
+                    this.sound.play(data.sound);
+                }
+                if (data.type && data.pieceId) {
+                    const piece = this.getPiece(
+                        data.pieceId,
+                    );
+                    if (piece) {
+                        await this.playEffect(
+                            data.type,
+                            piece.sprite.getCenter(),
+                            null,
+                            piece,
+                        );
+                    }
+                }
+            },
+        );
+        this.events.on(
+            "showCastRange",
+            async (data: {
+                position: Geom.Point;
+                range: number;
+                lineOfSight: boolean;
+            }) => {
+                await this.rangeGizmo.showSimpleRange(
+                    data.position,
+                    data.range,
+                    CursorType.RangeCast,
+                    data.lineOfSight,
+                );
+            },
+        );
+        this.events.on(
+            EventType.PieceInfo,
+            (data: any) => {
+                globalThis.dispatchEvent(
+                    new CustomEvent(
+                        EventType.PieceInfo,
+                        { detail: data },
+                    ),
+                );
+            },
+        );
+
         // Debugging aid
         window["currentBoard"] = this;
     }
@@ -296,6 +384,10 @@ export class Board extends EngineBoard {
 
     get cursor(): Cursor {
         return this._cursor;
+    }
+
+    override get cursorPosition() {
+        return this.cursor.position;
     }
 
     get rangeGizmo(): RangeGizmo {
