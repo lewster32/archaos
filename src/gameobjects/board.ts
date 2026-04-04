@@ -80,16 +80,6 @@ export class Board extends EngineBoard {
     private readonly _cursor: Cursor;
 
     /**
-     * The movement gizmo for this board.
-     */
-    private readonly _rangeGizmo: RangeGizmo;
-
-    /**
-     * The rules service for this board.
-     */
-    private readonly _rules: Rules;
-
-    /**
      * The sound effects manager for this board.
      */
     private _sound: SoundEffects;
@@ -143,8 +133,6 @@ export class Board extends EngineBoard {
 
         this._cursor = new Cursor(this);
         this._rangeGizmo = new RangeGizmo(this);
-
-        this._rules = Rules.getInstance();
 
         this.scene.game.events.on(EventType.EndTurn, async () => {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {
@@ -390,11 +378,11 @@ export class Board extends EngineBoard {
         return this.cursor.position;
     }
 
-    get rangeGizmo(): RangeGizmo {
-        return this._rangeGizmo;
+    override get rangeGizmo(): RangeGizmo {
+        return this._rangeGizmo as RangeGizmo;
     }
 
-    get rules(): Rules {
+    override get rules(): Rules {
         return this._rules;
     }
 

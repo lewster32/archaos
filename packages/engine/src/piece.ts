@@ -575,7 +575,7 @@ export class Piece extends Entity {
      * Update the facing direction of this piece based
      * on movement from one point to another.
      */
-    updateDirection(
+    protected updateDirection(
         fromPoint: { x: number; y: number },
         toPoint: { x: number; y: number },
     ): void {
@@ -599,7 +599,7 @@ export class Piece extends Entity {
      * corpse unless the piece has NoCorpse/Undead status
      * or is an illusion.
      */
-    kill(): void {
+    async kill(): Promise<void> {
         if (this._dead) {
             throw new Error(
                 "Cannot kill unit that is already dead",
@@ -622,7 +622,7 @@ export class Piece extends Entity {
             this.hasStatus(UnitStatus.NoCorpse) ||
             this.hasStatus(UnitStatus.Undead)
         ) {
-            this.destroy();
+            await this.destroy();
         }
         this._board.emitBoardUpdateEvent();
         this._board.boardEvents.emit(
@@ -635,7 +635,7 @@ export class Piece extends Entity {
      * Destroy this piece, removing it from the board.
      * Client overrides to also destroy sprites.
      */
-    destroy(): void {
+    async destroy(): Promise<void> {
         this._dead = true;
         if (this.currentRider) {
             this.currentRider.dismount();
@@ -649,7 +649,7 @@ export class Piece extends Entity {
      * Returns true if the attack killed the target.
      * Client overrides for animation.
      */
-    attack(piece: Piece): boolean {
+    async attack(piece: Piece): Promise<boolean> {
         if (!this.canAttackPiece(piece)) {
             return false;
         }
@@ -688,7 +688,7 @@ export class Piece extends Entity {
                     `${piece.fullName}`,
                 Colour.Red,
             );
-            piece.kill();
+            await piece.kill();
             return true;
         }
         return false;
@@ -699,7 +699,7 @@ export class Piece extends Entity {
      * Returns true if the attack killed the target.
      * Client overrides for animation.
      */
-    rangedAttack(piece: Piece): boolean {
+    async rangedAttack(piece: Piece): Promise<boolean> {
         if (!this.canRangedAttackPiece(piece)) {
             return false;
         }
@@ -740,7 +740,7 @@ export class Piece extends Entity {
                     `${piece.fullName}`,
                 Colour.Red,
             );
-            piece.kill();
+            await piece.kill();
             return true;
         }
         return false;

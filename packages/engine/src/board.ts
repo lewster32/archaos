@@ -992,10 +992,10 @@ export class Board extends Model implements Box {
      * Rolls combat, emits event, and kills the
      * defender on success.
      */
-    attackPiece(
+    async attackPiece(
         attackingPieceId: number,
         defendingPieceId: number,
-    ): Piece | null {
+    ): Promise<Piece | null> {
         const attackingPiece =
             this.getPiece(attackingPieceId);
         const defendingPiece =
@@ -1015,7 +1015,7 @@ export class Board extends Model implements Box {
 
         this._busy = true;
         const attackResult: boolean =
-            attackingPiece.attack(defendingPiece);
+            await attackingPiece.attack(defendingPiece);
         this._boardEvents.emit(
             BoardEvent.PieceAttacked,
             attackingPiece,
@@ -1031,10 +1031,10 @@ export class Board extends Model implements Box {
      * Rolls ranged combat, emits event, and kills the
      * defender on success.
      */
-    rangedAttackPiece(
+    async rangedAttackPiece(
         attackingPieceId: number,
         defendingPieceId: number,
-    ): Piece | null {
+    ): Promise<Piece | null> {
         const attackingPiece =
             this.getPiece(attackingPieceId);
         const defendingPiece =
@@ -1054,7 +1054,9 @@ export class Board extends Model implements Box {
 
         this._busy = true;
         const attackResult: boolean =
-            attackingPiece.rangedAttack(defendingPiece);
+            await attackingPiece.rangedAttack(
+                defendingPiece,
+            );
         this._boardEvents.emit(
             BoardEvent.PieceRangedAttacked,
             attackingPiece,
