@@ -6,7 +6,22 @@ import { Wizard } from "./wizard";
 import { Player } from "./player";
 import type { Spell } from "./spells/spell";
 import { Logger } from "./logger";
-import { PhaseMachine, GameEnd } from "./phasemachine";
+import {
+    PhaseMachine,
+    GameEnd,
+    StartGame,
+    MovingDone,
+    SkipSpellbook,
+    MovingReady,
+    SpellbookReady,
+    NoSpellsCast,
+    SpellsDone,
+    CastingReady,
+    CastingDone,
+    SpreadingDone,
+    SpellTargeting,
+} from "./phasemachine";
+import { EngineEvent } from "./enums/engineevent";
 import { BoardEvent } from "./enums/boardevent";
 import { BoardPhase } from "./enums/boardphase";
 import { BoardState } from "./enums/boardstate";
@@ -1335,5 +1350,299 @@ export class Board extends Model implements Box {
             EventType.EndTurnAvailable,
             false,
         );
+    }
+
+    /**
+     * Set the current player by ID.
+     *
+     * @param playerId The ID of the player to select.
+     */
+    async selectPlayer(playerId: number): Promise<void> {
+        this._currentPlayer = this.getPlayer(playerId);
+    }
+
+    /**
+     * Start a new turn on the board. This advances the FSM phase
+     * and resets piece state as appropriate.
+     *
+     * @returns A promise that resolves when the new turn has been
+     *     fully processed.
+     */
+    async newTurn(): Promise<void> {
+        this._selected = null;
+
+        if (this.state === BoardState.GameOver) {
+            return;
+        }
+
+        const pm = this._stateManager;
+
+        if (
+            pm.isActive(pm.states.idle) ||
+            pm.isActive(pm.states.moving)
+        ) {
+            // First call: transition FSM from idle into playing
+            if (pm.isActive(pm.states.idle)) {
+                pm.evaluate(new StartGame());
+            } else {
+                // End of moving phase → new turn cycle
+                pm.evaluate(new MovingDone());
+            }
+
+            this.pieces.forEach((piece) => {
+                piece.reset();
+            });
+            this._logger.log(`New turn`, Colour.Green);
+            this._boardEvents.emit(BoardEvent.NewTurn);
+            if (this._balanceShift !== 0) {
+                this._balance += this._balanceShift;
+                this._balance = Number.parseFloat(
+                    this._balance.toFixed(2),
+                );
+                this._logger.log(
+                    `World balance shifts towards ${
+                        this._balanceShift < 0
+                            ? "chaos"
+                            : "law"
+                    } by ${Number.parseInt(
+                        Math.abs(
+                            this._balanceShift * 100,
+                        ).toFixed(2),
+                        10,
+                    )}%`,
+                    this._balanceShift < 0
+                        ? Colour.Magenta
+                        : Colour.Cyan,
+                );
+                this._balanceShift = 0;
+                await this.idleDelay(Board.DEFAULT_DELAY);
+            }
+            const anySpellsLeft = this.players.some(
+                (p) => !p.defeated && p.spells.length > 0,
+            );
+            if (anySpellsLeft) {
+                pm.evaluate(new SpellbookReady());
+                await this.idleDelay(Board.END_TURN_DELAY);
+            } else {
+                this._logger.log(
+                    `No spells to cast, skipping to movement`,
+                    Colour.Green,
+                );
+                pm.evaluate(new SkipSpellbook());
+                pm.evaluate(new MovingReady());
+                await this.idleDelay(Board.END_TURN_DELAY);
+            }
+        } else if (pm.isActive(pm.states.spellbook)) {
+            // Skip casting phase if no player selected a spell
+            const anySpellSelected = this.players.some(
+                (p) => !p.defeated && p.selectedSpell,
+            );
+            if (anySpellSelected) {
+                pm.evaluate(new SpellsDone());
+                pm.evaluate(new CastingReady());
+                await this.idleDelay(Board.END_TURN_DELAY);
+            } else {
+                this._logger.log(
+                    `No spells to cast, skipping to movement`,
+                    Colour.Green,
+                );
+                pm.evaluate(new NoSpellsCast());
+
+                const previousPlayer = this.currentPlayer;
+                this.currentPlayer = null;
+
+                await this.rules.doSpread(this);
+                await this.rules.doExpire(this);
+
+                this.currentPlayer = previousPlayer;
+                this.emitBoardUpdateEvent();
+            }
+        } else if (pm.isActive(pm.states.casting)) {
+            pm.evaluate(new CastingDone());
+
+            const previousPlayer = this.currentPlayer;
+            this.currentPlayer = null;
+
+            await this.rules.doSpread(this);
+            await this.rules.doExpire(this);
+
+            this.currentPlayer = previousPlayer;
+            this.emitBoardUpdateEvent();
+        } else if (pm.isActive(pm.states.spreading)) {
+            pm.evaluate(new SpreadingDone());
+            pm.evaluate(new MovingReady());
+            await this.idleDelay(Board.END_TURN_DELAY);
+        }
+        this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Advance to the next player's turn. Loops until a human
+     * player's turn is ready (remote and AI players are handled
+     * inline; spellbook UI is left to the client override).
+     *
+     * @returns A promise that resolves when the next human
+     *     player's turn starts, or when the game is over.
+     */
+    async nextPlayer(): Promise<void> {
+        this.emitBoardUpdateEvent();
+        while (true) {
+            if (
+                this.state === BoardState.GameOver ||
+                (await this.checkWinCondition())
+            ) {
+                return;
+            }
+
+            this._currentPlayerIndex =
+                (this._currentPlayerIndex + 1) %
+                this._players.size;
+            this.deselectPlayer();
+
+            if (this._currentPlayerIndex === 0) {
+                await this.newTurn();
+            }
+
+            // Skip defeated players before selecting them
+            const playerId = Array.from(
+                this._players.keys(),
+            )[this._currentPlayerIndex];
+            if (this.getPlayer(playerId)?.defeated) {
+                continue;
+            }
+
+            await this.selectPlayer(playerId);
+
+            // Handle spellbook phase
+            if (this.phase === BoardPhase.Spellbook) {
+                if (this.currentPlayer?.remote) {
+                    if (
+                        await this.currentPlayer.remote
+                            .selectSpell()
+                    ) {
+                        this._boardEvents.emit(
+                            BoardEvent.SpellSelected,
+                            this.currentPlayer,
+                            this.currentPlayer
+                                .selectedSpell,
+                        );
+                    } else {
+                        console.log(
+                            "Remote player could not" +
+                                " select spell, skipping...",
+                        );
+                    }
+                    continue;
+                } else if (
+                    this.currentPlayer?.spells?.length
+                ) {
+                    // Return to allow the client override to
+                    // open the spellbook UI.
+                    return;
+                }
+            }
+
+            // Skip if no spells available in spellbook phase
+            if (this.phase === BoardPhase.Spellbook) {
+                if (
+                    this.currentPlayer?.spells.length === 0
+                ) {
+                    continue;
+                }
+            }
+
+            // Handle casting phase
+            if (this.phase === BoardPhase.Casting) {
+                this.selectWizard(this.currentPlayer);
+
+                if (this.selected) {
+                    const spell =
+                        this.currentPlayer?.selectedSpell;
+                    if (spell?.properties?.autoPlace) {
+                        this._stateManager.evaluate(
+                            new SpellTargeting(),
+                        );
+                        await this.rules.doAutoCastSpell(
+                            this,
+                        );
+                        this.emitBoardUpdateEvent();
+                        continue;
+                    } else if (spell?.range === 0) {
+                        this._stateManager.evaluate(
+                            new SpellTargeting(),
+                        );
+                        await this.rules.doCastSpell(
+                            this,
+                            this.currentPlayer
+                                .castingPiece,
+                        );
+                        this.emitBoardUpdateEvent();
+                        continue;
+                    } else if (spell?.range > 0) {
+                        this._stateManager.evaluate(
+                            new SpellTargeting(),
+                        );
+                        this._boardEvents.emit(
+                            EngineEvent.ShowCastRange,
+                            {
+                                position: this.selected
+                                    .position,
+                                range: spell.range,
+                                lineOfSight:
+                                    spell.lineOfSight,
+                            },
+                        );
+                        if (
+                            this.currentPlayer?.remote
+                        ) {
+                            if (
+                                !(await this.currentPlayer
+                                    .remote.castSpell())
+                            ) {
+                                console.log(
+                                    "Remote player could" +
+                                        " not cast spell," +
+                                        " skipping...",
+                                );
+                            }
+                            continue;
+                        }
+                    } else if (spell?.range === -1) {
+                        if (
+                            this.currentPlayer?.remote
+                        ) {
+                            if (
+                                !(await this.currentPlayer
+                                    .remote.castSpell())
+                            ) {
+                                console.log(
+                                    "Remote player could" +
+                                        " not cast spell," +
+                                        " skipping...",
+                                );
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                // Skip if no spell selected in casting phase
+                if (!this.currentPlayer?.selectedSpell) {
+                    continue;
+                }
+            }
+
+            if (
+                this.phase === BoardPhase.Moving &&
+                this.currentPlayer?.remote
+            ) {
+                await this.currentPlayer.remote
+                    .moveAllUnits();
+                continue;
+            }
+
+            // Exit loop — player's turn is ready
+            break;
+        }
     }
 }
