@@ -1831,9 +1831,6 @@ export class Board extends EngineBoard<Piece> {
                 : boardPixelHeight;
             this._scene.game.scale.resize(targetWidth, targetHeight);
             if (widthQuery.matches || heightQuery.matches) {
-                console.log(
-                    `Viewport smaller than board, resizing canvas to ${targetWidth}x${targetHeight}`,
-                );
                 // If a player is awaiting their turn, center on them, otherwise
                 // center the board
                 if (this.currentPlayer) {
