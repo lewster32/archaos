@@ -138,7 +138,7 @@ export {
 export { Rules, _resetRulesForTesting } from "./rules";
 
 // Board
-export { Board, type RangeGizmoLike } from "./board";
+export { Board } from "./board";
 
 // Register the spell factory on Board to break the
 // circular dependency (board → spellfactory →

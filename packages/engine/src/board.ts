@@ -37,24 +37,8 @@ import type {
 } from "./configs/piececonfig";
 import type { SpellConfig } from "./configs/spellconfig";
 import type { Box } from "./interfaces/ui";
-import type { Path } from "./pathfinding";
 import { Rules } from "./rules";
-
-/**
- * Minimal interface for range/pathfinding queries.
- * The client Board provides the full RangeGizmo
- * implementation; the engine Board leaves this null.
- * TODO: extract pure pathfinding from RangeGizmo into
- * the engine so this works headless.
- */
-export interface RangeGizmoLike {
-    getAllValidPaths(
-        ignoreTerminal?: boolean,
-    ): Set<Path>;
-    getPathTo(
-        point: { x: number; y: number },
-    ): Path | null;
-}
+import { RangeGizmo } from "./rangegizmo";
 
 /**
  * Simple point type without all the baggage of
@@ -181,7 +165,7 @@ export class Board<
     protected readonly _logger: Logger;
     protected readonly _rng: IRNG;
     protected readonly _rules: Rules;
-    protected _rangeGizmo: RangeGizmoLike | null = null;
+    protected _rangeGizmo: RangeGizmo;
 
     protected _spellFilter: (
         spell: SpellConfig,
@@ -222,6 +206,7 @@ export class Board<
 
         this._logger = Logger.getInstance();
         this._rules = Rules.getInstance();
+        this._rangeGizmo = new RangeGizmo(this);
         this._stateManager = new PhaseMachine(
             (activeState: string) => {
                 this.onPhaseTransition(activeState);
@@ -595,7 +580,7 @@ export class Board<
         return this._rules;
     }
 
-    get rangeGizmo(): RangeGizmoLike | null {
+    get rangeGizmo(): RangeGizmo {
         return this._rangeGizmo;
     }
 
