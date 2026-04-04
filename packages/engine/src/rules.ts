@@ -19,6 +19,11 @@ import { ComputerWizard } from "./ai/computerwizard";
 import type { Piece } from "./piece";
 import type { Player } from "./player";
 import { EffectType } from "./enums/effecttype";
+import type {
+    SpreadResult,
+    SpreadBatchPayload,
+    SpreadIterationPayload,
+} from "./actions";
 export type { SpellCastTarget } from "./spells/spell";
 
 /**
@@ -894,32 +899,47 @@ export class Rules {
     }
 
     /**
-     * Handle spreading effects on the board - called
-     * during the spreading phase and recursively
-     * spreads pieces with the 'spreads' status.
+     * Handle spreading effects on the board. Runs
+     * each iteration sequentially, collecting results
+     * into a batch payload, then emits a single
+     * `SpreadBatch` event for client replay.
      */
     async doSpread(board: Board): Promise<void> {
+        const payload: SpreadBatchPayload = {
+            iterations: [],
+        };
         for (
             let i: number = 0;
             i < Board.SPREAD_ITERATIONS;
             i++
         ) {
             const spreadPieces: Piece[] =
-                board.pieces.filter((piece) =>
-                    piece.hasStatus(UnitStatus.Spreads),
+                board.pieces.filter(
+                    (piece) =>
+                        piece.hasStatus(
+                            UnitStatus.Spreads,
+                        ) && !piece.dead,
                 );
-            board.events.emit(EngineEvent.FocusPieces, {
-                pieceIds: spreadPieces.map(
-                    (p) => p.id,
-                ),
-            });
+            const iteration: SpreadIterationPayload =
+                {
+                    focusPieceIds: spreadPieces.map(
+                        (p) => p.id,
+                    ),
+                    results: [],
+                };
             for (const piece of spreadPieces) {
                 if (piece.dead) continue;
-                await piece.spread();
+                const result: SpreadResult =
+                    await piece.spread();
+                iteration.results.push(result);
             }
+            payload.iterations.push(iteration);
             board.emitBoardUpdateEvent();
-            await board.idleDelay(Board.SPREAD_DELAY);
         }
+        board.events.emit(
+            EngineEvent.SpreadBatch,
+            payload,
+        );
     }
 
     /**

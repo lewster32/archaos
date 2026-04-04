@@ -4,9 +4,11 @@ import { ActionType } from "./enums/actiontype";
 import { BoardState } from "./enums/boardstate";
 import { InputType } from "./enums/inputtype";
 import { UnitStatus } from "./enums/unitstatus";
+import { EngineEvent } from "./enums/engineevent";
 import { Point } from "./point";
 import type { Board } from "./board";
 import type { Piece } from "./piece";
+import type { SpreadBatchPayload } from "./actions";
 
 function createMockPiece(overrides: Record<string, any> = {}): Piece {
     return {
@@ -314,5 +316,96 @@ describe("Rules", () => {
                 expect(board.rangedAttackPiece).not.toHaveBeenCalled();
             });
         });
+    });
+});
+
+describe("Rules.doSpread", () => {
+    it("emits SpreadBatch with correct iteration count", async () => {
+        const board = {
+            pieces: [
+                {
+                    id: 1,
+                    dead: false,
+                    hasStatus: vi.fn(
+                        (s: UnitStatus) =>
+                            s === UnitStatus.Spreads,
+                    ),
+                    spread: vi.fn().mockResolvedValue({
+                        action: "none",
+                    }),
+                },
+            ],
+            events: {
+                emit: vi.fn(),
+            },
+            emitBoardUpdateEvent: vi.fn(),
+        } as unknown as Board;
+
+        const rules = Rules.getInstance();
+        await rules.doSpread(board);
+
+        const batchCall = (
+            board.events.emit as any
+        ).mock.calls.find(
+            (c: any) =>
+                c[0] === EngineEvent.SpreadBatch,
+        );
+        expect(batchCall).toBeDefined();
+        const payload: SpreadBatchPayload =
+            batchCall[1];
+        expect(payload.iterations).toHaveLength(2);
+    });
+
+    it("collects spread results into iterations", async () => {
+        const spreader = {
+            id: 5,
+            dead: false,
+            hasStatus: vi.fn(
+                (s: UnitStatus) =>
+                    s === UnitStatus.Spreads,
+            ),
+            spread: vi.fn().mockResolvedValue({
+                action: "shrink",
+                pieceId: 5,
+            }),
+        };
+        // After first spread the piece "dies"
+        spreader.spread.mockImplementation(
+            async () => {
+                spreader.dead = true;
+                return {
+                    action: "shrink",
+                    pieceId: 5,
+                };
+            },
+        );
+        const board = {
+            pieces: [spreader],
+            events: { emit: vi.fn() },
+            emitBoardUpdateEvent: vi.fn(),
+        } as unknown as Board;
+
+        const rules = Rules.getInstance();
+        await rules.doSpread(board);
+
+        const payload: SpreadBatchPayload = (
+            board.events.emit as any
+        ).mock.calls.find(
+            (c: any) =>
+                c[0] === EngineEvent.SpreadBatch,
+        )[1];
+        expect(
+            payload.iterations[0].results,
+        ).toHaveLength(1);
+        expect(
+            payload.iterations[0].results[0],
+        ).toEqual({
+            action: "shrink",
+            pieceId: 5,
+        });
+        // Second iteration: piece is dead, filtered
+        expect(
+            payload.iterations[1].results,
+        ).toHaveLength(0);
     });
 });
