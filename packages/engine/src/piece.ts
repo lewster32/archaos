@@ -9,6 +9,11 @@ import { UnitType } from "./enums/unittype";
 import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
 import type { PieceConfig } from "./configs/piececonfig";
 import type {
+    SpreadResult,
+    SpreadShrinkResult,
+    SpreadGrowResult,
+} from "./actions";
+import type {
     UnitProperties,
     IUnitStats,
 } from "./interfaces/unitproperties";
@@ -842,7 +847,7 @@ export class Piece extends Entity {
      * acts accordingly. Client overrides for animations
      * and sound.
      */
-    async spread(): Promise<void> {
+    async spread(): Promise<SpreadResult> {
         if (
             !this.hasStatus(UnitStatus.Spreads) ||
             this.dead
@@ -865,12 +870,18 @@ export class Piece extends Entity {
             );
 
         if (spreadAction === SpreadAction.None) {
-            return;
+            return { action: "none" };
         }
 
         if (spreadAction === SpreadAction.Shrink) {
+            const result: SpreadShrinkResult = {
+                action: "shrink",
+                pieceId: this.id,
+            };
             if (this.currentEngulfed) {
                 this.currentEngulfed.engulfed = false;
+                result.releasedPieceId =
+                    this.currentEngulfed.id;
                 this._board.logger.log(
                     `${this.currentEngulfed.fullName}` +
                         ` was released from ` +
@@ -879,12 +890,14 @@ export class Piece extends Entity {
                 );
             }
             await this.destroy();
-            return;
+            return result;
         }
 
         // SpreadAction.Spread
         const adjacentPoints: Point[] =
-            this._board.getAdjacentPoints(this.position);
+            this._board.getAdjacentPoints(
+                this.position,
+            );
         const spreadPoint: Point =
             this._board.rng.pick(adjacentPoints);
         const spreadPieces: Piece[] =
@@ -892,6 +905,18 @@ export class Piece extends Entity {
                 spreadPoint,
                 (piece: Piece) => !piece.dead,
             );
+
+        const result: SpreadGrowResult = {
+            action: "spread",
+            pieceId: this.id,
+            targetPoint: {
+                x: spreadPoint.x,
+                y: spreadPoint.y,
+            },
+            destroyedPieceIds: [],
+            newPieceConfig: null,
+            newPieceId: -1,
+        };
 
         if (spreadPieces.length > 0) {
             if (
@@ -901,23 +926,30 @@ export class Piece extends Entity {
                         !piece.canBeSpreadOn,
                 )
             ) {
-                return;
+                return { action: "none" };
             }
             if (
                 spreadPieces.some((piece) =>
-                    piece.hasStatus(UnitStatus.Wizard),
+                    piece.hasStatus(
+                        UnitStatus.Wizard,
+                    ),
                 )
             ) {
                 const killedPiece =
                     spreadPieces.find((piece) =>
-                        piece.hasStatus(UnitStatus.Wizard),
+                        piece.hasStatus(
+                            UnitStatus.Wizard,
+                        ),
                     );
                 this._board.logger.log(
                     `${killedPiece.fullName} was ` +
-                        `destroyed by ${this.fullName}!`,
+                        `destroyed by ` +
+                        `${this.fullName}!`,
                     Colour.Red,
                 );
                 await killedPiece.kill();
+                result.killedPieceId =
+                    killedPiece.id;
             } else if (
                 this.hasStatus(UnitStatus.Engulfs)
             ) {
@@ -927,18 +959,21 @@ export class Piece extends Entity {
                     Colour.Yellow,
                 );
                 spreadPieces[0].engulfed = true;
+                result.engulfedPieceId =
+                    spreadPieces[0].id;
             } else {
-                await Promise.all(
-                    spreadPieces.map(async (piece) => {
-                        this._board.logger.log(
-                            `${piece.fullName} was ` +
-                                `destroyed by ` +
-                                `${this.fullName}`,
-                            Colour.Red,
-                        );
-                        return await piece.destroy();
-                    }),
-                );
+                for (const piece of spreadPieces) {
+                    this._board.logger.log(
+                        `${piece.fullName} was ` +
+                            `destroyed by ` +
+                            `${this.fullName}`,
+                        Colour.Red,
+                    );
+                    await piece.destroy();
+                    result.destroyedPieceIds.push(
+                        piece.id,
+                    );
+                }
             }
         }
 
@@ -946,7 +981,7 @@ export class Piece extends Entity {
             this._properties.id,
         );
 
-        const newPiece: Piece = await this._board.addPiece({
+        const pieceConfig: PieceConfig = {
             type: UnitType.Creature,
             x: spreadPoint.x,
             y: spreadPoint.y,
@@ -962,27 +997,42 @@ export class Piece extends Entity {
                 magicResistance: unit.properties.res,
                 attackType:
                     unit.attackType || "attacked",
-                rangedType: unit.rangedType || "shot",
+                rangedType:
+                    unit.rangedType || "shot",
                 projectileType:
                     unit.projectileType ||
                     UnitRangedProjectileType.Arrow,
-                status: [...(unit.status || [])],
+                status: [
+                    ...(unit.status || []),
+                ],
             },
             shadowScale: unit.shadowScale,
             offsetY: unit.offY,
             owner: this.owner,
             illusion: !!this._illusion,
             group: unit.group || "classicunits",
-        } as PieceConfig);
+        } as PieceConfig;
+        result.newPieceConfig = pieceConfig;
+
+        const newPiece: Piece =
+            await this._board.addPiece(pieceConfig);
+        result.newPieceId = newPiece.id;
 
         if (
             spreadPieces.length > 0 &&
             newPiece.hasStatus(UnitStatus.Engulfs) &&
             !spreadPieces[0].dead &&
-            !spreadPieces[0].hasStatus(UnitStatus.Wizard)
+            !spreadPieces[0].hasStatus(
+                UnitStatus.Wizard,
+            )
         ) {
-            newPiece.currentEngulfed = spreadPieces[0];
+            newPiece.currentEngulfed =
+                spreadPieces[0];
+            result.newPieceEngulfedId =
+                spreadPieces[0].id;
         }
+
+        return result;
     }
 
     // ── Status effects ──────────────────────────────────
