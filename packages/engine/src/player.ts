@@ -29,18 +29,18 @@ export interface PlayerAI {
  * defeat()/destroyCreations() to add rendering.
  */
 export class Player extends Model {
-    private readonly _name: string;
+    protected readonly _name: string;
     protected readonly _board: Board;
-    private readonly _wizcode: string;
-    private readonly _spells: Map<number, Spell>;
-    private readonly _colour: number;
+    protected readonly _wizcode: string;
+    protected readonly _spells: Map<number, Spell>;
+    protected readonly _colour: number;
 
-    private _castingPiece: Piece | null;
-    private _selectedSpell: Spell | null;
+    protected _castingPiece: Piece | null;
+    protected _selectedSpell: Spell | null;
     protected _defeated: boolean;
 
-    private _forceHit: boolean | null = null;
-    private _forceCast: boolean | null = null;
+    protected _forceHit: boolean | null = null;
+    protected _forceCast: boolean | null = null;
 
     protected readonly _remote: RemotePlayer | null;
 

@@ -85,7 +85,7 @@ export class Wizard extends Piece {
      * The WizCode for this wizard. Defines their
      * appearance in a compact sharable string form.
      */
-    private readonly _wizCode: WizCode;
+    protected readonly _wizCode: WizCode;
 
     /**
      * Create a new Wizard instance. The config is merged

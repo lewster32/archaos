@@ -119,8 +119,8 @@ export class Board extends Model implements Box {
 
     /* ── State fields ────────────────────────────── */
 
-    private readonly _width: number;
-    private readonly _height: number;
+    protected readonly _width: number;
+    protected readonly _height: number;
 
     /**
      * Tracks the last emitted phase to avoid
