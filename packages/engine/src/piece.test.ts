@@ -26,10 +26,7 @@ Piece.units = {
             mnv: 0,
             res: 0,
         },
-        status: [
-            UnitStatus.Spreads,
-            UnitStatus.Engulfs,
-        ],
+        status: [UnitStatus.Spreads, UnitStatus.Engulfs],
     } as unknown as UnitConfig,
 };
 
@@ -46,38 +43,22 @@ function makeMockBoard(rng = new TestRNG()): Board {
         boardEvents: { emit: vi.fn() },
         events: {
             emit: vi.fn(),
-            emitAsync: vi
-                .fn()
-                .mockResolvedValue(undefined),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
         },
         getAdjacentPoints: vi
             .fn()
-            .mockReturnValue([
-                new Point(1, 0),
-                new Point(0, 1),
-            ]),
-        getPiecesAtPosition: vi
-            .fn()
-            .mockReturnValue([]),
+            .mockReturnValue([new Point(1, 0), new Point(0, 1)]),
+        getPiecesAtPosition: vi.fn().mockReturnValue([]),
         removePiece: vi.fn(),
-        addPiece: vi
-            .fn()
-            .mockImplementation(() => ({
-                id: 99,
-                hasStatus: vi
-                    .fn()
-                    .mockReturnValue(false),
-                currentEngulfed: null,
-            })),
+        addPiece: vi.fn().mockImplementation(() => ({
+            id: 99,
+            hasStatus: vi.fn().mockReturnValue(false),
+            currentEngulfed: null,
+        })),
     } as unknown as Board;
 }
 
-function makeSpreader(
-    board: Board,
-    id = 1,
-    x = 0,
-    y = 0,
-): Piece {
+function makeSpreader(board: Board, id = 1, x = 0, y = 0): Piece {
     return new Piece(board, id, {
         type: UnitType.Creature,
         x,
@@ -94,10 +75,7 @@ function makeSpreader(
             magicResistance: 0,
             attackType: "attacked",
             rangedType: "shot",
-            status: [
-                UnitStatus.Spreads,
-                UnitStatus.Engulfs,
-            ],
+            status: [UnitStatus.Spreads, UnitStatus.Engulfs],
         },
         owner: { name: "Player 1" } as any,
     } as PieceConfig);
@@ -106,8 +84,7 @@ function makeSpreader(
 describe("Piece.spread", () => {
     it("returns { action: 'none' } when RNG picks None", async () => {
         const rng = new TestRNG();
-        rng.weightedRandomPick =
-            () => SpreadAction.None;
+        rng.weightedRandomPick = () => SpreadAction.None;
         const board = makeMockBoard(rng);
         const piece = makeSpreader(board);
         const result = await piece.spread();
@@ -116,8 +93,7 @@ describe("Piece.spread", () => {
 
     it("returns shrink result and destroys the piece", async () => {
         const rng = new TestRNG();
-        rng.weightedRandomPick =
-            () => SpreadAction.Shrink;
+        rng.weightedRandomPick = () => SpreadAction.Shrink;
         const board = makeMockBoard(rng);
         const piece = makeSpreader(board);
         const result = await piece.spread();
@@ -125,15 +101,12 @@ describe("Piece.spread", () => {
             action: "shrink",
             pieceId: piece.id,
         });
-        expect(
-            board.removePiece,
-        ).toHaveBeenCalledWith(piece.id);
+        expect(board.removePiece).toHaveBeenCalledWith(piece.id);
     });
 
     it("returns shrink with releasedPieceId when engulfing", async () => {
         const rng = new TestRNG();
-        rng.weightedRandomPick =
-            () => SpreadAction.Shrink;
+        rng.weightedRandomPick = () => SpreadAction.Shrink;
         const board = makeMockBoard(rng);
         const piece = makeSpreader(board);
         const engulfed = {
@@ -153,8 +126,7 @@ describe("Piece.spread", () => {
 
     it("returns spread result when spreading to empty square", async () => {
         const rng = new TestRNG();
-        rng.weightedRandomPick =
-            () => SpreadAction.Spread;
+        rng.weightedRandomPick = () => SpreadAction.Spread;
         rng.pick = (arr: any[]) => arr[0];
         const board = makeMockBoard(rng);
         const piece = makeSpreader(board);
@@ -190,8 +162,8 @@ describe("Piece.spread", () => {
             },
             owner: { name: "P1" } as any,
         } as PieceConfig);
-        await expect(
-            piece.spread(),
-        ).rejects.toThrow();
+        await expect(piece.spread()).rejects.toThrow(
+            "Cannot spread a non-spreading or dead piece",
+        );
     });
 });
