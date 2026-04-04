@@ -1,16 +1,11 @@
 import {
-    RangeType,
     BoardLayer,
     CursorType,
     UnitStatus,
     Node,
     Path,
     distance as gridDistance,
-    getAngle,
-    diagonalHeuristic,
-    buildPath,
-    isOpen,
-    isClosed,
+    RangeGizmo as EngineRangeGizmo,
 } from "@archaos/engine";
 import { Board } from "./board";
 import { Cursor } from "./cursor";
@@ -18,21 +13,23 @@ import { Piece } from "./piece";
 
 import { Geom, GameObjects } from "phaser";
 
-export class RangeGizmo {
+export class RangeGizmo extends EngineRangeGizmo {
     /**
      * Duration of gizmo reveal animation in milliseconds
      */
     private static readonly GIZMO_REVEAL_DURATION: number = 50;
 
     /**
-     * Stagger delay between gizmo reveal animations in milliseconds
+     * Stagger delay between gizmo reveal animations in
+     * milliseconds
      */
-    private static readonly GIZMO_REVEAL_STAGGER_DELAY: number = 5;
+    private static readonly GIZMO_REVEAL_STAGGER_DELAY: number =
+        5;
 
     /**
-     * Reference to the board
+     * Typed reference to the client board for Phaser access
      */
-    private readonly _board: Board;
+    private readonly _clientBoard: Board;
 
     /**
      * Layer for range gizmo graphics
@@ -44,184 +41,72 @@ export class RangeGizmo {
      */
     private readonly _pathLayer: GameObjects.Layer;
 
-    /**
-     * The piece we're generating the range gizmo for
-     */
-    private _piece: Piece = null;
+    private lastSimplePosition: Geom.Point =
+        new Geom.Point(-1, -1);
+    private lastDistance: number = -1;
+    private lastCursor: CursorType;
+    private lastLoS: boolean;
 
     /**
-     * The valid nodes in the range gizmo
-     */
-    private _validNodes: Node[] = [];
-
-    /**
-     * The calculated paths to valid nodes
-     */
-    private _paths: Map<string, Path>;
-
-    /**
-     * Create a new RangeGizmo for the given board. RangeGizmo is responsible
-     * for calculating and displaying movement ranges and paths for pieces. It's
-     * a single instance per board, and is reused for each piece as needed.
+     * Create a new RangeGizmo for the given board. RangeGizmo
+     * is responsible for calculating and displaying movement
+     * ranges and paths for pieces. It's a single instance per
+     * board, and is reused for each piece as needed.
      *
      * @param board The board to create the RangeGizmo for
      */
     constructor(board: Board) {
-        this._board = board;
-        this._rangeLayer = board.getLayer(BoardLayer.FloorCursors);
-        this._pathLayer = board.getLayer(BoardLayer.PathCursors);
-    }
-
-    /**
-     * First pass - determine if node is traversable or terminal
-     *
-     * @param node The node to check
-     * @returns The updated node
-     */
-    protected checkNodeTraversal(node: Node): Node {
-        // If the node is empty, it's traversable
-        const livePiecesAtPosition: Piece[] = this._board.getPiecesAtPosition(
-            new Geom.Point(node.x, node.y),
-            (piece: Piece) => !piece.dead,
+        super(board);
+        this._clientBoard = board;
+        this._rangeLayer = board.getLayer(
+            BoardLayer.FloorCursors,
         );
-        if (livePiecesAtPosition.length) {
-            // If one of the pieces here is the piece itself, it's traversable
-            if (livePiecesAtPosition.includes(this._piece)) {
-                node.traversable = true;
-                node.terminal = false;
-                return node;
-            }
-
-            // There's at least one piece here, check if we can mount or attack
-            // any of them - if so, mark as terminal, otherwise not traversable
-            for (const livePiece of livePiecesAtPosition) {
-                if (
-                    this._piece.canMountPiece(livePiece) ||
-                    this._piece.canAttackPiece(livePiece)
-                ) {
-                    // If any of the live pieces can be mounted or attacked, mark as
-                    // terminal
-                    node.terminal = true;
-                } else {
-                    // Otherwise, not traversable
-                    node.traversable = false;
-                }
-            }
-        } else {
-            // No pieces here, so it's traversable
-            node.traversable = true;
-            node.terminal = false;
-        }
-
-        return node;
+        this._pathLayer = board.getLayer(
+            BoardLayer.PathCursors,
+        );
     }
 
     /**
-     * Generate the range gizmo for the given unit - calculates valid nodes
-     * and paths to them
+     * Generate the range gizmo for the given unit - calculates
+     * valid nodes and paths to them, then renders visuals.
      *
      * @param unit The unit to generate the range gizmo for
-     * @returns A promise that resolves when generation is complete
+     * @returns A promise that resolves when generation is
+     * complete
      */
-    public async generate(unit: Piece): Promise<void> {
-        await this.reset();
-
-        // Reset state
-        this._validNodes = [];
-        this._paths = new Map<string, Path>();
-        this._piece = unit;
-
-        // Our set of potentially valid nodes - this is all of the nodes that
-        // could be reached within movement range, before considering obstacles
-        const potentiallyValidNodes: Map<string, Node> = new Map();
-
-        // Get all points in range
-        this._board
-            .getPointsInRange(
-                unit.position,
-                unit.stats.movement,
-                true,
-                unit.hasStatus(UnitStatus.Flying)
-                    ? RangeType.Fly
-                    : RangeType.Foot,
-            )
-            // Create nodes from those points
-            .map((pt: Geom.Point) => new Node(pt.x, pt.y))
-            // Filter out non-traversable nodes
-            .filter((node: Node) => {
-                node = this.checkNodeTraversal(node);
-                if (!node.traversable) {
-                    return false;
-                }
-                return true;
-            })
-            // Add to potentially valid nodes
-            .forEach((node: Node) => {
-                potentiallyValidNodes.set(node.x + "," + node.y, node);
-            });
-
-        // Now for each potentially valid node, check the warning status of the
-        // node - that is, whether there are any engageable enemy pieces
-        // adjacent to it
-        potentiallyValidNodes.forEach((node: Node) => {
-            const potentialEnemies: Set<Piece> = new Set(
-                this._board.getAdjacentPiecesAtPosition(
-                    node.pos,
-                    (piece: Piece) => {
-                        return piece.canEngagePiece(this._piece);
-                    },
-                ),
-            );
-            if (!potentialEnemies.size) {
-                return;
-            }
-            // Mark adjacent nodes as warning
-            potentialEnemies.forEach((enemy: Piece) => {
-                this._board
-                    .getAdjacentPoints(enemy.position, false)
-                    .forEach((adjPt: Geom.Point) => {
-                        const adjNodeKey = adjPt.x + "," + adjPt.y;
-                        if (potentiallyValidNodes.has(adjNodeKey)) {
-                            potentiallyValidNodes.get(adjNodeKey).warning =
-                                true;
-                        }
-                    });
-            });
-        });
-
-        // Set valid nodes to potentially valid nodes for now
-        this._validNodes = Array.from(potentiallyValidNodes.values());
-
-        // If we're flying we can just take all potentially valid nodes
-        if (this._piece.hasStatus(UnitStatus.Flying)) {
+    public override async generate(
+        unit: Piece,
+    ): Promise<void> {
+        await super.generate(unit);
+        if (this._piece?.hasStatus(UnitStatus.Flying)) {
             await this.generateVisualRange();
-            return;
         } else {
-            // Otherwise, we need to do pathfinding to determine actual valid nodes
-            for (const node of this._validNodes) {
-                const path: Path = this.getPathTo(node.pos);
-                node.path = path;
-                if (!path || path.cost > this._piece.stats.movement + 1) {
-                    node.traversable = false;
-                }
-            }
+            await this.generateVisualPaths();
         }
-        await this.generateVisualPaths();
     }
 
     /**
-     * Render a debug grid to the console showing traversable, terminal, and
-     * warning nodes
+     * Render a debug grid to the console showing traversable,
+     * terminal, and warning nodes
      *
      * @param board the board
      * @param nodes the nodes to show
      */
-    private static showDebugGrid(board: Board, nodes: Node[]): void {
+    private static showDebugGrid(
+        board: Board,
+        nodes: Node[],
+    ): void {
         let debugGrid: string = "";
         for (let yy: number = 0; yy < board.height; yy++) {
             let row: string = "";
-            for (let xx: number = 0; xx < board.width; xx++) {
-                const node = nodes.find((n: Node) => n.x === xx && n.y === yy);
+            for (
+                let xx: number = 0;
+                xx < board.width;
+                xx++
+            ) {
+                const node = nodes.find(
+                    (n: Node) => n.x === xx && n.y === yy,
+                );
                 if (node) {
                     if (node.terminal) {
                         row += "X ";
@@ -240,38 +125,47 @@ export class RangeGizmo {
     }
 
     /**
-     * Reset the range gizmo, clearing all visual elements. Optionally forces
-     * an immediate reset without animation.
+     * Reset the range gizmo, clearing all visual elements.
+     * Optionally forces an immediate reset without animation.
      *
-     * @param force If true, removes layers immediately without tween animation
-     * @returns A promise resolving to this RangeGizmo once cleared
+     * @param force If true, removes layers immediately without
+     * tween animation
+     * @returns A promise resolving to this RangeGizmo once
+     * cleared
      */
-    public async reset(force?: boolean): Promise<RangeGizmo> {
-        if (this._rangeLayer.length === 0 && this._pathLayer.length === 0) {
+    public override async reset(
+        force?: boolean,
+    ): Promise<RangeGizmo> {
+        if (
+            this._rangeLayer.length === 0 &&
+            this._pathLayer.length === 0
+        ) {
+            await super.reset();
+            return this;
+        }
+        if (force) {
+            this._rangeLayer.removeAll();
+            this._pathLayer.removeAll();
+            await super.reset();
             return this;
         }
         return new Promise((resolve: Function) => {
-            this._piece = null;
-            if (force) {
-                this._rangeLayer.removeAll();
-                this._pathLayer.removeAll();
-                resolve(this);
-                return;
-            }
-
-            this._board.scene.tweens.add({
+            this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
-                duration: force ? 0 : RangeGizmo.GIZMO_REVEAL_DURATION,
+                duration:
+                    RangeGizmo.GIZMO_REVEAL_DURATION,
                 alpha: 0,
-                delay: this._board.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "last",
-                    },
-                ),
-                onComplete: () => {
+                delay:
+                    this._clientBoard.scene.tweens.stagger(
+                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                        {
+                            from: "last",
+                        },
+                    ),
+                onComplete: async () => {
                     this._rangeLayer.removeAll();
                     this._pathLayer.removeAll();
+                    await super.reset();
                     setTimeout(() => {
                         resolve(this);
                     }, 50);
@@ -281,9 +175,10 @@ export class RangeGizmo {
     }
 
     /**
-     * Generate visual path indicators for all valid and terminal nodes.
-     * Creates cursor images at each node's isometric position and animates
-     * them in with a staggered reveal.
+     * Generate visual path indicators for all valid and
+     * terminal nodes. Creates cursor images at each node's
+     * isometric position and animates them in with a staggered
+     * reveal.
      */
     private async generateVisualPaths(): Promise<void> {
         this._rangeLayer.removeAll();
@@ -291,34 +186,46 @@ export class RangeGizmo {
         return new Promise((resolve: Function) => {
             this._validNodes
                 .filter(Boolean)
-                .filter((node: Node) => node.traversable || node.terminal)
+                .filter(
+                    (node: Node) =>
+                        node.traversable || node.terminal,
+                )
                 .forEach((node: Node) => {
-                    const path: Path = this.getPathTo(node.pos);
+                    const path: Path = this.getPathTo(
+                        node.pos,
+                    );
                     if (!path?.nodes?.length) {
                         return;
                     }
-                    if (path?.cost > this._piece.stats.movement + 1) {
+                    if (
+                        path?.cost >
+                        this._piece.stats.movement + 1
+                    ) {
                         node.traversable = false;
                     } else {
                         node.path = path;
                         const isoPosition: Geom.Point =
-                            this._board.getIsoPosition(node.pos);
+                            this._clientBoard.getIsoPosition(
+                                node.pos,
+                            );
                         let cursorImage: GameObjects.Image;
 
                         if (node.warning) {
-                            cursorImage = this._board.scene.add.image(
-                                isoPosition.x,
-                                isoPosition.y,
-                                "cursors",
-                                CursorType.RangeMoveWarning,
-                            );
+                            cursorImage =
+                                this._clientBoard.scene.add.image(
+                                    isoPosition.x,
+                                    isoPosition.y,
+                                    "cursors",
+                                    CursorType.RangeMoveWarning,
+                                );
                         } else {
-                            cursorImage = this._board.scene.add.image(
-                                isoPosition.x,
-                                isoPosition.y,
-                                "cursors",
-                                CursorType.RangeMove,
-                            );
+                            cursorImage =
+                                this._clientBoard.scene.add.image(
+                                    isoPosition.x,
+                                    isoPosition.y,
+                                    "cursors",
+                                    CursorType.RangeMove,
+                                );
                         }
                         cursorImage.setOrigin(0.5, 0.5);
                         cursorImage.setAlpha(0);
@@ -326,16 +233,18 @@ export class RangeGizmo {
                     }
                 });
 
-            this._board.scene.tweens.add({
+            this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                duration:
+                    RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay:
+                    this._clientBoard.scene.tweens.stagger(
+                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                        {
+                            from: "first",
+                        },
+                    ),
                 onComplete: () => {
                     resolve();
                 },
@@ -343,20 +252,18 @@ export class RangeGizmo {
         });
     }
 
-    private lastSimplePosition: Geom.Point = new Geom.Point(-1, -1);
-    private lastDistance: number = -1;
-    private lastCursor: CursorType;
-    private lastLoS: boolean;
-
     /**
-     * Generate a simple circular range overlay centred on a position. Skips
-     * regeneration if the parameters match the last call (unless forced).
+     * Generate a simple circular range overlay centred on a
+     * position. Skips regeneration if the parameters match
+     * the last call (unless forced).
      *
      * @param position Centre point of the range
      * @param distance Maximum distance from the centre
      * @param cursor Cursor sprite frame to use for each tile
-     * @param lineOfSight If true, only shows tiles with line of sight from position
-     * @param force If true, bypasses the duplicate-call check and skips reveal animation
+     * @param lineOfSight If true, only shows tiles with line
+     * of sight from position
+     * @param force If true, bypasses the duplicate-call check
+     * and skips reveal animation
      */
     public async generateSimpleRange(
         position: Geom.Point,
@@ -367,7 +274,10 @@ export class RangeGizmo {
     ): Promise<void> {
         if (
             !force &&
-            Geom.Point.Equals(position, this.lastSimplePosition) &&
+            Geom.Point.Equals(
+                position,
+                this.lastSimplePosition,
+            ) &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
             lineOfSight === this.lastLoS
@@ -385,29 +295,39 @@ export class RangeGizmo {
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
-            for (let yy: number = 0; yy < this._board.height; yy++) {
-                for (let xx: number = 0; xx < this._board.width; xx++) {
-                    const currentDistance: number = gridDistance(
-                        startPosition,
-                        new Geom.Point(xx, yy),
-                    );
+            for (
+                let yy: number = 0;
+                yy < this._clientBoard.height;
+                yy++
+            ) {
+                for (
+                    let xx: number = 0;
+                    xx < this._clientBoard.width;
+                    xx++
+                ) {
+                    const currentDistance: number =
+                        gridDistance(
+                            startPosition,
+                            new Geom.Point(xx, yy),
+                        );
                     if (currentDistance > distance) {
                         continue;
                     }
                     if (
                         lineOfSight &&
-                        !this._board.hasLineOfSight(
+                        !this._clientBoard.hasLineOfSight(
                             startPosition,
                             new Geom.Point(xx, yy),
                         )
                     ) {
                         continue;
                     }
-                    const isoPosition: Geom.Point = this._board.getIsoPosition(
-                        new Geom.Point(xx, yy),
-                    );
+                    const isoPosition: Geom.Point =
+                        this._clientBoard.getIsoPosition(
+                            new Geom.Point(xx, yy),
+                        );
                     const cursorImage: GameObjects.Image =
-                        this._board.scene.add.image(
+                        this._clientBoard.scene.add.image(
                             isoPosition.x,
                             isoPosition.y,
                             "cursors",
@@ -428,16 +348,18 @@ export class RangeGizmo {
                 resolve();
                 return;
             }
-            this._board.scene.tweens.add({
+            this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                duration:
+                    RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay:
+                    this._clientBoard.scene.tweens.stagger(
+                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                        {
+                            from: "first",
+                        },
+                    ),
                 onComplete: () => {
                     resolve();
                 },
@@ -446,14 +368,15 @@ export class RangeGizmo {
     }
 
     /**
-     * Show a simple range overlay with a reveal animation. Delegates to
-     * {@link generateSimpleRange} with `force: true`, then animates children
-     * from alpha 0 to 1.
+     * Show a simple range overlay with a reveal animation.
+     * Delegates to {@link generateSimpleRange} with
+     * `force: true`, then animates children from alpha 0 to 1.
      *
      * @param position Centre point of the range
      * @param distance Maximum distance from the centre
      * @param cursor Cursor sprite frame to use for each tile
-     * @param lineOfSight If true, only shows tiles with line of sight from position
+     * @param lineOfSight If true, only shows tiles with line
+     * of sight from position
      */
     public async showSimpleRange(
         position: Geom.Point,
@@ -469,50 +392,55 @@ export class RangeGizmo {
             true,
         );
 
-        this._rangeLayer.getChildren().forEach((child: GameObjects.Image) => {
-            child.setAlpha(0);
-        });
+        this._rangeLayer
+            .getChildren()
+            .forEach((child: GameObjects.Image) => {
+                child.setAlpha(0);
+            });
 
-        this._board.scene.tweens.add({
+        this._clientBoard.scene.tweens.add({
             targets: this._rangeLayer.getChildren(),
             alpha: 1,
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-            delay: this._board.scene.tweens.stagger(
-                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                {
-                    from: "first",
-                },
-            ),
+            delay:
+                this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "first",
+                    },
+                ),
         });
     }
 
     /**
-     * Hide the currently displayed simple range overlay with a fade-out
-     * animation (last-to-first stagger). No-ops if no range is visible.
+     * Hide the currently displayed simple range overlay with
+     * a fade-out animation (last-to-first stagger). No-ops if
+     * no range is visible.
      */
     public async hideSimpleRange(): Promise<void> {
-        // If no range to hide, return
         if (this._rangeLayer.length === 0) {
             return;
         }
 
-        this._board.scene.tweens.add({
+        this._clientBoard.scene.tweens.add({
             targets: this._rangeLayer.getChildren(),
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
             alpha: 0,
-            delay: this._board.scene.tweens.stagger(
-                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                {
-                    from: "last",
-                },
-            ),
+            delay:
+                this._clientBoard.scene.tweens.stagger(
+                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                    {
+                        from: "last",
+                    },
+                ),
         });
     }
 
     /**
-     * Generate visual range indicators for flying units. Unlike
-     * {@link generateVisualPaths}, flying units can reach any valid node
-     * directly so no pathfinding is needed — only validity is checked.
+     * Generate visual range indicators for flying units.
+     * Unlike {@link generateVisualPaths}, flying units can
+     * reach any valid node directly so no pathfinding is
+     * needed — only validity is checked.
      */
     private async generateVisualRange(): Promise<void> {
         this._rangeLayer.removeAll();
@@ -521,41 +449,46 @@ export class RangeGizmo {
             this._validNodes
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
-                    const isoPosition: Geom.Point = this._board.getIsoPosition(
-                        node.pos,
-                    );
+                    const isoPosition: Geom.Point =
+                        this._clientBoard.getIsoPosition(
+                            node.pos,
+                        );
                     let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
-                        cursorImage = this._board.scene.add.image(
-                            isoPosition.x,
-                            isoPosition.y,
-                            "cursors",
-                            CursorType.RangeMoveWarning,
-                        );
+                        cursorImage =
+                            this._clientBoard.scene.add.image(
+                                isoPosition.x,
+                                isoPosition.y,
+                                "cursors",
+                                CursorType.RangeMoveWarning,
+                            );
                     } else {
-                        cursorImage = this._board.scene.add.image(
-                            isoPosition.x,
-                            isoPosition.y,
-                            "cursors",
-                            CursorType.RangeMove,
-                        );
+                        cursorImage =
+                            this._clientBoard.scene.add.image(
+                                isoPosition.x,
+                                isoPosition.y,
+                                "cursors",
+                                CursorType.RangeMove,
+                            );
                     }
                     cursorImage.setOrigin(0.5, 0.5);
                     cursorImage.setAlpha(0);
                     this._rangeLayer.add(cursorImage);
                 });
 
-            this._board.scene.tweens.add({
+            this._clientBoard.scene.tweens.add({
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
-                duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._board.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                duration:
+                    RangeGizmo.GIZMO_REVEAL_DURATION,
+                delay:
+                    this._clientBoard.scene.tweens.stagger(
+                        RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
+                        {
+                            from: "first",
+                        },
+                    ),
                 onComplete: () => {
                     resolve();
                 },
@@ -564,89 +497,9 @@ export class RangeGizmo {
     }
 
     /**
-     * Look up a valid (traversable or terminal) node at the given board
-     * position.
-     *
-     * @param pt The board position to look up
-     * @returns The matching Node, or null if none found
-     */
-    public getNode(pt: Geom.Point): Node | null {
-        return (
-            this._validNodes.find(
-                (node: Node) =>
-                    Geom.Point.Equals(node.pos, pt) &&
-                    (node.traversable || node.terminal),
-            ) || null
-        );
-    }
-
-    /**
-     * Get (or compute and cache) the shortest path from the current piece's
-     * position to the given board position.
-     *
-     * @param pt The destination board position
-     * @returns The computed Path, or null if unreachable / no piece set
-     */
-    public getPathTo(pt: Geom.Point): Path {
-        let path: Path, node: Node;
-        node = this.getNode(pt);
-        if (!this._piece) {
-            return null;
-        }
-        if (!node || (!node.traversable && !node.terminal)) {
-            return null;
-        }
-        if (this._paths.has(pt.x + "," + pt.y)) {
-            path = this._paths.get(pt.x + "," + pt.y);
-        } else {
-            path = this.findPath(this._piece.position, pt);
-            this._paths.set(pt.x + "," + pt.y, path);
-        }
-        return path || null;
-    }
-
-    /**
-     * Get all valid paths from the piece's current position to valid nodes.
-     * Used for AI movement calculations.
-     *
-     * @param ignoreTerminal Whether to ignore terminal nodes when finding paths
-     * @returns A map of node positions to paths
-     */
-    public getAllValidPaths(ignoreTerminal: boolean = true): Set<Path> {
-        const output: Set<Path> = new Set();
-        for (const node of this._validNodes) {
-            if (node.isValid() && (!ignoreTerminal || !node.terminal)) {
-                const path: Path = this.getPathTo(node.pos);
-                if (path) {
-                    output.add(path);
-                }
-            }
-        }
-        return output;
-    }
-
-    /**
-     * Get all valid paths from the piece's current position to terminal nodes.
-     * Used for AI movement calculations.
-     *
-     * @returns A map of node positions to paths
-     */
-    public getAllTerminalPaths(): Set<Path> {
-        const output: Set<Path> = new Set();
-        for (const node of this._validNodes) {
-            if (node.isValid() && node.terminal) {
-                const path: Path = this.getPathTo(node.pos);
-                if (path) {
-                    output.add(path);
-                }
-            }
-        }
-        return output;
-    }
-
-    /**
-     * Display directional arrow cursors along the path from the current piece
-     * to the given destination. Clears any previously shown path first.
+     * Display directional arrow cursors along the path from
+     * the current piece to the given destination. Clears any
+     * previously shown path first.
      *
      * @param toPt The destination board position
      */
@@ -665,165 +518,29 @@ export class RangeGizmo {
             return;
         }
 
-        // If the original destination was terminal, the path ends one node
-        // before it, so we need to show the path including the last node
+        // If the original destination was terminal, the path
+        // ends one node before it, so we need to show the path
+        // including the last node
         const destinationNode = this.getNode(toPt);
         const endIndex = destinationNode?.terminal
             ? path.nodes.length
             : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
-            const isoPosition: Geom.Point = this._board.getIsoPosition(
-                path.nodes[n].pos,
-            );
+            const isoPosition: Geom.Point =
+                this._clientBoard.getIsoPosition(
+                    path.nodes[n].pos,
+                );
 
-            const cursorImage: GameObjects.Image = this._board.scene.add.image(
-                isoPosition.x,
-                isoPosition.y,
-                "cursors",
-                Cursor.getCursorAngle(path.angles[n]),
-            );
+            const cursorImage: GameObjects.Image =
+                this._clientBoard.scene.add.image(
+                    isoPosition.x,
+                    isoPosition.y,
+                    "cursors",
+                    Cursor.getCursorAngle(path.angles[n]),
+                );
             cursorImage.setOrigin(0.5, 0.5);
             this._pathLayer.add(cursorImage);
         }
     }
-
-    /**
-     * Run A* pathfinding between two board positions using the current set of
-     * valid nodes. Returns null if no path exists.
-     *
-     * @param fromPt The start position
-     * @param toPt The destination position
-     * @returns The shortest Path, or null if unreachable
-     */
-    public findPath(fromPt: Geom.Point, toPt: Geom.Point): Path {
-        let firstNode: Node, destinationNode: Node;
-        for (const node of this._validNodes) {
-            if (Geom.Point.Equals(node.pos, fromPt)) {
-                firstNode = node;
-            }
-            if (Geom.Point.Equals(node.pos, toPt)) {
-                destinationNode = node;
-            }
-        }
-
-        if (firstNode === null || destinationNode === null) {
-            return null;
-        }
-
-        const openNodes: Node[] = [];
-        const closedNodes: Node[] = [];
-
-        let currentNode: Node = firstNode;
-        let testNode: Node;
-
-        let l: number;
-        let i: number;
-
-        let connectedNodes: Node[];
-        let travelCost: number = 1;
-
-        let g: number;
-        let h: number;
-        let f: number;
-
-        if (!currentNode) {
-            return null;
-        }
-
-        currentNode.g = 0;
-        currentNode.h = diagonalHeuristic(
-            currentNode,
-            destinationNode,
-            travelCost,
-        );
-        currentNode.f = currentNode.g + currentNode.h;
-
-        while (currentNode != destinationNode) {
-            connectedNodes = this.findConnectedNodes(currentNode);
-
-            l = connectedNodes.length;
-
-            for (i = 0; i < l; ++i) {
-                testNode = connectedNodes[i];
-                // Can't traverse to self or non-traversable nodes except
-                // terminal
-                if (
-                    testNode === currentNode ||
-                    (!testNode.traversable && !testNode.terminal)
-                ) {
-                    continue;
-                }
-                g =
-                    currentNode.g +
-                    diagonalHeuristic(
-                        currentNode,
-                        testNode,
-                        travelCost,
-                    );
-                h = diagonalHeuristic(
-                    testNode,
-                    destinationNode,
-                    travelCost,
-                );
-                f = g + h;
-
-                if (
-                    isOpen(testNode, openNodes) ||
-                    isClosed(testNode, closedNodes)
-                ) {
-                    if (testNode.f > f) {
-                        testNode.f = f;
-                        testNode.g = g;
-                        testNode.h = h;
-                        testNode.parentNode = currentNode;
-                    }
-                } else {
-                    testNode.f = f;
-                    testNode.g = g;
-                    testNode.h = h;
-                    testNode.parentNode = currentNode;
-                    openNodes.push(testNode);
-                }
-            }
-            closedNodes.push(currentNode);
-
-            if (openNodes.length == 0) {
-                return null;
-            }
-            openNodes.sort(function (n1: Node, n2: Node): number {
-                return n1.f < n2.f ? -1 : 1;
-            });
-            currentNode = openNodes.shift();
-        }
-
-        return buildPath(destinationNode, firstNode);
-    }
-
-    /**
-     * Find all valid nodes adjacent to the given node (within 1 tile in any
-     * direction, i.e. the 8-connected neighbourhood).
-     *
-     * @param node The node to find neighbours for
-     * @returns Array of adjacent valid nodes (excludes the node itself)
-     */
-    public findConnectedNodes(node: Node): Node[] {
-        const output: Node[] = [];
-
-        for (const validNode of this._validNodes) {
-            if (node.x < validNode.x - 1 || node.x > validNode.x + 1) {
-                continue;
-            }
-            if (node.y < validNode.y - 1 || node.y > validNode.y + 1) {
-                continue;
-            }
-            if (node === validNode) {
-                continue;
-            }
-            output.push(validNode);
-        }
-
-        return output;
-    }
-
 }
