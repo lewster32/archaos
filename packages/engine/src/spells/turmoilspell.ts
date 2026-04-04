@@ -1,9 +1,9 @@
 import { Colour } from "../enums/colour";
 import { UnitType } from "../enums/unittype";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Spell } from "./spell";
-import type { Piece } from "../../../../src/gameobjects/piece";
+import type { Piece } from "../piece";
 import type { Player } from "../player";
 import { Point } from "../point";
 

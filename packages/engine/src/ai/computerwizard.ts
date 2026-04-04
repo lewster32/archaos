@@ -270,7 +270,7 @@ export class ComputerWizard implements RemotePlayer {
      * Causes the computer wizard to forget some of its knowledge about
      * illusions over time.
      */
-    private forgetIllusionKnowledge(): void {
+    public forgetIllusionKnowledge(): void {
         // Small chance to forget a known non-illusion piece each turn
         // Graph: https://www.desmos.com/calculator/ismripyway
         const forgetChance: number = Math.min(

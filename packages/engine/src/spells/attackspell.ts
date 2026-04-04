@@ -6,10 +6,10 @@ import { UnitStatus } from "../enums/unitstatus";
 import { Colour } from "../enums/colour";
 import type { SpellConfig } from "../configs/spellconfig";
 import { Point } from "../point";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
 import { Spell } from "./spell";
-import type { Piece } from "../../../../src/gameobjects/piece";
+import type { Piece } from "../piece";
 import type { Player } from "../player";
 /**
  * A spell that attacks one or more target pieces.

@@ -4,7 +4,7 @@ import { UnitType } from "../enums/unittype";
 import type { SpellConfig } from "../configs/spellconfig";
 import { vi } from "vitest";
 import { Point } from "../point";
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 import { TestRNG } from "../rng";
 
 export function makeMockBoard(

@@ -180,7 +180,7 @@ class Movement10 extends TutorialStep {
     onDismissHint(board: Board): void {
         TutorialStep.pointAtPosition(
             board,
-            board.getPlayer(1)!.castingPiece.screenPosition,
+            (board.getPlayer(1)!.castingPiece as Piece).screenPosition,
             2000,
         );
     }
@@ -237,7 +237,7 @@ class Movement25 extends TutorialStep {
     }
 
     onDismissHint(board: Board): void {
-        const wizard = board.getPlayer(1)?.castingPiece;
+        const wizard = board.getPlayer(1)?.castingPiece as Piece;
         if (wizard) {
             TutorialStep.pointAtPosition(board, wizard.screenPosition, 2000);
         }

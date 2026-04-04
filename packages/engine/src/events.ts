@@ -36,8 +36,12 @@ export class EventEmitter {
         return this;
     }
 
-    removeAllListeners(): this {
-        this._listeners.clear();
+    removeAllListeners(event?: string): this {
+        if (event) {
+            this._listeners.delete(event);
+        } else {
+            this._listeners.clear();
+        }
         return this;
     }
 }

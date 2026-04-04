@@ -7,9 +7,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 // Spell -> Board -> AttackSpell/SummonSpell -> Spell
 import "../../../../src/gameobjects/wizard";
 import { SummonSpell } from "./summonspell";
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 import { Point } from "../point";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────

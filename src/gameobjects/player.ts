@@ -3,23 +3,23 @@ import {
     Colour,
     BoardEvent,
     Player as EnginePlayer,
+    GameSetupPlayerType,
 } from "@archaos/engine";
 import type {
     PlayerConfig,
-    RemotePlayer,
+    PlayerAI,
 } from "@archaos/engine";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
 import { ComputerWizard } from "../../packages/engine/src/ai/computerwizard";
-import { GameSetupPlayerType } from "@archaos/engine";
 
 export class Player extends EnginePlayer {
     /**
      * Get the AI controller for this player, if any.
      */
-    public get ai(): ComputerWizard | null {
+    public override get ai(): PlayerAI | null {
         if (
             this._remote instanceof ComputerWizard
         ) {

@@ -9,11 +9,11 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 // without seeing it as undefined.
 import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 import { Point } from "../point";
 import { TestRNG } from "../rng";
 
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 
 import {
     makeMockBoard,

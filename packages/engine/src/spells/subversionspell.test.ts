@@ -3,7 +3,7 @@ import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { SubversionSpell } from "./subversionspell";
 import { Point } from "../point";
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 import {
     makeMockBoard,
     makeMockPiece,

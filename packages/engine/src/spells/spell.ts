@@ -10,9 +10,9 @@ import type { IRNG } from "../rng";
 import { Point } from "../point";
 import spellJsonData from "../../../../assets/data/classicspells.json";
 
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 
 import type { Player } from "../player";
 import {

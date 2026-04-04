@@ -1,39 +1,24 @@
+// Import directly from engine submodules to avoid barrel-induced
+// circular dependency (engine barrel → spell.ts → client board).
+import { Board as EngineBoard } from "../../packages/engine/src/board";
+import type { PieceConfig, WizardConfig } from "../../packages/engine/src/configs/piececonfig";
+import type { PlayerConfig } from "../../packages/engine/src/configs/playerconfig";
+import type { SpellConfig } from "../../packages/engine/src/configs/spellconfig";
+import { BoardEvent } from "../../packages/engine/src/enums/boardevent";
+import { BoardLayer } from "../../packages/engine/src/enums/boardlayer";
+import { BoardPhase } from "../../packages/engine/src/enums/boardphase";
+import { BoardState } from "../../packages/engine/src/enums/boardstate";
+import { Colour } from "../../packages/engine/src/enums/colour";
+import { CursorType } from "../../packages/engine/src/enums/cursortype";
+import { EventType } from "../../packages/engine/src/enums/eventtype";
+import { InputType } from "../../packages/engine/src/enums/inputtype";
+import { UnitStatus } from "../../packages/engine/src/enums/unitstatus";
+import { UnitType } from "../../packages/engine/src/enums/unittype";
+import type { BoardUpdateEventData, SpellbookOpenEventData } from "../../packages/engine/src/interfaces/ui";
+import { Path } from "../../packages/engine/src/pathfinding";
+import { Spell } from "../../packages/engine/src/spells/spell";
+import { createSpell } from "../../packages/engine/src/spells/spellfactory";
 import {
-    PieceConfig,
-    WizardConfig,
-    PlayerConfig,
-    SpellConfig,
-    BoardEvent,
-    BoardLayer,
-    BoardPhase,
-    BoardState,
-    Colour,
-    CursorType,
-    EventType,
-    InputType,
-    UnitStatus,
-    UnitType,
-    RangeType,
-    BoardUpdateEventData,
-    Box,
-    SpellbookOpenEventData,
-    Model,
-    IRNG,
-    GameRNG,
-} from "@archaos/engine";
-import { Cursor } from "./cursor";
-import { createEffect, EffectType } from "./effectemitter";
-import { delay as _delay } from "../utils";
-import { Piece } from "./piece";
-import { Player } from "./player";
-import { RangeGizmo } from "./rangegizmo";
-import { Path } from "@archaos/engine";
-import { Logger } from "./services/logger";
-import { Rules } from "./services/rules";
-import { SoundEffects } from "./soundeffects";
-import { Spell, createSpell } from "@archaos/engine";
-import {
-    PhaseMachine,
     StartGame,
     SpellbookReady,
     SkipSpellbook,
@@ -44,29 +29,29 @@ import {
     SpreadingDone,
     MovingReady,
     MovingDone,
-    GameEnd,
     SelectPiece,
     PieceDeselected,
     RequestDismount,
     CompleteDismount,
     SpellTargeting,
-} from "@archaos/engine";
+} from "../../packages/engine/src/phasemachine";
+import { Cursor } from "./cursor";
+import { createEffect, EffectType } from "./effectemitter";
+import { Piece } from "./piece";
+import { Player } from "./player";
+import { RangeGizmo } from "./rangegizmo";
+import { Rules } from "./services/rules";
+import { SoundEffects } from "./soundeffects";
 import { Wizard } from "./wizard";
 import type { Tutorial } from "./tutorials/tutorial";
 import {
     Display,
-    Events as PhaserEvents,
     Geom,
     GameObjects,
     Scene,
     Math as PMath,
     Cameras,
 } from "phaser";
-
-/**
- * Simple point type without all the baggage of Phaser's `Geom.Point`.
- */
-type SimplePoint = { x: number; y: number };
 
 /**
  * The main game board. This is where the magic (literally) happens.
@@ -76,189 +61,16 @@ type SimplePoint = { x: number; y: number };
  * @param width The width of the board in cells.
  * @param height The height of the board in cells.
  */
-export class Board extends Model implements Box {
-    /**
-     * Cheat to force all attacks to hit (true), miss (false), or normal (null).
-     */
-    public static CHEAT_FORCE_HIT: boolean | null = null;
-
-    /**
-     * Cheat to force all spells to cast successfully (true), fail (false), or normal
-     */
-    public static CHEAT_FORCE_CAST: boolean | null = null;
-
-    /**
-     * Cheat to use short animation delays for actions (true), normal delays (false or
-     */
-    public static CHEAT_SHORT_DELAY: boolean = false;
-
-    /**
-     * Duration of new turn highlight animation in milliseconds.
-     */
-    static get NEW_TURN_HIGHLIGHT_DURATION(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 700;
-    }
-
-    /**
-     * Number of steps in new turn highlight animation.
-     */
-    static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
-
-    /**
-     * Number of iterations for each spread phase. Determines how many steps of
-     * the automata are run.
-     */
-    static readonly SPREAD_ITERATIONS: number = 2;
-
+export class Board extends EngineBoard {
     /**
      * The Phaser scene the board is present in.
      */
     private readonly _scene: Scene;
 
     /**
-     * The width of the board in tiles.
-     */
-    private readonly _width: number;
-
-    /**
-     * The height of the board in tiles.
-     */
-    private readonly _height: number;
-
-    /**
-     * The different visual layers of the board (floor, pieces, cursors, etc).
+     * The different visual layers of the board.
      */
     private readonly _layers: Map<BoardLayer, GameObjects.Layer>;
-
-    /**
-     * Default board width in tiles.
-     */
-    static readonly DEFAULT_WIDTH: number = 13;
-
-    /**
-     * Default board height in tiles.
-     */
-    static readonly DEFAULT_HEIGHT: number = 13;
-
-    /**
-     * How wide a tile is in pixels.
-     */
-    static readonly DEFAULT_CELLSIZE: number = 14;
-
-    /**
-     * Empty space in cells added to the left and right of the board.
-     */
-    static readonly HORIZONTAL_PAD_CELLS: number = 6;
-
-    /**
-     * Empty space in cells added above and below the board.
-     * Larger than HORIZONTAL_PAD_CELLS to keep edge pieces clear of top/bottom
-     * UI elements when panning.
-     */
-    static readonly VERTICAL_PAD_CELLS: number = 9;
-
-    /**
-     * Default delay for actions in milliseconds.
-     */
-    static get DEFAULT_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 750;
-    }
-
-    /**
-     * Delay after ending a turn in milliseconds.
-     */
-    static get END_TURN_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 1500;
-    }
-
-    /**
-     * Delay between spread steps in milliseconds.
-     */
-    static get SPREAD_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 250;
-    }
-
-    /**
-     * Hard-coded table for looking up neighbouring directions to save us doing
-     * the loop/maths each time.
-     */
-    static readonly NEIGHBOUR_DIRECTIONS: SimplePoint[] = [
-        { x: 0, y: -1 },
-        { x: 1, y: 0 },
-        { x: 0, y: 1 },
-        { x: -1, y: 0 },
-        { x: -1, y: -1 },
-        { x: 1, y: 1 },
-        { x: -1, y: 1 },
-        { x: 1, y: -1 },
-    ];
-
-    /**
-     * Tracks the last emitted phase to avoid duplicate BoardEvent.PhaseChange
-     * emissions. Not the source of truth — use the computed `phase` getter.
-     */
-    private _lastPhase: BoardPhase;
-
-    /**
-     * Tracks the last emitted state to avoid duplicate BoardEvent.StateChange
-     * emissions during the movement phase (piece interaction states).
-     */
-    private _lastState: BoardState;
-
-    /**
-     * Whether the board is busy (e.g. during attack animations).
-     * When true, cursor input is blocked.
-     */
-    private _busy = false;
-
-    /**
-     * The current state of the board. The state is the specific mode the
-     * board is in within a phase, such as moving or casting a spell. It mostly
-     * affects what user inputs are valid.
-     */
-    private _state: BoardState;
-
-    /**
-     * The current world balance. A positive value indicates a shift towards law
-     * while a negative value indicates a shift towards chaos.
-     */
-    private _balance: number;
-
-    /**
-     * How much the world balance will shift at the end of the turn.
-     */
-    private _balanceShift: number;
-
-    /**
-     * All pieces on the board, mapped by their unique IDs.
-     */
-    private readonly _pieces: Map<number, Piece>;
-
-    /**
-     * The currently selected piece, or null if no piece is selected.
-     */
-    private _selected: Piece | null;
-
-    /**
-     * All players in the game, mapped by their unique IDs.
-     */
-    private readonly _players: Map<number, Player>;
-
-    /**
-     * The current player whose turn it is.
-     */
-    private _currentPlayer: Player | null;
-
-    /**
-     * The index of the current player in the players map. -1 if no current
-     * player.
-     */
-    private _currentPlayerIndex: number = -1;
-
-    /**
-     * Simple auto-incrementing ID counter for pieces.
-     */
-    private _idCounter: number = 1;
 
     /**
      * The cursor for this board.
@@ -266,79 +78,19 @@ export class Board extends Model implements Box {
     private readonly _cursor: Cursor;
 
     /**
-     * The movement gizmo for this board. This handles things like range and
-     * paths.
+     * The movement gizmo for this board.
      */
     private readonly _rangeGizmo: RangeGizmo;
 
     /**
-     * The rules service for this board. The rules apply most of the logic of
-     * the game.
+     * The rules service for this board.
      */
     private readonly _rules: Rules;
 
     /**
-     * The state manager for this board. The state manager handles the finite
-     * state machine for the game's phases and states.
-     */
-    private readonly _stateManager: PhaseMachine;
-
-    /**
-     * The logger for this board. The logger handles logging alerts to the
-     * game's UI.
-     */
-    private readonly _logger: Logger;
-
-    /**
      * The sound effects manager for this board.
      */
-    private readonly _sound: SoundEffects;
-
-    /**
-     * The seedable PRNG for this board. All gameplay-affecting randomness
-     * should go through this instance; visual/audio code should use
-     * `Math.random()` instead.
-     */
-    private readonly _rng: IRNG;
-
-    /**
-     * Spell filter function to use when generating random spells. By default,
-     * this allows all spells.
-     *
-     * @returns Whether the spell should be included in random selection.
-     */
-    private _spellFilter: (spell: SpellConfig) => boolean = () => true;
-
-    /**
-     * When true, the illusion casting option is suppressed for all summon
-     * spells. Used by tutorials to simplify the casting flow.
-     */
-    private _disableIllusions: boolean = false;
-
-    /**
-     * When true, the cancel button is suppressed for all spells. Used by
-     * tutorials to simplify the casting flow.
-     */
-    private _disableCancelSpell: boolean = false;
-
-    /**
-     * When true, the cancel action is suppressed for move/attack/ranged attack
-     * actions. Used by tutorials to enforce specific turn-based actions.
-     */
-    private _disableCancelAction: boolean = false;
-
-    /**
-     * When true, the player is not allowed to end their turn. Used by
-     * tutorials to enforce specific turn-based actions.
-     */
-    private _disableEndTurn: boolean = false;
-
-    /**
-     * Event emitter for board game events (turns, phase changes, attacks,
-     * piece deaths, etc.). Tutorials and other observers subscribe here.
-     */
-    private readonly _boardEvents: PhaserEvents.EventEmitter =
-        new PhaserEvents.EventEmitter();
+    private _sound: SoundEffects;
 
     /**
      * The active tutorial, if any.
@@ -347,7 +99,6 @@ export class Board extends Model implements Box {
 
     /**
      * Abort controller for the viewport media query listener.
-     * Used to clean up the listener when the board is destroyed.
      */
     private readonly _viewportListenerAbort: AbortController =
         new AbortController();
@@ -359,13 +110,9 @@ export class Board extends Model implements Box {
         height: number = Board.DEFAULT_HEIGHT,
         seed?: string,
     ) {
-        super(id);
+        super(id, width, height, seed);
         this._scene = scene;
-        this._rng = new GameRNG(seed);
         this._layers = new Map();
-
-        this._width = width;
-        this._height = height;
 
         this.createFloor();
         this._layers.set(BoardLayer.FloorCursors, this.scene.add.layer());
@@ -374,9 +121,9 @@ export class Board extends Model implements Box {
         this._layers.set(BoardLayer.Pieces, this.scene.add.layer());
 
         this._scene.game.scale.resize(
-            this._width * Board.DEFAULT_CELLSIZE * 2 +
+            this.width * Board.DEFAULT_CELLSIZE * 2 +
                 Board.DEFAULT_CELLSIZE * Board.HORIZONTAL_PAD_CELLS * 2,
-            this._height * Board.DEFAULT_CELLSIZE +
+            this.height * Board.DEFAULT_CELLSIZE +
                 Board.DEFAULT_CELLSIZE * Board.VERTICAL_PAD_CELLS * 2,
         );
 
@@ -392,142 +139,10 @@ export class Board extends Model implements Box {
 
         this.setupViewportResizing(boardPixelWidth, boardPixelHeight);
 
-        this._pieces = new Map<number, Piece>();
-        this._players = new Map<number, Player>();
-        this._state = BoardState.Idle;
-        this._lastPhase = BoardPhase.Idle;
-        this._lastState = BoardState.Idle;
-        this._balance = 0;
-        this._balanceShift = 0;
-
         this._cursor = new Cursor(this);
         this._rangeGizmo = new RangeGizmo(this);
 
-        this._selected = null;
-        this._currentPlayer = null;
-
         this._rules = Rules.getInstance();
-        this._logger = Logger.getInstance();
-        this._stateManager = new PhaseMachine((activeState: string) => {
-            // --- Phase change side effects ---
-            let newPhase: BoardPhase | null = null;
-            switch (activeState) {
-                case "spellbookSetup":
-                case "spellbookPlayer":
-                    newPhase = BoardPhase.Spellbook;
-                    break;
-                case "castingSetup":
-                case "castingPlayer":
-                    newPhase = BoardPhase.Casting;
-                    break;
-                case "spreading":
-                    newPhase = BoardPhase.Spreading;
-                    break;
-                case "movingSetup":
-                case "movingPlayer":
-                case "pieceIdle":
-                case "pieceMoving":
-                case "pieceAttacking":
-                case "pieceRangedAttacking":
-                case "pieceDismounting":
-                    newPhase = BoardPhase.Moving;
-                    break;
-            }
-            if (newPhase !== null && newPhase !== this._lastPhase) {
-                this._lastPhase = newPhase;
-                switch (newPhase) {
-                    case BoardPhase.Spellbook:
-                        this._logger.log(
-                            `Spell selection phase`,
-                            Colour.Green,
-                        );
-                        break;
-                    case BoardPhase.Casting:
-                        this._logger.log(
-                            `Spell casting phase`,
-                            Colour.Green,
-                        );
-                        break;
-                    case BoardPhase.Moving:
-                        this._logger.log(`Movement phase`, Colour.Green);
-                        break;
-                }
-                this._boardEvents.emit(BoardEvent.PhaseChange, newPhase);
-            }
-
-            // --- Piece state change side effects (movement phase) ---
-            let newState: BoardState | null = null;
-            switch (activeState) {
-                case "pieceIdle":
-                case "pieceMoving":
-                    newState = BoardState.Move;
-                    break;
-                case "pieceAttacking":
-                    newState = BoardState.Attack;
-                    break;
-                case "pieceRangedAttacking":
-                    newState = BoardState.RangedAttack;
-                    break;
-                case "pieceDismounting":
-                    newState = BoardState.Dismount;
-                    break;
-                case "castIdle":
-                case "castTargeting":
-                    newState = BoardState.CastSpell;
-                    break;
-                case "spellbookPlayer":
-                    newState = BoardState.SelectSpell;
-                    break;
-                case "spreading":
-                    newState = BoardState.Idle;
-                    break;
-            }
-            if (newState !== null && newState !== this._lastState) {
-                this._lastState = newState;
-                this._boardEvents.emit(BoardEvent.StateChange, newState);
-                if (
-                    newState === BoardState.Move ||
-                    newState === BoardState.SelectSpell
-                ) {
-                    setTimeout(() => {
-                        if (
-                            this.currentPlayer &&
-                            !this.currentPlayer.remote &&
-                            !this.tutorial?.config.disableEndTurn
-                        ) {
-                            this.emitUIEvent(
-                                EventType.EndTurnAvailable,
-                                true,
-                            );
-                        } else {
-                            this.emitUIEvent(
-                                EventType.EndTurnAvailable,
-                                false,
-                            );
-                        }
-                    });
-                } else {
-                    setTimeout(() => {
-                        if (
-                            this.currentPlayer &&
-                            !this.currentPlayer.remote &&
-                            !this.tutorial?.config.disableCancelSpell
-                        ) {
-                            this.emitUIEvent(
-                                EventType.CancelAvailable,
-                                true,
-                            );
-                        } else {
-                            this.emitUIEvent(
-                                EventType.CancelAvailable,
-                                false,
-                            );
-                        }
-                        this.emitUIEvent(EventType.EndTurnAvailable, false);
-                    });
-                }
-            }
-        });
 
         this.scene.game.events.on(EventType.EndTurn, async () => {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {
@@ -580,51 +195,60 @@ export class Board extends Model implements Box {
     /* #region State */
 
     /**
-     * Get the state manager for this board. The state manager handles the
-     * finite state machine for the game's phases and states.
+     * Override FSM state-change to emit UI button events.
      */
-    get stateManager(): PhaseMachine {
-        return this._stateManager;
+    protected override onStateChange(
+        newState: BoardState,
+    ): void {
+        if (
+            newState === BoardState.Move ||
+            newState === BoardState.SelectSpell
+        ) {
+            setTimeout(() => {
+                if (
+                    this.currentPlayer &&
+                    !this.currentPlayer.remote &&
+                    !this.tutorial?.config.disableEndTurn
+                ) {
+                    this.emitUIEvent(
+                        EventType.EndTurnAvailable,
+                        true,
+                    );
+                } else {
+                    this.emitUIEvent(
+                        EventType.EndTurnAvailable,
+                        false,
+                    );
+                }
+            });
+        } else {
+            setTimeout(() => {
+                if (
+                    this.currentPlayer &&
+                    !this.currentPlayer.remote &&
+                    !this.tutorial?.config.disableCancelSpell
+                ) {
+                    this.emitUIEvent(
+                        EventType.CancelAvailable,
+                        true,
+                    );
+                } else {
+                    this.emitUIEvent(
+                        EventType.CancelAvailable,
+                        false,
+                    );
+                }
+                this.emitUIEvent(EventType.EndTurnAvailable, false);
+            });
+        }
     }
 
     /**
-     * Get the current state of the board, computed from FSM during the
-     * movement phase. Outside movement, reads from the stored `_state`.
+     * Override state setter to emit UI events for
+     * button availability.
      */
-    get state(): BoardState {
-        if (this._state === BoardState.GameOver) return BoardState.GameOver;
-        const pm = this._stateManager;
-        // Movement phase
-        if (pm.isActive(pm.states.movingPlayer)) {
-            if (pm.isActive(pm.states.pieceAttacking))
-                return BoardState.Attack;
-            if (pm.isActive(pm.states.pieceRangedAttacking))
-                return BoardState.RangedAttack;
-            if (pm.isActive(pm.states.pieceDismounting))
-                return BoardState.Dismount;
-            return BoardState.Move;
-        }
-        // Casting phase
-        if (pm.isActive(pm.states.castingPlayer))
-            return BoardState.CastSpell;
-        // Spellbook phase
-        if (pm.isActive(pm.states.spellbookPlayer))
-            return BoardState.SelectSpell;
-        // Spreading phase
-        if (pm.isActive(pm.states.spreading)) return BoardState.Idle;
-        return this._state;
-    }
-
-    /**
-     * Set the current state of the board.
-     *
-     * @deprecated Use `stateManager` instead.
-     */
-    set state(state: BoardState) {
-        if (this._state === BoardState.GameOver) {
-            return;
-        }
-        this._state = state;
+    override set state(state: BoardState) {
+        super.state = state;
         this._boardEvents.emit(BoardEvent.StateChange, state);
         switch (state) {
             case BoardState.Idle:
@@ -664,81 +288,20 @@ export class Board extends Model implements Box {
         }
     }
 
-    /**
-     * Get the current phase of the board, computed from the FSM state.
-     */
-    get phase(): BoardPhase {
-        const pm = this._stateManager;
-        if (pm.isActive(pm.states.spellbook)) return BoardPhase.Spellbook;
-        if (pm.isActive(pm.states.casting)) return BoardPhase.Casting;
-        if (pm.isActive(pm.states.spreading)) return BoardPhase.Spreading;
-        if (pm.isActive(pm.states.moving)) return BoardPhase.Moving;
-        return BoardPhase.Idle;
+    override get state(): BoardState {
+        return super.state;
     }
 
-    /**
-     * Whether the board is currently busy (e.g. during attack animations).
-     */
-    get busy(): boolean {
-        return this._busy;
-    }
-
-    /**
-     * Get the current world balance. A positive value indicates a shift
-     * towards law, while a negative value indicates a shift towards chaos.
-     */
-    get balance(): number {
-        return this._balance;
-    }
-
-    /**
-     * Get how much the world balance will shift at the end of the turn.
-     */
-    get balanceShift(): number {
-        return this._balanceShift;
-    }
-
-    /**
-     * Set how much the world balance will shift at the end of the turn. This
-     * is reset to 0 at the end of each turn.
-     */
-    set balanceShift(balance: number) {
-        this._balanceShift = balance;
-    }
-
-    /**
-     * Get the cursor for this board.
-     */
     get cursor(): Cursor {
         return this._cursor;
     }
 
-    /**
-     * Get the movement gizmo for this board. This handles things like range
-     * and paths.
-     */
     get rangeGizmo(): RangeGizmo {
         return this._rangeGizmo;
     }
 
-    /**
-     * Get the rules service for this board. The rules apply most of the logic
-     * of the game.
-     */
     get rules(): Rules {
         return this._rules;
-    }
-
-    /**
-     * Get the logger for this board. The logger handles logging alerts to the
-     * game's UI.
-     */
-    get logger(): Logger {
-        return this._logger;
-    }
-
-    get rng(): IRNG {
-        return this._rng;
     }
 
     /**
@@ -853,18 +416,12 @@ export class Board extends Model implements Box {
 
     /* #region Pieces */
 
-    /**
-     * Get all pieces on the board.
-     */
-    get pieces(): Piece[] {
-        return Array.from(this._pieces.values());
+    override get pieces(): Piece[] {
+        return super.pieces as Piece[];
     }
 
-    /**
-     * Get the currently selected piece, or null if no piece is selected.
-     */
-    get selected(): Piece | null {
-        return this._selected;
+    override get selected(): Piece | null {
+        return super.selected as Piece | null;
     }
 
     /**
@@ -878,7 +435,7 @@ export class Board extends Model implements Box {
      * debounced to avoid flooding listeners with too many events, as it always
      * contains a snapshot of the board state.
      */
-    emitBoardUpdateEvent(): void {
+    override emitBoardUpdateEvent(): void {
         if (this._emitTimeout) {
             clearTimeout(this._emitTimeout);
         }
@@ -886,11 +443,11 @@ export class Board extends Model implements Box {
             this.emitUIEvent(EventType.BoardUpdate, {
                 pieces: this.pieces,
                 board: {
-                    width: this._width,
-                    height: this._height,
+                    width: this.width,
+                    height: this.height,
                 },
-                balance: this._balance,
-                balanceShift: this._balanceShift,
+                balance: this.balance,
+                balanceShift: this.balanceShift,
             } as BoardUpdateEventData);
         }, 500);
     }
@@ -901,7 +458,7 @@ export class Board extends Model implements Box {
      * @param eventType
      * @param data
      */
-    emitUIEvent(eventType: EventType, data: any): void {
+    override emitUIEvent(eventType: EventType, data: any): void {
         if (this._disableEndTurn && eventType === EventType.EndTurnAvailable) {
             console.log("End turn disabled, ignoring event");
             return;
@@ -974,28 +531,12 @@ export class Board extends Model implements Box {
         return wizard;
     }
 
-    /**
-     * Get a piece by its ID.
-     *
-     * @param id The ID of the piece to get.
-     * @returns The piece with the given ID, or null if no such piece exists.
-     */
-    getPiece(id: number): Piece | null {
-        if (this._pieces.has(id)) {
-            return this._pieces.get(id);
-        }
-        return null;
+    override getPiece(id: number): Piece | null {
+        return super.getPiece(id) as Piece | null;
     }
 
-    /**
-     * Get all pieces owned by a given player. This includes everything, such as
-     * wizards and non-controllable pieces.
-     *
-     * @param owner The player who owns the pieces.
-     * @returns An array of pieces owned by the given player.
-     */
-    getPiecesByOwner(owner: Player): Piece[] {
-        return this.pieces.filter((piece) => piece.owner === owner);
+    override getPiecesByOwner(owner: Player): Piece[] {
+        return super.getPiecesByOwner(owner) as Piece[];
     }
 
     /**
@@ -1008,56 +549,57 @@ export class Board extends Model implements Box {
         if (!id || this.state === BoardState.GameOver) {
             return;
         }
-        if (this._selected?.id === id) {
+        if (this.selected?.id === id) {
             console.warn(`Piece with ID ${id} is already selected`);
             return;
         }
         this._selected = this.getPiece(id);
-        if (!this._selected) {
+        if (!this.selected) {
             throw new Error(`No piece with ID ${id} found to select`);
         }
-        this._boardEvents.emit(BoardEvent.PieceSelected, this._selected);
+        this._boardEvents.emit(BoardEvent.PieceSelected, this.selected);
         if (this.phase === BoardPhase.Moving) {
             if (!silent) {
                 this.sound.play("select");
             }
-            if (this._selected.currentMount) {
+            if (this.selected.currentMount) {
                 this.emitUIEvent(EventType.DismountAvailable, true);
             }
 
             let firstEngagingPiece: Piece | null = null;
             // Special case: Units in Shadow Form do not become engaged at the
             // start of movement.
-            if (this._selected.hasStatus(UnitStatus.ShadowForm)) {
-                this._selected.engaged = false;
+            if (this.selected.hasStatus(UnitStatus.ShadowForm)) {
+                this.selected.engaged = false;
             } else {
-                firstEngagingPiece = this._selected.getFirstEngagingPiece();
+                firstEngagingPiece =
+                    this.selected.getFirstEngagingPiece() as Piece | null;
             }
 
             if (firstEngagingPiece) {
                 if (
-                    this._selected.engaged ||
-                    this._selected.properties.manoeuvrability < 0 || // A negative manoeuvrability means the unit stays engaged if near engageable enemies
+                    this.selected.engaged ||
+                    this.selected.properties.manoeuvrability < 0 || // A negative manoeuvrability means the unit stays engaged if near engageable enemies
                     firstEngagingPiece.properties.manoeuvrability ===
                         Infinity || // An infinite manoeuvrability means the unit always engages nearby enemies
                     this.roll(
                         firstEngagingPiece.stats.manoeuvrability,
-                        this._selected.stats.manoeuvrability,
+                        this.selected.stats.manoeuvrability,
                     )
                 ) {
-                    await this._selected.engage(firstEngagingPiece);
+                    await this.selected.engage(firstEngagingPiece);
                     await this.rangeGizmo.reset();
                 } else {
                     this.logger.log(
-                        `${this._selected.name} disengaged from ${firstEngagingPiece.name}`,
+                        `${this.selected.name} disengaged from ${firstEngagingPiece.name}`,
                         Colour.Green,
                     );
-                    if (!this._selected.moved) {
-                        await this.rangeGizmo.generate(this._selected);
+                    if (!this.selected.moved) {
+                        await this.rangeGizmo.generate(this.selected);
                     }
                 }
-            } else if (!this._selected.moved) {
-                await this.rangeGizmo.generate(this._selected);
+            } else if (!this.selected.moved) {
+                await this.rangeGizmo.generate(this.selected);
             }
 
             const pm = this._stateManager;
@@ -1088,13 +630,13 @@ export class Board extends Model implements Box {
     async deselectPiece(): Promise<void> {
         this.rules.dispatchEvent(EventType.PieceInfo, null);
 
-        if (!this._selected) {
+        if (!this.selected) {
             console.warn("No piece selected to deselect");
             this.nextPlayer();
             return;
         }
         if (this.phase === BoardPhase.Moving) {
-            const previousSelected: Piece = this._selected;
+            const previousSelected: Piece = this.selected;
             this._selected = null;
 
             if (previousSelected.currentRider?.canSelect) {
@@ -1151,168 +693,21 @@ export class Board extends Model implements Box {
         throw new Error(`Player '${player.name}' does not own a wizard`);
     }
 
-    /**
-     * Remove a piece from the board by its ID.
-     *
-     * @param id The ID of the piece to remove.
-     */
-    removePiece(id: number): void {
-        const piece = this.getPiece(id);
-        if (!id || !piece) {
-            console.warn(`No piece with ID ${id} found to remove`);
-            return;
-        }
-        this._pieces.delete(id);
-        this._boardEvents.emit(BoardEvent.PieceDestroyed, piece);
-    }
-
-    /**
-     * Get all adjacent points to a given point. Handles board edges.
-     *
-     * @param point The point to get adjacent points for.
-     * @returns An array of adjacent points.
-     */
-    getAdjacentPoints(
+    override getPiecesAtPosition(
         point: Geom.Point,
-        includeCentre?: boolean,
-    ): Geom.Point[] {
-        const points: Geom.Point[] = [];
-
-        for (let x: number = point.x - 1; x <= point.x + 1; x++) {
-            for (let y: number = point.y - 1; y <= point.y + 1; y++) {
-                if (
-                    // Not the origin
-                    (x !== point.x || y !== point.y) &&
-                    // Not off the board
-                    x >= 0 &&
-                    y >= 0 &&
-                    x < this.width &&
-                    y < this.height
-                ) {
-                    if (!includeCentre && x === point.x && y === point.y) {
-                        continue;
-                    }
-                    points.push(new Geom.Point(x, y));
-                }
-            }
-        }
-
-        return points;
+        filter?: (piece: Piece) => boolean,
+    ): Piece[] {
+        return super.getPiecesAtPosition(point, filter) as Piece[];
     }
 
-    /**
-     * Get all points within a given range of a point. Handles board edges.
-     *
-     * @param point The point to get points around.
-     * @param range The range to get points within.
-     * @param includeCentre Whether to include the centre point (default: false)
-     * @param moving Whether to use moving distance (default: false)
-     * @returns An array of points within the given range.
-     */
-    getPointsInRange(
-        point: Geom.Point,
-        range: number,
-        includeCentre?: boolean,
-        rangeType?: RangeType,
-    ): Geom.Point[] {
-        const points: Geom.Point[] = [];
-        for (let x: number = point.x - range; x <= point.x + range; x++) {
-            for (let y: number = point.y - range; y <= point.y + range; y++) {
-                if (
-                    // Not off the board
-                    x >= 0 &&
-                    y >= 0 &&
-                    x < this.width &&
-                    y < this.height &&
-                    // Within range
-                    Board.distance(point, new Geom.Point(x, y), rangeType) <=
-                        range + (rangeType === RangeType.Fly ? 0.5 : 0)
-                ) {
-                    if (!includeCentre && x === point.x && y === point.y) {
-                        continue;
-                    }
-                    points.push(new Geom.Point(x, y));
-                }
-            }
-        }
-        return points;
-    }
-
-    /**
-     * Get all pieces adjacent to a given position, optionally filtered.
-     *
-     * @param point The position to check around.
-     * @param filter A filter function to apply to pieces found.
-     * @param includeCentre Whether to include pieces at the centre point (default: false)
-     * @returns An array of pieces found adjacent to the position.
-     */
-    getAdjacentPiecesAtPosition(
+    override getAdjacentPiecesAtPosition(
         point: Geom.Point,
         filter?: (piece: Piece) => boolean,
         includeCentre?: boolean,
     ): Piece[] {
-        // Use a set to avoid duplicates
-        const neighbours: Set<Piece> = new Set();
-        const position: Geom.Point = Geom.Point.Clone(point);
-        for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
-            const directionNeighbours: Piece[] = this.getPiecesAtPosition(
-                new Geom.Point(
-                    position.x + direction.x,
-                    position.y + direction.y,
-                ),
-                filter,
-            );
-            if (directionNeighbours) {
-                directionNeighbours.forEach((piece) => neighbours.add(piece));
-            }
-        }
-        if (includeCentre) {
-            const centreNeighbours: Piece[] = this.getPiecesAtPosition(
-                position,
-                filter,
-            );
-            if (centreNeighbours) {
-                centreNeighbours.forEach((piece) => neighbours.add(piece));
-            }
-        }
-        return Array.from(neighbours);
-    }
-
-    /**
-     * Get all pieces at a given position, optionally filtered.
-     *
-     * @param point The position to check.
-     * @param filter A filter function to apply to pieces found.
-     * @returns An array of pieces found at the position.
-     */
-    getPiecesAtPosition(
-        point: Geom.Point,
-        filter?: (piece: Piece) => boolean,
-    ): Piece[] {
-        return Array.from(
-            this.pieces.filter((piece: Piece) => {
-                return (
-                    Geom.Point.Equals(piece.position, point) &&
-                    (filter ? filter(piece) : true)
-                );
-            }),
-        );
-    }
-
-    /**
-     * Check if a given point is a LoS blocker.
-     *
-     * @param point The point to check.
-     * @returns True if the point is visibly blocked, false otherwise.
-     */
-    isBlocker(point: Geom.Point): boolean {
-        const pieces: Piece[] = this.getPiecesAtPosition(point, (piece) => {
-            return !piece.hasStatus(UnitStatus.Transparent) && !piece.dead;
-        });
-        if (!pieces?.length) {
-            return false;
-        }
-        return true;
+        return super.getAdjacentPiecesAtPosition(
+            point, filter, includeCentre,
+        ) as Piece[];
     }
 
     /**
@@ -1328,11 +723,12 @@ export class Board extends Model implements Box {
         }
         this.sound.play("move");
         await piece.moveTo(
-            path.nodes.shift().pos,
+            path.nodes.shift().pos as Geom.Point,
             Piece.DEFAULT_STEP_MOVE_DURATION,
         );
         // Check for engagement after each step
-        const firstEngagingPiece: Piece | null = piece.getFirstEngagingPiece();
+        const firstEngagingPiece: Piece | null =
+            piece.getFirstEngagingPiece() as Piece | null;
         if (firstEngagingPiece) {
             // Cancel movement if engagement occurs
             await this.rangeGizmo.reset();
@@ -1383,7 +779,7 @@ export class Board extends Model implements Box {
 
         if (!piece.currentMount && !piece.engaged) {
             const firstEngagingPiece: Piece | null =
-                piece.getFirstEngagingPiece();
+                piece.getFirstEngagingPiece() as Piece | null;
 
             if (firstEngagingPiece) {
                 await piece.engage(firstEngagingPiece);
@@ -1542,19 +938,19 @@ export class Board extends Model implements Box {
     /**
      * Get all players in the game.
      */
-    get players(): Player[] {
-        return Array.from(this._players.values());
+    override get players(): Player[] {
+        return super.players as Player[];
     }
 
     /**
      * Get the current player whose turn it is.
      */
-    get currentPlayer(): Player | null {
-        return this._currentPlayer;
+    override get currentPlayer(): Player | null {
+        return super.currentPlayer as Player | null;
     }
 
-    set currentPlayer(player: Player | null) {
-        this._currentPlayer = player;
+    override set currentPlayer(player: Player | null) {
+        super.currentPlayer = player;
         this.cursor.enabled = Boolean(!this._currentPlayer?.remote);
         if (this._currentPlayer?.remote) {
             setTimeout(() => {
@@ -1584,69 +980,19 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Get or set the spell filter function used when adding spells.
+     * Add a new spell to a player's spellbook.
+     *
+     * @param player The player to add the spell to.
+     * @param config The configuration for the spell to add.
+     * @returns The newly added spell.
      */
-    get spellFilter(): (config: SpellConfig) => boolean {
-        return this._spellFilter ?? (() => true);
-    }
-
-    /**
-     * Get or set the spell filter function used when adding spells.
-     */
-    set spellFilter(filter: (config: SpellConfig) => boolean) {
-        this._spellFilter = filter;
-    }
-
-    /**
-     * Whether illusion casting is disabled for all summon spells on this board.
-     */
-    get disableIllusions(): boolean {
-        return this._disableIllusions;
-    }
-
-    set disableIllusions(value: boolean) {
-        this._disableIllusions = value;
-    }
-
-    /**
-     * Whether cancelling spells is disabled for all spells on this board.
-     */
-    get disableCancelSpell(): boolean {
-        return this._disableCancelSpell;
-    }
-
-    set disableCancelSpell(value: boolean) {
-        this._disableCancelSpell = value;
-    }
-
-    /**
-     * Whether cancelling actions is disabled for all actions on this board.
-     */
-    get disableCancelAction(): boolean {
-        return this._disableCancelAction;
-    }
-
-    set disableCancelAction(value: boolean) {
-        this._disableCancelAction = value;
-    }
-
-    /**
-     * Whether ending the turn is disabled for all players on this board.
-     */
-    get disableEndTurn(): boolean {
-        return this._disableEndTurn;
-    }
-
-    set disableEndTurn(value: boolean) {
-        this._disableEndTurn = value;
-    }
-
-    /**
-     * Event emitter for board game events. Tutorials and other observers
-     * can subscribe to {@link BoardEvent} values on this emitter.
-     */
-    get boardEvents(): PhaserEvents.EventEmitter {
-        return this._boardEvents;
+    override addSpell(player: Player, config: SpellConfig): Spell {
+        if (!config || !player) {
+            throw new Error("No player or config provided");
+        }
+        const spell = createSpell(this, this._idCounter++, config);
+        player.addSpell(spell);
+        return spell;
     }
 
     /**
@@ -1660,33 +1006,8 @@ export class Board extends Model implements Box {
         this._tutorial = tutorial;
     }
 
-    /**
-     * Add a new spell to a player's spellbook.
-     *
-     * @param player The player to add the spell to.
-     * @param config The configuration for the spell to add.
-     * @returns The newly added spell.
-     */
-    addSpell(player: Player, config: SpellConfig): Spell {
-        if (!config || !player) {
-            throw new Error("No player or config provided");
-        }
-        const spell = createSpell(this, this._idCounter++, config);
-        player.addSpell(spell);
-        return spell;
-    }
-
-    /**
-     * Get a player by their ID.
-     *
-     * @param id The ID of the player to retrieve.
-     * @returns The player with the specified ID, or null if not found.
-     */
-    getPlayer(id: number): Player | null {
-        if (this._players.has(id)) {
-            return this._players.get(id);
-        }
-        return null;
+    override getPlayer(id: number): Player | null {
+        return super.getPlayer(id) as Player | null;
     }
 
     /**
@@ -1954,10 +1275,9 @@ export class Board extends Model implements Box {
     /**
      * Deselect the current player.
      */
-    deselectPlayer(): void {
-        this.currentPlayer = null;
+    override deselectPlayer(): void {
+        super.deselectPlayer();
         this.rangeGizmo.reset();
-        this._selected = null;
         this.emitUIEvent(EventType.EndTurnAvailable, false);
     }
 
@@ -1998,63 +1318,6 @@ export class Board extends Model implements Box {
             `Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`,
         );
         await this.nextPlayer();
-    }
-
-    /**
-     * Check for win conditions. If only one or zero players remain undefeated,
-     * the game is over.
-     *
-     * @returns True if the game is over, false otherwise.
-     */
-    async checkWinCondition(): Promise<boolean> {
-        if (this.state === BoardState.GameOver) {
-            return true;
-        }
-        const undefeated: Player[] = this.players.filter(
-            (player) => !player.defeated,
-        );
-        // If less than 2 players remain undefeated, the game is over
-        if (undefeated?.length < 2) {
-            this.state = BoardState.GameOver;
-            this.stateManager.evaluate(new GameEnd());
-            if (undefeated.length === 1) {
-                this.logger.log(
-                    `Game over! ${undefeated[0].name} wins!`,
-                    Colour.Yellow,
-                );
-            } else if (undefeated.length < 1) {
-                // Somehow everyone got murked, likely the blobs or magic fire
-                // got out of control. Game over with no winner.
-                this.logger.log(
-                    `Game over! Everybody's dead Dave.`,
-                    Colour.Yellow,
-                );
-            }
-            await Board.delay(2000);
-            this.emitUIEvent(EventType.GameOver, true);
-            this._boardEvents.emit(BoardEvent.GameOver);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * End the game immediately, without checking win conditions. Used for
-     * scenarios and tutorials where the game needs to end without a clear
-     * winner.
-     */
-    endGame(message?: string): void {
-        // Idempotent - if the game is already over, do nothing
-        if (this.state === BoardState.GameOver) {
-            return;
-        }
-        this.state = BoardState.GameOver;
-        this.stateManager.evaluate(new GameEnd());
-        if (message) {
-            this.logger.log(message, Colour.Yellow);
-        }
-        this.emitUIEvent(EventType.GameOver, true);
-        this._boardEvents.emit(BoardEvent.GameOver);
     }
 
     /**
@@ -2163,14 +1426,14 @@ export class Board extends Model implements Box {
                         this.stateManager.evaluate(new SpellTargeting());
                         await this.rules.doCastSpell(
                             this,
-                            this.currentPlayer.castingPiece,
+                            this.currentPlayer.castingPiece as Piece,
                         );
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
                         this.stateManager.evaluate(new SpellTargeting());
                         await this.rangeGizmo.showSimpleRange(
-                            this.selected.position,
+                            this.selected.position as Geom.Point,
                             spell.range,
                             CursorType.RangeCast,
                             spell.lineOfSight,
@@ -2327,20 +1590,6 @@ export class Board extends Model implements Box {
     }
 
     /**
-     * Get the width of the board in tiles.
-     */
-    get width(): number {
-        return this._width;
-    }
-
-    /**
-     * Get the height of the board in tiles.
-     */
-    get height(): number {
-        return this._height;
-    }
-
-    /**
      * Whether the camera viewport is smaller than the board in either
      * dimension, enabling panning.
      */
@@ -2402,114 +1651,6 @@ export class Board extends Model implements Box {
         return screenPos;
     }
 
-    /**
-     * Roll an attack vs defence check.
-     *
-     * @param attack the attack value
-     * @param defence the defence value
-     * @param attackingPlayer optional player whose units are attacking; used
-     *        for per-player forceHit overrides (e.g. in tutorials)
-     * @returns true if the attack is greater than the defence, false otherwise
-     */
-    roll(attack: number, defence: number, attackingPlayer?: Player): boolean {
-        return this._rules.roll(attack, defence, this._rng, attackingPlayer);
-    }
-
-    rollChance(attack: number, castingPlayer?: Player): boolean {
-        return this._rules.rollChance(attack, this._rng, castingPlayer);
-    }
-
-    /**
-     * Check if there is line of sight between two positions on the board.
-     *
-     * @param startPosition the starting position
-     * @param endPosition the ending position
-     * @returns true if there is line of sight, false otherwise
-     */
-    hasLineOfSight(
-        startPosition: Geom.Point | PMath.Vector2,
-        endPosition: Geom.Point | PMath.Vector2,
-    ): boolean {
-        let xDiff: number = endPosition.x - startPosition.x;
-        let yDiff: number = endPosition.y - startPosition.y;
-
-        let xDir: number, yDir: number;
-
-        let xVal: number, yVal: number;
-
-        let numChecks: number;
-
-        xDir = xDiff < 0 ? -1 : 1;
-        yDir = yDiff < 0 ? -1 : 1;
-
-        if (xDiff === 0 || yDiff === 0) {
-            if (yDiff === 0) {
-                for (let a = 1; a < Math.abs(xDiff); a++) {
-                    xVal = a * xDir + startPosition.x;
-                    if (this.isBlocker(new Geom.Point(xVal, startPosition.y))) {
-                        return false;
-                    }
-                }
-            } else {
-                for (let a = 1; a < Math.abs(yDiff); a++) {
-                    yVal = a * yDir + startPosition.y;
-                    if (this.isBlocker(new Geom.Point(startPosition.x, yVal))) {
-                        return false;
-                    }
-                }
-            }
-        } else {
-            numChecks = Math.max(Math.abs(xDiff), Math.abs(yDiff));
-            let yInc = yDiff / numChecks,
-                xInc = xDiff / numChecks;
-
-            for (let a = 1; a < numChecks; a++) {
-                xVal = startPosition.x + Math.round(xInc * a);
-                yVal = startPosition.y + Math.round(yInc * a);
-                if (this.isBlocker(new Geom.Point(xVal, yVal))) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Calculate distance between two points on the board.
-     *
-     * @param startPosition the starting position
-     * @param endPosition the ending position
-     * @param moving whether the distance is for movement (default: false)
-     * @returns the distance between the two points
-     */
-    static distance(
-        startPosition: Geom.Point,
-        endPosition: Geom.Point,
-        rangeType: RangeType = RangeType.Fly,
-    ): number {
-        if (Geom.Point.Equals(startPosition, endPosition)) {
-            return 0;
-        }
-        // Calculate the difference in x and y coordinates
-        const difference: Geom.Point = new Geom.Point(
-            Math.abs(startPosition.x - endPosition.x),
-            Math.abs(startPosition.y - endPosition.y),
-        );
-
-        // If on foot, just use max distance, as the pathfinding will handle the
-        // actual movement cost
-        if (rangeType === RangeType.Foot) {
-            return Math.max(difference.x, difference.y);
-        }
-
-        // Otherwise (for ranged attacks), use modified distance calculation
-        return (
-            Math.max(difference.x, difference.y) -
-            Math.min(difference.x, difference.y) +
-            Math.min(difference.x, difference.y) * 1.5
-        );
-    }
 
     /**
      * Convert a point to isometric coordinates.
@@ -2531,61 +1672,9 @@ export class Board extends Model implements Box {
         return new Geom.Point(point.x + point.y / 2, point.y - point.x / 2);
     }
 
-    /**
-     * Delay the board state to Idle for a given time.
-     *
-     * @param time The delay time in milliseconds.
-     */
-    async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
-        const oldState: BoardState = this.state;
-        this.state = BoardState.Idle;
-        await Board.delay(time);
-        this.state = oldState;
-    }
-
-    /**
-     * Delay for a given time.
-     *
-     * @param time The delay time in milliseconds.
-     */
-    static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
-        return _delay(time);
-    }
-
     /* #endregion */
 
     /* #region Dev helpers */
-
-    /**
-     * Get a random empty space on the board.
-     * @returns
-     */
-    getRandomEmptySpace(): Geom.Point {
-        // First find where all the occupied spaces are
-        const occupiedSpaces: Set<string> = new Set();
-        this.pieces
-            .filter((piece: Piece) => !piece.dead)
-            .forEach((piece: Piece) => {
-                occupiedSpaces.add(`${piece.position.x},${piece.position.y}`);
-            });
-
-        // Now build a list of all empty spaces
-        const emptySpaces: Geom.Point[] = [];
-        for (let x: number = 0; x < this.width; x++) {
-            for (let y: number = 0; y < this.height; y++) {
-                const key: string = `${x},${y}`;
-                if (!occupiedSpaces.has(key)) {
-                    emptySpaces.push(new Geom.Point(x, y));
-                }
-            }
-        }
-        if (emptySpaces.length === 0) {
-            console.warn("No empty spaces available on the board!");
-            return null;
-        }
-        // Return a random empty space
-        return this._rng.pick(emptySpaces);
-    }
 
     /**
      * Set up a media-query listener that resizes the game canvas whenever the

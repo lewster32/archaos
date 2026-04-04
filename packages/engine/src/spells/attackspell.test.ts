@@ -13,7 +13,7 @@ import "../../../../src/gameobjects/wizard";
 import { AttackSpell } from "./attackspell";
 import { Spell } from "./spell";
 import { Point } from "../point";
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────

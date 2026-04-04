@@ -132,11 +132,13 @@ export {
     friendlyBalance,
 } from "./spells/spellutils";
 
+// Board
+export { Board } from "./board";
+
 // AI
-// ComputerWizard is not barrel-exported yet — it imports
-// the client Board, creating a circular dependency via the
-// barrel. Import directly from ./ai/computerwizard instead.
-// Will be added to the barrel after Task 12 (engine Board).
+// ComputerWizard not barrel-exported yet — still imports
+// client Board for rendering methods. Import directly from
+// ./ai/computerwizard instead.
 
 // Pathfinding
 export {

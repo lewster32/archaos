@@ -6,6 +6,12 @@ export class Point {
     x: number;
     y: number;
 
+    /**
+     * Geometry type constant for structural compatibility
+     * with Phaser.Geom.Point (GEOM_CONST.POINT = 3).
+     */
+    readonly type: number = 3;
+
     constructor(x: number = 0, y: number = 0) {
         this.x = x;
         this.y = y;

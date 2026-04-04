@@ -9,9 +9,9 @@ import { UnitType } from "../enums/unittype";
 import type { UnitConfig } from "../interfaces/ui";
 import { UnitStatus } from "../enums/unitstatus";
 import { Point } from "../point";
-import { Board } from "../../../../src/gameobjects/board";
+import { Board } from "../board";
 import { EffectType } from "../../../../src/gameobjects/effectemitter";
-import { Piece } from "../../../../src/gameobjects/piece";
+import { Piece } from "../piece";
 import { Player } from "../player";
 import { Spell } from "./spell";
 /**

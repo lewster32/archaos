@@ -3,7 +3,7 @@ import "../../../../src/gameobjects/wizard";
 import { Spell } from "./spell";
 import { RaiseDeadSpell } from "./raisedeadspell";
 import { Point } from "../point";
-import type { Board } from "../../../../src/gameobjects/board";
+import type { Board } from "../board";
 import {
     makeMockBoard,
     makeMockPiece,
