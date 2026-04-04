@@ -5,6 +5,11 @@ import { phaserAssetSizesPlugin } from "./vite-plugin-asset-sizes.mjs";
 export default defineConfig({
     plugins: [vue(), phaserAssetSizesPlugin()],
     base: "./",
+    server: {
+        watch: {
+            ignored: ["**/coverage/**"],
+        },
+    },
     build: {
         assetsInlineLimit: 0,
         chunkSizeWarningLimit: 1500,
