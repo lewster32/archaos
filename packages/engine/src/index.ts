@@ -164,3 +164,6 @@ export {
     isOpen,
     isClosed,
 } from "./pathfinding";
+
+// RangeGizmo
+export { RangeGizmo } from "./rangegizmo";
