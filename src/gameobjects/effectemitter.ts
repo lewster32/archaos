@@ -1,3 +1,4 @@
+import { EffectType } from "@archaos/engine";
 import { Piece } from "./piece";
 
 import {
@@ -301,37 +302,7 @@ class PointAtPositionEffect extends GameObjects.Container {
     }
 }
 
-export enum EffectType {
-    WizardCasting = "WizardCasting",
-    WizardCastFail = "WizardCastFail",
-    WizardCastBeam = "WizardCastBeam",
-    WizardDefeated = "WizardDefeated",
-    ArrowBeam = "ArrowBeam",
-    ArrowHit = "ArrowHit",
-    DragonFireBeam = "DragonFireBeam",
-    DragonFireHit = "DragonFireHit",
-    BlackDragonFireBeam = "BlackDragonFireBeam",
-    BlackDragonFireHit = "BlackDragonFireHit",
-    MagicBoltBeam = "MagicBoltBeam",
-    MagicBoltHit = "MagicBoltHit",
-    LightningBeam = "LightningBeam",
-    LightningHit = "LightningHit",
-    SummonPiece = "SummonPiece",
-    DisbelieveBeam = "DisbelieveBeam",
-    DisbelieveHit = "DisbelieveHit",
-    DarkPowerHit = "DarkPowerHit",
-    JusticeHit = "JusticeHit",
-    RaiseDeadBeam = "RaiseDeadBeam",
-    RaiseDeadHit = "RaiseDeadHit",
-    SubversionBeam = "SubversionBeam",
-    SubversionHit = "SubversionHit",
-    GiveSpell = "GiveSpell",
-    AttackHit = "AttackHit",
-    NoCorpseDeath = "NoCorpseDeath",
-    TurmoilBeam = "TurmoilBeam",
-    // Non-config effects for tutorial hints
-    PointAtPosition = "PointAtPosition",
-}
+export { EffectType } from "@archaos/engine";
 
 /**
  * Registry of code-defined effects. Each entry maps an EffectType to a

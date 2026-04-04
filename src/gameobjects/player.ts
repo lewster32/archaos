@@ -4,6 +4,7 @@ import {
     BoardEvent,
     Player as EnginePlayer,
     GameSetupPlayerType,
+    ComputerWizard,
 } from "@archaos/engine";
 import type {
     PlayerConfig,
@@ -13,7 +14,6 @@ import { Board } from "./board";
 import { EffectType } from "./effectemitter";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
-import { ComputerWizard } from "../../packages/engine/src/ai/computerwizard";
 
 export class Player extends EnginePlayer {
     /**
