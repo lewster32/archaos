@@ -23,20 +23,20 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Some new spells and units!
 - Mobile support
 - Standalone client (via Tauri - not yet released, but can be built from source)
+- Tutorials
 
 <p align="center"><img src="https://archaos.co.uk/images/spells/classicspells.png" alt="Classic spell icons"></p>
 
 ### Not yet features
 
-- Online multiplayer
-- Tutorials
+- Online multiplayer (lots of headway made towards this though)
 - The rest of the planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
 
 ## Play now! 🔥
 
 You can play the latest build in your browser here: https://www.archaos.co.uk/
 
-You can also build a standalone version of the game with `npm run tauri:build`
+If you're new to Chaos, there's a lot of good stuff online (it's a very old and surprisingly popular game after all) but I've also written up my own 'guide' of sorts as a way to help with development. See [archaos-rules.md](archaos-rules.md) for more info.
 
 ## Installing and building
 

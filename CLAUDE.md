@@ -20,14 +20,29 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - **Playwright** — e2e testing (mobile camera panning scenarios)
 - **jsdom** — DOM environment for tests (mocks Canvas API and rAF in `vitest.setup.ts`)
 
+### Monorepo Structure
+
+The project is an npm workspaces monorepo (`"workspaces": ["packages/*"]`). The main package is the Phaser/Vue client in `src/`; headless game logic lives in `@archaos/engine` (`packages/engine/`).
+
+- **`@archaos/engine`** — framework-agnostic game logic: Board, Piece, Wizard, Player, Rules, Logger, PhaseMachine, ComputerWizard AI, all spell classes, RangeGizmo (A* pathfinding), enums, configs, interfaces, and RNG. Has no Phaser or Vue dependency. Uses its own Vitest config.
+- **Client (`src/`)** — Phaser rendering, Vue UI, and Tauri integration. Client classes (e.g. `src/gameobjects/piece.ts`) extend engine classes and add visual/audio behaviour.
+
+Engine classes use a generic `<P extends Piece>` type parameter so the engine works with its own `Piece` while the client substitutes its richer subclass.
+
+```bash
+npm test               # run client tests
+npm run test:engine    # run engine tests only
+```
+
 ### Data Flow
 
 1. `Game.vue` calls `launch()` → creates Phaser game instance
-2. `GameScene` loads assets and constructs `Board`
-3. `Board` drives game flow (casting phase → movement phase → next turn)
+2. `GameScene` loads assets and constructs client `Board` (extends engine `Board`)
+3. Engine `Board` drives game flow (casting phase → movement phase → next turn) via `PhaseMachine`
 4. Player input (or `ComputerWizard` AI) calls into `Rules`
 5. `Rules` mutates board state and calls `Logger`
-6. `Logger` emits events that Vue components react to for text-based UI updates
+6. Engine `Board` emits `EngineEvent`s; client `Board` listens and triggers Phaser rendering/audio
+7. `Logger` emits events that Vue components react to for text-based UI updates
 
 ### RemotePlayer Interface
 
@@ -40,6 +55,10 @@ A modern remake of [Chaos: The Battle of Wizards](https://en.wikipedia.org/wiki/
 - Enums used extensively for type-safe state (avoid raw strings/numbers)
 - Service singletons use a protected constructor + `getInstance()` pattern
 - Vue components use SFC `<template>` + `<script lang="ts">` with TypeScript
+
+### Engine events (`events.ts`)
+
+Engine `Board` extends a custom `EventEmitter` and emits `EngineEvent` enum values (e.g. `EngineEvent.PieceKilled`, `EngineEvent.SpellCast`). The client `Board` subscribes to these events and translates them into Phaser visual/audio effects, keeping engine logic decoupled from rendering.
 
 ### Randomness architecture (`rng.ts`)
 
@@ -69,10 +88,12 @@ Tests provide `rng: new TestRNG()` on mock board objects instead of stubbing `PM
 **Requirements:** Node.js 24+, a modern browser (desktop or mobile). Standalone builds also require Rust 1.77.2+.
 
 ```bash
-npm install        # install dependencies
-npm start          # dev server (Vite HMR)
-npm run build      # type-check (vue-tsc) then Vite build → dist/
-npm run deploy     # references a private deployment script — will not work from a clone
+npm install           # install dependencies
+npm start             # dev server (Vite HMR)
+npm run build         # type-check (vue-tsc) then Vite build → dist/
+npm test              # run client unit tests (Vitest)
+npm run test:engine   # run engine unit tests only
+npm run deploy        # references a private deployment script — will not work from a clone
 ```
 
 ### Standalone Desktop Build (Tauri)
