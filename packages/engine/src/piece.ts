@@ -1,6 +1,8 @@
 import { Entity } from "./models/entity";
 import { BoardEvent } from "./enums/boardevent";
 import { Colour } from "./enums/colour";
+import { RangeType } from "./enums/rangetype";
+import { SpreadAction } from "./enums/spreadaction";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
@@ -13,6 +15,7 @@ import type {
 import type { UnitConfig, UnitStats } from "./interfaces/ui";
 import type { Player } from "./player";
 import { distance } from "./pathfinding";
+import { Point } from "./point";
 
 // Board is imported only as a type to avoid a circular
 // dependency at runtime (Board → Piece → Board).
@@ -786,6 +789,202 @@ export class Piece extends Entity {
         this.currentMount = null;
     }
 
+    /**
+     * Move this piece to the specified point on the board.
+     * Updates direction, position, and rider position.
+     * Dismounts if the current mount is left behind.
+     * Client overrides to also animate movement.
+     */
+    async moveTo(
+        point: { x: number; y: number },
+        _stepDuration?: number,
+    ): Promise<void> {
+        this.updateDirection(this.position, point);
+        this.position = new Point(point.x, point.y);
+        if (this.currentRider) {
+            this.currentRider.position = new Point(
+                point.x,
+                point.y,
+            );
+        }
+        if (
+            this.currentMount &&
+            !Point.equals(
+                this.currentMount.position,
+                this.position,
+            )
+        ) {
+            this._board.dismountPiece(this.id);
+        }
+    }
+
+    /**
+     * Raise this piece from the dead, assigning a new
+     * owner. Client overrides to also restore the sprite.
+     */
+    async raiseDead(
+        owner: Player | null,
+    ): Promise<void> {
+        if (!this.dead) {
+            throw new Error(
+                "Cannot raise a piece that is not dead",
+            );
+        }
+        this.owner = owner;
+        this._dead = false;
+        this.raisedDead = true;
+        this.addStatus(UnitStatus.Undead);
+    }
+
+    /**
+     * Spread this piece to an adjacent square. Picks a
+     * random spread action (None / Shrink / Spread) and
+     * acts accordingly. Client overrides for animations
+     * and sound.
+     */
+    async spread(): Promise<void> {
+        if (
+            !this.hasStatus(UnitStatus.Spreads) ||
+            this.dead
+        ) {
+            throw new Error(
+                "Cannot spread a non-spreading or " +
+                    "dead piece",
+            );
+        }
+
+        const spreadAction: SpreadAction =
+            this._board.rng.weightedRandomPick(
+                [
+                    SpreadAction.Shrink,
+                    SpreadAction.None,
+                    SpreadAction.Spread,
+                ],
+                1.75,
+                true,
+            );
+
+        if (spreadAction === SpreadAction.None) {
+            return;
+        }
+
+        if (spreadAction === SpreadAction.Shrink) {
+            if (this.currentEngulfed) {
+                this.currentEngulfed.engulfed = false;
+                this._board.logger.log(
+                    `${this.currentEngulfed.fullName}` +
+                        ` was released from ` +
+                        `${this.fullName}`,
+                    Colour.Green,
+                );
+            }
+            await this.destroy();
+            return;
+        }
+
+        // SpreadAction.Spread
+        const adjacentPoints: Point[] =
+            this._board.getAdjacentPoints(this.position);
+        const spreadPoint: Point =
+            this._board.rng.pick(adjacentPoints);
+        const spreadPieces: Piece[] =
+            this._board.getPiecesAtPosition(
+                spreadPoint,
+                (piece: Piece) => !piece.dead,
+            );
+
+        if (spreadPieces.length > 0) {
+            if (
+                spreadPieces.some(
+                    (piece) =>
+                        piece.owner === this.owner ||
+                        !piece.canBeSpreadOn,
+                )
+            ) {
+                return;
+            }
+            if (
+                spreadPieces.some((piece) =>
+                    piece.hasStatus(UnitStatus.Wizard),
+                )
+            ) {
+                const killedPiece =
+                    spreadPieces.find((piece) =>
+                        piece.hasStatus(UnitStatus.Wizard),
+                    );
+                this._board.logger.log(
+                    `${killedPiece.fullName} was ` +
+                        `destroyed by ${this.fullName}!`,
+                    Colour.Red,
+                );
+                await killedPiece.kill();
+            } else if (
+                this.hasStatus(UnitStatus.Engulfs)
+            ) {
+                this._board.logger.log(
+                    `${this.fullName} has engulfed ` +
+                        `${spreadPieces[0].fullName}`,
+                    Colour.Yellow,
+                );
+                spreadPieces[0].engulfed = true;
+            } else {
+                await Promise.all(
+                    spreadPieces.map(async (piece) => {
+                        this._board.logger.log(
+                            `${piece.fullName} was ` +
+                                `destroyed by ` +
+                                `${this.fullName}`,
+                            Colour.Red,
+                        );
+                        return await piece.destroy();
+                    }),
+                );
+            }
+        }
+
+        const unit: any = Piece.getUnitConfig(
+            this._properties.id,
+        );
+
+        const newPiece: Piece = this._board.addPiece({
+            type: UnitType.Creature,
+            x: spreadPoint.x,
+            y: spreadPoint.y,
+            properties: {
+                id: this._unitId,
+                name: unit.name,
+                movement: unit.properties.mov,
+                combat: unit.properties.com,
+                rangedCombat: unit.properties.rcm,
+                range: unit.properties.rng,
+                defence: unit.properties.def,
+                manoeuvrability: unit.properties.mnv,
+                magicResistance: unit.properties.res,
+                attackType:
+                    unit.attackType || "attacked",
+                rangedType: unit.rangedType || "shot",
+                projectileType:
+                    unit.projectileType ||
+                    UnitRangedProjectileType.Arrow,
+                status: [...(unit.status || [])],
+            },
+            shadowScale: unit.shadowScale,
+            offsetY: unit.offY,
+            owner: this.owner,
+            illusion: !!this._illusion,
+            group: unit.group || "classicunits",
+        } as PieceConfig);
+
+        if (
+            spreadPieces.length > 0 &&
+            newPiece.hasStatus(UnitStatus.Engulfs) &&
+            !spreadPieces[0].dead &&
+            !spreadPieces[0].hasStatus(UnitStatus.Wizard)
+        ) {
+            newPiece.currentEngulfed = spreadPieces[0];
+        }
+    }
+
     // ── Status effects ──────────────────────────────────
 
     /**
@@ -1206,6 +1405,69 @@ export class Piece extends Entity {
             Math.min(dx, dy) +
             Math.min(dx, dy) * 1.5;
         return distance <= this.stats.range;
+    }
+
+    /**
+     * Check if a point is within this piece's movement
+     * range. Engine fallback uses direct distance only —
+     * the client overrides with rangeGizmo path checking.
+     */
+    inMovementRange(
+        point: { x: number; y: number },
+    ): boolean {
+        if (Point.equals(
+            this.position,
+            new Point(point.x, point.y),
+        )) {
+            return false;
+        }
+        if (this.currentMount) {
+            if (
+                distance(
+                    this.position,
+                    new Point(point.x, point.y),
+                ) > 1.5
+            ) {
+                return false;
+            }
+        }
+        if (this.hasStatus(UnitStatus.Flying)) {
+            return (
+                distance(
+                    this.position,
+                    new Point(point.x, point.y),
+                    RangeType.Fly,
+                ) <= this.stats.movement
+            );
+        }
+        return (
+            distance(
+                this.position,
+                new Point(point.x, point.y),
+            ) <= this.stats.movement
+        );
+    }
+
+    /**
+     * Check if a point is within this piece's attack
+     * range (melee). A piece can attack into squares it
+     * could move to, or any immediately adjacent square.
+     */
+    inAttackRange(
+        point: { x: number; y: number },
+    ): boolean {
+        if (!this.moved && this.inMovementRange(point)) {
+            return true;
+        }
+        if (
+            distance(
+                this.position,
+                new Point(point.x, point.y),
+            ) > 1.5
+        ) {
+            return false;
+        }
+        return true;
     }
 
     // ── Unit config ─────────────────────────────────────
