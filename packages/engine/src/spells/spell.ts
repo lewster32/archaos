@@ -10,7 +10,8 @@ import type { IRNG } from "../rng";
 import { Point } from "../point";
 import spellJsonData from "../../../../assets/data/classicspells.json";
 
-import { Board } from "../board";
+import type { Board } from "../board";
+import { distance } from "../pathfinding";
 import { EffectType } from "../enums/effecttype";
 import { Piece } from "../piece";
 
@@ -279,7 +280,7 @@ export class Spell extends Model {
         const casterPosition: Point = Point.clone(
             this._castingPiece.position,
         );
-        if (Board.distance(casterPosition, point) > this.range) {
+        if (distance(casterPosition, point) > this.range) {
             return false;
         }
         return true;

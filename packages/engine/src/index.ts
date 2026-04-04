@@ -136,6 +136,16 @@ export {
 // Board
 export { Board } from "./board";
 
+// Register the spell factory on Board to break the
+// circular dependency (board → spellfactory →
+// attackspell → board). Runs once when the engine
+// package is first imported.
+import { Board as _B } from "./board";
+import {
+    createSpell as _cs,
+} from "./spells/spellfactory";
+_B.registerSpellFactory(_cs);
+
 // AI
 // ComputerWizard not barrel-exported yet — still imports
 // client Board for rendering methods. Import directly from

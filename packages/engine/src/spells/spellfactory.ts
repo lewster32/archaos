@@ -1,6 +1,6 @@
 import type { SpellConfig } from "../configs/spellconfig";
 import { SpellTarget } from "../enums/spelltarget";
-import { Board } from "../board";
+import type { Board } from "../board";
 import { AttackSpell } from "./attackspell";
 import { DisbelieveSpell } from "./disbelievespell";
 import { RaiseDeadSpell } from "./raisedeadspell";

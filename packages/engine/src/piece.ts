@@ -193,6 +193,10 @@ export class Piece extends Entity {
         return this._dead;
     }
 
+    set dead(value: boolean) {
+        this._dead = value;
+    }
+
     /**
      * Get the name of this piece.
      */

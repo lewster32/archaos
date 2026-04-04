@@ -2,6 +2,7 @@ import { Model } from "./models/model";
 import { Point } from "./point";
 import { EventEmitter } from "./events";
 import { Piece } from "./piece";
+import { Wizard } from "./wizard";
 import { Player } from "./player";
 import type { Spell } from "./spells/spell";
 import { Logger } from "./logger";
@@ -15,6 +16,10 @@ import { RangeType } from "./enums/rangetype";
 import { UnitStatus } from "./enums/unitstatus";
 import type { IRNG } from "./rng";
 import { GameRNG } from "./rng";
+import type {
+    PieceConfig,
+    WizardConfig,
+} from "./configs/piececonfig";
 import type { SpellConfig } from "./configs/spellconfig";
 import type { Box } from "./interfaces/ui";
 
@@ -130,6 +135,7 @@ export class Board extends Model implements Box {
 
     protected readonly _pieces: Map<number, Piece>;
     protected _selected: Piece | null;
+    protected _cursorPosition: Point = new Point(0, 0);
 
     protected readonly _players: Map<number, Player>;
     protected _currentPlayer: Player | null;
@@ -443,13 +449,59 @@ export class Board extends Model implements Box {
     /* ── Spells ──────────────────────────────────── */
 
     /**
-     * Add a spell to a player's spellbook. Override in
-     * client to use the spell factory.
+     * Cached spell factory, loaded lazily to avoid a
+     * circular dependency (board → spellfactory →
+     * attackspell → board).
      */
-    addSpell(_player: Player, _config: SpellConfig): Spell {
-        throw new Error(
-            "addSpell must be overridden in the client Board",
+    private static _spellFactory:
+        | ((
+              board: Board,
+              id: number,
+              config: SpellConfig,
+          ) => Spell)
+        | null = null;
+
+    /**
+     * Register the spell factory function. Must be
+     * called once before `addSpell` is used.
+     */
+    static registerSpellFactory(
+        factory: (
+            board: Board,
+            id: number,
+            config: SpellConfig,
+        ) => Spell,
+    ): void {
+        Board._spellFactory = factory;
+    }
+
+    /**
+     * Add a spell to a player's spellbook.
+     */
+    addSpell(
+        player: Player,
+        config: SpellConfig,
+    ): Spell {
+        if (!config || !player) {
+            throw new Error(
+                "No player or config provided",
+            );
+        }
+        if (!Board._spellFactory) {
+            throw new Error(
+                "Spell factory not registered. " +
+                    "Import spellfactory and call " +
+                    "Board.registerSpellFactory() " +
+                    "first.",
+            );
+        }
+        const spell = Board._spellFactory(
+            this,
+            this._idCounter++,
+            config,
         );
+        player.addSpell(spell);
+        return spell;
     }
 
     get spellFilter(): (config: SpellConfig) => boolean {
@@ -496,6 +548,21 @@ export class Board extends Model implements Box {
 
     get boardEvents(): EventEmitter {
         return this._boardEvents;
+    }
+
+    /**
+     * Alias for `boardEvents`.
+     */
+    get events(): EventEmitter {
+        return this._boardEvents;
+    }
+
+    get cursorPosition(): Point {
+        return this._cursorPosition;
+    }
+
+    set cursorPosition(point: Point) {
+        this._cursorPosition = point;
     }
 
     /* ── Geometry / queries ───────────────────────── */
@@ -766,6 +833,345 @@ export class Board extends Model implements Box {
             point.x + point.y / 2,
             point.y - point.x / 2,
         );
+    }
+
+    /* ── Piece actions ───────────────────────────── */
+
+    /**
+     * Add a piece to the board.
+     */
+    addPiece(config: PieceConfig): Piece {
+        const piece: Piece = new Piece(
+            this,
+            this._idCounter++,
+            config,
+        );
+        this._pieces.set(piece.id, piece);
+        this.emitBoardUpdateEvent();
+        return piece;
+    }
+
+    /**
+     * Add a wizard piece to the board.
+     */
+    addWizard(config: WizardConfig): Wizard {
+        const wizard: Wizard = new Wizard(
+            this,
+            this._idCounter++,
+            config,
+        );
+        this._pieces.set(wizard.id, wizard);
+        this.emitBoardUpdateEvent();
+        return wizard;
+    }
+
+    /**
+     * Create and place wizards for all players at
+     * game start.
+     */
+    createWizards(): void {
+        if (
+            this.state === BoardState.GameOver ||
+            this.state !== BoardState.Idle ||
+            this.phase !== BoardPhase.Idle ||
+            this.pieces.some((piece: Piece) =>
+                piece.hasStatus(UnitStatus.Wizard),
+            )
+        ) {
+            throw new Error(
+                "Cannot create wizards - " +
+                    "game not in initialising state",
+            );
+        }
+        Wizard.createAll(this, this.players);
+    }
+
+    /**
+     * Select a piece by ID. Sets `_selected` and
+     * emits `BoardEvent.PieceSelected`.
+     */
+    selectPiece(id: number): void {
+        if (!id || this._state === BoardState.GameOver) {
+            return;
+        }
+        this._selected = this.getPiece(id);
+        if (!this._selected) {
+            throw new Error(
+                `No piece with ID ${id} found ` +
+                    `to select`,
+            );
+        }
+        this._boardEvents.emit(
+            BoardEvent.PieceSelected,
+            this._selected,
+        );
+    }
+
+    /**
+     * Clear the current piece selection.
+     */
+    deselectPiece(): void {
+        this._selected = null;
+    }
+
+    /**
+     * Find the player's wizard piece and select it.
+     *
+     * @returns The wizard piece, or null if not found.
+     */
+    selectWizard(player: Player): Piece | null {
+        if (
+            !player ||
+            this._state === BoardState.GameOver
+        ) {
+            return null;
+        }
+        const ownedPieces: Piece[] =
+            this.getPiecesByOwner(player);
+        for (const piece of ownedPieces) {
+            if (piece.hasStatus(UnitStatus.Wizard)) {
+                this.selectPiece(piece.id);
+                return piece;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Move a piece to a new position. Synchronous
+     * state update with event emission.
+     */
+    movePiece(id: number, position: Point): Piece {
+        const piece: Piece | null = this.getPiece(id);
+        if (!piece) {
+            throw new Error(
+                `Could not find piece with ID ${id}`,
+            );
+        }
+        piece.position.setTo(position.x, position.y);
+        piece.moved = true;
+        this._boardEvents.emit(
+            BoardEvent.PieceMoved,
+            piece,
+        );
+        this.emitBoardUpdateEvent();
+        return piece;
+    }
+
+    /**
+     * Resolve a melee attack between two pieces.
+     * Rolls combat, emits event, and kills the
+     * defender on success.
+     */
+    attackPiece(
+        attackingPieceId: number,
+        defendingPieceId: number,
+    ): Piece | null {
+        const attackingPiece =
+            this.getPiece(attackingPieceId);
+        const defendingPiece =
+            this.getPiece(defendingPieceId);
+        if (!attackingPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${attackingPieceId}`,
+            );
+        }
+        if (!defendingPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${defendingPieceId}`,
+            );
+        }
+
+        this._busy = true;
+        attackingPiece.attacked = true;
+        attackingPiece.moved = true;
+
+        const rollSuccess: boolean = this.roll(
+            attackingPiece.stats.combat,
+            defendingPiece.stats.defence,
+            attackingPiece.owner,
+        );
+
+        if (attackingPiece.hasStatus(
+            UnitStatus.ShadowForm,
+        )) {
+            attackingPiece.removeStatus(
+                UnitStatus.ShadowForm,
+            );
+        }
+
+        this._boardEvents.emit(
+            BoardEvent.PieceAttacked,
+            attackingPiece,
+            defendingPiece,
+            rollSuccess,
+        );
+
+        if (rollSuccess) {
+            this._logger.log(
+                `${attackingPiece.fullName} defeated ` +
+                    `${defendingPiece.fullName}`,
+                Colour.Red,
+            );
+            defendingPiece.dead = true;
+            defendingPiece.owner = null;
+            this.removePiece(defendingPiece.id);
+        }
+
+        this._busy = false;
+        return attackingPiece;
+    }
+
+    /**
+     * Resolve a ranged attack between two pieces.
+     * Rolls ranged combat, emits event, and kills the
+     * defender on success.
+     */
+    rangedAttackPiece(
+        attackingPieceId: number,
+        defendingPieceId: number,
+    ): Piece | null {
+        const attackingPiece =
+            this.getPiece(attackingPieceId);
+        const defendingPiece =
+            this.getPiece(defendingPieceId);
+        if (!attackingPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${attackingPieceId}`,
+            );
+        }
+        if (!defendingPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${defendingPieceId}`,
+            );
+        }
+
+        this._busy = true;
+        attackingPiece.rangedAttacked = true;
+        attackingPiece.attacked = true;
+        attackingPiece.moved = true;
+
+        const rollSuccess: boolean = this.roll(
+            attackingPiece.stats.rangedCombat,
+            defendingPiece.stats.defence,
+            attackingPiece.owner,
+        );
+
+        this._boardEvents.emit(
+            BoardEvent.PieceRangedAttacked,
+            attackingPiece,
+            defendingPiece,
+            rollSuccess,
+        );
+
+        if (rollSuccess) {
+            if (attackingPiece.hasStatus(
+                UnitStatus.ShadowForm,
+            )) {
+                attackingPiece.removeStatus(
+                    UnitStatus.ShadowForm,
+                );
+            }
+            this._logger.log(
+                `${attackingPiece.fullName} defeated ` +
+                    `${defendingPiece.fullName}`,
+                Colour.Red,
+            );
+            defendingPiece.dead = true;
+            defendingPiece.owner = null;
+            this.removePiece(defendingPiece.id);
+        }
+
+        this._busy = false;
+        return attackingPiece;
+    }
+
+    /**
+     * Mount a piece upon another piece. If the
+     * mounting piece is already mounted, dismount
+     * first.
+     */
+    mountPiece(
+        mountingPieceId: number,
+        mountedPieceId: number,
+    ): Piece | null {
+        const mountingPiece =
+            this.getPiece(mountingPieceId);
+        const mountedPiece =
+            this.getPiece(mountedPieceId);
+        if (!mountingPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${mountingPieceId}`,
+            );
+        }
+        if (!mountedPiece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${mountedPieceId}`,
+            );
+        }
+
+        // Dismount first if already mounted
+        if (mountingPiece.currentMount) {
+            this.dismountPiece(mountingPieceId);
+            mountingPiece.moved = false;
+        }
+
+        mountingPiece.moved = true;
+        mountingPiece.attacked = true;
+        mountedPiece.moved = true;
+
+        mountingPiece.currentMount = mountedPiece;
+        mountedPiece.currentRider = mountingPiece;
+
+        mountingPiece.position.setTo(
+            mountedPiece.position.x,
+            mountedPiece.position.y,
+        );
+
+        this._logger.log(
+            `${mountingPiece.fullName} mounted ` +
+                `${mountedPiece.fullName}`,
+        );
+        this.emitBoardUpdateEvent();
+        return mountingPiece;
+    }
+
+    /**
+     * Dismount a piece from its current mount.
+     */
+    dismountPiece(
+        dismountingPieceId: number,
+    ): Piece | null {
+        const piece =
+            this.getPiece(dismountingPieceId);
+        if (!piece) {
+            throw new Error(
+                `Could not find piece with ` +
+                    `ID ${dismountingPieceId}`,
+            );
+        }
+        if (!piece.currentMount) {
+            throw new Error(
+                `${piece.name} is not mounted`,
+            );
+        }
+
+        piece.currentMount.currentRider = null;
+        piece.moved = true;
+        piece.currentMount.turnOver = true;
+        this._logger.log(
+            `${piece.fullName} dismounted ` +
+                `${piece.currentMount.fullName}`,
+        );
+        piece.currentMount = null;
+        this.emitBoardUpdateEvent();
+        return piece;
     }
 
     /* ── Game flow ───────────────────────────────── */
