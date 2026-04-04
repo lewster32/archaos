@@ -434,7 +434,7 @@ export class GameScene extends Scene {
                 forceHit: player.forceHit ?? null,
                 forceCast: player.forceCast ?? null,
             });
-            const wizard: Wizard = this.board.addWizard({
+            const wizard: Wizard = (await this.board.addWizard({
                 owner: currentPlayer,
                 x: player.position.x,
                 y: player.position.y,
@@ -442,7 +442,7 @@ export class GameScene extends Scene {
                 ...(player.wizardProperties && {
                     properties: player.wizardProperties,
                 }),
-            });
+            })) as Wizard;
             if (player.statuses?.length) {
                 for (let statusName of player.statuses) {
                     const status: UnitStatus =

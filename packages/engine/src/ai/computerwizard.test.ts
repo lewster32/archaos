@@ -16,7 +16,10 @@ function makeMockBoard(rollChanceResult: boolean = true) {
     return {
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         rng: new TestRNG(),
-        events: { emit: vi.fn() },
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
     } as unknown as Board;
 }
 
@@ -40,7 +43,10 @@ function makeBoardStub(
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         getPiecesByOwner: opts.getPiecesByOwner ?? vi.fn().mockReturnValue([]),
         rng: new TestRNG(),
-        events: { emit: vi.fn() },
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
     } as unknown as Board;
 }
 
@@ -766,7 +772,10 @@ describe("ComputerWizard", () => {
                 rollChance: rollChanceFn,
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: { emit: vi.fn() },
+                events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
             } as unknown as Board;
 
             injectDragonSpell(dragonChance, dragonBalance);
@@ -1060,7 +1069,10 @@ describe("ComputerWizard", () => {
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: { emit: vi.fn() },
+                events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
             } as unknown as Board;
 
             (Spell.spells as any)[TEST_KEY] = {
@@ -1157,7 +1169,10 @@ describe("ComputerWizard", () => {
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0.5),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: { emit: vi.fn() },
+                events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, player, 1);
@@ -1217,7 +1232,10 @@ describe("ComputerWizard", () => {
                 pieces: [goblin, dragon],
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                events: { emit: vi.fn() },
+                events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);
@@ -1264,7 +1282,10 @@ describe("ComputerWizard", () => {
                 pieces: [goblin],
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                events: { emit: vi.fn() },
+                events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);

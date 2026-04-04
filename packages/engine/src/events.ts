@@ -36,6 +36,16 @@ export class EventEmitter {
         return this;
     }
 
+    async emitAsync(
+        event: string,
+        ...args: any[]
+    ): Promise<void> {
+        for (const fn of
+            this._listeners.get(event) ?? []) {
+            await fn(...args);
+        }
+    }
+
     removeAllListeners(event?: string): this {
         if (event) {
             this._listeners.delete(event);

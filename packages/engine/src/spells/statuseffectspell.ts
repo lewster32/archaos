@@ -3,6 +3,7 @@ import { UnitStatus } from "../enums/unitstatus";
 import { UnitType } from "../enums/unittype";
 import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
@@ -12,7 +13,9 @@ import { Point } from "../point";
  * A self-targeting spell that grants a status effect to the casting wizard.
  * Covers shadow form and all magic equipment spells.
  */
-export class StatusEffectSpell extends Spell {
+export class StatusEffectSpell<
+    P extends Piece = Piece,
+> extends Spell<P> {
     private static readonly STATUS_MAP: { [key: string]: UnitStatus } = {
         "shadow-form": UnitStatus.ShadowForm,
         "magic-knife": UnitStatus.MagicKnife,
@@ -24,24 +27,28 @@ export class StatusEffectSpell extends Spell {
     };
 
     async doCast(
-        owner: Player,
-        castingPiece: Piece,
+        owner: Player<P>,
+        castingPiece: P,
         point?: Point,
-        targets?: Piece[],
-    ): Promise<Piece | boolean | null> {
-        const target: Piece = targets.find(
-            (p: Piece) => p.type === UnitType.Wizard && p.owner === this.owner,
+        targets?: P[],
+    ): Promise<P | boolean | null> {
+        const target: P = targets.find(
+            (p: P) => p.type === UnitType.Wizard && p.owner === this.owner,
         );
         if (!target) {
             return false;
         }
 
-        this._board.sound.play("spelleffect");
-        await this._board.playEffect(
-            EffectType.WizardCasting,
-            target.sprite.getCenter(),
-            null,
-            target,
+        this._board.events.emit(
+            EngineEvent.EffectRequested,
+            { sound: "spelleffect" },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.WizardCasting,
+                pieceId: target.id,
+            },
         );
 
         if (this.properties.id in StatusEffectSpell.STATUS_MAP) {

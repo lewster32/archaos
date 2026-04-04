@@ -946,7 +946,7 @@ export class Piece extends Entity {
             this._properties.id,
         );
 
-        const newPiece: Piece = this._board.addPiece({
+        const newPiece: Piece = await this._board.addPiece({
             type: UnitType.Creature,
             x: spreadPoint.x,
             y: spreadPoint.y,

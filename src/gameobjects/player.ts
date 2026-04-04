@@ -15,7 +15,7 @@ import { EffectType } from "./effectemitter";
 import { Wizard } from "./wizard";
 import type { Piece } from "./piece";
 
-export class Player extends EnginePlayer {
+export class Player extends EnginePlayer<Piece> {
     /**
      * Get the AI controller for this player, if any.
      */
@@ -43,7 +43,7 @@ export class Player extends EnginePlayer {
         colour: number,
     ) {
         super(
-            board,
+            board as any,
             id,
             config
                 ? {
@@ -65,8 +65,8 @@ export class Player extends EnginePlayer {
         ) {
             (this as any)._remote =
                 new ComputerWizard(
-                    board,
-                    this,
+                    board as any,
+                    this as any,
                     config.difficulty ?? 0.5,
                 );
             console.log(
@@ -82,11 +82,11 @@ export class Player extends EnginePlayer {
      */
     async defeat(): Promise<void> {
         this._defeated = true;
-        (this.board as Board).logger.log(
+        (this.board as unknown as Board).logger.log(
             `Game over for ${this.name}`,
             Colour.Red,
         );
-        await (this.board as Board).sound.playAsync(
+        await (this.board as unknown as Board).sound.playAsync(
             "deadwizard2",
             {
                 delay: Board.DEFAULT_DELAY,
@@ -94,10 +94,10 @@ export class Player extends EnginePlayer {
         );
         await this.destroyCreations();
         // Let's really dwell on this for a bit
-        await (this.board as Board).idleDelay(
+        await (this.board as unknown as Board).idleDelay(
             Board.END_TURN_DELAY,
         );
-        (this.board as Board).boardEvents.emit(
+        (this.board as unknown as Board).boardEvents.emit(
             BoardEvent.PlayerDefeated,
             this,
         );
@@ -109,7 +109,7 @@ export class Player extends EnginePlayer {
      */
     async destroyCreations(): Promise<any[]> {
         return Promise.all(
-            (this.board as Board)
+            (this.board as unknown as Board)
                 .getPiecesByOwner(this)
                 .filter(
                     (p) =>
@@ -123,13 +123,13 @@ export class Player extends EnginePlayer {
                             async () => {
                                 (
                                     this
-                                        .board as Board
+                                        .board as unknown as Board
                                 ).sound.play(
                                     "disbelieve",
                                 );
                                 await (
                                     this
-                                        .board as Board
+                                        .board as unknown as Board
                                 ).playEffect(
                                     EffectType.DisbelieveHit,
                                     (

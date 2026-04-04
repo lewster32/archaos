@@ -28,15 +28,17 @@ export interface PlayerAI {
  * The client Player extends this class and overrides
  * defeat()/destroyCreations() to add rendering.
  */
-export class Player extends Model {
+export class Player<
+    P extends Piece = Piece,
+> extends Model {
     protected readonly _name: string;
-    protected readonly _board: Board;
+    protected readonly _board: Board<P>;
     protected readonly _wizcode: string;
-    protected readonly _spells: Map<number, Spell>;
+    protected readonly _spells: Map<number, Spell<P>>;
     protected readonly _colour: number;
 
-    protected _castingPiece: Piece | null;
-    protected _selectedSpell: Spell | null;
+    protected _castingPiece: P | null;
+    protected _selectedSpell: Spell<P> | null;
     protected _defeated: boolean;
 
     protected _forceHit: boolean | null = null;
@@ -69,7 +71,7 @@ export class Player extends Model {
      * @param remote Optional remote player controller.
      */
     constructor(
-        board: Board,
+        board: Board<P>,
         id: number,
         config: PlayerConfig,
         colour: number,
@@ -104,11 +106,11 @@ export class Player extends Model {
         return this._name;
     }
 
-    get board(): Board {
+    get board(): Board<P> {
         return this._board;
     }
 
-    get spells(): Spell[] {
+    get spells(): Spell<P>[] {
         return Array.from(this._spells.values());
     }
 
@@ -136,11 +138,11 @@ export class Player extends Model {
         this._forceCast = value;
     }
 
-    get castingPiece(): Piece | null {
+    get castingPiece(): P | null {
         return this._castingPiece;
     }
 
-    set castingPiece(piece: Piece | null) {
+    set castingPiece(piece: P | null) {
         if (piece && piece.owner !== this) {
             throw new Error(
                 "Cannot set casting piece to a " +
@@ -190,20 +192,20 @@ export class Player extends Model {
     /**
      * Adds a spell to this player's spell list.
      */
-    addSpell(spell: Spell) {
+    addSpell(spell: Spell<P>) {
         spell.owner = this;
         this._spells.set(spell.id, spell);
     }
 
-    get selectedSpell(): Spell | null {
+    get selectedSpell(): Spell<P> | null {
         return this._selectedSpell;
     }
 
     /**
      * Selects a spell by its ID.
      */
-    async pickSpell(id: number): Promise<Spell> {
-        const spell: Spell | undefined =
+    async pickSpell(id: number): Promise<Spell<P>> {
+        const spell: Spell<P> | undefined =
             this._spells.get(id);
         if (spell) {
             this._selectedSpell = spell;
@@ -217,7 +219,7 @@ export class Player extends Model {
     /**
      * Uses the currently selected spell, if any.
      */
-    async useSpell(): Promise<Spell | null> {
+    async useSpell(): Promise<Spell<P> | null> {
         if (this._selectedSpell) {
             if (
                 this._selectedSpell.castTimes <= 0
@@ -234,9 +236,9 @@ export class Player extends Model {
     /**
      * Discards the currently selected spell.
      */
-    async discardSpell(): Promise<Spell | null> {
+    async discardSpell(): Promise<Spell<P> | null> {
         if (this._selectedSpell) {
-            const spell: Spell =
+            const spell: Spell<P> =
                 this._selectedSpell;
             if (spell.persist) {
                 spell.resetCastTimes();

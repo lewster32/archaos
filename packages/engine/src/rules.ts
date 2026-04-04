@@ -938,7 +938,7 @@ export class Rules {
                 piece.hasStatus(UnitStatus.Structure)
             ) {
                 if (board.roll(2, 10)) {
-                    board.events.emit(
+                    await board.events.emitAsync(
                         EngineEvent.EffectRequested,
                         {
                             type: EffectType
@@ -968,7 +968,7 @@ export class Rules {
                         ` new spell`,
                     Colour.Cyan,
                 );
-                board.events.emit(
+                await board.events.emitAsync(
                     EngineEvent.EffectRequested,
                     {
                         type: EffectType.GiveSpell,

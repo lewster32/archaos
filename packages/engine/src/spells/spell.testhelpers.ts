@@ -25,6 +25,10 @@ export function makeMockBoard(
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
         playEffect: vi.fn().mockResolvedValue(undefined),
         idleDelay: vi.fn().mockResolvedValue(undefined),
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
         logger: { log: vi.fn() },
         sound: { play: vi.fn() },
         rangeGizmo: {

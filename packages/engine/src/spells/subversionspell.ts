@@ -1,5 +1,6 @@
 import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { Colour } from "../enums/colour";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
@@ -11,15 +12,17 @@ import { Point } from "../point";
  * Illusionary units always resist. Succeeds or fails based on the target's
  * magic resistance.
  */
-export class SubversionSpell extends Spell {
+export class SubversionSpell<
+    P extends Piece = Piece,
+> extends Spell<P> {
     async doCast(
-        owner: Player,
-        castingPiece: Piece,
+        owner: Player<P>,
+        castingPiece: P,
         point?: Point,
-        targets?: Piece[],
-    ): Promise<Piece | boolean | null> {
-        const target: Piece = targets.find(
-            (p: Piece) => p.owner !== this.owner,
+        targets?: P[],
+    ): Promise<P | boolean | null> {
+        const target: P = targets.find(
+            (p: P) => p.owner !== this.owner,
         );
         if (!target) {
             return false;
@@ -31,19 +34,29 @@ export class SubversionSpell extends Spell {
             this._owner,
         );
 
-        this._board.sound.play("castloop08");
-        await this._board.playEffect(
-            EffectType.SubversionBeam,
-            castingPiece.sprite.getCenter(),
-            target.sprite.getCenter(),
+        this._board.events.emit(
+            EngineEvent.EffectRequested,
+            { sound: "castloop08" },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.SubversionBeam,
+                pieceId: target.id,
+                startPieceId: castingPiece.id,
+            },
         );
         if (rollSuccess && !target.illusion) {
-            this._board.sound.play("spelleffect");
-            await this._board.playEffect(
-                EffectType.SubversionHit,
-                target.sprite.getCenter(),
-                null,
-                target,
+            this._board.events.emit(
+                EngineEvent.EffectRequested,
+                { sound: "spelleffect" },
+            );
+            await this._board.events.emitAsync(
+                EngineEvent.EffectRequested,
+                {
+                    type: EffectType.SubversionHit,
+                    pieceId: target.id,
+                },
             );
             target.owner = this.owner;
             this._board.logger.log(

@@ -69,7 +69,9 @@ type SimplePoint = { x: number; y: number };
  * The client Board extends this and adds rendering,
  * sound, camera, cursor, and visual effects.
  */
-export class Board extends Model implements Box {
+export class Board<
+    P extends Piece = Piece,
+> extends Model implements Box {
     /* ── Cheat flags ─────────────────────────────── */
 
     /**
@@ -166,12 +168,12 @@ export class Board extends Model implements Box {
     protected _balance: number;
     protected _balanceShift: number;
 
-    protected readonly _pieces: Map<number, Piece>;
-    protected _selected: Piece | null;
+    protected readonly _pieces: Map<number, P>;
+    protected _selected: P | null;
     protected _cursorPosition: Point = new Point(0, 0);
 
-    protected readonly _players: Map<number, Player>;
-    protected _currentPlayer: Player | null;
+    protected readonly _players: Map<number, Player<P>>;
+    protected _currentPlayer: Player<P> | null;
     protected _currentPlayerIndex: number = -1;
     protected _idCounter: number = 1;
 
@@ -207,8 +209,8 @@ export class Board extends Model implements Box {
         this._width = width;
         this._height = height;
 
-        this._pieces = new Map<number, Piece>();
-        this._players = new Map<number, Player>();
+        this._pieces = new Map<number, P>();
+        this._players = new Map<number, Player<P>>();
         this._state = BoardState.Idle;
         this._lastPhase = BoardPhase.Idle;
         this._lastState = BoardState.Idle;
@@ -428,22 +430,22 @@ export class Board extends Model implements Box {
 
     /* ── Pieces ──────────────────────────────────── */
 
-    get pieces(): Piece[] {
+    get pieces(): P[] {
         return Array.from(this._pieces.values());
     }
 
-    get selected(): Piece | null {
+    get selected(): P | null {
         return this._selected;
     }
 
-    getPiece(id: number): Piece | null {
+    getPiece(id: number): P | null {
         if (this._pieces.has(id)) {
             return this._pieces.get(id);
         }
         return null;
     }
 
-    getPiecesByOwner(owner: Player): Piece[] {
+    getPiecesByOwner(owner: Player<P>): P[] {
         return this.pieces.filter(
             (piece) => piece.owner === owner,
         );
@@ -463,19 +465,19 @@ export class Board extends Model implements Box {
 
     /* ── Players ─────────────────────────────────── */
 
-    get players(): Player[] {
+    get players(): Player<P>[] {
         return Array.from(this._players.values());
     }
 
-    get currentPlayer(): Player | null {
+    get currentPlayer(): Player<P> | null {
         return this._currentPlayer;
     }
 
-    set currentPlayer(player: Player | null) {
+    set currentPlayer(player: Player<P> | null) {
         this._currentPlayer = player;
     }
 
-    getPlayer(id: number): Player | null {
+    getPlayer(id: number): Player<P> | null {
         if (this._players.has(id)) {
             return this._players.get(id);
         }
@@ -515,9 +517,9 @@ export class Board extends Model implements Box {
      * Add a spell to a player's spellbook.
      */
     addSpell(
-        player: Player,
+        player: Player<P>,
         config: SpellConfig,
-    ): Spell {
+    ): Spell<P> {
         if (!config || !player) {
             throw new Error(
                 "No player or config provided",
@@ -535,7 +537,7 @@ export class Board extends Model implements Box {
             this,
             this._idCounter++,
             config,
-        );
+        ) as Spell<P>;
         player.addSpell(spell);
         return spell;
     }
@@ -697,13 +699,13 @@ export class Board extends Model implements Box {
 
     getAdjacentPiecesAtPosition(
         point: Point,
-        filter?: (piece: Piece) => boolean,
+        filter?: (piece: P) => boolean,
         includeCentre?: boolean,
-    ): Piece[] {
-        const neighbours: Set<Piece> = new Set();
+    ): P[] {
+        const neighbours: Set<P> = new Set();
         const position: Point = Point.clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
-            const directionNeighbours: Piece[] =
+            const directionNeighbours: P[] =
                 this.getPiecesAtPosition(
                     new Point(
                         position.x + direction.x,
@@ -718,7 +720,7 @@ export class Board extends Model implements Box {
             }
         }
         if (includeCentre) {
-            const centreNeighbours: Piece[] =
+            const centreNeighbours: P[] =
                 this.getPiecesAtPosition(position, filter);
             if (centreNeighbours) {
                 centreNeighbours.forEach((piece) =>
@@ -731,10 +733,10 @@ export class Board extends Model implements Box {
 
     getPiecesAtPosition(
         point: Point,
-        filter?: (piece: Piece) => boolean,
-    ): Piece[] {
+        filter?: (piece: P) => boolean,
+    ): P[] {
         return Array.from(
-            this.pieces.filter((piece: Piece) => {
+            this.pieces.filter((piece: P) => {
                 return (
                     Point.equals(piece.position, point) &&
                     (filter ? filter(piece) : true)
@@ -744,7 +746,7 @@ export class Board extends Model implements Box {
     }
 
     isBlocker(point: Point): boolean {
-        const pieces: Piece[] = this.getPiecesAtPosition(
+        const pieces: P[] = this.getPiecesAtPosition(
             point,
             (piece) => {
                 return (
@@ -884,29 +886,31 @@ export class Board extends Model implements Box {
     /**
      * Add a piece to the board.
      */
-    addPiece(config: PieceConfig): Piece {
+    async addPiece(config: PieceConfig): Promise<P> {
         const piece: Piece = new Piece(
             this,
             this._idCounter++,
             config,
         );
-        this._pieces.set(piece.id, piece);
+        this._pieces.set(piece.id, piece as P);
         this.emitBoardUpdateEvent();
-        return piece;
+        return piece as P;
     }
 
     /**
      * Add a wizard piece to the board.
      */
-    addWizard(config: WizardConfig): Wizard {
+    async addWizard(config: WizardConfig): Promise<P> {
         const wizard: Wizard = new Wizard(
             this,
             this._idCounter++,
             config,
         );
-        this._pieces.set(wizard.id, wizard);
+        this._pieces.set(
+            wizard.id, wizard as unknown as P,
+        );
         this.emitBoardUpdateEvent();
-        return wizard;
+        return wizard as unknown as P;
     }
 
     /**
@@ -918,7 +922,7 @@ export class Board extends Model implements Box {
             this.state === BoardState.GameOver ||
             this.state !== BoardState.Idle ||
             this.phase !== BoardPhase.Idle ||
-            this.pieces.some((piece: Piece) =>
+            this.pieces.some((piece: P) =>
                 piece.hasStatus(UnitStatus.Wizard),
             )
         ) {
@@ -963,14 +967,14 @@ export class Board extends Model implements Box {
      *
      * @returns The wizard piece, or null if not found.
      */
-    selectWizard(player: Player): Piece | null {
+    async selectWizard(player: Player<P>): Promise<P | null> {
         if (
             !player ||
             this._state === BoardState.GameOver
         ) {
             return null;
         }
-        const ownedPieces: Piece[] =
+        const ownedPieces: P[] =
             this.getPiecesByOwner(player);
         for (const piece of ownedPieces) {
             if (piece.hasStatus(UnitStatus.Wizard)) {
@@ -985,8 +989,8 @@ export class Board extends Model implements Box {
      * Move a piece to a new position. Synchronous
      * state update with event emission.
      */
-    movePiece(id: number, position: Point): Piece {
-        const piece: Piece | null = this.getPiece(id);
+    async movePiece(id: number, position: Point): Promise<P> {
+        const piece: P | null = this.getPiece(id);
         if (!piece) {
             throw new Error(
                 `Could not find piece with ID ${id}`,
@@ -1010,7 +1014,7 @@ export class Board extends Model implements Box {
     async attackPiece(
         attackingPieceId: number,
         defendingPieceId: number,
-    ): Promise<Piece | null> {
+    ): Promise<P | null> {
         const attackingPiece =
             this.getPiece(attackingPieceId);
         const defendingPiece =
@@ -1049,7 +1053,7 @@ export class Board extends Model implements Box {
     async rangedAttackPiece(
         attackingPieceId: number,
         defendingPieceId: number,
-    ): Promise<Piece | null> {
+    ): Promise<P | null> {
         const attackingPiece =
             this.getPiece(attackingPieceId);
         const defendingPiece =
@@ -1087,10 +1091,10 @@ export class Board extends Model implements Box {
      * mounting piece is already mounted, dismount
      * first.
      */
-    mountPiece(
+    async mountPiece(
         mountingPieceId: number,
         mountedPieceId: number,
-    ): Piece | null {
+    ): Promise<P | null> {
         const mountingPiece =
             this.getPiece(mountingPieceId);
         const mountedPiece =
@@ -1128,9 +1132,9 @@ export class Board extends Model implements Box {
     /**
      * Dismount a piece from its current mount.
      */
-    dismountPiece(
+    async dismountPiece(
         dismountingPieceId: number,
-    ): Piece | null {
+    ): Promise<P | null> {
         const piece =
             this.getPiece(dismountingPieceId);
         if (!piece) {
@@ -1152,7 +1156,7 @@ export class Board extends Model implements Box {
     roll(
         attack: number,
         defence: number,
-        attackingPlayer?: Player,
+        attackingPlayer?: Player<P>,
     ): boolean {
         if (attackingPlayer?.forceHit != null) {
             return attackingPlayer.forceHit;
@@ -1183,7 +1187,7 @@ export class Board extends Model implements Box {
      */
     rollChance(
         attack: number,
-        castingPlayer?: Player,
+        castingPlayer?: Player<P>,
     ): boolean {
         if (castingPlayer?.forceCast != null) {
             return castingPlayer.forceCast;
@@ -1216,7 +1220,7 @@ export class Board extends Model implements Box {
         if (this.state === BoardState.GameOver) {
             return true;
         }
-        const undefeated: Player[] = this.players.filter(
+        const undefeated: Player<P>[] = this.players.filter(
             (player) => !player.defeated,
         );
         if (undefeated?.length < 2) {
@@ -1263,8 +1267,8 @@ export class Board extends Model implements Box {
     getRandomEmptySpace(): Point {
         const occupiedSpaces: Set<string> = new Set();
         this.pieces
-            .filter((piece: Piece) => !piece.dead)
-            .forEach((piece: Piece) => {
+            .filter((piece: P) => !piece.dead)
+            .forEach((piece: P) => {
                 occupiedSpaces.add(
                     `${piece.position.x},${piece.position.y}`,
                 );

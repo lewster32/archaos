@@ -3,7 +3,7 @@ import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
 import { UnitStatus } from "../enums/unitstatus";
 import { UnitType } from "../enums/unittype";
-import { CursorType } from "../enums/cursortype";
+import { EngineEvent } from "../enums/engineevent";
 import { Model } from "../models/model";
 import type { SpellConfig } from "../configs/spellconfig";
 import type { IRNG } from "../rng";
@@ -21,12 +21,16 @@ import type { Player } from "../player";
  * A valid target for spell casting: a point on the
  * board, a piece, or null (for auto-targeting spells).
  */
-export type SpellCastTarget = Point | Piece | null;
+export type SpellCastTarget<
+    P extends Piece = Piece,
+> = Point | P | null;
 
 /**
  * A spell that can be cast by a player's wizard.
  */
-export class Spell extends Model {
+export class Spell<
+    P extends Piece = Piece,
+> extends Model {
     /**
      * All spell configurations loaded from JSON.
      */
@@ -36,7 +40,7 @@ export class Spell extends Model {
     /**
      * A reference to the game board.
      */
-    protected _board: Board;
+    protected _board: Board<P>;
 
     /**
      * The type of this spell.
@@ -46,7 +50,7 @@ export class Spell extends Model {
     /**
      * The piece that is casting this spell.
      */
-    protected _castingPiece: Piece;
+    protected _castingPiece: P;
 
     /**
      * The raw properties of this spell.
@@ -71,7 +75,7 @@ export class Spell extends Model {
     /**
      * The player who owns this spell.
      */
-    protected _owner: Player;
+    protected _owner: Player<P>;
 
     /**
      * Create a new spell.
@@ -80,7 +84,7 @@ export class Spell extends Model {
      * @param id The unique ID of this spell
      * @param config The configuration of this spell
      */
-    constructor(board: Board, id: number, config: SpellConfig) {
+    constructor(board: Board<P>, id: number, config: SpellConfig) {
         super(id);
 
         if (!config) {
@@ -213,14 +217,14 @@ export class Spell extends Model {
     /**
      * The player who owns this spell.
      */
-    get owner(): Player {
+    get owner(): Player<P> {
         return this._owner;
     }
 
     /**
      * Set the owner of this spell.
      */
-    set owner(owner: Player) {
+    set owner(owner: Player<P>) {
         this._owner = owner;
         if (this._owner.castingPiece) {
             this._castingPiece = this._owner.castingPiece;
@@ -310,8 +314,8 @@ export class Spell extends Model {
             return false;
         }
         if (this._properties.tree) {
-            const neighbourTrees: Piece[] =
-                this._board.getAdjacentPiecesAtPosition(point, (p: Piece) =>
+            const neighbourTrees: P[] =
+                this._board.getAdjacentPiecesAtPosition(point, (p: P) =>
                     p.hasStatus(UnitStatus.Tree),
                 );
             if (neighbourTrees.length > 0) {
@@ -335,12 +339,12 @@ export class Spell extends Model {
      * @returns The valid target point or piece, or null if invalid
      */
     getValidTarget(
-        target: Point | Piece,
+        target: Point | P,
         showReason?: boolean,
-    ): SpellCastTarget {
+    ): SpellCastTarget<P> {
         const targetPoint: Point =
             Point.isPoint(target) ? target : target.position;
-        const targetPiece: Piece = Piece.isPiece(target) ? target : null;
+        const targetPiece: P = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
@@ -355,24 +359,24 @@ export class Spell extends Model {
             return null;
         }
         // Only find actively targetable pieces
-        const targetPieces: Piece[] = (
+        const targetPieces: P[] = (
             targetPiece
                 ? [targetPiece]
                 : this._board.getPiecesAtPosition(targetPoint)
-        ).filter((piece: Piece) => {
+        ).filter((piece: P) => {
             return (
                 !piece.currentMount && // Cannot directly target mounted pieces
                 !piece.engulfed
             ); // Nor engulfed pieces
         });
 
-        const targetLivingPiece: Piece = targetPieces.find(
-            (piece: Piece) => !piece.dead,
+        const targetLivingPiece: P = targetPieces.find(
+            (piece: P) => !piece.dead,
         );
 
         if (this._properties.target === SpellTarget.Self) {
-            const wizard: Piece = targetPieces.find(
-                (piece: Piece) => piece.type === UnitType.Wizard,
+            const wizard: P = targetPieces.find(
+                (piece: P) => piece.type === UnitType.Wizard,
             );
             if (wizard?.owner !== this._owner) {
                 if (showReason) {
@@ -392,7 +396,7 @@ export class Spell extends Model {
                 targetLivingPiece || // Cannot target living pieces
                 this._board.getPiecesAtPosition(
                     targetPoint,
-                    (p: Piece) => !p.dead,
+                    (p: P) => !p.dead,
                 ).length > 0 // Cannot target if any living pieces are present on the same tile
             ) {
                 if (showReason) {
@@ -403,13 +407,13 @@ export class Spell extends Model {
                 }
                 return null;
             }
-            return targetPieces.find((piece: Piece) => piece.dead);
+            return targetPieces.find((piece: P) => piece.dead);
         }
 
         // Living target spells (e.g., disbelieve, magic bolt etc.)
         if (!targetLivingPiece) {
             if (showReason) {
-                if (targetPieces.filter((p: Piece) => p.dead).length === 0) {
+                if (targetPieces.filter((p: P) => p.dead).length === 0) {
                     this._board.logger.log(
                         `${this.name} cannot be cast on empty ground`,
                         Colour.Magenta,
@@ -424,9 +428,9 @@ export class Spell extends Model {
             return null;
         }
 
-        const targetEnemyLivingPiece: Piece =
+        const targetEnemyLivingPiece: P =
             targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
-        const targetEnemyWizard: Piece =
+        const targetEnemyWizard: P =
             targetEnemyLivingPiece?.type === UnitType.Wizard
                 ? targetEnemyLivingPiece
                 : null;
@@ -452,7 +456,7 @@ export class Spell extends Model {
                     return null;
                 }
                 if (this.type === SpellType.Disbelieve) {
-                    const disbelievableTarget: Piece =
+                    const disbelievableTarget: P =
                         targetEnemyLivingPiece.canBeDisbelieved
                             ? targetEnemyLivingPiece
                             : null;
@@ -468,7 +472,7 @@ export class Spell extends Model {
                     return disbelievableTarget;
                 }
                 if (this.properties.id === "subversion") {
-                    const subversionTarget: Piece =
+                    const subversionTarget: P =
                         targetEnemyLivingPiece.canBeSubverted
                             ? targetEnemyLivingPiece
                             : null;
@@ -544,12 +548,12 @@ export class Spell extends Model {
      * @returns The result of the spell cast
      */
     async cast(
-        owner: Player,
-        castingPiece: Piece,
-        target?: Point | Piece,
-    ): Promise<Piece | boolean | null> {
+        owner: Player<P>,
+        castingPiece: P,
+        target?: Point | P,
+    ): Promise<P | boolean | null> {
         let castPoint: Point;
-        let castPiece: Piece;
+        let castPiece: P;
         if (Point.isPoint(target)) {
             castPoint = Point.clone(target);
         } else if (Piece.isPiece(target)) {
@@ -583,11 +587,11 @@ export class Spell extends Model {
      * @returns The result of the spell cast
      */
     async doCast(
-        _owner: Player,
-        _castingPiece: Piece,
+        _owner: Player<P>,
+        _castingPiece: P,
         _point?: Point,
-        _targets?: Piece[],
-    ): Promise<Piece | boolean | null> {
+        _targets?: P[],
+    ): Promise<P | boolean | null> {
         return false;
     }
 
@@ -598,14 +602,18 @@ export class Spell extends Model {
      * @param castingPiece The piece casting the spell
      * @returns The result of the failed spell cast
      */
-    async castFail(owner: Player, castingPiece: Piece): Promise<void> {
+    async castFail(
+        owner: Player<P>,
+        castingPiece: P,
+    ): Promise<void> {
         this._failed = true;
         this._castTimes = 0;
-        await this._board.playEffect(
-            EffectType.WizardCastFail,
-            castingPiece.sprite.getCenter(),
-            null,
-            castingPiece,
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.WizardCastFail,
+                pieceId: castingPiece.id,
+            },
         );
     }
 
@@ -614,15 +622,20 @@ export class Spell extends Model {
      */
     async showRange(show: boolean): Promise<void> {
         if (show) {
-            this._board.rangeGizmo.showSimpleRange(
-                this._castingPiece.position,
-                this.range,
-                CursorType.RangeCast,
-                this.lineOfSight,
+            this._board.events.emit(
+                EngineEvent.ShowCastRange,
+                {
+                    position:
+                        this._castingPiece.position,
+                    range: this.range,
+                    lineOfSight: this.lineOfSight,
+                },
             );
             return;
         }
-        this._board.rangeGizmo.reset();
+        this._board.events.emit(
+            EngineEvent.ResetCastRange,
+        );
     }
 
     /**

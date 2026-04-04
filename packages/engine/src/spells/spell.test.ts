@@ -1,3 +1,5 @@
+import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { SpellType } from "../enums/spelltype";
 import { SpellTarget } from "../enums/spelltarget";
 import { UnitType } from "../enums/unittype";
@@ -1214,21 +1216,27 @@ describe("Spell.castFail", () => {
         expect(s.castTimes).toBe(0);
     });
 
-    it("calls board.playEffect", async () => {
+    it("emits EffectRequested with WizardCastFail", async () => {
         const board = makeMockBoard();
-        const piece = makeMockPiece();
+        const piece = makeMockPiece({ id: 42 });
         const owner = makeMockPlayer(piece);
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
         await s.castFail(owner, piece);
-        expect(board.playEffect).toHaveBeenCalledTimes(1);
+        expect((board as any).events.emitAsync).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.WizardCastFail,
+                pieceId: 42,
+            },
+        );
     });
 });
 
 // ─── showRange ────────────────────────────────────────────────────────────────
 
 describe("Spell.showRange", () => {
-    it("calls showSimpleRange when show=true", async () => {
+    it("emits ShowCastRange when show=true", async () => {
         const board = makeMockBoard();
         const piece = makeMockPiece({ x: 2, y: 3 });
         const owner = makeMockPlayer(piece);
@@ -1239,21 +1247,25 @@ describe("Spell.showRange", () => {
         );
         s.owner = owner;
         await s.showRange(true);
-        expect((board as any).rangeGizmo.showSimpleRange).toHaveBeenCalledWith(
-            piece.position,
-            5,
-            expect.anything(),
-            true,
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.ShowCastRange,
+            {
+                position: piece.position,
+                range: 5,
+                lineOfSight: true,
+            },
         );
     });
 
-    it("calls rangeGizmo.reset when show=false", async () => {
+    it("emits ResetCastRange when show=false", async () => {
         const board = makeMockBoard();
         const owner = makeMockPlayer(makeMockPiece());
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
         await s.showRange(false);
-        expect((board as any).rangeGizmo.reset).toHaveBeenCalled();
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.ResetCastRange,
+        );
     });
 });
 

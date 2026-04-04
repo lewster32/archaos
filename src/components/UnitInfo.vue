@@ -43,7 +43,7 @@ import type { Ref } from "vue";
 import type { Piece } from "../gameobjects/piece";
 import UnitStats from "./UnitStats.vue";
 import { cssColour } from "../utils";
-import type { Player } from "../gameobjects/player";
+import type { Player } from "@archaos/engine";
 
 const props = defineProps<{
     unit: Piece | null;

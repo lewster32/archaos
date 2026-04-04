@@ -168,7 +168,7 @@ export class Wizard extends Piece {
             }
 
             const isoPosition: Geom.Point =
-                this.board.getIsoPosition(
+                this.clientBoard.getIsoPosition(
                     this.position,
                 );
 
@@ -183,7 +183,7 @@ export class Wizard extends Piece {
 
             // Animate the wizard and its effects
             // together.
-            this.board.scene.tweens.add({
+            this.clientBoard.scene.tweens.add({
                 targets: [
                     this._sprite,
                     ...this._effects.values(),
@@ -195,7 +195,7 @@ export class Wizard extends Piece {
 
             this._effects.forEach(
                 (sprite, status) => {
-                    this.board.scene.tweens.add({
+                    this.clientBoard.scene.tweens.add({
                         targets: [sprite],
                         x:
                             isoPosition.x +
@@ -218,7 +218,7 @@ export class Wizard extends Piece {
                 },
             );
 
-            this.board.scene.tweens.add({
+            this.clientBoard.scene.tweens.add({
                 targets: [
                     this._sprite,
                     this._shadow,
@@ -278,8 +278,8 @@ export class Wizard extends Piece {
      */
     async kill(): Promise<void> {
         // WOBWOBWOBWOBWOBWOB
-        this.board.sound.play("deadwizard1");
-        await this.board.playEffect(
+        this.clientBoard.sound.play("deadwizard1");
+        await this.clientBoard.playEffect(
             EffectType.WizardDefeated,
             this.sprite.getCenter(),
             null,
@@ -295,8 +295,8 @@ export class Wizard extends Piece {
             this._currentMount = null;
         }
         const ownedPieceCount: number =
-            this.board
-                .getPiecesByOwner(this.owner)
+            this.clientBoard
+                .getPiecesByOwner(this.owner as any)
                 .length;
         await this.destroy();
         await this.owner?.defeat();
@@ -304,10 +304,10 @@ export class Wizard extends Piece {
             await Board.delay(Board.END_TURN_DELAY);
         } else {
             // PCHOWWW
-            this.board.sound.play("disbelieve");
+            this.clientBoard.sound.play("disbelieve");
             await Board.delay(Board.DEFAULT_DELAY);
         }
-        await this.board.checkWinCondition();
+        await this.clientBoard.checkWinCondition();
     }
 
     /**
@@ -347,7 +347,7 @@ export class Wizard extends Piece {
         }
 
         const isoPosition: Geom.Point =
-            this.board.getIsoPosition(this.position);
+            this.clientBoard.getIsoPosition(this.position);
         let effectSprite:
             | GameObjects.Sprite
             | GameObjects.Image;
@@ -364,7 +364,7 @@ export class Wizard extends Piece {
             case UnitStatus.MagicShield:
             case UnitStatus.MagicWings:
                 effectSprite =
-                    this.board.scene.add.sprite(
+                    this.clientBoard.scene.add.sprite(
                         isoPosition.x +
                             (effectOffsets[status]?.x[
                                 this._wizCode.wiz
@@ -393,7 +393,7 @@ export class Wizard extends Piece {
                 effectSprite.setBlendMode(
                     BlendModes.ADD,
                 );
-                this.board
+                this.clientBoard
                     .getLayer(BoardLayer.Pieces)
                     .add(effectSprite);
                 this._effects.set(
@@ -404,7 +404,7 @@ export class Wizard extends Piece {
                 break;
             case UnitStatus.MagicArmour:
                 effectSprite =
-                    this.board.scene.add.image(
+                    this.clientBoard.scene.add.image(
                         isoPosition.x +
                             (effectOffsets[status]?.x[
                                 this._wizCode.wiz
@@ -428,7 +428,7 @@ export class Wizard extends Piece {
                 effectSprite.setBlendMode(
                     BlendModes.ADD,
                 );
-                this.board
+                this.clientBoard
                     .getLayer(BoardLayer.Pieces)
                     .add(effectSprite);
                 this._effects.set(
@@ -437,7 +437,7 @@ export class Wizard extends Piece {
                 );
                 effectSprite.setData(
                     "_effectTween",
-                    this.board.scene.tweens.add({
+                    this.clientBoard.scene.tweens.add({
                         targets: [effectSprite],
                         duration: 500,
                         yoyo: true,
@@ -595,10 +595,10 @@ export class Wizard extends Piece {
         }
 
         const isoPosition: Geom.Point =
-            this.board.getIsoPosition(this.position);
+            this.clientBoard.getIsoPosition(this.position);
 
         this._sprite = new WizardSprite(
-            this.board.scene,
+            this.clientBoard.scene,
             isoPosition.x,
             isoPosition.y,
             this._wizCode,
@@ -608,7 +608,7 @@ export class Wizard extends Piece {
 
         this._sprite.setOrigin(0.5, 0.6);
 
-        this.board
+        this.clientBoard
             .getLayer(BoardLayer.Pieces)
             .add(this._sprite);
 
@@ -624,10 +624,10 @@ export class Wizard extends Piece {
             return this._shadow;
         }
         const isoPosition: Geom.Point =
-            this.board.getIsoPosition(this.position);
+            this.clientBoard.getIsoPosition(this.position);
 
         this._shadow =
-            this.board.scene.add.image(
+            this.clientBoard.scene.add.image(
                 isoPosition.x,
                 isoPosition.y,
                 "unit-glow",
@@ -641,7 +641,7 @@ export class Wizard extends Piece {
         this._shadow.setBlendMode(BlendModes.ADD);
 
         // Add repeating tween to pulse the glow
-        this.board.scene.tweens.add({
+        this.clientBoard.scene.tweens.add({
             targets: [this._shadow],
             duration: 1000,
             yoyo: true,
@@ -651,7 +651,7 @@ export class Wizard extends Piece {
             loop: -1,
         });
 
-        this.board
+        this.clientBoard
             .getLayer(BoardLayer.Shadows)
             .add(this._shadow);
 
@@ -677,7 +677,9 @@ export class Wizard extends Piece {
         board: Board,
         players: Player[],
     ): void {
-        EngineWizard.createAll(board, players);
+        EngineWizard.createAll(
+            board as any, players as any,
+        );
     }
 
     /**

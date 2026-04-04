@@ -239,7 +239,7 @@ export class Cursor {
         this._image.setVisible(true);
 
         const allowedAction: ActionType = await this._board.rules.processIntent(
-            this._board,
+            this._board as any,
         );
 
         const selectedPiece: Piece | null = this._board.selected;
@@ -358,7 +358,7 @@ export class Cursor {
         }
 
         const actionState: ActionType = await this._board.rules.processAction(
-            this._board,
+            this._board as any,
             intendedAction,
             input,
         );

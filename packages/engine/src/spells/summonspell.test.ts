@@ -1,3 +1,4 @@
+import { EngineEvent } from "../enums/engineevent";
 import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
 import { UnitStatus } from "../enums/unitstatus";
@@ -22,6 +23,10 @@ function makeMockBoard(): Board {
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
         playEffect: vi.fn().mockResolvedValue(undefined),
         idleDelay: vi.fn().mockResolvedValue(undefined),
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
         logger: { log: vi.fn() },
         sound: { play: vi.fn() },
         rangeGizmo: { showSimpleRange: vi.fn(), reset: vi.fn() },
@@ -597,10 +602,16 @@ describe("SummonSpell.doCast", () => {
         );
     });
 
-    it('plays "castloop08" and "spelleffect" sounds', async () => {
+    it('emits "castloop08" and "spelleffect" sound events', async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect((board as any).sound.play).toHaveBeenCalledWith("castloop08");
-        expect((board as any).sound.play).toHaveBeenCalledWith("spelleffect");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "castloop08" },
+        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "spelleffect" },
+        );
     });
 
     it("logs a success message", async () => {
@@ -611,9 +622,12 @@ describe("SummonSpell.doCast", () => {
         );
     });
 
-    it("calls playEffect three times (WizardCasting + WizardCastBeam + SummonPiece)", async () => {
+    it("emits WizardCasting, WizardCastBeam, and SummonPiece effects", async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect(board.playEffect).toHaveBeenCalledTimes(3);
+        const emitCalls = (board as any).events.emitAsync.mock.calls
+            .filter((c: any[]) => c[0] === EngineEvent.EffectRequested && c[1]?.type)
+            .map((c: any[]) => c[1].type);
+        expect(emitCalls).toHaveLength(3);
     });
 
     it("uses fallback values when unit config omits attackType, rangedType, projectileType, status and group", async () => {
@@ -1258,11 +1272,14 @@ describe("SummonSpell.autoCast", () => {
         spell.owner = player;
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
-        expect(board.sound.play).toHaveBeenCalledWith("cancel");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "cancel" },
+        );
         expect(player.discardSpell).not.toHaveBeenCalled();
     });
 
-    it('calls discardSpell and plays "cancel" when no valid tiles remain after first successful cast', async () => {
+    it('calls discardSpell and emits "cancel" when no valid tiles remain after first successful cast', async () => {
         // First iteration: tiles available → cast succeeds and decrements castTimes.
         // Second iteration (castTimes=1 multi-cast): no tiles left.
         let callCount = 0;
@@ -1295,7 +1312,10 @@ describe("SummonSpell.autoCast", () => {
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
         expect(player.discardSpell).toHaveBeenCalled();
-        expect(board.sound.play).toHaveBeenCalledWith("cancel");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "cancel" },
+        );
     });
 
     it("returns true and calls discardSpell after casting all times (random path)", async () => {
@@ -1448,7 +1468,10 @@ describe("SummonSpell.autoCast", () => {
         vi.spyOn(spell as any, "trySelectWallTile").mockReturnValue(null);
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
-        expect(board.sound.play).toHaveBeenCalledWith("cancel");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "cancel" },
+        );
         expect(player.discardSpell).not.toHaveBeenCalled();
     });
 

@@ -1,3 +1,4 @@
+import { EngineEvent } from "../enums/engineevent";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Spell } from "./spell";
 import { RaiseDeadSpell } from "./raisedeadspell";
@@ -60,10 +61,16 @@ describe("RaiseDeadSpell.doCast", () => {
         );
     });
 
-    it("plays sound effects", async () => {
+    it("emits sound effect events", async () => {
         const corpse = makeMockPiece({ dead: true });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
-        expect((board as any).sound.play).toHaveBeenCalledWith("castloop08");
-        expect((board as any).sound.play).toHaveBeenCalledWith("spelleffect");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "castloop08" },
+        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "spelleffect" },
+        );
     });
 });

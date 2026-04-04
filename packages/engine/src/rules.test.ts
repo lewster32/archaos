@@ -42,7 +42,10 @@ function createMockBoard(overrides: Record<string, any> = {}): Board {
         attackPiece: vi.fn().mockResolvedValue(null),
         rangedAttackPiece: vi.fn().mockResolvedValue(null),
         mountPiece: vi.fn().mockResolvedValue(undefined),
-        events: { emit: vi.fn() },
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
         ...overrides,
     } as unknown as Board;
 }

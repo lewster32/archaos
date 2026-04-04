@@ -64,7 +64,7 @@ import {
  * @param width The width of the board in cells.
  * @param height The height of the board in cells.
  */
-export class Board extends EngineBoard {
+export class Board extends EngineBoard<Piece> {
     /**
      * The Phaser scene the board is present in.
      */
@@ -220,23 +220,58 @@ export class Board extends EngineBoard {
             async (data: {
                 type?: EffectType;
                 pieceId?: number;
+                startPieceId?: number;
+                startPosition?: { x: number; y: number };
+                targetPosition?: { x: number; y: number };
                 sound?: string;
+                soundOptions?: {
+                    repeat?: number;
+                    delay?: number;
+                };
             }) => {
                 if (data.sound) {
-                    this.sound.play(data.sound);
-                }
-                if (data.type && data.pieceId) {
-                    const piece = this.getPiece(
-                        data.pieceId,
-                    );
-                    if (piece) {
-                        await this.playEffect(
-                            data.type,
-                            piece.sprite.getCenter(),
-                            null,
-                            piece,
+                    if (data.soundOptions) {
+                        await this.sound.playAsync(
+                            data.sound,
+                            data.soundOptions,
                         );
+                    } else {
+                        this.sound.play(data.sound);
                     }
+                }
+                if (data.type) {
+                    const piece = data.pieceId
+                        ? this.getPiece(data.pieceId)
+                        : null;
+                    const startPiece = data.startPieceId
+                        ? this.getPiece(data.startPieceId)
+                        : null;
+                    const startPos = startPiece
+                        ? startPiece.sprite.getCenter()
+                        : data.startPosition
+                          ? this.getIsoPosition(
+                                new Geom.Point(
+                                    data.startPosition.x,
+                                    data.startPosition.y,
+                                ),
+                            )
+                          : null;
+                    const targetPos = data.targetPosition
+                        ? this.getIsoPosition(
+                              new Geom.Point(
+                                  data.targetPosition.x,
+                                  data.targetPosition.y,
+                              ),
+                          )
+                        : piece
+                          ? piece.sprite.getCenter()
+                          : null;
+                    await this.playEffect(
+                        data.type,
+                        (startPos ?? targetPos) as Geom.Point,
+                        targetPos as Geom.Point,
+                        piece,
+                    );
                 }
             },
         );
@@ -253,6 +288,12 @@ export class Board extends EngineBoard {
                     CursorType.RangeCast,
                     data.lineOfSight,
                 );
+            },
+        );
+        this.events.on(
+            EngineEvent.ResetCastRange,
+            () => {
+                this.rangeGizmo.reset();
             },
         );
         this.events.on(
@@ -465,8 +506,8 @@ export class Board extends EngineBoard {
                 this.currentPlayer = null;
                 this.updateBackgroundColour();
 
-                await this.rules.doSpread(this);
-                await this.rules.doExpire(this);
+                await this.rules.doSpread(this as any);
+                await this.rules.doExpire(this as any);
 
                 this.currentPlayer = previousPlayer;
                 this.emitBoardUpdateEvent();
@@ -482,8 +523,8 @@ export class Board extends EngineBoard {
             this.currentPlayer = null;
             this.updateBackgroundColour();
 
-            await this.rules.doSpread(this);
-            await this.rules.doExpire(this);
+            await this.rules.doSpread(this as any);
+            await this.rules.doExpire(this as any);
 
             this.currentPlayer = previousPlayer;
             this.emitBoardUpdateEvent();
@@ -578,6 +619,7 @@ export class Board extends EngineBoard {
     async addPiece(config: PieceConfig): Promise<Piece> {
         const piece: Piece = new Piece(this, this._idCounter++, config);
         this._pieces.set(piece.id, piece);
+        piece.initSprites();
         this.emitBoardUpdateEvent();
         return piece;
     }
@@ -607,7 +649,7 @@ export class Board extends EngineBoard {
      * @param config The configuration for the wizard to add.
      * @returns The newly added wizard.
      */
-    addWizard(config: WizardConfig): Wizard {
+    async addWizard(config: WizardConfig): Promise<Piece> {
         const wizard: Wizard = new Wizard(this, this._idCounter++, config);
         this._pieces.set(wizard.id, wizard);
         this.emitBoardUpdateEvent();
@@ -1069,13 +1111,17 @@ export class Board extends EngineBoard {
      * @param config The configuration for the spell to add.
      * @returns The newly added spell.
      */
-    override addSpell(player: Player, config: SpellConfig): Spell {
+    override addSpell(
+        player: Player, config: SpellConfig,
+    ): Spell<Piece> {
         if (!config || !player) {
             throw new Error("No player or config provided");
         }
-        const spell = createSpell(this, this._idCounter++, config);
-        player.addSpell(spell);
-        return spell;
+        const spell = createSpell(
+            this as any, this._idCounter++, config,
+        );
+        player.addSpell(spell as any);
+        return spell as Spell<Piece>;
     }
 
     /**
@@ -1502,13 +1548,13 @@ export class Board extends EngineBoard {
                     const spell: Spell = this.currentPlayer?.selectedSpell;
                     if (spell?.properties?.autoPlace) {
                         this.stateManager.evaluate(new SpellTargeting());
-                        await this.rules.doAutoCastSpell(this);
+                        await this.rules.doAutoCastSpell(this as any);
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range === 0) {
                         this.stateManager.evaluate(new SpellTargeting());
                         await this.rules.doCastSpell(
-                            this,
+                            this as any,
                             this.currentPlayer.castingPiece as Piece,
                         );
                         this.emitBoardUpdateEvent();

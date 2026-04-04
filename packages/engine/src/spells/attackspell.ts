@@ -8,14 +8,17 @@ import type { SpellConfig } from "../configs/spellconfig";
 import { Point } from "../point";
 import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
 import type { Player } from "../player";
 /**
  * A spell that attacks one or more target pieces.
  */
-export class AttackSpell extends Spell {
-    constructor(board: Board, id: number, config: SpellConfig) {
+export class AttackSpell<
+    P extends Piece = Piece,
+> extends Spell<P> {
+    constructor(board: Board<P>, id: number, config: SpellConfig) {
         super(board, id, config);
         this._type = SpellType.Attack;
     }
@@ -25,16 +28,16 @@ export class AttackSpell extends Spell {
     }
 
     async doCast(
-        owner: Player,
-        castingPiece: Piece,
+        owner: Player<P>,
+        castingPiece: P,
         point?: Point,
-        targets?: Piece[],
-    ): Promise<Piece | boolean | null> {
+        targets?: P[],
+    ): Promise<P | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
         }
         // Find the first valid target from the list of potential targets
-        const target: Piece = targets.find((t) => this.getValidTarget(t));
+        const target: P = targets.find((t) => this.getValidTarget(t));
         if (!target) {
             throw new Error("No valid target for attack spell");
         }
@@ -67,15 +70,20 @@ export class AttackSpell extends Spell {
         }
 
         if (beamSound) {
-            this._board.sound.play(beamSound);
+            this._board.events.emit(
+                EngineEvent.EffectRequested,
+                { sound: beamSound },
+            );
         }
 
         if (beamEffect) {
-            await this._board.playEffect(
-                beamEffect,
-                castingPiece.sprite.getCenter(),
-                target.sprite.getCenter(),
-                target,
+            await this._board.events.emitAsync(
+                EngineEvent.EffectRequested,
+                {
+                    type: beamEffect,
+                    pieceId: target.id,
+                    startPieceId: castingPiece.id,
+                },
             );
         }
 
@@ -88,14 +96,18 @@ export class AttackSpell extends Spell {
         let targetKilled: boolean = false;
 
         if (hitSound) {
-            this._board.sound.play(hitSound);
+            this._board.events.emit(
+                EngineEvent.EffectRequested,
+                { sound: hitSound },
+            );
         }
         if (hitEffect) {
-            await this._board.playEffect(
-                hitEffect,
-                target.sprite.getCenter(),
-                null,
-                target,
+            await this._board.events.emitAsync(
+                EngineEvent.EffectRequested,
+                {
+                    type: hitEffect,
+                    pieceId: target.id,
+                },
             );
         }
 
@@ -104,16 +116,20 @@ export class AttackSpell extends Spell {
                 this.properties.destroyWizardCreatures &&
                 target.hasStatus(UnitStatus.Wizard)
             ) {
-                await this._board.sound.playAsync("justicesuccessful", {
-                    delay: Board.DEFAULT_DELAY,
-                });
+                this._board.events.emit(
+                    EngineEvent.EffectRequested,
+                    { sound: "justicesuccessful" },
+                );
                 await target.owner.destroyCreations();
                 this._board.logger.log(
                     `${target.fullName}'s creations were dispelled by ${this.name}`,
                 );
                 await this._board.idleDelay(Board.DEFAULT_DELAY);
             } else {
-                this._board.sound.play("killcreature");
+                this._board.events.emit(
+                    EngineEvent.EffectRequested,
+                    { sound: "killcreature" },
+                );
                 await target.kill();
                 targetKilled = true;
             }

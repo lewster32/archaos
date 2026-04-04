@@ -1,3 +1,5 @@
+import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { SpellTarget } from "../enums/spelltarget";
 import { SpellType } from "../enums/spelltype";
 import { UnitStatus } from "../enums/unitstatus";
@@ -27,6 +29,10 @@ function makeMockBoard(opts: { rollResult?: boolean } = {}): Board {
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
         playEffect: vi.fn().mockResolvedValue(undefined),
         idleDelay: vi.fn().mockResolvedValue(undefined),
+        events: {
+            emit: vi.fn(),
+            emitAsync: vi.fn().mockResolvedValue(undefined),
+        },
         logger: { log: vi.fn() },
         sound: {
             play: vi.fn(),
@@ -288,29 +294,42 @@ describe("AttackSpell.doCast", () => {
             spell.owner = owner;
         });
 
-        it('plays "lightning4" beam sound', async () => {
+        it('emits "lightning4" beam sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "lightning4",
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "lightning4" },
             );
         });
 
-        it('plays "lightningexplode" hit sound', async () => {
+        it('emits "lightningexplode" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "lightningexplode",
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "lightningexplode" },
             );
         });
 
-        it("calls playEffect twice (beam + hit)", async () => {
+        it("emits beam + hit effects", async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect(board.playEffect).toHaveBeenCalledTimes(2);
+            expect((board as any).events.emitAsync).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({
+                    type: EffectType.LightningBeam,
+                }),
+            );
+            expect((board as any).events.emitAsync).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({
+                    type: EffectType.LightningHit,
+                }),
+            );
         });
     });
 
@@ -327,21 +346,23 @@ describe("AttackSpell.doCast", () => {
             spell.owner = owner;
         });
 
-        it('plays "magicbolt6" beam sound', async () => {
+        it('emits "magicbolt6" beam sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "magicbolt6",
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "magicbolt6" },
             );
         });
 
-        it('plays "magicboltexplode" hit sound', async () => {
+        it('emits "magicboltexplode" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "magicboltexplode",
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "magicboltexplode" },
             );
         });
     });
@@ -359,30 +380,32 @@ describe("AttackSpell.doCast", () => {
             spell.owner = owner;
         });
 
-        it('plays "justice" hit sound', async () => {
+        it('emits "justice" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith("justice");
-        });
-
-        it("does not play a beam sound (no beamSound for Justice)", async () => {
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                enemy,
-            ]);
-            // Only hitSound played — no beam-specific sounds
-            const playCalls = ((board as any).sound.play as any).mock.calls.map(
-                (c: any[]) => c[0],
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "justice" },
             );
-            expect(playCalls).not.toContain("lightning4");
-            expect(playCalls).not.toContain("magicbolt6");
         });
 
-        it("calls playEffect once (hit only, no beam)", async () => {
+        it("emits hit effect only (no beam)", async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect(board.playEffect).toHaveBeenCalledTimes(1);
+            expect((board as any).events.emitAsync).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({
+                    type: EffectType.JusticeHit,
+                }),
+            );
+            expect((board as any).events.emitAsync).not.toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({
+                    type: EffectType.LightningBeam,
+                }),
+            );
         });
     });
 
@@ -399,23 +422,31 @@ describe("AttackSpell.doCast", () => {
             spell.owner = owner;
         });
 
-        it('plays "justice" hit sound', async () => {
+        it('emits "justice" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect((board as any).sound.play).toHaveBeenCalledWith("justice");
+            expect((board as any).events.emit).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                { sound: "justice" },
+            );
         });
 
-        it("calls playEffect once (hit only, no beam)", async () => {
+        it("emits hit effect only (no beam)", async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [
                 enemy,
             ]);
-            expect(board.playEffect).toHaveBeenCalledTimes(1);
+            expect((board as any).events.emitAsync).toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({
+                    type: EffectType.DarkPowerHit,
+                }),
+            );
         });
     });
 
     describe("unknown / unspecified projectile", () => {
-        it("plays no beam or hit sounds", async () => {
+        it("emits no beam or hit sound events", async () => {
             const s = new AttackSpell(
                 board,
                 1,
@@ -424,18 +455,25 @@ describe("AttackSpell.doCast", () => {
             s.owner = owner;
             (board as any).roll.mockReturnValue(false); // prevent "killcreature" sound
             await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).sound.play).not.toHaveBeenCalled();
+            expect((board as any).events.emit).not.toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({ sound: expect.any(String) }),
+            );
         });
 
-        it("calls playEffect zero times (no beam, no hit effect)", async () => {
+        it("emits no effect type events", async () => {
             const s = new AttackSpell(
                 board,
                 1,
                 makeAttackConfig({ projectile: undefined }),
             );
             s.owner = owner;
+            (board as any).roll.mockReturnValue(false);
             await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect(board.playEffect).not.toHaveBeenCalled();
+            expect((board as any).events.emitAsync).not.toHaveBeenCalledWith(
+                EngineEvent.EffectRequested,
+                expect.objectContaining({ type: expect.any(String) }),
+            );
         });
     });
 
@@ -523,7 +561,10 @@ describe("AttackSpell.doCast", () => {
             [enemy],
         );
         expect(result).toBe(true);
-        expect((board as any).sound.play).toHaveBeenCalledWith("magicbolt6");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "magicbolt6" },
+        );
     });
 
     it("uses the real Lightning spell config from JSON", async () => {
@@ -537,6 +578,9 @@ describe("AttackSpell.doCast", () => {
             [enemy],
         );
         expect(result).toBe(true);
-        expect((board as any).sound.play).toHaveBeenCalledWith("lightning4");
+        expect((board as any).events.emit).toHaveBeenCalledWith(
+            EngineEvent.EffectRequested,
+            { sound: "lightning4" },
+        );
     });
 });

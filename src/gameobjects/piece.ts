@@ -11,7 +11,10 @@ import {
     UnitRangedProjectileType,
     Piece as EnginePiece,
 } from "@archaos/engine";
-import type { PieceConfig } from "@archaos/engine";
+import type {
+    PieceConfig,
+    Player as EnginePlayer,
+} from "@archaos/engine";
 import unitJsonData from "../../assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
@@ -29,10 +32,10 @@ EnginePiece.units = unitJsonData as any;
 export class Piece extends EnginePiece {
     /**
      * Get the board this piece belongs to, narrowed
-     * to the client Board type.
+     * to the client Board type for rendering access.
      */
-    override get board(): Board {
-        return this._board as Board;
+    get clientBoard(): Board {
+        return this._board as unknown as Board;
     }
 
     /**
@@ -73,7 +76,7 @@ export class Piece extends EnginePiece {
     protected _ownerHighlightTween: Tweens.Tween;
 
     constructor(board: Board, id: number, config: PieceConfig) {
-        super(board, id, config);
+        super(board as any, id, config);
 
         this._shadowScale = config.shadowScale || 3;
         this._offsetY = config.offsetY || 0;
@@ -89,13 +92,13 @@ export class Piece extends EnginePiece {
      * Initialise the piece's sprites. Will not create duplicate sprites if
      * they already exist.
      */
-    protected initSprites() {
+    initSprites() {
         this.createShadow();
         this.createSprite();
         this.createShaders();
 
         // Perform initial animation to fade the piece in and pop it in slightly
-        this.board.scene.tweens.add({
+        this.clientBoard.scene.tweens.add({
             targets: [this._sprite, this._shadow, ...this._effects.values()],
             alpha: { from: 0, to: 1 },
             duration: Piece.DEFAULT_MOVE_DURATION / 2,
@@ -177,14 +180,14 @@ export class Piece extends EnginePiece {
         this._engulfed = engulfed;
         setTimeout(() => {
             if (this._engulfed) {
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.name} was engulfed`,
                     Colour.Magenta,
                 );
                 this.sprite?.setVisible(false);
                 this.shadow?.setVisible(false);
             } else {
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.name} was released`,
                     Colour.Green,
                 );
@@ -267,7 +270,7 @@ export class Piece extends EnginePiece {
             ? Piece.SHADOW_FORM_ALPHA
             : 1;
 
-        this.board.scene.tweens.add({
+        this.clientBoard.scene.tweens.add({
             targets: [this._sprite, this._shadow, ...this._effects.values()],
             alpha: mount ? 0 : visibleAlpha,
             duration: Piece.DEFAULT_MOVE_DURATION / 2,
@@ -327,7 +330,7 @@ export class Piece extends EnginePiece {
                 return;
             }
 
-            const isoPosition: Geom.Point = this.board.getIsoPosition(
+            const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
                 this.position,
             );
 
@@ -337,7 +340,7 @@ export class Piece extends EnginePiece {
             );
 
             // A little hop for the piece as it moves
-            this.board.scene.tweens.add({
+            this.clientBoard.scene.tweens.add({
                 targets: [this._sprite],
                 displayOriginY: `+${Math.min(120, difference * 1.5)}`,
                 duration: duration / 2,
@@ -345,7 +348,7 @@ export class Piece extends EnginePiece {
             });
 
             // Move the piece to the new position
-            this.board.scene.tweens.add({
+            this.clientBoard.scene.tweens.add({
                 targets: [this._sprite, this._shadow],
                 x: isoPosition.x,
                 y: isoPosition.y - this._offsetY,
@@ -400,7 +403,7 @@ export class Piece extends EnginePiece {
             this.currentMount &&
             !Geom.Point.Equals(this.currentMount.position, this.position)
         ) {
-            await this.board.dismountPiece(this.id);
+            await this.clientBoard.dismountPiece(this.id);
         }
         await this.updatePosition(stepDuration);
     }
@@ -426,7 +429,7 @@ export class Piece extends EnginePiece {
         ) {
             return true;
         }
-        if (!this.board.rangeGizmo.getPathTo(point)) {
+        if (!this.clientBoard.rangeGizmo.getPathTo(point)) {
             return false;
         }
         return true;
@@ -440,7 +443,7 @@ export class Piece extends EnginePiece {
             !this.moved &&
             this.inMovementRange(point) &&
             (this.hasStatus(UnitStatus.Flying) ||
-                this.board.rangeGizmo.getPathTo(point))
+                this.clientBoard.rangeGizmo.getPathTo(point))
         ) {
             return true;
         }
@@ -456,7 +459,7 @@ export class Piece extends EnginePiece {
     findThreatPieces(): Set<Piece> {
         const threatPieces: Set<Piece> = new Set<Piece>();
 
-        const allPieces: Piece[] = this.board.pieces.filter(
+        const allPieces: Piece[] = this.clientBoard.pieces.filter(
             (piece: Piece) =>
                 piece.owner !== this.owner &&
                 !piece.dead &&
@@ -486,7 +489,7 @@ export class Piece extends EnginePiece {
         if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
             throw new Error("Cannot spread a non-spreading or dead piece");
         }
-        const spreadAction: SpreadAction = this.board.rng.weightedRandomPick([
+        const spreadAction: SpreadAction = this.clientBoard.rng.weightedRandomPick([
             SpreadAction.Shrink,
             SpreadAction.None,
             SpreadAction.Spread,
@@ -497,13 +500,13 @@ export class Piece extends EnginePiece {
         if (spreadAction === SpreadAction.Shrink) {
             if (this.currentEngulfed) {
                 this.currentEngulfed.engulfed = false;
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.currentEngulfed.fullName} was released from ${this.fullName}`,
                     Colour.Green,
                 );
             }
             await new Promise((resolve) => {
-                this.board.scene.tweens.add({
+                this.clientBoard.scene.tweens.add({
                     targets: this.sprite,
                     duration: Piece.DEFAULT_MOVE_DURATION / 2,
                     scale: { from: 1, to: 0 },
@@ -515,11 +518,11 @@ export class Piece extends EnginePiece {
             await this.destroy();
         }
         if (spreadAction === SpreadAction.Spread) {
-            const adjacentPoints: Geom.Point[] = this.board.getAdjacentPoints(
+            const adjacentPoints: Geom.Point[] = this.clientBoard.getAdjacentPoints(
                 this.position,
             );
-            const spreadPoint: Geom.Point = this.board.rng.pick(adjacentPoints);
-            const spreadPieces: Piece[] = this.board.getPiecesAtPosition(
+            const spreadPoint: Geom.Point = this.clientBoard.rng.pick(adjacentPoints);
+            const spreadPieces: Piece[] = this.clientBoard.getPiecesAtPosition(
                 spreadPoint,
                 (piece: Piece) => !piece.dead,
             );
@@ -541,13 +544,13 @@ export class Piece extends EnginePiece {
                     const killedPiece: Piece = spreadPieces.find((piece) =>
                         piece.hasStatus(UnitStatus.Wizard),
                     );
-                    this.board.logger.log(
+                    this.clientBoard.logger.log(
                         `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
                         Colour.Red,
                     );
                     await killedPiece.kill();
                 } else if (this.hasStatus(UnitStatus.Engulfs)) {
-                    this.board.logger.log(
+                    this.clientBoard.logger.log(
                         `${this.fullName} has engulfed ${spreadPieces[0].fullName}`,
                         Colour.Yellow,
                     );
@@ -555,13 +558,13 @@ export class Piece extends EnginePiece {
                 } else {
                     await Promise.all(
                         spreadPieces.map(async (piece) => {
-                            this.board.logger.log(
+                            this.clientBoard.logger.log(
                                 `${piece.fullName} was destroyed by ${this.fullName}`,
                                 Colour.Red,
                             );
                             switch (this.properties.attackType) {
                                 case UnitAttackType.Burned:
-                                    await this.board.playEffect(
+                                    await this.clientBoard.playEffect(
                                         EffectType.DragonFireHit,
                                         piece.sprite.getCenter(),
                                         null,
@@ -577,7 +580,7 @@ export class Piece extends EnginePiece {
 
             const unit: any = Piece.getUnitConfig(this.properties.id);
 
-            const newPiece: Piece = await this.board.addPiece({
+            const newPiece: Piece = await this.clientBoard.addPiece({
                 type: UnitType.Creature,
                 x: spreadPoint.x,
                 y: spreadPoint.y,
@@ -604,7 +607,7 @@ export class Piece extends EnginePiece {
                 group: unit.group || "classicunits",
             } as PieceConfig);
 
-            this.board.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
+            this.clientBoard.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
 
             if (spreadPieces.length) {
                 if (
@@ -614,7 +617,7 @@ export class Piece extends EnginePiece {
                 ) {
                     newPiece.currentEngulfed = spreadPieces[0];
                 } else {
-                    await this.board.idleDelay(Piece.DEFAULT_MOVE_DURATION);
+                    await this.clientBoard.idleDelay(Piece.DEFAULT_MOVE_DURATION);
                 }
             }
         }
@@ -623,7 +626,7 @@ export class Piece extends EnginePiece {
     /**
      * Raise this piece from the dead, assigning its new owner.
      */
-    async raiseDead(owner: Player | null): Promise<void> {
+    async raiseDead(owner: EnginePlayer | null): Promise<void> {
         if (!this.dead) {
             throw new Error("Cannot raise a piece that is not dead");
         }
@@ -640,17 +643,17 @@ export class Piece extends EnginePiece {
     /**
      * Engage this piece with the given piece.
      */
-    async engage(piece: Piece): Promise<void> {
+    async engage(piece: EnginePiece): Promise<void> {
         if (this.canEngagePiece(piece)) {
             this.engaged = true;
             this.attacked = false;
             piece.engaged = true;
         }
-        this.board.logger.log(
+        this.clientBoard.logger.log(
             `${this.name} is engaged with ${piece.name}`,
             Colour.Yellow,
         );
-        await this.board.sound.playAsync("engaged", {
+        await this.clientBoard.sound.playAsync("engaged", {
             delay: Board.DEFAULT_DELAY,
         });
     }
@@ -658,14 +661,14 @@ export class Piece extends EnginePiece {
     /**
      * Perform an attack on the given piece.
      */
-    async attack(piece: Piece): Promise<boolean> {
+    async attack(piece: EnginePiece): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan,
                 );
-                await this.board.sound.playAsync("undead", {
+                await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
                 });
                 return false;
@@ -675,22 +678,22 @@ export class Piece extends EnginePiece {
             this.attacked = true;
             this.moved = true;
 
-            const rollSuccess: boolean = this.board.roll(
+            const rollSuccess: boolean = this.clientBoard.roll(
                 this.stats.combat,
                 piece.stats.defence,
-                this.owner,
+                this.owner as any,
             );
 
-            this.board.sound.play("attackonly");
-            this.board.logger.log(
+            this.clientBoard.sound.play("attackonly");
+            this.clientBoard.logger.log(
                 `${this.name} ${this.properties.attackType} ${piece.name}`,
                 Colour.Yellow,
             );
-            await this.board.playEffect(
+            await this.clientBoard.playEffect(
                 EffectType.AttackHit,
-                piece.sprite.getCenter(),
+                (piece as Piece).sprite.getCenter(),
                 null,
-                piece,
+                piece as Piece,
             );
             await Board.delay(Board.DEFAULT_DELAY);
 
@@ -700,14 +703,14 @@ export class Piece extends EnginePiece {
             }
 
             if (rollSuccess) {
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.fullName} defeated ${piece.fullName}`,
                     Colour.Red,
                 );
-                this.board.sound.play("killcreature");
+                this.clientBoard.sound.play("killcreature");
                 await piece.kill();
                 if (
-                    this.board.getPiecesAtPosition(
+                    this.clientBoard.getPiecesAtPosition(
                         piece.position,
                         (p: Piece) => {
                             return !p.dead;
@@ -715,7 +718,7 @@ export class Piece extends EnginePiece {
                     ).length === 0 &&
                     this.canMove
                 ) {
-                    await this.board.movePiece(this.id, piece.position);
+                    await this.clientBoard.movePiece(this.id, piece.position);
                 }
                 return true;
             }
@@ -726,13 +729,13 @@ export class Piece extends EnginePiece {
     /**
      * Perform a ranged attack on the given piece.
      */
-    async rangedAttack(piece: Piece): Promise<boolean> {
+    async rangedAttack(piece: EnginePiece): Promise<boolean> {
         if (this.canRangedAttackPiece(piece)) {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
-                await this.board.sound.playAsync("undead", {
+                await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
                 });
-                this.board.logger.log(
+                this.clientBoard.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan,
                 );
@@ -779,33 +782,33 @@ export class Piece extends EnginePiece {
                     break;
             }
 
-            this.board.sound.play(beamSound);
-            await this.board.playEffect(
+            this.clientBoard.sound.play(beamSound);
+            await this.clientBoard.playEffect(
                 beamEffectType,
                 this.sprite.getCenter(),
-                piece.sprite.getCenter(),
-                piece,
+                (piece as Piece).sprite.getCenter(),
+                piece as Piece,
             );
 
-            this.board.sound.play(hitSound);
-            await this.board.playEffect(
+            this.clientBoard.sound.play(hitSound);
+            await this.clientBoard.playEffect(
                 hitEffectType,
-                piece.sprite.getCenter(),
+                (piece as Piece).sprite.getCenter(),
                 null,
-                piece,
+                piece as Piece,
             );
 
             this.rangedAttacked = true;
             this.attacked = true;
             this.moved = true;
 
-            const rollSuccess: boolean = this.board.roll(
+            const rollSuccess: boolean = this.clientBoard.roll(
                 this.stats.rangedCombat,
                 piece.stats.defence,
-                this.owner,
+                this.owner as any,
             );
 
-            this.board.logger.log(
+            this.clientBoard.logger.log(
                 `${this.name} ${this.properties.rangedType} ${piece.name}`,
                 Colour.Orange,
             );
@@ -816,8 +819,8 @@ export class Piece extends EnginePiece {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
-                this.board.sound.play("killcreature");
-                this.board.logger.log(
+                this.clientBoard.sound.play("killcreature");
+                this.clientBoard.logger.log(
                     `${this.fullName} defeated ${piece.fullName}`,
                     Colour.Red,
                 );
@@ -848,7 +851,7 @@ export class Piece extends EnginePiece {
         this._dead = true;
         this.owner = null;
         if (this.illusion) {
-            await this.board.playEffect(
+            await this.clientBoard.playEffect(
                 EffectType.DisbelieveHit,
                 this.sprite.getCenter(),
             );
@@ -858,17 +861,17 @@ export class Piece extends EnginePiece {
             this.hasStatus(UnitStatus.Undead)
         ) {
             silent = true;
-            await this.board.playEffect(
+            await this.clientBoard.playEffect(
                 EffectType.NoCorpseDeath,
                 this.sprite.getCenter(),
             );
             await this.destroy();
         }
         if (!silent) {
-            this.board.sound.play("killcreature");
+            this.clientBoard.sound.play("killcreature");
         }
         if (!this._sprite) {
-            this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
+            this.clientBoard.boardEvents?.emit(BoardEvent.PieceDied, this);
             return;
         }
         if (
@@ -881,15 +884,15 @@ export class Piece extends EnginePiece {
         } else {
             this._sprite.visible = false;
         }
-        this.board.emitBoardUpdateEvent();
+        this.clientBoard.emitBoardUpdateEvent();
         await Board.delay(Board.DEFAULT_DELAY);
-        this.board.boardEvents?.emit(BoardEvent.PieceDied, this);
+        this.clientBoard.boardEvents?.emit(BoardEvent.PieceDied, this);
     }
 
     /**
      * Mount this piece upon the given piece.
      */
-    async mount(piece: Piece): Promise<void> {
+    async mount(piece: EnginePiece): Promise<void> {
         if (!this.canMountPiece(piece)) {
             throw new Error(`${this.name} cannot mount ${piece.name}`);
         }
@@ -897,11 +900,11 @@ export class Piece extends EnginePiece {
         this.attacked = true;
         piece.moved = true;
 
-        this.currentMount = piece;
+        this.currentMount = piece as Piece;
         piece.currentRider = this;
-        await this.board.movePiece(this.id, piece.position);
-        this.board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
-        piece.createShaders(true, this.owner);
+        await this.clientBoard.movePiece(this.id, piece.position);
+        this.clientBoard.logger.log(`${this.fullName} mounted ${piece.fullName}`);
+        (piece as unknown as Piece).createShaders(true, this.owner as any);
     }
 
     /**
@@ -915,7 +918,7 @@ export class Piece extends EnginePiece {
 
         this.moved = true;
         this.currentMount.turnOver = true;
-        this.board.logger.log(
+        this.clientBoard.logger.log(
             `${this.fullName} dismounted ${this.currentMount.fullName}`,
         );
         (this.currentMount as Piece).createShaders(true);
@@ -940,8 +943,8 @@ export class Piece extends EnginePiece {
             sprite.destroy();
         });
 
-        this.board.removePiece(this.id);
-        this.board.emitBoardUpdateEvent();
+        this.clientBoard.removePiece(this.id);
+        this.clientBoard.emitBoardUpdateEvent();
     }
 
     // ── Rendering methods ───────────────────────────────────────────────────
@@ -976,18 +979,18 @@ export class Piece extends EnginePiece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: Geom.Point = this.board.getIsoPosition(
+        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
             this.position,
         );
 
-        this._shadow = this.board.scene.add.image(
+        this._shadow = this.clientBoard.scene.add.image(
             isoPosition.x,
             isoPosition.y,
             "board",
             "shadow-" + this._shadowScale,
         );
 
-        this.board.getLayer(BoardLayer.Shadows).add(this._shadow);
+        this.clientBoard.getLayer(BoardLayer.Shadows).add(this._shadow);
 
         this._shadow.setOrigin(0.5, 0.5);
         this._shadow.displayOriginY = -4;
@@ -1003,7 +1006,7 @@ export class Piece extends EnginePiece {
             return this._sprite;
         }
 
-        const isoPosition: Geom.Point = this.board.getIsoPosition(
+        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
             this.position,
         );
 
@@ -1011,7 +1014,7 @@ export class Piece extends EnginePiece {
             ? this._properties.id
             : "classicunits";
 
-        this._sprite = this.board.scene.add.sprite(
+        this._sprite = this.clientBoard.scene.add.sprite(
             isoPosition.x,
             isoPosition.y - this._offsetY,
             group,
@@ -1024,10 +1027,10 @@ export class Piece extends EnginePiece {
 
         this.playAnim();
 
-        this.board.getLayer(BoardLayer.Pieces).add(this._sprite);
+        this.clientBoard.getLayer(BoardLayer.Pieces).add(this._sprite);
 
         if (this.hasStatus(UnitStatus.Spreads)) {
-            this.board.scene.tweens.add({
+            this.clientBoard.scene.tweens.add({
                 targets: this._sprite,
                 duration: Piece.DEFAULT_MOVE_DURATION / 2,
                 scale: { from: 0, to: 1 },
@@ -1053,7 +1056,7 @@ export class Piece extends EnginePiece {
             tempOwner?.colour ?? this.owner?.colour ?? 0,
         );
 
-        const postFxPlugin: any = this.board.scene.game.plugins.get(
+        const postFxPlugin: any = this.clientBoard.scene.game.plugins.get(
             "rexcolorreplacepipelineplugin",
         );
         const postFxPipeline = postFxPlugin.add(this._sprite, {
@@ -1074,7 +1077,7 @@ export class Piece extends EnginePiece {
             );
         }
 
-        this._ownerHighlightTween = this.board.scene.tweens.addCounter({
+        this._ownerHighlightTween = this.clientBoard.scene.tweens.addCounter({
             from: 0,
             to: Piece.DEFAULT_HIGHLIGHT_STEPS - 1,
             duration: Piece.DEFAULT_HIGHLIGHT_DURATION,

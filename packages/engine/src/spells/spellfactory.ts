@@ -1,5 +1,6 @@
 import type { SpellConfig } from "../configs/spellconfig";
 import { SpellTarget } from "../enums/spelltarget";
+import type { Piece } from "../piece";
 import type { Board } from "../board";
 import { AttackSpell } from "./attackspell";
 import { DisbelieveSpell } from "./disbelievespell";
@@ -10,11 +11,11 @@ import { SubversionSpell } from "./subversionspell";
 import { SummonSpell } from "./summonspell";
 import { TurmoilSpell } from "./turmoilspell";
 
-type SpellConstructor = new (
-    board: Board,
+type SpellConstructor<P extends Piece = Piece> = new (
+    board: Board<P>,
     id: number,
     config: SpellConfig,
-) => Spell;
+) => Spell<P>;
 
 /**
  * An array of rules to determine which Spell subclass to instantiate based on
@@ -41,12 +42,14 @@ const SPELL_RULES: [(config: SpellConfig) => boolean, SpellConstructor][] = [
  * @param config The configuration object that defines the spell's properties and behavior.
  * @returns An instance of a Spell subclass that matches the provided configuration, or a generic Spell if no specific match is found.
  */
-export function createSpell(
-    board: Board,
+export function createSpell<
+    P extends Piece = Piece,
+>(
+    board: Board<P>,
     id: number,
     config: SpellConfig,
-): Spell {
+): Spell<P> {
     const SpellClass =
         SPELL_RULES.find(([match]) => match(config))?.[1] ?? Spell;
-    return new SpellClass(board, id, config);
+    return new SpellClass(board, id, config) as Spell<P>;
 }

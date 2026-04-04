@@ -10,6 +10,7 @@ import type { UnitConfig } from "../interfaces/ui";
 import { UnitStatus } from "../enums/unitstatus";
 import { Point } from "../point";
 import { Board } from "../board";
+import { EngineEvent } from "../enums/engineevent";
 import { EffectType } from "../enums/effecttype";
 import { Piece } from "../piece";
 import { Player } from "../player";
@@ -17,10 +18,12 @@ import { Spell } from "./spell";
 /**
  * A spell that summons a unit onto the board.
  */
-export class SummonSpell extends Spell {
+export class SummonSpell<
+    P extends Piece = Piece,
+> extends Spell<P> {
     protected _illusion: boolean;
 
-    constructor(board: Board, id: number, config: SpellConfig) {
+    constructor(board: Board<P>, id: number, config: SpellConfig) {
         super(board, id, config);
         this._illusion = false;
         this._type = SpellType.Summon;
@@ -91,7 +94,7 @@ export class SummonSpell extends Spell {
     }
 
     getValidTarget(
-        target: Point | Piece,
+        target: Point | P,
         showReason?: boolean,
     ): Point | null {
         if (Piece.isPiece(target)) {
@@ -117,9 +120,9 @@ export class SummonSpell extends Spell {
             return null;
         }
 
-        const targetPieces: Piece[] = this._board.getPiecesAtPosition(
+        const targetPieces: P[] = this._board.getPiecesAtPosition(
             targetPoint,
-            (piece: Piece) => {
+            (piece: P) => {
                 return !piece.currentMount && !piece.engulfed && !piece.dead;
             },
         );
@@ -142,26 +145,37 @@ export class SummonSpell extends Spell {
     }
 
     async doCast(
-        owner: Player,
-        castingPiece: Piece,
+        owner: Player<P>,
+        castingPiece: P,
         point: Point,
-    ): Promise<Piece> {
+    ): Promise<P> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
-        this._board.sound.play("castloop08");
-        await this._board.playEffect(
-            EffectType.WizardCasting,
-            castingPiece.sprite.getCenter(),
+        this._board.events.emit(
+            EngineEvent.EffectRequested,
+            { sound: "castloop08" },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.WizardCasting,
+                pieceId: castingPiece.id,
+            },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.WizardCastBeam,
+                pieceId: castingPiece.id,
+                startPieceId: castingPiece.id,
+                targetPosition: {
+                    x: point.x,
+                    y: point.y,
+                },
+            },
         );
 
-        await this._board.playEffect(
-            EffectType.WizardCastBeam,
-            castingPiece.sprite.getCenter(),
-            this._board.getIsoPosition(point),
-            castingPiece,
-        );
-
-        const newPiece: Piece = await this._board.addPiece({
+        const newPiece: P = await this._board.addPiece({
             type: UnitType.Creature,
             x: point.x,
             y: point.y,
@@ -188,12 +202,20 @@ export class SummonSpell extends Spell {
             group: unit.group || "classicunits",
         });
 
-        this._board.sound.play("spelleffect");
-        await this._board.playEffect(
-            EffectType.SummonPiece,
-            this._board.getIsoPosition(point),
-            null,
-            newPiece,
+        this._board.events.emit(
+            EngineEvent.EffectRequested,
+            { sound: "spelleffect" },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.SummonPiece,
+                pieceId: newPiece.id,
+                targetPosition: {
+                    x: point.x,
+                    y: point.y,
+                },
+            },
         );
 
         newPiece.turnOver = true;
@@ -217,7 +239,7 @@ export class SummonSpell extends Spell {
      * @returns true if the spell was cast at least partially, false if it had
      *          to be cancelled entirely before any cast succeeded
      */
-    async autoCast(player: Player): Promise<boolean> {
+    async autoCast(player: Player<P>): Promise<boolean> {
         const isSpreading: boolean =
             this.unitProperties?.status?.includes(UnitStatus.Spreads) ?? false;
         const isWall: boolean = this.name === "Wall";
@@ -248,7 +270,10 @@ export class SummonSpell extends Spell {
                 if (successfullyCast) {
                     player.discardSpell();
                 }
-                this._board.sound.play("cancel");
+                this._board.events.emit(
+                    EngineEvent.EffectRequested,
+                    { sound: "cancel" },
+                );
                 return false;
             }
 
@@ -290,7 +315,10 @@ export class SummonSpell extends Spell {
                     if (successfullyCast) {
                         player.discardSpell();
                     } else {
-                        this._board.sound.play("cancel");
+                        this._board.events.emit(
+                    EngineEvent.EffectRequested,
+                    { sound: "cancel" },
+                );
                     }
                     return successfullyCast;
                 }
@@ -331,12 +359,12 @@ export class SummonSpell extends Spell {
      * or staging the summoned unit for a short approach.
      */
     private selectDefaultTile(
-        player: Player,
+        player: Player<P>,
         wizardPos: Point | null,
         validTiles: Point[],
     ): Point {
-        const enemies: Piece[] = this._board.pieces.filter(
-            (p: Piece) =>
+        const enemies: P[] = this._board.pieces.filter(
+            (p: P) =>
                 p.owner !== player &&
                 !p.dead &&
                 !p.hasStatus(UnitStatus.Structure),
@@ -344,7 +372,7 @@ export class SummonSpell extends Spell {
 
         if (enemies.length > 0 && wizardPos) {
             // Find the highest-threat enemy piece: strength / (distance + 1)
-            let highestThreat: Piece = enemies[0];
+            let highestThreat: P = enemies[0];
             let highestThreatScore = 0;
             for (const enemy of enemies) {
                 const dist = Board.distance(wizardPos, enemy.position);
@@ -382,12 +410,12 @@ export class SummonSpell extends Spell {
      * the wizard when no enemies are present.
      */
     private selectSpreadingTile(
-        player: Player,
+        player: Player<P>,
         wizardPos: Point | null,
         validTiles: Point[],
     ): Point {
-        const enemies: Piece[] = this._board.pieces.filter(
-            (p: Piece) => p.owner !== player && !p.dead,
+        const enemies: P[] = this._board.pieces.filter(
+            (p: P) => p.owner !== player && !p.dead,
         );
         if (enemies.length > 0) {
             validTiles.sort((a, b) => {
@@ -434,12 +462,12 @@ export class SummonSpell extends Spell {
      * trees can attack them in melee each turn.
      */
     private selectShadowWoodTile(
-        player: Player,
+        player: Player<P>,
         wizardPos: Point | null,
         validTiles: Point[],
     ): Point {
-        const enemies: Piece[] = this._board.pieces.filter(
-            (p: Piece) => p.owner !== player && !p.dead,
+        const enemies: P[] = this._board.pieces.filter(
+            (p: P) => p.owner !== player && !p.dead,
         );
         if (enemies.length > 0 && wizardPos) {
             const scores: Map<Point, number> = new Map();
@@ -479,7 +507,7 @@ export class SummonSpell extends Spell {
      * remaining wall casts in that case rather than falling back to unsafe tiles.
      */
     private trySelectWallTile(
-        player: Player,
+        player: Player<P>,
         wizardPos: Point | null,
         validTiles: Point[],
         lastWallPt: Point | null,
@@ -500,8 +528,8 @@ export class SummonSpell extends Spell {
         }
 
         const difficulty: number = player.ai?.difficulty ?? 0.5;
-        const enemies: Piece[] = this._board.pieces.filter(
-            (p: Piece) => p.owner !== player && !p.dead,
+        const enemies: P[] = this._board.pieces.filter(
+            (p: P) => p.owner !== player && !p.dead,
         );
 
         if (

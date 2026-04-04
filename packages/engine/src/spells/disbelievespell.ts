@@ -1,5 +1,6 @@
 import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
+import { EngineEvent } from "../enums/engineevent";
 import { Colour } from "../enums/colour";
 import { Spell } from "./spell";
 import type { Piece } from "../piece";
@@ -10,26 +11,36 @@ import { Point } from "../point";
  * Disbelieve — reveals whether an enemy unit is an illusion and destroys it
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
-export class DisbelieveSpell extends Spell {
+export class DisbelieveSpell<
+    P extends Piece = Piece,
+> extends Spell<P> {
     async doCast(
-        owner: Player,
-        castingPiece: Piece,
+        owner: Player<P>,
+        castingPiece: P,
         point?: Point,
-        targets?: Piece[],
-    ): Promise<Piece | boolean | null> {
-        const target: Piece = targets.find((p: Piece) => p.canBeDisbelieved);
+        targets?: P[],
+    ): Promise<P | boolean | null> {
+        const target: P = targets.find((p: P) => p.canBeDisbelieved);
         if (!target) {
             return false;
         }
-        this._board.sound.play("castloop08");
-        await this._board.playEffect(
-            EffectType.DisbelieveBeam,
-            castingPiece.sprite.getCenter(),
-            target.sprite.getCenter(),
-            target,
+        this._board.events.emit(
+            EngineEvent.EffectRequested,
+            { sound: "castloop08" },
+        );
+        await this._board.events.emitAsync(
+            EngineEvent.EffectRequested,
+            {
+                type: EffectType.DisbelieveBeam,
+                pieceId: target.id,
+                startPieceId: castingPiece.id,
+            },
         );
         if (target.illusion) {
-            this._board.sound.play("disbelieve");
+            this._board.events.emit(
+                EngineEvent.EffectRequested,
+                { sound: "disbelieve" },
+            );
             await target.kill();
             this._board.logger.log(
                 `Disbelieve succeeded on illusionary ${target.name}`,
@@ -40,7 +51,7 @@ export class DisbelieveSpell extends Spell {
                 Colour.Magenta,
             );
             // Inform AI players that this piece is not an illusion
-            this._board.players.forEach((player: Player) => {
+            this._board.players.forEach((player: Player<P>) => {
                 player.ai?.rememberNonIllusionPiece(target.id);
             });
         }
