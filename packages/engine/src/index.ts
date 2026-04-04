@@ -133,6 +133,9 @@ export {
     friendlyBalance,
 } from "./spells/spellutils";
 
+// Rules
+export { Rules, _resetRulesForTesting } from "./rules";
+
 // Board
 export { Board } from "./board";
 
