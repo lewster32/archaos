@@ -939,7 +939,7 @@ export class Rules {
             ) {
                 if (board.roll(2, 10)) {
                     board.events.emit(
-                        "effectRequested",
+                        EngineEvent.EffectRequested,
                         {
                             type: EffectType
                                 .DisbelieveHit,
@@ -969,7 +969,7 @@ export class Rules {
                     Colour.Cyan,
                 );
                 board.events.emit(
-                    "effectRequested",
+                    EngineEvent.EffectRequested,
                     {
                         type: EffectType.GiveSpell,
                         pieceId: piece.id,
