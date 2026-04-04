@@ -2,7 +2,6 @@ import {
     BoardEvent,
     BoardLayer,
     Colour,
-    RangeType,
     SpreadAction,
     UnitAttackType,
     UnitDirection,
@@ -406,78 +405,6 @@ export class Piece extends EnginePiece {
             await this.clientBoard.dismountPiece(this.id);
         }
         await this.updatePosition(stepDuration);
-    }
-
-    // ── Range checks (uses Board statics) ───────────────────────────────────
-
-    /**
-     * Check if a point is within this piece's movement range.
-     */
-    inMovementRange(point: Geom.Point): boolean {
-        if (Geom.Point.Equals(this.position, point)) {
-            return false;
-        }
-        if (this.currentMount) {
-            if (Board.distance(this.position, point) > 1.5) {
-                return false;
-            }
-        }
-        if (
-            this.hasStatus(UnitStatus.Flying) &&
-            Board.distance(this.position, point, RangeType.Fly) <=
-                this.stats.movement
-        ) {
-            return true;
-        }
-        if (!this.clientBoard.rangeGizmo.getPathTo(point)) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Check if a point is within this piece's attack range.
-     */
-    inAttackRange(point: Geom.Point): boolean {
-        if (
-            !this.moved &&
-            this.inMovementRange(point) &&
-            (this.hasStatus(UnitStatus.Flying) ||
-                this.clientBoard.rangeGizmo.getPathTo(point))
-        ) {
-            return true;
-        }
-        if (Board.distance(this.position, point) > 1.5) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Find all pieces that pose a threat to this piece.
-     */
-    findThreatPieces(): Set<Piece> {
-        const threatPieces: Set<Piece> = new Set<Piece>();
-
-        const allPieces: Piece[] = this.clientBoard.pieces.filter(
-            (piece: Piece) =>
-                piece.owner !== this.owner &&
-                !piece.dead &&
-                !piece.currentRider &&
-                !piece.engulfed &&
-                ((piece.canAttackPiece(this) &&
-                    this.inAttackRange(piece.position)) ||
-                    (piece.canRangedAttackPiece(this) &&
-                        this.inRangedAttackRange(piece.position)) ||
-                    (piece.hasStatus(UnitStatus.Spreads) &&
-                        Board.distance(piece.position, this.position) <= 3)),
-        );
-
-        allPieces.forEach((piece: Piece) => {
-            threatPieces.add(piece);
-        });
-
-        return threatPieces;
     }
 
     // ── Combat & actions (mixed logic + rendering) ──────────────────────────

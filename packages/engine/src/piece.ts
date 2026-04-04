@@ -1344,9 +1344,6 @@ export class Piece extends Entity {
 
     /**
      * Find all pieces that pose a threat to this piece.
-     * Engine version uses distance checks only (no
-     * rangeGizmo path validation). The client overrides
-     * to add movement-path awareness.
      */
     findThreatPieces(): Set<Piece> {
         const threats = new Set<Piece>();
@@ -1361,10 +1358,7 @@ export class Piece extends Entity {
             }
             const melee =
                 piece.canAttackPiece(this) &&
-                distance(
-                    piece.position,
-                    this.position,
-                ) <= 1.5;
+                this.inAttackRange(piece.position);
             const ranged =
                 piece.canRangedAttackPiece(this) &&
                 this.inRangedAttackRange(
@@ -1409,8 +1403,8 @@ export class Piece extends Entity {
 
     /**
      * Check if a point is within this piece's movement
-     * range. Engine fallback uses direct distance only —
-     * the client overrides with rangeGizmo path checking.
+     * range. Uses rangeGizmo path checking for ground
+     * units, and fly-distance for flying units.
      */
     inMovementRange(
         point: { x: number; y: number },
@@ -1440,12 +1434,12 @@ export class Piece extends Entity {
                 ) <= this.stats.movement
             );
         }
-        return (
-            distance(
-                this.position,
-                new Point(point.x, point.y),
-            ) <= this.stats.movement
-        );
+        if (
+            !this.board.rangeGizmo.getPathTo(point)
+        ) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -1456,7 +1450,14 @@ export class Piece extends Entity {
     inAttackRange(
         point: { x: number; y: number },
     ): boolean {
-        if (!this.moved && this.inMovementRange(point)) {
+        if (
+            !this.moved &&
+            this.inMovementRange(point) &&
+            (this.hasStatus(UnitStatus.Flying) ||
+                this.board.rangeGizmo.getPathTo(
+                    point,
+                ))
+        ) {
             return true;
         }
         if (
