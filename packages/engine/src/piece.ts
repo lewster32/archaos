@@ -1,4 +1,6 @@
 import { Entity } from "./models/entity";
+import { BoardEvent } from "./enums/boardevent";
+import { Colour } from "./enums/colour";
 import { UnitDirection } from "./enums/unitdirection";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
@@ -191,10 +193,6 @@ export class Piece extends Entity {
      */
     get dead(): boolean {
         return this._dead;
-    }
-
-    set dead(value: boolean) {
-        this._dead = value;
     }
 
     /**
@@ -568,6 +566,223 @@ export class Piece extends Entity {
         if (this.currentRider) {
             this.currentRider.reset();
         }
+    }
+
+    // ── Direction ───────────────────────────────────
+
+    /**
+     * Update the facing direction of this piece based
+     * on movement from one point to another.
+     */
+    updateDirection(
+        fromPoint: { x: number; y: number },
+        toPoint: { x: number; y: number },
+    ): void {
+        const isoXOffset: number =
+            (toPoint.x - toPoint.y) -
+            (fromPoint.x - fromPoint.y);
+        if (isoXOffset === 0) {
+            return;
+        }
+        this.direction =
+            isoXOffset < 0
+                ? UnitDirection.Left
+                : UnitDirection.Right;
+    }
+
+    // ── Combat / lifecycle ─────────────────────────
+
+    /**
+     * Kill this piece. Handles rider dismount, engulfed
+     * release, illusion/undead destruction. Leaves a
+     * corpse unless the piece has NoCorpse/Undead status
+     * or is an illusion.
+     */
+    kill(): void {
+        if (this._dead) {
+            throw new Error(
+                "Cannot kill unit that is already dead",
+            );
+        }
+        if (this.currentRider) {
+            this.currentRider.dismount();
+            if (!this.currentRider.turnOver) {
+                this.currentRider.reset();
+            }
+        }
+        if (this.currentEngulfed) {
+            this.currentEngulfed.engulfed = false;
+            this.currentEngulfed = null;
+        }
+        this._dead = true;
+        this.owner = null;
+        if (
+            this.illusion ||
+            this.hasStatus(UnitStatus.NoCorpse) ||
+            this.hasStatus(UnitStatus.Undead)
+        ) {
+            this.destroy();
+        }
+        this._board.emitBoardUpdateEvent();
+        this._board.boardEvents.emit(
+            BoardEvent.PieceDied,
+            this,
+        );
+    }
+
+    /**
+     * Destroy this piece, removing it from the board.
+     * Client overrides to also destroy sprites.
+     */
+    destroy(): void {
+        this._dead = true;
+        if (this.currentRider) {
+            this.currentRider.dismount();
+        }
+        this._board.removePiece(this.id);
+        this._board.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Perform a melee attack on the given piece.
+     * Returns true if the attack killed the target.
+     * Client overrides for animation.
+     */
+    attack(piece: Piece): boolean {
+        if (!this.canAttackPiece(piece)) {
+            return false;
+        }
+        if (!this.canAttackPossiblyUndeadPiece(piece)) {
+            this._board.logger.log(
+                `${this.name} cannot attack the undead`,
+                Colour.Cyan,
+            );
+            return false;
+        }
+        this.updateDirection(
+            this.position,
+            piece.position,
+        );
+        this.attacked = true;
+        this.moved = true;
+
+        const rollSuccess: boolean = this._board.roll(
+            this.stats.combat,
+            piece.stats.defence,
+            this.owner,
+        );
+
+        this._board.logger.log(
+            `${this.name} attacks ${piece.name}`,
+        );
+
+        // Shadow Form is lost on attacking, regardless
+        if (this.hasStatus(UnitStatus.ShadowForm)) {
+            this.removeStatus(UnitStatus.ShadowForm);
+        }
+
+        if (rollSuccess) {
+            this._board.logger.log(
+                `${this.fullName} defeated ` +
+                    `${piece.fullName}`,
+                Colour.Red,
+            );
+            piece.kill();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Perform a ranged attack on the given piece.
+     * Returns true if the attack killed the target.
+     * Client overrides for animation.
+     */
+    rangedAttack(piece: Piece): boolean {
+        if (!this.canRangedAttackPiece(piece)) {
+            return false;
+        }
+        if (!this.canAttackPossiblyUndeadPiece(piece)) {
+            this._board.logger.log(
+                `${this.name} cannot attack the undead`,
+                Colour.Cyan,
+            );
+            return false;
+        }
+        this.updateDirection(
+            this.position,
+            piece.position,
+        );
+        this.rangedAttacked = true;
+        this.attacked = true;
+        this.moved = true;
+
+        const rollSuccess: boolean = this._board.roll(
+            this.stats.rangedCombat,
+            piece.stats.defence,
+            this.owner,
+        );
+
+        this._board.logger.log(
+            `${this.name} ranged attacks ${piece.name}`,
+        );
+
+        if (rollSuccess) {
+            // Shadow Form only lost on successful ranged
+            if (this.hasStatus(UnitStatus.ShadowForm)) {
+                this.removeStatus(
+                    UnitStatus.ShadowForm,
+                );
+            }
+            this._board.logger.log(
+                `${this.fullName} defeated ` +
+                    `${piece.fullName}`,
+                Colour.Red,
+            );
+            piece.kill();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Mount this piece upon another piece.
+     */
+    mount(piece: Piece): void {
+        if (!this.canMountPiece(piece)) {
+            throw new Error(
+                `${this.name} cannot mount ` +
+                    `${piece.name}`,
+            );
+        }
+        this.moved = true;
+        this.attacked = true;
+        piece.moved = true;
+        this.currentMount = piece;
+        piece.currentRider = this;
+        this._board.logger.log(
+            `${this.fullName} mounted ` +
+                `${piece.fullName}`,
+        );
+    }
+
+    /**
+     * Dismount from the current mount.
+     */
+    dismount(): void {
+        if (!this.currentMount) {
+            throw new Error(
+                `${this.name} is not mounted`,
+            );
+        }
+        this.currentMount.currentRider = null;
+        this.moved = true;
+        this.currentMount.turnOver = true;
+        this._board.logger.log(
+            `${this.fullName} dismounted ` +
+                `${this.currentMount.fullName}`,
+        );
+        this.currentMount = null;
     }
 
     // ── Status effects ──────────────────────────────────

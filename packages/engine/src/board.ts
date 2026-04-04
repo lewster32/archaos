@@ -985,41 +985,14 @@ export class Board extends Model implements Box {
         }
 
         this._busy = true;
-        attackingPiece.attacked = true;
-        attackingPiece.moved = true;
-
-        const rollSuccess: boolean = this.roll(
-            attackingPiece.stats.combat,
-            defendingPiece.stats.defence,
-            attackingPiece.owner,
-        );
-
-        if (attackingPiece.hasStatus(
-            UnitStatus.ShadowForm,
-        )) {
-            attackingPiece.removeStatus(
-                UnitStatus.ShadowForm,
-            );
-        }
-
+        const attackResult: boolean =
+            attackingPiece.attack(defendingPiece);
         this._boardEvents.emit(
             BoardEvent.PieceAttacked,
             attackingPiece,
             defendingPiece,
-            rollSuccess,
+            attackResult,
         );
-
-        if (rollSuccess) {
-            this._logger.log(
-                `${attackingPiece.fullName} defeated ` +
-                    `${defendingPiece.fullName}`,
-                Colour.Red,
-            );
-            defendingPiece.dead = true;
-            defendingPiece.owner = null;
-            this.removePiece(defendingPiece.id);
-        }
-
         this._busy = false;
         return attackingPiece;
     }
@@ -1051,41 +1024,14 @@ export class Board extends Model implements Box {
         }
 
         this._busy = true;
-        attackingPiece.rangedAttacked = true;
-        attackingPiece.attacked = true;
-        attackingPiece.moved = true;
-
-        const rollSuccess: boolean = this.roll(
-            attackingPiece.stats.rangedCombat,
-            defendingPiece.stats.defence,
-            attackingPiece.owner,
-        );
-
+        const attackResult: boolean =
+            attackingPiece.rangedAttack(defendingPiece);
         this._boardEvents.emit(
             BoardEvent.PieceRangedAttacked,
             attackingPiece,
             defendingPiece,
-            rollSuccess,
+            attackResult,
         );
-
-        if (rollSuccess) {
-            if (attackingPiece.hasStatus(
-                UnitStatus.ShadowForm,
-            )) {
-                attackingPiece.removeStatus(
-                    UnitStatus.ShadowForm,
-                );
-            }
-            this._logger.log(
-                `${attackingPiece.fullName} defeated ` +
-                    `${defendingPiece.fullName}`,
-                Colour.Red,
-            );
-            defendingPiece.dead = true;
-            defendingPiece.owner = null;
-            this.removePiece(defendingPiece.id);
-        }
-
         this._busy = false;
         return attackingPiece;
     }
@@ -1118,26 +1064,17 @@ export class Board extends Model implements Box {
 
         // Dismount first if already mounted
         if (mountingPiece.currentMount) {
-            this.dismountPiece(mountingPieceId);
+            mountingPiece.dismount();
             mountingPiece.moved = false;
         }
 
-        mountingPiece.moved = true;
-        mountingPiece.attacked = true;
-        mountedPiece.moved = true;
-
-        mountingPiece.currentMount = mountedPiece;
-        mountedPiece.currentRider = mountingPiece;
+        mountingPiece.mount(mountedPiece);
 
         mountingPiece.position.setTo(
             mountedPiece.position.x,
             mountedPiece.position.y,
         );
 
-        this._logger.log(
-            `${mountingPiece.fullName} mounted ` +
-                `${mountedPiece.fullName}`,
-        );
         this.emitBoardUpdateEvent();
         return mountingPiece;
     }
@@ -1156,20 +1093,7 @@ export class Board extends Model implements Box {
                     `ID ${dismountingPieceId}`,
             );
         }
-        if (!piece.currentMount) {
-            throw new Error(
-                `${piece.name} is not mounted`,
-            );
-        }
-
-        piece.currentMount.currentRider = null;
-        piece.moved = true;
-        piece.currentMount.turnOver = true;
-        this._logger.log(
-            `${piece.fullName} dismounted ` +
-                `${piece.currentMount.fullName}`,
-        );
-        piece.currentMount = null;
+        piece.dismount();
         this.emitBoardUpdateEvent();
         return piece;
     }
