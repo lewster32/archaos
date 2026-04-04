@@ -18,6 +18,17 @@ export { SpellTarget } from "./enums/spelltarget";
 export { SpellType } from "./enums/spelltype";
 export { SpreadAction } from "./enums/spreadaction";
 export { UnitAttackType } from "./enums/unitattacktype";
+
+// Actions (batch payloads)
+export type {
+    SpreadResult,
+    SpreadShrinkResult,
+    SpreadGrowResult,
+    SpreadIterationPayload,
+    SpreadBatchPayload,
+    TurmoilMoveResult,
+    TurmoilBatchPayload,
+} from "./actions";
 export { UnitDirection } from "./enums/unitdirection";
 export {
     UnitRangedProjectileType,

@@ -24,4 +24,10 @@ export enum EngineEvent {
 
     /** Reset/hide the casting range indicator. */
     ResetCastRange = "engine:reset-cast-range",
+
+    /** Batch of spread actions for client replay. */
+    SpreadBatch = "engine:spread-batch",
+
+    /** Batch of turmoil teleports for client replay. */
+    TurmoilBatch = "engine:turmoil-batch",
 }
