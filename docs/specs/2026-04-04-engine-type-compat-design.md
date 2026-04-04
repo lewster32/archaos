@@ -10,17 +10,91 @@ should produce zero errors from `src/gameobjects/` and
 
 ## Architecture
 
-Two-phase approach:
+Three-phase approach:
 
-1. **Phase 1 — Type compatibility:** Change `private` fields to
+1. **Phase 0 — Event enums:** Convert hardcoded event strings
+   to string enums, consistent with the project's existing
+   pattern (19 enum files in `packages/engine/src/enums/`).
+
+2. **Phase 1 — Type compatibility:** Change `private` fields to
    `protected` in engine classes so client subclasses are
    structurally compatible. Fix covariant return types where
    client overrides narrow the return type.
 
-2. **Phase 2 — Missing methods:** Add pure-state engine methods
+3. **Phase 2 — Missing methods:** Add pure-state engine methods
    for game logic that Rules and spells depend on. Convert
    rendering-only calls in spell `doCast()` methods to event
    emissions.
+
+## Phase 0: Event Enums
+
+Hardcoded event strings emitted by engine classes and listened
+to by the client need to be converted to a string enum. This
+follows the project convention — all 19 existing enum files in
+`packages/engine/src/enums/` use this pattern.
+
+### New enum: `EngineEvent`
+
+File: `packages/engine/src/enums/engineevent.ts`
+
+```typescript
+/**
+ * Events emitted by engine classes for client rendering
+ * and UI synchronisation. The engine emits these; the
+ * client subscribes to handle Phaser-specific rendering.
+ */
+export enum EngineEvent {
+    /** AI is thinking — client should disable cursor. */
+    AiThinking = "engine:ai-thinking",
+
+    /** AI finished thinking — client should enable cursor. */
+    AiActing = "engine:ai-acting",
+
+    /** Camera should focus on the given pieces. */
+    FocusPieces = "engine:focus-pieces",
+
+    /** Camera should focus on a board position. */
+    FocusPosition = "engine:focus-position",
+
+    /** A visual/sound effect should be played. */
+    EffectRequested = "engine:effect-requested",
+
+    /** Show casting range indicator on the board. */
+    ShowCastRange = "engine:show-cast-range",
+
+    /** Reset/hide the casting range indicator. */
+    ResetCastRange = "engine:reset-cast-range",
+}
+```
+
+The `engine:` prefix distinguishes these from `BoardEvent`
+(`board:`) and `EventType` (unprefixed) events.
+
+### Files to update
+
+**Emitters (replace string → enum):**
+- `packages/engine/src/ai/computerwizard.ts` — all
+  `emit("aiThinking")`, `emit("aiActing")`,
+  `emit("focusPieces", ...)`, `emit("focusPosition", ...)`,
+  `emit("effectRequested", ...)`
+- `packages/engine/src/rules.ts` —
+  `emit("showCastRange", ...)`, `emit("effectRequested", ...)`,
+  `emit("focusPieces", ...)`
+
+**Listeners (replace string → enum):**
+- `src/gameobjects/board.ts` — all `.on("aiThinking", ...)`,
+  `.on("aiActing", ...)`, etc.
+
+**Barrel export:**
+- `packages/engine/src/index.ts` — add
+  `export { EngineEvent } from "./enums/engineevent"`
+
+### Logger `"log"` event
+
+The Logger emits a `"log"` string event. This is a separate
+concern (Logger-specific, not engine→client rendering) and
+is out of scope for this phase. It can be addressed later if
+a LoggerEvent enum is desired.
 
 ## Phase 1: Type Compatibility
 
@@ -92,16 +166,16 @@ extraction phase).
 
 | Current call | Replacement |
 |-------------|-------------|
-| `board.sound.play(name)` | `board.events.emit("effectRequested", { sound: name })` |
-| `board.playEffect(type, pos, end, piece)` | `board.events.emit("effectRequested", { type, pieceId, startPos, endPos })` |
+| `board.sound.play(name)` | `board.events.emit(EngineEvent.EffectRequested, { sound: name })` |
+| `board.playEffect(type, pos, end, piece)` | `board.events.emit(EngineEvent.EffectRequested, { type, pieceId, startPos, endPos })` |
 | `piece.sprite.getCenter()` | Pass `piece.id` in event; client resolves position |
 | `board.getIsoPosition(point)` | Pass logical position in event; client resolves |
-| `board.rangeGizmo.showSimpleRange(...)` | `board.events.emit("showCastRange", { ... })` |
-| `board.rangeGizmo.reset()` | `board.events.emit("resetCastRange")` |
+| `board.rangeGizmo.showSimpleRange(...)` | `board.events.emit(EngineEvent.ShowCastRange, { ... })` |
+| `board.rangeGizmo.reset()` | `board.events.emit(EngineEvent.ResetCastRange)` |
 
-The client Board must add a handler for `resetCastRange`:
+The client Board must add a handler for `ResetCastRange`:
 ```typescript
-this.events.on("resetCastRange", () => {
+this.events.on(EngineEvent.ResetCastRange, () => {
     this.rangeGizmo.reset();
 });
 ```
