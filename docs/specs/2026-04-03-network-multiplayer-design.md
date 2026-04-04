@@ -202,7 +202,7 @@ Each player action has a configurable timeout (e.g. 60s for spell selection, 90s
 - **Casting phase:** auto-cancel the cast
 - **Movement phase:** auto-end movement (skip remaining pieces)
 
-Clients show a countdown timer synced to the server's clock.
+Timeouts are server-internal. Clients receive a `yourTurn` event when their turn starts and a timeout event if the server auto-acts. Clients may display their own local timer as a UX hint, but are not given a server-synced countdown.
 
 ## 4. Client Architecture (`packages/client/`)
 
@@ -264,8 +264,8 @@ Token expires when the room is destroyed.
 
 | Scenario | Behaviour |
 |----------|-----------|
-| Disconnected player's turn | Game **pauses**. All clients see "Waiting for [name] to reconnect..." with countdown. |
-| Another player's turn | Game **continues normally**. Clients see "[name] disconnected" indicator. |
+| Disconnected player's turn | Game **pauses**. Server sends `playerDisconnected { playerId }`. Clients show a waiting indicator (no server-synced countdown). |
+| Another player's turn | Game **continues normally**. Clients show "[name] disconnected" indicator. |
 | Reconnect within grace period | Full snapshot sent, game resumes seamlessly. No policy triggered. |
 
 ### Host-Configurable Disconnect Policy

@@ -18,6 +18,7 @@ Three tasks remain: Board/Rules extraction (Task 12), barrel export and client r
 | Rules | Move to engine | Rules is game logic. Replace the single Phaser import (`Geom`) with engine `Point`. Client re-exports from `@archaos/engine`. |
 | ComputerWizard rendering calls | Emit events | Replace `cursor`, `sound`, `centreOn*` calls with board event emissions. Client subscribes; server ignores. |
 | Client `packages/client/` restructure | Skip | Not needed for engine extraction. `src/` works with Vite as-is. Restructure can happen when the client package is created for multiplayer. |
+| Timing coupling | Decoupled | Engine/server updates state and emits events instantly. Client plays through events at its own pace with client-side timings. Server never waits for client animations. |
 | EffectType duplication | Single source in engine | Client `effectemitter.ts` re-exports from `@archaos/engine` instead of defining its own copy. |
 
 ## 1. Engine Board — Game Flow Methods
@@ -58,7 +59,28 @@ async movePiece(pieceId: number, target: Point): Promise<void> {
 }
 ```
 
-## 2. Rules — Move to Engine
+## 2. Timing — Decoupled by Design
+
+### Core Principle
+
+The engine (and by extension the server) updates state and emits events without waiting for rendering. The client receives events and plays through them at its own pace using client-side timings. The server never blocks on client animations.
+
+This means:
+
+- **Engine game action methods are synchronous.** `movePiece`, `attackPiece`, `castSpell` etc. mutate state and emit events, then return immediately. No `await` for animation delays.
+- **Client overrides are async.** The client Board overrides call `super.method()` (instant), then `await` their own animations. The client controls pacing.
+- **The server sends events as fast as the engine produces them.** The client queues and replays them in order at a comfortable rate for human viewers.
+- **No animation timing constants in the engine.** Delays like `Board.DEFAULT_DELAY` that exist purely for visual pacing are client concerns. The engine Board may retain a `delay()` utility but it resolves instantly (or is removed). Actual delay values live in the client.
+
+### Implication for Multiplayer
+
+The server runs the engine at full speed. When a player submits an action, the server validates it, the engine applies it, and the server broadcasts the resulting events immediately. Clients buffer and animate at their own speed. A fast connection doesn't mean faster animations; a slow animation doesn't block the server from processing the next action.
+
+### Disconnection Timeout
+
+The 30-second reconnection grace period (from the multiplayer spec) is handled entirely server-side. The server tracks the timer internally and makes the policy decision (AI takeover or deferred defeat) when it expires. Clients receive a simple `playerDisconnected { playerId }` event and can display whatever UI they choose — but do not receive a running countdown from the server.
+
+## 3. Rules — Move to Engine
 
 `src/gameobjects/services/rules.ts` moves to `packages/engine/src/rules.ts`.
 
@@ -97,7 +119,7 @@ export { Rules } from "@archaos/engine";
 
 Same pattern already used for Logger.
 
-## 3. ComputerWizard — Event-Based Rendering
+## 4. ComputerWizard — Event-Based Rendering
 
 ComputerWizard stays at `packages/engine/src/ai/computerwizard.ts`. Game action calls resolve naturally once those methods exist on the engine Board. Rendering calls become event emissions.
 
@@ -138,7 +160,7 @@ this.events.on("focusPieces", ({ pieceIds }) => {
 
 The server ignores these events.
 
-## 4. Barrel Export and Client Rewiring
+## 5. Barrel Export and Client Rewiring
 
 ### Barrel Export Additions
 
@@ -169,7 +191,7 @@ export { EffectType } from "@archaos/engine";
 
 All consumer imports remain unchanged.
 
-## 5. Verification and Cleanup
+## 6. Verification and Cleanup
 
 ### Zero Phaser in Engine
 
