@@ -2,208 +2,239 @@
     "king-cobra": {
         "chance": 0.9,
         "balance": 1,
-        "unitId": "2",
+        "unitId": "king-cobra",
         "name": "King Cobra"
     },
     "dire-wolf": {
         "chance": 0.9,
         "balance": -1,
-        "unitId": "3",
+        "unitId": "dire-wolf",
         "name": "Dire Wolf"
     },
     "goblin": {
         "chance": 0.9,
         "balance": -1,
-        "unitId": "28",
+        "unitId": "goblin",
         "name": "Goblin"
     },
     "crocodile": {
         "chance": 0.8,
         "balance": 0,
-        "unitId": "4",
+        "unitId": "crocodile",
         "name": "Crocodile",
         "spellFrame": 2
     },
     "faun": {
         "chance": 0.8,
         "balance": -1,
-        "unitId": "5",
+        "unitId": "faun",
         "name": "Faun"
     },
     "lion": {
         "chance": 0.6,
         "balance": 1,
-        "unitId": "6",
+        "unitId": "lion",
         "name": "Lion"
     },
     "elf": {
         "chance": 0.7,
         "balance": 2,
-        "unitId": "7",
+        "unitId": "elf",
         "name": "Elf",
-        "types": ["ranged", "ground"],
+        "types": [
+            "ranged",
+            "ground"
+        ],
         "spellFrame": 3
     },
     "orc": {
         "chance": 1,
         "balance": -1,
-        "unitId": "8",
+        "unitId": "orc",
         "name": "Orc"
     },
     "bear": {
         "chance": 0.6,
         "balance": 1,
-        "unitId": "9",
+        "unitId": "bear",
         "name": "Bear"
     },
     "gorilla": {
         "chance": 0.7,
         "balance": 0,
-        "unitId": "a",
+        "unitId": "gorilla",
         "name": "Gorilla",
         "spellFrame": 1
     },
     "ogre": {
         "chance": 0.7,
         "balance": -1,
-        "unitId": "b",
+        "unitId": "ogre",
         "name": "Ogre"
     },
     "hydra": {
         "chance": 0.5,
         "balance": -1,
-        "unitId": "c",
+        "unitId": "hydra",
         "name": "Hydra"
     },
     "giant-rat": {
         "chance": 1,
         "balance": 0,
-        "unitId": "d",
+        "unitId": "giant-rat",
         "name": "Giant Rat"
     },
     "giant": {
         "chance": 0.4,
         "balance": 1,
-        "unitId": "e",
+        "unitId": "giant",
         "name": "Giant"
     },
     "horse": {
         "chance": 0.9,
         "balance": 1,
-        "unitId": "f",
+        "unitId": "horse",
         "name": "Horse"
     },
     "unicorn": {
         "chance": 0.6,
         "balance": 2,
-        "unitId": "10",
+        "unitId": "unicorn",
         "name": "Unicorn"
     },
     "centaur": {
         "chance": 0.7,
         "balance": 1,
-        "unitId": "11",
+        "unitId": "centaur",
         "name": "Centaur",
-        "types": ["ranged", "mount"]
+        "types": [
+            "ranged",
+            "mount"
+        ]
     },
     "pegasus": {
         "chance": 0.6,
         "balance": 2,
-        "unitId": "12",
+        "unitId": "pegasus",
         "name": "Pegasus",
-        "types": ["flying", "mount"]
+        "types": [
+            "flying",
+            "mount"
+        ]
     },
     "gryphon": {
         "chance": 0.6,
         "balance": 1,
-        "unitId": "13",
+        "unitId": "gryphon",
         "name": "Gryphon",
-        "types": ["flying", "mount"]
+        "types": [
+            "flying",
+            "mount"
+        ]
     },
     "manticore": {
         "chance": 0.4,
         "balance": -1,
-        "unitId": "14",
+        "unitId": "manticore",
         "name": "Manticore",
-        "types": ["flying", "ranged", "mount"]
+        "types": [
+            "flying",
+            "ranged",
+            "mount"
+        ]
     },
     "bat": {
         "chance": 0.8,
         "balance": -1,
-        "unitId": "15",
+        "unitId": "bat",
         "name": "Bat"
     },
     "green-dragon": {
         "chance": 0.1,
         "balance": -1,
-        "unitId": "16",
+        "unitId": "green-dragon",
         "name": "Green Dragon",
-        "types": ["flying", "ranged"]
+        "types": [
+            "flying",
+            "ranged"
+        ]
     },
     "red-dragon": {
         "chance": 0.1,
         "balance": -2,
-        "unitId": "17",
+        "unitId": "red-dragon",
         "name": "Red Dragon",
-        "types": ["flying", "ranged"]
+        "types": [
+            "flying",
+            "ranged"
+        ]
     },
     "golden-dragon": {
         "chance": 0.1,
         "balance": 2,
-        "unitId": "18",
+        "unitId": "golden-dragon",
         "name": "Golden Dragon",
-        "types": ["flying", "ranged"]
+        "types": [
+            "flying",
+            "ranged"
+        ]
     },
     "harpy": {
         "chance": 0.6,
         "balance": -1,
-        "unitId": "19",
+        "unitId": "harpy",
         "name": "Harpy"
     },
     "eagle": {
         "chance": 0.7,
         "balance": 1,
-        "unitId": "1a",
+        "unitId": "eagle",
         "name": "Eagle"
     },
     "vampire": {
         "chance": 0.2,
         "balance": -2,
-        "unitId": "1b",
+        "unitId": "vampire",
         "name": "Vampire",
-        "types": ["flying", "undead"]
+        "types": [
+            "flying",
+            "undead"
+        ]
     },
     "ghost": {
         "chance": 0.5,
         "balance": -1,
-        "unitId": "1c",
+        "unitId": "ghost",
         "name": "Ghost",
-        "types": ["flying", "undead"]
+        "types": [
+            "flying",
+            "undead"
+        ]
     },
     "spectre": {
         "chance": 0.6,
         "balance": -1,
-        "unitId": "1d",
+        "unitId": "spectre",
         "name": "Spectre",
         "spellFrame": 1
     },
     "wraith": {
         "chance": 0.5,
         "balance": -1,
-        "unitId": "1e",
+        "unitId": "wraith",
         "name": "Wraith",
         "spellFrame": 2
     },
     "skeleton": {
         "chance": 0.7,
         "balance": -1,
-        "unitId": "1f",
+        "unitId": "skeleton",
         "name": "Skeleton"
     },
     "zombie": {
         "chance": 0.8,
         "balance": -1,
-        "unitId": "20",
+        "unitId": "zombie",
         "name": "Zombie"
     },
     "magic-wood": {
@@ -215,10 +246,13 @@
         "range": 5,
         "castTimes": 8,
         "allowIllusion": false,
-        "unitId": "21",
+        "unitId": "magic-wood",
         "name": "Magic Wood",
         "description": "Automatically summons up to eight trees which can be mounted by wizards.",
-        "types": ["static", "mount"]
+        "types": [
+            "static",
+            "mount"
+        ]
     },
     "shadow-wood": {
         "chance": 0.4,
@@ -228,7 +262,7 @@
         "range": 5,
         "castTimes": 8,
         "allowIllusion": false,
-        "unitId": "22",
+        "unitId": "shadow-wood",
         "name": "Shadow Wood",
         "description": "Summons up to eight trees which can not move, but can attack adjacent enemy creatures and wizards."
     },
@@ -238,7 +272,7 @@
         "balance": -1,
         "range": 6,
         "allowIllusion": false,
-        "unitId": "23",
+        "unitId": "magic-fire",
         "name": "Magic Fire",
         "description": "Slowly and randomly spreads around the map, destroying any enemy creatures and wizards it spreads over."
     },
@@ -248,7 +282,7 @@
         "balance": -1,
         "range": 6,
         "allowIllusion": false,
-        "unitId": "24",
+        "unitId": "gooey-blob",
         "name": "Gooey Blob",
         "description": "Slowly and randomly spreads around the map, engulfing and disabling creatures until they are freed. Beware, wizards are destroyed if engulfed!"
     },
@@ -256,17 +290,23 @@
         "chance": 0.5,
         "balance": 1,
         "allowIllusion": false,
-        "unitId": "25",
+        "unitId": "magic-castle",
         "name": "Magic Castle",
-        "types": ["static", "mount"]
+        "types": [
+            "static",
+            "mount"
+        ]
     },
     "dark-citadel": {
         "chance": 0.5,
         "balance": -1,
         "allowIllusion": false,
-        "unitId": "26",
+        "unitId": "dark-citadel",
         "name": "Dark Citadel",
-        "types": ["static", "mount"]
+        "types": [
+            "static",
+            "mount"
+        ]
     },
     "wall": {
         "chance": 0.8,
@@ -275,7 +315,7 @@
         "allowIllusion": false,
         "castTimes": 4,
         "range": 4,
-        "unitId": "27",
+        "unitId": "wall",
         "name": "Wall",
         "description": "Summons four walls which cannot be attacked or passed by land-based units."
     },
@@ -381,7 +421,10 @@
         "projectile": "raisedead",
         "name": "Raise Dead",
         "description": "Reanimates the corpse of a creature, making it undead, and putting it under the control of the caster.",
-        "types": ["special", "undead"]
+        "types": [
+            "special",
+            "undead"
+        ]
     },
     "subversion": {
         "balance": 0,
@@ -394,7 +437,9 @@
         "projectile": "subversion",
         "range": 7,
         "description": "Takes control of an enemy unit by the caster. Chance of success is based on the enemy unit's magic resistance. Illusionary units will always resist subversion.",
-        "types": ["special"]
+        "types": [
+            "special"
+        ]
     },
     "shadow-form": {
         "balance": 0,
@@ -444,7 +489,10 @@
         "range": 0,
         "name": "Magic Bow",
         "description": "Allows the caster to take ranged attacks, and to attack the undead.",
-        "types": ["ranged", "buff"]
+        "types": [
+            "ranged",
+            "buff"
+        ]
     },
     "magic-wings": {
         "balance": 0,
@@ -453,7 +501,10 @@
         "range": 0,
         "name": "Magic Wings",
         "description": "Allows the caster to fly.",
-        "types": ["flying", "buff"]
+        "types": [
+            "flying",
+            "buff"
+        ]
     },
     "law-1": {
         "balance": 2,
@@ -462,7 +513,9 @@
         "range": 0,
         "name": "Law 1",
         "description": "Makes the world moderately more lawful.",
-        "types": ["balance"]
+        "types": [
+            "balance"
+        ]
     },
     "law-2": {
         "balance": 4,
@@ -471,7 +524,9 @@
         "range": 0,
         "name": "Law 2",
         "description": "Makes the world greatly more lawful.",
-        "types": ["balance"]
+        "types": [
+            "balance"
+        ]
     },
     "chaos-1": {
         "balance": -2,
@@ -480,7 +535,9 @@
         "range": 0,
         "name": "Chaos 1",
         "description": "Makes the world moderately more chaotic.",
-        "types": ["balance"]
+        "types": [
+            "balance"
+        ]
     },
     "chaos-2": {
         "balance": -4,
@@ -489,7 +546,9 @@
         "range": 0,
         "name": "Chaos 2",
         "description": "Makes the world greatly more chaotic.",
-        "types": ["balance"]
+        "types": [
+            "balance"
+        ]
     },
     "turmoil": {
         "balance": -1,
@@ -498,7 +557,9 @@
         "range": 0,
         "name": "Turmoil",
         "description": "Randomly moves pieces around the board.",
-        "types": ["turmoil"],
+        "types": [
+            "turmoil"
+        ],
         "giftOnly": true
     }
 }

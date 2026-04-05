@@ -43,11 +43,11 @@ export class Wizard extends Piece {
     };
 
     /**
-     * Default wizard configuration. Uses Piece.units["1"]
+     * Default wizard configuration. Uses Piece.units["wizard"]
      * for base stats (populated by the client at startup).
      */
     static get DEFAULT_WIZARD_CONFIG(): PieceConfig {
-        const wizardUnit = Piece.units["1"];
+        const wizardUnit = Piece.units["wizard"];
         return {
             x: 0,
             y: 0,

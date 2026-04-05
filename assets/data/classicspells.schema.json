@@ -1,0 +1,130 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "classicspells.schema.json",
+    "title": "Classic Spells",
+    "description": "Spell definitions for the classic Archaos game mode.",
+    "type": "object",
+    "additionalProperties": {
+        "$ref": "#/definitions/spell"
+    },
+    "definitions": {
+        "spell": {
+            "type": "object",
+            "required": ["chance", "balance", "name"],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the spell."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Player-facing description shown in the spellbook."
+                },
+                "chance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Base probability (0–1) that the spell succeeds when cast."
+                },
+                "balance": {
+                    "type": "integer",
+                    "description": "World-balance contribution: positive = law, negative = chaos."
+                },
+                "unitId": {
+                    "type": "string",
+                    "description": "ID of the unit created when this spell is summoned (hex or decimal string key from classicunits.json)."
+                },
+                "target": {
+                    "type": "string",
+                    "enum": ["piece", "self", "corpse"],
+                    "description": "What the spell is targeted at."
+                },
+                "castOnEnemyUnit": {
+                    "type": "boolean",
+                    "description": "Whether the spell can be cast on an enemy unit."
+                },
+                "castOnWizard": {
+                    "type": "boolean",
+                    "description": "Whether the spell can be cast on an enemy wizard."
+                },
+                "destroyWizardCreatures": {
+                    "type": "boolean",
+                    "description": "Whether a successful cast also destroys all creatures owned by the target wizard."
+                },
+                "lineOfSight": {
+                    "type": "boolean",
+                    "description": "Whether the spell requires an unobstructed line of sight to the target."
+                },
+                "range": {
+                    "type": "integer",
+                    "minimum": -1,
+                    "description": "Maximum range in tiles. -1 means unlimited (global)."
+                },
+                "projectile": {
+                    "type": "string",
+                    "description": "Key identifying the projectile visual fired when this spell is cast."
+                },
+                "damage": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Damage dealt to the target on a successful hit."
+                },
+                "castTimes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of times this spell can be cast in a single turn (defaults to 1 if omitted)."
+                },
+                "allowIllusion": {
+                    "type": "boolean",
+                    "description": "Whether this spell can be cast as an illusion."
+                },
+                "autoPlace": {
+                    "type": "boolean",
+                    "description": "Whether the game automatically places summoned units rather than the player choosing tiles."
+                },
+                "tree": {
+                    "type": "boolean",
+                    "description": "Whether the summoned unit is classified as a tree (for wood-related effects)."
+                },
+                "persist": {
+                    "type": "boolean",
+                    "description": "Whether the spell remains in the wizard's hand after being cast."
+                },
+                "giftOnly": {
+                    "type": "boolean",
+                    "description": "Whether this spell can only be acquired as a gift (not drawn at game start)."
+                },
+                "spellFrame": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Override for the spell animation frame index used during casting."
+                },
+                "types": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/spellType"
+                    },
+                    "uniqueItems": true,
+                    "description": "Classification tags used by the AI and UI to categorise the spell."
+                }
+            }
+        },
+        "spellType": {
+            "type": "string",
+            "enum": [
+                "balance",
+                "buff",
+                "flying",
+                "ground",
+                "mount",
+                "ranged",
+                "special",
+                "static",
+                "turmoil",
+                "undead"
+            ],
+            "description": "A single spell classification tag."
+        }
+    }
+}

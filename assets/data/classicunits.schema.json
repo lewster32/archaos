@@ -1,0 +1,140 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "classicunits.schema.json",
+    "title": "Classic Units",
+    "description": "Unit definitions for the classic Archaos game mode.",
+    "type": "object",
+    "additionalProperties": {
+        "$ref": "#/definitions/unit"
+    },
+    "definitions": {
+        "unit": {
+            "type": "object",
+            "required": ["properties", "status", "name"],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the unit."
+                },
+                "indefiniteArticle": {
+                    "type": "string",
+                    "enum": ["a", "an"],
+                    "description": "Indefinite article used before the unit name. Omit if 'a' is correct."
+                },
+                "attackType": {
+                    "type": "string",
+                    "description": "Past-tense verb used in attack log messages (e.g. 'slashed', 'bit')."
+                },
+                "rangedType": {
+                    "type": "string",
+                    "description": "Past-tense verb used in ranged-attack log messages."
+                },
+                "projectileType": {
+                    "type": "string",
+                    "description": "Key identifying the projectile visual used for ranged attacks."
+                },
+                "properties": {
+                    "$ref": "#/definitions/unitProperties"
+                },
+                "status": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/unitStatus"
+                    },
+                    "uniqueItems": true,
+                    "description": "Status flags that govern unit behaviour."
+                },
+                "animFrames": {
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0 },
+                    "description": "Ordered list of sprite frame indices for the idle animation."
+                },
+                "animSpeed": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Animation speed in frames per tick."
+                },
+                "shadowScale": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Scale factor for the drop shadow. 0 hides the shadow."
+                },
+                "offY": {
+                    "type": "number",
+                    "description": "Vertical pixel offset applied to the sprite (positive = down)."
+                }
+            }
+        },
+        "unitProperties": {
+            "type": "object",
+            "required": ["mov", "com", "rcm", "rng", "def", "mnv", "res"],
+            "additionalProperties": false,
+            "description": "Combat and movement statistics for a unit.",
+            "properties": {
+                "mov": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Movement range in tiles."
+                },
+                "com": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Melee combat rating."
+                },
+                "rcm": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Ranged combat rating."
+                },
+                "rng": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Ranged attack range in tiles."
+                },
+                "def": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Defence rating."
+                },
+                "mnv": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Manoeuvre rating (used during engagement)."
+                },
+                "res": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9,
+                    "description": "Magic resistance rating."
+                }
+            }
+        },
+        "unitStatus": {
+            "type": "string",
+            "enum": [
+                "engulf",
+                "expires",
+                "expiresGivesSpell",
+                "flying",
+                "invuln",
+                "mount",
+                "mountAny",
+                "noCorpse",
+                "spread",
+                "struct",
+                "trans",
+                "tree",
+                "undead",
+                "wizard"
+            ],
+            "description": "A single status flag."
+        }
+    }
+}

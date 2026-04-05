@@ -10,7 +10,7 @@
             "scale": 1,
             "frames": [
                 {
-                    "filename": "1a_l_0",
+                    "filename": "eagle_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -31,7 +31,7 @@
                     }
                 },
                 {
-                    "filename": "1a_l_1",
+                    "filename": "eagle_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -52,7 +52,7 @@
                     }
                 },
                 {
-                    "filename": "1a_l_2",
+                    "filename": "eagle_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -73,7 +73,7 @@
                     }
                 },
                 {
-                    "filename": "1a_l_d",
+                    "filename": "eagle_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -94,7 +94,7 @@
                     }
                 },
                 {
-                    "filename": "1a_r_0",
+                    "filename": "eagle_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -115,7 +115,7 @@
                     }
                 },
                 {
-                    "filename": "1a_r_1",
+                    "filename": "eagle_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -136,7 +136,7 @@
                     }
                 },
                 {
-                    "filename": "1a_r_2",
+                    "filename": "eagle_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -157,7 +157,7 @@
                     }
                 },
                 {
-                    "filename": "1a_r_d",
+                    "filename": "eagle_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -178,7 +178,7 @@
                     }
                 },
                 {
-                    "filename": "1b_l_0",
+                    "filename": "vampire_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -199,7 +199,7 @@
                     }
                 },
                 {
-                    "filename": "1b_l_1",
+                    "filename": "vampire_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -220,7 +220,7 @@
                     }
                 },
                 {
-                    "filename": "1b_l_2",
+                    "filename": "vampire_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -241,7 +241,7 @@
                     }
                 },
                 {
-                    "filename": "1b_r_0",
+                    "filename": "vampire_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -262,7 +262,7 @@
                     }
                 },
                 {
-                    "filename": "1b_r_1",
+                    "filename": "vampire_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -283,7 +283,7 @@
                     }
                 },
                 {
-                    "filename": "1b_r_2",
+                    "filename": "vampire_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -304,7 +304,7 @@
                     }
                 },
                 {
-                    "filename": "1c_l_0",
+                    "filename": "ghost_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -325,7 +325,7 @@
                     }
                 },
                 {
-                    "filename": "1c_l_1",
+                    "filename": "ghost_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -346,7 +346,7 @@
                     }
                 },
                 {
-                    "filename": "1c_l_2",
+                    "filename": "ghost_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -367,7 +367,7 @@
                     }
                 },
                 {
-                    "filename": "1c_l_3",
+                    "filename": "ghost_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -388,7 +388,7 @@
                     }
                 },
                 {
-                    "filename": "1c_r_0",
+                    "filename": "ghost_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -409,7 +409,7 @@
                     }
                 },
                 {
-                    "filename": "1c_r_1",
+                    "filename": "ghost_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -430,7 +430,7 @@
                     }
                 },
                 {
-                    "filename": "1c_r_2",
+                    "filename": "ghost_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -451,7 +451,7 @@
                     }
                 },
                 {
-                    "filename": "1c_r_3",
+                    "filename": "ghost_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -472,7 +472,7 @@
                     }
                 },
                 {
-                    "filename": "1d_l_0",
+                    "filename": "spectre_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -493,7 +493,7 @@
                     }
                 },
                 {
-                    "filename": "1d_l_1",
+                    "filename": "spectre_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -514,7 +514,7 @@
                     }
                 },
                 {
-                    "filename": "1d_l_2",
+                    "filename": "spectre_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -535,7 +535,7 @@
                     }
                 },
                 {
-                    "filename": "1d_l_3",
+                    "filename": "spectre_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -556,7 +556,7 @@
                     }
                 },
                 {
-                    "filename": "1d_r_0",
+                    "filename": "spectre_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -577,7 +577,7 @@
                     }
                 },
                 {
-                    "filename": "1d_r_1",
+                    "filename": "spectre_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -598,7 +598,7 @@
                     }
                 },
                 {
-                    "filename": "1d_r_2",
+                    "filename": "spectre_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -619,7 +619,7 @@
                     }
                 },
                 {
-                    "filename": "1d_r_3",
+                    "filename": "spectre_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -640,7 +640,7 @@
                     }
                 },
                 {
-                    "filename": "1e_l_0",
+                    "filename": "wraith_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -661,7 +661,7 @@
                     }
                 },
                 {
-                    "filename": "1e_l_1",
+                    "filename": "wraith_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -682,7 +682,7 @@
                     }
                 },
                 {
-                    "filename": "1e_l_2",
+                    "filename": "wraith_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -703,7 +703,7 @@
                     }
                 },
                 {
-                    "filename": "1e_l_3",
+                    "filename": "wraith_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -724,7 +724,7 @@
                     }
                 },
                 {
-                    "filename": "1e_r_0",
+                    "filename": "wraith_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -745,7 +745,7 @@
                     }
                 },
                 {
-                    "filename": "1e_r_1",
+                    "filename": "wraith_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -766,7 +766,7 @@
                     }
                 },
                 {
-                    "filename": "1e_r_2",
+                    "filename": "wraith_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -787,7 +787,7 @@
                     }
                 },
                 {
-                    "filename": "1e_r_3",
+                    "filename": "wraith_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -808,7 +808,7 @@
                     }
                 },
                 {
-                    "filename": "1f_l_0",
+                    "filename": "skeleton_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -829,7 +829,7 @@
                     }
                 },
                 {
-                    "filename": "1f_l_1",
+                    "filename": "skeleton_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -850,7 +850,7 @@
                     }
                 },
                 {
-                    "filename": "1f_l_2",
+                    "filename": "skeleton_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -871,7 +871,7 @@
                     }
                 },
                 {
-                    "filename": "1f_r_0",
+                    "filename": "skeleton_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -892,7 +892,7 @@
                     }
                 },
                 {
-                    "filename": "1f_r_1",
+                    "filename": "skeleton_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -913,7 +913,7 @@
                     }
                 },
                 {
-                    "filename": "1f_r_2",
+                    "filename": "skeleton_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -934,7 +934,7 @@
                     }
                 },
                 {
-                    "filename": "2_l_0",
+                    "filename": "king-cobra_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -955,7 +955,7 @@
                     }
                 },
                 {
-                    "filename": "2_l_1",
+                    "filename": "king-cobra_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -976,7 +976,7 @@
                     }
                 },
                 {
-                    "filename": "2_l_2",
+                    "filename": "king-cobra_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -997,7 +997,7 @@
                     }
                 },
                 {
-                    "filename": "2_l_d",
+                    "filename": "king-cobra_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1018,7 +1018,7 @@
                     }
                 },
                 {
-                    "filename": "2_r_0",
+                    "filename": "king-cobra_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1039,7 +1039,7 @@
                     }
                 },
                 {
-                    "filename": "2_r_1",
+                    "filename": "king-cobra_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1060,7 +1060,7 @@
                     }
                 },
                 {
-                    "filename": "2_r_2",
+                    "filename": "king-cobra_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1081,7 +1081,7 @@
                     }
                 },
                 {
-                    "filename": "2_r_d",
+                    "filename": "king-cobra_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1102,7 +1102,7 @@
                     }
                 },
                 {
-                    "filename": "3_l_0",
+                    "filename": "dire-wolf_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1123,7 +1123,7 @@
                     }
                 },
                 {
-                    "filename": "3_l_1",
+                    "filename": "dire-wolf_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1144,7 +1144,7 @@
                     }
                 },
                 {
-                    "filename": "3_l_2",
+                    "filename": "dire-wolf_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1165,7 +1165,7 @@
                     }
                 },
                 {
-                    "filename": "3_l_d",
+                    "filename": "dire-wolf_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1186,7 +1186,7 @@
                     }
                 },
                 {
-                    "filename": "3_r_0",
+                    "filename": "dire-wolf_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1207,7 +1207,7 @@
                     }
                 },
                 {
-                    "filename": "3_r_1",
+                    "filename": "dire-wolf_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1228,7 +1228,7 @@
                     }
                 },
                 {
-                    "filename": "3_r_2",
+                    "filename": "dire-wolf_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1249,7 +1249,7 @@
                     }
                 },
                 {
-                    "filename": "3_r_d",
+                    "filename": "dire-wolf_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1270,7 +1270,7 @@
                     }
                 },
                 {
-                    "filename": "4_l_0",
+                    "filename": "crocodile_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1291,7 +1291,7 @@
                     }
                 },
                 {
-                    "filename": "4_l_1",
+                    "filename": "crocodile_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1312,7 +1312,7 @@
                     }
                 },
                 {
-                    "filename": "4_l_2",
+                    "filename": "crocodile_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1333,7 +1333,7 @@
                     }
                 },
                 {
-                    "filename": "4_l_d",
+                    "filename": "crocodile_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1354,7 +1354,7 @@
                     }
                 },
                 {
-                    "filename": "4_r_0",
+                    "filename": "crocodile_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1375,7 +1375,7 @@
                     }
                 },
                 {
-                    "filename": "4_r_1",
+                    "filename": "crocodile_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1396,7 +1396,7 @@
                     }
                 },
                 {
-                    "filename": "4_r_2",
+                    "filename": "crocodile_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1417,7 +1417,7 @@
                     }
                 },
                 {
-                    "filename": "4_r_d",
+                    "filename": "crocodile_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1438,7 +1438,7 @@
                     }
                 },
                 {
-                    "filename": "5_l_0",
+                    "filename": "faun_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1459,7 +1459,7 @@
                     }
                 },
                 {
-                    "filename": "5_l_1",
+                    "filename": "faun_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1480,7 +1480,7 @@
                     }
                 },
                 {
-                    "filename": "5_l_2",
+                    "filename": "faun_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1501,7 +1501,7 @@
                     }
                 },
                 {
-                    "filename": "5_l_d",
+                    "filename": "faun_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1522,7 +1522,7 @@
                     }
                 },
                 {
-                    "filename": "5_r_0",
+                    "filename": "faun_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1543,7 +1543,7 @@
                     }
                 },
                 {
-                    "filename": "5_r_1",
+                    "filename": "faun_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1564,7 +1564,7 @@
                     }
                 },
                 {
-                    "filename": "5_r_2",
+                    "filename": "faun_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1585,7 +1585,7 @@
                     }
                 },
                 {
-                    "filename": "5_r_d",
+                    "filename": "faun_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1606,7 +1606,7 @@
                     }
                 },
                 {
-                    "filename": "6_l_0",
+                    "filename": "lion_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1627,7 +1627,7 @@
                     }
                 },
                 {
-                    "filename": "6_l_1",
+                    "filename": "lion_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1648,7 +1648,7 @@
                     }
                 },
                 {
-                    "filename": "6_l_2",
+                    "filename": "lion_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1669,7 +1669,7 @@
                     }
                 },
                 {
-                    "filename": "6_l_d",
+                    "filename": "lion_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1690,7 +1690,7 @@
                     }
                 },
                 {
-                    "filename": "6_r_0",
+                    "filename": "lion_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1711,7 +1711,7 @@
                     }
                 },
                 {
-                    "filename": "6_r_1",
+                    "filename": "lion_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1732,7 +1732,7 @@
                     }
                 },
                 {
-                    "filename": "6_r_2",
+                    "filename": "lion_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1753,7 +1753,7 @@
                     }
                 },
                 {
-                    "filename": "6_r_d",
+                    "filename": "lion_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1774,7 +1774,7 @@
                     }
                 },
                 {
-                    "filename": "7_l_0",
+                    "filename": "elf_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1795,7 +1795,7 @@
                     }
                 },
                 {
-                    "filename": "7_l_1",
+                    "filename": "elf_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1816,7 +1816,7 @@
                     }
                 },
                 {
-                    "filename": "7_l_2",
+                    "filename": "elf_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1837,7 +1837,7 @@
                     }
                 },
                 {
-                    "filename": "7_l_3",
+                    "filename": "elf_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1858,7 +1858,7 @@
                     }
                 },
                 {
-                    "filename": "7_l_d",
+                    "filename": "elf_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1879,7 +1879,7 @@
                     }
                 },
                 {
-                    "filename": "7_r_0",
+                    "filename": "elf_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1900,7 +1900,7 @@
                     }
                 },
                 {
-                    "filename": "7_r_1",
+                    "filename": "elf_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1921,7 +1921,7 @@
                     }
                 },
                 {
-                    "filename": "7_r_2",
+                    "filename": "elf_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1942,7 +1942,7 @@
                     }
                 },
                 {
-                    "filename": "7_r_3",
+                    "filename": "elf_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1963,7 +1963,7 @@
                     }
                 },
                 {
-                    "filename": "7_r_d",
+                    "filename": "elf_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -1984,7 +1984,7 @@
                     }
                 },
                 {
-                    "filename": "8_l_0",
+                    "filename": "orc_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2005,7 +2005,7 @@
                     }
                 },
                 {
-                    "filename": "8_l_1",
+                    "filename": "orc_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2026,7 +2026,7 @@
                     }
                 },
                 {
-                    "filename": "8_l_2",
+                    "filename": "orc_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2047,7 +2047,7 @@
                     }
                 },
                 {
-                    "filename": "8_l_d",
+                    "filename": "orc_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2068,7 +2068,7 @@
                     }
                 },
                 {
-                    "filename": "8_r_0",
+                    "filename": "orc_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2089,7 +2089,7 @@
                     }
                 },
                 {
-                    "filename": "8_r_1",
+                    "filename": "orc_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2110,7 +2110,7 @@
                     }
                 },
                 {
-                    "filename": "8_r_2",
+                    "filename": "orc_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2131,7 +2131,7 @@
                     }
                 },
                 {
-                    "filename": "8_r_d",
+                    "filename": "orc_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2152,7 +2152,7 @@
                     }
                 },
                 {
-                    "filename": "9_l_0",
+                    "filename": "bear_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2173,7 +2173,7 @@
                     }
                 },
                 {
-                    "filename": "9_l_1",
+                    "filename": "bear_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2194,7 +2194,7 @@
                     }
                 },
                 {
-                    "filename": "9_l_2",
+                    "filename": "bear_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2215,7 +2215,7 @@
                     }
                 },
                 {
-                    "filename": "9_l_d",
+                    "filename": "bear_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2236,7 +2236,7 @@
                     }
                 },
                 {
-                    "filename": "9_r_0",
+                    "filename": "bear_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2257,7 +2257,7 @@
                     }
                 },
                 {
-                    "filename": "9_r_1",
+                    "filename": "bear_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2278,7 +2278,7 @@
                     }
                 },
                 {
-                    "filename": "9_r_2",
+                    "filename": "bear_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2299,7 +2299,7 @@
                     }
                 },
                 {
-                    "filename": "9_r_d",
+                    "filename": "bear_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2320,7 +2320,7 @@
                     }
                 },
                 {
-                    "filename": "10_l_0",
+                    "filename": "unicorn_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2341,7 +2341,7 @@
                     }
                 },
                 {
-                    "filename": "10_l_1",
+                    "filename": "unicorn_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2362,7 +2362,7 @@
                     }
                 },
                 {
-                    "filename": "10_l_2",
+                    "filename": "unicorn_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2383,7 +2383,7 @@
                     }
                 },
                 {
-                    "filename": "10_l_d",
+                    "filename": "unicorn_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2404,7 +2404,7 @@
                     }
                 },
                 {
-                    "filename": "10_r_0",
+                    "filename": "unicorn_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2425,7 +2425,7 @@
                     }
                 },
                 {
-                    "filename": "10_r_1",
+                    "filename": "unicorn_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2446,7 +2446,7 @@
                     }
                 },
                 {
-                    "filename": "10_r_2",
+                    "filename": "unicorn_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2467,7 +2467,7 @@
                     }
                 },
                 {
-                    "filename": "10_r_d",
+                    "filename": "unicorn_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2488,7 +2488,7 @@
                     }
                 },
                 {
-                    "filename": "11_l_0",
+                    "filename": "centaur_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2509,7 +2509,7 @@
                     }
                 },
                 {
-                    "filename": "11_l_1",
+                    "filename": "centaur_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2530,7 +2530,7 @@
                     }
                 },
                 {
-                    "filename": "11_l_2",
+                    "filename": "centaur_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2551,7 +2551,7 @@
                     }
                 },
                 {
-                    "filename": "11_l_d",
+                    "filename": "centaur_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2572,7 +2572,7 @@
                     }
                 },
                 {
-                    "filename": "11_r_0",
+                    "filename": "centaur_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2593,7 +2593,7 @@
                     }
                 },
                 {
-                    "filename": "11_r_1",
+                    "filename": "centaur_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2614,7 +2614,7 @@
                     }
                 },
                 {
-                    "filename": "11_r_2",
+                    "filename": "centaur_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2635,7 +2635,7 @@
                     }
                 },
                 {
-                    "filename": "11_r_d",
+                    "filename": "centaur_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2656,7 +2656,7 @@
                     }
                 },
                 {
-                    "filename": "12_l_0",
+                    "filename": "pegasus_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2677,7 +2677,7 @@
                     }
                 },
                 {
-                    "filename": "12_l_1",
+                    "filename": "pegasus_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2698,7 +2698,7 @@
                     }
                 },
                 {
-                    "filename": "12_l_2",
+                    "filename": "pegasus_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2719,7 +2719,7 @@
                     }
                 },
                 {
-                    "filename": "12_l_d",
+                    "filename": "pegasus_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2740,7 +2740,7 @@
                     }
                 },
                 {
-                    "filename": "12_r_0",
+                    "filename": "pegasus_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2761,7 +2761,7 @@
                     }
                 },
                 {
-                    "filename": "12_r_1",
+                    "filename": "pegasus_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2782,7 +2782,7 @@
                     }
                 },
                 {
-                    "filename": "12_r_2",
+                    "filename": "pegasus_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2803,7 +2803,7 @@
                     }
                 },
                 {
-                    "filename": "12_r_d",
+                    "filename": "pegasus_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2824,7 +2824,7 @@
                     }
                 },
                 {
-                    "filename": "13_l_0",
+                    "filename": "gryphon_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2845,7 +2845,7 @@
                     }
                 },
                 {
-                    "filename": "13_l_1",
+                    "filename": "gryphon_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2866,7 +2866,7 @@
                     }
                 },
                 {
-                    "filename": "13_l_2",
+                    "filename": "gryphon_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2887,7 +2887,7 @@
                     }
                 },
                 {
-                    "filename": "13_l_d",
+                    "filename": "gryphon_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2908,7 +2908,7 @@
                     }
                 },
                 {
-                    "filename": "13_r_0",
+                    "filename": "gryphon_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2929,7 +2929,7 @@
                     }
                 },
                 {
-                    "filename": "13_r_1",
+                    "filename": "gryphon_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2950,7 +2950,7 @@
                     }
                 },
                 {
-                    "filename": "13_r_2",
+                    "filename": "gryphon_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2971,7 +2971,7 @@
                     }
                 },
                 {
-                    "filename": "13_r_d",
+                    "filename": "gryphon_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -2992,7 +2992,7 @@
                     }
                 },
                 {
-                    "filename": "14_l_0",
+                    "filename": "manticore_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3013,7 +3013,7 @@
                     }
                 },
                 {
-                    "filename": "14_l_1",
+                    "filename": "manticore_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3034,7 +3034,7 @@
                     }
                 },
                 {
-                    "filename": "14_l_2",
+                    "filename": "manticore_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3055,7 +3055,7 @@
                     }
                 },
                 {
-                    "filename": "14_l_d",
+                    "filename": "manticore_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3076,7 +3076,7 @@
                     }
                 },
                 {
-                    "filename": "14_r_0",
+                    "filename": "manticore_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3097,7 +3097,7 @@
                     }
                 },
                 {
-                    "filename": "14_r_1",
+                    "filename": "manticore_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3118,7 +3118,7 @@
                     }
                 },
                 {
-                    "filename": "14_r_2",
+                    "filename": "manticore_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3139,7 +3139,7 @@
                     }
                 },
                 {
-                    "filename": "14_r_d",
+                    "filename": "manticore_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3160,7 +3160,7 @@
                     }
                 },
                 {
-                    "filename": "15_l_0",
+                    "filename": "bat_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3181,7 +3181,7 @@
                     }
                 },
                 {
-                    "filename": "15_l_1",
+                    "filename": "bat_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3202,7 +3202,7 @@
                     }
                 },
                 {
-                    "filename": "15_l_2",
+                    "filename": "bat_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3223,7 +3223,7 @@
                     }
                 },
                 {
-                    "filename": "15_l_d",
+                    "filename": "bat_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3244,7 +3244,7 @@
                     }
                 },
                 {
-                    "filename": "15_r_0",
+                    "filename": "bat_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3265,7 +3265,7 @@
                     }
                 },
                 {
-                    "filename": "15_r_1",
+                    "filename": "bat_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3286,7 +3286,7 @@
                     }
                 },
                 {
-                    "filename": "15_r_2",
+                    "filename": "bat_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3307,7 +3307,7 @@
                     }
                 },
                 {
-                    "filename": "15_r_d",
+                    "filename": "bat_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3328,7 +3328,7 @@
                     }
                 },
                 {
-                    "filename": "16_l_0",
+                    "filename": "green-dragon_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3349,7 +3349,7 @@
                     }
                 },
                 {
-                    "filename": "16_l_1",
+                    "filename": "green-dragon_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3370,7 +3370,7 @@
                     }
                 },
                 {
-                    "filename": "16_l_2",
+                    "filename": "green-dragon_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3391,7 +3391,7 @@
                     }
                 },
                 {
-                    "filename": "16_l_d",
+                    "filename": "green-dragon_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3412,7 +3412,7 @@
                     }
                 },
                 {
-                    "filename": "16_r_0",
+                    "filename": "green-dragon_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3433,7 +3433,7 @@
                     }
                 },
                 {
-                    "filename": "16_r_1",
+                    "filename": "green-dragon_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3454,7 +3454,7 @@
                     }
                 },
                 {
-                    "filename": "16_r_2",
+                    "filename": "green-dragon_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3475,7 +3475,7 @@
                     }
                 },
                 {
-                    "filename": "16_r_d",
+                    "filename": "green-dragon_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3496,7 +3496,7 @@
                     }
                 },
                 {
-                    "filename": "17_l_0",
+                    "filename": "red-dragon_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3517,7 +3517,7 @@
                     }
                 },
                 {
-                    "filename": "17_l_1",
+                    "filename": "red-dragon_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3538,7 +3538,7 @@
                     }
                 },
                 {
-                    "filename": "17_l_2",
+                    "filename": "red-dragon_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3559,7 +3559,7 @@
                     }
                 },
                 {
-                    "filename": "17_l_d",
+                    "filename": "red-dragon_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3580,7 +3580,7 @@
                     }
                 },
                 {
-                    "filename": "17_r_0",
+                    "filename": "red-dragon_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3601,7 +3601,7 @@
                     }
                 },
                 {
-                    "filename": "17_r_1",
+                    "filename": "red-dragon_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3622,7 +3622,7 @@
                     }
                 },
                 {
-                    "filename": "17_r_2",
+                    "filename": "red-dragon_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3643,7 +3643,7 @@
                     }
                 },
                 {
-                    "filename": "17_r_d",
+                    "filename": "red-dragon_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3664,7 +3664,7 @@
                     }
                 },
                 {
-                    "filename": "18_l_0",
+                    "filename": "golden-dragon_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3685,7 +3685,7 @@
                     }
                 },
                 {
-                    "filename": "18_l_1",
+                    "filename": "golden-dragon_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3706,7 +3706,7 @@
                     }
                 },
                 {
-                    "filename": "18_l_2",
+                    "filename": "golden-dragon_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3727,7 +3727,7 @@
                     }
                 },
                 {
-                    "filename": "18_l_d",
+                    "filename": "golden-dragon_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3748,7 +3748,7 @@
                     }
                 },
                 {
-                    "filename": "18_r_0",
+                    "filename": "golden-dragon_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3769,7 +3769,7 @@
                     }
                 },
                 {
-                    "filename": "18_r_1",
+                    "filename": "golden-dragon_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3790,7 +3790,7 @@
                     }
                 },
                 {
-                    "filename": "18_r_2",
+                    "filename": "golden-dragon_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3811,7 +3811,7 @@
                     }
                 },
                 {
-                    "filename": "18_r_d",
+                    "filename": "golden-dragon_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3832,7 +3832,7 @@
                     }
                 },
                 {
-                    "filename": "19_l_0",
+                    "filename": "harpy_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3853,7 +3853,7 @@
                     }
                 },
                 {
-                    "filename": "19_l_1",
+                    "filename": "harpy_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3874,7 +3874,7 @@
                     }
                 },
                 {
-                    "filename": "19_l_2",
+                    "filename": "harpy_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3895,7 +3895,7 @@
                     }
                 },
                 {
-                    "filename": "19_l_d",
+                    "filename": "harpy_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3916,7 +3916,7 @@
                     }
                 },
                 {
-                    "filename": "19_r_0",
+                    "filename": "harpy_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3937,7 +3937,7 @@
                     }
                 },
                 {
-                    "filename": "19_r_1",
+                    "filename": "harpy_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3958,7 +3958,7 @@
                     }
                 },
                 {
-                    "filename": "19_r_2",
+                    "filename": "harpy_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -3979,7 +3979,7 @@
                     }
                 },
                 {
-                    "filename": "19_r_d",
+                    "filename": "harpy_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4000,7 +4000,7 @@
                     }
                 },
                 {
-                    "filename": "20_l_0",
+                    "filename": "zombie_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4021,7 +4021,7 @@
                     }
                 },
                 {
-                    "filename": "20_l_1",
+                    "filename": "zombie_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4042,7 +4042,7 @@
                     }
                 },
                 {
-                    "filename": "20_l_2",
+                    "filename": "zombie_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4063,7 +4063,7 @@
                     }
                 },
                 {
-                    "filename": "20_l_3",
+                    "filename": "zombie_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4084,7 +4084,7 @@
                     }
                 },
                 {
-                    "filename": "20_r_0",
+                    "filename": "zombie_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4105,7 +4105,7 @@
                     }
                 },
                 {
-                    "filename": "20_r_1",
+                    "filename": "zombie_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4126,7 +4126,7 @@
                     }
                 },
                 {
-                    "filename": "20_r_2",
+                    "filename": "zombie_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4147,7 +4147,7 @@
                     }
                 },
                 {
-                    "filename": "20_r_3",
+                    "filename": "zombie_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4168,7 +4168,7 @@
                     }
                 },
                 {
-                    "filename": "21_l_0",
+                    "filename": "magic-wood_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4189,7 +4189,7 @@
                     }
                 },
                 {
-                    "filename": "21_l_1",
+                    "filename": "magic-wood_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4210,7 +4210,7 @@
                     }
                 },
                 {
-                    "filename": "21_l_2",
+                    "filename": "magic-wood_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4231,7 +4231,7 @@
                     }
                 },
                 {
-                    "filename": "21_r_0",
+                    "filename": "magic-wood_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4252,7 +4252,7 @@
                     }
                 },
                 {
-                    "filename": "21_r_1",
+                    "filename": "magic-wood_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4273,7 +4273,7 @@
                     }
                 },
                 {
-                    "filename": "21_r_2",
+                    "filename": "magic-wood_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4294,7 +4294,7 @@
                     }
                 },
                 {
-                    "filename": "22_l_0",
+                    "filename": "shadow-wood_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4315,7 +4315,7 @@
                     }
                 },
                 {
-                    "filename": "22_l_1",
+                    "filename": "shadow-wood_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4336,7 +4336,7 @@
                     }
                 },
                 {
-                    "filename": "22_l_2",
+                    "filename": "shadow-wood_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4357,7 +4357,7 @@
                     }
                 },
                 {
-                    "filename": "22_r_0",
+                    "filename": "shadow-wood_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4378,7 +4378,7 @@
                     }
                 },
                 {
-                    "filename": "22_r_1",
+                    "filename": "shadow-wood_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4399,7 +4399,7 @@
                     }
                 },
                 {
-                    "filename": "22_r_2",
+                    "filename": "shadow-wood_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4420,7 +4420,7 @@
                     }
                 },
                 {
-                    "filename": "23_l_0",
+                    "filename": "magic-fire_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4441,7 +4441,7 @@
                     }
                 },
                 {
-                    "filename": "23_l_1",
+                    "filename": "magic-fire_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4462,7 +4462,7 @@
                     }
                 },
                 {
-                    "filename": "23_l_2",
+                    "filename": "magic-fire_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4483,7 +4483,7 @@
                     }
                 },
                 {
-                    "filename": "23_l_3",
+                    "filename": "magic-fire_l_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4504,7 +4504,7 @@
                     }
                 },
                 {
-                    "filename": "23_r_0",
+                    "filename": "magic-fire_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4525,7 +4525,7 @@
                     }
                 },
                 {
-                    "filename": "23_r_1",
+                    "filename": "magic-fire_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4546,7 +4546,7 @@
                     }
                 },
                 {
-                    "filename": "23_r_2",
+                    "filename": "magic-fire_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4567,7 +4567,7 @@
                     }
                 },
                 {
-                    "filename": "23_r_3",
+                    "filename": "magic-fire_r_3",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4588,7 +4588,7 @@
                     }
                 },
                 {
-                    "filename": "24_l_0",
+                    "filename": "gooey-blob_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4609,7 +4609,7 @@
                     }
                 },
                 {
-                    "filename": "24_l_1",
+                    "filename": "gooey-blob_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4630,7 +4630,7 @@
                     }
                 },
                 {
-                    "filename": "24_l_2",
+                    "filename": "gooey-blob_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4651,7 +4651,7 @@
                     }
                 },
                 {
-                    "filename": "24_r_0",
+                    "filename": "gooey-blob_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4672,7 +4672,7 @@
                     }
                 },
                 {
-                    "filename": "24_r_1",
+                    "filename": "gooey-blob_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4693,7 +4693,7 @@
                     }
                 },
                 {
-                    "filename": "24_r_2",
+                    "filename": "gooey-blob_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4714,7 +4714,7 @@
                     }
                 },
                 {
-                    "filename": "25_l_0",
+                    "filename": "magic-castle_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4735,7 +4735,7 @@
                     }
                 },
                 {
-                    "filename": "25_r_0",
+                    "filename": "magic-castle_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4756,7 +4756,7 @@
                     }
                 },
                 {
-                    "filename": "26_l_0",
+                    "filename": "dark-citadel_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4777,7 +4777,7 @@
                     }
                 },
                 {
-                    "filename": "26_r_0",
+                    "filename": "dark-citadel_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4798,7 +4798,7 @@
                     }
                 },
                 {
-                    "filename": "27_l_0",
+                    "filename": "wall_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4819,7 +4819,7 @@
                     }
                 },
                 {
-                    "filename": "27_r_0",
+                    "filename": "wall_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4840,7 +4840,7 @@
                     }
                 },
                 {
-                    "filename": "28_l_0",
+                    "filename": "goblin_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4861,7 +4861,7 @@
                     }
                 },
                 {
-                    "filename": "28_l_1",
+                    "filename": "goblin_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4882,7 +4882,7 @@
                     }
                 },
                 {
-                    "filename": "28_l_2",
+                    "filename": "goblin_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4903,7 +4903,7 @@
                     }
                 },
                 {
-                    "filename": "28_l_d",
+                    "filename": "goblin_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4924,7 +4924,7 @@
                     }
                 },
                 {
-                    "filename": "28_r_0",
+                    "filename": "goblin_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4945,7 +4945,7 @@
                     }
                 },
                 {
-                    "filename": "28_r_1",
+                    "filename": "goblin_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4966,7 +4966,7 @@
                     }
                 },
                 {
-                    "filename": "28_r_2",
+                    "filename": "goblin_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -4987,7 +4987,7 @@
                     }
                 },
                 {
-                    "filename": "28_r_d",
+                    "filename": "goblin_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5008,7 +5008,7 @@
                     }
                 },
                 {
-                    "filename": "a_l_0",
+                    "filename": "gorilla_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5029,7 +5029,7 @@
                     }
                 },
                 {
-                    "filename": "a_l_1",
+                    "filename": "gorilla_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5050,7 +5050,7 @@
                     }
                 },
                 {
-                    "filename": "a_l_2",
+                    "filename": "gorilla_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5071,7 +5071,7 @@
                     }
                 },
                 {
-                    "filename": "a_l_d",
+                    "filename": "gorilla_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5092,7 +5092,7 @@
                     }
                 },
                 {
-                    "filename": "a_r_0",
+                    "filename": "gorilla_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5113,7 +5113,7 @@
                     }
                 },
                 {
-                    "filename": "a_r_1",
+                    "filename": "gorilla_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5134,7 +5134,7 @@
                     }
                 },
                 {
-                    "filename": "a_r_2",
+                    "filename": "gorilla_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5155,7 +5155,7 @@
                     }
                 },
                 {
-                    "filename": "a_r_d",
+                    "filename": "gorilla_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5176,7 +5176,7 @@
                     }
                 },
                 {
-                    "filename": "b_l_0",
+                    "filename": "ogre_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5197,7 +5197,7 @@
                     }
                 },
                 {
-                    "filename": "b_l_1",
+                    "filename": "ogre_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5218,7 +5218,7 @@
                     }
                 },
                 {
-                    "filename": "b_l_2",
+                    "filename": "ogre_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5239,7 +5239,7 @@
                     }
                 },
                 {
-                    "filename": "b_l_d",
+                    "filename": "ogre_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5260,7 +5260,7 @@
                     }
                 },
                 {
-                    "filename": "b_r_0",
+                    "filename": "ogre_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5281,7 +5281,7 @@
                     }
                 },
                 {
-                    "filename": "b_r_1",
+                    "filename": "ogre_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5302,7 +5302,7 @@
                     }
                 },
                 {
-                    "filename": "b_r_2",
+                    "filename": "ogre_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5323,7 +5323,7 @@
                     }
                 },
                 {
-                    "filename": "b_r_d",
+                    "filename": "ogre_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5344,7 +5344,7 @@
                     }
                 },
                 {
-                    "filename": "c_l_0",
+                    "filename": "hydra_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5365,7 +5365,7 @@
                     }
                 },
                 {
-                    "filename": "c_l_1",
+                    "filename": "hydra_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5386,7 +5386,7 @@
                     }
                 },
                 {
-                    "filename": "c_l_2",
+                    "filename": "hydra_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5407,7 +5407,7 @@
                     }
                 },
                 {
-                    "filename": "c_l_d",
+                    "filename": "hydra_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5428,7 +5428,7 @@
                     }
                 },
                 {
-                    "filename": "c_r_0",
+                    "filename": "hydra_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5449,7 +5449,7 @@
                     }
                 },
                 {
-                    "filename": "c_r_1",
+                    "filename": "hydra_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5470,7 +5470,7 @@
                     }
                 },
                 {
-                    "filename": "c_r_2",
+                    "filename": "hydra_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5491,7 +5491,7 @@
                     }
                 },
                 {
-                    "filename": "c_r_d",
+                    "filename": "hydra_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5512,7 +5512,7 @@
                     }
                 },
                 {
-                    "filename": "d_l_0",
+                    "filename": "giant-rat_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5533,7 +5533,7 @@
                     }
                 },
                 {
-                    "filename": "d_l_1",
+                    "filename": "giant-rat_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5554,7 +5554,7 @@
                     }
                 },
                 {
-                    "filename": "d_l_2",
+                    "filename": "giant-rat_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5575,7 +5575,7 @@
                     }
                 },
                 {
-                    "filename": "d_l_d",
+                    "filename": "giant-rat_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5596,7 +5596,7 @@
                     }
                 },
                 {
-                    "filename": "d_r_0",
+                    "filename": "giant-rat_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5617,7 +5617,7 @@
                     }
                 },
                 {
-                    "filename": "d_r_1",
+                    "filename": "giant-rat_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5638,7 +5638,7 @@
                     }
                 },
                 {
-                    "filename": "d_r_2",
+                    "filename": "giant-rat_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5659,7 +5659,7 @@
                     }
                 },
                 {
-                    "filename": "d_r_d",
+                    "filename": "giant-rat_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5680,7 +5680,7 @@
                     }
                 },
                 {
-                    "filename": "e_l_0",
+                    "filename": "giant_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5701,7 +5701,7 @@
                     }
                 },
                 {
-                    "filename": "e_l_1",
+                    "filename": "giant_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5722,7 +5722,7 @@
                     }
                 },
                 {
-                    "filename": "e_l_2",
+                    "filename": "giant_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5743,7 +5743,7 @@
                     }
                 },
                 {
-                    "filename": "e_l_d",
+                    "filename": "giant_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5764,7 +5764,7 @@
                     }
                 },
                 {
-                    "filename": "e_r_0",
+                    "filename": "giant_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5785,7 +5785,7 @@
                     }
                 },
                 {
-                    "filename": "e_r_1",
+                    "filename": "giant_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5806,7 +5806,7 @@
                     }
                 },
                 {
-                    "filename": "e_r_2",
+                    "filename": "giant_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5827,7 +5827,7 @@
                     }
                 },
                 {
-                    "filename": "e_r_d",
+                    "filename": "giant_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5848,7 +5848,7 @@
                     }
                 },
                 {
-                    "filename": "f_l_0",
+                    "filename": "horse_l_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5869,7 +5869,7 @@
                     }
                 },
                 {
-                    "filename": "f_l_1",
+                    "filename": "horse_l_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5890,7 +5890,7 @@
                     }
                 },
                 {
-                    "filename": "f_l_2",
+                    "filename": "horse_l_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5911,7 +5911,7 @@
                     }
                 },
                 {
-                    "filename": "f_l_d",
+                    "filename": "horse_l_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5932,7 +5932,7 @@
                     }
                 },
                 {
-                    "filename": "f_r_0",
+                    "filename": "horse_r_0",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5953,7 +5953,7 @@
                     }
                 },
                 {
-                    "filename": "f_r_1",
+                    "filename": "horse_r_1",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5974,7 +5974,7 @@
                     }
                 },
                 {
-                    "filename": "f_r_2",
+                    "filename": "horse_r_2",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
@@ -5995,7 +5995,7 @@
                     }
                 },
                 {
-                    "filename": "f_r_d",
+                    "filename": "horse_r_d",
                     "rotated": false,
                     "trimmed": false,
                     "sourceSize": {
