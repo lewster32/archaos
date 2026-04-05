@@ -61,6 +61,9 @@ export class Piece extends EnginePiece {
      */
     static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
+    /** Pixels above the target's isometric tile the attacker hovers. */
+    private static readonly HOVER_HEIGHT = 48;
+
     protected _shadowScale: number;
     protected _shadow?: GameObjects.Image;
     protected _sprite?: GameObjects.Sprite;
@@ -380,6 +383,49 @@ export class Piece extends EnginePiece {
         }
         this.direction =
             isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
+    }
+
+    /**
+     * Visually tween this piece's sprite to hover above the given
+     * board position. Does not update the logical position.
+     * Used for fly-attack approach animation.
+     */
+    async flyApproach(targetPos: Geom.Point): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._sprite) {
+                resolve();
+                return;
+            }
+            const iso = this.clientBoard.getIsoPosition(targetPos);
+            const groundY = iso.y - this._offsetY;
+
+            if (this._shadow) {
+                this.clientBoard.scene.tweens.add({
+                    targets: [this._shadow],
+                    x: iso.x,
+                    y: groundY,
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            }
+
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                x: iso.x,
+                y: groundY - Piece.HOVER_HEIGHT,
+                duration: Piece.DEFAULT_MOVE_DURATION,
+                ease: PMath.Easing.Cubic.InOut,
+                onUpdateScope: this,
+                onUpdate: () => {
+                    this.updateDepth();
+                },
+                onCompleteScope: this,
+                onComplete: () => {
+                    this.updateDepth();
+                    resolve();
+                },
+            });
+        });
     }
 
     /**

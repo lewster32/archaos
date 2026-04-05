@@ -170,6 +170,30 @@ function makePiece(
     });
 }
 
+function makeTweenBoard(isoX = 100, isoY = 200) {
+    const tweenSpy = vi.fn().mockImplementation((config: any) => {
+        config.onComplete?.call(config.onCompleteScope);
+        return {};
+    });
+    const board = makeMockBoard({
+        getIsoPosition: () => ({ x: isoX, y: isoY }),
+        scene: {
+            add: {
+                sprite: () => makeMockSprite(),
+                image: () => makeMockImage(),
+            },
+            tweens: {
+                add: tweenSpy,
+                addCounter: () => ({
+                    stop: () => ({}),
+                    destroy: () => ({}),
+                }),
+            },
+        },
+    });
+    return { board, tweenSpy };
+}
+
 function makeRangedPiece(overrides: Partial<PieceConfig> = {}): MockPiece {
     return new MockPiece(makeMockBoard(), 1, {
         type: UnitType.Creature,
@@ -1867,6 +1891,31 @@ describe("Piece", () => {
         it("SHADOW_FORM_ALPHA is between 0 and 1", () => {
             expect(Piece.SHADOW_FORM_ALPHA).toBeGreaterThan(0);
             expect(Piece.SHADOW_FORM_ALPHA).toBeLessThan(1);
+        });
+    });
+
+    describe("flyApproach", () => {
+        it("does not update the logical position", async () => {
+            const { board } = makeTweenBoard();
+            const piece = makePieceOnBoard(board);
+            const originalPos = new Geom.Point(
+                piece.position.x,
+                piece.position.y,
+            );
+            await piece.flyApproach(new Geom.Point(5, 5));
+            expect(piece.position).toEqual(originalPos);
+        });
+
+        it("adds a tween targeting the sprite", async () => {
+            const { board, tweenSpy } = makeTweenBoard();
+            const piece = makePieceOnBoard(board);
+            await piece.flyApproach(new Geom.Point(5, 5));
+            const spriteTween = tweenSpy.mock.calls.find(
+                (call: any[]) =>
+                    Array.isArray(call[0].targets) &&
+                    call[0].targets.includes(piece.sprite),
+            );
+            expect(spriteTween).toBeDefined();
         });
     });
 
