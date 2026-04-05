@@ -456,7 +456,10 @@ export class Piece extends EnginePiece {
     /**
      * Perform an attack on the given piece.
      */
-    async attack(piece: EnginePiece): Promise<boolean> {
+    async attack(
+        piece: EnginePiece,
+        options?: { silentMove?: boolean },
+    ): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
                 this.clientBoard.logger.log(
@@ -513,7 +516,11 @@ export class Piece extends EnginePiece {
                     ).length === 0 &&
                     this.canMove
                 ) {
-                    await this.clientBoard.movePiece(this.id, piece.position);
+                    await this.clientBoard.movePiece(
+                        this.id,
+                        piece.position,
+                        options?.silentMove,
+                    );
                 }
                 return true;
             }
