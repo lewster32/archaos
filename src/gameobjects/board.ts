@@ -919,9 +919,14 @@ export class Board extends EngineBoard<Piece> {
      *
      * @param id The ID of the piece to move.
      * @param position The position to move the piece to.
+     * @param silent Optional flag to suppress movement sound effects.
      * @returns A promise that resolves to the moved piece.
      */
-    async movePiece(id: number, position: Geom.Point): Promise<Piece> {
+    async movePiece(
+        id: number,
+        position: Geom.Point,
+        silent?: boolean,
+    ): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (!piece) {
             throw new Error(`Could not find piece with ID ${id}`);
@@ -932,7 +937,9 @@ export class Board extends EngineBoard<Piece> {
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
         if (isFlying || Board.distance(piece.position, position) <= 1.5) {
-            this.sound.play(isFlying ? "fly" : "move");
+            if (!silent) {
+                this.sound.play(isFlying ? "fly" : "move");
+            }
             await piece.moveTo(position);
         } else if (path && path.nodes?.length > 1) {
             // Remove first step, as that's the piece's current position
