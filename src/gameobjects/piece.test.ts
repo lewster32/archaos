@@ -1942,6 +1942,32 @@ describe("Piece", () => {
             );
             expect(spriteTween).toBeDefined();
         });
+
+        it("tweens the sprite to ground level, not elevated", async () => {
+            const { board, tweenSpy } = makeTweenBoard(50, 80);
+            const piece = makePieceOnBoard(board);
+            await piece.flyReturn(new Geom.Point(0, 0));
+            // Find the flyReturn sprite tween (has y property, targets sprite)
+            const spriteCall = tweenSpy.mock.calls.find(
+                (call: any[]) =>
+                    Array.isArray(call[0].targets) &&
+                    call[0].targets.includes(piece.sprite) &&
+                    typeof call[0].y === "number",
+            );
+            // Find the flyReturn shadow tween (has y property, doesn't
+            // target sprite)
+            const shadowCall = tweenSpy.mock.calls.find(
+                (call: any[]) =>
+                    Array.isArray(call[0].targets) &&
+                    !call[0].targets.includes(piece.sprite) &&
+                    typeof call[0].y === "number",
+            );
+            expect(spriteCall).toBeDefined();
+            expect(shadowCall).toBeDefined();
+            // Shadow always targets groundY; sprite must match it (no
+            // HOVER_HEIGHT offset)
+            expect(spriteCall[0].y).toBe(shadowCall[0].y);
+        });
     });
 
     describe("screenPosition", () => {
