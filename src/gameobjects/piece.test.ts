@@ -1919,6 +1919,31 @@ describe("Piece", () => {
         });
     });
 
+    describe("flyReturn", () => {
+        it("does not update the logical position", async () => {
+            const { board } = makeTweenBoard();
+            const piece = makePieceOnBoard(board);
+            const originalPos = new Geom.Point(
+                piece.position.x,
+                piece.position.y,
+            );
+            await piece.flyReturn(new Geom.Point(0, 0));
+            expect(piece.position).toEqual(originalPos);
+        });
+
+        it("adds a tween targeting the sprite", async () => {
+            const { board, tweenSpy } = makeTweenBoard();
+            const piece = makePieceOnBoard(board);
+            await piece.flyReturn(new Geom.Point(0, 0));
+            const spriteTween = tweenSpy.mock.calls.find(
+                (call: any[]) =>
+                    Array.isArray(call[0].targets) &&
+                    call[0].targets.includes(piece.sprite),
+            );
+            expect(spriteTween).toBeDefined();
+        });
+    });
+
     describe("screenPosition", () => {
         it("returns the center of the sprite when sprite exists", () => {
             const piece = makePiece();

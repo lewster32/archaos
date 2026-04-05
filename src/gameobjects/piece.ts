@@ -429,6 +429,49 @@ export class Piece extends EnginePiece {
     }
 
     /**
+     * Visually tween this piece's sprite back to the given origin
+     * board position after a failed fly-attack. Does not update the
+     * logical position.
+     */
+    async flyReturn(originPos: Geom.Point): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._sprite) {
+                resolve();
+                return;
+            }
+            const iso = this.clientBoard.getIsoPosition(originPos);
+            const groundY = iso.y - this._offsetY;
+
+            if (this._shadow) {
+                this.clientBoard.scene.tweens.add({
+                    targets: [this._shadow],
+                    x: iso.x,
+                    y: groundY,
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            }
+
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                x: iso.x,
+                y: groundY,
+                duration: Piece.DEFAULT_MOVE_DURATION,
+                ease: PMath.Easing.Cubic.InOut,
+                onUpdateScope: this,
+                onUpdate: () => {
+                    this.updateDepth();
+                },
+                onCompleteScope: this,
+                onComplete: () => {
+                    this.updateDepth();
+                    resolve();
+                },
+            });
+        });
+    }
+
+    /**
      * Move this piece to the specified point on the board.
      */
     async moveTo(point: Geom.Point, stepDuration?: number) {
