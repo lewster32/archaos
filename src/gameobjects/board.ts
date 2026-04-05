@@ -1002,48 +1002,45 @@ export class Board extends EngineBoard<Piece> {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
         this._busy = true;
-        if (attackingPiece && defendingPiece) {
-            // Flying units that aren't adjacent animate a swoop to the target
-            const isFlyAttack: boolean =
-                attackingPiece.hasStatus(UnitStatus.Flying) &&
-                Board.distance(
-                    attackingPiece.position,
-                    defendingPiece.position,
-                ) > 1.5;
 
-            let originPos: Geom.Point | null = null;
-            if (isFlyAttack) {
-                originPos = new Geom.Point(
-                    attackingPiece.position.x,
-                    attackingPiece.position.y,
-                );
-                this.sound.play("fly");
-                await attackingPiece.flyApproach(defendingPiece.position);
-            }
+        // Flying units that aren't adjacent animate a swoop to the target
+        const isFlyAttack: boolean =
+            attackingPiece.hasStatus(UnitStatus.Flying) &&
+            Board.distance(
+                attackingPiece.position,
+                defendingPiece.position,
+            ) > 1.5;
 
-            const attackResult: boolean = await attackingPiece.attack(
-                defendingPiece,
-                isFlyAttack ? { silentMove: true } : undefined,
+        let originPos: Geom.Point | null = null;
+        if (isFlyAttack) {
+            originPos = new Geom.Point(
+                attackingPiece.position.x,
+                attackingPiece.position.y,
             );
-            this._boardEvents.emit(
-                BoardEvent.PieceAttacked,
-                attackingPiece,
-                defendingPiece,
-                attackResult,
-            );
-
-            if (isFlyAttack && !attackResult && originPos) {
-                await attackingPiece.flyReturn(originPos);
-            }
-
-            this._busy = false;
-            if (attackResult) {
-                await this.rangeGizmo.reset();
-            }
-            return attackingPiece;
+            this.sound.play("fly");
+            await attackingPiece.flyApproach(defendingPiece.position);
         }
+
+        const attackResult: boolean = await attackingPiece.attack(
+            defendingPiece,
+            isFlyAttack ? { silentMove: true } : undefined,
+        );
+        this._boardEvents.emit(
+            BoardEvent.PieceAttacked,
+            attackingPiece,
+            defendingPiece,
+            attackResult,
+        );
+
+        if (isFlyAttack && !attackResult && originPos) {
+            await attackingPiece.flyReturn(originPos);
+        }
+
         this._busy = false;
-        return null;
+        if (attackResult) {
+            await this.rangeGizmo.reset();
+        }
+        return attackingPiece;
     }
 
     /**
