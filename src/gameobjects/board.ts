@@ -1033,7 +1033,7 @@ export class Board extends EngineBoard<Piece> {
         );
 
         if (isFlyAttack && !attackResult && originPos) {
-            await attackingPiece.flyReturn(originPos);
+            await attackingPiece.flyReturn(originPos, defendingPiece.position);
         }
 
         this._busy = false;

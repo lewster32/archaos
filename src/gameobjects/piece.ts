@@ -62,7 +62,7 @@ export class Piece extends EnginePiece {
     static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
     /** Pixels above the target's isometric tile the attacker hovers. */
-    private static readonly HOVER_HEIGHT = 48;
+    private static readonly HOVER_HEIGHT = 18;
 
     protected _shadowScale: number;
     protected _shadow?: GameObjects.Image;
@@ -399,6 +399,22 @@ export class Piece extends EnginePiece {
             const iso = this.clientBoard.getIsoPosition(targetPos);
             const groundY = iso.y - this._offsetY;
 
+            const difference: number = Board.distance(
+                new Geom.Point(this._sprite.x, this._sprite.y),
+                new Geom.Point(iso.x, groundY),
+            );
+
+            // Face the unit towards the target
+            this.updateDirection(this.position, targetPos);
+
+            // Arc: swoop upward during the first half then settle at hover height
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                displayOriginY: `+${Math.min(120, difference * 2)}`,
+                duration: Piece.DEFAULT_MOVE_DURATION / 2,
+                yoyo: true,
+            });
+
             if (this._shadow) {
                 this.clientBoard.scene.tweens.add({
                     targets: [this._shadow],
@@ -417,11 +433,15 @@ export class Piece extends EnginePiece {
                 ease: PMath.Easing.Cubic.InOut,
                 onUpdateScope: this,
                 onUpdate: () => {
-                    this.updateDepth();
+                    // Depth based on ground-plane projection so the hovering
+                    // unit sorts correctly relative to other pieces
+                    this._sprite?.setDepth(
+                        this._sprite.y + Piece.HOVER_HEIGHT,
+                    );
                 },
                 onCompleteScope: this,
                 onComplete: () => {
-                    this.updateDepth();
+                    this._sprite?.setDepth(groundY);
                     resolve();
                 },
             });
@@ -433,7 +453,7 @@ export class Piece extends EnginePiece {
      * board position after a failed fly-attack. Does not update the
      * logical position.
      */
-    async flyReturn(originPos: Geom.Point): Promise<void> {
+    async flyReturn(originPos: Geom.Point, targetPos: Geom.Point): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -441,6 +461,22 @@ export class Piece extends EnginePiece {
             }
             const iso = this.clientBoard.getIsoPosition(originPos);
             const groundY = iso.y - this._offsetY;
+
+            const difference: number = Board.distance(
+                new Geom.Point(this._sprite.x, this._sprite.y),
+                new Geom.Point(iso.x, groundY),
+            );
+
+            // Face the unit towards the origin
+            this.updateDirection(targetPos, originPos);
+
+            // Arc: swoop upward during the first half then descend to ground
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                displayOriginY: `+${Math.min(120, difference * 2)}`,
+                duration: Piece.DEFAULT_MOVE_DURATION / 2,
+                yoyo: true,
+            });
 
             if (this._shadow) {
                 this.clientBoard.scene.tweens.add({
@@ -460,7 +496,11 @@ export class Piece extends EnginePiece {
                 ease: PMath.Easing.Cubic.InOut,
                 onUpdateScope: this,
                 onUpdate: () => {
-                    this.updateDepth();
+                    // Piece descends from hover height; keep depth based on
+                    // ground-plane projection throughout the return
+                    this._sprite?.setDepth(
+                        this._sprite.y + Piece.HOVER_HEIGHT,
+                    );
                 },
                 onCompleteScope: this,
                 onComplete: () => {

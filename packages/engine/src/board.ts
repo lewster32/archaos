@@ -73,19 +73,19 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     /* ── Timing constants ────────────────────────── */
 
     static get DEFAULT_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 750;
+        return this.CHEAT_SHORT_DELAY ? 10 : 750;
     }
 
     static get END_TURN_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 1500;
+        return this.CHEAT_SHORT_DELAY ? 10 : 1500;
     }
 
     static get SPREAD_DELAY(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 250;
+        return this.CHEAT_SHORT_DELAY ? 10 : 250;
     }
 
     static get NEW_TURN_HIGHLIGHT_DURATION(): number {
-        return Board.CHEAT_SHORT_DELAY ? 10 : 700;
+        return this.CHEAT_SHORT_DELAY ? 10 : 700;
     }
 
     static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
@@ -954,8 +954,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (attackingPlayer?.forceHit != null) {
             return attackingPlayer.forceHit;
         }
-        if (Board.CHEAT_FORCE_HIT !== null) {
-            return Board.CHEAT_FORCE_HIT;
+        const cheatForceHit = (
+            this.constructor as unknown as { CHEAT_FORCE_HIT: boolean | null }
+        ).CHEAT_FORCE_HIT;
+        if (cheatForceHit !== null) {
+            return cheatForceHit;
         }
         const attackRoll: number = this._rng.between(0, 10 + attack);
         const defenceRoll: number = this._rng.between(0, 10 + defence);
@@ -974,8 +977,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (castingPlayer?.forceCast != null) {
             return castingPlayer.forceCast;
         }
-        if (Board.CHEAT_FORCE_CAST !== null) {
-            return Board.CHEAT_FORCE_CAST;
+        const cheatForceCast = (
+            this.constructor as unknown as { CHEAT_FORCE_CAST: boolean | null }
+        ).CHEAT_FORCE_CAST;
+        if (cheatForceCast !== null) {
+            return cheatForceCast;
         }
         const defenceRoll: number = this._rng.frac();
         if (attack < 0 || attack > 1) {

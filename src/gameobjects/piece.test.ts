@@ -1595,8 +1595,8 @@ describe("Piece", () => {
         });
 
         it("returns a config object for a known unit ID", () => {
-            // Units use numeric string keys in classicunits.json; '2' is King Cobra
-            const config = Piece.getUnitConfig("2");
+            // Units use numeric string keys in classicunits.json; 'king-cobra' is King Cobra
+            const config = Piece.getUnitConfig("king-cobra");
             expect(config).toBeDefined();
             expect(typeof config?.name).toBe("string");
         });
@@ -1608,17 +1608,17 @@ describe("Piece", () => {
         });
 
         it("returns UnitStats for a known unit name (case-insensitive)", () => {
-            // Unit key '2' is King Cobra in classicunits.json
-            const config = Piece.getUnitConfig("2");
+            // Unit key 'king-cobra' is King Cobra in classicunits.json
+            const config = Piece.getUnitConfig("king-cobra");
             if (!config) return; // guard: skip if json not loaded
             const stats = Piece.getUnitPropertiesByName(config.name);
             expect(stats).not.toBeNull();
-            expect(stats?.id).toBe("2");
+            expect(stats?.id).toBe("king-cobra");
             expect(typeof stats?.combat).toBe("number");
         });
 
         it("matches names case-insensitively", () => {
-            const config = Piece.getUnitConfig("2");
+            const config = Piece.getUnitConfig("king-cobra");
             if (!config) return;
             const upper = Piece.getUnitPropertiesByName(
                 config.name.toUpperCase(),
@@ -1638,13 +1638,13 @@ describe("Piece", () => {
         });
 
         it("returns properties for a known unit name", () => {
-            // Unit key '2' is King Cobra in classicunits.json
-            const config = Piece.getUnitConfig("2");
+            // Unit key 'king-cobra' is King Cobra in classicunits.json
+            const config = Piece.getUnitConfig("king-cobra");
             if (!config) return;
             const props = Piece.getPieceProperties(config.name);
             expect(props).toBeDefined();
             expect(props?.type).toBe(UnitType.Creature);
-            expect(props?.properties?.id).toBe("2");
+            expect(props?.properties?.id).toBe("king-cobra");
         });
     });
 
@@ -1927,14 +1927,14 @@ describe("Piece", () => {
                 piece.position.x,
                 piece.position.y,
             );
-            await piece.flyReturn(new Geom.Point(0, 0));
+            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
             expect(piece.position).toEqual(originalPos);
         });
 
         it("adds a tween targeting the sprite", async () => {
             const { board, tweenSpy } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            await piece.flyReturn(new Geom.Point(0, 0));
+            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
             const spriteTween = tweenSpy.mock.calls.find(
                 (call: any[]) =>
                     Array.isArray(call[0].targets) &&
@@ -1946,7 +1946,7 @@ describe("Piece", () => {
         it("tweens the sprite to ground level, not elevated", async () => {
             const { board, tweenSpy } = makeTweenBoard(50, 80);
             const piece = makePieceOnBoard(board);
-            await piece.flyReturn(new Geom.Point(0, 0));
+            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
             // Find the flyReturn sprite tween (has y property, targets sprite)
             const spriteCall = tweenSpy.mock.calls.find(
                 (call: any[]) =>

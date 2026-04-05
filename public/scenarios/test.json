@@ -9,13 +9,13 @@
         {
             "id": 1,
             "name": "Player 1",
-            "position": { "x": 0, "y": 0 },
+            "position": { "x": 0, "y": 2 },
             "computerControlled": false,
             "statuses": [],
             "pieces": [
                 {
                     "type": "Pegasus",
-                    "position": { "x": 1, "y": 0 }
+                    "position": { "x": 1, "y": 2 }
                 }
             ],
             "spells": []
@@ -23,29 +23,37 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 3, "y": 0 },
+            "position": { "x": 2, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [{
-                    "type": "Gooey Blob",
-                    "position": { "x": 2, "y": 0 }
-            }],
+            "pieces": [],
             "wizardProperties": {
-                "movement": 0
+                "movement": 0,
+                "manoeuvrability": 0
             },
             "spells": []
         },
         {
             "id": 3,
             "name": "Player 3",
-            "position": { "x": 5, "y": 0 },
+            "position": { "x": 5, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [],
+            "pieces": [
+                {
+                    "type": "Wall",
+                    "position": { "x": 5, "y": 1 }
+                },
+                {
+                    "type": "Wall",
+                    "position": { "x": 4, "y": 1 }
+                }
+            ],
             "wizardProperties": {
-                "movement": 0
+                "movement": 0,
+                "manoeuvrability": 0
             },
             "spells": []
         }
