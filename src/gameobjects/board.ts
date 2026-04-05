@@ -482,7 +482,7 @@ export class Board extends EngineBoard<Piece> {
      */
     async newTurn(): Promise<void> {
         this._selected = null;
-        this.rules.dispatchEvent(EventType.PieceInfo, null);
+        this.rules.dispatchEvent(EventType.PieceInfo, null, this);
 
         if (this.state === BoardState.GameOver) {
             return;
@@ -799,7 +799,7 @@ export class Board extends EngineBoard<Piece> {
      * @returns A promise that resolves when the piece has been deselected.
      */
     async deselectPiece(): Promise<void> {
-        this.rules.dispatchEvent(EventType.PieceInfo, null);
+        this.rules.dispatchEvent(EventType.PieceInfo, null, this);
 
         if (!this.selected) {
             console.warn("No piece selected to deselect");

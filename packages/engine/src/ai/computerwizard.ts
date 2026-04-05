@@ -925,7 +925,7 @@ export class ComputerWizard implements RemotePlayer {
                         `${piece.fullName} flies to attack ${targetPiece.fullName}`,
                     );
                     piece.moved = true;
-                    this._board.attackPiece(piece.id, targetPiece.id);
+                    await this._board.attackPiece(piece.id, targetPiece.id);
                     if (!piece.currentMount && piece.engaged) {
                         const firstEngagingPiece: Piece | null =
                             piece.getFirstEngagingPiece();
