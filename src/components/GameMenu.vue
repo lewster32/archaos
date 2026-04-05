@@ -200,6 +200,17 @@
                         >Classic spells</span
                     >
                 </label>
+                <label for="classicBalance" class="checkbox-label">
+                    <input
+                        type="checkbox"
+                        v-model="setup.classicBalance"
+                        style="--accent-color: var(--color-green)"
+                        id="classicBalance"
+                    />
+                    <span class="c-green" title="use the original 'buggy' balance, which only positively affects the chance of aligned spells"
+                        >Classic balance</span
+                    >
+                </label>
             </div>
             <div class="callout__row">
                 <label for="mute" class="checkbox-label">
@@ -272,6 +283,7 @@ if (!setup.value) {
         spellCount: 15,
         players: defaultPlayers,
         classicSpells: false,
+        classicBalance: false,
         difficulty: 0.5,
         muteAudio: false,
     };
@@ -316,6 +328,7 @@ function startGame(): void {
         },
         spellCount: Math.abs(setup.value!.spellCount) || 15,
         classicSpells: Boolean(setup.value!.classicSpells),
+        classicBalance: Boolean(setup.value!.classicBalance),
         difficulty: setup.value!.difficulty || 0.5,
         muteAudio: Boolean(setup.value!.muteAudio),
     });

@@ -5,15 +5,18 @@ to become the sole survivor.
 
 ## Play area
 
-The game plays out on a _board_. This is a (typically square) grid of _tiles_ (may also be referred to as spaces), much
-like a chess board. The board is initially empty and featureless other than each player's _wizard_. The wizard
-represents the player on the board, and if the wizard is killed, the game is over for that player.
+The game plays out on a _board_. This is a (typically square) grid of _tiles_ (may also be referred to as 'squares' or
+'spaces'), much like a chess board. The board is initially empty and featureless other than each player's _wizard_. The
+wizard represents the player on the board, and if the wizard is killed, the game is over for that player.
 
 The wizard is a type of _piece_ that can exist on the board. A piece is any physical object on the board, such as a
 summoned _creature_, _structure_ or _tree_.
 
 Pieces cannot leave the constraints of the board. All gameplay takes place within the boundaries of the board's width
 and height.
+
+Some spells and ranged attacks check for _line of sight_. This means that the target must be unobstructed by other
+pieces. Certain pieces such as *Ghost* and *Magic Fire* are `Transparent` and do not block line of sight.
 
 ## Phases, states and turns
 
@@ -210,6 +213,10 @@ Casting spells which have a _chaos_ balance will cause the game to shift towards
 chaos-aligned spells will become easier to cast. Conversely, law-aligned spells will become more difficult to cast. This
 same effect happens in reverse for spells cast with _law_ balance, thus the name 'balance' as the game shifts between
 the two opposed alignments.
+
+**Note** in the original game, although the manual described the behaviour of opposing alignment spells becoming harder
+to cast, this did not actually get implemented, and the balance only positively affected the chance of casting spells
+aligned to the current balance state.
 
 _Neutral_ spells are not affected by (nor do they affect) the balance of the game.
 

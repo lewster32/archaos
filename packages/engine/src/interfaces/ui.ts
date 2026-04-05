@@ -45,6 +45,7 @@ export interface SetupData {
     spellCount: number;
     players: SetupPlayer[];
     classicSpells: boolean;
+    classicBalance: boolean;
     difficulty: number;
     muteAudio: boolean;
     tutorial?: string;
@@ -58,6 +59,7 @@ export interface GameSetupData {
     board: Box;
     spellCount: number;
     classicSpells: boolean;
+    classicBalance: boolean;
     difficulty?: number;
     muteAudio?: boolean;
 }

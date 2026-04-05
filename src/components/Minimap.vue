@@ -95,13 +95,13 @@
                               : "neutral (-)"
                     }}</span
                 >, giving <span class="c-green">higher</span> chance to cast
-                spells with this alignment, and a
+                spells with this alignment<template v-if="!classicBalance">, and a
                 <span class="c-red">lower</span> chance to cast
                 <span
                     :class="{ 'c-cyan': balance < 0, 'c-magenta': balance > 0 }"
                     >{{ balance < 0 ? "lawful (^)" : "chaotic (*)" }}</span
                 >
-                spells.
+                spells.</template><template v-else>.</template>
             </p>
             <p v-else>
                 The world is currently neutral (-); all spells will have their
@@ -145,6 +145,7 @@ const props = defineProps<{
     board: { width: number; height: number } | null;
     balance?: number;
     balanceShift?: number;
+    classicBalance?: boolean;
 }>();
 
 const infoDialog = ref<HTMLDialogElement | null>(null);

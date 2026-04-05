@@ -265,6 +265,7 @@ export class GameScene extends Scene {
             1,
             data?.board?.width,
             data?.board?.height,
+            data?.classicBalance ?? false,
         );
 
         if (data.muteAudio) {

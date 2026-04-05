@@ -103,9 +103,10 @@ export class Board extends EngineBoard<Piece> {
         id: number,
         width: number = Board.DEFAULT_WIDTH,
         height: number = Board.DEFAULT_HEIGHT,
+        classicBalance: boolean = false,
         seed?: string,
     ) {
-        super(id, width, height, seed);
+        super(id, width, height, classicBalance, seed);
         this._scene = scene;
         this._layers = new Map();
 

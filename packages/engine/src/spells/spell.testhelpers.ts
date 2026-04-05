@@ -10,13 +10,20 @@ import { TestRNG } from "../rng";
 export function makeMockBoard(
     opts: {
         balance?: number;
+        classicBalance?: boolean;
         rollChanceResult?: boolean;
         players?: any[];
     } = {},
 ): Board {
-    const { balance = 0, rollChanceResult = true, players = [] } = opts;
+    const {
+        balance = 0,
+        classicBalance = false,
+        rollChanceResult = true,
+        players = [],
+    } = opts;
     return {
         balance,
+        classicBalance,
         balanceShift: 0,
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         roll: vi.fn().mockReturnValue(true),

@@ -147,6 +147,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     protected _balance: number;
     protected _balanceShift: number;
 
+    /**
+     * Whether to use the original 'buggy' balance, which only positively
+     * affects the chance of aligned spells.
+     */
+    protected _classicBalance: boolean;
+
     protected readonly _pieces: Map<number, P>;
     protected _selected: P | null;
     protected _cursorPosition: Point = new Point(0, 0);
@@ -177,10 +183,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         id: number,
         width: number = Board.DEFAULT_WIDTH,
         height: number = Board.DEFAULT_HEIGHT,
+        classicBalance: boolean = false,
         seed?: string,
     ) {
         super(id);
         this._rng = new GameRNG(seed);
+        this._classicBalance = classicBalance;
 
         this._width = width;
         this._height = height;
@@ -348,6 +356,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
     set balanceShift(balance: number) {
         this._balanceShift = balance;
+    }
+
+    get classicBalance(): boolean {
+        return this._classicBalance;
     }
 
     get rng(): IRNG {

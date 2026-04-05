@@ -25,6 +25,7 @@
         :board="board"
         :balance="balance"
         :balanceShift="balanceShift"
+        :classicBalance="classicBalance"
         v-if="gameStarted"
     />
     <GameControls
@@ -106,6 +107,7 @@ const spellbook: Ref<SpellbookData> = ref({
 const logs: Ref<LogEntry[]> = ref([]);
 const board: Ref<Box> = ref({ width: 0, height: 0 });
 const balance: Ref<number> = ref(0);
+const classicBalance: Ref<boolean> = ref(false);
 const balanceShift: Ref<number> = ref(0);
 const gameStarted: Ref<boolean> = ref(false);
 const gameOver: Ref<boolean> = ref(false);
@@ -159,6 +161,7 @@ const dismount = () => {
 const onGameStart = (data: GameSetupData) => {
     eventEmitter.value?.emit("start-game", data);
     gameStarted.value = true;
+    classicBalance.value = data.classicBalance ?? false;
 };
 
 const onGameStartTutorial = (

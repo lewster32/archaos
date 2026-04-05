@@ -27,7 +27,10 @@
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [],
+            "pieces": [{
+                    "type": "Gooey Blob",
+                    "position": { "x": 2, "y": 0 }
+            }],
             "wizardProperties": {
                 "movement": 0
             },

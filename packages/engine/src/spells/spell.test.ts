@@ -298,6 +298,65 @@ describe("Spell.chance", () => {
         const s = new Spell(board, 1, makeConfig({ chance: 0.8, balance: 1 }));
         expect(s.chance).toBe(1);
     });
+
+    describe("classicBalance mode", () => {
+        it("still boosts aligned (lawful) spells on a lawful board", () => {
+            const board = makeMockBoard({
+                balance: 0.2,
+                classicBalance: true,
+            });
+            const s = new Spell(
+                board,
+                1,
+                makeConfig({ chance: 0.5, balance: 1 }),
+            );
+            expect(s.chance).toBeCloseTo(0.7);
+        });
+
+        it("does not penalise chaotic spells on a lawful board", () => {
+            // Without classicBalance, a lawful board (balance > 0) would lower
+            // chaotic spell chance. With it, the offset is zeroed out.
+            const board = makeMockBoard({
+                balance: 0.2,
+                classicBalance: true,
+            });
+            const s = new Spell(
+                board,
+                1,
+                makeConfig({ chance: 0.5, balance: -1 }),
+            );
+            expect(s.chance).toBeCloseTo(0.5);
+        });
+
+        it("still boosts aligned (chaotic) spells on a chaotic board", () => {
+            const board = makeMockBoard({
+                balance: -0.2,
+                classicBalance: true,
+            });
+            const s = new Spell(
+                board,
+                1,
+                makeConfig({ chance: 0.5, balance: -1 }),
+            );
+            // board balance < 0, spell balance < 0: offset *= -1 → +0.2
+            expect(s.chance).toBeCloseTo(0.7);
+        });
+
+        it("does not penalise lawful spells on a chaotic board", () => {
+            // Without classicBalance, a chaotic board (balance < 0) penalises
+            // lawful spells. With it, the offset is zeroed out.
+            const board = makeMockBoard({
+                balance: -0.2,
+                classicBalance: true,
+            });
+            const s = new Spell(
+                board,
+                1,
+                makeConfig({ chance: 0.5, balance: 1 }),
+            );
+            expect(s.chance).toBeCloseTo(0.5);
+        });
+    });
 });
 
 // ─── description getter ───────────────────────────────────────────────────────
