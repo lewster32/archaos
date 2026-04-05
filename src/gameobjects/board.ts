@@ -981,9 +981,13 @@ export class Board extends EngineBoard<Piece> {
     /**
      * Perform an attack from one piece to another.
      *
+     * Flying units that are not adjacent (distance > 1.5) play a swoop
+     * animation: the attacker hovers above the target, the attack resolves,
+     * then the attacker either lands (success) or returns (failure).
+     *
      * @param attackingPieceId The ID of the attacking piece.
      * @param defendingPieceId The ID of the defending piece.
-     * @returns
+     * @returns The attacking piece, or null if either piece was not found.
      */
     async attackPiece(
         attackingPieceId: number,
@@ -999,14 +1003,39 @@ export class Board extends EngineBoard<Piece> {
         }
         this._busy = true;
         if (attackingPiece && defendingPiece) {
-            const attackResult: boolean =
-                await attackingPiece.attack(defendingPiece);
+            // Flying units that aren't adjacent animate a swoop to the target
+            const isFlyAttack: boolean =
+                attackingPiece.hasStatus(UnitStatus.Flying) &&
+                Board.distance(
+                    attackingPiece.position,
+                    defendingPiece.position,
+                ) > 1.5;
+
+            let originPos: Geom.Point | null = null;
+            if (isFlyAttack) {
+                originPos = new Geom.Point(
+                    attackingPiece.position.x,
+                    attackingPiece.position.y,
+                );
+                this.sound.play("fly");
+                await attackingPiece.flyApproach(defendingPiece.position);
+            }
+
+            const attackResult: boolean = await attackingPiece.attack(
+                defendingPiece,
+                isFlyAttack ? { silentMove: true } : undefined,
+            );
             this._boardEvents.emit(
                 BoardEvent.PieceAttacked,
                 attackingPiece,
                 defendingPiece,
                 attackResult,
             );
+
+            if (isFlyAttack && !attackResult && originPos) {
+                await attackingPiece.flyReturn(originPos);
+            }
+
             this._busy = false;
             if (attackResult) {
                 await this.rangeGizmo.reset();
