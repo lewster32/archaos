@@ -13,6 +13,15 @@
         <div class="unitinfo__inner callout">
             <h2>
                 {{ unit?.name }}<template v-if="unit?.dead">'s corpse</template>
+                <template v-if="unit.owner">
+                    <button
+                        class="button button--default button--small"
+                        @click="highlightOwnedUnits(unit?.owner)"
+                        title="Highlight all units owned by this unit's owner"
+                    >
+                        <i class="icon icon--eye"></i>
+                    </button>
+                </template>
             </h2>
             <UnitStats
                 v-if="unit"
@@ -20,20 +29,6 @@
                 :owner="unit.owner?.name"
                 :isMount="Boolean(unit?.currentRider)"
             />
-            <div class="callout__buttons" v-if="unit">
-                <button
-                    class="spellinfo__select button button--green button--small"
-                    @click="highlightOwnedUnits(unit?.owner)"
-                >
-                    Highlight
-                </button>
-                <button
-                    class="spellinfo__select button button--small"
-                    @click="close()"
-                >
-                    Dismiss
-                </button>
-            </div>
         </div>
     </div>
 </template>
@@ -100,7 +95,7 @@ const close: () => void = () => {
         display: flex;
         flex-direction: column;
         gap: 1em;
-        min-height: 13rem;
+        min-height: 10rem;
     }
     .callout {
         outline: 2px solid var(--tint-colour, transparent);
@@ -108,6 +103,9 @@ const close: () => void = () => {
     }
     h2 {
         font-size: 2rem;
+        display: flex;
+        gap: 0.5em;
+        align-items: center;
     }
 }
 </style>

@@ -335,7 +335,7 @@ const toggle: () => void = () => {
 
 <style lang="scss">
 body:has(.unitinfo--show) {
-    --spellbook-bottom: 15rem;
+    --spellbook-bottom: 11rem;
 }
 
 .spellbook {
