@@ -69,7 +69,7 @@
         >
             <img
                 class="spellbook-icon"
-                src="../../assets/images/ui/spellbook.png"
+                src="@assets/images/ui/spellbook.png"
                 alt="Spellbook"
             />
         </button>
@@ -435,10 +435,10 @@ body:has(.unitinfo--show) {
     border-image-width: 6px;
     border-image-slice: 3 fill;
     border-image-repeat: repeat;
-    border-image-source: url("../../assets/images/ui/callout-disabled.png");
+    border-image-source: url("@assets/images/ui/callout-disabled.png");
 
     &:hover {
-        border-image-source: url("../../assets/images/ui/callout-selected.png");
+        border-image-source: url("@assets/images/ui/callout-selected.png");
     }
 
     + .spell {
