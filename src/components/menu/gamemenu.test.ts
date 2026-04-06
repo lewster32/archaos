@@ -3,7 +3,7 @@ import { render } from "vitest-browser-vue";
 import { userEvent } from "vitest/browser";
 
 import GameMenu from "./GameMenu.vue";
-import { acceptConsent } from "../gameobjects/storage";
+import { acceptConsent } from "../../gameobjects/storage";
 
 function renderMenu(menuProps: Record<string, unknown> = {}) {
     return render(GameMenu, { props: menuProps });

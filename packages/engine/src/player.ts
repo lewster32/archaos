@@ -32,7 +32,7 @@ export interface PlayerAI {
 export class Player<P extends Piece = Piece> extends Model {
     protected readonly _name: string;
     protected readonly _board: Board<P>;
-    protected readonly _wizcode: string;
+    protected readonly _wizCode: string;
     protected readonly _spells: Map<number, Spell<P>>;
     protected readonly _colour: number;
 
@@ -87,7 +87,7 @@ export class Player<P extends Piece = Piece> extends Model {
         this._spells = new Map();
         this._selectedSpell = null;
         this._defeated = false;
-        this._wizcode = config.wizcode || "";
+        this._wizCode = config.wizCode || "";
         this._forceHit = config.forceHit ?? null;
         this._forceCast = config.forceCast ?? null;
         this._remote = remote ?? null;
@@ -113,8 +113,8 @@ export class Player<P extends Piece = Piece> extends Model {
         return this._defeated;
     }
 
-    get wizcode(): string {
-        return this._wizcode;
+    get wizCode(): string {
+        return this._wizCode;
     }
 
     get forceHit(): boolean | null {

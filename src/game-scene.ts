@@ -307,6 +307,7 @@ export class GameScene extends Scene {
                     ? GameSetupPlayerType.Computer
                     : GameSetupPlayerType.Local,
                 difficulty: player.difficulty || modifiedDifficulty,
+                wizCode: player.wizCode,
             });
         }
 

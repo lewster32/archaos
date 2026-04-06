@@ -56,7 +56,7 @@ export class TurmoilSpell<P extends Piece = Piece> extends Spell<P> {
         this._board.events.emit(EngineEvent.TurmoilBatch, payload);
 
         this._board.logger.log(
-            `${target.name} successfully casts` + ` '${this.name}'`,
+            `${target.name} successfully casts '${this.name}'`,
             Colour.Green,
         );
 

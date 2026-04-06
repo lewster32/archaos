@@ -707,7 +707,7 @@ export class Rules {
         const defenceRoll: number = rng.frac();
         if (attack < 0 || attack > 1) {
             console.warn(
-                `Chance value ${attack} is out of` + ` bounds, clamping to 0-1`,
+                `Chance value ${attack} is out of bounds, clamping to 0-1`,
             );
             attack = Math.max(0, Math.min(1, attack));
         }

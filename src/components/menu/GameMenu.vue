@@ -1,12 +1,16 @@
 <template>
     <div class="menu">
-        <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
+        <img src="@assets/images/ui/logo.png" alt="Archaos" class="logo" />
         <div v-if="setup">
             <div class="callout__row">
                 <button
                     class="button button--yellow"
                     @click="
-                        ($refs.tutorialDialog as HTMLDialogElement)?.showModal()
+                        (
+                            $refs.tutorialDialog as InstanceType<
+                                typeof TutorialDialog
+                            >
+                        )?.showModal()
                     "
                 >
                     Play a tutorial
@@ -17,148 +21,25 @@
                     class="button"
                     @click="
                         (
-                            $refs.playerConfigDialog as HTMLDialogElement
+                            $refs.playersConfigDialog as InstanceType<
+                                typeof PlayersConfigDialog
+                            >
                         )?.showModal()
                     "
                 >
                     Configure players <i class="icon icon--settings"></i>
                 </button>
             </div>
-            <dialog
-                v-if="setup.playerCount > 0"
-                class="callout"
-                ref="playerConfigDialog"
-            >
-                <div class="callout__row">
-                    <label
-                        for="playercount"
-                        title="The number of players in the game."
-                        >Number of players:</label
-                    >
-                    <select v-model="setup.playerCount" id="playercount">
-                        <option v-for="n in 7" :key="n" :value="n + 1">
-                            {{ n + 1 }} Players
-                        </option>
-                    </select>
-                </div>
-                <div
-                    class="callout__row"
-                    v-for="(name, index) in setup.players.slice(
-                        0,
-                        setup.playerCount,
-                    )"
-                    :key="index"
-                    :class="{
-                        'is-computer': setup.players[index].computerControlled,
-                    }"
-                >
-                    <label :for="`player${index}`" style="width: 20ch"
-                        >{{
-                            setup.players[index].computerControlled
-                                ? "Computer"
-                                : "Human"
-                        }}
-                        {{ index + 1 }}'s name:</label
-                    >
-                    <input
-                        v-model="setup.players[index].name"
-                        type="text"
-                        :id="`player${index}`"
-                        maxlength="20"
-                        style="width: 23ch"
-                    />
-                    <label
-                        class="human-computer-toggle"
-                        :for="`aicheckbox${index}`"
-                        title="Computer controlled?"
-                    >
-                        <input
-                            type="checkbox"
-                            v-model="setup.players[index].computerControlled"
-                            class="human-computer-toggle__input"
-                            :id="`aicheckbox${index}`"
-                        />
-                    </label>
-                </div>
-                <div
-                    class="callout__row callout__row--difficulty difficulty"
-                    :class="{ 'difficulty--disabled': !hasComputerPlayers }"
-                >
-                    <label
-                        for="difficulty"
-                        title="The difficulty of computer-controlled players. Higher produces more challenging and aggressive opponents."
-                        >Difficulty:</label
-                    >
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="1"
-                        step="0.1"
-                        v-model="setup.difficulty"
-                        class="difficulty__input"
-                        :disabled="!hasComputerPlayers"
-                    />
-                    <span class="difficulty__value">{{
-                        Math.round(setup.difficulty * 10)
-                    }}</span>
-                </div>
-                <div class="callout__row">
-                    <button
-                        class="button button--green"
-                        @click="
-                            (
-                                $refs.playerConfigDialog as HTMLDialogElement
-                            )?.close()
-                        "
-                    >
-                        Done
-                    </button>
-                </div>
-            </dialog>
-            <dialog
-                v-if="tutorials.length > 0"
-                class="callout callout--min-width"
+            <PlayersConfigDialog
+                v-if="setup"
+                ref="playersConfigDialog"
+                :setup="setup"
+            />
+            <TutorialDialog
                 ref="tutorialDialog"
-            >
-                <h2 class="callout__title">Tutorials</h2>
-                <div
-                    class="callout__row"
-                    v-for="(tut, index) in tutorials"
-                    :key="index"
-                >
-                    <button
-                        class="button tutorial-button"
-                        @click="startTutorial(tut.id)"
-                    >
-                        <span class="tutorial-button__name">
-                            <span class="tutorial-button__index"
-                                >{{ index + 1 }}.</span
-                            >
-                            {{ tut.name }}
-                        </span>
-                        <i
-                            v-if="tut.done"
-                            title="You have completed this tutorial"
-                            class="tutorial-button__icon icon icon--tick"
-                        ></i>
-                        <i
-                            v-else
-                            title="You have not completed this tutorial yet"
-                            class="tutorial-button__icon icon icon--right"
-                        ></i>
-                    </button>
-                </div>
-                <div class="callout__row">
-                    <button
-                        class="button button--red"
-                        @click="
-                            ($refs.tutorialDialog as HTMLDialogElement)?.close()
-                        "
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </dialog>
+                :tutorials="tutorials"
+                @select="startTutorial"
+            />
             <div class="callout__row callout__row--balanced">
                 <label
                     for="boardsize"
@@ -235,10 +116,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, reactive } from "vue";
+import { ref, watch, reactive } from "vue";
 import type { SetupData, GameSetupData, SetupPlayer } from "@archaos/engine";
-import { getTutorials } from "../gameobjects/tutorials/tutorialregistry";
-import * as storage from "../gameobjects/storage";
+import { getTutorials } from "../../gameobjects/tutorials/tutorialregistry";
+import * as storage from "../../gameobjects/storage";
+import PlayersConfigDialog from "./PlayersConfigDialog.vue";
+import TutorialDialog from "./TutorialDialog.vue";
 
 const emit = defineEmits<{
     start: [data: GameSetupData];
@@ -246,14 +129,14 @@ const emit = defineEmits<{
 }>();
 
 const defaultPlayers: SetupPlayer[] = [
-    { name: "Gandalf" },
-    { name: "Glinda", computerControlled: true },
-    { name: "Merlin", computerControlled: true },
-    { name: "Morgana", computerControlled: true },
-    { name: "Rincewind", computerControlled: true },
-    { name: "Saruman", computerControlled: true },
-    { name: "Elminster", computerControlled: true },
-    { name: "Mordenkainen", computerControlled: true },
+    { name: "Gandalf", computerControlled: false, wizCode: "001b09002a" },
+    { name: "Elminster", computerControlled: true, wizCode: "0500110207" },
+    { name: "Merlin", computerControlled: true, wizCode: "0207070216"},
+    { name: "Morgana", computerControlled: true, wizCode: "0a1a0a0023" },
+    { name: "Rincewind", computerControlled: true, wizCode: "0c00090005" },
+    { name: "Mordenkainen", computerControlled: true, wizCode: "05131d0200" },
+    { name: "Glinda", computerControlled: true, wizCode: "061d100100" },
+    { name: "Saruman", computerControlled: true, wizCode: "0806060000" },
 ];
 
 const setup = ref<SetupData | null>(null);
@@ -303,16 +186,6 @@ watch(
         }
     },
     { immediate: true },
-);
-
-/**
- * Check any of the active players are computer-controlled.
- */
-const hasComputerPlayers = computed(
-    () =>
-        setup.value?.players
-            .slice(0, setup.value.playerCount)
-            .some((p) => p.computerControlled) || false,
 );
 
 function startGame(): void {
@@ -385,7 +258,7 @@ function startTutorial(tutorialId: string): void {
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
-    border-image-source: url("../../assets/images/ui/check-unchecked.png");
+    border-image-source: url("@assets/images/ui/check-unchecked.png");
     cursor: pointer;
     &::before {
         content: "";

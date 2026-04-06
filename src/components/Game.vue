@@ -61,15 +61,16 @@ import type {
     GameSetupData,
     GameScenarioData,
 } from "@archaos/engine";
-import Spellbook from "./Spellbook.vue";
-import Log from "./Log.vue";
-import Minimap from "./Minimap.vue";
-import GameMenu from "./GameMenu.vue";
-import GameControls from "./GameControls.vue";
 import LoadingScreen from "./LoadingScreen.vue";
-import UnitInfo from "./UnitInfo.vue";
 import TutorialMessage from "./TutorialMessage.vue";
 import ConsentBanner from "./ConsentBanner.vue";
+
+import Log from "./game/Log.vue";
+import Spellbook from "./game/Spellbook.vue";
+import Minimap from "./game/Minimap.vue";
+import GameMenu from "./menu/GameMenu.vue";
+import GameControls from "./game/GameControls.vue";
+import UnitInfo from "./game/UnitInfo.vue";
 
 // Phaser game launcher
 import { launch } from "../game/game";

@@ -34,6 +34,7 @@ export interface SetupPlayer {
     name: string;
     computerControlled?: boolean;
     difficulty?: number;
+    wizCode?: string;
 }
 
 /**
@@ -74,6 +75,7 @@ export interface GameSetupPlayer {
     name: string;
     type: GameSetupPlayerType;
     difficulty?: number;
+    wizCode?: string;
 }
 
 /**

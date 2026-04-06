@@ -35,9 +35,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { Ref } from "vue";
-import type { Piece } from "../gameobjects/piece";
+import type { Piece } from "../../gameobjects/piece";
 import UnitStats from "./UnitStats.vue";
-import { cssColour } from "../utils";
+import { cssColour } from "../../utils";
 import type { Player } from "@archaos/engine";
 
 const props = defineProps<{

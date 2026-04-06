@@ -754,7 +754,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this.pieces.some((piece: P) => piece.hasStatus(UnitStatus.Wizard))
         ) {
             throw new Error(
-                "Cannot create wizards - " + "game not in initialising state",
+                "Cannot create wizards - game not in initialising state",
             );
         }
         Wizard.createAll(this, this.players);
@@ -770,7 +770,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
         this._selected = this.getPiece(id);
         if (!this._selected) {
-            throw new Error(`No piece with ID ${id} found ` + `to select`);
+            throw new Error(`No piece with ID ${id} found to select`);
         }
         this._boardEvents.emit(BoardEvent.PieceSelected, this._selected);
     }
@@ -830,12 +830,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${attackingPieceId}`,
+                `Could not find piece with ID ${attackingPieceId}`,
             );
         }
         if (!defendingPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${defendingPieceId}`,
+                `Could not find piece with ID ${defendingPieceId}`,
             );
         }
 
@@ -865,12 +865,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${attackingPieceId}`,
+                `Could not find piece with ID ${attackingPieceId}`,
             );
         }
         if (!defendingPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${defendingPieceId}`,
+                `Could not find piece with ID ${defendingPieceId}`,
             );
         }
 
@@ -900,12 +900,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const mountedPiece = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${mountingPieceId}`,
+                `Could not find piece with ID ${mountingPieceId}`,
             );
         }
         if (!mountedPiece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${mountedPieceId}`,
+                `Could not find piece with ID ${mountedPieceId}`,
             );
         }
 
@@ -933,7 +933,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const piece = this.getPiece(dismountingPieceId);
         if (!piece) {
             throw new Error(
-                `Could not find piece with ` + `ID ${dismountingPieceId}`,
+                `Could not find piece with ID ${dismountingPieceId}`,
             );
         }
         piece.dismount();

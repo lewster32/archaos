@@ -15,7 +15,7 @@
                 "type": "Elf",
                 "position": { "x": 1, "y": 14 }
             }],
-            "spells": ["Horse"]
+            "spells": ["Magic Castle"]
         },
         {
             "id": 2,
@@ -23,7 +23,7 @@
             "position": { "x": 0, "y": 7 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Pegasus"]
+            "spells": ["Dark Citadel"]
         },
         {
             "id": 3,
@@ -31,7 +31,7 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Centaur"]
+            "spells": ["Magic Castle"]
         },
         {
             "id": 4,
@@ -39,7 +39,7 @@
             "position": { "x": 7, "y": 14 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Manticore"]
+            "spells": ["Dark Citadel"]
         },
         {
             "id": 7,
@@ -47,7 +47,7 @@
             "position": { "x": 7, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Gryphon"]
+            "spells": ["Magic Castle"]
         },
         {
             "id": 6,
@@ -55,7 +55,7 @@
             "position": { "x": 14, "y": 14 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Horse"]
+            "spells": ["Dark Citadel"]
         },
         {
             "id": 7,
@@ -63,7 +63,7 @@
             "position": { "x": 14, "y": 7 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Pegasus"]
+            "spells": ["Magic Castle"]
         },
         {
             "id": 8,
@@ -71,7 +71,7 @@
             "position": { "x": 14, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Centaur"]
+            "spells": ["Dark Citadel"]
         }
     ],
     "phase": "casting",

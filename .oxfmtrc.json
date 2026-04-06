@@ -2,7 +2,7 @@
     "$schema": "./node_modules/oxfmt/configuration_schema.json",
     "tabWidth": 4,
     "useTabs": false,
-    "printWidth": 80,
+    "printWidth": 120,
     "sortPackageJson": false,
     "endOfLine": "crlf",
     "ignorePatterns": []

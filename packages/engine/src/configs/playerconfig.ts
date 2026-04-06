@@ -4,7 +4,7 @@ export interface PlayerConfig {
     name?: string;
     type: GameSetupPlayerType;
     difficulty?: number;
-    wizcode?: string;
+    wizCode?: string;
 
     /**
      * Per-player attack outcome override. When set, all attacks by this

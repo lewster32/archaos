@@ -255,6 +255,29 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
 
             let chosenTile: Point;
 
+            // Special case: if the summoned unit is an invulnerable static
+            // mount (e.g., Magic Castle or Dark Citadel), it should always be
+            // cast adjacent to the wizard if possible so it can be immediately
+            // mounted.
+            if (
+                this.unitProperties?.status?.includes(UnitStatus.Mount) &&
+                this.unitProperties?.status?.includes(UnitStatus.Structure) &&
+                this.unitProperties?.status?.includes(UnitStatus.Invulnerable)
+            ) {
+                chosenTile = this._board.rng.pick(validTiles.filter((pt) =>
+                    Board.distance(pt, wizardPos ?? new Point()) <= 1.5,
+                ));
+                if (chosenTile) {
+                    console.debug(
+                        `${player.name} is casting ${this.name} adjacent to ` +
+                        `the wizard for immediate mounting`,
+                    );
+                    await this._board.rules.doCastSpell(this._board, chosenTile);
+                    successfullyCast = true;
+                    continue;
+                }
+            }
+
             if (
                 isSpreading &&
                 this._board.rollChance(0.5 + (player.ai?.difficulty ?? 0) * 0.5)

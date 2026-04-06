@@ -23,7 +23,7 @@
 </template>
 <script setup lang="ts">
 import { Colour } from "@archaos/engine";
-import { Log } from "../gameobjects/services/logger";
+import { Log } from "../../gameobjects/services/logger";
 import { ref, computed } from "vue";
 
 const props = defineProps<{

@@ -43,7 +43,7 @@ export class Player extends EnginePlayer<Piece> {
             config
                 ? {
                       ...config,
-                      wizcode: config.wizcode || Wizard.randomWizCode(),
+                      wizCode: config.wizCode || Wizard.randomWizCode(),
                   }
                 : config,
             colour,

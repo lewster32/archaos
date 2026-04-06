@@ -17,7 +17,7 @@ vi.mock("phaser", () => ({
 }));
 
 import Log from "./Log.vue";
-import type { Log as LogEntry } from "../gameobjects/services/logger";
+import type { Log as LogEntry } from "../../gameobjects/services/logger";
 import { Colour } from "@archaos/engine";
 
 // The colour is bound as inline style on the .game-log__message <span>, not

@@ -259,13 +259,13 @@ export class Wizard extends Piece {
                     owner: players[0],
                     x: Math.floor(board.width / 2),
                     y: board.height - 2,
-                    wizCode: players[0].wizcode,
+                    wizCode: players[0].wizCode,
                 });
                 board.addWizard({
                     owner: players[1],
                     x: Math.floor(board.width / 2),
                     y: 1,
-                    wizCode: players[1].wizcode,
+                    wizCode: players[1].wizCode,
                 });
                 break;
             case 3:
@@ -274,19 +274,19 @@ export class Wizard extends Piece {
                     owner: players[0],
                     x: 1,
                     y: Math.floor(board.height / 2),
-                    wizCode: players[0].wizcode,
+                    wizCode: players[0].wizCode,
                 });
                 board.addWizard({
                     owner: players[1],
                     x: board.width - 2,
                     y: board.height - 2,
-                    wizCode: players[1].wizcode,
+                    wizCode: players[1].wizCode,
                 });
                 board.addWizard({
                     owner: players[2],
                     x: board.width - 2,
                     y: 1,
-                    wizCode: players[2].wizcode,
+                    wizCode: players[2].wizCode,
                 });
                 break;
             case 4:
@@ -295,25 +295,25 @@ export class Wizard extends Piece {
                     owner: players[0],
                     x: 1,
                     y: board.height - 2,
-                    wizCode: players[0].wizcode,
+                    wizCode: players[0].wizCode,
                 });
                 board.addWizard({
                     owner: players[1],
                     x: 1,
                     y: 1,
-                    wizCode: players[1].wizcode,
+                    wizCode: players[1].wizCode,
                 });
                 board.addWizard({
                     owner: players[2],
                     x: board.width - 2,
                     y: board.height - 2,
-                    wizCode: players[2].wizcode,
+                    wizCode: players[2].wizCode,
                 });
                 board.addWizard({
                     owner: players[3],
                     x: board.width - 2,
                     y: 1,
-                    wizCode: players[3].wizcode,
+                    wizCode: players[3].wizCode,
                 });
                 break;
             case 5:
@@ -334,7 +334,7 @@ export class Wizard extends Piece {
                         owner: players[(i + 2) % 5],
                         x: x,
                         y: y,
-                        wizCode: players[(i + 2) % 5].wizcode,
+                        wizCode: players[(i + 2) % 5].wizCode,
                     });
                 }
                 break;
@@ -356,7 +356,7 @@ export class Wizard extends Piece {
                         owner: players[(i + 2) % 6],
                         x: x,
                         y: y,
-                        wizCode: players[(i + 2) % 6].wizcode,
+                        wizCode: players[(i + 2) % 6].wizCode,
                     });
                 }
                 break;
@@ -366,7 +366,7 @@ export class Wizard extends Piece {
                     owner: players[0],
                     x: Math.floor(board.width / 2),
                     y: Math.floor(board.height / 2),
-                    wizCode: players[0].wizcode,
+                    wizCode: players[0].wizCode,
                 });
                 for (let i = 1; i < 7; i++) {
                     const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
@@ -384,7 +384,7 @@ export class Wizard extends Piece {
                         owner: players[((i + 2) % 6) + 1],
                         x: x,
                         y: y,
-                        wizCode: players[((i + 2) % 6) + 1].wizcode,
+                        wizCode: players[((i + 2) % 6) + 1].wizCode,
                     });
                 }
                 break;
@@ -412,7 +412,7 @@ export class Wizard extends Piece {
                                 owner: players[playerIndex],
                                 x: xx,
                                 y: yy,
-                                wizCode: players[playerIndex].wizcode,
+                                wizCode: players[playerIndex].wizCode,
                             });
                             playerIndex++;
                         }
@@ -476,7 +476,7 @@ export class Wizard extends Piece {
                             owner: player,
                             x: best.x,
                             y: best.y,
-                            wizCode: player.wizcode,
+                            wizCode: player.wizCode,
                         });
                     }
                 }

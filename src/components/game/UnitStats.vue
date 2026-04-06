@@ -276,7 +276,7 @@ const clampedNum = (num: number | undefined) => {
         text-align: center;
         background-image:
             var(--stat-num, none), var(--stat-icon, none),
-            url("../../assets/images/ui/stat-bg.png");
+            url("@assets/images/ui/stat-bg.png");
         background-size: 36px;
         user-select: none;
         &[title] {
@@ -299,33 +299,33 @@ const clampedNum = (num: number | undefined) => {
             }
         }
         &--mov {
-            --stat-icon: url("../../assets/images/ui/stat-move.png");
+            --stat-icon: url("@assets/images/ui/stat-move.png");
         }
         &--fly {
-            --stat-icon: url("../../assets/images/ui/stat-fly.png");
+            --stat-icon: url("@assets/images/ui/stat-fly.png");
         }
         &--com {
-            --stat-icon: url("../../assets/images/ui/stat-combat.png");
+            --stat-icon: url("@assets/images/ui/stat-combat.png");
         }
         &--rcm {
-            --stat-icon: url("../../assets/images/ui/stat-ranged-combat.png");
+            --stat-icon: url("@assets/images/ui/stat-ranged-combat.png");
         }
         &--rng {
-            --stat-icon: url("../../assets/images/ui/stat-ranged-combat-range.png");
+            --stat-icon: url("@assets/images/ui/stat-ranged-combat-range.png");
         }
         &--def {
-            --stat-icon: url("../../assets/images/ui/stat-defence.png");
+            --stat-icon: url("@assets/images/ui/stat-defence.png");
         }
         &--mnv {
-            --stat-icon: url("../../assets/images/ui/stat-manoeuvre.png");
+            --stat-icon: url("@assets/images/ui/stat-manoeuvre.png");
         }
         &--res {
-            --stat-icon: url("../../assets/images/ui/stat-magic-resist.png");
+            --stat-icon: url("@assets/images/ui/stat-magic-resist.png");
         }
 
         @for $_i from 1 through 10 {
             &--num-#{$_i} {
-                --stat-num: url("../../assets/images/ui/stat-num-#{$_i}.png");
+                --stat-num: url("@assets/images/ui/stat-num-#{$_i}.png");
             }
         }
     }

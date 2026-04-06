@@ -620,7 +620,7 @@ export class Piece extends Entity {
 
         if (rollSuccess) {
             this._board.logger.log(
-                `${this.fullName} defeated ` + `${piece.fullName}`,
+                `${this.fullName} defeated ${piece.fullName}`,
                 Colour.Red,
             );
             await piece.kill();
@@ -752,7 +752,7 @@ export class Piece extends Entity {
      */
     async spread(): Promise<SpreadResult> {
         if (!this.hasStatus(UnitStatus.Spreads) || this.dead) {
-            throw new Error("Cannot spread a non-spreading or " + "dead piece");
+            throw new Error("Cannot spread a non-spreading or dead piece");
         }
 
         const spreadAction: SpreadAction = this._board.rng.weightedRandomPick(

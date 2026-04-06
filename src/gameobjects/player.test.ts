@@ -142,28 +142,28 @@ describe("Player", () => {
             expect(player.toString()).toBe("Alice");
         });
 
-        it("has a wizcode from the config", () => {
+        it("has a wizCode from the config", () => {
             const p = new Player(
                 mockBoard,
                 5,
                 {
                     name: "Charlie",
                     type: GameSetupPlayerType.Local,
-                    wizcode: "0000000000",
+                    wizCode: "0000000000",
                 },
                 0x0000ff,
             );
-            expect(p.wizcode).toBe("0000000000");
+            expect(p.wizCode).toBe("0000000000");
         });
 
-        it("generates a random wizcode when not provided", () => {
+        it("generates a random wizCode when not provided", () => {
             const p = new Player(
                 mockBoard,
                 6,
                 { name: "Dana", type: GameSetupPlayerType.Local },
                 0x0000ff,
             );
-            expect(p.wizcode).toMatch(/^[0-9a-f]{10}$/);
+            expect(p.wizCode).toMatch(/^[0-9a-f]{10}$/);
         });
     });
 

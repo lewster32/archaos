@@ -7,15 +7,15 @@
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
-    border-image-source: url("../../assets/images/ui/callout.png");
+    border-image-source: url("@assets/images/ui/callout.png");
 
-    background-image: url("../../assets/images/ui/background.png");
+    background-image: url("@assets/images/ui/background.png");
     background-size: 32px;
 
     box-shadow: -2px 8px rgba(0, 0, 0, 0.5);
 
     &:hover {
-        border-image-source: url("../../assets/images/ui/callout-hover.png");
+        border-image-source: url("@assets/images/ui/callout-hover.png");
     }
 
     &--min-width {
@@ -124,9 +124,9 @@ input {
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
-    border-image-source: url("../../assets/images/ui/edit-inactive.png");
+    border-image-source: url("@assets/images/ui/edit-inactive.png");
     &:hover {
-        border-image-source: url("../../assets/images/ui/edit-active.png");
+        border-image-source: url("@assets/images/ui/edit-active.png");
     }
 }
 
@@ -138,7 +138,7 @@ input {
     background-color: #101010;
 
     &:hover {
-        border-image-source: url("../../assets/images/ui/edit-active.png");
+        border-image-source: url("@assets/images/ui/edit-active.png");
     }
 }
 
@@ -149,7 +149,7 @@ input[type="checkbox"] {
     cursor: pointer;
     padding: 0;
     appearance: none;
-    border-image-source: url("../../assets/images/ui/check-unchecked.png");
+    border-image-source: url("@assets/images/ui/check-unchecked.png");
     background-color: #171717;
     &:checked,
     &:checked:hover {
@@ -180,14 +180,14 @@ input[type="range"] {
         appearance: none;
         width: 24px;
         height: 24px;
-        background: url("../../assets/images/ui/button-cyan.png") no-repeat
+        background: url("@assets/images/ui/button-cyan.png") no-repeat
             center center / 100% 100%;
     }
     &:disabled {
         pointer-events: none;
         &::-webkit-slider-thumb,
         &::-moz-range-thumb {
-            background: url("../../assets/images/ui/button-header.png")
+            background: url("@assets/images/ui/button-header.png")
                 no-repeat center center / 100% 100%;
         }
     }
@@ -201,33 +201,33 @@ input[type="range"] {
     background-size: contain;
     background-repeat: no-repeat;
     &--settings {
-        background-image: url("../../assets/images/ui/icon-settings.png");
+        background-image: url("@assets/images/ui/icon-settings.png");
     }
     &--menu {
-        background-image: url("../../assets/images/ui/icon-menu.png");
+        background-image: url("@assets/images/ui/icon-menu.png");
     }
     &--left {
-        background-image: url("../../assets/images/ui/icon-left.png");
+        background-image: url("@assets/images/ui/icon-left.png");
         width: 12px;
         height: 20px;
     }
     &--right {
-        background-image: url("../../assets/images/ui/icon-right.png");
+        background-image: url("@assets/images/ui/icon-right.png");
         width: 12px;
         height: 20px;
     }
     &--add {
-        background-image: url("../../assets/images/ui/icon-add.png");
+        background-image: url("@assets/images/ui/icon-add.png");
         width: 20px;
         height: 20px;
     }
     &--tick {
-        background-image: url("../../assets/images/ui/icon-tick.png");
+        background-image: url("@assets/images/ui/icon-tick.png");
         width: 22px;
         height: 20px;
     }
     &--eye {
-        background-image: url("../../assets/images/ui/icon-eye.png");
+        background-image: url("@assets/images/ui/icon-eye.png");
         width: 22px;
         height: 18px;
     }

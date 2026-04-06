@@ -12,8 +12,8 @@
     color: var(--color-white);
     font-weight: 300;
     letter-spacing: 1px;
-    --border-image-source: url("../../assets/images/ui/button-header.png");
-    --border-image-source-hover: url("../../assets/images/ui/button-header-hover.png");
+    --border-image-source: url("@assets/images/ui/button-header.png");
+    --border-image-source-hover: url("@assets/images/ui/button-header-hover.png");
     text-align: center;
     user-select: none;
     border-image-source: var(--border-image-source);
@@ -24,8 +24,8 @@
 
     &:disabled {
         cursor: not-allowed;
-        --border-image-source: url("../../assets/images/ui/button-disabled.png");
-        --border-image-source-hover: url("../../assets/images/ui/button-disabled.png");
+        --border-image-source: url("@assets/images/ui/button-disabled.png");
+        --border-image-source-hover: url("@assets/images/ui/button-disabled.png");
         text-shadow: none;
         color: var(--color-black);
     }
@@ -39,27 +39,27 @@
     }
 
     &--red {
-        --border-image-source: url("../../assets/images/ui/button-red.png");
-        --border-image-source-hover: url("../../assets/images/ui/button-red-hover.png");
+        --border-image-source: url("@assets/images/ui/button-red.png");
+        --border-image-source-hover: url("@assets/images/ui/button-red-hover.png");
     }
 
     &--green {
-        --border-image-source: url("../../assets/images/ui/button-green.png");
-        --border-image-source-hover: url("../../assets/images/ui/button-green-hover.png");
+        --border-image-source: url("@assets/images/ui/button-green.png");
+        --border-image-source-hover: url("@assets/images/ui/button-green-hover.png");
     }
 
     &--yellow {
         color: var(--color-white);
         text-shadow: var(--text-shadow);
-        --border-image-source: url("../../assets/images/ui/button-yellow.png");
-        --border-image-source-hover: url("../../assets/images/ui/button-yellow.png");
+        --border-image-source: url("@assets/images/ui/button-yellow.png");
+        --border-image-source-hover: url("@assets/images/ui/button-yellow.png");
     }
 
     &--cyan {
         color: var(--color-white);
         text-shadow: var(--text-shadow);
-        --border-image-source: url("../../assets/images/ui/button-cyan.png");
-        --border-image-source-hover: url("../../assets/images/ui/button-cyan.png");
+        --border-image-source: url("@assets/images/ui/button-cyan.png");
+        --border-image-source-hover: url("@assets/images/ui/button-cyan.png");
     }
 
     &--small {
@@ -84,4 +84,8 @@
 
 span.button {
     pointer-events: none;
+}
+
+button {
+    all: unset;
 }

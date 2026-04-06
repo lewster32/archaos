@@ -1,6 +1,6 @@
 <template>
     <div class="loading-screen">
-        <img src="../../assets/images/ui/logo.png" alt="Archaos" class="logo" />
+        <img src="@assets/images/ui/logo.png" alt="Archaos" class="logo" />
         <div
             class="loading-bar"
             role="progressbar"
@@ -60,8 +60,8 @@ const totalMB =
     border-image-width: 6px;
     border-image-slice: 3;
     border-image-repeat: repeat;
-    border-image-source: url("../../assets/images/ui/callout.png");
-    background-image: url("../../assets/images/ui/background.png");
+    border-image-source: url("@assets/images/ui/callout.png");
+    background-image: url("@assets/images/ui/background.png");
     background-size: 32px;
     overflow: hidden;
 }

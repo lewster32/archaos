@@ -26,8 +26,8 @@
  * uses so there is no duplication of asset loading logic.
  */
 import { SpellType, UnitStatus, UnitConfig } from "@archaos/engine";
-import classicunitsAtlas from "../../assets/spritesheets/classicunits.png";
-import classicunitsData from "../../assets/spritesheets/classicunits.json";
+import classicunitsAtlas from "@assets/spritesheets/classicunits.png";
+import classicunitsData from "@assets/spritesheets/classicunits.json";
 
 type FrameRect = { x: number; y: number; w: number; h: number };
 
@@ -45,7 +45,7 @@ type EnhancedAtlasInfo = { imageUrl: string; frames: Map<string, FrameRect> };
 const _enhancedFrames = new Map<string, EnhancedAtlasInfo>();
 
 const _enhancedFiles: Record<string, any> = import.meta.glob(
-    "../../assets/data/enhanced/*.json",
+    "@assets/data/enhanced/*.json",
     { eager: true },
 );
 

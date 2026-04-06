@@ -73,13 +73,13 @@ defineEmits<{
         filter: brightness(0.8);
     }
     &--cancel {
-        background-image: url("../../assets/images/ui/cancel.png");
+        background-image: url("@assets/images/ui/cancel.png");
     }
     &--skip {
-        background-image: url("../../assets/images/ui/end-turn.png");
+        background-image: url("@assets/images/ui/end-turn.png");
     }
     &--dismount {
-        background-image: url("../../assets/images/ui/dismount.png");
+        background-image: url("@assets/images/ui/dismount.png");
     }
 }
 </style>
