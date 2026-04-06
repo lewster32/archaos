@@ -19,13 +19,13 @@
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)
 //   chaossounds.ogg                                     147151 B  (audio (preferred format))
-//   Game.css                                             17054 B  (lazy CSS bundle)
+//   Game.css                                             19784 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     1223 B  (lazy CSS bundle)
-//   Game.js                                             290989 B  (lazy JS bundle)
-//   LoadingScreen.js                                     69539 B  (lazy JS bundle)
+//   Game.js                                             297869 B  (lazy JS bundle)
+//   LoadingScreen.js                                     70390 B  (lazy JS bundle)
 //   phaser.js                                          1198735 B  (lazy JS bundle)
 //   window.js                                            14825 B  (lazy JS bundle)
-//   TOTAL                                              2047658 B
+//   TOTAL                                              2058119 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 2047658;
+export const TOTAL_GAME_ASSET_BYTES = 2058119;
