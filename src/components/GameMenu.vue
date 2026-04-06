@@ -159,7 +159,7 @@
                     </button>
                 </div>
             </dialog>
-            <div class="callout__row">
+            <div class="callout__row callout__row--balanced">
                 <label
                     for="boardsize"
                     title="The size of the play area. If there are more than 4 players, the small board is disabled to prevent overcrowding."
@@ -174,7 +174,7 @@
                     <option value="21">Huge Board</option>
                 </select>
             </div>
-            <div class="callout__row">
+            <div class="callout__row callout__row--balanced">
                 <label
                     for="spellcount"
                     title="The number of spells each player starts with."
@@ -416,6 +416,17 @@ function startTutorial(tutorialId: string): void {
     gap: 1em;
     &--difficulty {
         margin-block: 1em;
+    }
+    &--balanced {
+        > * {
+            flex: 1 0 45%;
+        }
+    }
+}
+
+.callout .callout__row {
+    label {
+        flex: 0 1 20ch;
     }
 }
 
