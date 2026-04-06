@@ -321,29 +321,34 @@ export class ComputerWizard implements RemotePlayer {
 
     /**
      * Looks up the effective casting chance for the spell that summons a unit
-     * with the given unit ID, adjusted for the current world balance (chaotic
-     * spells are easier on a chaotic board, and vice versa).
+     * with the given unit ID, adjusted for the current universe balance
+     * (chaotic spells are easier on a chaotic board, and vice versa).
      *
      * @param unitId the unit ID to look up
-     * @param worldBalance the current world balance from the board
+     * @param universeBalance the current universe balance from the board
+     * @param classicBalance whether to apply the classic balance adjustment (which boosts chances, never penalises them)
      * @returns the effective casting chance (0.1-1), or null if no matching spell found
      */
     private static getSpellChanceForUnit(
         unitId: string,
-        worldBalance: number,
+        universeBalance: number,
+        classicBalance: boolean = false
     ): number | null {
         for (const spellConfig of Object.values(Spell.spells)) {
             if (
                 spellConfig.unitId === unitId ||
                 spellConfig.unit?.id === unitId
             ) {
-                // Apply the same world-balance adjustment as Spell.chance
+                // Apply the same universe-balance adjustment as Spell.chance
                 if (spellConfig.balance === 0) {
                     return spellConfig.chance;
                 }
-                let balanceOffset: number = worldBalance;
+                let balanceOffset: number = universeBalance;
                 if (spellConfig.balance < 0) {
                     balanceOffset *= -1;
+                }
+                if (classicBalance && balanceOffset < 0) {
+                    balanceOffset = 0;
                 }
                 return Math.min(
                     Math.max(spellConfig.chance + balanceOffset, 0.1),
@@ -456,6 +461,7 @@ export class ComputerWizard implements RemotePlayer {
                                 ComputerWizard.getSpellChanceForUnit(
                                     piece.properties.id,
                                     this._board.balance,
+                                    this._board.classicBalance
                                 );
                             if (castChance === null) continue;
 

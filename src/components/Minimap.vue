@@ -6,7 +6,7 @@
         <button
             class="minimap__info callout button--small c-white"
             @click="toggleInfo()"
-            title="Show world balance info"
+            title="Show universe balance info"
         >
             <span
                 style="font-weight: bold"
@@ -84,7 +84,7 @@
                 </span>
             </p>
             <p v-if="balance != 0">
-                The world is currently
+                The universe is currently
                 <span
                     :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
                     >{{
@@ -104,7 +104,7 @@
                 spells.</template><template v-else>.</template>
             </p>
             <p v-else>
-                The world is currently neutral (-); all spells will have their
+                The universe is currently neutral (-); all spells will have their
                 normal casting chance.
             </p>
             <template v-if="balanceShift !== 0">
@@ -117,17 +117,17 @@
                         }"
                         >{{ balanceShift < 0 ? "chaos (*)" : "law (^)" }}</span
                     >
-                    has increased this turn, which will shift the world balance
+                    has increased this turn, which will shift the universe balance
                     at the start of the next turn.
                 </p>
             </template>
             <p>
-                The balance of the world is changed every time a non-neutral
+                The balance of the universe is changed every time a non-neutral
                 spell is <span class="c-green">successfully cast</span>, and
                 affects every player's chance to cast subsequent spells.
             </p>
             <p>
-                Neutral (-) spells are not affected by, nor affect world
+                Neutral (-) spells are not affected by, nor affect universe
                 balance.
             </p>
         </div>

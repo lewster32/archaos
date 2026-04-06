@@ -29,7 +29,7 @@
                 },
                 "balance": {
                     "type": "integer",
-                    "description": "World-balance contribution: positive = law, negative = chaos."
+                    "description": "Universe-balance contribution: positive = law, negative = chaos."
                 },
                 "unitId": {
                     "type": "string",

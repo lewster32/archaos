@@ -119,8 +119,8 @@ export class Spell<P extends Piece = Piece> extends Model {
 
     /**
      * The normalised chance of successfully casting this spell based on the
-     * current balance of the game world. Clamped between 0.1 and 1 to prevent
-     * situations where a spell is impossible to cast.
+     * current balance of the game universe. Clamped between 0.1 and 1 to
+     * prevent situations where a spell is impossible to cast.
      * 
      * If `classicBalance` is `true`, any penalty from a misaligned board is
      * suppressed — only boosts (aligned spell + aligned board) are applied.
@@ -249,9 +249,9 @@ export class Spell<P extends Piece = Piece> extends Model {
         let description: string = "";
         if (this.chance < 0.3) {
             if (this.balance < 0) {
-                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting until the world is more chaotic.</span>`;
+                description += `<br /><span class='c-magenta'>Unlikely to succeed in casting until the universe is more chaotic.</span>`;
             } else if (this.balance > 0) {
-                description += `<br /><span class='c-cyan'>Unlikely to succeed in casting until the world is more lawful.</span>`;
+                description += `<br /><span class='c-cyan'>Unlikely to succeed in casting until the universe is more lawful.</span>`;
             } else {
                 description += `<br /><span class='c-magenta'>Unlikely to succeed in casting.</span>`;
             }

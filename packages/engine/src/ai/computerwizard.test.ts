@@ -586,7 +586,7 @@ describe("ComputerWizard", () => {
         });
 
         it("increases chance for a chaotic spell on a chaotic board", () => {
-            // balance -2, worldBalance -0.3 → offset flips to +0.3
+            // balance -2, universeBalance -0.3 → offset flips to +0.3
             inject({ chance: 0.1, balance: -2 });
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
@@ -876,7 +876,7 @@ describe("ComputerWizard", () => {
             expect(threatArg).toBeGreaterThan(noThreatArg);
         });
 
-        it("world balance reduces suspicion for aligned spells", async () => {
+        it("universe balance reduces suspicion for aligned spells", async () => {
             // Chaotic dragon on neutral board: effective chance = 0.1
             const neutral = setup({
                 difficulty: 0.5,

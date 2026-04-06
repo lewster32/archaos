@@ -13,7 +13,7 @@
         <div class="unitinfo__inner callout">
             <h2>
                 {{ unit?.name }}<template v-if="unit?.dead">'s corpse</template>
-                <template v-if="unit.owner">
+                <template v-if="unit?.owner">
                     <button
                         class="button button--default button--small"
                         @click="highlightOwnedUnits(unit?.owner)"

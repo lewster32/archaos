@@ -514,7 +514,7 @@
         "target": "self",
         "range": 0,
         "name": "Law 1",
-        "description": "Makes the world moderately more lawful.",
+        "description": "Makes the universe moderately more lawful.",
         "types": [
             "balance"
         ]
@@ -525,7 +525,7 @@
         "target": "self",
         "range": 0,
         "name": "Law 2",
-        "description": "Makes the world greatly more lawful.",
+        "description": "Makes the universe greatly more lawful.",
         "types": [
             "balance"
         ]
@@ -536,7 +536,7 @@
         "target": "self",
         "range": 0,
         "name": "Chaos 1",
-        "description": "Makes the world moderately more chaotic.",
+        "description": "Makes the universe moderately more chaotic.",
         "types": [
             "balance"
         ]
@@ -547,7 +547,7 @@
         "target": "self",
         "range": 0,
         "name": "Chaos 2",
-        "description": "Makes the world greatly more chaotic.",
+        "description": "Makes the universe greatly more chaotic.",
         "types": [
             "balance"
         ]

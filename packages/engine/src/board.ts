@@ -1161,7 +1161,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 this._balance += this._balanceShift;
                 this._balance = Number.parseFloat(this._balance.toFixed(2));
                 this._logger.log(
-                    `World balance shifts towards ${
+                    `Universe balance shifts towards ${
                         this._balanceShift < 0 ? "chaos" : "law"
                     } by ${Number.parseInt(
                         Math.abs(this._balanceShift * 100).toFixed(2),
