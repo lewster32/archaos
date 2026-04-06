@@ -289,6 +289,7 @@
     "magic-castle": {
         "chance": 0.5,
         "balance": 1,
+        "range": 8,
         "allowIllusion": false,
         "unitId": "magic-castle",
         "name": "Magic Castle",
@@ -300,6 +301,7 @@
     "dark-citadel": {
         "chance": 0.5,
         "balance": -1,
+        "range": 8,
         "allowIllusion": false,
         "unitId": "dark-citadel",
         "name": "Dark Citadel",

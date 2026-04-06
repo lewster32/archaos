@@ -494,16 +494,9 @@ export class Piece extends Entity {
     }
 
     /**
-     * Get the default tint color for this piece.
-     */
-    get defaultTint(): number {
-        return this.raisedDead ? Piece.RAISED_DEAD_TINT : 0xffffff;
-    }
-
-    /**
      * Reset this piece's state for a new turn.
      */
-    reset() {
+    public reset() {
         this.turnOver = false;
         this.engaged = false;
 
@@ -539,7 +532,7 @@ export class Piece extends Entity {
      * corpse unless the piece has NoCorpse/Undead status
      * or is an illusion.
      */
-    async kill(): Promise<void> {
+    async kill(_silent: boolean = false): Promise<void> {
         if (this._dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
@@ -562,7 +555,6 @@ export class Piece extends Entity {
         ) {
             await this.destroy();
         }
-        this._board.emitBoardUpdateEvent();
         this._board.boardEvents.emit(BoardEvent.PieceDied, this);
     }
 
@@ -576,7 +568,21 @@ export class Piece extends Entity {
             this.currentRider.dismount();
         }
         this._board.removePiece(this.id);
-        this._board.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Engage this piece with the given piece.
+     */
+    async engage(piece: Piece): Promise<void> {
+        if (this.canEngagePiece(piece)) {
+            this.engaged = true;
+            this.attacked = false;
+            piece.engaged = true;
+        }
+        this.board.logger.log(
+            `${this.name} is engaged with ${piece.name}`,
+            Colour.Yellow,
+        );
     }
 
     /**
@@ -584,7 +590,7 @@ export class Piece extends Entity {
      * Returns true if the attack killed the target.
      * Client overrides for animation.
      */
-    async attack(piece: Piece): Promise<boolean> {
+    async attack(piece: Piece, _options?: any): Promise<boolean> {
         if (!this.canAttackPiece(piece)) {
             return false;
         }
@@ -658,7 +664,7 @@ export class Piece extends Entity {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
             this._board.logger.log(
-                `${this.fullName} defeated ` + `${piece.fullName}`,
+                `${this.fullName} defeated ${piece.fullName}`,
                 Colour.Red,
             );
             await piece.kill();
@@ -670,24 +676,25 @@ export class Piece extends Entity {
     /**
      * Mount this piece upon another piece.
      */
-    mount(piece: Piece): void {
+    async mount(piece: Piece): Promise<void> {
         if (!this.canMountPiece(piece)) {
-            throw new Error(`${this.name} cannot mount ` + `${piece.name}`);
+            throw new Error(`${this.name} cannot mount ${piece.name}`);
         }
         this.moved = true;
         this.attacked = true;
         piece.moved = true;
         this.currentMount = piece;
         piece.currentRider = this;
+        await this.board.movePiece(this.id, piece.position);
         this._board.logger.log(
-            `${this.fullName} mounted ` + `${piece.fullName}`,
+            `${this.fullName} mounted ${piece.fullName}`,
         );
     }
 
     /**
      * Dismount from the current mount.
      */
-    dismount(): void {
+    async dismount(): Promise<void> {
         if (!this.currentMount) {
             throw new Error(`${this.name} is not mounted`);
         }
@@ -695,7 +702,7 @@ export class Piece extends Entity {
         this.moved = true;
         this.currentMount.turnOver = true;
         this._board.logger.log(
-            `${this.fullName} dismounted ` + `${this.currentMount.fullName}`,
+            `${this.fullName} dismounted ${this.currentMount.fullName}`,
         );
         this.currentMount = null;
     }

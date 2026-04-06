@@ -256,9 +256,6 @@ export class Rules {
             return false;
         }
         board.state = BoardState.Idle;
-        board.logger.log(
-            `${board.currentPlayer.name} casts` + ` '${casted.name}'`,
-        );
         await casted.cast(board.currentPlayer, board.selected, currentTarget);
         board.boardEvents.emit(
             BoardEvent.SpellCast,

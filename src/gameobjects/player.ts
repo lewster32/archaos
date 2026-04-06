@@ -69,7 +69,7 @@ export class Player extends EnginePlayer<Piece> {
      * defeat sequence, and destroys all of their
      * non-wizard pieces.
      */
-    async defeat(): Promise<void> {
+    override async defeat(): Promise<void> {
         this._defeated = true;
         (this.board as unknown as Board).logger.log(
             `Game over for ${this.name}`,
@@ -91,7 +91,7 @@ export class Player extends EnginePlayer<Piece> {
      * Destroys all non-wizard pieces owned by this
      * player, with a short delay and effect for each.
      */
-    async destroyCreations(): Promise<any[]> {
+    override async destroyCreations(): Promise<any[]> {
         return Promise.all(
             (this.board as unknown as Board)
                 .getPiecesByOwner(this)

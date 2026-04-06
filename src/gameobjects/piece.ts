@@ -137,6 +137,13 @@ export class Piece extends EnginePiece {
     }
 
     /**
+     * Get the default tint color for this piece.
+     */
+    get defaultTint(): number {
+        return this.raisedDead ? Piece.RAISED_DEAD_TINT : 0xffffff;
+    }
+
+    /**
      * Flash a highlight effect on this piece.
      */
     async flashHighlight(): Promise<void> {
@@ -173,9 +180,9 @@ export class Piece extends EnginePiece {
      * Set whether this piece is currently engulfed by another piece.
      */
     override set engulfed(engulfed: boolean) {
-        this._engulfed = engulfed;
+        super.engulfed = engulfed;
         setTimeout(() => {
-            if (this._engulfed) {
+            if (this.engulfed) {
                 this.clientBoard.logger.log(
                     `${this.name} was engulfed`,
                     Colour.Magenta,
@@ -216,7 +223,7 @@ export class Piece extends EnginePiece {
      * tinting it slightly darker.
      */
     override set turnOver(state: boolean) {
-        this.moved = this.attacked = this.rangedAttacked = state;
+        super.turnOver = state;
 
         // Don't apply the turn over tint if the piece has no valid actions;
         // prevents Magic Fire, Dark Citadel etc. from always being shaded
@@ -514,7 +521,7 @@ export class Piece extends EnginePiece {
     /**
      * Move this piece to the specified point on the board.
      */
-    async moveTo(point: Geom.Point, stepDuration?: number) {
+    override async moveTo(point: Geom.Point, stepDuration?: number) {
         this.updateDirection(this.position, point);
         this.position = point;
         if (this.currentRider) {
@@ -550,33 +557,19 @@ export class Piece extends EnginePiece {
     /**
      * Raise this piece from the dead, assigning its new owner.
      */
-    async raiseDead(owner: EnginePlayer | null): Promise<void> {
-        if (!this.dead) {
-            throw new Error("Cannot raise a piece that is not dead");
-        }
-        this.owner = owner;
-        this._dead = false;
-        this.raisedDead = true;
+    override async raiseDead(owner: EnginePlayer | null): Promise<void> {
+        await super.raiseDead(owner);
         if (this.sprite) {
             this.sprite.setVisible(true);
             this.playAnim();
         }
-        this.addStatus(UnitStatus.Undead);
     }
 
     /**
      * Engage this piece with the given piece.
      */
-    async engage(piece: EnginePiece): Promise<void> {
-        if (this.canEngagePiece(piece)) {
-            this.engaged = true;
-            this.attacked = false;
-            piece.engaged = true;
-        }
-        this.clientBoard.logger.log(
-            `${this.name} is engaged with ${piece.name}`,
-            Colour.Yellow,
-        );
+    override async engage(piece: EnginePiece): Promise<void> {
+        await super.engage(piece);
         await this.clientBoard.sound.playAsync("engaged", {
             delay: Board.DEFAULT_DELAY,
         });
@@ -585,7 +578,7 @@ export class Piece extends EnginePiece {
     /**
      * Perform an attack on the given piece.
      */
-    async attack(
+    override async attack(
         piece: EnginePiece,
         options?: { silentMove?: boolean },
     ): Promise<boolean> {
@@ -660,7 +653,7 @@ export class Piece extends EnginePiece {
     /**
      * Perform a ranged attack on the given piece.
      */
-    async rangedAttack(piece: EnginePiece): Promise<boolean> {
+    override async rangedAttack(piece: EnginePiece): Promise<boolean> {
         if (this.canRangedAttackPiece(piece)) {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
                 await this.clientBoard.sound.playAsync("undead", {
@@ -765,12 +758,12 @@ export class Piece extends EnginePiece {
     /**
      * Kill this piece.
      */
-    async kill(silent: boolean = false): Promise<void> {
+    override async kill(silent: boolean = false): Promise<void> {
         if (this.dead) {
             throw new Error("Cannot kill unit that is already dead");
         }
         if (this.currentRider) {
-            await (this.currentRider as Piece).dismount();
+            await this.currentRider.dismount();
             if (!this.turnOver) {
                 this.currentRider.reset();
             }
@@ -823,7 +816,7 @@ export class Piece extends EnginePiece {
     /**
      * Mount this piece upon the given piece.
      */
-    async mount(piece: EnginePiece): Promise<void> {
+    override async mount(piece: EnginePiece): Promise<void> {
         if (!this.canMountPiece(piece)) {
             throw new Error(`${this.name} cannot mount ${piece.name}`);
         }
@@ -843,25 +836,25 @@ export class Piece extends EnginePiece {
     /**
      * Dismount this piece from its current mount.
      */
-    async dismount(): Promise<void> {
+    override async dismount(): Promise<void> {
         if (!this.currentMount) {
             throw new Error(`${this.name} is not mounted`);
         }
-        (this.currentMount as Piece).currentRider = null;
+        this.currentMount.currentRider = null;
 
         this.moved = true;
         this.currentMount.turnOver = true;
         this.clientBoard.logger.log(
             `${this.fullName} dismounted ${this.currentMount.fullName}`,
         );
-        (this.currentMount as Piece).createShaders(true);
+        this.currentMount.createShaders(true);
         this.currentMount = null;
     }
 
     /**
      * Destroy this piece, removing it from the board.
      */
-    async destroy() {
+    override async destroy() {
         this._dead = true;
         if (this.currentRider) {
             await (this.currentRider as Piece).dismount();

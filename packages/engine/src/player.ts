@@ -8,6 +8,7 @@ import type { Piece } from "./piece";
 // Board is imported only as a type to avoid a
 // circular dependency at runtime.
 import type { Board } from "./board";
+import { UnitStatus } from "./enums/unitstatus";
 
 /**
  * Minimal AI interface that engine code (spells)
@@ -168,6 +169,7 @@ export class Player<P extends Piece = Piece> extends Model {
      */
     async defeat(): Promise<void> {
         this._defeated = true;
+        await this.destroyCreations();
         this.board.logger.log(`Game over for ${this.name}`, Colour.Red);
     }
 
@@ -177,7 +179,12 @@ export class Player<P extends Piece = Piece> extends Model {
      * rendering effects.
      */
     async destroyCreations(): Promise<any[]> {
-        return [];
+        return Promise.all(
+            (this.board as unknown as Board)
+                .getPiecesByOwner(this)
+                .filter((p) => !p.hasStatus(UnitStatus.Wizard))
+                .map((piece: Piece) => piece.destroy()),
+        );
     }
 
     /**

@@ -250,9 +250,7 @@ export class Wizard extends Piece {
         ).length;
         await this.destroy();
         await this.owner?.defeat();
-        if (ownedPieceCount > 1) {
-            await Board.delay(Board.END_TURN_DELAY);
-        } else {
+        if (ownedPieceCount < 1) {
             // PCHOWWW
             this.clientBoard.sound.play("disbelieve");
             await Board.delay(Board.DEFAULT_DELAY);
