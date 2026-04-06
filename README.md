@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="https://www.archaos.co.uk/2021/images/web/logo.png" alt="Archaos">
+  <img src="https://www.archaos.co.uk/images/web/logo.png" alt="Archaos">
 </h1>
 
 <h2 align="center">A modern remake of <a href="https://en.wikipedia.org/wiki/Chaos:_The_Battle_of_Wizards">Chaos: The Battle of Wizards</a> built using <a href="http://phaser.io/">Phaser 3, <a href="https://vuejs.org/">Vue 3</a> and <a href="https://vitejs.dev/">Vite</a>.</h2>
