@@ -11,8 +11,11 @@
             "name": "Gandalf",
             "position": { "x": 0, "y": 14 },
             "computerControlled": true,
-            "pieces": [],
-            "spells": ["Wall"]
+            "pieces": [{
+                "type": "Elf",
+                "position": { "x": 1, "y": 14 }
+            }],
+            "spells": ["Horse"]
         },
         {
             "id": 2,
@@ -20,7 +23,7 @@
             "position": { "x": 0, "y": 7 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Pegasus"]
         },
         {
             "id": 3,
@@ -28,7 +31,7 @@
             "position": { "x": 0, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Centaur"]
         },
         {
             "id": 4,
@@ -36,7 +39,7 @@
             "position": { "x": 7, "y": 14 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Manticore"]
         },
         {
             "id": 7,
@@ -44,7 +47,7 @@
             "position": { "x": 7, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Gryphon"]
         },
         {
             "id": 6,
@@ -52,7 +55,7 @@
             "position": { "x": 14, "y": 14 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Horse"]
         },
         {
             "id": 7,
@@ -60,7 +63,7 @@
             "position": { "x": 14, "y": 7 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Pegasus"]
         },
         {
             "id": 8,
@@ -68,13 +71,13 @@
             "position": { "x": 14, "y": 0 },
             "computerControlled": true,
             "pieces": [],
-            "spells": ["Wall"]
+            "spells": ["Centaur"]
         }
     ],
     "phase": "casting",
     "cheats": {
         "forceHit": null,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

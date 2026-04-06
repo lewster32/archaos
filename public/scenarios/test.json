@@ -10,11 +10,11 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 2 },
-            "computerControlled": false,
+            "computerControlled": true,
             "statuses": [],
             "pieces": [
                 {
-                    "type": "Pegasus",
+                    "type": "Manticore",
                     "position": { "x": 1, "y": 2 }
                 }
             ],
@@ -23,21 +23,22 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 2, "y": 2 },
+            "position": { "x": 3, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
             "pieces": [],
             "wizardProperties": {
                 "movement": 0,
-                "manoeuvrability": 0
+                "manoeuvrability": 0,
+                "combat": 1
             },
             "spells": []
         },
         {
             "id": 3,
             "name": "Player 3",
-            "position": { "x": 5, "y": 2 },
+            "position": { "x": 4, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
@@ -53,7 +54,8 @@
             ],
             "wizardProperties": {
                 "movement": 0,
-                "manoeuvrability": 0
+                "manoeuvrability": 0,
+                "combat": 1
             },
             "spells": []
         }
@@ -61,7 +63,7 @@
     "corpses": [],
     "phase": "moving",
     "cheats": {
-        "forceHit": false,
+        "forceHit": null,
         "forceCast": true,
         "shortDelay": true
     }

@@ -764,7 +764,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Select a piece by ID. Sets `_selected` and
      * emits `BoardEvent.PieceSelected`.
      */
-    selectPiece(id: number): void {
+    async selectPiece(id: number): Promise<void> {
         if (!id || this._state === BoardState.GameOver) {
             return;
         }
@@ -778,7 +778,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     /**
      * Clear the current piece selection.
      */
-    deselectPiece(): void {
+    async deselectPiece(): Promise<void> {
         this._selected = null;
     }
 
@@ -794,7 +794,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const ownedPieces: P[] = this.getPiecesByOwner(player);
         for (const piece of ownedPieces) {
             if (piece.hasStatus(UnitStatus.Wizard)) {
-                this.selectPiece(piece.id);
+                await this.selectPiece(piece.id);
                 return piece;
             }
         }
@@ -1299,7 +1299,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
             // Handle casting phase
             if (this.phase === BoardPhase.Casting) {
-                this.selectWizard(this.currentPlayer);
+                await this.selectWizard(this.currentPlayer);
 
                 if (this.selected) {
                     const spell = this.currentPlayer?.selectedSpell;

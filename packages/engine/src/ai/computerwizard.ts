@@ -747,7 +747,7 @@ export class ComputerWizard implements RemotePlayer {
         this._board.events.emit(EngineEvent.FocusPieces, {
             pieceIds: [piece.id],
         });
-        this._board.selectPiece(piece.id);
+        await this._board.selectPiece(piece.id);
         await Board.delay(Board.DEFAULT_DELAY / 4);
 
         if (piece.engaged) {
@@ -882,7 +882,7 @@ export class ComputerWizard implements RemotePlayer {
                         (mountable.canAttack && !mountable.attacked) ||
                         (mountable.canRangedAttack && !mountable.rangedAttacked)
                     ) {
-                        this._board.selectPiece(mountable.id);
+                        await this._board.selectPiece(mountable.id);
                     }
                     return true;
                 } else {
@@ -939,7 +939,9 @@ export class ComputerWizard implements RemotePlayer {
                         }
                     }
                     piece.attacked = true;
-                    return true;
+                    // Don't return — fall through to the ranged attack check
+                    // below so units with a ranged capability can still fire
+                    // after a fly-attack (whether it succeeded or failed).
                 } else {
                     console.debug(
                         `No attackable targets in fly range for ${piece.fullName}`,
@@ -951,7 +953,11 @@ export class ComputerWizard implements RemotePlayer {
                 );
             }
 
-            // Find all valid reachable tiles
+            // Find all valid reachable tiles. Re-check piece.moved here because
+            // a fly-attack above may have consumed the move inside this block.
+            if (piece.moved) {
+                // Fly-attack already used the move; skip to ranged attack below.
+            } else {
             const reachableTiles: Point[] = Array.from(
                 this._board.rangeGizmo.getAllValidPaths(),
             )
@@ -1126,6 +1132,7 @@ export class ComputerWizard implements RemotePlayer {
                 console.debug(`${piece.fullName} is now engaged after moving`);
                 await this.moveUnit(piece);
             }
+            } // end else (piece.moved)
         }
         if (!piece.rangedAttacked && piece.canRangedAttack) {
             // Try to attack a random target in range

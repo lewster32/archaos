@@ -78,19 +78,24 @@ export class RangeGizmo {
             return node;
         }
 
-        // If the only piece here is the moving piece itself,
-        // it's traversable (starting square).
-        if (livePieces.length === 1 && livePieces[0] === this._piece) {
+        // The rider of the moving piece occupies the same tile
+        // but moves with it — treat it as part of the moving
+        // piece for traversal purposes.
+        const rider = this._piece.currentRider;
+
+        // If the only pieces here are the moving piece (and
+        // possibly its rider), the tile is traversable.
+        const otherPieces = livePieces.filter(
+            (p) => p !== this._piece && p !== rider,
+        );
+        if (otherPieces.length === 0) {
             node.traversable = true;
             node.terminal = false;
             return node;
         }
 
         // Evaluate each piece at this position.
-        for (const livePiece of livePieces) {
-            if (livePiece === this._piece) {
-                continue;
-            }
+        for (const livePiece of otherPieces) {
             if (
                 this._piece.canMountPiece(livePiece) ||
                 this._piece.canAttackPiece(livePiece)

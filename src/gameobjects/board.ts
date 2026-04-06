@@ -162,7 +162,7 @@ export class Board extends EngineBoard<Piece> {
                     `Dismount ${this.selected.currentRider.owner.name}? (${Cursor.CANCEL_KEY} to cancel)`,
                     Colour.Yellow,
                 );
-                this.selectPiece(this.selected.currentRider.id);
+                await this.selectPiece(this.selected.currentRider.id);
                 this.stateManager.evaluate(new RequestDismount());
                 await this.rangeGizmo.generate(this.selected);
             }
@@ -1032,7 +1032,14 @@ export class Board extends EngineBoard<Piece> {
             attackResult,
         );
 
-        if (isFlyAttack && !attackResult && originPos) {
+        // Return to origin if: attack missed, OR attack succeeded but the
+        // tile was still occupied (e.g. killing a mount dismounts its wizard),
+        // so movePiece was not called and the sprite is still hovering.
+        const didNotMove =
+            isFlyAttack &&
+            originPos &&
+            Geom.Point.Equals(attackingPiece.position, originPos);
+        if (didNotMove) {
             await attackingPiece.flyReturn(originPos, defendingPiece.position);
         }
 
@@ -1061,6 +1068,23 @@ export class Board extends EngineBoard<Piece> {
         }
         if (!defendingPiece) {
             throw new Error(`Could not find piece with ID ${defendingPieceId}`);
+        }
+        // For AI players, the cursor never runs the pre-attack setup
+        // (sound, log, range gizmo) that it does for human players.
+        // Replicate that here so the ranged attack is visible.
+        if (this.currentPlayer?.remote) {
+            this.sound.play("bowselecta");
+            this.logger.log(
+                `${attackingPiece.name}'s turn to ranged attack`,
+                Colour.Yellow,
+            );
+            await this.rangeGizmo.showSimpleRange(
+                attackingPiece.position,
+                attackingPiece.stats.range,
+                CursorType.RangeRangedAttack,
+                true,
+            );
+            await Board.delay(Board.DEFAULT_DELAY);
         }
         this._busy = true;
         if (attackingPiece && defendingPiece) {
