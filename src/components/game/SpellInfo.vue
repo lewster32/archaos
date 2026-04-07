@@ -1,72 +1,76 @@
 <template>
-    <div class="spellinfo" v-if="show">
+    <div class="callout spellinfo" v-if="show">
         <button class="spellinfo__close button button--small" @click="close()">
             &times;
         </button>
-        <div class="spellinfo__inner callout">
-            <SpellImage
-                class="spellinfo__image"
-                :spell="spell"
-                style="--zoom: 5"
-            />
+        <div class="spellinfo__inner">
+            <div class="spellinfo__top">
+                <SpellImage
+                    class="spellinfo__image"
+                    :spell="spell"
+                    style="--zoom: 3"
+                />
+                <div class="spellinfo__stats">
+                    <p class="spell-stats__item">
+                        <span class="spell-stats__label">Name:</span>
+                        <span class="spell-stats__value">{{ spell.name }}</span>
+                    </p>
+                    <p class="spell-stats__item">
+                        <span class="spell-stats__label">Type:</span>
+                        <span class="spell-stats__value">{{
+                            spellType(spell)
+                        }}</span>
+                    </p>
+                    <p class="spell-stats__item">
+                        <span class="spell-stats__label">Chance:</span>
+                        <span
+                            :style="`color: var(--spell-chance-colour-${chanceRounded(
+                                spell.chance,
+                            )})`"
+                            class="spell-stats__Value"
+                            :title="`This has a ${chancePercent(
+                                spell.chance,
+                            )}% chance of casting.`"
+                            >{{ chancePercent(spell.chance) }}%</span
+                        >
+                    </p>
+                    <p
+                        v-if="
+                            spell.type == SpellType.Attack &&
+                            (spell as AttackSpell).damage
+                        "
+                        class="spell-stats__item"
+                    >
+                        <span class="spell-stats__label">Damage:</span>
+                        <span class="spell-stats__value">{{
+                            (spell as AttackSpell).damage
+                        }}</span>
+                    </p>
+                    <p v-if="spell.range > 1.5" class="spell-stats__item">
+                        <span class="spell-stats__label">Range:</span>
+                        <span class="spell-stats__value">{{ spell.range }}</span>
+                    </p>
+                    <p class="spell-stats__item">
+                        <span class="spell-stats__label">Balance:</span>
+                        <span
+                            class="spell-stats__value"
+                            :class="{
+                                'balance-lawful': spell.balance > 0,
+                                'balance-chaotic': spell.balance < 0,
+                            }"
+                            :title="`${friendlyBalance(spell.balance)}`"
+                            >{{ balanceIndicator(spell) }}</span
+                        >
+                    </p>
+                    <p v-if="spell.castTimes > 1" class="spell-stats__item">
+                        <span class="spell-stats__label">Quantity:</span>
+                        <span class="spell-stats__value">{{
+                            spell.castTimes
+                        }}</span>
+                    </p>
+                </div>
+            </div>
             <div class="spellinfo__stats spell-stats">
-                <p class="spell-stats__item">
-                    <span class="spell-stats__label">Name:</span>
-                    <span class="spell-stats__value">{{ spell.name }}</span>
-                </p>
-                <p class="spell-stats__item">
-                    <span class="spell-stats__label">Type:</span>
-                    <span class="spell-stats__value">{{
-                        spellType(spell)
-                    }}</span>
-                </p>
-                <p class="spell-stats__item">
-                    <span class="spell-stats__label">Chance:</span>
-                    <span
-                        :style="`color: var(--spell-chance-colour-${chanceRounded(
-                            spell.chance,
-                        )})`"
-                        class="spell-stats__Value"
-                        :title="`This has a ${chancePercent(
-                            spell.chance,
-                        )}% chance of casting.`"
-                        >{{ chancePercent(spell.chance) }}%</span
-                    >
-                </p>
-                <p
-                    v-if="
-                        spell.type == SpellType.Attack &&
-                        (spell as AttackSpell).damage
-                    "
-                    class="spell-stats__item"
-                >
-                    <span class="spell-stats__label">Damage:</span>
-                    <span class="spell-stats__value">{{
-                        (spell as AttackSpell).damage
-                    }}</span>
-                </p>
-                <p v-if="spell.range > 1.5" class="spell-stats__item">
-                    <span class="spell-stats__label">Range:</span>
-                    <span class="spell-stats__value">{{ spell.range }}</span>
-                </p>
-                <p class="spell-stats__item">
-                    <span class="spell-stats__label">Balance:</span>
-                    <span
-                        class="spell-stats__value"
-                        :class="{
-                            'balance-lawful': spell.balance > 0,
-                            'balance-chaotic': spell.balance < 0,
-                        }"
-                        :title="`${friendlyBalance(spell.balance)}`"
-                        >{{ balanceIndicator(spell) }}</span
-                    >
-                </p>
-                <p v-if="spell.castTimes > 1" class="spell-stats__item">
-                    <span class="spell-stats__label">Quantity:</span>
-                    <span class="spell-stats__value">{{
-                        spell.castTimes
-                    }}</span>
-                </p>
                 <div v-if="spell.description">
                     <p
                         class="spellinfo__description"
@@ -74,10 +78,7 @@
                     ></p>
                 </div>
                 <div
-                    v-if="
-                        spell.type === SpellType.Summon &&
-                        (spell as SummonSpell).unitProperties
-                    "
+                    v-if="spellHasStats"
                 >
                     <UnitStats :unit="(spell as SummonSpell).unitProperties" />
                 </div>
@@ -127,6 +128,17 @@ const show: Ref<boolean> = computed(() => {
     return props.spell != null;
 });
 
+const spellHasStats: Ref<boolean> = computed(() => {
+    return (
+        props.spell.type === SpellType.Summon &&
+        (props.spell as SummonSpell).unitProperties != null &&
+        // Any of the stats are non-zero
+        Object.values((props.spell as SummonSpell).unitProperties?.properties).some(
+            (value) => value > 0,
+        )
+    );
+});
+
 /**
  * Gets the image URL for a spell.
  *
@@ -172,22 +184,31 @@ const select: () => void = () => {
 
 .spellinfo {
     position: fixed;
-    left: 0;
-    top: 0;
-    padding: 1em;
+    right: 1rem;
+    top: 1rem;
+    max-width: calc(100vw - 2rem);
+    z-index: 100;
+
+    &__top {
+        display: flex;
+        flex: 1 0 auto;
+        gap: 1rem;
+        align-items: start;
+        max-width: calc(100% - 2.5rem);
+    }
+    
     &__image {
         background-color: var(--color-black);
     }
     &__stats {
-        flex: 1 1 auto;
+        flex: 1 0 auto;
     }
     &__inner {
-        min-width: 360px;
-        max-width: 480px;
+        min-width: 280px;
+        max-width: 380px;
         display: flex;
+        flex-direction: column;
         gap: 1rem;
-        justify-content: center;
-        align-items: flex-start;
     }
     &__select {
         margin-top: 0.5em;
@@ -195,8 +216,8 @@ const select: () => void = () => {
     &__close {
         position: absolute;
         z-index: 100;
-        right: 2em;
-        top: 2em;
+        right: .5em;
+        top: .5em;
     }
     &__description {
         margin: 0.5em 0;

@@ -1,41 +1,31 @@
 <template>
     <div class="wiz-code-editor">
         <div class="wiz-code-editor__sliders">
-            <label for="wiz">
-                <span>Style</span>
-                <SliderControl id="wiz" :min="0" :max="15"
-                    :model-value="modelCode.wiz"
-                    @update:model-value="modelCode = { ...modelCode, wiz: $event }"
-                />
-            </label>
-            <label for="primary">
-                <span>Primary</span>
-                <SliderControl id="primary" :min="0" :max="35"
-                    :model-value="modelCode.pri"
-                    @update:model-value="modelCode = { ...modelCode, pri: $event }"
-                />
-            </label>
-            <label for="secondary">
-                <span>Secondary</span>
-                <SliderControl id="secondary" :min="0" :max="35"
-                    :model-value="modelCode.sec"
-                    @update:model-value="modelCode = { ...modelCode, sec: $event }"
-                />
-            </label>
-            <label for="skin">
-                <span>Skin</span>
-                <SliderControl id="skin" :min="0" :max="9"
-                    :model-value="modelCode.skin"
-                    @update:model-value="modelCode = { ...modelCode, skin: $event }"
-                />
-            </label>
-            <label for="hat">
-                <span>Hat</span>
-                <SliderControl id="hat" :min="0" :max="50"
-                    :model-value="modelCode.hat"
-                    @update:model-value="modelCode = { ...modelCode, hat: $event }"
-                />
-            </label>
+            <label for="wiz">Character style</label>
+            <SliderControl id="wiz" :min="0" :max="15"
+                :model-value="modelCode.wiz"
+                @update:model-value="modelCode = { ...modelCode, wiz: $event }"
+            />
+            <label for="primary">Primary colour</label>
+            <SliderControl id="primary" :min="0" :max="35"
+                :model-value="modelCode.pri"
+                @update:model-value="modelCode = { ...modelCode, pri: $event }"
+            />
+            <label for="secondary">Secondary colour</label>
+            <SliderControl id="secondary" :min="0" :max="35"
+                :model-value="modelCode.sec"
+                @update:model-value="modelCode = { ...modelCode, sec: $event }"
+            />
+            <label for="skin">Skin colour</label>
+            <SliderControl id="skin" :min="0" :max="9"
+                :model-value="modelCode.skin"
+                @update:model-value="modelCode = { ...modelCode, skin: $event }"
+            />
+            <label for="hat">Hat type</label>
+            <SliderControl id="hat" :min="0" :max="50"
+                :model-value="modelCode.hat"
+                @update:model-value="modelCode = { ...modelCode, hat: $event }"
+            />
         </div>
         <div class="wiz-code-editor__preview-container">
             <canvas
@@ -51,6 +41,10 @@
                 spellcheck="false"
                 minlength="10"
                 maxlength="10"
+                :class="{
+                    'c-green': props.valid,
+                    'c-red': !props.valid,
+                }"
             />
         </div>
     </div>
@@ -68,13 +62,15 @@ import {
 } from "@assets/spritesheets/wizards.json";
 import { Wizard } from "@archaos/engine";
 
+const props = defineProps<{
+    valid?: boolean;
+}>();
+
 const FRAME_W = 18;
 const FRAME_H = 18;
 const HAT_W = 14;
 const HAT_H = 14;
 const CANVAS_H = 24;
-
-
 
 const model = defineModel<string>({ default: Wizard.randomWizCode() });
 
@@ -265,14 +261,13 @@ watch(model, render);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5em;
+    gap: 1em;
 
     &__preview-container {
         position: relative;
         display: flex;
         align-items: center;
-        gap: 0.5em;
-        width: 100%;
+        gap: 1em;
     }
 
     &__preview {
@@ -280,28 +275,32 @@ watch(model, render);
         width: calc(18px * 4);
         height: calc(24px * 4);
         margin-inline-end: auto;
+
+        border-style: solid;
+        border-width: 6px;
+        border-image-width: 6px;
+        border-image-slice: 3;
+        border-image-repeat: repeat;
+        border-image-source: url("@assets/images/ui/callout-hover.png");
+        background-color: var(--color-dark-grey);
     }
 
     &__input {
         width: 14ch;
         font-size: 2rem;
         text-align: center;
+        text-transform: uppercase;
     }
 
     &__sliders {
+        margin-block-start: 1rem;
         display: flex;
         flex-direction: column;
-        gap: 0.5em;
+        column-gap: 0.5em;
         width: 100%;
 
         label {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-
-            > * {
-                flex: 1;
-            }
+            text-align: center;
         }
     }
 }

@@ -24,22 +24,38 @@
             </label>
         </div>
         <div class="callout__row">
-            <WizCodeEditor v-model="player.wizCode" />
+            <WizCodeEditor v-model="player.wizCode" :valid="isValid"/>
+        </div>
+        <div class="callout__row" v-if="!isValid">
+            <p class="c-yellow text-shadow">
+                Invalid WizCode. Must be 10 characters and contain only 0-9 and A-F.
+            </p>
         </div>
         <div class="callout__buttons">
             <button
-                class="button button--green"
+                class="button button--important"
+                :class="{
+                    'button--green': isValid,
+                    'button--disabled': !isValid,
+                }"
+                :disabled="!isValid"
                 @click="dialog?.close()"
             >
-                OK
+                Done
+            </button>
+            <button
+                class="button button--yellow"
+                @click="randomise()"
+            >
+                Randomise
             </button>
         </div>
     </dialog>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { Ref } from "vue";
-import type { SetupPlayer } from "@archaos/engine";
+import { Wizard, type SetupPlayer } from "@archaos/engine";
 import WizCodeEditor from "./WizCodeEditor.vue";
 const dialog: Ref<HTMLDialogElement | null> = ref<HTMLDialogElement | null>(null);
 
@@ -52,12 +68,29 @@ defineExpose({
     close: () => dialog.value?.close(),
 });
 
+const randomise = () => {
+    if (props.player) {
+        props.player.wizCode = Wizard.randomWizCode();
+    }
+};
+
+const isValid = computed(() => {
+    if (!props.player) return false;
+    try {
+        return Wizard.parseWizCode(props.player.wizCode) !== null;
+    } catch {
+        return false;
+    }
+});
+
 </script>
 <style lang="scss" scoped>
 .callout {
-    min-width: min(400px, calc(100vw - 2em));
+    min-width: min(320px, calc(100vw - 2em));
+    max-width: 26rem;
     &__row {
         &--center {
+            margin-block: 1rem;
             user-select: none;
             display: flex;
             align-items: center;
@@ -67,6 +100,9 @@ defineExpose({
                 flex: 1 0 33%;
             }
         }
+    }
+    &__buttons {
+        margin-block-start: 1rem;
     }
 }
 .human-computer-toggle {

@@ -17,7 +17,7 @@
                     "position": { "x": 1, "y": 1 }
                 }
             ],
-            "spells": []
+            "spells": ["*"]
         },
         {
             "id": 2,
@@ -60,7 +60,7 @@
         }
     ],
     "corpses": [],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": false,
         "forceCast": true,

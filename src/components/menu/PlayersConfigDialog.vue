@@ -66,7 +66,7 @@
             }}</span>
         </div>
         <div class="callout__buttons">
-            <button class="button button--green" @click="dialog?.close()">
+            <button class="button button--green button--important" @click="dialog?.close()">
                 Done
             </button>
         </div>

@@ -81,7 +81,7 @@ onUnmounted(() => {
     max-height: calc(100vh - 2em);
     overflow: auto;
     text-shadow: var(--text-shadow);
-    background: #111;
+    background: var(--color-dark-grey);
 
     &__body {
         margin: 0.75em 0;

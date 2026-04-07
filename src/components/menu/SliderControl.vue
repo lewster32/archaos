@@ -1,7 +1,7 @@
 <template>
     <div class="slider-controls">
         <button
-            class="button button--small"
+            class="button button--small slider-controls__subtract"
             @click="emit('update:modelValue', Math.max(modelValue - 1, min))"
         >
             <i class="icon icon--left"></i>
@@ -11,10 +11,11 @@
             :min="min"
             :max="max"
             :value="modelValue"
+            class="slider-controls__input"
             @input="emit('update:modelValue', +($event.target as HTMLInputElement).value)"
         />
         <button
-            class="button button--small"
+            class="button button--small slider-controls__add"
             @click="emit('update:modelValue', Math.min(modelValue + 1, max))"
         >
             <i class="icon icon--right"></i>
@@ -37,5 +38,8 @@ const emit = defineEmits<{
     display: flex;
     align-items: center;
     gap: 0.25em;
+    &__input {
+        flex: 1 1 auto;
+    }
 }
 </style>
