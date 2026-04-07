@@ -51,6 +51,7 @@ function createMockBoard(): Board {
     return {
         boardEvents: new Events.EventEmitter(),
         endGame: vi.fn(),
+        centreOnWorldPosition: vi.fn(),
     } as unknown as Board;
 }
 
