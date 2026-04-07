@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import type { SetupData, SetupPlayer } from "@archaos/engine";
 import PlayerConfigDialog from "./PlayerConfigDialog.vue";
 
@@ -107,8 +107,9 @@ defineExpose({
 
 const currentlyConfiguringPlayer = ref<SetupPlayer | null>(null);
 
-const configurePlayer = (player: SetupPlayer) => {
+const configurePlayer = async (player: SetupPlayer) => {
     currentlyConfiguringPlayer.value = player;
+    await nextTick();
     (
         playerConfigDialog.value as InstanceType<
             typeof PlayerConfigDialog
