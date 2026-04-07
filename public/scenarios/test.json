@@ -12,13 +12,17 @@
             "position": { "x": 0, "y": 2 },
             "statuses": [],
             "pieces": [
+                {
+                    "type": "Elf",
+                    "position": { "x": 1, "y": 1 }
+                }
             ],
-            "spells": ["Wall"]
+            "spells": []
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 3, "y": 2 },
+            "position": { "x": 6, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
@@ -33,7 +37,7 @@
         {
             "id": 3,
             "name": "Player 3",
-            "position": { "x": 4, "y": 2 },
+            "position": { "x": 7, "y": 4 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
@@ -56,10 +60,10 @@
         }
     ],
     "corpses": [],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
-        "forceHit": null,
+        "forceHit": false,
         "forceCast": true,
-        "shortDelay": false
+        "shortDelay": true
     }
 }

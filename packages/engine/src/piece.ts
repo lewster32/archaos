@@ -1307,7 +1307,7 @@ export class Piece extends Entity {
                     this.position,
                     new Point(point.x, point.y),
                     RangeType.Fly,
-                ) <= this.stats.movement
+                ) <= this.stats.movement + 0.5
             );
         }
         if (!this.board.rangeGizmo.getPathTo(point)) {
