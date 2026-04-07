@@ -244,8 +244,7 @@ export abstract class TutorialStep {
      * Displays a pointer at the board position.
      *
      * @param board The game board, providing access to the current game state.
-     * @param x The x-coordinate of the board position.
-     * @param y The y-coordinate of the board position.
+     * @param pos The position to point at in world space.
      * @param duration Optional duration in milliseconds for how long the pointer should be shown (default `2000`)
      * @returns A point representing the board position.
      */
@@ -254,6 +253,7 @@ export abstract class TutorialStep {
         pos: Geom.Point,
         duration: number = 2000,
     ): void {
+        board.centreOnWorldPosition(pos);
         board.playEffect(
             EffectType.PointAtPosition,
             pos,
@@ -262,6 +262,43 @@ export abstract class TutorialStep {
             duration,
         );
     }
+
+    /**
+     * Displays pointers at the board positions and centers the camera on their
+     * centroid.
+     * 
+     * @param board The game board, providing access to the current game state.
+     * @param positions The positions to point at in world space.
+     * @param duration Optional duration in milliseconds for how long the pointers should be shown (default `2000`)
+     */
+    protected static pointAtPositions(
+        board: Board,
+        positions: Geom.Point[],
+        duration: number = 2000,
+    ): void {
+        // Get the centroid of the positions to point the camera at
+        const centroid: Geom.Point = positions.reduce(
+            (acc, pos) => {
+                acc.x += pos.x;
+                acc.y += pos.y;
+                return acc;
+            },
+            new Geom.Point(0, 0),
+        );
+        centroid.x /= positions.length;
+        centroid.y /= positions.length;
+        board.centreOnWorldPosition(centroid);
+        for (const pos of positions) {
+            board.playEffect(
+                EffectType.PointAtPosition,
+                pos,
+                undefined,
+                undefined,
+                duration,
+            );
+        }
+    }
+
 }
 
 // ─── Tutorial ───────────────────────────────────────────────────────────────

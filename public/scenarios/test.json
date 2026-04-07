@@ -10,15 +10,10 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 2 },
-            "computerControlled": true,
             "statuses": [],
             "pieces": [
-                {
-                    "type": "Manticore",
-                    "position": { "x": 1, "y": 2 }
-                }
             ],
-            "spells": []
+            "spells": ["Wall"]
         },
         {
             "id": 2,
@@ -61,10 +56,10 @@
         }
     ],
     "corpses": [],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
         "forceHit": null,
         "forceCast": true,
-        "shortDelay": true
+        "shortDelay": false
     }
 }

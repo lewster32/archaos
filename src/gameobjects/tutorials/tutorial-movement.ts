@@ -213,7 +213,7 @@ class Movement20 extends TutorialStep {
     checkCondition(board: Board, event?: BoardEvent): boolean {
         if (
             event === BoardEvent.PhaseChange &&
-            board.phase === BoardPhase.Moving
+            board.phase === BoardPhase.Spreading
         ) {
             return true;
         }
@@ -325,9 +325,11 @@ class Movement30 extends TutorialStep {
                 !p.turnOver,
         );
         if (remainingPiecesToMove.length > 0) {
-            remainingPiecesToMove.forEach((p) => {
-                TutorialStep.pointAtPosition(board, p.screenPosition, 2000);
-            });
+            TutorialStep.pointAtPositions(
+                board,
+                remainingPiecesToMove.map((p) => p.screenPosition),
+                2000,
+            );
         }
     }
 

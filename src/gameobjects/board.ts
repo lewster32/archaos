@@ -188,7 +188,7 @@ export class Board extends EngineBoard<Piece> {
             this.cursor.enabled = false;
         });
         this.events.on(EngineEvent.AiActing, () => {
-            this.cursor.enabled = true;
+            this.cursor.enabled = false;
         });
         this.events.on(
             EngineEvent.FocusPieces,
@@ -1473,12 +1473,40 @@ export class Board extends EngineBoard<Piece> {
      * @returns A promise that resolves when the camera has centred.
      */
     async centreOnPosition(position: Geom.Point): Promise<void> {
+        return this.centreOnWorldPosition(this.getIsoPosition(position));
+    }
+
+    /**
+     * Centre the camera on a given screen position.
+     *
+     * @param screenPosition The screen position to centre the camera on.
+     * @returns A promise that resolves when the camera has centred.
+     */
+    async centreOnScreenPosition(screenPosition: Geom.Point): Promise<void> {
+        const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
+        const worldVector = camera.getWorldPoint(
+            screenPosition.x,
+            screenPosition.y,
+        );
+        return this.centreOnWorldPosition(
+            new Geom.Point(worldVector.x, worldVector.y),
+        );
+    }
+
+    /**
+     * Centre the camera on a given world (isometric) position.
+     *
+     * @param isoPos The world position to centre the camera on.
+     * @returns A promise that resolves when the camera has centred.
+     */
+    async centreOnWorldPosition(
+        isoPos: Geom.Point,
+    ): Promise<void> {
         if (!this.needsPanning) {
             return;
         }
 
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
-        const isoPos: Geom.Point = this.getIsoPosition(position);
         const bounds = camera.getBounds();
 
         const tweenProps: { scrollX?: number; scrollY?: number } = {};
