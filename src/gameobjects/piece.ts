@@ -70,6 +70,7 @@ export class Piece extends EnginePiece {
     protected _effects: Map<UnitStatus, GameObjects.Sprite | GameObjects.Image>;
     protected _offsetY: number;
     protected _ownerHighlightTween: Tweens.Tween;
+    protected _ownerHighlightPipeline: any;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board as any, id, config);
@@ -125,14 +126,17 @@ export class Piece extends EnginePiece {
         }
         if (state && this.canSelect) {
             this._highlighted = true;
-            if (!this._ownerHighlightTween?.isDestroyed) {
-                this._ownerHighlightTween.play().resume();
+            if (!this._ownerHighlightTween.isDestroyed()) {
+                this._ownerHighlightTween.resume();
             }
             return;
         }
         this._highlighted = false;
-        if (!this._ownerHighlightTween?.isDestroyed) {
-            this._ownerHighlightTween.stop();
+        if (!this._ownerHighlightTween.isDestroyed()) {
+            this._ownerHighlightTween.pause();
+            if (this._ownerHighlightPipeline) {
+                this._ownerHighlightPipeline.newColor = 0;
+            }
         }
     }
 
@@ -985,7 +989,7 @@ export class Piece extends EnginePiece {
         const postFxPlugin: any = this.clientBoard.scene.game.plugins.get(
             "rexcolorreplacepipelineplugin",
         );
-        const postFxPipeline = postFxPlugin.add(this._sprite, {
+        this._ownerHighlightPipeline = postFxPlugin.add(this._sprite, {
             originalColor: startColor,
             epsilon: 0,
         });
@@ -1013,7 +1017,7 @@ export class Piece extends EnginePiece {
                 const newColor: Types.Display.ColorObject =
                     tweenColours[Math.round(tween.getValue())];
 
-                postFxPipeline.newColor = Display.Color.GetColor(
+                this._ownerHighlightPipeline.newColor = Display.Color.GetColor(
                     newColor.r,
                     newColor.g,
                     newColor.b,
