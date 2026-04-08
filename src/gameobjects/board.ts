@@ -59,7 +59,7 @@ import {
 } from "phaser";
 
 // Weather
-import { Rain, WeatherEffect, WeatherType } from "./boardeffects/weather";
+import { RainEffect, WeatherEffect, WeatherType } from "./boardeffects/weather";
 
 /**
  * The main game board. This is where the magic (literally) happens.
@@ -2045,7 +2045,7 @@ export class Board extends EngineBoard<Piece> {
         }
         switch (type) {
             case WeatherType.Rain:
-                this._weatherEffect = new Rain(this);    
+                this._weatherEffect = new RainEffect(this);    
                 break;
         }
         this._weatherEffect.start();

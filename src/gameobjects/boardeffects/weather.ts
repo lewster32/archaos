@@ -29,7 +29,7 @@ export interface WeatherEffect {
  * 
  * @param board The board to apply the rain effect to.
  */
-export class Rain implements WeatherEffect {
+export class RainEffect implements WeatherEffect {
     /**
      * The Phaser scene to which the rain effect's particles and timers will be
      * added.
