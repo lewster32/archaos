@@ -28,6 +28,9 @@ import classicSoundsM4a from "@assets/sounds/chaossounds.m4a?url";
 import classicSoundsMp3 from "@assets/sounds/chaossounds.mp3?url";
 import classicSoundsOgg from "@assets/sounds/chaossounds.ogg?url";
 
+import rain from "@assets/spritesheets/rain.png";
+import rainJson from "@assets/spritesheets/rain.json?url";
+
 import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
 import { Spell } from "@archaos/engine";
@@ -107,6 +110,9 @@ export class GameScene extends Scene {
             classicSoundsMp3,
             classicSoundsM4a,
         ]);
+
+        // Weather
+        this.load.atlas("rain", rain, rainJson);
 
         // Load any enhanced content (additional spells/units)
         this.loadEnhancedData();
@@ -231,6 +237,16 @@ export class GameScene extends Scene {
                 }),
                 frameRate: 5,
             });
+        });
+
+        this.anims.create({
+            key: "rain_splash",
+            frames: [
+                { key: "rain", frame: "splash_1" },
+                { key: "rain", frame: "splash_2" },
+            ],
+            frameRate: 8,
+            repeat: 0,
         });
 
         // Start a normal game
@@ -557,3 +573,4 @@ export class GameScene extends Scene {
         }, Board.DEFAULT_DELAY);
     }
 }
+

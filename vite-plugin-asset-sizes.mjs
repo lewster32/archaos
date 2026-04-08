@@ -22,6 +22,8 @@ const PHASER_ASSET_FILES = new Set([
     "chaossounds.json",
     "rexcolorreplacepipelineplugin.min.js",
     "rexperlinplugin.min.js",
+    "rain.png",
+    "rain.json"
 ]);
 
 /**

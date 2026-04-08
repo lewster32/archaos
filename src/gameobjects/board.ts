@@ -58,6 +58,9 @@ import {
     Cameras,
 } from "phaser";
 
+// Weather
+import { Rain, WeatherEffect, WeatherType } from "./boardeffects/weather";
+
 /**
  * The main game board. This is where the magic (literally) happens.
  *
@@ -368,8 +371,10 @@ export class Board extends EngineBoard<Piece> {
             );
         });
 
+        this.startWeather();
+
         // Debugging aid
-        window["currentBoard"] = this;
+        globalThis["currentBoard"] = this;
     }
 
     /* #region State */
@@ -1245,7 +1250,7 @@ export class Board extends EngineBoard<Piece> {
      *
      * @returns A promise that resolves when the background colour has been updated.
      */
-    private async updateBackgroundColour(): Promise<void> {
+    public async updateBackgroundColour(): Promise<void> {
         return new Promise((resolve) => {
             if (this.currentPlayer?.colour) {
                 document.body.style.setProperty(
@@ -2011,7 +2016,40 @@ export class Board extends EngineBoard<Piece> {
         this._layers?.forEach((layer: GameObjects.Layer) => {
             layer.destroy();
         });
+
+        this._weatherEffect?.destroy();
     }
 
     /* #endregion */
+
+    /* #region Weather and atmosphere */
+
+    /**
+     * Start a weather effect on the board. Currently supports only rain, but
+     * more effects may be added in the future.
+     */
+    private _weatherEffect?: WeatherEffect;
+
+    /**
+     * Start a weather effect on the board.
+     * 
+     * @param type  The type of weather effect to start (default: Rain).
+     */
+    protected startWeather(type: WeatherType = WeatherType.Rain): void {
+        if (Math.random() > 0.3) {
+            // Earlier on today, apparently, a woman rung the BBC and said she
+            // heard there was a hurricane on the way... well, if you're
+            // watching, don't worry, there isn't!
+            // ~ Michael Fish
+            return;
+        }
+        switch (type) {
+            case WeatherType.Rain:
+                this._weatherEffect = new Rain(this);    
+                break;
+        }
+        this._weatherEffect.start();
+    }
+
+    /* endregion */
 }

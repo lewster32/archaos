@@ -41,7 +41,7 @@ import { RangeGizmo } from "./rangegizmo";
  * Simple point type without all the baggage of
  * Phaser's `Geom.Point`.
  */
-type SimplePoint = { x: number; y: number };
+export type SimplePoint = { x: number; y: number };
 
 /**
  * The engine Board: pure game state, turn orchestration,

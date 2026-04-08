@@ -1,0 +1,28 @@
+{
+    "frames": [
+        {
+            "filename": "drop",
+            "frame": { "x": 2, "y": 0, "w": 1, "h": 2 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 1, "h": 2 },
+            "sourceSize": { "w": 1, "h": 2 }
+        },
+        {
+            "filename": "splash_1",
+            "frame": { "x": 0, "y": 2, "w": 4, "h": 3 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 4, "h": 3 },
+            "sourceSize": { "w": 4, "h": 3 }
+        },
+        {
+            "filename": "splash_2",
+            "frame": { "x": 0, "y": 5, "w": 4, "h": 3 },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": { "x": 0, "y": 0, "w": 4, "h": 3 },
+            "sourceSize": { "w": 4, "h": 3 }
+        }
+    ]
+}
