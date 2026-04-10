@@ -49,6 +49,7 @@ import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
 import { Wizard } from "./wizard";
 import type { Tutorial } from "./tutorials/tutorial";
+import Phaser from "phaser";
 import {
     Display,
     GameObjects,
@@ -1371,9 +1372,9 @@ export class Board extends EngineBoard<Piece> {
                         units.forEach((piece: Piece) => {
                             const target: GameObjects.Sprite = piece.sprite;
                             if (currentVal === 0) {
-                                target.setTintFill(
-                                    this.currentPlayer?.colour || 0xffffff,
-                                );
+                                // @ts-expect-error -- phaser4
+                                target.setTint(this.currentPlayer?.colour || 0xffffff)
+                                    .setTintMode(Phaser.TintModes.FILL);
                             } else {
                                 target.setTint(piece.defaultTint);
                             }

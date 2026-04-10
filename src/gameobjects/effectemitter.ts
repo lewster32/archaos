@@ -1,6 +1,7 @@
 import { EffectType } from "@archaos/engine";
 import { Piece } from "./piece";
 
+import Phaser from "phaser";
 import {
     Scene,
     GameObjects,
@@ -144,7 +145,8 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration,
                     onUpdate: (tween) => {
                         if (Math.round(tween.getValue()) % 2 === 0) {
-                            target.sprite.setTintFill(0xffffff);
+                            // @ts-expect-error -- phaser4
+                            target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
                         } else {
                             target.sprite.setTint(target.defaultTint);
                         }
@@ -161,11 +163,9 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     to: te.to!,
                     duration,
                     onUpdate: (tween) => {
-                        target.sprite.setTintFill(
-                            colors![
-                                Math.floor(tween.getValue()) % colors!.length
-                            ],
-                        );
+                        // @ts-expect-error -- phaser4
+                        target.sprite.setTint(colors![Math.floor(tween.getValue()) % colors!.length])
+                            .setTintMode(Phaser.TintModes.FILL);
                     },
                     onComplete: () => {
                         target.sprite.setTint(target.defaultTint);
@@ -180,9 +180,9 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration: duration / 2,
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue());
-                        target.sprite.setTintFill(
-                            Display.Color.GetColor(value, value, value),
-                        );
+                        // @ts-expect-error -- phaser4
+                        target.sprite.setTint(Display.Color.GetColor(value, value, value))
+                            .setTintMode(Phaser.TintModes.FILL);
                     },
                 });
                 this.scene.tweens.add({
@@ -201,11 +201,9 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue()) % 5;
                         if (value === 0) {
-                            target.sprite.setTintFill(
-                                colors![
-                                    Math.floor(Math.random() * colors!.length)
-                                ],
-                            );
+                            // @ts-expect-error -- phaser4
+                            target.sprite.setTint(colors![Math.floor(Math.random() * colors!.length)])
+                                .setTintMode(Phaser.TintModes.FILL);
                         }
                     },
                 });
