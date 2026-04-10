@@ -43,6 +43,15 @@ export class ComputerWizard implements RemotePlayer {
     private readonly _enemyPlayerPriorities: Map<Player, number> = new Map();
 
     /**
+     * Controls how sharply the suspicion score affects the chance to cast
+     * Disbelieve. A value of 1 gives a linear relationship; higher values
+     * suppress casting against low-suspicion targets while keeping the AI
+     * aggressive against high-suspicion ones (power curve / gamma). Values
+     * below 1 produce a more uniform chance regardless of threat level.
+     */
+    private static readonly DISBELIEVE_CONTRAST: number = 2;
+
+    /**
      * The difficulty level of the computer wizard, from 0 (easiest) to 1 (hardest).
      */
     private readonly _difficulty: number = 0.5;
@@ -488,9 +497,17 @@ export class ComputerWizard implements RemotePlayer {
                         }
 
                         if (bestTarget) {
-                            // Normalise to a 0-1 preference, gated by difficulty
+                            // Normalise to [0,1], apply contrast curve, then
+                            // gate by difficulty. Higher contrast suppresses
+                            // low-suspicion targets while keeping the AI
+                            // aggressive against genuine threats.
+                            const normalised: number =
+                                Math.min(bestSuspicion / 25, 1);
                             const disbelievePreference: number = Math.min(
-                                (bestSuspicion / 25) * this._difficulty,
+                                Math.pow(
+                                    normalised,
+                                    ComputerWizard.DISBELIEVE_CONTRAST,
+                                ) * this._difficulty,
                                 1,
                             );
 
