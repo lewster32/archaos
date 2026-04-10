@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Geom } from "phaser";
+import { Math as PMath } from "phaser";
 import { RangeGizmo } from "./rangegizmo";
 import {
     Node,
@@ -85,7 +85,7 @@ function makeMockBoard(overrides: Record<string, any> = {}): Board {
             if (layer === 5) return pathLayer;
             return rangeLayer;
         }),
-        getIsoPosition: vi.fn((pt: any) => new Geom.Point(pt.x * 2, pt.y * 2)),
+        getIsoPosition: vi.fn((pt: any) => new PMath.Vector2(pt.x * 2, pt.y * 2)),
         getPiecesAtPosition: vi.fn(() => []),
         getAdjacentPiecesAtPosition: vi.fn(() => []),
         getAdjacentPoints: vi.fn(() => []),
@@ -408,7 +408,7 @@ describe("RangeGizmo", () => {
         it("returns null when no valid nodes exist", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
-            expect(gizmo.getNode(new Geom.Point(0, 0))).toBeNull();
+            expect(gizmo.getNode(new PMath.Vector2(0, 0))).toBeNull();
         });
     });
 
@@ -416,7 +416,7 @@ describe("RangeGizmo", () => {
         it("returns null when no piece is set", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
-            expect(gizmo.getPathTo(new Geom.Point(0, 0))).toBeNull();
+            expect(gizmo.getPathTo(new PMath.Vector2(0, 0))).toBeNull();
         });
     });
 
@@ -452,8 +452,8 @@ describe("RangeGizmo", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
             const result = gizmo.findPath(
-                new Geom.Point(0, 0),
-                new Geom.Point(1, 0),
+                new PMath.Vector2(0, 0),
+                new PMath.Vector2(1, 0),
             );
             expect(result).toBeNull();
         });
@@ -519,7 +519,7 @@ describe("RangeGizmo", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
 
-            gizmo.showPath(new Geom.Point(1, 1));
+            gizmo.showPath(new PMath.Vector2(1, 1));
 
             // Path layer's removeAll is called, but no images are added
             // since there is no piece set

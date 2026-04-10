@@ -7,7 +7,7 @@ import {
 } from "@archaos/engine";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Cursor } from "./cursor";
-import { Geom, Math as PMath } from "phaser";
+import { Math as PMath } from "phaser";
 import type { Board } from "./board";
 
 // ─── Pointer/tile coordinate helpers ─────────────────────────────────────────
@@ -141,7 +141,7 @@ function getImage(board: Board) {
  */
 function makeMovePiece(extra: Record<string, unknown> = {}) {
     return {
-        position: new Geom.Point(5, 5),
+        position: new PMath.Vector2(5, 5),
         hasStatus: vi.fn().mockReturnValue(false),
         currentMount: null,
         canEngagePiece: vi.fn().mockReturnValue(false),
@@ -281,8 +281,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns DownLeft for dy=+1, dx=0", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(5, 6),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(5, 6),
             ),
         ).toBe(CursorType.DownLeft);
     });
@@ -290,8 +290,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns Down for dy=+1, dx=+1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(6, 6),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(6, 6),
             ),
         ).toBe(CursorType.Down);
     });
@@ -299,8 +299,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns DownRight for dy=0, dx=+1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(6, 5),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(6, 5),
             ),
         ).toBe(CursorType.DownRight);
     });
@@ -308,8 +308,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns Right for dy=-1, dx=+1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(6, 4),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(6, 4),
             ),
         ).toBe(CursorType.Right);
     });
@@ -317,8 +317,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns UpRight for dy=-1, dx=0", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(5, 4),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(5, 4),
             ),
         ).toBe(CursorType.UpRight);
     });
@@ -326,8 +326,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns Up for dy=-1, dx=-1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(4, 4),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(4, 4),
             ),
         ).toBe(CursorType.Up);
     });
@@ -335,8 +335,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns UpLeft for dy=0, dx=-1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(4, 5),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(4, 5),
             ),
         ).toBe(CursorType.UpLeft);
     });
@@ -344,8 +344,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("returns Left for dy=+1, dx=-1", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(4, 6),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(4, 6),
             ),
         ).toBe(CursorType.Left);
     });
@@ -353,8 +353,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("clamps large positive deltas to unit steps — (0,0) to (10,10) → Down", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(0, 0),
-                new Geom.Point(10, 10),
+                new PMath.Vector2(0, 0),
+                new PMath.Vector2(10, 10),
             ),
         ).toBe(CursorType.Down);
     });
@@ -362,8 +362,8 @@ describe("Cursor.getMovementDirectionType", () => {
     it("clamps large negative deltas — (10,10) to (0,0) → Up", () => {
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(10, 10),
-                new Geom.Point(0, 0),
+                new PMath.Vector2(10, 10),
+                new PMath.Vector2(0, 0),
             ),
         ).toBe(CursorType.Up);
     });
@@ -372,8 +372,8 @@ describe("Cursor.getMovementDirectionType", () => {
         // "0,0" is not a key in DIRECTION_MAP so the nullish fallback gives Invalid
         expect(
             Cursor.getMovementDirectionType(
-                new Geom.Point(5, 5),
-                new Geom.Point(5, 5),
+                new PMath.Vector2(5, 5),
+                new PMath.Vector2(5, 5),
             ),
         ).toBe(CursorType.Invalid);
     });
@@ -766,7 +766,7 @@ describe("Cursor.update()", () => {
         it("shows Warning cursor when an adjacent piece can be engaged", async () => {
             const neighbour = { canEngagePiece: vi.fn().mockReturnValue(true) };
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 hasStatus: vi.fn().mockReturnValue(false),
                 currentMount: null,
                 canEngagePiece: vi.fn().mockReturnValue(true),
@@ -790,7 +790,7 @@ describe("Cursor.update()", () => {
                 canEngagePiece: vi.fn().mockReturnValue(false),
             };
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 hasStatus: vi.fn().mockReturnValue(false),
                 currentMount: null,
                 canEngagePiece: vi.fn().mockReturnValue(false),
@@ -811,7 +811,7 @@ describe("Cursor.update()", () => {
 
         it("shows Fly cursor when selected piece has Flying status and no engageable neighbours", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 hasStatus: vi.fn().mockReturnValue(true), // Flying is true
                 currentMount: null,
                 canEngagePiece: vi.fn().mockReturnValue(false),
@@ -832,7 +832,7 @@ describe("Cursor.update()", () => {
 
         it("shows Dismount cursor when selected piece has a currentMount but no Flying status", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 hasStatus: vi.fn().mockReturnValue(false), // no Flying
                 currentMount: { id: 99 }, // has a mount
                 canEngagePiece: vi.fn().mockReturnValue(false),
@@ -854,7 +854,7 @@ describe("Cursor.update()", () => {
         it("shows a directional cursor when selected piece has no special conditions", async () => {
             // Piece is at tile (4,4); cursor lands at (5,5) → dx=+1, dy=+1 → Down
             const selectedPiece = {
-                position: new Geom.Point(4, 4),
+                position: new PMath.Vector2(4, 4),
                 hasStatus: vi.fn().mockReturnValue(false),
                 currentMount: null,
                 canEngagePiece: vi.fn().mockReturnValue(false),
@@ -885,7 +885,7 @@ describe("Cursor.update()", () => {
     describe("ActionType.Mount branch", () => {
         it("calls rangeGizmo.showPath when selected piece movement > 1", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 stats: { movement: 2 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
@@ -901,7 +901,7 @@ describe("Cursor.update()", () => {
 
         it("does not call rangeGizmo.showPath when selected piece movement is 1", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
@@ -917,7 +917,7 @@ describe("Cursor.update()", () => {
 
         it("sets cursor type to Mount", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
@@ -933,7 +933,7 @@ describe("Cursor.update()", () => {
 
         it("calls image.setFlipX based on relative isometric positions", async () => {
             const selectedPiece = {
-                position: new Geom.Point(5, 5),
+                position: new PMath.Vector2(5, 5),
                 stats: { movement: 1 },
             };
             const board = makeMockBoard({ selected: selectedPiece });
@@ -1114,7 +1114,7 @@ describe("Cursor.action()", () => {
             moved: true,
             canRangedAttack: true,
             name: "Archer",
-            position: new Geom.Point(3, 3),
+            position: new PMath.Vector2(3, 3),
             stats: { range: 4 },
         });
         const board = makeMockBoard({ selected: selectedPiece });
@@ -1142,7 +1142,7 @@ describe("Cursor.action()", () => {
             moved: true,
             canRangedAttack: true,
             name: "Legolas",
-            position: new Geom.Point(3, 3),
+            position: new PMath.Vector2(3, 3),
             stats: { range: 4 },
         });
         const board = makeMockBoard({ selected: selectedPiece });

@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { Rules } from "./rules";
 import type { Board } from "../board";
 import type { Piece } from "../piece";
-import { Geom } from "phaser";
+import { Math as PMath } from "phaser";
 
 function createMockPiece(overrides: Record<string, any> = {}): Piece {
     return {
@@ -13,7 +13,7 @@ function createMockPiece(overrides: Record<string, any> = {}): Piece {
         currentRider: null,
         engulfed: false,
         owner: { id: 1 },
-        position: new Geom.Point(0, 0),
+        position: new PMath.Vector2(0, 0),
         moved: false,
         attacked: false,
         engaged: false,
@@ -31,7 +31,7 @@ function createMockPiece(overrides: Record<string, any> = {}): Piece {
 function createMockBoard(overrides: Record<string, any> = {}): Board {
     return {
         state: BoardState.Move,
-        cursor: { position: new Geom.Point(4, 0) },
+        cursor: { position: new PMath.Vector2(4, 0) },
         selected: null,
         currentPlayer: { id: 1 },
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
@@ -52,14 +52,14 @@ describe("Rules", () => {
         it("returns Attack for a flying unit with an enemy in attack range", async () => {
             const attacker = createMockPiece({
                 id: 1,
-                position: new Geom.Point(0, 0),
+                position: new PMath.Vector2(0, 0),
                 canAttackPiece: vi.fn().mockReturnValue(true),
                 inAttackRange: vi.fn().mockReturnValue(true),
                 hasStatus: vi.fn().mockReturnValue(true),
             });
             const defender = createMockPiece({
                 id: 2,
-                position: new Geom.Point(4, 0),
+                position: new PMath.Vector2(4, 0),
                 owner: { id: 2 },
             });
             const board = createMockBoard({
@@ -82,7 +82,7 @@ describe("Rules", () => {
             it("flying unit attacks enemy in movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(true),
                     hasStatus: vi
@@ -93,13 +93,13 @@ describe("Rules", () => {
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(4, 0),
+                    position: new PMath.Vector2(4, 0),
                     owner: { id: 2 },
                     inAttackRange: vi.fn().mockReturnValue(false),
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(4, 0) },
+                    cursor: { position: new PMath.Vector2(4, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -121,7 +121,7 @@ describe("Rules", () => {
             it("flying unit cannot attack enemy outside movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(false),
                     hasStatus: vi
@@ -132,12 +132,12 @@ describe("Rules", () => {
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(10, 0),
+                    position: new PMath.Vector2(10, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(10, 0) },
+                    cursor: { position: new PMath.Vector2(10, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -154,19 +154,19 @@ describe("Rules", () => {
             it("ground unit walks to attack distant enemy within movement range", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inMovementRange: vi.fn().mockReturnValue(true),
                     hasStatus: vi.fn().mockReturnValue(false),
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(3, 0),
+                    position: new PMath.Vector2(3, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(3, 0) },
+                    cursor: { position: new PMath.Vector2(3, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -190,7 +190,7 @@ describe("Rules", () => {
             it("adjacent attack succeeds without moving", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(true),
                     hasStatus: vi.fn().mockReturnValue(false),
@@ -198,12 +198,12 @@ describe("Rules", () => {
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(1, 0),
+                    position: new PMath.Vector2(1, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(1, 0) },
+                    cursor: { position: new PMath.Vector2(1, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -224,17 +224,17 @@ describe("Rules", () => {
             it("returns Invalid when canAttackPiece is false", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(false),
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(1, 0),
+                    position: new PMath.Vector2(1, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(1, 0) },
+                    cursor: { position: new PMath.Vector2(1, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -253,17 +253,17 @@ describe("Rules", () => {
             it("ranged attack succeeds when canRangedAttackPiece is true", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canRangedAttackPiece: vi.fn().mockReturnValue(true),
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(3, 0),
+                    position: new PMath.Vector2(3, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(3, 0) },
+                    cursor: { position: new PMath.Vector2(3, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
@@ -283,17 +283,17 @@ describe("Rules", () => {
             it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
                 const attacker = createMockPiece({
                     id: 1,
-                    position: new Geom.Point(0, 0),
+                    position: new PMath.Vector2(0, 0),
                     canRangedAttackPiece: vi.fn().mockReturnValue(false),
                 });
                 const defender = createMockPiece({
                     id: 2,
-                    position: new Geom.Point(3, 0),
+                    position: new PMath.Vector2(3, 0),
                     owner: { id: 2 },
                 });
                 const board = createMockBoard({
                     selected: attacker,
-                    cursor: { position: new Geom.Point(3, 0) },
+                    cursor: { position: new PMath.Vector2(3, 0) },
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
