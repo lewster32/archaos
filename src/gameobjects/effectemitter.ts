@@ -147,11 +147,11 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                         if (Math.round(tween.getValue()) % 2 === 0) {
                             target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
                         } else {
-                            target.sprite.setTint(target.defaultTint);
+                            target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
                         }
                     },
                     onComplete: () => {
-                        target.sprite.setTint(target.defaultTint);
+                        target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
                     },
                 });
                 break;
@@ -166,7 +166,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                             .setTintMode(Phaser.TintModes.FILL);
                     },
                     onComplete: () => {
-                        target.sprite.setTint(target.defaultTint);
+                        target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
                     },
                 });
                 break;

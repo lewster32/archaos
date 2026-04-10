@@ -1110,10 +1110,41 @@ export class ComputerWizard implements RemotePlayer {
                         }
                     }
                     if (closestTile) {
-                        console.debug(
-                            `${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`,
-                        );
-                        movePt = closestTile;
+                        // If the chosen tile is occupied by an enemy piece,
+                        // attack it rather than moving onto the same tile.
+                        const pieceAtTile: Piece | null =
+                            this._board.getPiecesAtPosition(
+                                closestTile,
+                                (p: Piece) => !p.dead && p.owner !== this._player,
+                            )[0] ?? null;
+                        if (pieceAtTile) {
+                            // Tile is occupied — attack if possible, otherwise
+                            // leave movePt unset and fall through to random move.
+                            if (
+                                piece.canAttackPossiblyUndeadPiece(
+                                    pieceAtTile,
+                                ) &&
+                                piece.canAttackPiece(pieceAtTile)
+                            ) {
+                                console.debug(
+                                    `${piece.fullName} chooses to attack ${pieceAtTile.fullName} rather than move towards them`,
+                                );
+                                await this._board.attackPiece(
+                                    piece.id,
+                                    pieceAtTile.id,
+                                );
+                                piece.attacked = true;
+                            } else {
+                                console.debug(
+                                    `${piece.fullName} cannot move to or attack ${pieceAtTile.fullName}; skipping tactical move`,
+                                );
+                            }
+                        } else {
+                            console.debug(
+                                `${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`,
+                            );
+                            movePt = closestTile;
+                        }
                     } else {
                         console.debug(
                             `Could not find closest tile to enemy pieces for ${piece.fullName}`,
@@ -1121,10 +1152,29 @@ export class ComputerWizard implements RemotePlayer {
                     }
                 }
             }
-            // If we didn't find a tactical move point, pick a random one
+            // If we didn't find a tactical move point, pick a random unoccupied
+            // tile to move to
             if (!movePt) {
-                console.debug(`${piece.fullName} chooses to move randomly`);
-                movePt = this._board.rng.pick(reachableTiles);
+                movePt = this._board.rng.pick(reachableTiles.filter((pt: Point) => {
+                    const pieceAtTile: Piece | null =
+                        this._board.getPiecesAtPosition(
+                            pt,
+                            (p: Piece) => !p.dead,
+                        )[0] ?? null;
+                    return !pieceAtTile; // Only consider unoccupied tiles
+                }));
+                if (movePt) {
+                    console.debug(`${piece.fullName} chooses to move randomly`);
+                }
+            }
+            if (!movePt) {
+                console.debug(
+                    `${piece.fullName} could not find a valid tile to move to`,
+                );
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
+                return false;
             }
 
             console.debug(

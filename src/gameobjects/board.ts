@@ -51,13 +51,13 @@ import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
 import { Wizard } from "./wizard";
 import type { Tutorial } from "./tutorials/tutorial";
-import Phaser from "phaser";
 import {
     Display,
     GameObjects,
     Scene,
     Math as PMath,
     Cameras,
+    TintModes,
 } from "phaser";
 
 // Weather
@@ -1384,9 +1384,9 @@ export class Board extends EngineBoard<Piece> {
                             const target: GameObjects.Sprite = piece.sprite;
                             if (currentVal === 0) {
                                 target.setTint(this.currentPlayer?.colour || 0xffffff)
-                                    .setTintMode(Phaser.TintModes.FILL);
+                                    .setTintMode(TintModes.FILL);
                             } else {
-                                target.setTint(piece.defaultTint);
+                                target.setTint(piece.defaultTint).setTintMode(TintModes.MULTIPLY);
                             }
                         });
                     }
@@ -1394,7 +1394,7 @@ export class Board extends EngineBoard<Piece> {
                 onComplete: () => {
                     units.forEach((piece: Piece) => {
                         const target: GameObjects.Sprite = piece.sprite;
-                        target.setTint(piece.defaultTint);
+                        target.setTint(piece.defaultTint).setTintMode(TintModes.MULTIPLY);
                         piece.turnOver = false;
                         piece.highlighted = true;
                     });

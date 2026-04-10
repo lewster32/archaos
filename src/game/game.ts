@@ -26,9 +26,8 @@ export const launch = (containerId: string) => {
             antialias: true,
             transparent: true,
             renderNodes: {
-                [FilterColorReplaceRenderNode.KEY]: {
-                    function: FilterColorReplaceRenderNode,
-                },
+                [FilterColorReplaceRenderNode.KEY]:
+                    FilterColorReplaceRenderNode,
             },
         },
         scale: {
