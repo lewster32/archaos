@@ -148,7 +148,7 @@ export class Wizard extends Piece {
             }
 
             const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-                this.position,
+                this.position as unknown as PMath.Vector2,
             );
 
             const difference: number = Board.distance(
@@ -283,7 +283,7 @@ export class Wizard extends Piece {
         }
 
         const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
+            this.position as unknown as PMath.Vector2,
         );
         let effectSprite: GameObjects.Sprite | GameObjects.Image;
         switch (status) {
@@ -473,7 +473,7 @@ export class Wizard extends Piece {
         }
 
         const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
+            this.position as unknown as PMath.Vector2,
         );
 
         this._sprite = new WizardSprite(
@@ -501,7 +501,7 @@ export class Wizard extends Piece {
             return this._shadow;
         }
         const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
+            this.position as unknown as PMath.Vector2,
         );
 
         this._shadow = this.clientBoard.scene.add.image(

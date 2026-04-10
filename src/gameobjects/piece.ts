@@ -342,7 +342,7 @@ export class Piece extends EnginePiece {
             }
 
             const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-                this.position,
+                this.position as unknown as PMath.Vector2,
             );
 
             const difference: number = Board.distance(
@@ -390,8 +390,8 @@ export class Piece extends EnginePiece {
      * point to another.
      */
     protected updateDirection(
-        fromPoint: { x: number; y: number },
-        toPoint: { x: number; y: number },
+        fromPoint: PMath.Vector2,
+        toPoint: PMath.Vector2,
     ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
@@ -408,7 +408,7 @@ export class Piece extends EnginePiece {
      * board position. Does not update the logical position.
      * Used for fly-attack approach animation.
      */
-    async flyApproach(targetPos: { x: number; y: number }): Promise<void> {
+    async flyApproach(targetPos: PMath.Vector2): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -423,7 +423,10 @@ export class Piece extends EnginePiece {
             );
 
             // Face the unit towards the target
-            this.updateDirection(this.position, targetPos);
+            this.updateDirection(
+                this.position as unknown as PMath.Vector2,
+                targetPos,
+            );
 
             // Arc: swoop upward during the first half then settle at hover height
             this.clientBoard.scene.tweens.add({
@@ -472,8 +475,8 @@ export class Piece extends EnginePiece {
      * logical position.
      */
     async flyReturn(
-        originPos: { x: number; y: number },
-        targetPos: { x: number; y: number },
+        originPos: PMath.Vector2,
+        targetPos: PMath.Vector2,
     ): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
@@ -535,8 +538,8 @@ export class Piece extends EnginePiece {
     /**
      * Move this piece to the specified point on the board.
      */
-    override async moveTo(point: { x: number; y: number }, stepDuration?: number) {
-        this.updateDirection(this.position, point);
+    override async moveTo(point: PMath.Vector2, stepDuration?: number) {
+        this.updateDirection(this.position as unknown as PMath.Vector2, point);
         this.position = new Point(point.x, point.y);
         if (this.currentRider) {
             this.currentRider.position = new Point(point.x, point.y);
@@ -609,7 +612,10 @@ export class Piece extends EnginePiece {
                 return false;
             }
 
-            this.updateDirection(this.position, piece.position);
+            this.updateDirection(
+                this.position as unknown as PMath.Vector2,
+                piece.position as unknown as PMath.Vector2,
+            );
             this.attacked = true;
             this.moved = true;
 
@@ -646,7 +652,7 @@ export class Piece extends EnginePiece {
                 await piece.kill();
                 if (
                     this.clientBoard.getPiecesAtPosition(
-                        piece.position,
+                        piece.position as unknown as PMath.Vector2,
                         (p: Piece) => {
                             return !p.dead;
                         },
@@ -655,7 +661,7 @@ export class Piece extends EnginePiece {
                 ) {
                     await this.clientBoard.movePiece(
                         this.id,
-                        piece.position,
+                        piece.position as unknown as PMath.Vector2,
                         options?.silentMove,
                     );
                 }
@@ -680,7 +686,10 @@ export class Piece extends EnginePiece {
                 );
                 return false;
             }
-            this.updateDirection(this.position, piece.position);
+            this.updateDirection(
+                this.position as unknown as PMath.Vector2,
+                piece.position as unknown as PMath.Vector2,
+            );
 
             let beamEffectType: EffectType;
             let hitEffectType: EffectType;
@@ -841,7 +850,10 @@ export class Piece extends EnginePiece {
 
         this.currentMount = piece as Piece;
         piece.currentRider = this;
-        await this.clientBoard.movePiece(this.id, piece.position);
+        await this.clientBoard.movePiece(
+            this.id,
+            piece.position as unknown as PMath.Vector2,
+        );
         this.clientBoard.logger.log(
             `${this.fullName} mounted ${piece.fullName}`,
         );
@@ -921,7 +933,7 @@ export class Piece extends EnginePiece {
             return this._shadow;
         }
         const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
+            this.position as unknown as PMath.Vector2,
         );
 
         this._shadow = this.clientBoard.scene.add.image(
@@ -948,7 +960,7 @@ export class Piece extends EnginePiece {
         }
 
         const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
+            this.position as unknown as PMath.Vector2,
         );
 
         const group: string = Piece.getUnitConfig(this._properties.id).group

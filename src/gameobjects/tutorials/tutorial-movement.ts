@@ -1,4 +1,5 @@
 import { BoardEvent, BoardPhase, UnitType } from "@archaos/engine";
+import { Math as PMath } from "phaser";
 import { Board } from "../board";
 import "../wizard";
 import { Piece } from "../piece";
@@ -280,7 +281,7 @@ class Movement25 extends TutorialStep {
             if (
                 horse &&
                 board.getAdjacentPiecesAtPosition(
-                    horse.position,
+                    horse.position as unknown as PMath.Vector2,
                     (p) => p.id === board.getPlayer(1)?.castingPiece.id,
                 ).length > 0
             ) {
