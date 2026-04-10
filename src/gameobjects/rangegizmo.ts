@@ -6,6 +6,7 @@ import {
     Path,
     distance as gridDistance,
     RangeGizmo as EngineRangeGizmo,
+    SimplePoint,
 } from "@archaos/engine";
 import { Board } from "./board";
 import { Cursor } from "./cursor";
@@ -174,7 +175,7 @@ export class RangeGizmo extends EngineRangeGizmo {
                         node.path = path;
                         const isoPosition: PMath.Vector2 =
                             this._clientBoard.getIsoPosition(
-                            node.pos as unknown as PMath.Vector2,
+                            node.pos,
                         );
                         let cursorImage: GameObjects.Image;
 
@@ -230,7 +231,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * and skips reveal animation
      */
     public async generateSimpleRange(
-        position: PMath.Vector2,
+        position: SimplePoint,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -330,7 +331,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * of sight from position
      */
     public async showSimpleRange(
-        position: PMath.Vector2,
+        position: SimplePoint,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -398,7 +399,7 @@ export class RangeGizmo extends EngineRangeGizmo {
                 .forEach((node: Node) => {
                     const isoPosition: PMath.Vector2 =
                         this._clientBoard.getIsoPosition(
-                            node.pos as unknown as PMath.Vector2,
+                            node.pos,
                         );
                     let cursorImage: GameObjects.Image;
 
@@ -446,7 +447,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      *
      * @param toPt The destination board position
      */
-    public showPath(toPt: PMath.Vector2): void {
+    public showPath(toPt: SimplePoint): void {
         this._pathLayer.removeAll();
         if (
             !this._piece ||
@@ -472,7 +473,7 @@ export class RangeGizmo extends EngineRangeGizmo {
 
         for (let n: number = 1; n < endIndex; n++) {
             const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(
-                path.nodes[n].pos as unknown as PMath.Vector2,
+                path.nodes[n].pos,
             );
 
             const cursorImage: GameObjects.Image =

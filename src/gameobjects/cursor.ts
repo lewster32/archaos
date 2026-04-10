@@ -7,6 +7,7 @@ import {
     EventType,
     InputType,
     UnitStatus,
+    SimplePoint,
 } from "@archaos/engine";
 import { Board } from "./board";
 import { Piece } from "./piece";
@@ -266,11 +267,11 @@ export class Cursor {
             case ActionType.Move:
                 if (selectedPiece) {
                     this._board.rangeGizmo.showPath(
-                        this._position as unknown as PMath.Vector2,
+                        this._position,
                     );
                     const neighbours: Piece[] =
                         this._board.getAdjacentPiecesAtPosition(
-                            this._position as unknown as PMath.Vector2,
+                            this._position,
                             (piece: Piece) => piece !== selectedPiece,
                         );
                     if (
@@ -290,23 +291,23 @@ export class Cursor {
                         break;
                     }
                     this.type = Cursor.getMovementDirectionType(
-                        selectedPiece?.position as unknown as PMath.Vector2,
-                        this._position as unknown as PMath.Vector2,
+                        selectedPiece.position,
+                        this._position,
                     );
                 }
                 break;
             case ActionType.Mount:
                 if (selectedPiece.stats.movement > 1) {
                     this._board.rangeGizmo.showPath(
-                        this._position as unknown as PMath.Vector2,
+                        this._position,
                     );
                 }
                 this._image.setFlipX(
                     Board.toIsometric(
-                        this._position as unknown as PMath.Vector2,
+                        this._position,
                     ).x <
                         Board.toIsometric(
-                            selectedPiece.position as unknown as PMath.Vector2,
+                            selectedPiece?.position,
                         ).x,
                 );
                 this.type = CursorType.Mount;
@@ -317,7 +318,7 @@ export class Cursor {
             case ActionType.Attack:
                 if (selectedPiece.stats.movement > 1) {
                     this._board.rangeGizmo.showPath(
-                        this._position as unknown as PMath.Vector2,
+                        this._position,
                     );
                 }
                 this.type = CursorType.Attack;
@@ -405,7 +406,7 @@ export class Cursor {
                         Colour.Yellow,
                     );
                     await this._board.rangeGizmo.showSimpleRange(
-                        this._board.selected.position as unknown as PMath.Vector2,
+                        this._board.selected.position,
                         this._board.selected.stats.range,
                         CursorType.RangeRangedAttack,
                         true,
@@ -519,8 +520,8 @@ export class Cursor {
      * @returns the cursor type representing the direction
      */
     static getMovementDirectionType(
-        fromPoint: PMath.Vector2,
-        toPoint: PMath.Vector2,
+        fromPoint: SimplePoint,
+        toPoint: SimplePoint,
     ): CursorType {
         const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);

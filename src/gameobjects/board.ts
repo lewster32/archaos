@@ -3,6 +3,7 @@ import {
     BoardEvent,
     EngineEvent,
     BoardLayer,
+    SimplePoint,
     BoardPhase,
     BoardState,
     Colour,
@@ -274,7 +275,7 @@ export class Board extends EngineBoard<Piece> {
         this.events.on(
             EngineEvent.ShowCastRange,
             async (data: {
-                position: PMath.Vector2;
+                position: SimplePoint;
                 range: number;
                 lineOfSight: boolean;
             }) => {
@@ -871,7 +872,7 @@ export class Board extends EngineBoard<Piece> {
     }
 
     override getPiecesAtPosition(
-        point: PMath.Vector2,
+        point: SimplePoint,
         filter?: (piece: Piece) => boolean,
     ): Piece[] {
         return super.getPiecesAtPosition(
@@ -881,7 +882,7 @@ export class Board extends EngineBoard<Piece> {
     }
 
     override getAdjacentPiecesAtPosition(
-        point: PMath.Vector2,
+        point: SimplePoint,
         filter?: (piece: Piece) => boolean,
         includeCentre?: boolean,
     ): Piece[] {
@@ -905,7 +906,7 @@ export class Board extends EngineBoard<Piece> {
         }
         this.sound.play("move");
         await piece.moveTo(
-            path.nodes.shift().pos as PMath.Vector2,
+            path.nodes.shift().pos,
             Piece.DEFAULT_STEP_MOVE_DURATION,
         );
         // Check for engagement after each step
@@ -933,7 +934,7 @@ export class Board extends EngineBoard<Piece> {
      */
     async movePiece(
         id: number,
-        position: PMath.Vector2,
+        position: SimplePoint,
         silent?: boolean,
     ): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
@@ -1028,7 +1029,7 @@ export class Board extends EngineBoard<Piece> {
             );
             this.sound.play("fly");
             await attackingPiece.flyApproach(
-                defendingPiece.position as unknown as PMath.Vector2,
+                defendingPiece.position,
             );
         }
 
@@ -1054,7 +1055,7 @@ export class Board extends EngineBoard<Piece> {
         if (didNotMove) {
             await attackingPiece.flyReturn(
                 originPos,
-                defendingPiece.position as unknown as PMath.Vector2,
+                defendingPiece.position,
             );
         }
 
@@ -1094,7 +1095,7 @@ export class Board extends EngineBoard<Piece> {
                 Colour.Yellow,
             );
             await this.rangeGizmo.showSimpleRange(
-                attackingPiece.position as unknown as PMath.Vector2,
+                attackingPiece.position,
                 attackingPiece.stats.range,
                 CursorType.RangeRangedAttack,
                 true,
@@ -1486,7 +1487,7 @@ export class Board extends EngineBoard<Piece> {
      * @param position The board position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnPosition(position: PMath.Vector2): Promise<void> {
+    async centreOnPosition(position: SimplePoint): Promise<void> {
         return this.centreOnWorldPosition(this.getIsoPosition(position));
     }
 
@@ -1496,7 +1497,7 @@ export class Board extends EngineBoard<Piece> {
      * @param screenPosition The screen position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnScreenPosition(screenPosition: PMath.Vector2): Promise<void> {
+    async centreOnScreenPosition(screenPosition: SimplePoint): Promise<void> {
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
         const worldVector = camera.getWorldPoint(
             screenPosition.x,
@@ -1706,7 +1707,7 @@ export class Board extends EngineBoard<Piece> {
                     } else if (spell?.range > 0) {
                         this.stateManager.evaluate(new SpellTargeting());
                         await this.rangeGizmo.showSimpleRange(
-                            this.selected.position as PMath.Vector2,
+                            this.selected.position,
                             spell.range,
                             CursorType.RangeCast,
                             spell.lineOfSight,
@@ -1894,7 +1895,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The isometric coordinates of the point.
      */
-    getIsoPosition(point: PMath.Vector2): PMath.Vector2 {
+    getIsoPosition(point: SimplePoint): PMath.Vector2 {
         const newPoint: PMath.Vector2 = new PMath.Vector2(
             point.x * Board.DEFAULT_CELLSIZE,
             point.y * Board.DEFAULT_CELLSIZE,
@@ -1913,7 +1914,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to get the screen position for.
      * @returns The screen position of the point.
      */
-    getScreenPosition(point: PMath.Vector2): PMath.Vector2 {
+    getScreenPosition(point: SimplePoint): PMath.Vector2 {
         const isoPos: PMath.Vector2 = this.getIsoPosition(point);
 
         const screenPos: PMath.Vector2 = new PMath.Vector2(
@@ -1930,7 +1931,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The converted point.
      */
-    static toIsometric(point: PMath.Vector2): PMath.Vector2 {
+    static toIsometric(point: SimplePoint): PMath.Vector2 {
         return new PMath.Vector2(point.x - point.y, (point.x + point.y) / 2);
     }
 
@@ -1940,7 +1941,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The converted point.
      */
-    static fromIsometric(point: PMath.Vector2): PMath.Vector2 {
+    static fromIsometric(point: SimplePoint): PMath.Vector2 {
         return new PMath.Vector2(point.x + point.y / 2, point.y - point.x / 2);
     }
 

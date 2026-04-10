@@ -281,7 +281,7 @@ class Movement25 extends TutorialStep {
             if (
                 horse &&
                 board.getAdjacentPiecesAtPosition(
-                    horse.position as unknown as PMath.Vector2,
+                    horse.position,
                     (p) => p.id === board.getPlayer(1)?.castingPiece.id,
                 ).length > 0
             ) {
