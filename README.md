@@ -2,7 +2,7 @@
   <img src="https://www.archaos.co.uk/images/web/logo.png" alt="Archaos">
 </h1>
 
-<h2 align="center">A modern remake of <a href="https://en.wikipedia.org/wiki/Chaos:_The_Battle_of_Wizards">Chaos: The Battle of Wizards</a> built using <a href="http://phaser.io/">Phaser 3, <a href="https://vuejs.org/">Vue 3</a> and <a href="https://vitejs.dev/">Vite</a>.</h2>
+<h2 align="center">A modern remake of <a href="https://en.wikipedia.org/wiki/Chaos:_The_Battle_of_Wizards">Chaos: The Battle of Wizards</a> built using <a href="http://phaser.io/">Phaser 4, <a href="https://vuejs.org/">Vue 3</a> and <a href="https://vitejs.dev/">Vite</a>.</h2>
 
 This is a project that has been many, many years in the making. The oldest piece of work I can find exploring the possibility of an update to this game is from 2003 - a [document](https://www.rotates.org/old/chaos/) outlining a number of additions to the base game, along with some (very outdated) waffle about technical approaches. There's also a wealth of (again, very outdated) [posts on my blog](https://www.rotates.org/category/projects/archaos-projects/) documenting progress through the many iterations - most rather a bit too ambitious at the time - that led vaguely to this point.
 

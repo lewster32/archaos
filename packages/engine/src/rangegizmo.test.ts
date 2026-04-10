@@ -57,6 +57,25 @@ class TestRangeGizmo extends RangeGizmo {
     }
 }
 
+// ─── Helpers ────────────────────────────────────
+
+/**
+ * Build a mock board whose getPiecesAtPosition actually
+ * invokes the filter callback, so lambda bodies inside
+ * checkNodeTraversal (line 72) are exercised.
+ */
+function makeBoardWithRealFilter(
+    pieces: Piece[],
+): Board {
+    return {
+        ...makeMockBoard(),
+        getPiecesAtPosition: vi.fn(
+            (_pt: Point, filter?: (p: Piece) => boolean) =>
+                filter ? pieces.filter(filter) : pieces,
+        ),
+    } as unknown as Board;
+}
+
 // ─── checkNodeTraversal ──────────────────────────
 
 describe("checkNodeTraversal", () => {
@@ -119,6 +138,41 @@ describe("checkNodeTraversal", () => {
         const node = new Node(4, 4);
         gizmo.testCheckNodeTraversal(node);
         expect(node.traversable).toBe(false);
+    });
+
+    it("dead piece filtered out by the !dead lambda (line 72)", () => {
+        // Use a board whose getPiecesAtPosition actually invokes the
+        // filter callback, so the `(piece) => !piece.dead` lambda body
+        // is executed and the dead piece is excluded.
+        const deadPiece = makeMockPiece({ dead: true });
+        const realFilterBoard = makeBoardWithRealFilter([deadPiece]);
+        const g = new TestRangeGizmo(realFilterBoard);
+        g.setPiece(piece);
+        const node = new Node(0, 0);
+        g.testCheckNodeTraversal(node);
+        // Dead piece is filtered → livePieces is empty → traversable
+        expect(node.traversable).toBe(true);
+        expect(node.terminal).toBe(false);
+    });
+
+    it("rider on same tile treated as part of moving piece → traversable", () => {
+        // The moving piece has a rider. The board returns [piece, rider].
+        // After filtering out `piece` and `rider`, otherPieces is empty
+        // → tile is traversable.
+        const rider = makeMockPiece();
+        const movingPiece = makeMockPiece({
+            currentRider: rider,
+        });
+        const realFilterBoard = makeBoardWithRealFilter([
+            movingPiece as unknown as Piece,
+            rider,
+        ]);
+        const g = new TestRangeGizmo(realFilterBoard);
+        g.setPiece(movingPiece as unknown as Piece);
+        const node = new Node(0, 0);
+        g.testCheckNodeTraversal(node);
+        expect(node.traversable).toBe(true);
+        expect(node.terminal).toBe(false);
     });
 });
 
@@ -574,5 +628,40 @@ describe("generate", () => {
             .getValidNodes()
             .find((n) => n.x === 1 && n.y === 0);
         expect(warned?.warning).toBe(true);
+    });
+
+    it("ground unit: marks node non-traversable when path cost exceeds movement (line 190)", async () => {
+        // movement=1, so threshold is movement+1=2. A path of 3 straight
+        // steps has cost 3 > 2, so the node should be set non-traversable.
+        // Arrange a 4-node horizontal strip. getPointsInRange returns
+        // (0,0),(1,0),(2,0),(3,0). With movement=1 the piece can only take
+        // 1 step; the A* path to (3,0) costs 3, which exceeds the budget.
+        const board = makeMockBoard();
+        const gizmo = new TestRangeGizmo(board);
+
+        const groundPiece = makeMockPiece({
+            position: new Point(0, 0),
+            stats: { movement: 1 },
+            hasStatus: vi.fn(() => false),
+        });
+
+        vi.mocked(board.getPointsInRange).mockReturnValue([
+            new Point(0, 0),
+            new Point(1, 0),
+            new Point(2, 0),
+            new Point(3, 0),
+        ]);
+        vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
+        vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
+
+        await gizmo.generate(groundPiece);
+
+        // (3,0) is 3 steps from (0,0): path cost 3 > 2 → non-traversable
+        const farNode = gizmo
+            .getValidNodes()
+            .find((n) => n.x === 3 && n.y === 0);
+        expect(farNode).toBeDefined();
+        // traversable must be false: path cost 3 > movement+1=2
+        expect(farNode?.traversable).toBe(false);
     });
 });

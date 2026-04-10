@@ -38,4 +38,36 @@ describe("EventEmitter", () => {
         emitter.emit("test");
         expect(fn).toHaveBeenCalledTimes(1);
     });
+
+    it("emitAsync calls listeners and awaits each one", async () => {
+        const emitter = new EventEmitter();
+        const order: number[] = [];
+        emitter.on("seq", async () => {
+            await Promise.resolve();
+            order.push(1);
+        });
+        emitter.on("seq", async () => {
+            order.push(2);
+        });
+        await emitter.emitAsync("seq");
+        expect(order).toEqual([1, 2]);
+    });
+
+    it("emitAsync on an event with no listeners resolves immediately", async () => {
+        const emitter = new EventEmitter();
+        await expect(emitter.emitAsync("unknown")).resolves.toBeUndefined();
+    });
+
+    it("removeAllListeners with an event name removes only that event", () => {
+        const emitter = new EventEmitter();
+        const fnA = vi.fn();
+        const fnB = vi.fn();
+        emitter.on("a", fnA);
+        emitter.on("b", fnB);
+        emitter.removeAllListeners("a");
+        emitter.emit("a");
+        emitter.emit("b");
+        expect(fnA).not.toHaveBeenCalled();
+        expect(fnB).toHaveBeenCalledTimes(1);
+    });
 });

@@ -1750,6 +1750,76 @@ describe("SummonSpell.autoCast", () => {
         // difficulty=0 → rollChance(0) → false → selectDefaultTile NOT called
         expect(selectSpy).not.toHaveBeenCalled();
     });
+
+    it("casts adjacent to the wizard when unit is invulnerable mount structure (lines 267-277)", async () => {
+        // Unit has all three flags: Mount, Structure, Invulnerable.
+        // autoCast should pick a tile adjacent to wizardPos (distance ≤ 1.5)
+        // rather than any other tile-selection strategy.
+        getUnitConfigSpy.mockReturnValue(
+            makeUnitConfig({
+                status: [
+                    UnitStatus.Mount,
+                    UnitStatus.Structure,
+                    UnitStatus.Invulnerable,
+                ],
+            }),
+        );
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ castTimes: 1 }),
+        );
+        const player = makeAutoCastPlayer();
+        // Wizard at (0,0): all tiles in the 2×2 board are within distance 1.5
+        player.castingPiece.position = new Point(0, 0);
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi
+            .fn()
+            .mockImplementation(async () => {
+                (spell as any)._castTimes--;
+            });
+        const result = await spell.autoCast(player);
+        expect(result).toBe(true);
+        // doCastSpell should have been called via the adjacent-mount branch
+        expect((board as any).rules.doCastSpell).toHaveBeenCalledTimes(1);
+        expect(player.discardSpell).toHaveBeenCalled();
+    });
+
+    it("falls through to random pick when no adjacent tiles available for invulnerable mount structure", async () => {
+        // Unit is invulnerable mount structure, but wizard is placed far
+        // away so the adjacent filter returns an empty set. The code then
+        // falls through to the normal tile-selection branches (random pick).
+        getUnitConfigSpy.mockReturnValue(
+            makeUnitConfig({
+                status: [
+                    UnitStatus.Mount,
+                    UnitStatus.Structure,
+                    UnitStatus.Invulnerable,
+                ],
+            }),
+        );
+        board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
+        const spell = new SummonSpell(
+            board,
+            1,
+            makeSummonConfig({ castTimes: 1 }),
+        );
+        const player = makeAutoCastPlayer();
+        // Wizard far from any valid tile: distance to each of the 2×2 tiles
+        // from (99,99) is > 1.5, so the adjacent filter yields nothing.
+        player.castingPiece.position = new Point(99, 99);
+        spell.owner = player;
+        (board as any).rules.doCastSpell = vi
+            .fn()
+            .mockImplementation(async () => {
+                (spell as any)._castTimes--;
+            });
+        const result = await spell.autoCast(player);
+        // Falls through to rng.pick (random path) and still succeeds
+        expect(result).toBe(true);
+        expect((board as any).rules.doCastSpell).toHaveBeenCalledTimes(1);
+    });
 });
 
 // ─── selectDefaultTile ────────────────────────────────────────────────────────

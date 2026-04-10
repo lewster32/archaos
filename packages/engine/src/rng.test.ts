@@ -70,6 +70,47 @@ describe("weightedRandomPick", () => {
     });
 });
 
+describe("weightedRandomPick distribution", () => {
+    it("positive weight biases towards later elements", () => {
+        const rng = new GameRNG("wrp-pos");
+        const arr = ["a", "b", "c", "d", "e"];
+        const counts: Record<string, number> = {
+            a: 0, b: 0, c: 0, d: 0, e: 0,
+        };
+        for (let i = 0; i < 1000; i++) {
+            counts[weightedRandomPick(rng, arr, 2)]++;
+        }
+        expect(counts["e"]).toBeGreaterThan(counts["a"]);
+        expect(counts["d"]).toBeGreaterThan(counts["b"]);
+    });
+
+    it("negative weight biases towards earlier elements", () => {
+        const rng = new GameRNG("wrp-neg");
+        const arr = ["a", "b", "c", "d", "e"];
+        const counts: Record<string, number> = {
+            a: 0, b: 0, c: 0, d: 0, e: 0,
+        };
+        for (let i = 0; i < 1000; i++) {
+            counts[weightedRandomPick(rng, arr, -2)]++;
+        }
+        expect(counts["a"]).toBeGreaterThan(counts["e"]);
+        expect(counts["b"]).toBeGreaterThan(counts["d"]);
+    });
+
+    it("linear mode biases in the correct direction", () => {
+        const rng = new GameRNG("wrp-linear");
+        const arr = [10, 20, 30, 40, 50];
+        let earlyCount = 0;
+        let lateCount = 0;
+        for (let i = 0; i < 1000; i++) {
+            const pick = weightedRandomPick(rng, arr, 2, false);
+            if (pick === 10 || pick === 20) earlyCount++;
+            if (pick === 40 || pick === 50) lateCount++;
+        }
+        expect(lateCount).toBeGreaterThan(earlyCount);
+    });
+});
+
 describe("GameRNG", () => {
     it("produces deterministic output from the same seed", () => {
         const a = new GameRNG("test-seed");

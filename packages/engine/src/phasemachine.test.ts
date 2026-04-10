@@ -659,6 +659,15 @@ describe("PhaseMachine", () => {
         });
     });
 
+    describe("activeLeafState fallback", () => {
+        it('returns "game" when no leaf state is active', () => {
+            // Replace the internal Instance with a stub whose get() always
+            // returns undefined, simulating a state where no leaf is active.
+            (pm as any)._instance = { get: () => undefined, evaluate: () => false };
+            expect(pm.activeLeafState).toBe("game");
+        });
+    });
+
     describe("castingPlayer casting states", () => {
         function enterCastingPlayer() {
             pm.evaluate(new StartGame());
