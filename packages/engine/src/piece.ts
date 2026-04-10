@@ -1181,6 +1181,7 @@ export class Piece extends Entity {
             !this._dead &&
             !this.engulfed &&
             !piece.dead &&
+            !piece.engulfed &&
             !this.moved &&
             this.hasStatus(UnitStatus.Wizard) &&
             !piece.currentRider &&
