@@ -36,7 +36,6 @@
         "jsdom": "^28.1.0",
         "oxfmt": "^0.41.0",
         "oxlint": "^1.56.0",
-        "phaser3spectorjs": "^0.0.8",
         "playwright": "^1.58.2",
         "sass": "^1.98.0",
         "typescript": "^5.9",
@@ -49,7 +48,7 @@
         "@archaos/engine": "*",
         "@steelbreeze/state": "^8.3.1",
         "@tauri-apps/api": "^2.10.1",
-        "phaser": "^3.90.0",
+        "phaser": "^4.0.0-rc.7",
         "vue": "^3.5.30"
     }
 }

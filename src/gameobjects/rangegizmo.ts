@@ -6,12 +6,13 @@ import {
     Path,
     distance as gridDistance,
     RangeGizmo as EngineRangeGizmo,
+    SimplePoint,
 } from "@archaos/engine";
 import { Board } from "./board";
 import { Cursor } from "./cursor";
 import { Piece } from "./piece";
 
-import { Geom, GameObjects } from "phaser";
+import { Math as PMath, GameObjects } from "phaser";
 
 export class RangeGizmo extends EngineRangeGizmo {
     /**
@@ -40,7 +41,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      */
     private readonly _pathLayer: GameObjects.Layer;
 
-    private lastSimplePosition: Geom.Point = new Geom.Point(-1, -1);
+    private lastSimplePosition: PMath.Vector2 = new PMath.Vector2(-1, -1);
     private lastDistance: number = -1;
     private lastCursor: CursorType;
     private lastLoS: boolean;
@@ -172,8 +173,10 @@ export class RangeGizmo extends EngineRangeGizmo {
                         node.traversable = false;
                     } else {
                         node.path = path;
-                        const isoPosition: Geom.Point =
-                            this._clientBoard.getIsoPosition(node.pos);
+                        const isoPosition: PMath.Vector2 =
+                            this._clientBoard.getIsoPosition(
+                            node.pos,
+                        );
                         let cursorImage: GameObjects.Image;
 
                         if (node.warning) {
@@ -228,7 +231,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * and skips reveal animation
      */
     public async generateSimpleRange(
-        position: Geom.Point,
+        position: SimplePoint,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -236,7 +239,8 @@ export class RangeGizmo extends EngineRangeGizmo {
     ): Promise<void> {
         if (
             !force &&
-            Geom.Point.Equals(position, this.lastSimplePosition) &&
+            position.x === this.lastSimplePosition.x &&
+            position.y === this.lastSimplePosition.y &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
             lineOfSight === this.lastLoS
@@ -245,12 +249,12 @@ export class RangeGizmo extends EngineRangeGizmo {
         }
         await this.reset(force);
 
-        this.lastSimplePosition = Geom.Point.Clone(position);
+        this.lastSimplePosition = new PMath.Vector2(position.x, position.y);
         this.lastDistance = distance;
         this.lastCursor = cursor;
         this.lastLoS = lineOfSight;
 
-        const startPosition = Geom.Point.Clone(position);
+        const startPosition = new PMath.Vector2(position.x, position.y);
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
@@ -258,7 +262,7 @@ export class RangeGizmo extends EngineRangeGizmo {
                 for (let xx: number = 0; xx < this._clientBoard.width; xx++) {
                     const currentDistance: number = gridDistance(
                         startPosition,
-                        new Geom.Point(xx, yy),
+                        new PMath.Vector2(xx, yy),
                     );
                     if (currentDistance > distance) {
                         continue;
@@ -267,14 +271,14 @@ export class RangeGizmo extends EngineRangeGizmo {
                         lineOfSight &&
                         !this._clientBoard.hasLineOfSight(
                             startPosition,
-                            new Geom.Point(xx, yy),
+                            new PMath.Vector2(xx, yy),
                         )
                     ) {
                         continue;
                     }
-                    const isoPosition: Geom.Point =
+                    const isoPosition: PMath.Vector2 =
                         this._clientBoard.getIsoPosition(
-                            new Geom.Point(xx, yy),
+                            new PMath.Vector2(xx, yy),
                         );
                     const cursorImage: GameObjects.Image =
                         this._clientBoard.scene.add.image(
@@ -327,7 +331,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * of sight from position
      */
     public async showSimpleRange(
-        position: Geom.Point,
+        position: SimplePoint,
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -393,8 +397,10 @@ export class RangeGizmo extends EngineRangeGizmo {
             this._validNodes
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
-                    const isoPosition: Geom.Point =
-                        this._clientBoard.getIsoPosition(node.pos);
+                    const isoPosition: PMath.Vector2 =
+                        this._clientBoard.getIsoPosition(
+                            node.pos,
+                        );
                     let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
@@ -441,12 +447,13 @@ export class RangeGizmo extends EngineRangeGizmo {
      *
      * @param toPt The destination board position
      */
-    public showPath(toPt: Geom.Point): void {
+    public showPath(toPt: SimplePoint): void {
         this._pathLayer.removeAll();
         if (
             !this._piece ||
             this._piece.hasStatus(UnitStatus.Flying) ||
-            Geom.Point.Equals(toPt, this._piece.position)
+            (toPt.x === this._piece.position.x &&
+                toPt.y === this._piece.position.y)
         ) {
             return;
         }
@@ -465,7 +472,7 @@ export class RangeGizmo extends EngineRangeGizmo {
             : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
-            const isoPosition: Geom.Point = this._clientBoard.getIsoPosition(
+            const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(
                 path.nodes[n].pos,
             );
 

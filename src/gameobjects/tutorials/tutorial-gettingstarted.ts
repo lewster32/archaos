@@ -1,5 +1,5 @@
 import { BoardEvent, BoardState } from "@archaos/engine";
-import { Geom } from "phaser";
+import { Math as PMath } from "phaser";
 import type { Board } from "../board";
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";
@@ -56,8 +56,8 @@ class GettingStarted10 extends TutorialStep {
     }
 
     onDismissHint(board: Board): void {
-        const validPosition: Geom.Point = board.getIsoPosition(
-            new Geom.Point(1, 0),
+        const validPosition: PMath.Vector2 = board.getIsoPosition(
+            new PMath.Vector2(1, 0),
         );
         validPosition.y += 10;
         TutorialStep.pointAtPosition(board, validPosition, 3000);

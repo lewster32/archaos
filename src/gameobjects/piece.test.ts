@@ -12,7 +12,7 @@ import "./wizard";
 import { Piece } from "./piece";
 import { Board } from "./board";
 import { Player } from "./player";
-import { Geom } from "phaser";
+import { Math as PMath } from "phaser";
 import { TestRNG } from "@archaos/engine";
 
 // ─── Mock helpers ────────────────────────────────────────────────────────────
@@ -22,8 +22,8 @@ function makeMockSprite() {
         setOrigin: () => ({}),
         setFrame: () => ({}),
         setDepth: () => ({}),
-        setTint: () => ({}),
-        setTintFill: () => ({}),
+        setTint: vi.fn().mockReturnThis(),
+        setTintMode: vi.fn().mockReturnThis(),
         clearTint: () => ({}),
         setAlpha: () => ({}),
         setVisible: () => ({}),
@@ -50,7 +50,8 @@ function makeMockSprite() {
 function makeMockImage() {
     return {
         setOrigin: () => ({}),
-        setTint: () => ({}),
+        setTint: vi.fn().mockReturnThis(),
+        setTintMode: vi.fn().mockReturnThis(),
         setBlendMode: () => ({}),
         setDepth: () => ({}),
         setFlipX: () => ({}),
@@ -332,7 +333,7 @@ describe("Piece", () => {
     describe("position getter and setter", () => {
         it("setter updates integer coordinates", () => {
             const piece = makePiece();
-            piece.position = new Geom.Point(4, 7);
+            piece.position = new PMath.Vector2(4, 7);
             expect(piece.position.x).toBe(4);
             expect(piece.position.y).toBe(7);
         });
@@ -340,14 +341,14 @@ describe("Piece", () => {
         it("setter throws for non-integer x", () => {
             const piece = makePiece();
             expect(() => {
-                piece.position = new Geom.Point(1.5, 0);
+                piece.position = new PMath.Vector2(1.5, 0);
             }).toThrow(TypeError);
         });
 
         it("setter throws for non-integer y", () => {
             const piece = makePiece();
             expect(() => {
-                piece.position = new Geom.Point(0, 3.14);
+                piece.position = new PMath.Vector2(0, 3.14);
             }).toThrow(TypeError);
         });
     });
@@ -853,7 +854,7 @@ describe("Piece", () => {
     describe("inRangedAttackRange", () => {
         it("returns true when target is within range", () => {
             const piece = makeRangedPiece({ x: 0, y: 0 });
-            const target = new Geom.Point(2, 0);
+            const target = new PMath.Vector2(2, 0);
             // Board.distance will compute euclidean distance; with range=6 this should pass
             // We just check it doesn't throw and returns a boolean
             expect(typeof piece.inRangedAttackRange(target)).toBe("boolean");
@@ -862,7 +863,7 @@ describe("Piece", () => {
         it("returns false when target is beyond range", () => {
             const piece = makePiece({ x: 0, y: 0 });
             // With range=0 any non-zero distance should fail
-            const target = new Geom.Point(1, 0);
+            const target = new PMath.Vector2(1, 0);
             expect(piece.inRangedAttackRange(target)).toBe(false);
         });
     });
@@ -1823,8 +1824,8 @@ describe("Piece", () => {
             const piece = makePiece({ x: 3, y: 0 });
             // from (3,0) to (0,3): toIsometric(0,3).x=0-3=-3, toIsometric(3,0).x=3-0=3 → offset=-3-3=-6 < 0 → Left
             (piece as any).updateDirection(
-                new Geom.Point(3, 0),
-                new Geom.Point(0, 3),
+                new PMath.Vector2(3, 0),
+                new PMath.Vector2(0, 3),
             );
             expect(piece.direction).toBe(UnitDirection.Left);
         });
@@ -1833,8 +1834,8 @@ describe("Piece", () => {
             const piece = makePiece({ x: 0, y: 3 });
             // from (0,3) to (3,0): toIsometric(3,0).x=3, toIsometric(0,3).x=-3 → offset=3-(-3)=6 > 0 → Right
             (piece as any).updateDirection(
-                new Geom.Point(0, 3),
-                new Geom.Point(3, 0),
+                new PMath.Vector2(0, 3),
+                new PMath.Vector2(3, 0),
             );
             expect(piece.direction).toBe(UnitDirection.Right);
         });
@@ -1846,8 +1847,8 @@ describe("Piece", () => {
             // from (1,2) to (2,1): toIsometric(2,1).x=2-1=1, toIsometric(1,2).x=1-2=-1 → not zero
             // Use same point: from (2,2) to (2,2) → offset=0
             (piece as any).updateDirection(
-                new Geom.Point(2, 2),
-                new Geom.Point(2, 2),
+                new PMath.Vector2(2, 2),
+                new PMath.Vector2(2, 2),
             );
             // Direction should remain unchanged
             expect(piece.direction).toBe(UnitDirection.Left);
@@ -1898,18 +1899,18 @@ describe("Piece", () => {
         it("does not update the logical position", async () => {
             const { board } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            const originalPos = new Geom.Point(
+            const originalPos = new PMath.Vector2(
                 piece.position.x,
                 piece.position.y,
             );
-            await piece.flyApproach(new Geom.Point(5, 5));
+            await piece.flyApproach(new PMath.Vector2(5, 5));
             expect(piece.position).toEqual(originalPos);
         });
 
         it("adds a tween targeting the sprite", async () => {
             const { board, tweenSpy } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            await piece.flyApproach(new Geom.Point(5, 5));
+            await piece.flyApproach(new PMath.Vector2(5, 5));
             const spriteTween = tweenSpy.mock.calls.find(
                 (call: any[]) =>
                     Array.isArray(call[0].targets) &&
@@ -1923,18 +1924,18 @@ describe("Piece", () => {
         it("does not update the logical position", async () => {
             const { board } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            const originalPos = new Geom.Point(
+            const originalPos = new PMath.Vector2(
                 piece.position.x,
                 piece.position.y,
             );
-            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
+            await piece.flyReturn(new PMath.Vector2(0, 0), new PMath.Vector2(5, 5));
             expect(piece.position).toEqual(originalPos);
         });
 
         it("adds a tween targeting the sprite", async () => {
             const { board, tweenSpy } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
+            await piece.flyReturn(new PMath.Vector2(0, 0), new PMath.Vector2(5, 5));
             const spriteTween = tweenSpy.mock.calls.find(
                 (call: any[]) =>
                     Array.isArray(call[0].targets) &&
@@ -1946,7 +1947,7 @@ describe("Piece", () => {
         it("tweens the sprite to ground level, not elevated", async () => {
             const { board, tweenSpy } = makeTweenBoard(50, 80);
             const piece = makePieceOnBoard(board);
-            await piece.flyReturn(new Geom.Point(0, 0), new Geom.Point(5, 5));
+            await piece.flyReturn(new PMath.Vector2(0, 0), new PMath.Vector2(5, 5));
             // Find the flyReturn sprite tween (has y property, targets sprite)
             const spriteCall = tweenSpy.mock.calls.find(
                 (call: any[]) =>

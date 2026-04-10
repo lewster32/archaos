@@ -4,7 +4,7 @@ import {
     GameScenarioData,
     GameScenarioPlayer,
 } from "@archaos/engine";
-import { Geom } from "phaser";
+import { Math as PMath } from "phaser";
 import type { Board } from "../board";
 import { Logger } from "../services/logger";
 import * as storage from "../storage";
@@ -250,7 +250,7 @@ export abstract class TutorialStep {
      */
     protected static pointAtPosition(
         board: Board,
-        pos: Geom.Point,
+        pos: PMath.Vector2,
         duration: number = 2000,
     ): void {
         board.centreOnWorldPosition(pos);
@@ -273,17 +273,17 @@ export abstract class TutorialStep {
      */
     protected static pointAtPositions(
         board: Board,
-        positions: Geom.Point[],
+        positions: PMath.Vector2[],
         duration: number = 2000,
     ): void {
         // Get the centroid of the positions to point the camera at
-        const centroid: Geom.Point = positions.reduce(
+        const centroid: PMath.Vector2 = positions.reduce(
             (acc, pos) => {
                 acc.x += pos.x;
                 acc.y += pos.y;
                 return acc;
             },
-            new Geom.Point(0, 0),
+            new PMath.Vector2(0, 0),
         );
         centroid.x /= positions.length;
         centroid.y /= positions.length;

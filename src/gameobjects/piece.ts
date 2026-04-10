@@ -6,14 +6,18 @@ import {
     UnitStatus,
     UnitRangedProjectileType,
     Piece as EnginePiece,
+    Point,
+    SimplePoint,
 } from "@archaos/engine";
 import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";
+import Phaser from "phaser";
+import { Math as PMath, GameObjects, Display, Tweens } from "phaser";
 import type { Player } from "./player";
 import type { Types } from "phaser";
+import { ColorReplaceFilter } from "./filters/colorreplace";
 
 // Populate the engine Piece's static units data from JSON
 EnginePiece.units = unitJsonData as any;
@@ -70,7 +74,7 @@ export class Piece extends EnginePiece {
     protected _effects: Map<UnitStatus, GameObjects.Sprite | GameObjects.Image>;
     protected _offsetY: number;
     protected _ownerHighlightTween: Tweens.Tween;
-    protected _ownerHighlightPipeline: any;
+    protected _ownerHighlightFilter: ColorReplaceFilter | null = null;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board as any, id, config);
@@ -134,8 +138,8 @@ export class Piece extends EnginePiece {
         this._highlighted = false;
         if (!this._ownerHighlightTween.isDestroyed()) {
             this._ownerHighlightTween.pause();
-            if (this._ownerHighlightPipeline) {
-                this._ownerHighlightPipeline.newColor = 0;
+            if (this._ownerHighlightFilter) {
+                this._ownerHighlightFilter.setNewColor(0, 0, 0);
             }
         }
     }
@@ -155,9 +159,10 @@ export class Piece extends EnginePiece {
             return;
         }
         for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
-            this._sprite.setTintFill(0xffffff);
+            this._sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
             await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
-            this._sprite.setTintFill(this.owner?.colour ?? 0x000000);
+            this._sprite.setTint(this.owner?.colour ?? 0x000000)
+                .setTintMode(Phaser.TintModes.FILL);
             await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
         }
         this._sprite.clearTint();
@@ -313,7 +318,7 @@ export class Piece extends EnginePiece {
     /**
      * Get the current screen position of this piece's sprite.
      */
-    get screenPosition(): Geom.Point | null {
+    get screenPosition(): PMath.Vector2 | null {
         return this.sprite?.getCenter() || null;
     }
 
@@ -337,12 +342,12 @@ export class Piece extends EnginePiece {
                 return;
             }
 
-            const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
                 this.position,
             );
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
                 isoPosition,
             );
 
@@ -385,7 +390,10 @@ export class Piece extends EnginePiece {
      * Update the facing direction of this piece based on movement from one
      * point to another.
      */
-    protected updateDirection(fromPoint: Geom.Point, toPoint: Geom.Point) {
+    protected updateDirection(
+        fromPoint: SimplePoint,
+        toPoint: SimplePoint,
+    ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
 
@@ -401,7 +409,7 @@ export class Piece extends EnginePiece {
      * board position. Does not update the logical position.
      * Used for fly-attack approach animation.
      */
-    async flyApproach(targetPos: Geom.Point): Promise<void> {
+    async flyApproach(targetPos: SimplePoint): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -411,12 +419,15 @@ export class Piece extends EnginePiece {
             const groundY = iso.y - this._offsetY;
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
-                new Geom.Point(iso.x, groundY),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
             );
 
             // Face the unit towards the target
-            this.updateDirection(this.position, targetPos);
+            this.updateDirection(
+                this.position,
+                targetPos,
+            );
 
             // Arc: swoop upward during the first half then settle at hover height
             this.clientBoard.scene.tweens.add({
@@ -464,7 +475,10 @@ export class Piece extends EnginePiece {
      * board position after a failed fly-attack. Does not update the
      * logical position.
      */
-    async flyReturn(originPos: Geom.Point, targetPos: Geom.Point): Promise<void> {
+    async flyReturn(
+        originPos: SimplePoint,
+        targetPos: SimplePoint,
+    ): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -474,8 +488,8 @@ export class Piece extends EnginePiece {
             const groundY = iso.y - this._offsetY;
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
-                new Geom.Point(iso.x, groundY),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
             );
 
             // Face the unit towards the origin
@@ -525,16 +539,17 @@ export class Piece extends EnginePiece {
     /**
      * Move this piece to the specified point on the board.
      */
-    override async moveTo(point: Geom.Point, stepDuration?: number) {
+    override async moveTo(point: SimplePoint, stepDuration?: number) {
         this.updateDirection(this.position, point);
-        this.position = point;
+        this.position = new Point(point.x, point.y);
         if (this.currentRider) {
-            this.currentRider.position = point;
+            this.currentRider.position = new Point(point.x, point.y);
             (this.currentRider as Piece).updatePosition(stepDuration);
         }
         if (
             this.currentMount &&
-            !Geom.Point.Equals(this.currentMount.position, this.position)
+            !(this.currentMount.position.x === this.position.x &&
+                this.currentMount.position.y === this.position.y)
         ) {
             await this.clientBoard.dismountPiece(this.id);
         }
@@ -598,7 +613,10 @@ export class Piece extends EnginePiece {
                 return false;
             }
 
-            this.updateDirection(this.position, piece.position);
+            this.updateDirection(
+                this.position,
+                piece.position,
+            );
             this.attacked = true;
             this.moved = true;
 
@@ -669,7 +687,10 @@ export class Piece extends EnginePiece {
                 );
                 return false;
             }
-            this.updateDirection(this.position, piece.position);
+            this.updateDirection(
+                this.position,
+                piece.position,
+            );
 
             let beamEffectType: EffectType;
             let hitEffectType: EffectType;
@@ -830,7 +851,10 @@ export class Piece extends EnginePiece {
 
         this.currentMount = piece as Piece;
         piece.currentRider = this;
-        await this.clientBoard.movePiece(this.id, piece.position);
+        await this.clientBoard.movePiece(
+            this.id,
+            piece.position,
+        );
         this.clientBoard.logger.log(
             `${this.fullName} mounted ${piece.fullName}`,
         );
@@ -909,7 +933,7 @@ export class Piece extends EnginePiece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 
@@ -936,7 +960,7 @@ export class Piece extends EnginePiece {
             return this._sprite;
         }
 
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 
@@ -986,13 +1010,13 @@ export class Piece extends EnginePiece {
             tempOwner?.colour ?? this.owner?.colour ?? 0,
         );
 
-        const postFxPlugin: any = this.clientBoard.scene.game.plugins.get(
-            "rexcolorreplacepipelineplugin",
+        this._sprite.enableFilters();
+        this._ownerHighlightFilter = new ColorReplaceFilter(
+            this._sprite.filterCamera!,
+            [0, 0, 0],
+            0,
         );
-        this._ownerHighlightPipeline = postFxPlugin.add(this._sprite, {
-            originalColor: startColor,
-            epsilon: 0,
-        });
+        this._sprite.filters!.internal.add(this._ownerHighlightFilter);
 
         const tweenColours: Types.Display.ColorObject[] =
             Array.from<Types.Display.ColorObject>({
@@ -1017,10 +1041,10 @@ export class Piece extends EnginePiece {
                 const newColor: Types.Display.ColorObject =
                     tweenColours[Math.round(tween.getValue())];
 
-                this._ownerHighlightPipeline.newColor = Display.Color.GetColor(
-                    newColor.r,
-                    newColor.g,
-                    newColor.b,
+                this._ownerHighlightFilter!.setNewColor(
+                    newColor.r / 255,
+                    newColor.g / 255,
+                    newColor.b / 255,
                 );
             },
         });

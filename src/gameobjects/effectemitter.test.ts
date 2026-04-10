@@ -8,6 +8,10 @@ const mockCircleTo = vi.fn().mockReturnThis();
 const mockLineTo = vi.fn().mockReturnThis();
 
 vi.mock("phaser", () => ({
+    default: {
+        TintModes: { FILL: 1 },
+    },
+    TintModes: { FILL: 1 },
     GameObjects: {
         Container: class MockContainer {
             scene: any;
@@ -85,7 +89,7 @@ import type { Piece } from "./piece";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Simple {x, y} point — duck-types with Geom.Point / PMath.Vector2. */
+/** Simple {x, y} point — duck-types with PMath.Vector2. */
 const point = (x: number, y: number): any => ({ x, y });
 
 function makeMockScene() {
@@ -113,10 +117,12 @@ function makeMockScene() {
 }
 
 function makeMockTarget(overrides: Partial<Record<string, any>> = {}): Piece {
+    const setTintMode = vi.fn().mockReturnThis();
+    const setTint = vi.fn().mockReturnValue({ setTintMode });
     return {
         sprite: {
-            setTint: vi.fn(),
-            setTintFill: vi.fn(),
+            setTint,
+            setTintMode,
         },
         shadow: {},
         defaultTint: 0xffffff,
@@ -339,9 +345,9 @@ describe("EffectEmitter", () => {
             const flashTween = scene.tweenCounters[0];
             expect(flashTween.to).toBe(4);
 
-            // Even value → setTintFill white
+            // Even value → setTint white (fill mode)
             flashTween.onUpdate({ getValue: () => 2 });
-            expect(target.sprite.setTintFill).toHaveBeenCalledWith(0xffffff);
+            expect(target.sprite.setTint).toHaveBeenCalledWith(0xffffff);
 
             // Odd value → setTint default
             flashTween.onUpdate({ getValue: () => 3 });
@@ -390,15 +396,15 @@ describe("EffectEmitter", () => {
 
             // Value 0 → colors[0 % 3] = 0xff0000
             cycleTween.onUpdate({ getValue: () => 0 });
-            expect(target.sprite.setTintFill).toHaveBeenCalledWith(0xff0000);
+            expect(target.sprite.setTint).toHaveBeenCalledWith(0xff0000);
 
             // Value 1.9 → floor(1.9) = 1, colors[1 % 3] = 0xff7700
             cycleTween.onUpdate({ getValue: () => 1.9 });
-            expect(target.sprite.setTintFill).toHaveBeenCalledWith(0xff7700);
+            expect(target.sprite.setTint).toHaveBeenCalledWith(0xff7700);
 
             // Value 3 → colors[3 % 3] = colors[0] = 0xff0000
             cycleTween.onUpdate({ getValue: () => 3 });
-            expect(target.sprite.setTintFill).toHaveBeenCalledWith(0xff0000);
+            expect(target.sprite.setTint).toHaveBeenCalledWith(0xff0000);
         });
 
         it("should restore default tint on cycleTint complete", () => {
@@ -445,7 +451,7 @@ describe("EffectEmitter", () => {
             // Simulate update at value 128
             fadeTween.onUpdate({ getValue: () => 128 });
             const expected = (128 << 16) | (128 << 8) | 128;
-            expect(target.sprite.setTintFill).toHaveBeenCalledWith(expected);
+            expect(target.sprite.setTint).toHaveBeenCalledWith(expected);
 
             // Should also add a sprite+shadow fade-out tween
             expect(scene.tweens.add).toHaveBeenCalled();
@@ -479,18 +485,20 @@ describe("EffectEmitter", () => {
             const explodeTween = scene.tweenCounters[0];
             expect(explodeTween.to).toBe(64);
 
-            // value 0 → floor(0) % 5 === 0, should setTintFill with a picked color
+            // value 0 → floor(0) % 5 === 0, should setTint with a picked color
             explodeTween.onUpdate({ getValue: () => 0 });
-            expect(target.sprite.setTintFill).toHaveBeenCalled();
+            expect(target.sprite.setTint).toHaveBeenCalled();
 
-            // value 3 → floor(3) % 5 === 3, should NOT setTintFill
-            (target.sprite.setTintFill as ReturnType<typeof vi.fn>).mockClear();
+            // value 3 → floor(3) % 5 === 3, should NOT setTint (fill mode)
+            (target.sprite.setTint as ReturnType<typeof vi.fn>).mockClear();
             explodeTween.onUpdate({ getValue: () => 3 });
-            expect(target.sprite.setTintFill).not.toHaveBeenCalled();
+            // setTint is also used for non-fill calls (e.g. onComplete), but
+            // after clearing, value 3 should not trigger it
+            expect(target.sprite.setTint).not.toHaveBeenCalled();
 
-            // value 5 → floor(5) % 5 === 0, should setTintFill again
+            // value 5 → floor(5) % 5 === 0, should setTint again
             explodeTween.onUpdate({ getValue: () => 5 });
-            expect(target.sprite.setTintFill).toHaveBeenCalled();
+            expect(target.sprite.setTint).toHaveBeenCalled();
 
             // Should add sprite+shadow fade-out tween
             expect(scene.tweens.add).toHaveBeenCalled();

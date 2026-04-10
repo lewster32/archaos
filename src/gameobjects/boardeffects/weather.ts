@@ -1,4 +1,4 @@
-import { SimplePoint } from "@archaos/engine/src/board";
+import type { SimplePoint } from "@archaos/engine";
 import { Board } from "../board";
 
 import {
