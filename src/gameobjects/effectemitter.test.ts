@@ -85,7 +85,7 @@ import type { Piece } from "./piece";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Simple {x, y} point — duck-types with Geom.Point / PMath.Vector2. */
+/** Simple {x, y} point — duck-types with PMath.Vector2. */
 const point = (x: number, y: number): any => ({ x, y });
 
 function makeMockScene() {
