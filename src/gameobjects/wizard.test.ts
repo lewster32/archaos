@@ -13,8 +13,8 @@ function makeMockSprite() {
         setOrigin: () => ({}),
         setFrame: () => ({}),
         setDepth: () => ({}),
-        setTint: () => ({}),
-        setTintFill: () => ({}),
+        setTint: vi.fn().mockReturnThis(),
+        setTintMode: vi.fn().mockReturnThis(),
         clearTint: () => ({}),
         setAlpha: () => ({}),
         setVisible: vi.fn().mockReturnThis(),
@@ -36,7 +36,8 @@ function makeMockImage() {
     const store: Record<string, unknown> = {};
     return {
         setOrigin: () => ({}),
-        setTint: () => ({}),
+        setTint: vi.fn().mockReturnThis(),
+        setTintMode: vi.fn().mockReturnThis(),
         setBlendMode: () => ({}),
         setDepth: () => ({}),
         setFlipX: () => ({}),
