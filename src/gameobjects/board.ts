@@ -206,7 +206,7 @@ export class Board extends EngineBoard<Piece> {
         );
         this.events.on(
             EngineEvent.FocusPosition,
-            (data: { position: { x: number; y: number } }) => {
+            (data: { position: SimplePoint }) => {
                 this.centreOnPosition(
                     new PMath.Vector2(data.position.x, data.position.y),
                 );
@@ -218,8 +218,8 @@ export class Board extends EngineBoard<Piece> {
                 type?: EffectType;
                 pieceId?: number;
                 startPieceId?: number;
-                startPosition?: { x: number; y: number };
-                targetPosition?: { x: number; y: number };
+                startPosition?: SimplePoint;
+                targetPosition?: SimplePoint;
                 sound?: string;
                 soundOptions?: {
                     repeat?: number;
