@@ -123,7 +123,6 @@ function makeMockTarget(overrides: Partial<Record<string, any>> = {}): Piece {
         sprite: {
             setTint,
             setTintMode,
-            setTintFill: vi.fn(),
         },
         shadow: {},
         defaultTint: 0xffffff,
