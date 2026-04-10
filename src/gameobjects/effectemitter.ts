@@ -5,7 +5,6 @@ import {
     Scene,
     GameObjects,
     Math as PMath,
-    Geom,
     Curves,
     BlendModes,
     Display,
@@ -19,8 +18,8 @@ import effectsData from "@assets/data/effects.json";
  */
 export type CustomEffectFactory = (
     scene: Scene,
-    startPosition: PMath.Vector2 | Geom.Point,
-    endPosition: PMath.Vector2 | Geom.Point | null,
+    startPosition: PMath.Vector2,
+    endPosition: PMath.Vector2 | null,
     target: Piece | null,
     duration: number | null,
     resolve: Function,
@@ -45,8 +44,8 @@ const parseHexColor = (hex: string): number => {
 
 const buildParticleConfig = (
     def: EffectDefinition,
-    startPosition: PMath.Vector2 | Geom.Point,
-    endPosition?: PMath.Vector2 | Geom.Point,
+    startPosition: PMath.Vector2,
+    endPosition?: PMath.Vector2,
 ): any => {
     const config: any = { ...def.particle };
 
@@ -109,8 +108,8 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
     constructor(
         scene: Scene,
         type: EffectType,
-        startPosition: PMath.Vector2 | Geom.Point,
-        endPosition: PMath.Vector2 | Geom.Point | null,
+        startPosition: PMath.Vector2,
+        endPosition: PMath.Vector2 | null,
         target: Piece | null,
         duration: number | null,
         resolve: Function,
@@ -257,7 +256,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
 class PointAtPositionEffect extends GameObjects.Container {
     constructor(
         scene: Scene,
-        startPosition: PMath.Vector2 | Geom.Point,
+        startPosition: PMath.Vector2,
         duration: number = 3500,
         resolve: Function = () => {},
     ) {
@@ -336,8 +335,8 @@ export const registerCustomEffect = (
 export const createEffect = (
     scene: Scene,
     type: EffectType,
-    startPosition: PMath.Vector2 | Geom.Point,
-    endPosition: PMath.Vector2 | Geom.Point | null,
+    startPosition: PMath.Vector2,
+    endPosition: PMath.Vector2 | null,
     target: Piece | null,
     duration: number | null,
     resolve: Function,

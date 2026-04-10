@@ -12,7 +12,7 @@ import { Player } from "./player";
 import { EffectType } from "./effectemitter";
 import { Piece } from "./piece";
 import { WizardSprite } from "./wizardsprite";
-import { Math as PMath, Geom, GameObjects, BlendModes, Tweens } from "phaser";
+import { Math as PMath, GameObjects, BlendModes, Tweens } from "phaser";
 
 // Populate the engine Wizard's wizcode max bounds from
 // spritesheet metadata.
@@ -147,12 +147,12 @@ export class Wizard extends Piece {
                 return;
             }
 
-            const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
                 this.position,
             );
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
                 isoPosition,
             );
 
@@ -282,7 +282,7 @@ export class Wizard extends Piece {
             this.removeStatus(UnitStatus.MagicKnife);
         }
 
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
         let effectSprite: GameObjects.Sprite | GameObjects.Image;
@@ -472,7 +472,7 @@ export class Wizard extends Piece {
             return this._sprite;
         }
 
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 
@@ -500,7 +500,7 @@ export class Wizard extends Piece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 

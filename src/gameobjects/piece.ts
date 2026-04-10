@@ -11,7 +11,7 @@ import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import { Math as PMath, GameObjects, Geom, Display, Tweens } from "phaser";
+import { Math as PMath, GameObjects, Display, Tweens } from "phaser";
 import type { Player } from "./player";
 import type { Types } from "phaser";
 
@@ -313,7 +313,7 @@ export class Piece extends EnginePiece {
     /**
      * Get the current screen position of this piece's sprite.
      */
-    get screenPosition(): Geom.Point | null {
+    get screenPosition(): PMath.Vector2 | null {
         return this.sprite?.getCenter() || null;
     }
 
@@ -337,12 +337,12 @@ export class Piece extends EnginePiece {
                 return;
             }
 
-            const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
                 this.position,
             );
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
                 isoPosition,
             );
 
@@ -385,7 +385,7 @@ export class Piece extends EnginePiece {
      * Update the facing direction of this piece based on movement from one
      * point to another.
      */
-    protected updateDirection(fromPoint: Geom.Point, toPoint: Geom.Point) {
+    protected updateDirection(fromPoint: PMath.Vector2, toPoint: PMath.Vector2) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
 
@@ -401,7 +401,7 @@ export class Piece extends EnginePiece {
      * board position. Does not update the logical position.
      * Used for fly-attack approach animation.
      */
-    async flyApproach(targetPos: Geom.Point): Promise<void> {
+    async flyApproach(targetPos: PMath.Vector2): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -411,8 +411,8 @@ export class Piece extends EnginePiece {
             const groundY = iso.y - this._offsetY;
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
-                new Geom.Point(iso.x, groundY),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
             );
 
             // Face the unit towards the target
@@ -464,7 +464,7 @@ export class Piece extends EnginePiece {
      * board position after a failed fly-attack. Does not update the
      * logical position.
      */
-    async flyReturn(originPos: Geom.Point, targetPos: Geom.Point): Promise<void> {
+    async flyReturn(originPos: PMath.Vector2, targetPos: PMath.Vector2): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -474,8 +474,8 @@ export class Piece extends EnginePiece {
             const groundY = iso.y - this._offsetY;
 
             const difference: number = Board.distance(
-                new Geom.Point(this._sprite.x, this._sprite.y),
-                new Geom.Point(iso.x, groundY),
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
             );
 
             // Face the unit towards the origin
@@ -525,7 +525,7 @@ export class Piece extends EnginePiece {
     /**
      * Move this piece to the specified point on the board.
      */
-    override async moveTo(point: Geom.Point, stepDuration?: number) {
+    override async moveTo(point: PMath.Vector2, stepDuration?: number) {
         this.updateDirection(this.position, point);
         this.position = point;
         if (this.currentRider) {
@@ -534,7 +534,7 @@ export class Piece extends EnginePiece {
         }
         if (
             this.currentMount &&
-            !Geom.Point.Equals(this.currentMount.position, this.position)
+            !(this.currentMount.position as PMath.Vector2).equals(this.position)
         ) {
             await this.clientBoard.dismountPiece(this.id);
         }
@@ -909,7 +909,7 @@ export class Piece extends EnginePiece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 
@@ -936,7 +936,7 @@ export class Piece extends EnginePiece {
             return this._sprite;
         }
 
-        const isoPosition: Geom.Point = this.clientBoard.getIsoPosition(
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
             this.position,
         );
 
