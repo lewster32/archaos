@@ -16,7 +16,6 @@
 //   pointer-arrow.png                                     1018 B  (Phaser preload)
 //   rain.json                                              908 B  (Phaser preload)
 //   rain.png                                               969 B  (Phaser preload)
-//   rexcolorreplacepipelineplugin.min.js                  7834 B  (Phaser preload)
 //   rexperlinplugin.min.js                               10068 B  (Phaser preload)
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)

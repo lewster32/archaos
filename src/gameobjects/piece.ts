@@ -15,6 +15,7 @@ import Phaser from "phaser";
 import { Math as PMath, GameObjects, Display, Tweens } from "phaser";
 import type { Player } from "./player";
 import type { Types } from "phaser";
+import { ColorReplaceFilter } from "./filters/colorreplace";
 
 // Populate the engine Piece's static units data from JSON
 EnginePiece.units = unitJsonData as any;
@@ -71,7 +72,7 @@ export class Piece extends EnginePiece {
     protected _effects: Map<UnitStatus, GameObjects.Sprite | GameObjects.Image>;
     protected _offsetY: number;
     protected _ownerHighlightTween: Tweens.Tween;
-    protected _ownerHighlightPipeline: any;
+    protected _ownerHighlightFilter: ColorReplaceFilter | null = null;
 
     constructor(board: Board, id: number, config: PieceConfig) {
         super(board as any, id, config);
@@ -135,8 +136,8 @@ export class Piece extends EnginePiece {
         this._highlighted = false;
         if (!this._ownerHighlightTween.isDestroyed()) {
             this._ownerHighlightTween.pause();
-            if (this._ownerHighlightPipeline) {
-                this._ownerHighlightPipeline.newColor = 0;
+            if (this._ownerHighlightFilter) {
+                this._ownerHighlightFilter.setNewColor(0, 0, 0);
             }
         }
     }
@@ -990,13 +991,9 @@ export class Piece extends EnginePiece {
             tempOwner?.colour ?? this.owner?.colour ?? 0,
         );
 
-        const postFxPlugin: any = this.clientBoard.scene.game.plugins.get(
-            "rexcolorreplacepipelineplugin",
-        );
-        this._ownerHighlightPipeline = postFxPlugin.add(this._sprite, {
-            originalColor: startColor,
-            epsilon: 0,
-        });
+        this._ownerHighlightFilter = new ColorReplaceFilter([0, 0, 0], 0);
+        // @ts-expect-error -- phaser4
+        this._sprite.filters.internal.add(this._ownerHighlightFilter);
 
         const tweenColours: Types.Display.ColorObject[] =
             Array.from<Types.Display.ColorObject>({
@@ -1021,10 +1018,10 @@ export class Piece extends EnginePiece {
                 const newColor: Types.Display.ColorObject =
                     tweenColours[Math.round(tween.getValue())];
 
-                this._ownerHighlightPipeline.newColor = Display.Color.GetColor(
-                    newColor.r,
-                    newColor.g,
-                    newColor.b,
+                this._ownerHighlightFilter!.setNewColor(
+                    newColor.r / 255,
+                    newColor.g / 255,
+                    newColor.b / 255,
                 );
             },
         });

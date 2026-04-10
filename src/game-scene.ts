@@ -8,7 +8,6 @@ import {
     UnitStatus,
     SpellConfig,
 } from "@archaos/engine";
-import rexcolorreplacepipelineplugin from "@assets/plugins/rexcolorreplacepipelineplugin.min.js?url";
 import rexperlinplugin from "@assets/plugins/rexperlinplugin.min.js?url";
 import boardJson from "@assets/spritesheets/board.json?url";
 import boardAtlas from "@assets/spritesheets/board.png";
@@ -92,14 +91,6 @@ export class GameScene extends Scene {
         this.load.image("unit-glow", unitGlow);
 
         this.load.image("pointer-arrow", pointerArrow);
-
-        if (!this.plugins.get("rexcolorreplacepipelineplugin")) {
-            this.load.plugin(
-                "rexcolorreplacepipelineplugin",
-                rexcolorreplacepipelineplugin,
-                true,
-            );
-        }
 
         if (!this.plugins.get("rexperlinplugin")) {
             this.load.plugin("rexperlinplugin", rexperlinplugin, true);
