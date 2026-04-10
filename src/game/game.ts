@@ -5,7 +5,7 @@ import { FilterColorReplaceRenderNode } from "../gameobjects/filters/filtercolor
 export const launch = (containerId: string) => {
     return new Game({
         title: "Archaos",
-        version: "0.1.0",
+        version: "0.5.0",
         width: 400,
         height: 220,
         type: AUTO,
@@ -26,6 +26,7 @@ export const launch = (containerId: string) => {
             antialias: true,
             transparent: true,
             renderNodes: {
+                // @ts-ignore
                 [FilterColorReplaceRenderNode.KEY]:
                     FilterColorReplaceRenderNode,
             },
