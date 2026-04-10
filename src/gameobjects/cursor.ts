@@ -509,8 +509,8 @@ export class Cursor {
      * @returns the cursor type representing the direction
      */
     static getMovementDirectionType(
-        fromPoint: PMath.Vector2,
-        toPoint: PMath.Vector2,
+        fromPoint: { x: number; y: number },
+        toPoint: { x: number; y: number },
     ): CursorType {
         const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);

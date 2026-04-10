@@ -12,6 +12,7 @@ import {
     UnitStatus,
     UnitType,
     Path,
+    Point,
     Spell,
     createSpell,
     StartGame,
@@ -870,19 +871,22 @@ export class Board extends EngineBoard<Piece> {
     }
 
     override getPiecesAtPosition(
-        point: PMath.Vector2,
+        point: { x: number; y: number },
         filter?: (piece: Piece) => boolean,
     ): Piece[] {
-        return super.getPiecesAtPosition(point, filter) as Piece[];
+        return super.getPiecesAtPosition(
+            new Point(point.x, point.y),
+            filter,
+        ) as Piece[];
     }
 
     override getAdjacentPiecesAtPosition(
-        point: PMath.Vector2,
+        point: { x: number; y: number },
         filter?: (piece: Piece) => boolean,
         includeCentre?: boolean,
     ): Piece[] {
         return super.getAdjacentPiecesAtPosition(
-            point,
+            new Point(point.x, point.y),
             filter,
             includeCentre,
         ) as Piece[];
@@ -929,7 +933,7 @@ export class Board extends EngineBoard<Piece> {
      */
     async movePiece(
         id: number,
-        position: PMath.Vector2,
+        position: { x: number; y: number },
         silent?: boolean,
     ): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
@@ -941,7 +945,7 @@ export class Board extends EngineBoard<Piece> {
         const path: Path = this.rangeGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
-        if (isFlying || Board.distance(piece.position, position) <= 1.5) {
+        if (isFlying || Board.distance(piece.position, new Point(position.x, position.y)) <= 1.5) {
             if (!silent) {
                 this.sound.play(isFlying ? "fly" : "move");
             }
@@ -1043,7 +1047,8 @@ export class Board extends EngineBoard<Piece> {
         const didNotMove =
             isFlyAttack &&
             originPos &&
-            originPos.equals(attackingPiece.position);
+            originPos.x === attackingPiece.position.x &&
+            originPos.y === attackingPiece.position.y;
         if (didNotMove) {
             await attackingPiece.flyReturn(originPos, defendingPiece.position);
         }
@@ -1372,7 +1377,6 @@ export class Board extends EngineBoard<Piece> {
                         units.forEach((piece: Piece) => {
                             const target: GameObjects.Sprite = piece.sprite;
                             if (currentVal === 0) {
-                                // @ts-expect-error -- phaser4
                                 target.setTint(this.currentPlayer?.colour || 0xffffff)
                                     .setTintMode(Phaser.TintModes.FILL);
                             } else {
@@ -1477,7 +1481,7 @@ export class Board extends EngineBoard<Piece> {
      * @param position The board position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnPosition(position: PMath.Vector2): Promise<void> {
+    async centreOnPosition(position: { x: number; y: number }): Promise<void> {
         return this.centreOnWorldPosition(this.getIsoPosition(position));
     }
 
@@ -1885,11 +1889,11 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The isometric coordinates of the point.
      */
-    getIsoPosition(point: PMath.Vector2): PMath.Vector2 {
-        const newPoint: PMath.Vector2 = point.clone();
-
-        newPoint.x *= Board.DEFAULT_CELLSIZE;
-        newPoint.y *= Board.DEFAULT_CELLSIZE;
+    getIsoPosition(point: { x: number; y: number }): PMath.Vector2 {
+        const newPoint: PMath.Vector2 = new PMath.Vector2(
+            point.x * Board.DEFAULT_CELLSIZE,
+            point.y * Board.DEFAULT_CELLSIZE,
+        );
 
         const isoPos: PMath.Vector2 = Board.toIsometric(newPoint);
 
@@ -1904,7 +1908,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to get the screen position for.
      * @returns The screen position of the point.
      */
-    getScreenPosition(point: PMath.Vector2): PMath.Vector2 {
+    getScreenPosition(point: { x: number; y: number }): PMath.Vector2 {
         const isoPos: PMath.Vector2 = this.getIsoPosition(point);
 
         const screenPos: PMath.Vector2 = new PMath.Vector2(
@@ -1921,7 +1925,7 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The converted point.
      */
-    static toIsometric(point: PMath.Vector2): PMath.Vector2 {
+    static toIsometric(point: { x: number; y: number }): PMath.Vector2 {
         return new PMath.Vector2(point.x - point.y, (point.x + point.y) / 2);
     }
 

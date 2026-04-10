@@ -228,7 +228,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * and skips reveal animation
      */
     public async generateSimpleRange(
-        position: PMath.Vector2,
+        position: { x: number; y: number },
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -236,7 +236,8 @@ export class RangeGizmo extends EngineRangeGizmo {
     ): Promise<void> {
         if (
             !force &&
-            position.equals(this.lastSimplePosition) &&
+            position.x === this.lastSimplePosition.x &&
+            position.y === this.lastSimplePosition.y &&
             distance === this.lastDistance &&
             cursor === this.lastCursor &&
             lineOfSight === this.lastLoS
@@ -245,12 +246,12 @@ export class RangeGizmo extends EngineRangeGizmo {
         }
         await this.reset(force);
 
-        this.lastSimplePosition = position.clone();
+        this.lastSimplePosition = new PMath.Vector2(position.x, position.y);
         this.lastDistance = distance;
         this.lastCursor = cursor;
         this.lastLoS = lineOfSight;
 
-        const startPosition = position.clone();
+        const startPosition = new PMath.Vector2(position.x, position.y);
         this._rangeLayer.removeAll();
 
         return new Promise((resolve: Function) => {
@@ -327,7 +328,7 @@ export class RangeGizmo extends EngineRangeGizmo {
      * of sight from position
      */
     public async showSimpleRange(
-        position: PMath.Vector2,
+        position: { x: number; y: number },
         distance: number,
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
@@ -441,12 +442,13 @@ export class RangeGizmo extends EngineRangeGizmo {
      *
      * @param toPt The destination board position
      */
-    public showPath(toPt: PMath.Vector2): void {
+    public showPath(toPt: { x: number; y: number }): void {
         this._pathLayer.removeAll();
         if (
             !this._piece ||
             this._piece.hasStatus(UnitStatus.Flying) ||
-            toPt.equals(this._piece.position as unknown as PMath.Vector2)
+            (toPt.x === this._piece.position.x &&
+                toPt.y === this._piece.position.y)
         ) {
             return;
         }

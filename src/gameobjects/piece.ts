@@ -6,6 +6,7 @@ import {
     UnitStatus,
     UnitRangedProjectileType,
     Piece as EnginePiece,
+    Point,
 } from "@archaos/engine";
 import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
@@ -157,10 +158,8 @@ export class Piece extends EnginePiece {
             return;
         }
         for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
-            // @ts-expect-error -- phaser4
             this._sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
             await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
-            // @ts-expect-error -- phaser4
             this._sprite.setTint(this.owner?.colour ?? 0x000000)
                 .setTintMode(Phaser.TintModes.FILL);
             await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
@@ -390,7 +389,10 @@ export class Piece extends EnginePiece {
      * Update the facing direction of this piece based on movement from one
      * point to another.
      */
-    protected updateDirection(fromPoint: PMath.Vector2, toPoint: PMath.Vector2) {
+    protected updateDirection(
+        fromPoint: { x: number; y: number },
+        toPoint: { x: number; y: number },
+    ) {
         const isoXOffset: number =
             Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
 
@@ -406,7 +408,7 @@ export class Piece extends EnginePiece {
      * board position. Does not update the logical position.
      * Used for fly-attack approach animation.
      */
-    async flyApproach(targetPos: PMath.Vector2): Promise<void> {
+    async flyApproach(targetPos: { x: number; y: number }): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -469,7 +471,10 @@ export class Piece extends EnginePiece {
      * board position after a failed fly-attack. Does not update the
      * logical position.
      */
-    async flyReturn(originPos: PMath.Vector2, targetPos: PMath.Vector2): Promise<void> {
+    async flyReturn(
+        originPos: { x: number; y: number },
+        targetPos: { x: number; y: number },
+    ): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -530,16 +535,17 @@ export class Piece extends EnginePiece {
     /**
      * Move this piece to the specified point on the board.
      */
-    override async moveTo(point: PMath.Vector2, stepDuration?: number) {
+    override async moveTo(point: { x: number; y: number }, stepDuration?: number) {
         this.updateDirection(this.position, point);
-        this.position = point;
+        this.position = new Point(point.x, point.y);
         if (this.currentRider) {
-            this.currentRider.position = point;
+            this.currentRider.position = new Point(point.x, point.y);
             (this.currentRider as Piece).updatePosition(stepDuration);
         }
         if (
             this.currentMount &&
-            !(this.currentMount.position as PMath.Vector2).equals(this.position)
+            !(this.currentMount.position.x === this.position.x &&
+                this.currentMount.position.y === this.position.y)
         ) {
             await this.clientBoard.dismountPiece(this.id);
         }
@@ -991,9 +997,13 @@ export class Piece extends EnginePiece {
             tempOwner?.colour ?? this.owner?.colour ?? 0,
         );
 
-        this._ownerHighlightFilter = new ColorReplaceFilter([0, 0, 0], 0);
-        // @ts-expect-error -- phaser4
-        this._sprite.filters.internal.add(this._ownerHighlightFilter);
+        this._sprite.enableFilters();
+        this._ownerHighlightFilter = new ColorReplaceFilter(
+            this._sprite.filterCamera!,
+            [0, 0, 0],
+            0,
+        );
+        this._sprite.filters!.internal.add(this._ownerHighlightFilter);
 
         const tweenColours: Types.Display.ColorObject[] =
             Array.from<Types.Display.ColorObject>({

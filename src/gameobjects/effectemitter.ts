@@ -145,7 +145,6 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration,
                     onUpdate: (tween) => {
                         if (Math.round(tween.getValue()) % 2 === 0) {
-                            // @ts-expect-error -- phaser4
                             target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
                         } else {
                             target.sprite.setTint(target.defaultTint);
@@ -163,7 +162,6 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     to: te.to!,
                     duration,
                     onUpdate: (tween) => {
-                        // @ts-expect-error -- phaser4
                         target.sprite.setTint(colors![Math.floor(tween.getValue()) % colors!.length])
                             .setTintMode(Phaser.TintModes.FILL);
                     },
@@ -180,7 +178,6 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration: duration / 2,
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue());
-                        // @ts-expect-error -- phaser4
                         target.sprite.setTint(Display.Color.GetColor(value, value, value))
                             .setTintMode(Phaser.TintModes.FILL);
                     },
@@ -201,7 +198,6 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue()) % 5;
                         if (value === 0) {
-                            // @ts-expect-error -- phaser4
                             target.sprite.setTint(colors![Math.floor(Math.random() * colors!.length)])
                                 .setTintMode(Phaser.TintModes.FILL);
                         }

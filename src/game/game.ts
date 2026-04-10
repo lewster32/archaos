@@ -1,5 +1,6 @@
 import { GameScene } from "../game-scene";
 import { Game, Scale, AUTO } from "phaser";
+import { FilterColorReplaceRenderNode } from "../gameobjects/filters/filtercolorreplacerendernode";
 
 export const launch = (containerId: string) => {
     return new Game({
@@ -24,6 +25,11 @@ export const launch = (containerId: string) => {
             pixelArt: true,
             antialias: true,
             transparent: true,
+            renderNodes: {
+                [FilterColorReplaceRenderNode.KEY]: {
+                    function: FilterColorReplaceRenderNode,
+                },
+            },
         },
         scale: {
             mode: Scale.NONE,
