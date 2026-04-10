@@ -121,5 +121,8 @@ test-results/
 
 # Superpowers
 .superpowers/
+
+# Git worktrees
+.worktrees/
 scripts/fix-spell-unit-ids.mjs
 scripts/rename-unit-ids.mjs
