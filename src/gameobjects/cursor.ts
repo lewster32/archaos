@@ -11,13 +11,13 @@ import {
 import { Board } from "./board";
 import { Piece } from "./piece";
 import { AdvanceToAttack, AdvanceToRangedAttack } from "@archaos/engine";
-import { Geom, GameObjects, Input, Math as PMath } from "phaser";
+import { GameObjects, Input, Math as PMath } from "phaser";
 
 export class Cursor {
     /**
      * Current cursor position on the board.
      */
-    private readonly _position: Geom.Point;
+    private readonly _position: PMath.Vector2;
 
     /**
      * Image representing the cursor.
@@ -82,7 +82,7 @@ export class Cursor {
     /**
      * Offset to apply to cursor image position.
      */
-    static readonly OFFSET: Geom.Point = new Geom.Point(0, 0);
+    static readonly OFFSET: PMath.Vector2 = new PMath.Vector2(0, 0);
 
     /**
      * Map of direction vectors to cursor types.
@@ -111,7 +111,7 @@ export class Cursor {
         this._board.getLayer(BoardLayer.Pieces).add(this._image);
         this._type = CursorType.Idle;
 
-        this._position = new Geom.Point(0, 0);
+        this._position = new PMath.Vector2(0, 0);
         this._panningEnabled = this._board.needsPanning;
 
         this._board.scene.input.on("pointerdown", (pointer: Input.Pointer) => {
@@ -187,7 +187,7 @@ export class Cursor {
     /**
      * Get the current cursor position on the board.
      */
-    get position(): Geom.Point {
+    get position(): PMath.Vector2 {
         return this._position;
     }
 
@@ -211,14 +211,14 @@ export class Cursor {
 
         const pointer: Input.Pointer = this._board.scene.input.activePointer;
 
-        const translatedIsoPosition: Geom.Point = this.translateCursorPosition(
+        const translatedIsoPosition: PMath.Vector2 = this.translateCursorPosition(
             pointer.position,
         );
 
         // Only perform one intent check per tile (unless forced)
         if (
             !force &&
-            Geom.Point.Equals(translatedIsoPosition, this._position)
+            translatedIsoPosition.equals(this._position)
         ) {
             return ActionType.None;
         }
@@ -317,8 +317,8 @@ export class Cursor {
                 break;
         }
 
-        const isoPosition: Geom.Point = this._board.getIsoPosition(
-            new Geom.Point(translatedIsoPosition.x, translatedIsoPosition.y),
+        const isoPosition: PMath.Vector2 = this._board.getIsoPosition(
+            new PMath.Vector2(translatedIsoPosition.x, translatedIsoPosition.y),
         );
 
         this._image.x = isoPosition.x + Cursor.OFFSET.x;
@@ -453,7 +453,7 @@ export class Cursor {
      * @param vector
      * @returns
      */
-    private translateCursorPosition(vector: PMath.Vector2): Geom.Point {
+    private translateCursorPosition(vector: PMath.Vector2): PMath.Vector2 {
         const camera = this._board.scene.cameras.main;
         const point: PMath.Vector2 = new PMath.Vector2(
             vector.x + camera.scrollX + Board.DEFAULT_CELLSIZE,
@@ -469,7 +469,7 @@ export class Cursor {
         point.x = Math.round(ax);
         point.y = Math.round(ay);
 
-        return new Geom.Point(point.x, point.y);
+        return new PMath.Vector2(point.x, point.y);
     }
 
     /**
@@ -509,8 +509,8 @@ export class Cursor {
      * @returns the cursor type representing the direction
      */
     static getMovementDirectionType(
-        fromPoint: Geom.Point,
-        toPoint: Geom.Point,
+        fromPoint: PMath.Vector2,
+        toPoint: PMath.Vector2,
     ): CursorType {
         const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);

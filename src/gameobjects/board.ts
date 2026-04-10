@@ -51,7 +51,6 @@ import { Wizard } from "./wizard";
 import type { Tutorial } from "./tutorials/tutorial";
 import {
     Display,
-    Geom,
     GameObjects,
     Scene,
     Math as PMath,
@@ -206,7 +205,7 @@ export class Board extends EngineBoard<Piece> {
             EngineEvent.FocusPosition,
             (data: { position: { x: number; y: number } }) => {
                 this.centreOnPosition(
-                    new Geom.Point(data.position.x, data.position.y),
+                    new PMath.Vector2(data.position.x, data.position.y),
                 );
             },
         );
@@ -245,7 +244,7 @@ export class Board extends EngineBoard<Piece> {
                         ? startPiece.sprite.getCenter()
                         : data.startPosition
                           ? this.getIsoPosition(
-                                new Geom.Point(
+                                new PMath.Vector2(
                                     data.startPosition.x,
                                     data.startPosition.y,
                                 ),
@@ -253,7 +252,7 @@ export class Board extends EngineBoard<Piece> {
                           : null;
                     const targetPos = data.targetPosition
                         ? this.getIsoPosition(
-                              new Geom.Point(
+                              new PMath.Vector2(
                                   data.targetPosition.x,
                                   data.targetPosition.y,
                               ),
@@ -263,8 +262,8 @@ export class Board extends EngineBoard<Piece> {
                           : null;
                     await this.playEffect(
                         data.type,
-                        (startPos ?? targetPos) as Geom.Point,
-                        targetPos as Geom.Point,
+                        (startPos ?? targetPos) as PMath.Vector2,
+                        targetPos as PMath.Vector2,
                         piece,
                     );
                 }
@@ -273,7 +272,7 @@ export class Board extends EngineBoard<Piece> {
         this.events.on(
             EngineEvent.ShowCastRange,
             async (data: {
-                position: Geom.Point;
+                position: PMath.Vector2;
                 range: number;
                 lineOfSight: boolean;
             }) => {
@@ -349,10 +348,10 @@ export class Board extends EngineBoard<Piece> {
                     if (!piece) continue;
                     this.sound.play("spelleffect");
                     const startPos = this.getIsoPosition(
-                        new Geom.Point(move.from.x, move.from.y),
+                        new PMath.Vector2(move.from.x, move.from.y),
                     );
                     const endPos = this.getIsoPosition(
-                        new Geom.Point(move.to.x, move.to.y),
+                        new PMath.Vector2(move.to.x, move.to.y),
                     );
                     await this.playEffect(
                         EffectType.TurmoilBeam,
@@ -870,14 +869,14 @@ export class Board extends EngineBoard<Piece> {
     }
 
     override getPiecesAtPosition(
-        point: Geom.Point,
+        point: PMath.Vector2,
         filter?: (piece: Piece) => boolean,
     ): Piece[] {
         return super.getPiecesAtPosition(point, filter) as Piece[];
     }
 
     override getAdjacentPiecesAtPosition(
-        point: Geom.Point,
+        point: PMath.Vector2,
         filter?: (piece: Piece) => boolean,
         includeCentre?: boolean,
     ): Piece[] {
@@ -901,7 +900,7 @@ export class Board extends EngineBoard<Piece> {
         }
         this.sound.play("move");
         await piece.moveTo(
-            path.nodes.shift().pos as Geom.Point,
+            path.nodes.shift().pos as PMath.Vector2,
             Piece.DEFAULT_STEP_MOVE_DURATION,
         );
         // Check for engagement after each step
@@ -929,7 +928,7 @@ export class Board extends EngineBoard<Piece> {
      */
     async movePiece(
         id: number,
-        position: Geom.Point,
+        position: PMath.Vector2,
         silent?: boolean,
     ): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
@@ -1016,9 +1015,9 @@ export class Board extends EngineBoard<Piece> {
                 defendingPiece.position,
             ) > 1.5;
 
-        let originPos: Geom.Point | null = null;
+        let originPos: PMath.Vector2 | null = null;
         if (isFlyAttack) {
-            originPos = new Geom.Point(
+            originPos = new PMath.Vector2(
                 attackingPiece.position.x,
                 attackingPiece.position.y,
             );
@@ -1043,7 +1042,7 @@ export class Board extends EngineBoard<Piece> {
         const didNotMove =
             isFlyAttack &&
             originPos &&
-            Geom.Point.Equals(attackingPiece.position, originPos);
+            originPos.equals(attackingPiece.position);
         if (didNotMove) {
             await attackingPiece.flyReturn(originPos, defendingPiece.position);
         }
@@ -1468,7 +1467,7 @@ export class Board extends EngineBoard<Piece> {
         const avgY: number =
             pieces.reduce((sum, piece) => sum + piece.position.y, 0) /
             pieces.length;
-        return this.centreOnPosition(new Geom.Point(avgX, avgY));
+        return this.centreOnPosition(new PMath.Vector2(avgX, avgY));
     }
 
     /**
@@ -1477,7 +1476,7 @@ export class Board extends EngineBoard<Piece> {
      * @param position The board position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnPosition(position: Geom.Point): Promise<void> {
+    async centreOnPosition(position: PMath.Vector2): Promise<void> {
         return this.centreOnWorldPosition(this.getIsoPosition(position));
     }
 
@@ -1487,14 +1486,14 @@ export class Board extends EngineBoard<Piece> {
      * @param screenPosition The screen position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnScreenPosition(screenPosition: Geom.Point): Promise<void> {
+    async centreOnScreenPosition(screenPosition: PMath.Vector2): Promise<void> {
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
         const worldVector = camera.getWorldPoint(
             screenPosition.x,
             screenPosition.y,
         );
         return this.centreOnWorldPosition(
-            new Geom.Point(worldVector.x, worldVector.y),
+            new PMath.Vector2(worldVector.x, worldVector.y),
         );
     }
 
@@ -1505,7 +1504,7 @@ export class Board extends EngineBoard<Piece> {
      * @returns A promise that resolves when the camera has centred.
      */
     async centreOnWorldPosition(
-        isoPos: Geom.Point,
+        isoPos: PMath.Vector2,
     ): Promise<void> {
         if (!this.needsPanning) {
             return;
@@ -1697,7 +1696,7 @@ export class Board extends EngineBoard<Piece> {
                     } else if (spell?.range > 0) {
                         this.stateManager.evaluate(new SpellTargeting());
                         await this.rangeGizmo.showSimpleRange(
-                            this.selected.position as Geom.Point,
+                            this.selected.position as PMath.Vector2,
                             spell.range,
                             CursorType.RangeCast,
                             spell.lineOfSight,
@@ -1765,8 +1764,8 @@ export class Board extends EngineBoard<Piece> {
 
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
-                const isoPos: Geom.Point = this.getIsoPosition(
-                    new Geom.Point(x, y),
+                const isoPos: PMath.Vector2 = this.getIsoPosition(
+                    new PMath.Vector2(x, y),
                 );
 
                 const tile: GameObjects.Image = this.scene.add.image(
@@ -1807,8 +1806,8 @@ export class Board extends EngineBoard<Piece> {
      */
     async playEffect(
         type: EffectType,
-        startPosition: PMath.Vector2 | Geom.Point,
-        endPosition?: PMath.Vector2 | Geom.Point,
+        startPosition: PMath.Vector2,
+        endPosition?: PMath.Vector2,
         target?: Piece,
         duration?: number,
     ): Promise<void> {
@@ -1885,13 +1884,13 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The isometric coordinates of the point.
      */
-    getIsoPosition(point: Geom.Point): Geom.Point {
-        const newPoint: Geom.Point = Geom.Point.Clone(point);
+    getIsoPosition(point: PMath.Vector2): PMath.Vector2 {
+        const newPoint: PMath.Vector2 = point.clone();
 
         newPoint.x *= Board.DEFAULT_CELLSIZE;
         newPoint.y *= Board.DEFAULT_CELLSIZE;
 
-        const isoPos: Geom.Point = Board.toIsometric(newPoint);
+        const isoPos: PMath.Vector2 = Board.toIsometric(newPoint);
 
         isoPos.y += Board.DEFAULT_CELLSIZE / 2;
 
@@ -1904,10 +1903,10 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to get the screen position for.
      * @returns The screen position of the point.
      */
-    getScreenPosition(point: Geom.Point): Geom.Point {
-        const isoPos: Geom.Point = this.getIsoPosition(point);
+    getScreenPosition(point: PMath.Vector2): PMath.Vector2 {
+        const isoPos: PMath.Vector2 = this.getIsoPosition(point);
 
-        const screenPos: Geom.Point = new Geom.Point(
+        const screenPos: PMath.Vector2 = new PMath.Vector2(
             isoPos.x + this.scene.cameras.main.scrollX,
             isoPos.y + this.scene.cameras.main.scrollY,
         );
@@ -1921,8 +1920,8 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The converted point.
      */
-    static toIsometric(point: Geom.Point): Geom.Point {
-        return new Geom.Point(point.x - point.y, (point.x + point.y) / 2);
+    static toIsometric(point: PMath.Vector2): PMath.Vector2 {
+        return new PMath.Vector2(point.x - point.y, (point.x + point.y) / 2);
     }
 
     /**
@@ -1931,8 +1930,8 @@ export class Board extends EngineBoard<Piece> {
      * @param point The point to convert.
      * @returns The converted point.
      */
-    static fromIsometric(point: Geom.Point): Geom.Point {
-        return new Geom.Point(point.x + point.y / 2, point.y - point.x / 2);
+    static fromIsometric(point: PMath.Vector2): PMath.Vector2 {
+        return new PMath.Vector2(point.x + point.y / 2, point.y - point.x / 2);
     }
 
     /* #endregion */

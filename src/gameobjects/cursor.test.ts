@@ -7,7 +7,7 @@ import {
 } from "@archaos/engine";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Cursor } from "./cursor";
-import { Geom } from "phaser";
+import { Geom, Math as PMath } from "phaser";
 import type { Board } from "./board";
 
 // ─── Pointer/tile coordinate helpers ─────────────────────────────────────────
@@ -516,9 +516,9 @@ describe("Cursor.type setter/getter", () => {
 // ─── position getter ──────────────────────────────────────────────────────────
 
 describe("Cursor.position", () => {
-    it("returns a Geom.Point instance", () => {
+    it("returns a PMath.Vector2 instance", () => {
         const { cursor } = makeCursor();
-        expect(cursor.position).toBeInstanceOf(Geom.Point);
+        expect(cursor.position).toBeInstanceOf(PMath.Vector2);
     });
 
     it("returns the same object reference on successive calls (no copy)", () => {
