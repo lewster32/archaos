@@ -55,7 +55,7 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
                     `${target.name} already has ${this.name} - this spell has no effect`,
                     Colour.Magenta,
                 );
-                await this._board.idleDelay(Board.DEFAULT_DELAY);
+                await this._board.idleDelay();
                 return true;
             }
         }
@@ -65,7 +65,7 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
             Colour.Green,
         );
 
-        await this._board.idleDelay(Board.DEFAULT_DELAY);
+        await this._board.idleDelay();
         return true;
     }
 }

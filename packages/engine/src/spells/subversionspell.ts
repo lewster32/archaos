@@ -56,7 +56,7 @@ export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
                 Colour.Magenta,
             );
         }
-        await this._board.idleDelay(Board.DEFAULT_DELAY);
+        await this._board.idleDelay();
         return true;
     }
 }

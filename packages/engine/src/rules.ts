@@ -278,7 +278,7 @@ export class Rules {
                 board.selected.turnOver = true;
             }
             board.deselectPlayer();
-            await board.idleDelay(Board.DEFAULT_DELAY);
+            await board.idleDelay();
             return false;
         } else {
             board.logger.log(
@@ -580,7 +580,7 @@ export class Rules {
                         board.selected.turnOver = true;
                     }
                     board.deselectPlayer();
-                    await board.idleDelay(Board.DEFAULT_DELAY);
+                    await board.idleDelay();
                     await board.nextPlayer();
                 }
                 return ActionType.Cancel;
@@ -794,7 +794,7 @@ export class Rules {
                     Spell.getRandomSpell(board.rng, true, board.spellFilter),
                 );
                 await piece.kill();
-                await board.idleDelay(Board.DEFAULT_DELAY);
+                await board.idleDelay();
             }
         }
         board.emitBoardUpdateEvent();
