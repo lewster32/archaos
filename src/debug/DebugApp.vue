@@ -9,9 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import SoundsDebug from "./sounds/SoundsDebug.vue";
 
 const params = new URLSearchParams(window.location.search);
-const panel = ref(params.has("sounds") ? "sounds" : "");
+const panel: "sounds" | "" = params.has("sounds") ? "sounds" : "";
 </script>
