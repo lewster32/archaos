@@ -253,7 +253,7 @@ export class Wizard extends Piece {
         if (ownedPieceCount < 1) {
             // PCHOWWW
             this.clientBoard.sound.play("disbelieve");
-            await Board.delay(Board.DEFAULT_DELAY);
+            await this.clientBoard.delay(Board.DEFAULT_DELAY);
         }
         await this.clientBoard.checkWinCondition();
     }
