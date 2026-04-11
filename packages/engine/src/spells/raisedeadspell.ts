@@ -1,4 +1,3 @@
-import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
 import { EngineEvent } from "../enums/engineevent";
 import { Colour } from "../enums/colour";

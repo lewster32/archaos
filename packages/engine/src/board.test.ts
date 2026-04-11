@@ -652,7 +652,9 @@ describe("Board", () => {
         });
 
         it("selectPiece throws for an unknown id", async () => {
-            await expect(makeBoard().selectPiece(999)).rejects.toThrow();
+            await expect(makeBoard().selectPiece(999)).rejects.toThrow(
+                "No piece with ID 999 found to select",
+            );
         });
 
         it("deselectPiece clears selected", async () => {
@@ -723,7 +725,7 @@ describe("Board", () => {
         it("throws for an unknown piece id", async () => {
             await expect(
                 makeBoard().movePiece(999, new Point(0, 0)),
-            ).rejects.toThrow();
+            ).rejects.toThrow("Could not find piece with ID 999");
         });
     });
 
@@ -966,7 +968,7 @@ describe("Board", () => {
             );
             await expect(
                 board.attackPiece(999, defender.id),
-            ).rejects.toThrow();
+            ).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("throws when the defending piece does not exist", async () => {
@@ -980,7 +982,7 @@ describe("Board", () => {
             );
             await expect(
                 board.attackPiece(attacker.id, 999),
-            ).rejects.toThrow();
+            ).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("emits PieceAttacked and returns attacker", async () => {
@@ -1021,7 +1023,7 @@ describe("Board", () => {
             );
             await expect(
                 board.rangedAttackPiece(999, defender.id),
-            ).rejects.toThrow();
+            ).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("throws when the defending piece does not exist", async () => {
@@ -1032,7 +1034,7 @@ describe("Board", () => {
             );
             await expect(
                 board.rangedAttackPiece(attacker.id, 999),
-            ).rejects.toThrow();
+            ).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("emits PieceRangedAttacked and returns attacker", async () => {
@@ -1074,7 +1076,7 @@ describe("Board", () => {
             const mount = await board.addPiece(
                 makePieceConfig(1, 0, board.players[0], [UnitStatus.MountAny]),
             );
-            await expect(board.mountPiece(999, mount.id)).rejects.toThrow();
+            await expect(board.mountPiece(999, mount.id)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("mountPiece throws when the mounted piece does not exist", async () => {
@@ -1083,12 +1085,12 @@ describe("Board", () => {
             const rider = await board.addPiece(
                 makePieceConfig(0, 0, board.players[0], [UnitStatus.Wizard]),
             );
-            await expect(board.mountPiece(rider.id, 999)).rejects.toThrow();
+            await expect(board.mountPiece(rider.id, 999)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("dismountPiece throws when the piece does not exist", async () => {
             const board = makeBoard();
-            await expect(board.dismountPiece(999)).rejects.toThrow();
+            await expect(board.dismountPiece(999)).rejects.toThrow("Could not find piece with ID 999");
         });
     });
 
@@ -1230,11 +1232,11 @@ describe("Board", () => {
         it("throws when player or config is missing", () => {
             Board.registerSpellFactory((_b, _id, _cfg) => ({} as any));
             const board = makeBoard();
-            const player = board.addPlayer({
+            const _player = board.addPlayer({
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            expect(() => board.addSpell(null as any, null as any)).toThrow();
+            expect(() => board.addSpell(null as any, null as any)).toThrow("No player or config provided");
             (Board as any)._spellFactory = null;
         });
     });
@@ -1276,14 +1278,14 @@ describe("Board", () => {
             board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
             board.createWizards();
             // A wizard is already placed — calling again should throw.
-            expect(() => board.createWizards()).toThrow();
+            expect(() => board.createWizards()).toThrow("Cannot create wizards");
         });
 
         it("throws when the game is already over", () => {
             const board = makeBoard();
             board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
             board.state = BoardState.GameOver;
-            expect(() => board.createWizards()).toThrow();
+            expect(() => board.createWizards()).toThrow("Cannot create wizards");
         });
     });
 
@@ -1422,7 +1424,7 @@ describe("Board", () => {
             };
             const board = makeBoard();
             // p1 local with no spells — provides the human turn that breaks
-            const p1 = board.addPlayer({
+            const _p1 = board.addPlayer({
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });

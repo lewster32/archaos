@@ -1,7 +1,6 @@
 import { EffectType } from "@archaos/engine";
 import { Piece } from "./piece";
 
-import Phaser from "phaser";
 import {
     Scene,
     GameObjects,
@@ -9,6 +8,7 @@ import {
     Curves,
     BlendModes,
     Display,
+    TintModes,
 } from "phaser";
 
 import effectsData from "@assets/data/effects.json";
@@ -145,13 +145,13 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration,
                     onUpdate: (tween) => {
                         if (Math.round(tween.getValue()) % 2 === 0) {
-                            target.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+                            target.sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
                         } else {
-                            target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
+                            target.sprite.setTint(target.defaultTint).setTintMode(TintModes.MULTIPLY);
                         }
                     },
                     onComplete: () => {
-                        target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
+                        target.sprite.setTint(target.defaultTint).setTintMode(TintModes.MULTIPLY);
                     },
                 });
                 break;
@@ -163,10 +163,10 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration,
                     onUpdate: (tween) => {
                         target.sprite.setTint(colors![Math.floor(tween.getValue()) % colors!.length])
-                            .setTintMode(Phaser.TintModes.FILL);
+                            .setTintMode(TintModes.FILL);
                     },
                     onComplete: () => {
-                        target.sprite.setTint(target.defaultTint).setTintMode(Phaser.TintModes.MULTIPLY);
+                        target.sprite.setTint(target.defaultTint).setTintMode(TintModes.MULTIPLY);
                     },
                 });
                 break;
@@ -179,7 +179,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue());
                         target.sprite.setTint(Display.Color.GetColor(value, value, value))
-                            .setTintMode(Phaser.TintModes.FILL);
+                            .setTintMode(TintModes.FILL);
                     },
                 });
                 this.scene.tweens.add({
@@ -199,7 +199,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                         const value: number = Math.floor(tween.getValue()) % 5;
                         if (value === 0) {
                             target.sprite.setTint(colors![Math.floor(Math.random() * colors!.length)])
-                                .setTintMode(Phaser.TintModes.FILL);
+                                .setTintMode(TintModes.FILL);
                         }
                     },
                 });

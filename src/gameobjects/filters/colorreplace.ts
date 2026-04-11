@@ -1,5 +1,5 @@
 /* v8 ignore start */
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import { FilterColorReplaceRenderNode } from "./filtercolorreplacerendernode";
 
 /**

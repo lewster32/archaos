@@ -1,7 +1,6 @@
 import { Colour } from "../enums/colour";
 import { UnitStatus } from "../enums/unitstatus";
 import { UnitType } from "../enums/unittype";
-import { Board } from "../board";
 import { EffectType } from "../enums/effecttype";
 import { EngineEvent } from "../enums/engineevent";
 import { Spell } from "./spell";

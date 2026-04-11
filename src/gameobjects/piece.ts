@@ -13,8 +13,7 @@ import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
-import Phaser from "phaser";
-import { Math as PMath, GameObjects, Display, Tweens } from "phaser";
+import { Math as PMath, GameObjects, Display, Tweens, TintModes } from "phaser";
 import type { Player } from "./player";
 import type { Types } from "phaser";
 import { ColorReplaceFilter } from "./filters/colorreplace";
@@ -159,10 +158,10 @@ export class Piece extends EnginePiece {
             return;
         }
         for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
-            this._sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+            this._sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
             await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
             this._sprite.setTint(this.owner?.colour ?? 0x000000)
-                .setTintMode(Phaser.TintModes.FILL);
+                .setTintMode(TintModes.FILL);
             await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
         }
         this._sprite.clearTint();
