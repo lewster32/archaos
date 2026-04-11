@@ -41,7 +41,9 @@ import type { SoundParams } from "../../gameobjects/chaossounds";
 
 interface SoundEntry extends SoundParams {
     id: string;
+    address: string;
     calledFrom: string[];
+    _note?: string;
 }
 
 const sounds = soundsData as SoundEntry[];
@@ -51,6 +53,8 @@ async function play(sound: SoundEntry): Promise<void> {
     playing.value = true;
     try {
         await playSound(sound);
+    } catch (e) {
+        console.error("Failed to play sound", sound.id, e);
     } finally {
         playing.value = false;
     }
