@@ -54,12 +54,8 @@ import { ref, watch, onMounted, reactive, computed } from "vue";
 import SliderControl from "./SliderControl.vue";
 import wizardsUrl from "@assets/spritesheets/wizards.png";
 import hatsUrl from "@assets/spritesheets/hats.png";
-import {
-    hatYFix,
-    replaceColors,
-    replaceSkin,
-    searchColors,
-} from "@assets/spritesheets/wizards.json";
+import wizardsJson from "@assets/spritesheets/wizards.json";
+const { hatYFix, replaceColors, replaceSkin, searchColors } = wizardsJson;
 import { Wizard } from "@archaos/engine";
 
 const props = defineProps<{

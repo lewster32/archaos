@@ -122,11 +122,6 @@ export class TestRNG implements IRNG {
         return this._fracValue;
     }
 
-    /** Allow tests to override the value returned by `between()`. */
-    set betweenValue(v: number) {
-        this._betweenValue = v;
-    }
-
     pick<T>(array: T[]): T {
         return array[0];
     }
