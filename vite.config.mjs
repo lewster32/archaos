@@ -20,6 +20,10 @@ export default defineConfig({
         assetsInlineLimit: 0,
         chunkSizeWarningLimit: 1500,
         rolldownOptions: {
+            input: {
+                main:  "index.html",
+                debug: "debug.html",
+            },
             output: {
                 entryFileNames: `assets/[name].js`,
                 chunkFileNames: `assets/[name].js`,
