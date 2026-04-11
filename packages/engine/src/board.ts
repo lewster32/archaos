@@ -44,6 +44,17 @@ import { RangeGizmo } from "./rangegizmo";
 export type SimplePoint = { x: number; y: number };
 
 /**
+ * Optional dependency overrides for the engine Board.
+ * Pass in tests to inject deterministic RNG, a mock Logger,
+ * and/or a mock Rules instance instead of the production singletons.
+ */
+export interface BoardDeps {
+    rng?: IRNG;
+    logger?: Logger;
+    rules?: Rules;
+}
+
+/**
  * The engine Board: pure game state, turn orchestration,
  * and geometry queries. No Phaser imports.
  *
@@ -185,9 +196,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         height: number = Board.DEFAULT_HEIGHT,
         classicBalance: boolean = false,
         seed?: string,
+        deps?: BoardDeps,
     ) {
         super(id);
-        this._rng = new GameRNG(seed);
+        this._rng    = deps?.rng    ?? new GameRNG(seed);
+        this._logger = deps?.logger ?? Logger.getInstance();
+        this._rules  = deps?.rules  ?? Rules.getInstance();
         this._classicBalance = classicBalance;
 
         this._width = width;
@@ -204,8 +218,6 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._selected = null;
         this._currentPlayer = null;
 
-        this._logger = Logger.getInstance();
-        this._rules = Rules.getInstance();
         this._rangeGizmo = new RangeGizmo(this);
         this._stateManager = new PhaseMachine((activeState: string) => {
             this.onPhaseTransition(activeState);
