@@ -1,0 +1,17 @@
+<template>
+    <SoundsDebug v-if="panel === 'sounds'" />
+    <div v-else>
+        <h1>Archaos Debug Tools</h1>
+        <ul>
+            <li><a href="?sounds">Sounds</a></li>
+        </ul>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import SoundsDebug from "./sounds/SoundsDebug.vue";
+
+const params = new URLSearchParams(window.location.search);
+const panel = ref(params.has("sounds") ? "sounds" : "");
+</script>
