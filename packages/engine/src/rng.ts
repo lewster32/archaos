@@ -102,6 +102,7 @@ export class GameRNG implements IRNG {
  */
 export class TestRNG implements IRNG {
     private _fracValue: number;
+    private _betweenValue: number | null = null;
 
     constructor(fracValue: number = 0.5) {
         this._fracValue = fracValue;
@@ -110,6 +111,11 @@ export class TestRNG implements IRNG {
     /** Allow tests to override the value returned by `frac()`. */
     set fracValue(v: number) {
         this._fracValue = v;
+    }
+
+    /** Allow tests to override the value returned by `between()`. */
+    set betweenValue(v: number) {
+        this._betweenValue = v;
     }
 
     frac(): number {
@@ -128,7 +134,7 @@ export class TestRNG implements IRNG {
         return min;
     }
     between(min: number, _max: number): number {
-        return min;
+        return this._betweenValue ?? min;
     }
     shuffle<T>(array: T[]): T[] {
         return array;
