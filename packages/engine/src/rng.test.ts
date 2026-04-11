@@ -32,6 +32,13 @@ describe("TestRNG", () => {
         expect(rng.between(5, 10)).toBe(5);
     });
 
+    it("betweenValue setter overrides between() output", () => {
+        const rng = new TestRNG();
+        expect(rng.between(5, 10)).toBe(5); // default: returns min
+        rng.betweenValue = 8;
+        expect(rng.between(5, 10)).toBe(8); // override: returns configured value
+    });
+
     it("shuffle returns array unchanged", () => {
         const rng = new TestRNG();
         const arr = [1, 2, 3];

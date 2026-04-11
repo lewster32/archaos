@@ -111,7 +111,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 this._board.logger.log(
                     `${target.fullName}'s creations were dispelled by ${this.name}`,
                 );
-                await this._board.idleDelay(Board.DEFAULT_DELAY);
+                await this._board.idleDelay();
             } else {
                 this._board.events.emit(EngineEvent.EffectRequested, {
                     sound: "killcreature",

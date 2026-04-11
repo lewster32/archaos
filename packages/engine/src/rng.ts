@@ -113,6 +113,11 @@ export class TestRNG implements IRNG {
         this._fracValue = v;
     }
 
+    /** Allow tests to override the value returned by `between()`. */
+    set betweenValue(v: number) {
+        this._betweenValue = v;
+    }
+
     frac(): number {
         return this._fracValue;
     }

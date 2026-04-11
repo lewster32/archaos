@@ -136,7 +136,7 @@ export { Rules, _resetRulesForTesting } from "./rules";
 
 // Board
 export { Board } from "./board";
-export type { SimplePoint } from "./board";
+export type { SimplePoint, BoardDeps } from "./board";
 
 // Register the spell factory on Board to break the
 // circular dependency (board → spellfactory →

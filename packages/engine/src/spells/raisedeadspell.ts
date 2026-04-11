@@ -49,7 +49,7 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             player.ai?.rememberNonIllusionPiece(target.id);
         });
 
-        await this._board.idleDelay(Board.DEFAULT_DELAY);
+        await this._board.idleDelay();
         return true;
     }
 }

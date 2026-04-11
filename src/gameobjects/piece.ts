@@ -160,10 +160,10 @@ export class Piece extends EnginePiece {
         }
         for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
             this._sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-            await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
+            await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
             this._sprite.setTint(this.owner?.colour ?? 0x000000)
                 .setTintMode(Phaser.TintModes.FILL);
-            await Board.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
+            await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
         }
         this._sprite.clearTint();
         this._sprite.setTint(this.defaultTint);
@@ -637,7 +637,7 @@ export class Piece extends EnginePiece {
                 null,
                 piece as Piece,
             );
-            await Board.delay(Board.DEFAULT_DELAY);
+            await this.clientBoard.delay(Board.DEFAULT_DELAY);
 
             // Shadow Form is lost on attacking, regardless of success
             if (this.hasStatus(UnitStatus.ShadowForm)) {
@@ -762,7 +762,7 @@ export class Piece extends EnginePiece {
                 Colour.Orange,
             );
 
-            await Board.delay(Board.DEFAULT_DELAY / 2);
+            await this.clientBoard.delay(Board.DEFAULT_DELAY / 2);
 
             if (rollSuccess) {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
@@ -834,7 +834,7 @@ export class Piece extends EnginePiece {
             this._sprite.visible = false;
         }
         this.clientBoard.emitBoardUpdateEvent();
-        await Board.delay(Board.DEFAULT_DELAY);
+        await this.clientBoard.delay(Board.DEFAULT_DELAY);
         this.clientBoard.boardEvents?.emit(BoardEvent.PieceDied, this);
     }
 
