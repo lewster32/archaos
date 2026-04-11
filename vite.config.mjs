@@ -21,7 +21,7 @@ export default defineConfig({
         chunkSizeWarningLimit: 1500,
         rolldownOptions: {
             input: {
-                main:  "index.html",
+                main: "index.html",
                 debug: "debug.html",
             },
             output: {
