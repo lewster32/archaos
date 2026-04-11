@@ -231,12 +231,11 @@ describe("Board", () => {
             ).toHaveLength(8);
         });
 
-        it("returns 8 points even when includeCentre is true (centre excluded by outer guard)", () => {
+        it("includes the origin when includeCentre is true", () => {
             const board = makeBoard();
-            // The outer loop condition `(x !== point.x || y !== point.y)` always
-            // excludes the origin, so includeCentre=true still yields 8 points.
             const pts = board.getAdjacentPoints(new Point(6, 6), true);
-            expect(pts).toHaveLength(8);
+            expect(pts).toHaveLength(9);
+            expect(pts.some((p) => p.x === 6 && p.y === 6)).toBe(true);
         });
     });
 
@@ -591,6 +590,9 @@ describe("Board", () => {
             });
             (p1 as any)._defeated = true;
             await board.checkWinCondition();
+            // "Dave" appears in the draw message — a Red Dwarf reference
+            // ("Everybody's dead Dave"); the message text is defined in
+            // board.ts.
             expect(logger.log).toHaveBeenCalledWith(
                 expect.stringContaining("Dave"),
                 expect.anything(),

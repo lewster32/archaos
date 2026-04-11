@@ -560,7 +560,6 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         for (let x: number = point.x - 1; x <= point.x + 1; x++) {
             for (let y: number = point.y - 1; y <= point.y + 1; y++) {
                 if (
-                    (x !== point.x || y !== point.y) &&
                     x >= 0 &&
                     y >= 0 &&
                     x < this.width &&
