@@ -78,31 +78,6 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      */
     public static CHEAT_FORCE_CAST: boolean | null = null;
 
-    /**
-     * Cheat to use short animation delays for actions.
-     */
-    public static CHEAT_SHORT_DELAY: boolean = false;
-
-    /* ── Timing constants ────────────────────────── */
-
-    static get DEFAULT_DELAY(): number {
-        return this.CHEAT_SHORT_DELAY ? 10 : 750;
-    }
-
-    static get END_TURN_DELAY(): number {
-        return this.CHEAT_SHORT_DELAY ? 10 : 1500;
-    }
-
-    static get SPREAD_DELAY(): number {
-        return this.CHEAT_SHORT_DELAY ? 10 : 250;
-    }
-
-    static get NEW_TURN_HIGHLIGHT_DURATION(): number {
-        return this.CHEAT_SHORT_DELAY ? 10 : 700;
-    }
-
-    static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
-
     /* ── Board geometry constants ─────────────────── */
 
     static readonly DEFAULT_WIDTH: number = 13;
@@ -1059,7 +1034,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     Colour.Yellow,
                 );
             }
-            await Board.delay(2000);
+            await this.delay(2000);
             this.emitUIEvent(EventType.GameOver, true);
             this._boardEvents.emit(BoardEvent.GameOver);
             return true;
@@ -1111,19 +1086,26 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Delay for a given time.
+     * Delay hook. In the engine this resolves on the next event-loop
+     * tick (0 ms) so game-logic tests run instantly.
+     * The client Board overrides this with real timing.
+     *
+     * @param _time Ignored in the engine; forwarded to the client override.
      */
-    static async delay(time: number = Board.DEFAULT_DELAY): Promise<void> {
-        return new Promise((resolve) => setTimeout(resolve, time));
+    async delay(_time?: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, 0));
     }
 
     /**
-     * Delay with an idle state then restore.
+     * Briefly enter an idle state then restore.
+     * Calls `this.delay()` so the client override is used automatically.
+     *
+     * @param _time Ignored in the engine; forwarded to the client override.
      */
-    async idleDelay(time: number = Board.DEFAULT_DELAY): Promise<void> {
+    async idleDelay(_time?: number): Promise<void> {
         const oldState: BoardState = this.state;
         this.state = BoardState.Idle;
-        await Board.delay(time);
+        await this.delay(_time);
         this.state = oldState;
     }
 
@@ -1206,14 +1188,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan,
                 );
                 this._balanceShift = 0;
-                await this.idleDelay(Board.DEFAULT_DELAY);
+                await this.idleDelay();
             }
             const anySpellsLeft = this.players.some(
                 (p) => !p.defeated && p.spells.length > 0,
             );
             if (anySpellsLeft) {
                 pm.evaluate(new SpellbookReady());
-                await this.idleDelay(Board.END_TURN_DELAY);
+                await this.idleDelay();
             } else {
                 this._logger.log(
                     `No spells to cast, skipping to movement`,
@@ -1221,7 +1203,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 );
                 pm.evaluate(new SkipSpellbook());
                 pm.evaluate(new MovingReady());
-                await this.idleDelay(Board.END_TURN_DELAY);
+                await this.idleDelay();
             }
         } else if (pm.isActive(pm.states.spellbook)) {
             // Skip casting phase if no player selected a spell
@@ -1231,7 +1213,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             if (anySpellSelected) {
                 pm.evaluate(new SpellsDone());
                 pm.evaluate(new CastingReady());
-                await this.idleDelay(Board.END_TURN_DELAY);
+                await this.idleDelay();
             } else {
                 this._logger.log(
                     `No spells to cast, skipping to movement`,
@@ -1262,7 +1244,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         } else if (pm.isActive(pm.states.spreading)) {
             pm.evaluate(new SpreadingDone());
             pm.evaluate(new MovingReady());
-            await this.idleDelay(Board.END_TURN_DELAY);
+            await this.idleDelay();
         }
         this.emitBoardUpdateEvent();
     }
