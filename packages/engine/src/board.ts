@@ -199,9 +199,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         deps?: BoardDeps,
     ) {
         super(id);
-        this._rng    = deps?.rng    ?? new GameRNG(seed);
+        this._rng = deps?.rng ?? new GameRNG(seed);
         this._logger = deps?.logger ?? Logger.getInstance();
-        this._rules  = deps?.rules  ?? Rules.getInstance();
+        this._rules = deps?.rules ?? Rules.getInstance();
         this._classicBalance = classicBalance;
 
         this._width = width;
