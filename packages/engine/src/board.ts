@@ -32,8 +32,10 @@ import { UnitStatus } from "./enums/unitstatus";
 import type { IRNG } from "./rng";
 import { GameRNG } from "./rng";
 import type { PieceConfig, WizardConfig } from "./configs/piececonfig";
+import type { PlayerConfig } from "./configs/playerconfig";
 import type { SpellConfig } from "./configs/spellconfig";
 import type { Box } from "./interfaces/ui";
+import type { RemotePlayer } from "./interfaces/remoteplayer";
 import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
 
@@ -439,6 +441,28 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             return this._players.get(id);
         }
         return null;
+    }
+
+    /**
+     * Create a player from config and add them to the board.
+     *
+     * @param config Player configuration.
+     * @param remote Optional remote-player controller (AI or network).
+     * @returns The newly created player.
+     */
+    addPlayer(
+        config: PlayerConfig,
+        remote?: RemotePlayer | null,
+    ): Player<P> {
+        const player = new Player<P>(
+            this,
+            this._idCounter++,
+            config,
+            Player.PLAYER_COLOURS[this._players.size],
+            remote,
+        );
+        this._players.set(player.id, player);
+        return player;
     }
 
     /* ── Spells ──────────────────────────────────── */
