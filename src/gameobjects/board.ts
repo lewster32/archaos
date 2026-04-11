@@ -33,6 +33,7 @@ import {
     SpellTargeting,
 } from "@archaos/engine";
 import type {
+    BoardDeps,
     PieceConfig,
     WizardConfig,
     PlayerConfig,
@@ -41,6 +42,7 @@ import type {
     SpellbookOpenEventData,
     SpreadBatchPayload,
     TurmoilBatchPayload,
+    RemotePlayer,
 } from "@archaos/engine";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
@@ -72,6 +74,26 @@ import { RainEffect, WeatherEffect, WeatherType } from "./boardeffects/weather";
  * @param height The height of the board in cells.
  */
 export class Board extends EngineBoard<Piece> {
+    public static CHEAT_SHORT_DELAY: boolean = false;
+
+    static get DEFAULT_DELAY(): number {
+        return this.CHEAT_SHORT_DELAY ? 10 : 750;
+    }
+
+    static get END_TURN_DELAY(): number {
+        return this.CHEAT_SHORT_DELAY ? 10 : 1500;
+    }
+
+    static get SPREAD_DELAY(): number {
+        return this.CHEAT_SHORT_DELAY ? 10 : 250;
+    }
+
+    static get NEW_TURN_HIGHLIGHT_DURATION(): number {
+        return this.CHEAT_SHORT_DELAY ? 10 : 700;
+    }
+
+    static readonly NEW_TURN_HIGHLIGHT_STEPS: number = 7;
+
     /**
      * The Phaser scene the board is present in.
      */
@@ -110,8 +132,9 @@ export class Board extends EngineBoard<Piece> {
         height: number = Board.DEFAULT_HEIGHT,
         classicBalance: boolean = false,
         seed?: string,
+        deps?: BoardDeps,
     ) {
-        super(id, width, height, classicBalance, seed);
+        super(id, width, height, classicBalance, seed, deps);
         this._scene = scene;
         this._layers = new Map();
 
@@ -378,6 +401,16 @@ export class Board extends EngineBoard<Piece> {
         // Debugging aid
         globalThis["currentBoard"] = this;
     }
+
+    /* #region Timing */
+
+    override async delay(
+        time: number = (this.constructor as typeof Board).DEFAULT_DELAY,
+    ): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+
+    /* #endregion */
 
     /* #region State */
 
@@ -1100,7 +1133,7 @@ export class Board extends EngineBoard<Piece> {
                 CursorType.RangeRangedAttack,
                 true,
             );
-            await Board.delay(Board.DEFAULT_DELAY);
+            await this.delay(Board.DEFAULT_DELAY);
         }
         this._busy = true;
         if (attackingPiece && defendingPiece) {
@@ -1212,9 +1245,14 @@ export class Board extends EngineBoard<Piece> {
      * Add a new player to the game.
      *
      * @param config The configuration for the player to add.
+     * @param remote Optional remote-player controller (unused here;
+     *               client Player sets up AI internally from config).
      * @returns The newly added player.
      */
-    addPlayer(config: PlayerConfig): Player {
+    override addPlayer(
+        config: PlayerConfig,
+        _remote?: RemotePlayer | null,
+    ): Player {
         const player: Player = new Player(
             this,
             this._idCounter++,
