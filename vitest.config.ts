@@ -29,6 +29,13 @@ export default defineConfig({
                     include: ["src/**/*.test.ts"],
                     exclude: ["src/components/**/*.test.ts"],
                     setupFiles: ["./vitest.setup.ts"],
+                    deps: {
+                        optimizer: {
+                            web: {
+                                include: ["phaser"],
+                            },
+                        },
+                    },
                 },
             },
             {
