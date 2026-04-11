@@ -630,6 +630,41 @@ describe("generate", () => {
         expect(warned?.warning).toBe(true);
     });
 
+    // ── A* open-set update (lines 363-366) ──────────────────────────────────
+    //
+    // NOTE: Lines 363-366 are a defensive coding pattern (updating a node's
+    // cost when a cheaper path is found while it is already in the open/closed
+    // set). With the current diagonalHeuristic (diagonal cost = 1.5, cardinal
+    // cost = 1.0) on an 8-connected unit grid, this branch is structurally
+    // unreachable: the heuristic is admissible and very close to consistent,
+    // so A* always reaches each node via its cheapest path on the first visit.
+    // The branch would only fire if costs/heuristic were changed to allow a
+    // specific form of inconsistency. It is excluded from coverage targets.
+
+    it("findPath with warning node still finds a valid path", () => {
+        // Exercises the A* algorithm with a warning node (inflated h) to
+        // ensure the planner degrades gracefully and still returns a result.
+        const board = makeMockBoard();
+        const gizmo = new TestRangeGizmo(board);
+
+        const nodeA = new Node(0, 0); // start
+        const nodeB = new Node(1, 0); // warning — A* avoids but cannot skip
+        const nodeC = new Node(0, 1); // normal
+        const nodeD = new Node(1, 1); // destination
+
+        nodeB.warning = true;
+
+        [nodeA, nodeB, nodeC, nodeD].forEach((n) => {
+            n.traversable = true;
+        });
+
+        gizmo.setValidNodes([nodeA, nodeB, nodeC, nodeD]);
+
+        // A path exists via C→D (avoiding the expensive warning node B)
+        const path = gizmo.findPath(new Point(0, 0), new Point(1, 1));
+        expect(path).not.toBeNull();
+    });
+
     it("ground unit: marks node non-traversable when path cost exceeds movement (line 190)", async () => {
         // movement=1, so threshold is movement+1=2. A path of 3 straight
         // steps has cost 3 > 2, so the node should be set non-traversable.

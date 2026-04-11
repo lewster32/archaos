@@ -926,5 +926,718 @@ describe("Board", () => {
             await board.nextPlayer();
             expect(selectSpell).toHaveBeenCalled();
         });
+
+        it("returns early when a local player with spells reaches Spellbook phase (line 1306)", async () => {
+            // The board enters Spellbook phase because p1 has a spell.
+            // nextPlayer() selects p1, sees it is local with spells, and
+            // returns immediately so the client can display the spellbook UI.
+            // A second player is required to pass the 2-player win-condition
+            // check inside nextPlayer().
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            p1.addSpell(makeMockSpell());
+            board.addPlayer({
+                name: "P2",
+                type: GameSetupPlayerType.Local,
+            });
+
+            await board.nextPlayer();
+            // currentPlayer is p1; the loop returned early without advancing
+            // to any subsequent player.
+            expect(board.currentPlayer).toBe(p1);
+            expect(board.phase).toBe(BoardPhase.Spellbook);
+        });
+    });
+
+    // ── attackPiece ────────────────────────────────────────────────────────
+
+    describe("attackPiece", () => {
+        it("throws when the attacking piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const defender = await board.addPiece(
+                makePieceConfig(1, 0, board.players[0]),
+            );
+            await expect(
+                board.attackPiece(999, defender.id),
+            ).rejects.toThrow();
+        });
+
+        it("throws when the defending piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const attacker = await board.addPiece(
+                makePieceConfig(0, 0, board.players[0]),
+            );
+            await expect(
+                board.attackPiece(attacker.id, 999),
+            ).rejects.toThrow();
+        });
+
+        it("emits PieceAttacked and returns attacker", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const p2 = board.addPlayer({
+                name: "P2",
+                type: GameSetupPlayerType.Local,
+            });
+            const attacker = await board.addPiece(
+                makePieceConfig(0, 0, p1),
+            );
+            const defender = await board.addPiece(
+                makePieceConfig(1, 0, p2),
+            );
+            const attacked: any[] = [];
+            board.boardEvents.on(
+                BoardEvent.PieceAttacked,
+                (...args: any[]) => attacked.push(args),
+            );
+            const result = await board.attackPiece(attacker.id, defender.id);
+            expect(result).toBe(attacker);
+            expect(attacked).toHaveLength(1);
+        });
+    });
+
+    // ── rangedAttackPiece ─────────────────────────────────────────────────
+
+    describe("rangedAttackPiece", () => {
+        it("throws when the attacking piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            const defender = await board.addPiece(
+                makePieceConfig(1, 0, board.players[0]),
+            );
+            await expect(
+                board.rangedAttackPiece(999, defender.id),
+            ).rejects.toThrow();
+        });
+
+        it("throws when the defending piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            const attacker = await board.addPiece(
+                makePieceConfig(0, 0, board.players[0]),
+            );
+            await expect(
+                board.rangedAttackPiece(attacker.id, 999),
+            ).rejects.toThrow();
+        });
+
+        it("emits PieceRangedAttacked and returns attacker", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const p2 = board.addPlayer({
+                name: "P2",
+                type: GameSetupPlayerType.Local,
+            });
+            const attacker = await board.addPiece(
+                makePieceConfig(0, 0, p1),
+            );
+            const defender = await board.addPiece(
+                makePieceConfig(1, 0, p2),
+            );
+            const attacked: any[] = [];
+            board.boardEvents.on(
+                BoardEvent.PieceRangedAttacked,
+                (...args: any[]) => attacked.push(args),
+            );
+            const result = await board.rangedAttackPiece(
+                attacker.id,
+                defender.id,
+            );
+            expect(result).toBe(attacker);
+            expect(attacked).toHaveLength(1);
+        });
+    });
+
+    // ── mountPiece / dismountPiece ─────────────────────────────────────────
+
+    describe("mountPiece / dismountPiece", () => {
+        it("mountPiece throws when the mounting piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            const mount = await board.addPiece(
+                makePieceConfig(1, 0, board.players[0], [UnitStatus.MountAny]),
+            );
+            await expect(board.mountPiece(999, mount.id)).rejects.toThrow();
+        });
+
+        it("mountPiece throws when the mounted piece does not exist", async () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            const rider = await board.addPiece(
+                makePieceConfig(0, 0, board.players[0], [UnitStatus.Wizard]),
+            );
+            await expect(board.mountPiece(rider.id, 999)).rejects.toThrow();
+        });
+
+        it("dismountPiece throws when the piece does not exist", async () => {
+            const board = makeBoard();
+            await expect(board.dismountPiece(999)).rejects.toThrow();
+        });
+    });
+
+    // ── getAdjacentPiecesAtPosition ────────────────────────────────────────
+
+    describe("getAdjacentPiecesAtPosition", () => {
+        it("returns all pieces adjacent to a given point", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            // Place two pieces adjacent to (5,5)
+            await board.addPiece(makePieceConfig(5, 4, p1)); // north
+            await board.addPiece(makePieceConfig(6, 5, p1)); // east
+            const centre = new Point(5, 5);
+            const neighbours = board.getAdjacentPiecesAtPosition(centre);
+            expect(neighbours).toHaveLength(2);
+        });
+
+        it("applies a filter predicate", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const piece = await board.addPiece(makePieceConfig(5, 4, p1));
+            await piece.kill(); // now dead
+            await board.addPiece(makePieceConfig(6, 5, p1)); // alive
+            const centre = new Point(5, 5);
+            const alive = board.getAdjacentPiecesAtPosition(
+                centre,
+                (p) => !p.dead,
+            );
+            expect(alive).toHaveLength(1);
+        });
+
+        it("includes centre pieces when includeCentre=true", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            await board.addPiece(makePieceConfig(5, 5, p1)); // at centre
+            const centre = new Point(5, 5);
+            const withCentre = board.getAdjacentPiecesAtPosition(
+                centre,
+                undefined,
+                true,
+            );
+            expect(withCentre).toHaveLength(1);
+        });
+    });
+
+    // ── getRandomEmptySpace ────────────────────────────────────────────────
+
+    describe("getRandomEmptySpace", () => {
+        it("returns a point that is not occupied", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            // Occupy (0,0)
+            await board.addPiece(makePieceConfig(0, 0, p1));
+            const point = board.getRandomEmptySpace();
+            expect(point).not.toBeNull();
+            expect(point.x === 0 && point.y === 0).toBe(false);
+        });
+
+        it("returns null when the board is completely full", async () => {
+            // Use a very small board (2×2) and fill it
+            const board = new Board(2, 2, 2, false, undefined, {
+                rng: new TestRNG(),
+                logger: { log: vi.fn() } as unknown as Logger,
+                rules: makeRules(),
+            });
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            for (let x = 0; x < 2; x++) {
+                for (let y = 0; y < 2; y++) {
+                    await board.addPiece(makePieceConfig(x, y, p1));
+                }
+            }
+            const result = board.getRandomEmptySpace();
+            expect(result).toBeNull();
+        });
+    });
+
+    // ── addSpell ───────────────────────────────────────────────────────────
+
+    describe("addSpell", () => {
+        it("throws when no spell factory is registered", () => {
+            // Reset the spell factory
+            (Board as any)._spellFactory = null;
+            const board = makeBoard();
+            const player = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            expect(() =>
+                board.addSpell(player, {
+                    id: "test",
+                    name: "Test",
+                    chance: 0.5,
+                    balance: 0,
+                }),
+            ).toThrow("Spell factory not registered");
+        });
+
+        it("registers a factory and adds a spell to the player", () => {
+            const fakeSpell = {
+                id: 99,
+                owner: null,
+                addSpell: vi.fn(),
+                resetCastTimes: vi.fn(),
+                castTimes: 1,
+                persist: false,
+            } as any;
+            Board.registerSpellFactory((_b, _id, _cfg) => fakeSpell);
+            const board = makeBoard();
+            const player = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            board.addSpell(player, {
+                id: "test",
+                name: "Test",
+                chance: 0.5,
+                balance: 0,
+            });
+            expect(player.spells).toHaveLength(1);
+            // Cleanup factory so other tests aren't affected
+            (Board as any)._spellFactory = null;
+        });
+
+        it("throws when player or config is missing", () => {
+            Board.registerSpellFactory((_b, _id, _cfg) => ({} as any));
+            const board = makeBoard();
+            const player = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            expect(() => board.addSpell(null as any, null as any)).toThrow();
+            (Board as any)._spellFactory = null;
+        });
+    });
+
+    // ── addWizard ──────────────────────────────────────────────────────────
+
+    describe("addWizard", () => {
+        it("adds a wizard piece to the board", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const wizard = await board.addWizard({
+                owner: p1,
+                x: 3,
+                y: 3,
+                wizCode: "0000000000",
+            });
+            expect(board.pieces).toContain(wizard);
+            expect(wizard.hasStatus(UnitStatus.Wizard)).toBe(true);
+        });
+    });
+
+    // ── createWizards ──────────────────────────────────────────────────────
+
+    describe("createWizards", () => {
+        it("creates a wizard for each player", () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
+            board.createWizards();
+            expect(board.pieces).toHaveLength(2);
+        });
+
+        it("throws when not in the initial idle state", async () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
+            board.createWizards();
+            // A wizard is already placed — calling again should throw.
+            expect(() => board.createWizards()).toThrow();
+        });
+
+        it("throws when the game is already over", () => {
+            const board = makeBoard();
+            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+            board.state = BoardState.GameOver;
+            expect(() => board.createWizards()).toThrow();
+        });
+    });
+
+    // ── spellFilter / disable flags ────────────────────────────────────────
+
+    describe("spellFilter and disable flags", () => {
+        it("spellFilter defaults to always-true", () => {
+            const board = makeBoard();
+            expect(board.spellFilter({ id: "x" } as any)).toBe(true);
+        });
+
+        it("can be replaced with a custom filter", () => {
+            const board = makeBoard();
+            board.spellFilter = () => false;
+            expect(board.spellFilter({ id: "x" } as any)).toBe(false);
+        });
+
+        it("disableIllusions getter/setter round-trips", () => {
+            const board = makeBoard();
+            board.disableIllusions = true;
+            expect(board.disableIllusions).toBe(true);
+        });
+
+        it("disableCancelSpell getter/setter round-trips", () => {
+            const board = makeBoard();
+            board.disableCancelSpell = true;
+            expect(board.disableCancelSpell).toBe(true);
+        });
+
+        it("disableCancelAction getter/setter round-trips", () => {
+            const board = makeBoard();
+            board.disableCancelAction = true;
+            expect(board.disableCancelAction).toBe(true);
+        });
+
+        it("disableEndTurn getter/setter round-trips", () => {
+            const board = makeBoard();
+            board.disableEndTurn = true;
+            expect(board.disableEndTurn).toBe(true);
+        });
+    });
+
+    // ── rollChance out-of-bounds warning ───────────────────────────────────
+
+    describe("rollChance – out-of-bounds chance value", () => {
+        it("clamps a chance > 1 to 1 and succeeds against frac=0.5", () => {
+            const board = makeBoard();
+            // frac=0.5 (TestRNG default), clamped chance=1 > 0.5 → true
+            const result = board.rollChance(1.5);
+            expect(result).toBe(true);
+        });
+
+        it("clamps a chance < 0 to 0 and fails against frac=0.5", () => {
+            const board = makeBoard();
+            // clamped chance=0, 0 > 0.5 is false → false
+            const result = board.rollChance(-0.5);
+            expect(result).toBe(false);
+        });
+    });
+
+    // ── idleDelay ──────────────────────────────────────────────────────────
+
+    describe("idleDelay", () => {
+        it("temporarily sets state to Idle then restores it", async () => {
+            const board = makeBoard();
+            board.state = BoardState.Move;
+            const states: BoardState[] = [];
+            const promise = board.idleDelay();
+            // After calling, state should be Idle synchronously (before await)
+            states.push(board.state);
+            await promise;
+            states.push(board.state);
+            // During idle: Idle; after resolution: restored to Move
+            expect(states[0]).toBe(BoardState.Idle);
+            expect(states[1]).toBe(BoardState.Move);
+        });
+    });
+
+    // ── board.busy flag ────────────────────────────────────────────────────
+
+    describe("board.busy", () => {
+        it("is false on a newly created board", () => {
+            expect(makeBoard().busy).toBe(false);
+        });
+    });
+
+    // ── board.balanceShift setter ──────────────────────────────────────────
+
+    describe("board.balanceShift", () => {
+        it("getter/setter round-trips", () => {
+            const board = makeBoard();
+            board.balanceShift = 0.1;
+            expect(board.balanceShift).toBe(0.1);
+        });
+    });
+
+    // ── selectPlayer / deselectPlayer ─────────────────────────────────────
+
+    describe("selectPlayer / deselectPlayer", () => {
+        it("selectPlayer sets currentPlayer by id", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            await board.selectPlayer(p1.id);
+            expect(board.currentPlayer).toBe(p1);
+        });
+
+        it("deselectPlayer clears currentPlayer and selected", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const piece = await board.addPiece(
+                makePieceConfig(0, 0, p1),
+            );
+            await board.selectPiece(piece.id);
+            await board.selectPlayer(p1.id);
+            board.deselectPlayer();
+            expect(board.currentPlayer).toBeNull();
+            expect(board.selected).toBeNull();
+        });
+    });
+
+    // ── nextPlayer – remote casting path ──────────────────────────────────
+
+    describe("nextPlayer – remote casting", () => {
+        it("calls remote.moveAllUnits during the moving phase", async () => {
+            const moveAllUnits = vi.fn().mockResolvedValue(undefined);
+            const remote = {
+                selectSpell: vi.fn().mockResolvedValue(false),
+                castSpell: vi.fn().mockResolvedValue(true),
+                moveAllUnits,
+            };
+            const board = makeBoard();
+            // p1 local with no spells — provides the human turn that breaks
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            // p2 is remote/AI with no spells
+            board.addPlayer(
+                { name: "P2", type: GameSetupPlayerType.Computer },
+                remote as any,
+            );
+
+            // Drive the FSM into the moving phase manually
+            await board.newTurn(); // idle→moving (no spells)
+            // Now index is at -1; nextPlayer → p1 (index 0, newTurn again
+            // but now in moving phase → wraps to spellbook... re-check)
+            // Use a shortcut: just check moveAllUnits gets called
+            // by invoking nextPlayer twice past p1
+            await board.nextPlayer(); // → p1 (local, break)
+            await board.nextPlayer(); // → p2 (remote, moving phase)
+            expect(moveAllUnits).toHaveBeenCalled();
+        });
+    });
+
+    // ── Simple getters and setters ────────────────────────────────────────
+
+    describe("classicBalance", () => {
+        it("returns false by default", () => {
+            const board = makeBoard();
+            expect(board.classicBalance).toBe(false);
+        });
+    });
+
+    describe("spellFilter getter/setter", () => {
+        it("default filter accepts all configs", () => {
+            const board = makeBoard();
+            expect(board.spellFilter({} as any)).toBe(true);
+        });
+
+        it("setter replaces the filter", () => {
+            const board = makeBoard();
+            board.spellFilter = () => false;
+            expect(board.spellFilter({} as any)).toBe(false);
+        });
+    });
+
+    describe("rangeGizmo getter", () => {
+        it("returns a defined RangeGizmo instance", () => {
+            const board = makeBoard();
+            expect(board.rangeGizmo).toBeDefined();
+        });
+    });
+
+    describe("events getter", () => {
+        it("is an alias for boardEvents", () => {
+            const board = makeBoard();
+            expect(board.events).toBe(board.boardEvents);
+        });
+    });
+
+    describe("cursorPosition getter/setter", () => {
+        it("round-trips a point", () => {
+            const board = makeBoard();
+            const pt = new Point(3, 4);
+            board.cursorPosition = pt;
+            expect(board.cursorPosition).toBe(pt);
+        });
+    });
+
+    describe("state setter – GameOver guard", () => {
+        it("silently ignores state changes when game is already over", () => {
+            const board = makeBoard();
+            board.endGame();
+            board.state = BoardState.Move;
+            expect(board.state).toBe(BoardState.GameOver);
+        });
+    });
+
+    // ── selectPiece / selectWizard guards ─────────────────────────────────
+
+    describe("selectPiece – guard conditions", () => {
+        it("returns without selecting when id is 0 (falsy)", async () => {
+            const board = makeBoard();
+            await expect(board.selectPiece(0)).resolves.toBeUndefined();
+            expect(board.selected).toBeNull();
+        });
+
+        it("returns without selecting when game is already over", async () => {
+            const board = makeBoard();
+            board.endGame();
+            await expect(board.selectPiece(999)).resolves.toBeUndefined();
+        });
+    });
+
+    describe("selectWizard – GameOver guard", () => {
+        it("returns null when game is already over", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            board.endGame();
+            const result = await board.selectWizard(p1 as any);
+            expect(result).toBeNull();
+        });
+    });
+
+    // ── mountPiece / dismountPiece success paths ──────────────────────────
+
+    describe("mountPiece / dismountPiece – success paths", () => {
+        it("mountPiece mounts a wizard on a horse and returns the rider", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const wizard = await board.addPiece(
+                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
+            );
+            const horse = await board.addPiece(
+                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
+            );
+            const result = await board.mountPiece(wizard.id, horse.id);
+            expect(result).toBe(wizard);
+            expect(wizard.currentMount).toBe(horse);
+            expect(horse.currentRider).toBe(wizard);
+        });
+
+        it("mountPiece auto-dismounts from a previous mount before remounting", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const wizard = await board.addPiece(
+                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
+            );
+            const horse1 = await board.addPiece(
+                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
+            );
+            const horse2 = await board.addPiece(
+                makePieceConfig(2, 0, p1, [UnitStatus.Mount]),
+            );
+            // Wire up the wizard as already mounted on horse1 without
+            // consuming the moved flag (canMountPiece requires !moved).
+            (wizard as any)._currentMount = horse1;
+            (horse1 as any)._currentRider = wizard;
+            await board.mountPiece(wizard.id, horse2.id);
+            expect(wizard.currentMount).toBe(horse2);
+            expect(horse1.currentRider).toBeNull();
+        });
+
+        it("dismountPiece returns the dismounted piece", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const wizard = await board.addPiece(
+                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
+            );
+            const horse = await board.addPiece(
+                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
+            );
+            (wizard as any)._currentMount = horse;
+            (horse as any)._currentRider = wizard;
+            const result = await board.dismountPiece(wizard.id);
+            expect(result).toBe(wizard);
+            expect(wizard.currentMount).toBeNull();
+        });
+    });
+
+    // ── newTurn – additional paths ────────────────────────────────────────
+
+    describe("newTurn – GameOver guard", () => {
+        it("returns early without throwing when game is over", async () => {
+            const board = makeBoard();
+            board.endGame();
+            await expect(board.newTurn()).resolves.toBeUndefined();
+        });
+    });
+
+    describe("newTurn – resets pieces on each new turn", () => {
+        it("calls reset on pieces when transitioning into Moving phase", async () => {
+            const board = makeBoard();
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            const piece = await board.addPiece(makePieceConfig(0, 0, p1));
+            // Simulate piece having moved this turn
+            (piece as any)._moved = true;
+            // newTurn from idle (no spells) → Moving; reset() clears _moved
+            await board.newTurn();
+            expect((piece as any)._moved).toBe(false);
+        });
+    });
+
+    describe("newTurn – spreading phase transition", () => {
+        it("advances from spreading to moving when called in spreading state", async () => {
+            const rules = makeRules();
+            const board = makeBoard({ rules });
+            const p1 = board.addPlayer({
+                name: "P1",
+                type: GameSetupPlayerType.Local,
+            });
+            p1.addSpell(makeMockSpell({ id: 10 }));
+            board.addPlayer({
+                name: "P2",
+                type: GameSetupPlayerType.Local,
+            });
+            await board.newTurn(); // idle → Spellbook
+            (p1 as any)._selectedSpell = makeMockSpell({ id: 10 });
+            await board.newTurn(); // Spellbook → Casting
+            await board.newTurn(); // Casting → Spreading (via CastingDone)
+            // FSM is now in spreading state; one more call exits it
+            await board.newTurn(); // Spreading → Moving
+            expect(board.phase).toBe(BoardPhase.Moving);
+        });
     });
 }); // closes describe("Board")

@@ -537,9 +537,18 @@ export class Piece extends Entity {
             throw new Error("Cannot kill unit that is already dead");
         }
         if (this.currentRider) {
-            this.currentRider.dismount();
-            if (!this.currentRider.turnOver) {
-                this.currentRider.reset();
+            const rider = this.currentRider;
+            // Record whether the mount had already moved this turn before
+            // dismounting. The moved setter propagates mount movement to the
+            // rider, so rider._moved being true here means the mount moved.
+            const mountHadMoved = rider._moved;
+            rider.dismount();
+            if (mountHadMoved) {
+                // Mount had already moved — rider's turn is also over.
+                rider.turnOver = true;
+            } else if (!rider.turnOver) {
+                // Mount had not yet moved — rider gets a fresh turn on foot.
+                rider.reset();
             }
         }
         if (this.currentEngulfed) {

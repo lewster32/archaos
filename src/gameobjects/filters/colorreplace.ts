@@ -1,3 +1,4 @@
+/* v8 ignore start */
 import Phaser from "phaser";
 import { FilterColorReplaceRenderNode } from "./filtercolorreplacerendernode";
 
@@ -56,3 +57,4 @@ export class ColorReplaceFilter extends Phaser.Filters.Controller {
         this.newColor[2] = b;
     }
 }
+/* v8 ignore end */

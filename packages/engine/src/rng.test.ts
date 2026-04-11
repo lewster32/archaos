@@ -190,3 +190,23 @@ describe("GameRNG", () => {
         }
     });
 });
+
+// ── weightedRandomPick fallback return (line 199) ────────────────────────────
+
+describe("weightedRandomPick – fallback return path", () => {
+    it("returns last element (positive weight) when frac returns 1.0 exactly", () => {
+        // frac=1.0 → randomWeight = totalWeight → loop condition never met
+        // → fallback branch: weight >= 0 → array.at(-1)
+        const rng = new TestRNG(1.0);
+        const arr = ["a", "b", "c"];
+        const result = weightedRandomPick(rng, arr, 2);
+        expect(result).toBe("c");
+    });
+
+    it("returns first element (negative weight) when frac returns 1.0 exactly", () => {
+        const rng = new TestRNG(1.0);
+        const arr = ["a", "b", "c"];
+        const result = weightedRandomPick(rng, arr, -2);
+        expect(result).toBe("a");
+    });
+});

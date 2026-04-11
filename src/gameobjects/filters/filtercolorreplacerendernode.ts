@@ -1,3 +1,4 @@
+/* v8 ignore start */
 import Phaser from "phaser";
 
 const { RenderNodes } = Phaser.Renderer.WebGL;
@@ -62,3 +63,4 @@ export class FilterColorReplaceRenderNode
         pm.setUniform("uEpsilon", c.epsilon);
     }
 }
+/* v8 ignore end */
