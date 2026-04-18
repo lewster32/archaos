@@ -763,7 +763,6 @@ export class ComputerWizard implements RemotePlayer {
             pieceIds: [piece.id],
         });
         await this._board.selectPiece(piece.id);
-        await this._board.delay();
 
         if (piece.engaged) {
             console.debug(`${piece.fullName} is engaged`);

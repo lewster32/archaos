@@ -14,7 +14,7 @@
             >
                 {{ `${balance < 0 ? "*" : balance > 0 ? "^" : "-"}` }}
             </span>
-            {{ balance ? `(+${Math.floor(Math.abs(balance) / 4) * 10}%)` : "" }}
+            {{ balancePercent ? `(+${balancePercent}%)` : "" }}
             <span
                 :class="{
                     'c-magenta': balanceShift < 0,
@@ -63,11 +63,7 @@
                     }}
                 </span>
                 <span class="balance-info__amount">
-                    {{
-                        balance
-                            ? `(+${Math.floor(Math.abs(balance) / 4) * 10}%)`
-                            : ""
-                    }}
+                    {{ balancePercent ? `(+${balancePercent}%)` : "" }}
                     <span
                         class="balance-info__shift"
                         :class="{
@@ -87,21 +83,21 @@
                 The universe is currently
                 <span
                     :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
-                    >{{
-                        balance < 0
-                            ? "chaotic (*)"
-                            : balance > 0
-                              ? "lawful (^)"
-                              : "neutral (-)"
-                    }}</span
-                >, giving <span class="c-green">higher</span> chance to cast
-                spells with this alignment<template v-if="!classicBalance">, and a
-                <span class="c-red">lower</span> chance to cast
-                <span
-                    :class="{ 'c-cyan': balance < 0, 'c-magenta': balance > 0 }"
-                    >{{ balance < 0 ? "lawful (^)" : "chaotic (*)" }}</span
-                >
-                spells.</template><template v-else>.</template>
+                    >{{ balance < 0 ? "chaotic (*)" : "lawful (^)" }}</span
+                ><template v-if="balancePercent != 0">, giving
+                    <span class="c-green">higher</span> chance to cast spells
+                    with this alignment<template v-if="!classicBalance">, and a
+                        <span class="c-red">lower</span> chance to cast
+                        <span
+                            :class="{
+                                'c-cyan': balance < 0,
+                                'c-magenta': balance > 0,
+                            }"
+                            >{{
+                                balance < 0 ? "lawful (^)" : "chaotic (*)"
+                            }}</span
+                        >
+                        spells</template></template>.
             </p>
             <p v-else>
                 The universe is currently neutral (-); all spells will have their
@@ -154,6 +150,17 @@ const infoDialog = ref<HTMLDialogElement | null>(null);
  * Whether to show the minimap or not.
  */
 const show = ref(true);
+
+/**
+ * The effective spell-chance adjustment (%) produced by the current universe
+ * alignment. Zero when the accumulated alignment points are below the
+ * quantisation threshold (every 4 points = one 10% tier), in which case the
+ * UI suppresses the percentage entirely.
+ */
+const balancePercent = computed<number>(() => {
+    const value: number = props.balance ?? 0;
+    return Math.floor(Math.abs(value) / 4) * 10;
+});
 
 /**
  * The scale of the minimap based on the board size.

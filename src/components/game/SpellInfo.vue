@@ -27,12 +27,19 @@
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
                                 spell.chance,
                             )})`"
-                            class="spell-stats__Value"
-                            :title="`This has a ${chancePercent(
-                                spell.chance,
-                            )}% chance of casting.`"
-                            >{{ chancePercent(spell.chance) }}%</span
+                            class="spell-stats__value"
+                            :title="chanceTitle"
+                            >{{ chancePercent(spell.chance) }}%
+                        <span
+                            v-if="chanceDelta !== 0"
+                            class="spell-stats__delta"
+                            :class="{
+                                'c-green': chanceDelta > 0,
+                                'c-red': chanceDelta < 0,
+                            }"
+                            >({{ chanceDelta > 0 ? "+" : "" }}{{ chanceDelta }}%)</span
                         >
+                            </span>
                     </p>
                     <p
                         v-if="
@@ -126,6 +133,34 @@ const emit = defineEmits<{
  */
 const show: Ref<boolean> = computed(() => {
     return props.spell != null;
+});
+
+/**
+ * The signed effect of the current universe alignment on the spell's casting
+ * chance, expressed as an integer percentage (-100..+100). Zero when the
+ * alignment has no effect on this spell.
+ */
+const chanceDelta: Ref<number> = computed(() => {
+    return (
+        chancePercent(props.spell.chance) -
+        chancePercent(props.spell.properties.chance)
+    );
+});
+
+/**
+ * Tooltip text describing both the base and alignment-adjusted chance.
+ */
+const chanceTitle: Ref<string> = computed(() => {
+    const base: number = chancePercent(props.spell.properties.chance);
+    const delta: number = chanceDelta.value;
+    if (delta === 0) {
+        return `This has a ${base}% chance of casting.`;
+    }
+    const sign: string = delta > 0 ? "+" : "";
+    return (
+        `Base chance ${base}%, ${sign}${delta}% from universe alignment ` +
+        `(effective ${base + delta}%).`
+    );
 });
 
 const spellHasStats: Ref<boolean> = computed(() => {
