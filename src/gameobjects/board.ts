@@ -2110,9 +2110,16 @@ export class Board extends EngineBoard<Piece> {
      *                 supported keys. Omit to use random defaults.
      */
     public startWeather(
-        type: WeatherType = WeatherType.Rain,
+        type: WeatherType = null,
         options?: Record<string, unknown>,
     ): void {
+        if (type === null) {
+            type = this.rng.pick([
+                WeatherType.Rain,
+                WeatherType.Snow
+            ]);
+        }
+
         if (this._weatherEffect) {
             this._weatherEffect.destroy();
             this._weatherEffect = undefined;
