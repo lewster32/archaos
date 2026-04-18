@@ -47,7 +47,7 @@
         "shortDelay": true
     },
     "weather": {
-        "type": "snow",
-        "intensity": 0.9
+        "type": "rain",
+        "intensity": 0.5
     }
 }
