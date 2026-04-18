@@ -400,7 +400,7 @@ export class Cursor {
                     this._board.stateManager.evaluate(
                         new AdvanceToRangedAttack(),
                     );
-                    this._board.sound.play("bowselecta");
+                    this._board.sound.play("ranged-select", true);
                     this._board.logger.log(
                         `${selected.name}'s turn to ranged attack`,
                         Colour.Yellow,

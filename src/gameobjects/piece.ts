@@ -590,7 +590,7 @@ export class Piece extends EnginePiece {
         await super.engage(piece);
         await this.clientBoard.sound.playAsync("engaged", {
             delay: Board.DEFAULT_DELAY,
-        });
+        }, true);
     }
 
     /**
@@ -608,7 +608,7 @@ export class Piece extends EnginePiece {
                 );
                 await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
-                });
+                }, true);
                 return false;
             }
 
@@ -625,7 +625,7 @@ export class Piece extends EnginePiece {
                 this.owner as any,
             );
 
-            this.clientBoard.sound.play("attackonly");
+            this.clientBoard.sound.play("attack", true);
             this.clientBoard.logger.log(
                 `${this.name} ${this.properties.attackType} ${piece.name}`,
                 Colour.Yellow,
@@ -648,7 +648,7 @@ export class Piece extends EnginePiece {
                     `${this.fullName} defeated ${piece.fullName}`,
                     Colour.Red,
                 );
-                this.clientBoard.sound.play("killcreature");
+                this.clientBoard.sound.play("die", true);
                 await piece.kill();
                 if (
                     this.clientBoard.getPiecesAtPosition(
@@ -679,7 +679,7 @@ export class Piece extends EnginePiece {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
                 await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
-                });
+                }, true);
                 this.clientBoard.logger.log(
                     `${this.name} cannot attack the undead`,
                     Colour.Cyan,
@@ -700,37 +700,37 @@ export class Piece extends EnginePiece {
                 case UnitRangedProjectileType.Lightning:
                     beamEffectType = EffectType.LightningBeam;
                     hitEffectType = EffectType.LightningHit;
-                    beamSound = "lightning4";
-                    hitSound = "lightningexplode";
+                    beamSound = "lightning-beam";
+                    hitSound = "bolt-hit";
                     break;
                 case UnitRangedProjectileType.DragonFire:
                     beamEffectType = EffectType.DragonFireBeam;
                     hitEffectType = EffectType.DragonFireHit;
-                    beamSound = "dragonfire6";
-                    hitSound = "dragonfireexplosion";
+                    beamSound = "dragon-beam";
+                    hitSound = "dragon-fire";
                     break;
                 case UnitRangedProjectileType.BlackDragonFire:
                     beamEffectType = EffectType.BlackDragonFireBeam;
                     hitEffectType = EffectType.BlackDragonFireHit;
-                    beamSound = "dragonfire6";
-                    hitSound = "dragonfireexplosion";
+                    beamSound = "dragon-beam";
+                    hitSound = "dragon-fire";
                     break;
                 case UnitRangedProjectileType.MagicBolt:
                     beamEffectType = EffectType.MagicBoltBeam;
                     hitEffectType = EffectType.MagicBoltHit;
-                    beamSound = "magicbolt6";
-                    hitSound = "magicboltexplode";
+                    beamSound = "magic-bolt-beam";
+                    hitSound = "bolt-hit";
                     break;
                 case UnitRangedProjectileType.Arrow:
                 default:
                     beamEffectType = EffectType.ArrowBeam;
                     hitEffectType = EffectType.ArrowHit;
-                    beamSound = "bowfire6";
-                    hitSound = "bowhit";
+                    beamSound = "arrow-fly";
+                    hitSound = "arrow-hit";
                     break;
             }
 
-            this.clientBoard.sound.play(beamSound);
+            this.clientBoard.sound.play(beamSound, true);
             await this.clientBoard.playEffect(
                 beamEffectType,
                 this.sprite.getCenter(),
@@ -738,7 +738,7 @@ export class Piece extends EnginePiece {
                 piece as Piece,
             );
 
-            this.clientBoard.sound.play(hitSound);
+            this.clientBoard.sound.play(hitSound, true);
             await this.clientBoard.playEffect(
                 hitEffectType,
                 (piece as Piece).sprite.getCenter(),
@@ -767,7 +767,7 @@ export class Piece extends EnginePiece {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
-                this.clientBoard.sound.play("killcreature");
+                this.clientBoard.sound.play("die", true);
                 this.clientBoard.logger.log(
                     `${this.fullName} defeated ${piece.fullName}`,
                     Colour.Red,
@@ -816,7 +816,7 @@ export class Piece extends EnginePiece {
             await this.destroy();
         }
         if (!silent) {
-            this.clientBoard.sound.play("killcreature");
+            this.clientBoard.sound.play("die", true);
         }
         if (!this._sprite) {
             this.clientBoard.boardEvents?.emit(BoardEvent.PieceDied, this);

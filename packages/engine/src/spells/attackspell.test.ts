@@ -300,7 +300,7 @@ describe("AttackSpell.doCast", () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect((board as any).events.emit).toHaveBeenCalledWith(
                 EngineEvent.EffectRequested,
-                { sound: "lightning4" },
+                { sound: "lightning-beam" },
             );
         });
 
@@ -308,7 +308,7 @@ describe("AttackSpell.doCast", () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect((board as any).events.emit).toHaveBeenCalledWith(
                 EngineEvent.EffectRequested,
-                { sound: "lightningexplode" },
+                { sound: "bolt-hit" },
             );
         });
 
@@ -342,19 +342,19 @@ describe("AttackSpell.doCast", () => {
             spell.owner = owner;
         });
 
-        it('emits "magicbolt6" beam sound', async () => {
+        it('emits "magic-bolt-beam" beam sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect((board as any).events.emit).toHaveBeenCalledWith(
                 EngineEvent.EffectRequested,
-                { sound: "magicbolt6" },
+                { sound: "magic-bolt-beam" },
             );
         });
 
-        it('emits "magicboltexplode" hit sound', async () => {
+        it('emits "bolt-hit" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
             expect((board as any).events.emit).toHaveBeenCalledWith(
                 EngineEvent.EffectRequested,
-                { sound: "magicboltexplode" },
+                { sound: "bolt-hit" },
             );
         });
     });
@@ -544,7 +544,7 @@ describe("AttackSpell.doCast", () => {
         expect(result).toBe(true);
         expect((board as any).events.emit).toHaveBeenCalledWith(
             EngineEvent.EffectRequested,
-            { sound: "magicbolt6" },
+            { sound: "magic-bolt-beam" },
         );
     });
 
@@ -558,7 +558,7 @@ describe("AttackSpell.doCast", () => {
         expect(result).toBe(true);
         expect((board as any).events.emit).toHaveBeenCalledWith(
             EngineEvent.EffectRequested,
-            { sound: "lightning4" },
+            { sound: "lightning-beam" },
         );
     });
 });

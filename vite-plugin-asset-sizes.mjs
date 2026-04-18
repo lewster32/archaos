@@ -21,7 +21,6 @@ const PHASER_ASSET_FILES = new Set([
     "unit-glow.png",
     "chaossounds.json",
     "rexcolorreplacepipelineplugin.min.js",
-    "rexperlinplugin.min.js",
     "rain.png",
     "rain.json"
 ]);
@@ -51,7 +50,6 @@ const JS_EXCLUDE = new Set([
     "rolldown-runtime.js",
     // Rex plugins are already counted as Phaser assets above.
     "rexcolorreplacepipelineplugin.min.js",
-    "rexperlinplugin.min.js",
 ]);
 
 /**

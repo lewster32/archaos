@@ -357,7 +357,7 @@
         ],
         "_note": "Elf/manticore arrow projectile. One engine tick + 3500 T-state gap per Bresenham pixel drawn by $B626. Rising pitch from +1 increments on all voices, short single-cell cross keeps the per-pixel gap low so pitch rise stays audible.",
         "gap": 3500,
-        "repeat": 120
+        "repeat": 60
     },
     {
         "id": "magic-bolt-beam",
@@ -379,7 +379,7 @@
             1,
             1
         ],
-        "repeat": 40,
+        "repeat": 60,
         "gap": 10600,
         "_note": "Magic Bolt spell beam. Same pitch record as arrow-fly but middleCount=9 and a 13-cell extended cross, giving a much lower, buzzier pitch than arrow-fly.",
         "contentionFactor": 4
@@ -406,11 +406,11 @@
         ],
         "phases": [
             {
-                "repeat": 140,
+                "repeat": 170,
                 "gap": 8400
             },
             {
-                "repeat": 17,
+                "repeat": 47,
                 "gap": 2600
             }
         ],
@@ -439,7 +439,7 @@
         ],
         "phases": [
             {
-                "repeat": 120,
+                "repeat": 35,
                 "gap": 11600
             },
             {

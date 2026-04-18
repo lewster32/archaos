@@ -22,7 +22,7 @@ export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
             return false;
         }
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "castloop08",
+            sound: "cast-beam",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.DisbelieveBeam,

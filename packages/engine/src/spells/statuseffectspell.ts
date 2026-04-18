@@ -37,7 +37,7 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
         }
 
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "spelleffect",
+            sound: "die",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.WizardCasting,

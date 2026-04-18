@@ -101,7 +101,7 @@ export class Player extends EnginePlayer<Piece> {
                         setTimeout(
                             async () => {
                                 (this.board as unknown as Board).sound.play(
-                                    "disbelieve",
+                                    "destroy", true
                                 );
                                 await (
                                     this.board as unknown as Board

@@ -30,7 +30,7 @@ export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
         );
 
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "castloop08",
+            sound: "cast-beam",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.SubversionBeam,
@@ -39,7 +39,7 @@ export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
         });
         if (rollSuccess && !target.illusion) {
             this._board.events.emit(EngineEvent.EffectRequested, {
-                sound: "spelleffect",
+                sound: "die",
             });
             await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                 type: EffectType.SubversionHit,

@@ -2,8 +2,6 @@
  * Mainly UI-related spell utility functions.
  */
 
-import type { Spell } from "./spell";
-
 /**
  * Converts a normalised casting chance into a percentage.
  *
@@ -26,18 +24,18 @@ export const chanceRounded = (chance: number): number => {
 };
 
 /**
- * Gets the balance indicator for a spell. This is a simple symbol as per the
- * original game: ^ for lawful, * for chaotic, - for neutral. The number of
- * symbols indicates the strength of the balance effect, up to a maximum of 4.
+ * Returns a simple symbol as per the original game: ^ for lawful, * for
+ * chaotic, - for neutral. The number of symbols indicates the strength of the
+ * balance effect, up to a maximum of 4.
  *
- * @param spell The spell to get the balance indicator for.
+ * @param balance The balance value of the spell.
  * @returns The balance indicator symbol.
  */
-export const balanceIndicator = (spell: Spell): string => {
-    if (spell.balance > 0) {
-        return "^".repeat(Math.min(spell.balance, 4));
-    } else if (spell.balance < 0) {
-        return "*".repeat(Math.min(Math.abs(spell.balance), 4));
+export const balanceIndicator = (balance: number): string => {
+    if (balance > 0) {
+        return "^".repeat(Math.min(balance, 4));
+    } else if (balance < 0) {
+        return "*".repeat(Math.min(Math.abs(balance), 4));
     }
     return "-";
 };

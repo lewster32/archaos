@@ -2,6 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SoundEffects } from "./soundeffects";
 import { Scene } from "phaser";
 
+vi.mock("./chaossounds", () => ({
+    playSound: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@assets/data/chaossounds.json", () => ({
+    default: [
+        {
+            id: "new-turn",
+            outerCount: 1,
+            middleCount: 1,
+            pitch: [1, 1, 1, 1],
+            increments: [0, 0, 0, 0],
+        },
+    ],
+}));
+
+import { playSound } from "./chaossounds";
+
 describe("SoundEffects", () => {
     let mockScene: any;
     let mockSound: any;
@@ -105,5 +123,46 @@ describe("SoundEffects", () => {
     it("should destroy the sound effects manager", () => {
         soundEffects.destroy();
         expect(mockSound.destroy).toHaveBeenCalled();
+    });
+
+    it("should dispatch to the chaos sound generator when useGenerator is true", () => {
+        soundEffects.play("new-turn", true);
+        expect(playSound).toHaveBeenCalledWith(
+            expect.objectContaining({ id: "new-turn" }),
+        );
+        expect(mockSound.play).not.toHaveBeenCalled();
+    });
+
+    it("should log an error when the generated sound id is unknown", async () => {
+        const consoleErrorSpy = vi
+            .spyOn(console, "error")
+            .mockImplementation(() => {});
+        soundEffects.play("does-not-exist", true);
+        // Allow the fire-and-forget promise chain to settle
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            "Error playing sound effect 'does-not-exist':",
+            expect.any(Error),
+        );
+    });
+
+    it("should await the chaos sound generator in playAsync when useGenerator is true", async () => {
+        await soundEffects.playAsync("new-turn", undefined, true);
+        expect(playSound).toHaveBeenCalledWith(
+            expect.objectContaining({ id: "new-turn" }),
+        );
+        expect(mockSound.play).not.toHaveBeenCalled();
+    });
+
+    it("should log an error when playAsync is given an unknown generated id", async () => {
+        const consoleErrorSpy = vi
+            .spyOn(console, "error")
+            .mockImplementation(() => {});
+        await soundEffects.playAsync("does-not-exist", undefined, true);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            "Error playing sound effect 'does-not-exist':",
+            expect.any(Error),
+        );
     });
 });

@@ -22,7 +22,7 @@
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 6, "y": 2 },
+            "position": { "x": 4, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],

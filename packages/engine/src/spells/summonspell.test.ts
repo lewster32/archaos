@@ -605,15 +605,15 @@ describe("SummonSpell.doCast", () => {
         );
     });
 
-    it('emits "castloop08" and "spelleffect" sound events', async () => {
+    it('emits "cast-beam" and "die" sound events', async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
         expect((board as any).events.emit).toHaveBeenCalledWith(
             EngineEvent.EffectRequested,
-            { sound: "castloop08" },
+            { sound: "cast-beam" },
         );
         expect((board as any).events.emit).toHaveBeenCalledWith(
             EngineEvent.EffectRequested,
-            { sound: "spelleffect" },
+            { sound: "die" },
         );
     });
 

@@ -22,7 +22,7 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             return false;
         }
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "castloop08",
+            sound: "cast-beam",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.RaiseDeadBeam,
@@ -30,7 +30,7 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             startPieceId: castingPiece.id,
         });
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "spelleffect",
+            sound: "die",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.RaiseDeadHit,

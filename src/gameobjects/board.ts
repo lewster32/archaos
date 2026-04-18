@@ -254,9 +254,10 @@ export class Board extends EngineBoard<Piece> {
                         await this.sound.playAsync(
                             data.sound,
                             data.soundOptions,
+                            true
                         );
                     } else {
-                        this.sound.play(data.sound);
+                        this.sound.play(data.sound, true);
                     }
                 }
                 if (data.type) {
@@ -363,7 +364,7 @@ export class Board extends EngineBoard<Piece> {
             async (payload: TurmoilBatchPayload) => {
                 const caster = this.getPiece(payload.castingPieceId);
                 if (caster) {
-                    this.sound.play("spelleffect");
+                    this.sound.play("die", true);
                     await this.playEffect(
                         EffectType.WizardCasting,
                         caster.sprite.getCenter(),
@@ -372,7 +373,7 @@ export class Board extends EngineBoard<Piece> {
                 for (const move of payload.moves) {
                     const piece = this.getPiece(move.pieceId);
                     if (!piece) continue;
-                    this.sound.play("spelleffect");
+                    this.sound.play("die", true);
                     const startPos = this.getIsoPosition(
                         new PMath.Vector2(move.from.x, move.from.y),
                     );
@@ -768,7 +769,7 @@ export class Board extends EngineBoard<Piece> {
         this._boardEvents.emit(BoardEvent.PieceSelected, this.selected);
         if (this.phase === BoardPhase.Moving) {
             if (!silent) {
-                this.sound.play("select");
+                this.sound.play("select-piece", true);
             }
             if (this.selected.currentMount) {
                 this.emitUIEvent(EventType.DismountAvailable, true);
@@ -934,7 +935,7 @@ export class Board extends EngineBoard<Piece> {
         if (!path?.nodes?.length || path.nodes[0].terminal) {
             return;
         }
-        this.sound.play("move");
+        this.sound.play("step", true);
         await piece.moveTo(
             path.nodes.shift().pos,
             Piece.DEFAULT_STEP_MOVE_DURATION,
@@ -978,7 +979,7 @@ export class Board extends EngineBoard<Piece> {
 
         if (isFlying || Board.distance(piece.position, new Point(position.x, position.y)) <= 1.5) {
             if (!silent) {
-                this.sound.play(isFlying ? "fly" : "move");
+                this.sound.play(isFlying ? "fly" : "step", true);
             }
             await piece.moveTo(position);
         } else if (path && path.nodes?.length > 1) {
@@ -1057,7 +1058,7 @@ export class Board extends EngineBoard<Piece> {
                 attackingPiece.position.x,
                 attackingPiece.position.y,
             );
-            this.sound.play("fly");
+            this.sound.play("fly", true);
             await attackingPiece.flyApproach(
                 defendingPiece.position,
             );
@@ -1119,7 +1120,7 @@ export class Board extends EngineBoard<Piece> {
         // (sound, log, range gizmo) that it does for human players.
         // Replicate that here so the ranged attack is visible.
         if (this.currentPlayer?.remote) {
-            this.sound.play("bowselecta");
+            this.sound.play("ranged-select", true);
             this.logger.log(
                 `${attackingPiece.name}'s turn to ranged attack`,
                 Colour.Yellow,
@@ -1178,7 +1179,7 @@ export class Board extends EngineBoard<Piece> {
                 await mountingPiece.dismount();
                 mountingPiece.moved = false;
             }
-            this.sound.play("move");
+            this.sound.play("step", true);
             await mountingPiece.mount(mountedPiece);
             this.emitBoardUpdateEvent();
             return mountingPiece;
@@ -1201,7 +1202,7 @@ export class Board extends EngineBoard<Piece> {
             return null;
         }
         this.emitUIEvent(EventType.DismountAvailable, false);
-        this.sound.play("move");
+        this.sound.play("step", true);
         await dismountingPiece.dismount();
         this.emitBoardUpdateEvent();
         return dismountingPiece;
@@ -1381,7 +1382,7 @@ export class Board extends EngineBoard<Piece> {
 
         switch (this.phase) {
             case BoardPhase.Spellbook:
-                this.sound.play("endturn");
+                this.sound.play("new-turn", true);
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to select a spell`,
                 );
@@ -1392,7 +1393,7 @@ export class Board extends EngineBoard<Piece> {
                         `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`,
                     );
                 } else {
-                    this.sound.play("cancel");
+                    this.sound.play("cancel", true);
                     this.logger.log(
                         `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
                         Colour.Magenta,
@@ -1400,7 +1401,7 @@ export class Board extends EngineBoard<Piece> {
                 }
                 break;
             case BoardPhase.Moving:
-                this.sound.play("endturn");
+                this.sound.play("new-turn", true);
                 this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
                 break;
         }
@@ -1440,10 +1441,10 @@ export class Board extends EngineBoard<Piece> {
 
             // Beep beep beep for casting phase
             if (this.phase === BoardPhase.Casting) {
-                this.sound.playAsync("casting", {
+                this.sound.playAsync("is-casting", {
                     repeat: 3,
-                    delay: 150,
-                });
+                    delay: 60,
+                }, true);
             }
         });
     }
@@ -1803,10 +1804,16 @@ export class Board extends EngineBoard<Piece> {
     createFloor() {
         const floorLayer: GameObjects.Layer = this.scene.add.layer();
 
-        // Get some simplex noise for tile variation
-        const noise: any = (
-            this.scene.game.plugins.get("rexperlinplugin") as any
-        ).add(Math.random());
+        // Simplex noise config for tile variation. noiseCells of 0.25
+        // matches the original x/4 sampling frequency; a randomised seed
+        // varies the pattern each game.
+        const noiseConfig = {
+            noiseCells: [0.25, 0.25],
+            noiseSeed: [
+                Math.floor(Math.random() * 1_000_000),
+                Math.floor(Math.random() * 1_000_000),
+            ],
+        };
 
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
@@ -1824,8 +1831,11 @@ export class Board extends EngineBoard<Piece> {
                 tile.setDisplayOrigin(14, 1);
                 tile.setActive(false);
 
-                // Set tint based on noise value
-                const noiseValue: number = noise.simplex2(x / 4, y / 4);
+                // Set tint based on noise value (range -1 to 1)
+                const noiseValue: number = PMath.HashSimplex(
+                    [x, y],
+                    noiseConfig,
+                );
                 tile.setData("noiseValue", noiseValue);
                 tile.setTint(
                     Display.Color.ValueToColor(0xffffff).darken(noiseValue * 20)

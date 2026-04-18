@@ -46,14 +46,14 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
             case UnitRangedProjectileType.Lightning:
                 beamEffect = EffectType.LightningBeam;
                 hitEffect = EffectType.LightningHit;
-                beamSound = "lightning4";
-                hitSound = "lightningexplode";
+                beamSound = "lightning-beam";
+                hitSound = "bolt-hit";
                 break;
             case UnitRangedProjectileType.MagicBolt:
                 beamEffect = EffectType.MagicBoltBeam;
                 hitEffect = EffectType.MagicBoltHit;
-                beamSound = "magicbolt6";
-                hitSound = "magicboltexplode";
+                beamSound = "magic-bolt-beam";
+                hitSound = "bolt-hit";
                 break;
             case UnitRangedProjectileType.Justice:
                 hitEffect = EffectType.JusticeHit;

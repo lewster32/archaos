@@ -66,7 +66,7 @@
                                 'balance-chaotic': spell.balance < 0,
                             }"
                             :title="`${friendlyBalance(spell.balance)}`"
-                            >{{ balanceIndicator(spell) }}</span
+                            >{{ balanceIndicator(spell.balance) }}</span
                         >
                     </p>
                     <p v-if="spell.castTimes > 1" class="spell-stats__item">

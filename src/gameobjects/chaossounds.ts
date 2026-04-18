@@ -23,6 +23,7 @@ const CLOCK_SPEED = 3_500_000; // ZX Spectrum 48K: 3.5 MHz
 const SAMPLE_RATE = 44_100; // Cleaner than you've ever heard it (possibly)
 const DJNZ_TSTATES = 13; // Measured T-state cost of the DJNZ-based busy-wait loop at 49978, which is the main determinant of pitch.
 const FLIP_OVERHEAD = 139; // measured T-state cost of all instructions surrounding the busy-wait
+const VOLUME = 0.25; // scales final PCM amplitude to avoid blasting the listener's ears off
 
 export interface SoundParams {
   outerCount: number;   // how many times the pitch table is updated
@@ -200,7 +201,7 @@ function delaysToSamples(delays: number[]): Float32Array {
  */
 function playSamples(samples: Float32Array, context: AudioContext): Promise<void> {
   const centred = new Float32Array(samples.length);
-  for (let i = 0; i < samples.length; i++) centred[i] = (samples[i] - 0.5) * 2;
+  for (let i = 0; i < samples.length; i++) centred[i] = (samples[i] - 0.5) * 2 * VOLUME;
 
   const buffer = context.createBuffer(1, centred.length, SAMPLE_RATE);
   buffer.copyToChannel(centred, 0);

@@ -764,7 +764,7 @@ export class Rules {
                     await board.events.emitAsync(EngineEvent.EffectRequested, {
                         type: EffectType.DisbelieveHit,
                         pieceId: piece.id,
-                        sound: "disbelieve",
+                        sound: "destroy",
                     });
                     await piece.kill();
                     board.logger.log(
@@ -787,7 +787,7 @@ export class Rules {
                 await board.events.emitAsync(EngineEvent.EffectRequested, {
                     type: EffectType.GiveSpell,
                     pieceId: piece.id,
-                    sound: "newspell",
+                    sound: "new-spell",
                 });
                 board.addSpell(
                     piece.currentRider.owner,

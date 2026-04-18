@@ -141,7 +141,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
         const unit: any = Piece.getUnitConfig(this.unitId);
 
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "castloop08",
+            sound: "cast-beam",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.WizardCasting,
@@ -185,7 +185,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
         });
 
         this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "spelleffect",
+            sound: "die",
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.SummonPiece,

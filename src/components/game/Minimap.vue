@@ -8,25 +8,14 @@
             @click="toggleInfo()"
             title="Show universe balance info"
         >
+            <span v-if="balanceShift < 0" class="c-magenta">&lt;&lt; </span>
             <span
-                style="font-weight: bold"
                 :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
             >
                 {{ `${balance < 0 ? "*" : balance > 0 ? "^" : "-"}` }}
             </span>
             {{ balancePercent ? `(+${balancePercent}%)` : "" }}
-            <span
-                :class="{
-                    'c-magenta': balanceShift < 0,
-                    'c-cyan': balanceShift > 0,
-                }"
-            >
-                {{
-                    balanceShift
-                        ? ` ${balanceShift < 0 ? "+*" : balanceShift > 0 ? "+^" : ""}`
-                        : ""
-                }}
-            </span>
+            <span v-if="balanceShift > 0" class="c-cyan"> &gt;&gt;</span>
         </button>
         <div class="minimap__inner callout">
             <div class="minimap__map map" :style="boardStyles">
@@ -59,24 +48,11 @@
             >
                 <span class="balance-info__name">
                     {{
-                        `${balance < 0 ? "* Chaotic" : balance > 0 ? "^ Lawful" : "Neutral"}`
+                        `${balance < 0 ? `${balanceIndicator(balance)} Chaotic` : balance > 0 ? `${balanceIndicator(balance)} Lawful` : "Neutral"}`
                     }}
                 </span>
                 <span class="balance-info__amount">
                     {{ balancePercent ? `(+${balancePercent}%)` : "" }}
-                    <span
-                        class="balance-info__shift"
-                        :class="{
-                            'c-magenta': balanceShift < 0,
-                            'c-cyan': balanceShift > 0,
-                        }"
-                    >
-                        {{
-                            balanceShift
-                                ? ` ${balanceShift < 0 ? "+*" : balanceShift > 0 ? "+^" : ""}`
-                                : ""
-                        }}
-                    </span>
                 </span>
             </p>
             <p v-if="balance != 0">
@@ -103,20 +79,6 @@
                 The universe is currently neutral (-); all spells will have their
                 normal casting chance.
             </p>
-            <template v-if="balanceShift !== 0">
-                <p>
-                    The amount of
-                    <span
-                        :class="{
-                            'c-magenta': balanceShift < 0,
-                            'c-cyan': balanceShift > 0,
-                        }"
-                        >{{ balanceShift < 0 ? "chaos (*)" : "law (^)" }}</span
-                    >
-                    has increased this turn, which will shift the universe balance
-                    at the start of the next turn.
-                </p>
-            </template>
             <p>
                 The balance of the universe is changed every time a non-neutral
                 spell is <span class="c-green">successfully cast</span>, and
@@ -132,7 +94,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from "vue";
 import { ref, computed } from "vue";
-import { UnitStatus } from "@archaos/engine";
+import { balanceIndicator, UnitStatus } from "@archaos/engine";
 import { Piece } from "../../gameobjects/piece";
 import { cssColour } from "../../utils";
 

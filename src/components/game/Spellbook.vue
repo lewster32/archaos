@@ -101,7 +101,7 @@
                                 'balance-lawful': spell.balance > 0,
                                 'balance-chaotic': spell.balance < 0,
                             }"
-                            >{{ balanceIndicator(spell) }}</span
+                            >{{ balanceIndicator(spell.balance) }}</span
                         >
                         <span
                             :style="`color: var(--spell-chance-colour-${chanceRounded(
