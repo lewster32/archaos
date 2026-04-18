@@ -45,5 +45,9 @@
         "forceHit": false,
         "forceCast": true,
         "shortDelay": true
+    },
+    "weather": {
+        "type": "snow",
+        "intensity": 0.9
     }
 }

@@ -63,7 +63,12 @@ import {
 } from "phaser";
 
 // Weather
-import { RainEffect, WeatherEffect, WeatherType } from "./boardeffects/weather";
+import {
+    RainEffect,
+    SnowEffect,
+    WeatherEffect,
+    WeatherType,
+} from "./boardeffects/weather";
 
 /**
  * The main game board. This is where the magic (literally) happens.
@@ -399,7 +404,15 @@ export class Board extends EngineBoard<Piece> {
             );
         });
 
-        this.startWeather();
+        // 30% chance of weather on a fresh board. Scenarios can override
+        // this by calling `startWeather` explicitly with options.
+        if (Math.random() <= 0.3) {
+            // Earlier on today, apparently, a woman rung the BBC and said
+            // she heard there was a hurricane on the way... well, if you're
+            // watching, don't worry, there isn't!
+            // ~ Michael Fish
+            this.startWeather();
+        }
 
         // Debugging aid
         globalThis["currentBoard"] = this;
@@ -2088,21 +2101,28 @@ export class Board extends EngineBoard<Piece> {
     private _weatherEffect?: WeatherEffect;
 
     /**
-     * Start a weather effect on the board.
-     * 
-     * @param type  The type of weather effect to start (default: Rain).
+     * Start a weather effect on the board. Any existing weather effect is
+     * destroyed first, so this can be called to replace the current weather.
+     *
+     * @param type     The type of weather effect to start (default: Rain).
+     * @param options  Untyped per-effect options bag. Validated at runtime
+     *                 by the effect class — see e.g. `RainEffect` for the
+     *                 supported keys. Omit to use random defaults.
      */
-    protected startWeather(type: WeatherType = WeatherType.Rain): void {
-        if (Math.random() > 0.3) {
-            // Earlier on today, apparently, a woman rung the BBC and said she
-            // heard there was a hurricane on the way... well, if you're
-            // watching, don't worry, there isn't!
-            // ~ Michael Fish
-            return;
+    public startWeather(
+        type: WeatherType = WeatherType.Rain,
+        options?: Record<string, unknown>,
+    ): void {
+        if (this._weatherEffect) {
+            this._weatherEffect.destroy();
+            this._weatherEffect = undefined;
         }
         switch (type) {
             case WeatherType.Rain:
-                this._weatherEffect = new RainEffect(this);    
+                this._weatherEffect = new RainEffect(this, options);
+                break;
+            case WeatherType.Snow:
+                this._weatherEffect = new SnowEffect(this, options);
                 break;
         }
         this._weatherEffect.start();

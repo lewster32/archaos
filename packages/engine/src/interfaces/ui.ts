@@ -91,7 +91,27 @@ export interface GameScenarioData {
     currentPlayerIndex?: number;
     corpses?: GameScenarioPiece[];
     muteAudio?: boolean;
+
+    /**
+     * Optional weather configuration. When set, weather is forced on (the
+     * usual random gate is bypassed) and the supplied parameters override
+     * the effect's random defaults. Useful for testing different patterns.
+     */
+    weather?: GameScenarioWeather;
 }
+
+/**
+ * Untyped weather configuration loaded from a scenario.
+ *
+ * The reserved `type` key (string, default `"rain"`) selects which weather
+ * effect to start. All other keys are passed through to the effect and
+ * validated at runtime — see the effect class (e.g. `RainEffect`) for the
+ * supported keys and value ranges. Unknown keys are ignored.
+ *
+ * The presence of this object on a scenario forces weather to start,
+ * regardless of the usual random gate.
+ */
+export type GameScenarioWeather = Record<string, unknown>;
 
 /**
  * Game scenario player data.

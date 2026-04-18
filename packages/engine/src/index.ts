@@ -95,6 +95,7 @@ export {
     type GameScenarioPlayer,
     type GameScenarioPiece,
     type GameScenarioCheats,
+    type GameScenarioWeather,
     type BoardUpdateEventData,
     type SpellbookOpenEventData,
     type SpellbookEventData,

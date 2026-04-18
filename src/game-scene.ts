@@ -35,6 +35,7 @@ import { Spell } from "@archaos/engine";
 import { Piece } from "./gameobjects/piece";
 import { Wizard } from "./gameobjects/wizard";
 import { Tutorial } from "./gameobjects/tutorials/tutorial";
+import { WeatherType } from "./gameobjects/boardeffects/weather";
 
 import { Scene } from "phaser";
 import { loadingProgress, debugLoading } from "./game/loading-state";
@@ -545,6 +546,15 @@ export class GameScene extends Scene {
             Board.CHEAT_FORCE_CAST = scenarioData.cheats.forceCast ?? null;
             Board.CHEAT_SHORT_DELAY =
                 scenarioData.cheats.shortDelay ?? Board.CHEAT_SHORT_DELAY;
+        }
+
+        if (scenarioData.weather) {
+            const rawType = scenarioData.weather.type;
+            const weatherType: WeatherType =
+                typeof rawType === "string"
+                    ? (rawType.toLowerCase() as WeatherType)
+                    : WeatherType.Rain;
+            this.board.startWeather(weatherType, scenarioData.weather);
         }
 
         setTimeout(async () => {
