@@ -12,45 +12,25 @@
             "position": { "x": 0, "y": 2 },
             "statuses": [],
             "pieces": [
-                {
-                    "type": "Elf",
-                    "position": { "x": 1, "y": 1 }
-                }
+
             ],
-            "spells": ["*"]
-        },
-        {
-            "id": 2,
-            "name": "Player 2",
-            "position": { "x": 4, "y": 2 },
-            "computerControlled": true,
-            "difficulty": 0.5,
-            "statuses": [],
-            "pieces": [],
+            "computerControlled": false,
+            "spells": ["Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2"],
             "wizardProperties": {
                 "movement": 0,
                 "manoeuvrability": 0,
                 "combat": 1
-            },
-            "spells": []
+            }
+
         },
         {
-            "id": 3,
-            "name": "Player 3",
-            "position": { "x": 7, "y": 4 },
+            "id": 2,
+            "name": "Player 2",
+            "position": { "x": 8, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [
-                {
-                    "type": "Wall",
-                    "position": { "x": 5, "y": 1 }
-                },
-                {
-                    "type": "Wall",
-                    "position": { "x": 4, "y": 1 }
-                }
-            ],
+            "pieces": [],
             "wizardProperties": {
                 "movement": 0,
                 "manoeuvrability": 0,

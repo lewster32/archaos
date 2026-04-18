@@ -29,6 +29,7 @@ describe("SoundEffects", () => {
         mockSound = {
             play: vi.fn(),
             destroy: vi.fn(),
+            manager: { mute: false },
         };
         mockScene = {
             sound: {
@@ -44,16 +45,17 @@ describe("SoundEffects", () => {
     });
 
     it("should play a sound effect", () => {
-        soundEffects.play("effect1");
+        soundEffects.play("effect1", false);
         expect(mockSound.play).toHaveBeenCalledWith("effect1");
     });
 
     it("should play a sound effect asynchronously with options", async () => {
         vi.useFakeTimers();
-        const promise = soundEffects.playAsync("effect2", {
-            repeat: 2,
-            delay: 100,
-        });
+        const promise = soundEffects.playAsync(
+            "effect2",
+            { repeat: 2, delay: 100 },
+            false,
+        );
         await vi.runAllTimersAsync();
         await promise;
         vi.useRealTimers();
@@ -62,12 +64,12 @@ describe("SoundEffects", () => {
     });
 
     it("should play a sound effect asynchronously without options", async () => {
-        await soundEffects.playAsync("effect4");
+        await soundEffects.playAsync("effect4", undefined, false);
         expect(mockSound.play).toHaveBeenCalledWith("effect4");
     });
 
     it("should use default repeat and delay when options are empty", async () => {
-        await soundEffects.playAsync("effect7", {});
+        await soundEffects.playAsync("effect7", {}, false);
         expect(mockSound.play).toHaveBeenCalledWith("effect7");
         expect(mockSound.play).toHaveBeenCalledTimes(1);
     });
@@ -85,7 +87,7 @@ describe("SoundEffects", () => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
-        await soundEffects.playAsync("effect6");
+        await soundEffects.playAsync("effect6", undefined, false);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "Error playing sound effect 'effect6':",
             expect.any(Error),
@@ -99,7 +101,7 @@ describe("SoundEffects", () => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
-        soundEffects.play("effect5");
+        soundEffects.play("effect5", false);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "Error playing sound effect 'effect5':",
             expect.any(Error),
@@ -113,7 +115,7 @@ describe("SoundEffects", () => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
-        soundEffects.play("effect3");
+        soundEffects.play("effect3", false);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "Error playing sound effect 'effect3':",
             expect.any(Error),
@@ -125,8 +127,8 @@ describe("SoundEffects", () => {
         expect(mockSound.destroy).toHaveBeenCalled();
     });
 
-    it("should dispatch to the chaos sound generator when useGenerator is true", () => {
-        soundEffects.play("new-turn", true);
+    it("should dispatch to the chaos sound generator by default", () => {
+        soundEffects.play("new-turn");
         expect(playSound).toHaveBeenCalledWith(
             expect.objectContaining({ id: "new-turn" }),
         );
@@ -137,7 +139,7 @@ describe("SoundEffects", () => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
-        soundEffects.play("does-not-exist", true);
+        soundEffects.play("does-not-exist");
         // Allow the fire-and-forget promise chain to settle
         await Promise.resolve();
         await Promise.resolve();
@@ -147,8 +149,8 @@ describe("SoundEffects", () => {
         );
     });
 
-    it("should await the chaos sound generator in playAsync when useGenerator is true", async () => {
-        await soundEffects.playAsync("new-turn", undefined, true);
+    it("should await the chaos sound generator in playAsync by default", async () => {
+        await soundEffects.playAsync("new-turn");
         expect(playSound).toHaveBeenCalledWith(
             expect.objectContaining({ id: "new-turn" }),
         );
@@ -159,10 +161,18 @@ describe("SoundEffects", () => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
-        await soundEffects.playAsync("does-not-exist", undefined, true);
+        await soundEffects.playAsync("does-not-exist");
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "Error playing sound effect 'does-not-exist':",
             expect.any(Error),
         );
+    });
+
+    it("should skip the chaos sound generator when the sound manager is muted", async () => {
+        vi.mocked(playSound).mockClear();
+        mockSound.manager.mute = true;
+        await soundEffects.playAsync("new-turn");
+        soundEffects.play("new-turn");
+        expect(playSound).not.toHaveBeenCalled();
     });
 });

@@ -200,7 +200,7 @@ export class Board extends EngineBoard<Piece> {
 
         this._sound = SoundEffects.getInstance(this.scene);
 
-        this._sound.play("screenactive");
+        this._sound.play("screenactive", false);
 
         document.addEventListener(
             "highlight-owned-units",
@@ -254,10 +254,9 @@ export class Board extends EngineBoard<Piece> {
                         await this.sound.playAsync(
                             data.sound,
                             data.soundOptions,
-                            true
                         );
                     } else {
-                        this.sound.play(data.sound, true);
+                        this.sound.play(data.sound);
                     }
                 }
                 if (data.type) {
@@ -345,7 +344,10 @@ export class Board extends EngineBoard<Piece> {
                         if (newPiece && !newPiece.sprite) {
                             newPiece.initSprites();
                         }
-                        this.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`);
+                        this.sound.play(
+                            `blob${Math.random() < 0.5 ? 1 : 2}`,
+                            false,
+                        );
                         if (
                             result.killedPieceId != null ||
                             result.destroyedPieceIds.length > 0 ||
@@ -364,7 +366,7 @@ export class Board extends EngineBoard<Piece> {
             async (payload: TurmoilBatchPayload) => {
                 const caster = this.getPiece(payload.castingPieceId);
                 if (caster) {
-                    this.sound.play("die", true);
+                    this.sound.play("die");
                     await this.playEffect(
                         EffectType.WizardCasting,
                         caster.sprite.getCenter(),
@@ -373,7 +375,7 @@ export class Board extends EngineBoard<Piece> {
                 for (const move of payload.moves) {
                     const piece = this.getPiece(move.pieceId);
                     if (!piece) continue;
-                    this.sound.play("die", true);
+                    this.sound.play("die");
                     const startPos = this.getIsoPosition(
                         new PMath.Vector2(move.from.x, move.from.y),
                     );
@@ -769,7 +771,7 @@ export class Board extends EngineBoard<Piece> {
         this._boardEvents.emit(BoardEvent.PieceSelected, this.selected);
         if (this.phase === BoardPhase.Moving) {
             if (!silent) {
-                this.sound.play("select-piece", true);
+                this.sound.play("select-piece");
             }
             if (this.selected.currentMount) {
                 this.emitUIEvent(EventType.DismountAvailable, true);
@@ -935,7 +937,7 @@ export class Board extends EngineBoard<Piece> {
         if (!path?.nodes?.length || path.nodes[0].terminal) {
             return;
         }
-        this.sound.play("step", true);
+        this.sound.play("step");
         await piece.moveTo(
             path.nodes.shift().pos,
             Piece.DEFAULT_STEP_MOVE_DURATION,
@@ -979,7 +981,7 @@ export class Board extends EngineBoard<Piece> {
 
         if (isFlying || Board.distance(piece.position, new Point(position.x, position.y)) <= 1.5) {
             if (!silent) {
-                this.sound.play(isFlying ? "fly" : "step", true);
+                this.sound.play(isFlying ? "fly" : "step");
             }
             await piece.moveTo(position);
         } else if (path && path.nodes?.length > 1) {
@@ -1058,7 +1060,7 @@ export class Board extends EngineBoard<Piece> {
                 attackingPiece.position.x,
                 attackingPiece.position.y,
             );
-            this.sound.play("fly", true);
+            this.sound.play("fly");
             await attackingPiece.flyApproach(
                 defendingPiece.position,
             );
@@ -1120,7 +1122,7 @@ export class Board extends EngineBoard<Piece> {
         // (sound, log, range gizmo) that it does for human players.
         // Replicate that here so the ranged attack is visible.
         if (this.currentPlayer?.remote) {
-            this.sound.play("ranged-select", true);
+            this.sound.play("ranged-select");
             this.logger.log(
                 `${attackingPiece.name}'s turn to ranged attack`,
                 Colour.Yellow,
@@ -1179,7 +1181,7 @@ export class Board extends EngineBoard<Piece> {
                 await mountingPiece.dismount();
                 mountingPiece.moved = false;
             }
-            this.sound.play("step", true);
+            this.sound.play("step");
             await mountingPiece.mount(mountedPiece);
             this.emitBoardUpdateEvent();
             return mountingPiece;
@@ -1202,7 +1204,7 @@ export class Board extends EngineBoard<Piece> {
             return null;
         }
         this.emitUIEvent(EventType.DismountAvailable, false);
-        this.sound.play("step", true);
+        this.sound.play("step");
         await dismountingPiece.dismount();
         this.emitBoardUpdateEvent();
         return dismountingPiece;
@@ -1382,7 +1384,7 @@ export class Board extends EngineBoard<Piece> {
 
         switch (this.phase) {
             case BoardPhase.Spellbook:
-                this.sound.play("new-turn", true);
+                this.sound.play("new-turn");
                 this.logger.log(
                     `${this.currentPlayer?.name}'s turn to select a spell`,
                 );
@@ -1393,7 +1395,7 @@ export class Board extends EngineBoard<Piece> {
                         `${this.currentPlayer?.name}'s turn to cast '${this.currentPlayer.selectedSpell.name}'`,
                     );
                 } else {
-                    this.sound.play("cancel", true);
+                    this.sound.play("cancel");
                     this.logger.log(
                         `Skipping ${this.currentPlayer?.name}'s casting turn (no spell selected)`,
                         Colour.Magenta,
@@ -1401,7 +1403,7 @@ export class Board extends EngineBoard<Piece> {
                 }
                 break;
             case BoardPhase.Moving:
-                this.sound.play("new-turn", true);
+                this.sound.play("new-turn");
                 this.logger.log(`${this.currentPlayer?.name}'s turn to move`);
                 break;
         }
@@ -1444,7 +1446,7 @@ export class Board extends EngineBoard<Piece> {
                 this.sound.playAsync("is-casting", {
                     repeat: 3,
                     delay: 60,
-                }, true);
+                });
             }
         });
     }

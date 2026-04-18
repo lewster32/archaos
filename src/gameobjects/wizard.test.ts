@@ -726,10 +726,9 @@ describe("Wizard instance methods", () => {
 
             expect((board as any).sound.play).toHaveBeenCalledWith(
                 "deadwizard1",
+                false,
             );
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "disbelieve",
-            );
+            expect((board as any).sound.play).toHaveBeenCalledWith("destroy");
             expect((board as any).playEffect).toHaveBeenCalled();
             expect((board as any).checkWinCondition).toHaveBeenCalled();
             expect((owner as any).defeat).toHaveBeenCalled();

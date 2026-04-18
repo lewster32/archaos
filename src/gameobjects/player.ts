@@ -75,9 +75,11 @@ export class Player extends EnginePlayer<Piece> {
             `Game over for ${this.name}`,
             Colour.Red,
         );
-        await (this.board as unknown as Board).sound.playAsync("deadwizard2", {
-            delay: Board.DEFAULT_DELAY,
-        });
+        await (this.board as unknown as Board).sound.playAsync(
+            "deadwizard2",
+            { delay: Board.DEFAULT_DELAY },
+            false,
+        );
         await this.destroyCreations();
         // Let's really dwell on this for a bit
         await (this.board as unknown as Board).idleDelay(Board.END_TURN_DELAY);
@@ -101,7 +103,7 @@ export class Player extends EnginePlayer<Piece> {
                         setTimeout(
                             async () => {
                                 (this.board as unknown as Board).sound.play(
-                                    "destroy", true
+                                    "destroy",
                                 );
                                 await (
                                     this.board as unknown as Board

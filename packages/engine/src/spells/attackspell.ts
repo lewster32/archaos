@@ -105,7 +105,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 target.hasStatus(UnitStatus.Wizard)
             ) {
                 this._board.events.emit(EngineEvent.EffectRequested, {
-                    sound: "justicesuccessful",
+                    sound: "destroy",
                 });
                 await target.owner.destroyCreations();
                 this._board.logger.log(
@@ -114,7 +114,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 await this._board.idleDelay();
             } else {
                 this._board.events.emit(EngineEvent.EffectRequested, {
-                    sound: "killcreature",
+                    sound: "die",
                 });
                 await target.kill();
                 targetKilled = true;

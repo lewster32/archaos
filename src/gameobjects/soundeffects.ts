@@ -31,16 +31,17 @@ export class SoundEffects {
     /**
      * Play a sound effect asynchronously.
      *
-     * @param effectName the marker name of the effect to play from the audio sprite,
-     *                   or (when `useGenerator` is true) the id of a chaossounds.json entry
+     * @param effectName the id of a chaossounds.json entry to synthesise via the
+     *                   ZX Spectrum beeper emulator, or (when `useGenerator` is
+     *                   false) the marker name of the effect in the audio sprite
      * @param options options for playing the sound effect
-     * @param useGenerator if true, synthesise the sound via the ZX Spectrum beeper
-     *                     emulator in chaossounds.ts instead of playing from the audio sprite
+     * @param useGenerator defaults to true (beeper emulator). Pass false to
+     *                     play a marker from the loaded audio sprite instead.
      */
     public async playAsync(
         effectName: string,
         options?: SoundEffectOptions,
-        useGenerator: boolean = false,
+        useGenerator: boolean = true,
     ): Promise<void> {
         try {
             const repeat: number = options?.repeat ?? 1;
@@ -67,12 +68,13 @@ export class SoundEffects {
     /**
      * Play a sound effect.
      *
-     * @param effectName the marker name of the effect to play from the audio sprite,
-     *                   or (when `useGenerator` is true) the id of a chaossounds.json entry
-     * @param useGenerator if true, synthesise the sound via the ZX Spectrum beeper
-     *                     emulator in chaossounds.ts instead of playing from the audio sprite
+     * @param effectName the id of a chaossounds.json entry to synthesise via the
+     *                   ZX Spectrum beeper emulator, or (when `useGenerator` is
+     *                   false) the marker name of the effect in the audio sprite
+     * @param useGenerator defaults to true (beeper emulator). Pass false to
+     *                     play a marker from the loaded audio sprite instead.
      */
-    public play(effectName: string, useGenerator: boolean = false): void {
+    public play(effectName: string, useGenerator: boolean = true): void {
         try {
             if (useGenerator) {
                 this._playGenerated(effectName).catch((e) => {
@@ -92,8 +94,15 @@ export class SoundEffects {
     /**
      * Look up a chaossounds.json entry by id and play it through the beeper
      * emulator. Throws if the id is unknown.
+     *
+     * The beeper emulator uses its own Web Audio API context, separate from
+     * Phaser's sound manager, so we explicitly honour the manager's mute
+     * flag here to keep `scene.sound.mute` as the single source of truth.
      */
     private _playGenerated(id: string): Promise<void> {
+        if (this._sound.manager.mute) {
+            return Promise.resolve();
+        }
         const entry = CHAOS_SOUNDS.find((s) => s.id === id);
         if (!entry) {
             throw new Error(`Chaos sound '${id}' not found`);

@@ -1109,7 +1109,7 @@ describe("Cursor.action()", () => {
         expect(selectedPiece.turnOver).toBe(false);
     });
 
-    it("plays bowselecta sound and calls showSimpleRange when piece has moved and canRangedAttack", async () => {
+    it("plays ranged-select sound and calls showSimpleRange when piece has moved and canRangedAttack", async () => {
         const selectedPiece = makeMovePiece({
             moved: true,
             canRangedAttack: true,
@@ -1128,7 +1128,7 @@ describe("Cursor.action()", () => {
         const cursor = new Cursor(board);
         await cursor.action(InputType.Click);
 
-        expect(board.sound.play).toHaveBeenCalledWith("bowselecta");
+        expect(board.sound.play).toHaveBeenCalledWith("ranged-select");
         expect(board.rangeGizmo.showSimpleRange).toHaveBeenCalledWith(
             selectedPiece.position,
             4,

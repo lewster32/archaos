@@ -229,7 +229,7 @@ export class Wizard extends Piece {
      */
     async kill(): Promise<void> {
         // WOBWOBWOBWOBWOBWOB
-        this.clientBoard.sound.play("deadwizard1");
+        this.clientBoard.sound.play("deadwizard1", false);
         await this.clientBoard.playEffect(
             EffectType.WizardDefeated,
             this.sprite.getCenter(),
@@ -252,7 +252,7 @@ export class Wizard extends Piece {
         await this.owner?.defeat();
         if (ownedPieceCount < 1) {
             // PCHOWWW
-            this.clientBoard.sound.play("destroy", true);
+            this.clientBoard.sound.play("destroy");
             await this.clientBoard.delay(Board.DEFAULT_DELAY);
         }
         await this.clientBoard.checkWinCondition();

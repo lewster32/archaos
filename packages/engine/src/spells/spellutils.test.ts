@@ -5,8 +5,6 @@ import {
     balanceIndicator,
     friendlyBalance,
 } from "./spellutils";
-import type { Spell } from "./spell";
-
 describe("chancePercent", () => {
     it("converts 0 to 0%", () => {
         expect(chancePercent(0)).toBe(0);
@@ -59,40 +57,37 @@ describe("chanceRounded", () => {
     });
 });
 
-// balance() accepts any object with a `balance: number` property
-describe("balance", () => {
-    const spell = (b: number) => ({ balance: b }) as Pick<Spell, "balance">;
-
+describe("balanceIndicator", () => {
     it('returns "-" for neutral (balance 0)', () => {
-        expect(balanceIndicator(spell(0) as Spell)).toBe("-");
+        expect(balanceIndicator(0)).toBe("-");
     });
 
     it('returns "^" for lawful balance of 1', () => {
-        expect(balanceIndicator(spell(1) as Spell)).toBe("^");
+        expect(balanceIndicator(1)).toBe("^");
     });
 
     it('returns "^^^" for lawful balance of 3', () => {
-        expect(balanceIndicator(spell(3) as Spell)).toBe("^^^");
+        expect(balanceIndicator(3)).toBe("^^^");
     });
 
     it('returns "^^^^" for lawful balance of 4 (maximum)', () => {
-        expect(balanceIndicator(spell(4) as Spell)).toBe("^^^^");
+        expect(balanceIndicator(4)).toBe("^^^^");
     });
 
     it("caps lawful symbols at 4 when balance exceeds 4", () => {
-        expect(balanceIndicator(spell(10) as Spell)).toBe("^^^^");
+        expect(balanceIndicator(10)).toBe("^^^^");
     });
 
     it('returns "*" for chaotic balance of -1', () => {
-        expect(balanceIndicator(spell(-1) as Spell)).toBe("*");
+        expect(balanceIndicator(-1)).toBe("*");
     });
 
     it('returns "**" for chaotic balance of -2', () => {
-        expect(balanceIndicator(spell(-2) as Spell)).toBe("**");
+        expect(balanceIndicator(-2)).toBe("**");
     });
 
     it("caps chaotic symbols at 4 when balance is below -4", () => {
-        expect(balanceIndicator(spell(-5) as Spell)).toBe("****");
+        expect(balanceIndicator(-5)).toBe("****");
     });
 });
 

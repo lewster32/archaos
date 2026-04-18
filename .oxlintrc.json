@@ -8,7 +8,8 @@
     },
     "rules": {
         "no-await-in-loop": "off",
-        "import/no-unassigned-import": "off"
+        "import/no-unassigned-import": "off",
+        "vitest/require-mock-type-parameters": "off"
     },
     "settings": {
         "vitest": {

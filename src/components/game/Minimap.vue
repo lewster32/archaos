@@ -48,7 +48,7 @@
             >
                 <span class="balance-info__name">
                     {{
-                        `${balance < 0 ? `${balanceIndicator(balance)} Chaotic` : balance > 0 ? `${balanceIndicator(balance)} Lawful` : "Neutral"}`
+                        `${balance < 0 ? `${balanceIndicator(balanceNormalised)} Chaotic` : balance > 0 ? `${balanceIndicator(balanceNormalised)} Lawful` : "Neutral"}`
                     }}
                 </span>
                 <span class="balance-info__amount">
@@ -124,6 +124,16 @@ const balancePercent = computed<number>(() => {
     return Math.floor(Math.abs(value) / 4) * 10;
 });
 
+/**
+ * The current universe balance normalised for the indicator. Balance is
+ * measured in 'alignment points' which are equivalent to 10% spell chance
+ * adjustment per 4 points, so the indicator is normalised to show a full shift
+ * at 4 points in either direction.
+ */
+const balanceNormalised = computed<number>(() => {
+    const value: number = props.balance ?? 0;
+    return value / 4;
+});
 /**
  * The scale of the minimap based on the board size.
  */

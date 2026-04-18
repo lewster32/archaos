@@ -212,7 +212,7 @@ function playSamples(samples: Float32Array, context: AudioContext): Promise<void
   source.start();
 
   return new Promise((resolve) => {
-    source.onended = () => resolve();
+    source.addEventListener("ended", () => resolve(), { once: true });
   });
 }
 
