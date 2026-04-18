@@ -2113,12 +2113,10 @@ export class Board extends EngineBoard<Piece> {
         type: WeatherType = null,
         options?: Record<string, unknown>,
     ): void {
-        if (type === null) {
-            type = this.rng.pick([
-                WeatherType.Rain,
-                WeatherType.Snow
-            ]);
-        }
+        type ??= this.rng.pick([
+            WeatherType.Rain,
+            WeatherType.Snow
+        ]);
 
         if (this._weatherEffect) {
             this._weatherEffect.destroy();
