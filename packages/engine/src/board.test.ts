@@ -756,16 +756,20 @@ describe("Board", () => {
             expect(board.phase).toBe(BoardPhase.Spellbook);
         });
 
-        it("applies a non-zero balanceShift, logs it, then resets it to 0", async () => {
+        it("logs a non-zero accumulated alignment shift and resets it", async () => {
             const logger = { log: vi.fn() } as unknown as Logger;
             const board = makeBoard({ logger });
             board.addPlayer({
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            board.balanceShift = 0.1;
+            board.alignment.shift(2);
+            expect(board.balance).toBe(2);
+            expect(board.balanceShift).toBe(2);
             await board.newTurn();
-            expect(board.balance).toBeCloseTo(0.1);
+            // Alignment.shift updates balance immediately; newTurn only resets
+            // the per-turn accumulator.
+            expect(board.balance).toBe(2);
             expect(board.balanceShift).toBe(0);
             expect(logger.log).toHaveBeenCalledWith(
                 expect.stringContaining("law"),
@@ -1372,13 +1376,23 @@ describe("Board", () => {
         });
     });
 
-    // ── board.balanceShift setter ──────────────────────────────────────────
+    // ── board.alignment ────────────────────────────────────────────────────
 
-    describe("board.balanceShift", () => {
-        it("getter/setter round-trips", () => {
+    describe("board.alignment", () => {
+        it("exposes the shared Alignment instance via a getter", () => {
             const board = makeBoard();
-            board.balanceShift = 0.1;
-            expect(board.balanceShift).toBe(0.1);
+            expect(board.alignment).toBeDefined();
+            expect(board.balance).toBe(board.alignment.value);
+            expect(board.balanceShift).toBe(
+                board.alignment.valueAccumulated,
+            );
+        });
+
+        it("balance and balanceShift track alignment.shift()", () => {
+            const board = makeBoard();
+            board.alignment.shift(3);
+            expect(board.balance).toBe(3);
+            expect(board.balanceShift).toBe(3);
         });
     });
 
@@ -1447,13 +1461,6 @@ describe("Board", () => {
     });
 
     // ── Simple getters and setters ────────────────────────────────────────
-
-    describe("classicBalance", () => {
-        it("returns false by default", () => {
-            const board = makeBoard();
-            expect(board.classicBalance).toBe(false);
-        });
-    });
 
     describe("spellFilter getter/setter", () => {
         it("default filter accepts all configs", () => {

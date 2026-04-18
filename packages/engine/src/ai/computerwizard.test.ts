@@ -7,7 +7,23 @@ import type { Player } from "../player";
 import type { Piece } from "../piece";
 import { Spell } from "../spells/spell";
 import { Point } from "../point";
+import { Alignment } from "../alignment";
 import { TestRNG } from "../rng";
+
+/**
+ * Build an Alignment instance for tests that need a specific balance. The
+ * `balance` argument uses the legacy float form (e.g. 0.3 = 30% toward law)
+ * and is converted to the equivalent integer alignment value via the
+ * quantisation used by Alignment.adjustChance (multiply by 40 so
+ * |value|/4/10 matches the legacy 0..1 scale).
+ */
+function makeAlignment(balance: number = 0, classicBalance: boolean = false): Alignment {
+    const alignment: Alignment = new Alignment(classicBalance);
+    if (balance !== 0) {
+        (alignment as any)._value = Math.round(balance * 40);
+    }
+    return alignment;
+}
 
 // ─── Shared stubs ────────────────────────────────────────────────────────────
 
@@ -557,7 +573,10 @@ describe("ComputerWizard", () => {
         it("returns the chance for a classic spell matched by unitId", () => {
             inject({ chance: 0.3, balance: 0 });
             expect(
-                (ComputerWizard as any).getSpellChanceForUnit("test-unit", 0),
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    makeAlignment(0),
+                ),
             ).toBe(0.3);
         });
 
@@ -571,7 +590,7 @@ describe("ComputerWizard", () => {
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
                     "enhanced-unit",
-                    0,
+                    makeAlignment(0),
                 ),
             ).toBe(0.4);
         });
@@ -580,18 +599,18 @@ describe("ComputerWizard", () => {
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
                     "no-such-unit",
-                    0,
+                    makeAlignment(0),
                 ),
             ).toBeNull();
         });
 
         it("increases chance for a chaotic spell on a chaotic board", () => {
-            // balance -2, universeBalance -0.3 → offset flips to +0.3
+            // spell balance -2, alignment -0.3 → adjustChance adds +0.3
             inject({ chance: 0.1, balance: -2 });
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
                     "test-unit",
-                    -0.3,
+                    makeAlignment(-0.3),
                 ),
             ).toBeCloseTo(0.4);
         });
@@ -599,7 +618,10 @@ describe("ComputerWizard", () => {
         it("increases chance for a lawful spell on a lawful board", () => {
             inject({ chance: 0.3, balance: 2 });
             expect(
-                (ComputerWizard as any).getSpellChanceForUnit("test-unit", 0.2),
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    makeAlignment(0.2),
+                ),
             ).toBeCloseTo(0.5);
         });
 
@@ -608,7 +630,7 @@ describe("ComputerWizard", () => {
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
                     "test-unit",
-                    -0.5,
+                    makeAlignment(-0.5),
                 ),
             ).toBe(0.5);
         });
@@ -616,7 +638,10 @@ describe("ComputerWizard", () => {
         it("clamps the adjusted chance to a maximum of 1", () => {
             inject({ chance: 0.5, balance: -2 });
             expect(
-                (ComputerWizard as any).getSpellChanceForUnit("test-unit", -1),
+                (ComputerWizard as any).getSpellChanceForUnit(
+                    "test-unit",
+                    makeAlignment(-1),
+                ),
             ).toBe(1);
         });
 
@@ -625,7 +650,7 @@ describe("ComputerWizard", () => {
             expect(
                 (ComputerWizard as any).getSpellChanceForUnit(
                     "test-unit",
-                    -0.5,
+                    makeAlignment(-0.5),
                 ),
             ).toBe(0.1);
         });
@@ -765,10 +790,14 @@ describe("ComputerWizard", () => {
                     ? vi.fn().mockImplementation(rollChanceReturn)
                     : vi.fn().mockReturnValue(rollChanceReturn);
 
+            const alignment = makeAlignment(boardBalance);
             const board = {
                 pieces,
                 players: [player, enemy],
-                balance: boardBalance,
+                alignment,
+                get balance() {
+                    return alignment.value;
+                },
                 rollChance: rollChanceFn,
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
@@ -1062,10 +1091,14 @@ describe("ComputerWizard", () => {
                 pickSpell: vi.fn().mockResolvedValue(undefined),
             } as unknown as Player;
 
+            const alignment = makeAlignment(0);
             const board = {
                 pieces: [dragon],
                 players: [player, enemy],
-                balance: 0,
+                alignment,
+                get balance() {
+                    return alignment.value;
+                },
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
@@ -1161,10 +1194,14 @@ describe("ComputerWizard", () => {
                 unitId: "test-goblin-pref",
             };
 
+            const alignment = makeAlignment(0);
             const board = {
                 pieces: [goblin],
                 players: [player, enemy],
-                balance: 0,
+                alignment,
+                get balance() {
+                    return alignment.value;
+                },
                 // Low suspicion → preference ≈ 0.032 → this threshold rejects it
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0.5),
                 rng: new TestRNG(),

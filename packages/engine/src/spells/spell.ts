@@ -119,13 +119,12 @@ export class Spell<P extends Piece = Piece> extends Model {
 
     /**
      * The normalised chance of successfully casting this spell based on the
-     * current balance of the game universe. Clamped between 0.1 and 1 to
+     * current alignment of the game universe. Clamped between 0.1 and 1 to
      * prevent situations where a spell is impossible to cast.
-     * 
-     * If `classicBalance` is `true`, any penalty from a misaligned board is
-     * suppressed — only boosts (aligned spell + aligned board) are applied.
-     * This replicates the original game's behaviour, where the balance check
-     * only rewarded alignment rather than also punishing misalignment.
+     *
+     * The alignment adjustment itself is handled by the board's `Alignment`
+     * instance — see {@link Alignment.adjustChance} for how the original
+     * ('classic') and symmetric modes differ.
      *
      * @return The chance of successfully casting this spell
      */
@@ -133,17 +132,11 @@ export class Spell<P extends Piece = Piece> extends Model {
         if (this.balance === 0) {
             return this._properties.chance;
         }
-        let balanceOffset = this._board.balance;
-        if (this.balance < 0) {
-            balanceOffset *= -1;
-        }
-        if (this._board.classicBalance && balanceOffset < 0) {
-            balanceOffset = 0;
-        }
-        return Math.min(
-            Math.max(this._properties.chance + balanceOffset, 0.1),
-            1,
+        const adjusted: number = this._board.alignment.adjustChance(
+            this._properties.chance,
+            this.balance,
         );
+        return Math.min(Math.max(adjusted, 0.1), 1);
     }
 
     /**
@@ -568,8 +561,7 @@ export class Spell<P extends Piece = Piece> extends Model {
             return null;
         }
         if (this._castTimes === this._totalCastTimes) {
-            // TODO: Check how this shift compares to the real game
-            this._board.balanceShift += this.balance * 0.01;
+            this._board.alignment.shift(this.balance);
         }
         this._castTimes--;
 

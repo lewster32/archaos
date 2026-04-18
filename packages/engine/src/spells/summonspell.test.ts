@@ -8,14 +8,21 @@ import { SummonSpell } from "./summonspell";
 import { Piece } from "../piece";
 import { Point } from "../point";
 import { Board } from "../board";
+import { Alignment } from "../alignment";
 import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
 function makeMockBoard(): Board {
+    const alignment: Alignment = new Alignment(false);
     return {
-        balance: 0,
-        balanceShift: 0,
+        alignment,
+        get balance() {
+            return alignment.value;
+        },
+        get balanceShift() {
+            return alignment.valueAccumulated;
+        },
         rollChance: vi.fn().mockReturnValue(true),
         roll: vi.fn().mockReturnValue(true),
         hasLineOfSight: vi.fn().mockReturnValue(true),

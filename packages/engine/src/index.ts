@@ -138,6 +138,9 @@ export { Rules, _resetRulesForTesting } from "./rules";
 export { Board } from "./board";
 export type { SimplePoint, BoardDeps } from "./board";
 
+// Alignment
+export { Alignment } from "./alignment";
+
 // Register the spell factory on Board to break the
 // circular dependency (board → spellfactory →
 // attackspell → board). Runs once when the engine

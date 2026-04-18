@@ -5,7 +5,27 @@ import type { SpellConfig } from "../configs/spellconfig";
 import { vi } from "vitest";
 import { Point } from "../point";
 import type { Board } from "../board";
+import { Alignment } from "../alignment";
 import { TestRNG } from "../rng";
+
+/**
+ * Build an Alignment for tests. `balance` uses the legacy float form
+ * (e.g. 0.2 = 20% toward law) and is converted to the equivalent integer
+ * alignment value via the quantisation used by
+ * {@link Alignment.adjustChance} (multiply by 40 so |value|/4/10 matches
+ * the legacy 0..1 scale). The private `_value` field is seeded directly so
+ * tests can set up any balance — the real `shift()` method is clamped to ±4.
+ *
+ * @param balance The balance value to seed (legacy float, -1..+1).
+ * @param classicBalance If true, use the original asymmetric chance mode.
+ */
+function makeAlignment(balance: number, classicBalance: boolean): Alignment {
+    const alignment: Alignment = new Alignment(classicBalance);
+    if (balance !== 0) {
+        (alignment as any)._value = Math.round(balance * 40);
+    }
+    return alignment;
+}
 
 export function makeMockBoard(
     opts: {
@@ -21,10 +41,15 @@ export function makeMockBoard(
         rollChanceResult = true,
         players = [],
     } = opts;
+    const alignment: Alignment = makeAlignment(balance, classicBalance);
     return {
-        balance,
-        classicBalance,
-        balanceShift: 0,
+        alignment,
+        get balance() {
+            return alignment.value;
+        },
+        get balanceShift() {
+            return alignment.valueAccumulated;
+        },
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         roll: vi.fn().mockReturnValue(true),
         hasLineOfSight: vi.fn().mockReturnValue(true),

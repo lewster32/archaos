@@ -38,6 +38,7 @@ import type { Box } from "./interfaces/ui";
 import type { RemotePlayer } from "./interfaces/remoteplayer";
 import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
+import { Alignment } from "./alignment";
 
 /**
  * Simple point type without all the baggage of
@@ -132,14 +133,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      */
     protected _state: BoardState;
 
-    protected _balance: number;
-    protected _balanceShift: number;
-
     /**
-     * Whether to use the original 'buggy' balance, which only positively
-     * affects the chance of aligned spells.
+     * Tracks the universe's alignment balance and applies the spell alignment
+     * bias to casting chances. Owns both the current balance and per-turn
+     * accumulator.
      */
-    protected _classicBalance: boolean;
+    protected readonly _alignment: Alignment;
 
     protected readonly _pieces: Map<number, P>;
     protected _selected: P | null;
@@ -179,7 +178,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._rng = deps?.rng ?? new GameRNG(seed);
         this._logger = deps?.logger ?? Logger.getInstance();
         this._rules = deps?.rules ?? Rules.getInstance();
-        this._classicBalance = classicBalance;
+        this._alignment = new Alignment(classicBalance);
 
         this._width = width;
         this._height = height;
@@ -189,8 +188,6 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._state = BoardState.Idle;
         this._lastPhase = BoardPhase.Idle;
         this._lastState = BoardState.Idle;
-        this._balance = 0;
-        this._balanceShift = 0;
 
         this._selected = null;
         this._currentPlayer = null;
@@ -335,20 +332,29 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         return this._busy;
     }
 
+    /**
+     * The engine's universe alignment tracker. Owns the current balance,
+     * the per-turn accumulator, and the bias-vs-balance casting-chance
+     * adjustment. Exposed as read-only so client/UI code can query state.
+     */
+    get alignment(): Alignment {
+        return this._alignment;
+    }
+
+    /**
+     * Shortcut for `alignment.value` — the universe's current balance.
+     * Negative values bias toward chaos, positive toward law.
+     */
     get balance(): number {
-        return this._balance;
+        return this._alignment.value;
     }
 
+    /**
+     * Shortcut for `alignment.valueAccumulated` — the total bias
+     * accumulated this turn from successful spell casts.
+     */
     get balanceShift(): number {
-        return this._balanceShift;
-    }
-
-    set balanceShift(balance: number) {
-        this._balanceShift = balance;
-    }
-
-    get classicBalance(): boolean {
-        return this._classicBalance;
+        return this._alignment.valueAccumulated;
     }
 
     get rng(): IRNG {
@@ -1174,19 +1180,16 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             });
             this._logger.log(`New turn`, Colour.Green);
             this._boardEvents.emit(BoardEvent.NewTurn);
-            if (this._balanceShift !== 0) {
-                this._balance += this._balanceShift;
-                this._balance = Number.parseFloat(this._balance.toFixed(2));
+            const accumulated: number = this._alignment.valueAccumulated;
+            if (accumulated !== 0) {
+                const magnitude: number = Math.abs(accumulated);
                 this._logger.log(
                     `Universe balance shifts towards ${
-                        this._balanceShift < 0 ? "chaos" : "law"
-                    } by ${Number.parseInt(
-                        Math.abs(this._balanceShift * 100).toFixed(2),
-                        10,
-                    )}%`,
-                    this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan,
+                        accumulated < 0 ? "chaos" : "law"
+                    } by ${magnitude} point${magnitude === 1 ? "" : "s"}`,
+                    accumulated < 0 ? Colour.Magenta : Colour.Cyan,
                 );
-                this._balanceShift = 0;
+                this._alignment.resetAccumulated();
                 await this.idleDelay();
             }
             const anySpellsLeft = this.players.some(

@@ -13,7 +13,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="sound in sounds" :key="sound.id">
+                <tr v-for="sound in sounds.toSorted((a, b) => a.id.localeCompare(b.id))" :key="sound.id">
                     <td>{{ sound.id }}</td>
                     <td>{{ sound.outerCount }}</td>
                     <td>{{ sound.middleCount }}</td>

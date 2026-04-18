@@ -14,7 +14,7 @@
             >
                 {{ `${balance < 0 ? "*" : balance > 0 ? "^" : "-"}` }}
             </span>
-            {{ balance ? `(+${Math.round(Math.abs(balance) * 100)}%)` : "" }}
+            {{ balance ? `(+${Math.floor(Math.abs(balance) / 4) * 10}%)` : "" }}
             <span
                 :class="{
                     'c-magenta': balanceShift < 0,
@@ -65,7 +65,7 @@
                 <span class="balance-info__amount">
                     {{
                         balance
-                            ? `(+${Math.round(Math.abs(balance) * 100)}%)`
+                            ? `(+${Math.floor(Math.abs(balance) / 4) * 10}%)`
                             : ""
                     }}
                     <span

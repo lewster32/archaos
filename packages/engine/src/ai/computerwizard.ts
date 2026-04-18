@@ -14,6 +14,7 @@ import type { SummonSpell } from "../spells/summonspell";
 import { Board } from "../board";
 import type { Player } from "../player";
 import { Point } from "../point";
+import type { Alignment } from "../alignment";
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
@@ -330,39 +331,31 @@ export class ComputerWizard implements RemotePlayer {
 
     /**
      * Looks up the effective casting chance for the spell that summons a unit
-     * with the given unit ID, adjusted for the current universe balance
-     * (chaotic spells are easier on a chaotic board, and vice versa).
+     * with the given unit ID, adjusted by the universe alignment (chaotic
+     * spells are easier on a chaotic board, and vice versa).
      *
      * @param unitId the unit ID to look up
-     * @param universeBalance the current universe balance from the board
-     * @param classicBalance whether to apply the classic balance adjustment (which boosts chances, never penalises them)
+     * @param alignment the board's alignment tracker, used to compute the chance modifier
      * @returns the effective casting chance (0.1-1), or null if no matching spell found
      */
     private static getSpellChanceForUnit(
         unitId: string,
-        universeBalance: number,
-        classicBalance: boolean = false
+        alignment: Alignment,
     ): number | null {
         for (const spellConfig of Object.values(Spell.spells)) {
             if (
                 spellConfig.unitId === unitId ||
                 spellConfig.unit?.id === unitId
             ) {
-                // Apply the same universe-balance adjustment as Spell.chance
+                // Apply the same alignment adjustment as Spell.chance
                 if (spellConfig.balance === 0) {
                     return spellConfig.chance;
                 }
-                let balanceOffset: number = universeBalance;
-                if (spellConfig.balance < 0) {
-                    balanceOffset *= -1;
-                }
-                if (classicBalance && balanceOffset < 0) {
-                    balanceOffset = 0;
-                }
-                return Math.min(
-                    Math.max(spellConfig.chance + balanceOffset, 0.1),
-                    1,
+                const adjusted: number = alignment.adjustChance(
+                    spellConfig.chance,
+                    spellConfig.balance,
                 );
+                return Math.min(Math.max(adjusted, 0.1), 1);
             }
         }
         return null;
@@ -469,8 +462,7 @@ export class ComputerWizard implements RemotePlayer {
                             const castChance: number | null =
                                 ComputerWizard.getSpellChanceForUnit(
                                     piece.properties.id,
-                                    this._board.balance,
-                                    this._board.classicBalance
+                                    this._board.alignment,
                                 );
                             if (castChance === null) continue;
 

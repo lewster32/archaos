@@ -11,15 +11,22 @@ import { AttackSpell } from "./attackspell";
 import { Spell } from "./spell";
 import { Point } from "../point";
 import type { Board } from "../board";
+import { Alignment } from "../alignment";
 import { TestRNG } from "../rng";
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
 function makeMockBoard(opts: { rollResult?: boolean } = {}): Board {
     const { rollResult = true } = opts;
+    const alignment: Alignment = new Alignment(false);
     return {
-        balance: 0,
-        balanceShift: 0,
+        alignment,
+        get balance() {
+            return alignment.value;
+        },
+        get balanceShift() {
+            return alignment.valueAccumulated;
+        },
         rollChance: vi.fn().mockReturnValue(true),
         roll: vi.fn().mockReturnValue(rollResult),
         hasLineOfSight: vi.fn().mockReturnValue(true),

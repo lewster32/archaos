@@ -544,19 +544,16 @@ export class Board extends EngineBoard<Piece> {
             });
             this._logger.log(`New turn`, Colour.Green);
             this._boardEvents.emit(BoardEvent.NewTurn);
-            if (this._balanceShift !== 0) {
-                this._balance += this._balanceShift;
-                this._balance = Number.parseFloat(this._balance.toFixed(2));
+            const accumulated: number = this._alignment.valueAccumulated;
+            if (accumulated !== 0) {
+                const magnitude: number = Math.abs(accumulated);
                 this._logger.log(
                     `Universe balance shifts towards ${
-                        this._balanceShift < 0 ? "chaos" : "law"
-                    } by ${Number.parseInt(
-                        Math.abs(this._balanceShift * 100).toFixed(2),
-                        10,
-                    )}%`,
-                    this._balanceShift < 0 ? Colour.Magenta : Colour.Cyan,
+                        accumulated < 0 ? "chaos" : "law"
+                    } by ${magnitude} point${magnitude === 1 ? "" : "s"}`,
+                    accumulated < 0 ? Colour.Magenta : Colour.Cyan,
                 );
-                this._balanceShift = 0;
+                this._alignment.resetAccumulated();
                 await this.idleDelay(Board.DEFAULT_DELAY);
             }
             const anySpellsLeft = this.players.some(
