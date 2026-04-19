@@ -1,6 +1,6 @@
-import type { PieceState } from "./piecestate";
-import type { PieceId, Point, PlayerId, SpellId, SpellTypeId } from "./primitives";
-import type { PhaseKind, PlayerPublicState, ScenarioState } from "./snapshot";
+import type { PartialPersistentFlags, PartialStats, PartialTurnFlags, PieceState } from "./piecestate";
+import type { JsonObject, PieceId, PlayerId, Point, SpellId, SpellTypeId } from "./primitives";
+import type { AlignmentState, PhaseKind, PlayerPublicState, ScenarioState } from "./snapshot";
 
 // ---------------------------------------------------------------------------
 // Common sub-types
@@ -337,7 +337,7 @@ export interface PieceStatsChangedOutcome {
     /** The piece whose stats changed. */
     pieceId: PieceId;
     /** The subset of stats that changed, with their new values. */
-    stats: import("./piecestate").PartialStats;
+    stats: PartialStats;
 }
 
 /**
@@ -379,7 +379,7 @@ export interface PieceTurnFlagChangedOutcome {
     /** The piece whose turn flags changed. */
     pieceId: PieceId;
     /** The subset of turn flags that changed, with their new values. */
-    flags: import("./piecestate").PartialTurnFlags;
+    flags: PartialTurnFlags;
 }
 
 /**
@@ -393,7 +393,7 @@ export interface PiecePersistentFlagChangedOutcome {
     /** The piece whose persistent flags changed. */
     pieceId: PieceId;
     /** The subset of persistent flags that changed, with their new values. */
-    flags: import("./piecestate").PartialPersistentFlags;
+    flags: PartialPersistentFlags;
 }
 
 /**
@@ -439,8 +439,9 @@ export interface PieceResistedSpellOutcome {
 // ---------------------------------------------------------------------------
 
 /**
- * The board's alignment value has shifted — typically caused by casting
- * a chaos- or law-aligned spell.
+ * The board's alignment value has shifted — caused by casting a chaos- or
+ * law-aligned spell, or by the Law/Chaos spells that directly adjust
+ * alignment.
  */
 export interface AlignmentChangedOutcome {
     /** Discriminant for this outcome kind. */
@@ -448,7 +449,7 @@ export interface AlignmentChangedOutcome {
     /** Signed delta applied to the alignment value (negative = towards chaos). */
     delta: number;
     /** The new alignment state after applying the delta. */
-    newAlignment: import("./snapshot").AlignmentState;
+    newAlignment: AlignmentState;
 }
 
 /**
@@ -459,7 +460,7 @@ export interface WeatherChangedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "weather-changed";
     /** The new weather descriptor. */
-    weather: import("./primitives").JsonObject;
+    weather: JsonObject;
 }
 
 // ---------------------------------------------------------------------------

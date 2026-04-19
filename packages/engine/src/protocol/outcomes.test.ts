@@ -376,24 +376,28 @@ describe("outcomes — communication", () => {
 });
 
 describe("outcomes — connection lifecycle", () => {
-    test("player-disconnected / -reconnected / -replaced-by-ai", () => {
-        const d: import("./outcomes").PlayerDisconnectedOutcome = {
+    test("player-disconnected carries playerId", () => {
+        const o: import("./outcomes").PlayerDisconnectedOutcome = {
             kind: "player-disconnected",
             playerId: 1,
         };
-        const r: import("./outcomes").PlayerReconnectedOutcome = {
+        expect(o.playerId).toBe(1);
+    });
+
+    test("player-reconnected carries playerId", () => {
+        const o: import("./outcomes").PlayerReconnectedOutcome = {
             kind: "player-reconnected",
             playerId: 1,
         };
-        const a: import("./outcomes").PlayerReplacedByAiOutcome = {
+        expect(o.playerId).toBe(1);
+    });
+
+    test("player-replaced-by-ai carries playerId", () => {
+        const o: import("./outcomes").PlayerReplacedByAiOutcome = {
             kind: "player-replaced-by-ai",
             playerId: 1,
         };
-        expect([d, r, a].map((o) => o.kind)).toEqual([
-            "player-disconnected",
-            "player-reconnected",
-            "player-replaced-by-ai",
-        ]);
+        expect(o.playerId).toBe(1);
     });
 });
 
