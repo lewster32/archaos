@@ -230,19 +230,27 @@ export interface RequestHistoryCommand extends BaseCommand {
 /**
  * Request resend of a missed private event. Exactly one of `commandIdRef`
  * or `sequenceRef` is provided, identifying which missed private event
- * to retrieve.
+ * to retrieve. The XOR constraint is enforced structurally by the union
+ * below.
  *
  * The field is named `commandIdRef` (not `commandId`) so the envelope's
  * own `commandId` is not shadowed.
  */
-export interface RequestPrivateResendCommand extends BaseCommand {
-    /** Discriminant for this command kind. */
-    kind: "request-private-resend";
-    /** The commandId of a missed command-rejected private event. */
-    commandIdRef?: CommandId;
-    /** The broadcast sequence a missed private event accompanies. */
-    sequenceRef?: SequenceRef;
-}
+export type RequestPrivateResendCommand =
+    | (BaseCommand & {
+          /** Discriminant for this command kind. */
+          kind: "request-private-resend";
+          /** The commandId of a missed command-rejected private event. */
+          commandIdRef: CommandId;
+          sequenceRef?: never;
+      })
+    | (BaseCommand & {
+          /** Discriminant for this command kind. */
+          kind: "request-private-resend";
+          commandIdRef?: never;
+          /** The broadcast sequence a missed private event accompanies. */
+          sequenceRef: SequenceRef;
+      });
 
 /**
  * Establish identity after a disconnect. The one command the server

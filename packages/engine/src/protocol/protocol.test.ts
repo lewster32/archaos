@@ -432,10 +432,17 @@ describe("every command kind round-trips", () => {
         },
         {
             type: "command",
-            commandId: "c_18",
+            commandId: "c_18a",
             token: "t",
             kind: "request-private-resend",
             commandIdRef: "c_x",
+        },
+        {
+            type: "command",
+            commandId: "c_18b",
+            token: "t",
+            kind: "request-private-resend",
+            sequenceRef: 42,
         },
         {
             type: "command",
