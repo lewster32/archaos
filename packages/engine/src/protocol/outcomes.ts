@@ -218,6 +218,8 @@ export interface PieceSpawnedOutcome {
 }
 
 /**
+ * A piece has moved from one tile to another.
+ *
  * If the moved piece has a `mountedById`, the rider identified by that id
  * has its position synchronised to the same destination without a
  * separate outcome.
@@ -310,6 +312,8 @@ export interface PieceMountedOutcome {
 }
 
 /**
+ * A rider has dismounted from a mount.
+ *
  * If the rider dismounts to an adjacent tile or piece, a separate
  * piece-moved or piece-mounted outcome follows within the same event's
  * `outcomes` array.
