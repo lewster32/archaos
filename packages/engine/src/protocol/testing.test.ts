@@ -43,6 +43,11 @@ describe("expectJsonSafe", () => {
         expect(() => expectJsonSafe(input)).toThrow();
     });
 
+    test("fails when the value contains a Set", () => {
+        const input = { s: new Set(["a", "b"]) } as unknown;
+        expect(() => expectJsonSafe(input)).toThrow();
+    });
+
     test("fails when the value contains a function", () => {
         const input = { fn: () => 42 } as unknown;
         expect(() => expectJsonSafe(input)).toThrow();

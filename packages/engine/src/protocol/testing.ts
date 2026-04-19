@@ -1,6 +1,9 @@
 import { expect } from "vitest";
 
 /**
+ * Test-only helper — this module imports vitest and must not be imported
+ * from production code.
+ *
  * Assert that a value round-trips cleanly through
  * `JSON.parse(JSON.stringify(value))` — i.e. every field is JSON-safe
  * (no `undefined`, no `Map`, no `Set`, no functions, no class instances
@@ -9,31 +12,22 @@ import { expect } from "vitest";
  * Returns the parsed clone typed as the input, which is useful for
  * asserting that the declared TypeScript type is also the runtime shape.
  *
- * Throws via Vitest's `expect` if the round-trip is lossy.
+ * Throws via Vitest's `expect` if the round-trip is lossy, naming the
+ * offending key paths in the failure message.
  *
  * @param value the value to test
  * @returns the parsed clone, typed as the input
  */
 export function expectJsonSafe<T>(value: T): T {
-    // Use a replacer to detect non-JSON-safe values during stringification
-    let foundUnsafeValue = false;
+    const unsafeKeys: string[] = [];
     const stringified: string = JSON.stringify(value, (key, val) => {
-        // Check for values that JSON.stringify will drop or coerce
-        if (val === undefined) {
-            foundUnsafeValue = true;
-        }
-        if (typeof val === "function") {
-            foundUnsafeValue = true;
-        }
-        if (val instanceof Map || val instanceof Set) {
-            foundUnsafeValue = true;
+        if (val === undefined || typeof val === "function" || val instanceof Map || val instanceof Set) {
+            unsafeKeys.push(key || "(root)");
         }
         return val;
     });
-
-    // If we found an unsafe value, expect the assertion to fail
-    expect(!foundUnsafeValue).toBe(true);
-
+    expect(unsafeKeys, `Non-JSON-safe values at keys: ${unsafeKeys.join(", ")}`).toEqual([]);
     const parsed: unknown = JSON.parse(stringified);
+    expect(parsed).toEqual(value);
     return parsed as T;
 }
