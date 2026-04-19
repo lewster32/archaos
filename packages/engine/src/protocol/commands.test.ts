@@ -197,3 +197,139 @@ describe("commands — movement phase", () => {
         expect(cmd.kind).toBe("end-movement-phase");
     });
 });
+
+describe("commands — communication", () => {
+    test("chat carries message", () => {
+        const cmd: import("./commands").ChatCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "chat",
+            message: "hi",
+        };
+        expect(cmd.message).toBe("hi");
+    });
+
+    test("ping-position carries point", () => {
+        const cmd: import("./commands").PingPositionCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "ping-position",
+            point: { x: 5, y: 5 },
+        };
+        expect(cmd.point).toEqual({ x: 5, y: 5 });
+    });
+});
+
+describe("commands — history and recovery", () => {
+    test("request-snapshot carries only envelope fields", () => {
+        const cmd: import("./commands").RequestSnapshotCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "request-snapshot",
+        };
+        expect(cmd.kind).toBe("request-snapshot");
+    });
+
+    test("request-history carries fromSequence and optional toSequence", () => {
+        const open: import("./commands").RequestHistoryCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "request-history",
+            fromSequence: 10,
+        };
+        const closed: import("./commands").RequestHistoryCommand = {
+            ...open,
+            toSequence: 42,
+        };
+        expect(open.toSequence).toBeUndefined();
+        expect(closed.toSequence).toBe(42);
+    });
+
+    test("request-private-resend accepts commandId or sequenceRef", () => {
+        const byCmd: import("./commands").RequestPrivateResendCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "request-private-resend",
+            commandIdRef: "c_x",
+        };
+        const bySeq: import("./commands").RequestPrivateResendCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "t",
+            kind: "request-private-resend",
+            sequenceRef: 10,
+        };
+        expect(byCmd.commandIdRef).toBe("c_x");
+        expect(bySeq.sequenceRef).toBe(10);
+    });
+
+    test("reconnect relies on the envelope token and optional lastAppliedSequence", () => {
+        const open: import("./commands").ReconnectCommand = {
+            type: "command",
+            commandId: "c_1",
+            token: "abc",
+            kind: "reconnect",
+        };
+        const resumed: import("./commands").ReconnectCommand = {
+            ...open,
+            lastAppliedSequence: 30,
+        };
+        expect(open.token).toBe("abc");
+        expect(open.lastAppliedSequence).toBeUndefined();
+        expect(resumed.lastAppliedSequence).toBe(30);
+    });
+});
+
+describe("CommandMessage union discriminator", () => {
+    test("covers a representative sample of every category", () => {
+        const commands: import("./commands").CommandMessage[] = [
+            {
+                type: "command",
+                commandId: "c_1",
+                token: "t",
+                kind: "pick-spell",
+                spellId: 10,
+            },
+            {
+                type: "command",
+                commandId: "c_2",
+                token: "t",
+                kind: "cast-spell",
+                target: { self: true },
+            },
+            {
+                type: "command",
+                commandId: "c_3",
+                token: "t",
+                kind: "move-piece",
+                pieceId: 101,
+                to: { x: 0, y: 0 },
+            },
+            {
+                type: "command",
+                commandId: "c_4",
+                token: "t",
+                kind: "chat",
+                message: "gg",
+            },
+            {
+                type: "command",
+                commandId: "c_5",
+                token: "t",
+                kind: "request-snapshot",
+            },
+        ];
+        expect(commands.map((c) => c.kind)).toEqual([
+            "pick-spell",
+            "cast-spell",
+            "move-piece",
+            "chat",
+            "request-snapshot",
+        ]);
+    });
+});
