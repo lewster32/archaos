@@ -102,7 +102,9 @@ export interface CommandRejectedPrivateEvent {
 }
 
 /**
- * Any private event sent from the server to one recipient.
+ * Any private event sent from the server to a single recipient. The
+ * outer discriminant is `type: "private-event"`; narrow further on the
+ * `kind` field to reach the specific variant.
  */
 export type PrivateEventMessage =
     | SpellbookDeliveredPrivateEvent
