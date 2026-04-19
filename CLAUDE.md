@@ -121,3 +121,7 @@ npm run fmt:check     # check formatting without writing
 ```
 
 Configuration files: `.oxlintrc.json`, `.oxfmtrc.json`.
+
+## Tool use
+
+When invoking Python for tool use, always use `python` and not `python3`.
