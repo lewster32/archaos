@@ -727,7 +727,7 @@ export class Piece extends Entity {
                 this.currentEngulfed.engulfed = false;
                 result.releasedPieceId = this.currentEngulfed.id;
                 this._board.logger.log(
-                    `${this.currentEngulfed.fullName}` + ` was released from ` + `${this.fullName}`,
+                    `${this.currentEngulfed.fullName} was released from ${this.fullName}`,
                     Colour.Green,
                 );
             }
@@ -759,18 +759,18 @@ export class Piece extends Entity {
             if (spreadPieces.some((piece) => piece.hasStatus(UnitStatus.Wizard))) {
                 const killedPiece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
                 this._board.logger.log(
-                    `${killedPiece.fullName} was ` + `destroyed by ` + `${this.fullName}!`,
+                    `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
                     Colour.Red,
                 );
                 await killedPiece.kill();
                 result.killedPieceId = killedPiece.id;
             } else if (this.hasStatus(UnitStatus.Engulfs)) {
-                this._board.logger.log(`${this.fullName} has engulfed ` + `${spreadPieces[0].fullName}`, Colour.Yellow);
+                this._board.logger.log(`${this.fullName} has engulfed ${spreadPieces[0].fullName}`, Colour.Yellow);
                 spreadPieces[0].engulfed = true;
                 result.engulfedPieceId = spreadPieces[0].id;
             } else {
                 for (const piece of spreadPieces) {
-                    this._board.logger.log(`${piece.fullName} was ` + `destroyed by ` + `${this.fullName}`, Colour.Red);
+                    this._board.logger.log(`${piece.fullName} was destroyed by ${this.fullName}`, Colour.Red);
                     await piece.destroy();
                     result.destroyedPieceIds.push(piece.id);
                 }

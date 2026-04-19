@@ -1178,7 +1178,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                             this.currentPlayer.selectedSpell,
                         );
                     } else {
-                        console.log("Remote player could not" + " select spell, skipping...");
+                        console.log("Remote player could not select spell, skipping...");
                     }
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
@@ -1220,14 +1220,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                         });
                         if (this.currentPlayer?.remote) {
                             if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could" + " not cast spell," + " skipping...");
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
                             if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could" + " not cast spell," + " skipping...");
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }

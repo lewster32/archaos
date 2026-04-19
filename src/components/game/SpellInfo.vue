@@ -119,7 +119,7 @@ const chanceTitle: Ref<string> = computed(() => {
         return `This has a ${base}% chance of casting.`;
     }
     const sign: string = delta > 0 ? "+" : "";
-    return `Base chance ${base}%, ${sign}${delta}% from universe alignment ` + `(effective ${base + delta}%).`;
+    return `Base chance ${base}%, ${sign}${delta}% from universe alignment (effective ${base + delta}%).`;
 });
 
 const spellHasStats: Ref<boolean> = computed(() => {

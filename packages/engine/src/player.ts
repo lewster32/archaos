@@ -133,7 +133,7 @@ export class Player<P extends Piece = Piece> extends Model {
 
     set castingPiece(piece: P | null) {
         if (piece && piece.owner !== this) {
-            throw new Error("Cannot set casting piece to a " + "piece not owned by this player");
+            throw new Error("Cannot set casting piece to a piece not owned by this player");
         }
         this._castingPiece = piece;
     }

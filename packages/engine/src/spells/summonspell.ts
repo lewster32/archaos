@@ -248,7 +248,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
                 );
                 if (chosenTile) {
                     console.debug(
-                        `${player.name} is casting ${this.name} adjacent to ` + `the wizard for immediate mounting`,
+                        `${player.name} is casting ${this.name} adjacent to the wizard for immediate mounting`,
                     );
                     await this._board.rules.doCastSpell(this._board, chosenTile);
                     successfullyCast = true;
@@ -266,7 +266,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
                 const result = this.trySelectWallTile(player, wizardPos, validTiles, lastWallPt, prevWallPt);
                 if (result === null) {
                     console.debug(
-                        `${player.name} cancelled remaining wall casts — ` + `all valid tiles are adjacent to wizard`,
+                        `${player.name} cancelled remaining wall casts — all valid tiles are adjacent to wizard`,
                     );
                     if (successfullyCast) {
                         player.discardSpell();

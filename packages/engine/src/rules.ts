@@ -223,7 +223,7 @@ export class Rules {
             board.stateManager.evaluate(new SpellCastComplete());
             await board.currentPlayer.discardSpell();
             if (casted.failed) {
-                board.logger.log(`${board.currentPlayer.name}` + ` failed to cast` + ` ${casted.name}`, Colour.Magenta);
+                board.logger.log(`${board.currentPlayer.name} failed to cast ${casted.name}`, Colour.Magenta);
             }
             if (board.selected) {
                 board.selected.turnOver = true;
@@ -454,7 +454,7 @@ export class Rules {
                     const wasted: Spell | null = await board.currentPlayer.discardSpell();
                     if (wasted) {
                         board.logger.log(
-                            `Discarded` + ` ${board.currentPlayer.name}'s` + ` spell` + ` '${wasted.name}'`,
+                            `Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`,
                         );
                     }
                     if (board.selected) {
@@ -582,7 +582,7 @@ export class Rules {
             attack = Math.max(0, Math.min(1, attack));
         }
         console.debug(
-            `Rolled ${attack} vs` + ` ${defenceRoll}; chance ` + `${attack > defenceRoll ? "succeeds" : "fails"}`,
+            `Rolled ${attack} vs ${defenceRoll}; chance ${attack > defenceRoll ? "succeeds" : "fails"}`,
         );
         return attack > defenceRoll;
     }
@@ -638,7 +638,7 @@ export class Rules {
             } else if (piece.hasStatus(UnitStatus.ExpiresGivesSpell) && piece.currentRider && board.roll(4, 10)) {
                 const owner: Player = piece.currentRider.owner;
                 board.logger.log(
-                    `${piece.name} has expired and` + ` gifted ${owner.name} a` + ` new spell`,
+                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
                     Colour.Cyan,
                 );
                 await board.events.emitAsync(EngineEvent.EffectRequested, {
