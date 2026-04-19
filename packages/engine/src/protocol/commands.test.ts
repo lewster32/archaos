@@ -5,6 +5,8 @@ import type {
     CancelCastCommand,
     CancelPieceActionCommand,
     CastSpellCommand,
+    ChatCommand,
+    CommandMessage,
     DismountPieceCommand,
     EndMovementPhaseCommand,
     EndPieceTurnCommand,
@@ -12,7 +14,12 @@ import type {
     MountPieceCommand,
     MovePieceCommand,
     PickSpellCommand,
+    PingPositionCommand,
     RangedAttackPieceCommand,
+    ReconnectCommand,
+    RequestHistoryCommand,
+    RequestPrivateResendCommand,
+    RequestSnapshotCommand,
     SelectPieceCommand,
 } from "./commands";
 
@@ -200,7 +207,7 @@ describe("commands — movement phase", () => {
 
 describe("commands — communication", () => {
     test("chat carries message", () => {
-        const cmd: import("./commands").ChatCommand = {
+        const cmd: ChatCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
@@ -211,7 +218,7 @@ describe("commands — communication", () => {
     });
 
     test("ping-position carries point", () => {
-        const cmd: import("./commands").PingPositionCommand = {
+        const cmd: PingPositionCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
@@ -224,7 +231,7 @@ describe("commands — communication", () => {
 
 describe("commands — history and recovery", () => {
     test("request-snapshot carries only envelope fields", () => {
-        const cmd: import("./commands").RequestSnapshotCommand = {
+        const cmd: RequestSnapshotCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
@@ -234,14 +241,14 @@ describe("commands — history and recovery", () => {
     });
 
     test("request-history carries fromSequence and optional toSequence", () => {
-        const open: import("./commands").RequestHistoryCommand = {
+        const open: RequestHistoryCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
             kind: "request-history",
             fromSequence: 10,
         };
-        const closed: import("./commands").RequestHistoryCommand = {
+        const closed: RequestHistoryCommand = {
             ...open,
             toSequence: 42,
         };
@@ -250,14 +257,14 @@ describe("commands — history and recovery", () => {
     });
 
     test("request-private-resend accepts commandId or sequenceRef", () => {
-        const byCmd: import("./commands").RequestPrivateResendCommand = {
+        const byCmd: RequestPrivateResendCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
             kind: "request-private-resend",
             commandIdRef: "c_x",
         };
-        const bySeq: import("./commands").RequestPrivateResendCommand = {
+        const bySeq: RequestPrivateResendCommand = {
             type: "command",
             commandId: "c_1",
             token: "t",
@@ -269,13 +276,13 @@ describe("commands — history and recovery", () => {
     });
 
     test("reconnect relies on the envelope token and optional lastAppliedSequence", () => {
-        const open: import("./commands").ReconnectCommand = {
+        const open: ReconnectCommand = {
             type: "command",
             commandId: "c_1",
             token: "abc",
             kind: "reconnect",
         };
-        const resumed: import("./commands").ReconnectCommand = {
+        const resumed: ReconnectCommand = {
             ...open,
             lastAppliedSequence: 30,
         };
@@ -286,50 +293,61 @@ describe("commands — history and recovery", () => {
 });
 
 describe("CommandMessage union discriminator", () => {
-    test("covers a representative sample of every category", () => {
-        const commands: import("./commands").CommandMessage[] = [
+    test("covers all 19 command kinds", () => {
+        const commands: CommandMessage[] = [
+            // 6.1 Spellbook
+            { type: "command", commandId: "c_1", token: "t", kind: "pick-spell", spellId: 10 },
+            { type: "command", commandId: "c_2", token: "t", kind: "end-spell-pick" },
+            // 6.2 Casting
+            { type: "command", commandId: "c_3", token: "t", kind: "cast-spell", target: { self: true } },
+            { type: "command", commandId: "c_4", token: "t", kind: "cancel-cast" },
+            // 6.3 Movement
+            { type: "command", commandId: "c_5", token: "t", kind: "select-piece", pieceId: 101 },
+            { type: "command", commandId: "c_6", token: "t", kind: "move-piece", pieceId: 101, to: { x: 0, y: 0 } },
+            { type: "command", commandId: "c_7", token: "t", kind: "attack-piece", attackerId: 101, targetId: 102 },
             {
                 type: "command",
-                commandId: "c_1",
+                commandId: "c_8",
                 token: "t",
-                kind: "pick-spell",
-                spellId: 10,
+                kind: "ranged-attack-piece",
+                attackerId: 101,
+                targetId: 102,
             },
-            {
-                type: "command",
-                commandId: "c_2",
-                token: "t",
-                kind: "cast-spell",
-                target: { self: true },
-            },
-            {
-                type: "command",
-                commandId: "c_3",
-                token: "t",
-                kind: "move-piece",
-                pieceId: 101,
-                to: { x: 0, y: 0 },
-            },
-            {
-                type: "command",
-                commandId: "c_4",
-                token: "t",
-                kind: "chat",
-                message: "gg",
-            },
-            {
-                type: "command",
-                commandId: "c_5",
-                token: "t",
-                kind: "request-snapshot",
-            },
+            { type: "command", commandId: "c_9", token: "t", kind: "mount-piece", wizardId: 1, mountId: 50 },
+            { type: "command", commandId: "c_10", token: "t", kind: "dismount-piece", wizardId: 1 },
+            { type: "command", commandId: "c_11", token: "t", kind: "cancel-piece-action", pieceId: 101 },
+            { type: "command", commandId: "c_12", token: "t", kind: "end-piece-turn", pieceId: 101 },
+            { type: "command", commandId: "c_13", token: "t", kind: "end-movement-phase" },
+            // 6.4 Communication
+            { type: "command", commandId: "c_14", token: "t", kind: "chat", message: "gg" },
+            { type: "command", commandId: "c_15", token: "t", kind: "ping-position", point: { x: 3, y: 3 } },
+            // 6.5 History and recovery
+            { type: "command", commandId: "c_16", token: "t", kind: "request-snapshot" },
+            { type: "command", commandId: "c_17", token: "t", kind: "request-history", fromSequence: 10 },
+            { type: "command", commandId: "c_18", token: "t", kind: "request-private-resend", commandIdRef: "c_x" },
+            { type: "command", commandId: "c_19", token: "abc", kind: "reconnect" },
         ];
         expect(commands.map((c) => c.kind)).toEqual([
             "pick-spell",
+            "end-spell-pick",
             "cast-spell",
+            "cancel-cast",
+            "select-piece",
             "move-piece",
+            "attack-piece",
+            "ranged-attack-piece",
+            "mount-piece",
+            "dismount-piece",
+            "cancel-piece-action",
+            "end-piece-turn",
+            "end-movement-phase",
             "chat",
+            "ping-position",
             "request-snapshot",
+            "request-history",
+            "request-private-resend",
+            "reconnect",
         ]);
+        expect(commands).toHaveLength(19);
     });
 });
