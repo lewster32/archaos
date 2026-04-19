@@ -433,3 +433,148 @@ export interface PieceResistedSpellOutcome {
     /** The type reference for the spell. */
     spellTypeId: SpellTypeId;
 }
+
+// ---------------------------------------------------------------------------
+// 4.4 World
+// ---------------------------------------------------------------------------
+
+/**
+ * The board's alignment value has shifted — typically caused by casting
+ * a chaos- or law-aligned spell.
+ */
+export interface AlignmentChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "alignment-changed";
+    /** Signed delta applied to the alignment value (negative = towards chaos). */
+    delta: number;
+    /** The new alignment state after applying the delta. */
+    newAlignment: import("./snapshot").AlignmentState;
+}
+
+/**
+ * The board's weather has changed. Carries the full weather descriptor
+ * as serialised by the engine; the shape mirrors ScenarioState.weather.
+ */
+export interface WeatherChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "weather-changed";
+    /** The new weather descriptor. */
+    weather: import("./primitives").JsonObject;
+}
+
+// ---------------------------------------------------------------------------
+// 4.5 Communication
+// ---------------------------------------------------------------------------
+
+/**
+ * A chat message sent by a player. Part of the canonical broadcast log
+ * and appears in replays.
+ */
+export interface ChatSentOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "chat-sent";
+    /** The player who sent the chat message. */
+    playerId: PlayerId;
+    /** The chat message body. */
+    message: string;
+}
+
+/**
+ * A tactical attention-ping placed on a board tile by a player.
+ */
+export interface PositionPingedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "position-pinged";
+    /** The player who pinged. */
+    playerId: PlayerId;
+    /** The board tile that was pinged. */
+    point: Point;
+}
+
+// ---------------------------------------------------------------------------
+// 4.6 Connection lifecycle
+// ---------------------------------------------------------------------------
+
+/**
+ * A player's transport disconnected. No immediate gameplay impact; the
+ * host's timeout policy determines whether the player is replaced or
+ * defeated.
+ */
+export interface PlayerDisconnectedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "player-disconnected";
+    /** The player whose transport disconnected. */
+    playerId: PlayerId;
+}
+
+/**
+ * A previously-disconnected player has reconnected with a valid token.
+ * The server sends a recipient snapshot to the reconnecting player in
+ * the same beat.
+ */
+export interface PlayerReconnectedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "player-reconnected";
+    /** The reconnected player. */
+    playerId: PlayerId;
+}
+
+/**
+ * The host's timeout policy fired and the player's transport was swapped
+ * for an AI instance.
+ */
+export interface PlayerReplacedByAiOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "player-replaced-by-ai";
+    /** The player whose transport was replaced. */
+    playerId: PlayerId;
+}
+
+// ---------------------------------------------------------------------------
+// Discriminated union of every outcome kind
+// ---------------------------------------------------------------------------
+
+/**
+ * Every outcome kind that can appear inside a broadcast event's
+ * `outcomes` array. The discriminator is `kind`.
+ */
+export type Outcome =
+    // 4.1 Game lifecycle
+    | GameStartedOutcome
+    | PhaseChangedOutcome
+    | PlayerDefeatedOutcome
+    | GameOverOutcome
+    // 4.2 Spells
+    | PlayerPickedSpellOutcome
+    | SpellRevealedOutcome
+    | SpellCastAttemptedOutcome
+    | SpellCastSucceededOutcome
+    | SpellCastCancelledOutcome
+    | SpellCastFailedOutcome
+    | SpellRemovedFromBookOutcome
+    | PlayerEndedSpellPickOutcome
+    // 4.3 Pieces
+    | PieceSpawnedOutcome
+    | PieceMovedOutcome
+    | PieceAttackedOutcome
+    | PieceRangedAttackedOutcome
+    | PieceDiedOutcome
+    | PieceMountedOutcome
+    | PieceDismountedOutcome
+    | PieceStatsChangedOutcome
+    | PieceStatusesChangedOutcome
+    | PieceOwnerChangedOutcome
+    | PieceTurnFlagChangedOutcome
+    | PiecePersistentFlagChangedOutcome
+    | PieceActionCancelledOutcome
+    | PieceResistedSpellOutcome
+    // 4.4 World
+    | AlignmentChangedOutcome
+    | WeatherChangedOutcome
+    // 4.5 Communication
+    | ChatSentOutcome
+    | PositionPingedOutcome
+    // 4.6 Connection lifecycle
+    | PlayerDisconnectedOutcome
+    | PlayerReconnectedOutcome
+    | PlayerReplacedByAiOutcome;

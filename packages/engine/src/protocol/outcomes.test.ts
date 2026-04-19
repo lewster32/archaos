@@ -334,3 +334,93 @@ describe("outcomes — pieces", () => {
         expect(JSON.parse(JSON.stringify(o))).toEqual(o);
     });
 });
+
+describe("outcomes — world", () => {
+    test("alignment-changed carries delta and newAlignment", () => {
+        const o: import("./outcomes").AlignmentChangedOutcome = {
+            kind: "alignment-changed",
+            delta: -1,
+            newAlignment: { value: 3, accumulatedValue: 2 },
+        };
+        expect(o.delta).toBe(-1);
+        expect(o.newAlignment.value).toBe(3);
+    });
+
+    test("weather-changed carries full weather descriptor", () => {
+        const o: import("./outcomes").WeatherChangedOutcome = {
+            kind: "weather-changed",
+            weather: { type: "clear" },
+        };
+        expect(o.weather).toEqual({ type: "clear" });
+    });
+});
+
+describe("outcomes — communication", () => {
+    test("chat-sent carries playerId and message", () => {
+        const o: import("./outcomes").ChatSentOutcome = {
+            kind: "chat-sent",
+            playerId: 1,
+            message: "gl hf",
+        };
+        expect(o.message).toBe("gl hf");
+    });
+
+    test("position-pinged carries playerId and point", () => {
+        const o: import("./outcomes").PositionPingedOutcome = {
+            kind: "position-pinged",
+            playerId: 1,
+            point: { x: 5, y: 5 },
+        };
+        expect(o.point).toEqual({ x: 5, y: 5 });
+    });
+});
+
+describe("outcomes — connection lifecycle", () => {
+    test("player-disconnected / -reconnected / -replaced-by-ai", () => {
+        const d: import("./outcomes").PlayerDisconnectedOutcome = {
+            kind: "player-disconnected",
+            playerId: 1,
+        };
+        const r: import("./outcomes").PlayerReconnectedOutcome = {
+            kind: "player-reconnected",
+            playerId: 1,
+        };
+        const a: import("./outcomes").PlayerReplacedByAiOutcome = {
+            kind: "player-replaced-by-ai",
+            playerId: 1,
+        };
+        expect([d, r, a].map((o) => o.kind)).toEqual([
+            "player-disconnected",
+            "player-reconnected",
+            "player-replaced-by-ai",
+        ]);
+    });
+});
+
+describe("Outcome union discriminator", () => {
+    test("an Outcome can be assigned a game-lifecycle kind", () => {
+        const o: import("./outcomes").Outcome = {
+            kind: "game-over",
+            winnerId: "draw",
+        };
+        expect(o.kind).toBe("game-over");
+    });
+
+    test("an Outcome can be assigned a piece kind", () => {
+        const o: import("./outcomes").Outcome = {
+            kind: "piece-died",
+            pieceId: 1,
+            cause: "combat",
+        };
+        expect(o.kind).toBe("piece-died");
+    });
+
+    test("an Outcome can be assigned a communication kind", () => {
+        const o: import("./outcomes").Outcome = {
+            kind: "chat-sent",
+            playerId: 1,
+            message: "hi",
+        };
+        expect(o.kind).toBe("chat-sent");
+    });
+});
