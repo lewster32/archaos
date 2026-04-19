@@ -5,13 +5,7 @@
             <div class="callout__row">
                 <button
                     class="button button--yellow"
-                    @click="
-                        (
-                            $refs.tutorialDialog as InstanceType<
-                                typeof TutorialDialog
-                            >
-                        )?.showModal()
-                    "
+                    @click="($refs.tutorialDialog as InstanceType<typeof TutorialDialog>)?.showModal()"
                 >
                     Play a tutorial
                 </button>
@@ -19,27 +13,13 @@
             <div class="callout__row">
                 <button
                     class="button"
-                    @click="
-                        (
-                            $refs.playersConfigDialog as InstanceType<
-                                typeof PlayersConfigDialog
-                            >
-                        )?.showModal()
-                    "
+                    @click="($refs.playersConfigDialog as InstanceType<typeof PlayersConfigDialog>)?.showModal()"
                 >
                     Configure players <i class="icon icon--settings"></i>
                 </button>
             </div>
-            <PlayersConfigDialog
-                v-if="setup"
-                ref="playersConfigDialog"
-                :setup="setup"
-            />
-            <TutorialDialog
-                ref="tutorialDialog"
-                :tutorials="tutorials"
-                @select="startTutorial"
-            />
+            <PlayersConfigDialog v-if="setup" ref="playersConfigDialog" :setup="setup" />
+            <TutorialDialog ref="tutorialDialog" :tutorials="tutorials" @select="startTutorial" />
             <div class="callout__row callout__row--balanced">
                 <label
                     for="boardsize"
@@ -47,20 +27,14 @@
                     >Board size:</label
                 >
                 <select v-model="setup.boardSize" id="boardsize">
-                    <option value="9" :disabled="setup.playerCount > 4">
-                        Small Board
-                    </option>
+                    <option value="9" :disabled="setup.playerCount > 4">Small Board</option>
                     <option value="13">Medium Board</option>
                     <option value="17">Large Board</option>
                     <option value="21">Huge Board</option>
                 </select>
             </div>
             <div class="callout__row callout__row--balanced">
-                <label
-                    for="spellcount"
-                    title="The number of spells each player starts with."
-                    >Spell count:</label
-                >
+                <label for="spellcount" title="The number of spells each player starts with.">Spell count:</label>
                 <select v-model="setup.spellCount" id="spellcount">
                     <option value="10">10</option>
                     <option value="15">15</option>
@@ -77,9 +51,7 @@
                         style="--accent-color: var(--color-green)"
                         id="classicspells"
                     />
-                    <span class="c-green" title="only use spells from original"
-                        >Classic spells</span
-                    >
+                    <span class="c-green" title="only use spells from original">Classic spells</span>
                 </label>
                 <label for="classicBalance" class="checkbox-label">
                     <input
@@ -88,28 +60,21 @@
                         style="--accent-color: var(--color-green)"
                         id="classicBalance"
                     />
-                    <span class="c-green" title="use the original 'buggy' balance, which only positively affects the chance of aligned spells"
+                    <span
+                        class="c-green"
+                        title="use the original 'buggy' balance, which only positively affects the chance of aligned spells"
                         >Classic balance</span
                     >
                 </label>
             </div>
             <div class="callout__row">
                 <label for="mute" class="checkbox-label">
-                    <input
-                        type="checkbox"
-                        id="mute"
-                        v-model="setup.muteAudio"
-                    />
+                    <input type="checkbox" id="mute" v-model="setup.muteAudio" />
                     <span>Mute audio</span>
                 </label>
             </div>
             <div class="callout__row">
-                <button
-                    class="button button--green button--important start-game"
-                    @click="startGame"
-                >
-                    Start Game
-                </button>
+                <button class="button button--green button--important start-game" @click="startGame">Start Game</button>
             </div>
         </div>
     </div>
@@ -131,7 +96,7 @@ const emit = defineEmits<{
 const defaultPlayers: SetupPlayer[] = [
     { name: "Gandalf", computerControlled: false, wizCode: "001b09002a" },
     { name: "Elminster", computerControlled: true, wizCode: "0500110207" },
-    { name: "Merlin", computerControlled: true, wizCode: "0207070216"},
+    { name: "Merlin", computerControlled: true, wizCode: "0207070216" },
     { name: "Morgana", computerControlled: true, wizCode: "0a1a0a0023" },
     { name: "Rincewind", computerControlled: true, wizCode: "0c00090005" },
     { name: "Mordenkainen", computerControlled: true, wizCode: "05131d0200" },
@@ -150,9 +115,7 @@ if (saved) {
     // Expand legacy 4-player saves to the full 8-player list.
     if (setup.value.players?.length === 4) {
         const existing = setup.value.players;
-        setup.value.players = defaultPlayers.map((p, i) =>
-            i < existing.length ? existing[i] : p,
-        );
+        setup.value.players = defaultPlayers.map((p, i) => (i < existing.length ? existing[i] : p));
     }
     if (!setup.value.difficulty) {
         setup.value.difficulty = 0.5;
@@ -173,9 +136,7 @@ if (!setup.value) {
 }
 
 while (setup.value.players.length < setup.value.playerCount) {
-    setup.value.players.push(
-        defaultPlayers[setup.value.players.length % defaultPlayers.length],
-    );
+    setup.value.players.push(defaultPlayers[setup.value.players.length % defaultPlayers.length]);
 }
 
 watch(
@@ -191,10 +152,7 @@ watch(
 function startGame(): void {
     storage.setItem("setup", JSON.stringify(setup.value));
     emit("start", {
-        players: setup.value!.players.slice(
-            0,
-            Math.abs(setup.value!.playerCount) || 2,
-        ),
+        players: setup.value!.players.slice(0, Math.abs(setup.value!.playerCount) || 2),
         board: {
             width: Math.abs(setup.value!.boardSize) || 13,
             height: Math.abs(setup.value!.boardSize) || 13,

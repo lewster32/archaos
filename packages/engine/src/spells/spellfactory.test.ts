@@ -20,11 +20,7 @@ describe("createSpell", () => {
     });
 
     it("creates a SummonSpell when config has a unit object", () => {
-        const spell = createSpell(
-            board,
-            1,
-            makeConfig({ unit: { id: "goblin" } as any }),
-        );
+        const spell = createSpell(board, 1, makeConfig({ unit: { id: "goblin" } as any }));
         expect(spell).toBeInstanceOf(SummonSpell);
     });
 
@@ -54,11 +50,7 @@ describe("createSpell", () => {
     });
 
     it("creates a StatusEffectSpell when target is SpellTarget.Self", () => {
-        const spell = createSpell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Self }),
-        );
+        const spell = createSpell(board, 1, makeConfig({ target: SpellTarget.Self }));
         expect(spell).toBeInstanceOf(StatusEffectSpell);
     });
 
@@ -69,11 +61,7 @@ describe("createSpell", () => {
     });
 
     it("unitId rule takes priority over damage", () => {
-        const spell = createSpell(
-            board,
-            1,
-            makeConfig({ unitId: "goblin", damage: 5 }),
-        );
+        const spell = createSpell(board, 1, makeConfig({ unitId: "goblin", damage: 5 }));
         expect(spell).toBeInstanceOf(SummonSpell);
     });
 

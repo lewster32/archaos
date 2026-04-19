@@ -1,14 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-    Node,
-    Path,
-    diagonalHeuristic,
-    isOpen,
-    isClosed,
-    buildPath,
-    distance,
-    getAngle,
-} from "./pathfinding";
+import { Node, Path, diagonalHeuristic, isOpen, isClosed, buildPath, distance, getAngle } from "./pathfinding";
 import { Point } from "./point";
 import { RangeType } from "./enums/rangetype";
 

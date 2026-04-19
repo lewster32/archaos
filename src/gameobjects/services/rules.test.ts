@@ -69,9 +69,7 @@ describe("Rules", () => {
 
             const result = await rules.processIntent(board);
             expect(result).toBe(ActionType.Attack);
-            expect(attacker.inAttackRange).toHaveBeenCalledWith(
-                defender.position,
-            );
+            expect(attacker.inAttackRange).toHaveBeenCalledWith(defender.position);
         });
     });
 
@@ -85,11 +83,7 @@ describe("Rules", () => {
                     position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(true),
-                    hasStatus: vi
-                        .fn()
-                        .mockImplementation(
-                            (s: UnitStatus) => s === UnitStatus.Flying,
-                        ),
+                    hasStatus: vi.fn().mockImplementation((s: UnitStatus) => s === UnitStatus.Flying),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -103,17 +97,10 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
                 // Should NOT have moved first (flying units attack from position)
                 expect(board.movePiece).not.toHaveBeenCalled();
             });
@@ -124,11 +111,7 @@ describe("Rules", () => {
                     position: new PMath.Vector2(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(false),
-                    hasStatus: vi
-                        .fn()
-                        .mockImplementation(
-                            (s: UnitStatus) => s === UnitStatus.Flying,
-                        ),
+                    hasStatus: vi.fn().mockImplementation((s: UnitStatus) => s === UnitStatus.Flying),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -141,11 +124,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.attackPiece).not.toHaveBeenCalled();
@@ -170,21 +149,11 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.position,
-                );
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.movePiece).toHaveBeenCalledWith(attacker.id, defender.position);
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("adjacent attack succeeds without moving", async () => {
@@ -207,18 +176,11 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
                 expect(board.movePiece).not.toHaveBeenCalled();
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("returns Invalid when canAttackPiece is false", async () => {
@@ -238,11 +200,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.attackPiece).not.toHaveBeenCalled();
@@ -267,17 +225,10 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.RangedAttack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.RangedAttack);
-                expect(board.rangedAttackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.rangedAttackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
@@ -297,11 +248,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.RangedAttack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.rangedAttackPiece).not.toHaveBeenCalled();

@@ -2,9 +2,10 @@
     <dialog v-if="player" class="callout" ref="dialog">
         <h2 class="callout__title">{{ player.name }}</h2>
         <div class="callout__row callout__row--center">
-            <label class="text-center"
-            :class="{'c-yellow': !player.computerControlled, 'c-grey': player.computerControlled}"
-            @click="player.computerControlled = false"
+            <label
+                class="text-center"
+                :class="{ 'c-yellow': !player.computerControlled, 'c-grey': player.computerControlled }"
+                @click="player.computerControlled = false"
             >
                 Human
             </label>
@@ -16,20 +17,19 @@
                     id="aicheckbox"
                 />
             </label>
-            <label class="text-center"
-            :class="{'c-cyan': player.computerControlled, 'c-grey': !player.computerControlled}"
-            @click="player.computerControlled = true"
+            <label
+                class="text-center"
+                :class="{ 'c-cyan': player.computerControlled, 'c-grey': !player.computerControlled }"
+                @click="player.computerControlled = true"
             >
                 Computer
             </label>
         </div>
         <div class="callout__row">
-            <WizCodeEditor v-model="player.wizCode" :valid="isValid"/>
+            <WizCodeEditor v-model="player.wizCode" :valid="isValid" />
         </div>
         <div class="callout__row" v-if="!isValid">
-            <p class="c-yellow text-shadow">
-                Invalid WizCode. Must be 10 characters and contain only 0-9 and A-F.
-            </p>
+            <p class="c-yellow text-shadow">Invalid WizCode. Must be 10 characters and contain only 0-9 and A-F.</p>
         </div>
         <div class="callout__buttons">
             <button
@@ -43,12 +43,7 @@
             >
                 Done
             </button>
-            <button
-                class="button button--yellow"
-                @click="randomise()"
-            >
-                Randomise
-            </button>
+            <button class="button button--yellow" @click="randomise()">Randomise</button>
         </div>
     </dialog>
 </template>
@@ -82,7 +77,6 @@ const isValid = computed(() => {
         return false;
     }
 });
-
 </script>
 <style lang="scss" scoped>
 .callout {

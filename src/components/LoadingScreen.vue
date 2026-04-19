@@ -9,10 +9,7 @@
             aria-valuemax="100"
             :title="`Loading... ${Math.round(progress * 100)}% (${totalMB ? `~${totalMB} MB` : 'size unknown'})`"
         >
-            <div
-                class="loading-bar__fill"
-                :style="{ width: `${Math.round(progress * 100)}%` }"
-            />
+            <div class="loading-bar__fill" :style="{ width: `${Math.round(progress * 100)}%` }" />
         </div>
         <p class="loading-label">
             {{ Math.round(progress * 100) }}%
@@ -26,10 +23,7 @@ import { loadingProgress } from "../game/loading-state";
 import { TOTAL_GAME_ASSET_BYTES } from "../game/asset-sizes";
 
 const progress = loadingProgress;
-const totalMB =
-    TOTAL_GAME_ASSET_BYTES > 0
-        ? (TOTAL_GAME_ASSET_BYTES / 1024 / 1024).toFixed(1)
-        : null;
+const totalMB = TOTAL_GAME_ASSET_BYTES > 0 ? (TOTAL_GAME_ASSET_BYTES / 1024 / 1024).toFixed(1) : null;
 </script>
 
 <style lang="scss" scoped>

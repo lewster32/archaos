@@ -27,8 +27,7 @@ export const launch = (containerId: string) => {
             transparent: true,
             renderNodes: {
                 // @ts-ignore
-                [FilterColorReplaceRenderNode.KEY]:
-                    FilterColorReplaceRenderNode,
+                [FilterColorReplaceRenderNode.KEY]: FilterColorReplaceRenderNode,
             },
         },
         scale: {

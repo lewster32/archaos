@@ -23,12 +23,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         return this._properties.damage || 0;
     }
 
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
         }
@@ -100,17 +95,12 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         }
 
         if (rollSuccess) {
-            if (
-                this.properties.destroyWizardCreatures &&
-                target.hasStatus(UnitStatus.Wizard)
-            ) {
+            if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
                 this._board.events.emit(EngineEvent.EffectRequested, {
                     sound: "destroy",
                 });
                 await target.owner.destroyCreations();
-                this._board.logger.log(
-                    `${target.fullName}'s creations were dispelled by ${this.name}`,
-                );
+                this._board.logger.log(`${target.fullName}'s creations were dispelled by ${this.name}`);
                 await this._board.idleDelay();
             } else {
                 this._board.events.emit(EngineEvent.EffectRequested, {
@@ -122,10 +112,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         }
 
         if (targetKilled) {
-            this._board.logger.log(
-                `${target.fullName} was defeated by ${this.name}`,
-                Colour.Red,
-            );
+            this._board.logger.log(`${target.fullName} was defeated by ${this.name}`, Colour.Red);
         }
 
         return true;
@@ -135,8 +122,7 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         let description = ` Attack with ${this.name}.`;
 
         if (this.properties.destroyWizardCreatures) {
-            description +=
-                " If successfully cast on a wizard, it will destroy their creations.";
+            description += " If successfully cast on a wizard, it will destroy their creations.";
         }
 
         return (description + " " + super.description).trim();

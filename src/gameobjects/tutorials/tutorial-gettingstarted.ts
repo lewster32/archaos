@@ -4,15 +4,8 @@ import type { Board } from "../board";
 import { Piece } from "../piece";
 import { Tutorial, TutorialStep, clickOrTap } from "./tutorial";
 
-const RANDOM_PLAYER_SPELL: string = [
-    "King Cobra",
-    "Faun",
-    "Gorilla",
-    "Crocodile",
-][Math.floor(Math.random() * 4)];
-const RANDOM_OPPONENT_SPELL: string = ["Orc", "Goblin", "Ogre"][
-    Math.floor(Math.random() * 3)
-];
+const RANDOM_PLAYER_SPELL: string = ["King Cobra", "Faun", "Gorilla", "Crocodile"][Math.floor(Math.random() * 4)];
+const RANDOM_OPPONENT_SPELL: string = ["Orc", "Goblin", "Ogre"][Math.floor(Math.random() * 3)];
 class GettingStarted5 extends TutorialStep {
     constructor() {
         super(
@@ -30,11 +23,7 @@ class GettingStarted5 extends TutorialStep {
         );
     }
 
-    public checkCondition(
-        _: Board,
-        event?: BoardEvent,
-        ...args: any[]
-    ): boolean {
+    public checkCondition(_: Board, event?: BoardEvent, ...args: any[]): boolean {
         return event === BoardEvent.SpellSelected && args[0].id === 1;
     }
 }
@@ -56,22 +45,14 @@ class GettingStarted10 extends TutorialStep {
     }
 
     onDismissHint(board: Board): void {
-        const validPosition: PMath.Vector2 = board.getIsoPosition(
-            new PMath.Vector2(1, 0),
-        );
+        const validPosition: PMath.Vector2 = board.getIsoPosition(new PMath.Vector2(1, 0));
         validPosition.y += 10;
         TutorialStep.pointAtPosition(board, validPosition, 3000);
     }
 
-    public checkCondition(
-        board: Board,
-        event?: BoardEvent,
-        ...args: any[]
-    ): boolean {
+    public checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
         return (
-            event === BoardEvent.StateChange &&
-            args[0] == BoardState.Move &&
-            board.getPlayer(1)?.spells.length === 0
+            event === BoardEvent.StateChange && args[0] == BoardState.Move && board.getPlayer(1)?.spells.length === 0
         );
     }
 }
@@ -101,8 +82,7 @@ class GettingStarted15 extends TutorialStep {
     onEnter(board: Board): void {
         // Nerf the player's piece's mnv so it stays engaged with the opponent's
         // piece once near
-        this.playerPiece =
-            board.pieces?.find((p) => p.name === RANDOM_PLAYER_SPELL) ?? null;
+        this.playerPiece = board.pieces?.find((p) => p.name === RANDOM_PLAYER_SPELL) ?? null;
         if (this.playerPiece) {
             this.playerPiece.properties.manoeuvrability = -1;
         } else {
@@ -113,8 +93,7 @@ class GettingStarted15 extends TutorialStep {
         }
         // Buff the enemy player's piece's mnv to Infinity so it also stays
         // engaged with the player's piece
-        this.enemyPiece =
-            board.pieces?.find((p) => p.name === RANDOM_OPPONENT_SPELL) ?? null;
+        this.enemyPiece = board.pieces?.find((p) => p.name === RANDOM_OPPONENT_SPELL) ?? null;
         if (this.enemyPiece) {
             this.enemyPiece.properties.manoeuvrability = Infinity;
         } else {
@@ -127,23 +106,12 @@ class GettingStarted15 extends TutorialStep {
 
     onDismissHint(board: Board): void {
         if (this.playerPiece) {
-            TutorialStep.pointAtPosition(
-                board,
-                this.playerPiece.screenPosition,
-                2000,
-            );
+            TutorialStep.pointAtPosition(board, this.playerPiece.screenPosition, 2000);
         }
     }
 
-    public checkCondition(
-        board: Board,
-        event?: BoardEvent,
-        ...args: any[]
-    ): boolean {
-        return (
-            event === BoardEvent.PieceAttacked &&
-            args[1].owner === board.getPlayer(1)
-        );
+    public checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
+        return event === BoardEvent.PieceAttacked && args[1].owner === board.getPlayer(1);
     }
 }
 class GettingStarted20 extends TutorialStep {
@@ -183,9 +151,7 @@ class GettingStarted30 extends TutorialStep {
     private readonly roundLimit: number = 7;
 
     public getOutro(): string {
-        console.log(
-            `${this.roundCount} rounds of ${this.roundLimit} limit reached.`,
-        );
+        console.log(`${this.roundCount} rounds of ${this.roundLimit} limit reached.`);
         // Pacifist ending
         if (this.roundCount > this.roundLimit) {
             return `<p>
@@ -233,9 +199,7 @@ class GettingStarted30 extends TutorialStep {
             return true;
         }
 
-        return (
-            event === BoardEvent.PlayerDefeated || event === BoardEvent.GameOver
-        );
+        return event === BoardEvent.PlayerDefeated || event === BoardEvent.GameOver;
     }
 
     onEnter(_: Board): void {
@@ -249,10 +213,7 @@ class GettingStarted30 extends TutorialStep {
      * @param board The current state of the board.
      */
     onComplete(board: Board): void {
-        if (
-            this.roundCount > this.roundLimit &&
-            board.state !== BoardState.GameOver
-        ) {
+        if (this.roundCount > this.roundLimit && board.state !== BoardState.GameOver) {
             board.endGame();
         }
     }
@@ -265,8 +226,7 @@ export class GettingStartedTutorial extends Tutorial {
         super({
             id: "getting-started",
             name: "Getting Started",
-            description:
-                "Learn the basics of Archaos with this introductory tutorial.",
+            description: "Learn the basics of Archaos with this introductory tutorial.",
             intro: `<p class="text-large text-center text-shadow c-green">
             Welcome to <span class="text-rainbow">Archaos</span>!
             <p class="text-center">

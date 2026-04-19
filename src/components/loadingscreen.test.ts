@@ -49,19 +49,14 @@ describe("LoadingScreen", () => {
         it("sets the aria-valuenow attribute on the progress bar", async () => {
             mockProgress.value = 0.4;
             const screen = await render(LoadingScreen);
-            await expect
-                .element(screen.getByRole("progressbar"))
-                .toHaveAttribute("aria-valuenow", "40");
+            await expect.element(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "40");
         });
 
         it("sets the fill width as a percentage via inline style", async () => {
             mockProgress.value = 0.75;
             const screen = await render(LoadingScreen);
             // The fill div sits inside the progressbar; check its style attribute directly.
-            const fill = screen
-                .getByRole("progressbar")
-                .element()
-                .querySelector(".loading-bar__fill") as HTMLElement;
+            const fill = screen.getByRole("progressbar").element().querySelector(".loading-bar__fill") as HTMLElement;
             expect(fill.style.width).toBe("75%");
         });
     });
@@ -71,9 +66,7 @@ describe("LoadingScreen", () => {
             mockProgress.value = 0;
             const screen = await render(LoadingScreen);
             // 2097152 bytes = 2.0 MB
-            await expect
-                .element(screen.getByText(/about 2\.0 MB/))
-                .toBeVisible();
+            await expect.element(screen.getByText(/about 2\.0 MB/)).toBeVisible();
         });
     });
 });

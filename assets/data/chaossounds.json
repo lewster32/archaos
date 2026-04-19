@@ -2,73 +2,31 @@
     {
         "id": "key-press",
         "address": "0x89EF",
-        "calledFrom": [
-            "35294",
-            "35661",
-            "35724",
-            "35835",
-            "36828",
-            "38613"
-        ],
+        "calledFrom": ["35294", "35661", "35724", "35835", "36828", "38613"],
         "outerCount": 4,
         "middleCount": 12,
-        "pitch": [
-            4,
-            3,
-            2,
-            1
-        ],
-        "increments": [
-            1,
-            7,
-            80,
-            34
-        ],
+        "pitch": [4, 3, 2, 1],
+        "increments": [1, 7, 80, 34],
         "_note": "Bytes decoded from Z80 instructions at 35311-35320."
     },
     {
         "id": "new-spell",
         "address": "0x903E",
-        "calledFrom": [
-            "36828"
-        ],
+        "calledFrom": ["36828"],
         "outerCount": 20,
         "middleCount": 6,
-        "pitch": [
-            2,
-            7,
-            20,
-            3
-        ],
-        "increments": [
-            251,
-            20,
-            0,
-            0
-        ],
+        "pitch": [2, 7, 20, 3],
+        "increments": [251, 20, 0, 0],
         "_note": "Bytes decoded from Z80 instructions at 36926-36935."
     },
     {
         "id": "die",
         "address": "0x910D",
-        "calledFrom": [
-            "41231",
-            "41390 (×1 via CALL 49910, ×18 via CALL 49921)"
-        ],
+        "calledFrom": ["41231", "41390 (×1 via CALL 49910, ×18 via CALL 49921)"],
         "outerCount": 4,
         "middleCount": 3,
-        "pitch": [
-            10,
-            10,
-            40,
-            70
-        ],
-        "increments": [
-            2,
-            2,
-            70,
-            40
-        ],
+        "pitch": [10, 10, 40, 70],
+        "increments": [2, 2, 70, 40],
         "repeat": 19,
         "_note": "Wizard death explosion animation sound (routine 41354, branch (IX+2)==0). CALL 49910 then 18x CALL 49921 in a loop, one per animation frame. This is the 'wobwobwob' heard during the initial death animation."
     },
@@ -78,40 +36,17 @@
         "calledFrom": [],
         "outerCount": 6,
         "middleCount": 12,
-        "pitch": [
-            0,
-            20,
-            40,
-            60
-        ],
-        "increments": [
-            2,
-            6,
-            12,
-            40
-        ]
+        "pitch": [0, 20, 40, 60],
+        "increments": [2, 6, 12, 40]
     },
     {
         "id": "destroy",
         "address": "0x9121",
-        "calledFrom": [
-            "39506 (×1 via CALL 49910, ×7 via CALL 49921)",
-            "55139 (×1 via CALL 49910, ×7 via CALL 49921)"
-        ],
+        "calledFrom": ["39506 (×1 via CALL 49910, ×7 via CALL 49921)", "55139 (×1 via CALL 49910, ×7 via CALL 49921)"],
         "outerCount": 12,
         "middleCount": 4,
-        "pitch": [
-            10,
-            10,
-            40,
-            7
-        ],
-        "increments": [
-            2,
-            2,
-            70,
-            30
-        ],
+        "pitch": [10, 10, 40, 7],
+        "increments": [2, 2, 70, 30],
         "repeat": 8,
         "_note": "First call via CALL 49910 (LDIR + engine). Then 7 calls via CALL 49921 (engine only, pitch carries over)."
     },
@@ -121,214 +56,95 @@
         "calledFrom": [],
         "outerCount": 1,
         "middleCount": 1,
-        "pitch": [
-            1,
-            2,
-            3,
-            2
-        ],
-        "increments": [
-            0,
-            0,
-            0,
-            0
-        ]
+        "pitch": [1, 2, 3, 2],
+        "increments": [0, 0, 0, 0]
     },
     {
         "id": "justice",
         "address": "0x9135",
-        "calledFrom": [
-            "40504 (×22)",
-            "41071 (×1, then switches to sound_effect_06)"
-        ],
+        "calledFrom": ["40504 (×22)", "41071 (×1, then switches to sound_effect_06)"],
         "outerCount": 10,
         "middleCount": 5,
-        "pitch": [
-            1,
-            5,
-            30,
-            8
-        ],
-        "increments": [
-            3,
-            7,
-            253,
-            246
-        ],
+        "pitch": [1, 5, 30, 8],
+        "increments": [3, 7, 253, 246],
         "repeat": 22,
         "_note": "The engine runs once per call. The caller at 40504 invokes it 22 times (1 + outer loop 3×7) while animating. increments 253/246 = -3/-10 mod 256, so voices 3 and 4 sweep downward in pitch each repeat."
     },
     {
         "id": "sound_effect_06",
         "address": "0x913F",
-        "calledFrom": [
-            "41109 (×1 via CALL 49910, within board-scan loop at 40795)"
-        ],
+        "calledFrom": ["41109 (×1 via CALL 49910, within board-scan loop at 40795)"],
         "outerCount": 20,
         "middleCount": 3,
-        "pitch": [
-            40,
-            40,
-            70,
-            100
-        ],
-        "increments": [
-            2,
-            3,
-            60,
-            100
-        ]
+        "pitch": [40, 40, 70, 100],
+        "increments": [2, 3, 60, 100]
     },
     {
         "id": "spread-1",
         "address": "0x9149",
-        "calledFrom": [
-            "41231"
-        ],
+        "calledFrom": ["41231"],
         "outerCount": 20,
         "middleCount": 3,
-        "pitch": [
-            1,
-            2,
-            3,
-            4
-        ],
-        "increments": [
-            1,
-            1,
-            1,
-            1
-        ]
+        "pitch": [1, 2, 3, 4],
+        "increments": [1, 1, 1, 1]
     },
     {
         "id": "dragon-fire",
         "address": "0xC243",
-        "calledFrom": [
-            "47635 (indirect via 49907)"
-        ],
+        "calledFrom": ["47635 (indirect via 49907)"],
         "outerCount": 50,
         "middleCount": 1,
-        "pitch": [
-            10,
-            30,
-            50,
-            70
-        ],
-        "increments": [
-            20,
-            50,
-            80,
-            140
-        ],
+        "pitch": [10, 30, 50, 70],
+        "increments": [20, 50, 80, 140],
         "repeat": 10,
         "_note": "Dragon fire burn projectile animation: CALL 49910 once then 9× CALL 49921 in a B=9 loop at 47659."
     },
     {
         "id": "attack",
         "address": "0xC24D",
-        "calledFrom": [
-            "45944 (×1 via CALL 49913, ×20 via CALL 49921)"
-        ],
+        "calledFrom": ["45944 (×1 via CALL 49913, ×20 via CALL 49921)"],
         "outerCount": 5,
         "middleCount": 4,
-        "pitch": [
-            10,
-            20,
-            30,
-            40
-        ],
-        "increments": [
-            10,
-            20,
-            30,
-            40
-        ],
+        "pitch": [10, 20, 30, 40],
+        "increments": [10, 20, 30, 40],
         "repeat": 21,
         "_note": "Played during a 5-outer × 4-inner frame animation loop at 45941. CALL 49913 once then CALL 49921 on each of the 20 inner iterations."
     },
     {
         "id": "ranged-select",
         "address": "0xC257",
-        "calledFrom": [
-            "47635 (indirect via 49907)"
-        ],
+        "calledFrom": ["47635 (indirect via 49907)"],
         "outerCount": 240,
         "middleCount": 2,
-        "pitch": [
-            20,
-            46,
-            57,
-            80
-        ],
-        "increments": [
-            255,
-            254,
-            253,
-            252
-        ]
+        "pitch": [20, 46, 57, 80],
+        "increments": [255, 254, 253, 252]
     },
     {
         "id": "step",
         "address": "0xC261",
-        "calledFrom": [
-            "45063"
-        ],
+        "calledFrom": ["45063"],
         "outerCount": 20,
         "middleCount": 2,
-        "pitch": [
-            40,
-            40,
-            70,
-            100
-        ],
-        "increments": [
-            2,
-            3,
-            60,
-            100
-        ]
+        "pitch": [40, 40, 70, 100],
+        "increments": [2, 3, 60, 100]
     },
     {
         "id": "fly-end",
         "address": "0xC261",
-        "calledFrom": [
-            "45063"
-        ],
+        "calledFrom": ["45063"],
         "outerCount": 20,
         "middleCount": 2,
-        "pitch": [
-            46,
-            57,
-            80,
-            2
-        ],
-        "increments": [
-            3,
-            60,
-            100,
-            1
-        ]
+        "pitch": [46, 57, 80, 2],
+        "increments": [3, 60, 100, 1]
     },
     {
         "id": "dragon-beam",
         "address": "0xC26B",
-        "calledFrom": [
-            "47569 (indirect via 49907, ×1 via CALL 49910)"
-        ],
+        "calledFrom": ["47569 (indirect via 49907, ×1 via CALL 49910)"],
         "outerCount": 1,
         "middleCount": 1,
-        "pitch": [
-            10,
-            10,
-            40,
-            70
-        ],
-        "increments": [
-            2,
-            2,
-            70,
-            40
-        ],
+        "pitch": [10, 10, 40, 70],
+        "increments": [2, 2, 70, 40],
         "_note": "Dragon ranged breath beam. One outer iteration of the sound engine per Bresenham pixel, plus ~10000 T-states of per-pixel drawing work (13-cell cross). Pitch sweeps down from the +70/+40 increments on voices 3-4.",
         "gap": 10000,
         "repeat": 120,
@@ -337,24 +153,11 @@
     {
         "id": "arrow-fly",
         "address": "0xC275",
-        "calledFrom": [
-            "47547 (indirect via 49907)",
-            "40110"
-        ],
+        "calledFrom": ["47547 (indirect via 49907)", "40110"],
         "outerCount": 1,
         "middleCount": 4,
-        "pitch": [
-            1,
-            2,
-            3,
-            4
-        ],
-        "increments": [
-            1,
-            1,
-            1,
-            1
-        ],
+        "pitch": [1, 2, 3, 4],
+        "increments": [1, 1, 1, 1],
         "_note": "Elf/manticore arrow projectile. One engine tick + 3500 T-state gap per Bresenham pixel drawn by $B626. Rising pitch from +1 increments on all voices, short single-cell cross keeps the per-pixel gap low so pitch rise stays audible.",
         "gap": 3500,
         "repeat": 60
@@ -362,23 +165,11 @@
     {
         "id": "magic-bolt-beam",
         "address": "0xC275",
-        "calledFrom": [
-            "40110 (per-pixel via CALL 49921 in 46630)"
-        ],
+        "calledFrom": ["40110 (per-pixel via CALL 49921 in 46630)"],
         "outerCount": 1,
         "middleCount": 9,
-        "pitch": [
-            1,
-            2,
-            3,
-            4
-        ],
-        "increments": [
-            1,
-            1,
-            1,
-            1
-        ],
+        "pitch": [1, 2, 3, 4],
+        "increments": [1, 1, 1, 1],
         "repeat": 60,
         "gap": 10600,
         "_note": "Magic Bolt spell beam. Same pitch record as arrow-fly but middleCount=9 and a 13-cell extended cross, giving a much lower, buzzier pitch than arrow-fly.",
@@ -387,23 +178,11 @@
     {
         "id": "cast-beam",
         "address": "0x912B",
-        "calledFrom": [
-            "41366 (per-pixel via CALL 49921 in 46630, two-phase)"
-        ],
+        "calledFrom": ["41366 (per-pixel via CALL 49921 in 46630, two-phase)"],
         "outerCount": 1,
         "middleCount": 1,
-        "pitch": [
-            1,
-            2,
-            3,
-            2
-        ],
-        "increments": [
-            0,
-            0,
-            0,
-            0
-        ],
+        "pitch": [1, 2, 3, 2],
+        "increments": [0, 0, 0, 0],
         "phases": [
             {
                 "repeat": 170,
@@ -420,23 +199,11 @@
     {
         "id": "lightning-beam",
         "address": "0x912B",
-        "calledFrom": [
-            "40127 (per-pixel via CALL 49921 in 46630, two-phase)"
-        ],
+        "calledFrom": ["40127 (per-pixel via CALL 49921 in 46630, two-phase)"],
         "outerCount": 1,
         "middleCount": 1,
-        "pitch": [
-            1,
-            2,
-            3,
-            2
-        ],
-        "increments": [
-            0,
-            0,
-            0,
-            0
-        ],
+        "pitch": [1, 2, 3, 2],
+        "increments": [0, 0, 0, 0],
         "phases": [
             {
                 "repeat": 35,
@@ -453,88 +220,39 @@
     {
         "id": "new-turn",
         "address": "0xC27F",
-        "calledFrom": [
-            "44261"
-        ],
+        "calledFrom": ["44261"],
         "outerCount": 255,
         "middleCount": 1,
-        "pitch": [
-            255,
-            255,
-            255,
-            255
-        ],
-        "increments": [
-            252,
-            252,
-            252,
-            252
-        ],
+        "pitch": [255, 255, 255, 255],
+        "increments": [252, 252, 252, 252],
         "_note": "Rising tone, ~0.8s. All voices identical, uniform sweep upward in pitch."
     },
     {
         "id": "engaged",
         "address": "0xC289",
-        "calledFrom": [
-            "48845"
-        ],
+        "calledFrom": ["48845"],
         "outerCount": 32,
         "middleCount": 4,
-        "pitch": [
-            255,
-            255,
-            30,
-            60
-        ],
-        "increments": [
-            250,
-            250,
-            40,
-            80
-        ]
+        "pitch": [255, 255, 30, 60],
+        "increments": [250, 250, 40, 80]
     },
     {
         "id": "bolt-hit",
         "address": "0xC293",
-        "calledFrom": [
-            "45873"
-        ],
+        "calledFrom": ["45873"],
         "outerCount": 63,
         "middleCount": 4,
-        "pitch": [
-            1,
-            1,
-            40,
-            67
-        ],
-        "increments": [
-            4,
-            4,
-            226,
-            176
-        ]
+        "pitch": [1, 1, 40, 67],
+        "increments": [4, 4, 226, 176]
     },
     {
         "id": "arrow-hit",
         "address": "0xC29D",
-        "calledFrom": [
-            "40144",
-            "47602"
-        ],
+        "calledFrom": ["40144", "47602"],
         "outerCount": 6,
         "middleCount": 3,
-        "pitch": [
-            1,
-            1,
-            20,
-            30
-        ],
-        "increments": [
-            4,
-            4,
-            17,
-            23
-        ],
+        "pitch": [1, 1, 20, 30],
+        "increments": [4, 4, 17, 23],
         "repeat": 10,
         "_note": "Ranged projectile flight and impact splash. CALL 49910 once then 9× CALL 49921 in a B=9 loop (40178/47649). 10 total engine runs."
     },
@@ -546,18 +264,8 @@
         ],
         "outerCount": 20,
         "middleCount": 2,
-        "pitch": [
-            255,
-            255,
-            255,
-            255
-        ],
-        "increments": [
-            255,
-            255,
-            255,
-            249
-        ],
+        "pitch": [255, 255, 255, 255],
+        "increments": [255, 255, 255, 249],
         "repeat": 13,
         "gap": 4000,
         "contentionFactor": 10,
@@ -581,105 +289,47 @@
         ],
         "outerCount": 50,
         "middleCount": 1,
-        "pitch": [
-            1,
-            1,
-            255,
-            255
-        ],
-        "increments": [
-            50,
-            50,
-            206,
-            206
-        ]
+        "pitch": [1, 1, 255, 255],
+        "increments": [50, 50, 206, 206]
     },
     {
         "id": "fly",
         "address": "0xC2BB",
-        "calledFrom": [
-            "45384"
-        ],
+        "calledFrom": ["45384"],
         "outerCount": 127,
         "middleCount": 1,
-        "pitch": [
-            1,
-            1,
-            15,
-            18
-        ],
-        "increments": [
-            5,
-            5,
-            23,
-            37
-        ]
+        "pitch": [1, 1, 15, 18],
+        "increments": [5, 5, 23, 37]
     },
     {
         "id": "wiz-death-2",
         "address": "0xC2C5",
-        "calledFrom": [
-            "46324 (×1 via CALL 49913), 46580 (×9 via CALL 49921)"
-        ],
+        "calledFrom": ["46324 (×1 via CALL 49913), 46580 (×9 via CALL 49921)"],
         "outerCount": 20,
         "middleCount": 3,
-        "pitch": [
-            255,
-            255,
-            255,
-            255
-        ],
-        "increments": [
-            255,
-            255,
-            255,
-            235
-        ],
+        "pitch": [255, 255, 255, 255],
+        "increments": [255, 255, 255, 235],
         "repeat": 10,
         "_note": "First call via CALL 49913 (LDIR + engine). Then a loop of 9 calls via CALL 49921 (engine only, pitch carries over). increments 255/249 = -1/-7 mod 256, so voices drift downward across repeats."
     },
     {
         "id": "select-piece",
         "address": "0xC2CF",
-        "calledFrom": [
-            "44597"
-        ],
+        "calledFrom": ["44597"],
         "outerCount": 90,
         "middleCount": 1,
-        "pitch": [
-            255,
-            255,
-            255,
-            255
-        ],
-        "increments": [
-            0,
-            255,
-            255,
-            254
-        ],
+        "pitch": [255, 255, 255, 255],
+        "increments": [0, 255, 255, 254],
         "_note": "Bytes decoded from Z80 instructions at 49871-49880: 5A 01 FF FF FF FF 00 FF FF FE."
     },
     {
         "id": "undead",
         "address": "0xC2D9",
-        "calledFrom": [
-            "45654"
-        ],
+        "calledFrom": ["45654"],
         "outerCount": 24,
         "middleCount": 12,
-        "pitch": [
-            12,
-            46,
-            80,
-            160
-        ],
-        "increments": [
-            24,
-            47,
-            101,
-            154
-        ],
+        "pitch": [12, 46, 80, 160],
+        "increments": [24, 47, 101, 154],
         "_note": "Bytes decoded from Z80 instructions at 49881-49890."
     },
     {
@@ -693,18 +343,8 @@
         ],
         "outerCount": 20,
         "middleCount": 4,
-        "pitch": [
-            23,
-            45,
-            56,
-            4
-        ],
-        "increments": [
-            12,
-            8,
-            31,
-            66
-        ],
+        "pitch": [23, 45, 56, 4],
+        "increments": [12, 8, 31, 66],
         "_note": "Plays when cycling through the spell book or viewing a creature's stats. Previously misnamed ranged-hit-2."
     }
 ]

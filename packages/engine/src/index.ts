@@ -79,10 +79,7 @@ export {
 export { type RemotePlayer } from "./interfaces/remoteplayer";
 export { RemoteWizard } from "./interfaces/remotewizard";
 export { type WizCode } from "./interfaces/wizcode";
-export {
-    type IUnitStats,
-    type UnitProperties,
-} from "./interfaces/unitproperties";
+export { type IUnitStats, type UnitProperties } from "./interfaces/unitproperties";
 export {
     GameSetupPlayerType,
     type SpellbookData,
@@ -125,12 +122,7 @@ export { StatusEffectSpell } from "./spells/statuseffectspell";
 export { SubversionSpell } from "./spells/subversionspell";
 export { TurmoilSpell } from "./spells/turmoilspell";
 export { createSpell } from "./spells/spellfactory";
-export {
-    chancePercent,
-    chanceRounded,
-    balanceIndicator,
-    friendlyBalance,
-} from "./spells/spellutils";
+export { chancePercent, chanceRounded, balanceIndicator, friendlyBalance } from "./spells/spellutils";
 
 // Rules
 export { Rules, _resetRulesForTesting } from "./rules";
@@ -154,16 +146,7 @@ _B.registerSpellFactory(_cs);
 export { ComputerWizard } from "./ai/computerwizard";
 
 // Pathfinding
-export {
-    Node,
-    Path,
-    distance,
-    getAngle,
-    diagonalHeuristic,
-    buildPath,
-    isOpen,
-    isClosed,
-} from "./pathfinding";
+export { Node, Path, distance, getAngle, diagonalHeuristic, buildPath, isOpen, isClosed } from "./pathfinding";
 
 // RangeGizmo
 export { RangeGizmo } from "./rangegizmo";

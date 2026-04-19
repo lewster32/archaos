@@ -1,29 +1,16 @@
 <template>
     <div class="modal" v-if="currentSpell && noValidTargets">
         <div class="callout">
-            <p class="callout__title">
-                No valid targets for {{ currentSpell.name }}!
-            </p>
+            <p class="callout__title">No valid targets for {{ currentSpell.name }}!</p>
             <div class="callout__buttons">
-                <button
-                    class="spellinfo__select button button--yellow"
-                    @click="select(currentSpell, true)"
-                >
+                <button class="spellinfo__select button button--yellow" @click="select(currentSpell, true)">
                     {{
-                        [
-                            "Select",
-                            "Ignore",
-                            "Confirm",
-                            "YOLO",
-                            "Whatever",
-                            "Lemme at 'em",
-                        ].at(Math.floor(Math.random() * 6))
+                        ["Select", "Ignore", "Confirm", "YOLO", "Whatever", "Lemme at 'em"].at(
+                            Math.floor(Math.random() * 6),
+                        )
                     }}
                 </button>
-                <button
-                    class="spellinfo__select button button--green button--important"
-                    @click="closeInfo()"
-                >
+                <button class="spellinfo__select button button--green button--important" @click="closeInfo()">
                     Cancel
                 </button>
             </div>
@@ -31,67 +18,33 @@
     </div>
     <div class="modal" v-if="illusionPrompt">
         <div class="callout" style="width: min(90vw, 300px)">
-            <p class="callout__title">
-                Cast {{ currentSpell.name }} as illusion?
-            </p>
+            <p class="callout__title">Cast {{ currentSpell.name }} as illusion?</p>
             <div class="callout__buttons">
-                <button
-                    class="spellinfo__select button button--green button--important"
-                    @click="selectIllusion(true)"
-                >
+                <button class="spellinfo__select button button--green button--important" @click="selectIllusion(true)">
                     Yes
                 </button>
-                <button
-                    class="spellinfo__select button button--red button--important"
-                    @click="selectIllusion(false)"
-                >
+                <button class="spellinfo__select button button--red button--important" @click="selectIllusion(false)">
                     No
                 </button>
-                <button
-                    class="spellinfo__select button"
-                    @click="closeIllusion()"
-                >
-                    Cancel
-                </button>
+                <button class="spellinfo__select button" @click="closeIllusion()">Cancel</button>
             </div>
         </div>
     </div>
-    <div
-        class="spellbook"
-        v-if="show && data"
-        :class="{ 'spellbook--minimised': minimised }"
-    >
+    <div class="spellbook" v-if="show && data" :class="{ 'spellbook--minimised': minimised }">
         <button
             v-if="minimised"
             class="spellbook__toggle spellbook__toggle--closed button button--green button--flashing"
             @click="toggle()"
             title="Open spellbook"
         >
-            <img
-                class="spellbook-icon"
-                src="@assets/images/ui/spellbook.png"
-                alt="Spellbook"
-            />
+            <img class="spellbook-icon" src="@assets/images/ui/spellbook.png" alt="Spellbook" />
         </button>
-        <button
-            v-if="!minimised"
-            class="spellbook__toggle button button--small"
-            @click="toggle()"
-        >
-            &gt;
-        </button>
-        <div
-            class="spellbook__inner callout"
-            :class="{ 'spellbook__inner--minimised': minimised }"
-        >
+        <button v-if="!minimised" class="spellbook__toggle button button--small" @click="toggle()">&gt;</button>
+        <div class="spellbook__inner callout" :class="{ 'spellbook__inner--minimised': minimised }">
             <h1 class="spellbook__title">{{ data.caster }}'s spells</h1>
             <div class="spellbook__scroll" ref="scroll">
                 <ul class="spellbook__list spell-list">
-                    <li
-                        class="spell-list__item spell"
-                        v-for="spell in spellsByChance"
-                        :key="spell.id"
-                    >
+                    <li class="spell-list__item spell" v-for="spell in spellsByChance" :key="spell.id">
                         <SpellImage :spell="spell" />
                         <span class="spell__name">{{ spell.name }}</span>
                         <span
@@ -104,22 +57,13 @@
                             >{{ balanceIndicator(spell.balance) }}</span
                         >
                         <span
-                            :style="`color: var(--spell-chance-colour-${chanceRounded(
-                                spell.chance,
-                            )})`"
+                            :style="`color: var(--spell-chance-colour-${chanceRounded(spell.chance)})`"
                             class="spell__chance"
-                            :title="`This has a ${chancePercent(
-                                spell.chance,
-                            )}% chance of casting.`"
+                            :title="`This has a ${chancePercent(spell.chance)}% chance of casting.`"
                             >{{ chancePercent(spell.chance) }}%</span
                         >
-                        <button class="spell__info button" @click="info(spell)">
-                            i
-                        </button>
-                        <button
-                            class="spell__select button button--green button--important"
-                            @click="select(spell)"
-                        >
+                        <button class="spell__info button" @click="info(spell)">i</button>
+                        <button class="spell__select button button--green button--important" @click="select(spell)">
                             Select
                         </button>
                     </li>
@@ -127,11 +71,7 @@
             </div>
             <button
                 :disabled="data.preventSkip"
-                :title="
-                    data.preventSkip
-                        ? 'Skipping spells is currently disabled'
-                        : 'Skip selecting a spell'
-                "
+                :title="data.preventSkip ? 'Skipping spells is currently disabled' : 'Skip selecting a spell'"
                 class="spellbook__skip button button--red"
                 @click="select(null)"
             >
@@ -149,12 +89,7 @@
 <script setup lang="ts">
 import { SpellType } from "@archaos/engine";
 import type { SpellbookData } from "@archaos/engine";
-import {
-    balanceIndicator,
-    chancePercent,
-    chanceRounded,
-    friendlyBalance,
-} from "@archaos/engine";
+import { balanceIndicator, chancePercent, chanceRounded, friendlyBalance } from "@archaos/engine";
 import type { Spell, SummonSpell } from "@archaos/engine";
 import SpellInfo from "./SpellInfo.vue";
 import SpellImage from "./SpellImage.vue";
@@ -253,10 +188,7 @@ const closeIllusion: () => void = () => {
  *
  * @param spell The spell to select, or null to skip selection.
  */
-const select: (spell: Spell | null, force?: boolean) => void = (
-    spell: Spell | null,
-    force?: boolean,
-) => {
+const select: (spell: Spell | null, force?: boolean) => void = (spell: Spell | null, force?: boolean) => {
     props.data.minimised = true;
     if (!spell) {
         emit("select", null);
@@ -272,10 +204,7 @@ const select: (spell: Spell | null, force?: boolean) => void = (
     noValidTargets.value = false;
 
     // If the spell is a summon that allows illusions, show the prompt.
-    if (
-        spell.type === SpellType.Summon &&
-        (spell as SummonSpell).allowIllusion
-    ) {
+    if (spell.type === SpellType.Summon && (spell as SummonSpell).allowIllusion) {
         illusionPrompt.value = true;
     } else {
         emit("select", spell);

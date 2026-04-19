@@ -55,9 +55,7 @@ export class SoundEffects {
                 }
                 /* v8 ignore next */
                 if (i < repeat - 1 && delay > 0) {
-                    await new Promise((resolve) =>
-                        setTimeout(resolve, delay),
-                    );
+                    await new Promise((resolve) => setTimeout(resolve, delay));
                 }
             }
         } catch (e) {
@@ -78,10 +76,7 @@ export class SoundEffects {
         try {
             if (useGenerator) {
                 this._playGenerated(effectName).catch((e) => {
-                    console.error(
-                        `Error playing sound effect '${effectName}':`,
-                        e,
-                    );
+                    console.error(`Error playing sound effect '${effectName}':`, e);
                 });
             } else {
                 this._sound.play(effectName);

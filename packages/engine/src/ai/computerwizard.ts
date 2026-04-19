@@ -109,20 +109,16 @@ export class ComputerWizard implements RemotePlayer {
         this._enemyPlayerPriorities.clear();
 
         // First of all, who's left to fight?
-        const enemyPlayers: Player[] = this._board.players.filter(
-            (p: Player) => {
-                return p !== this._player && !p.defeated;
-            },
-        );
+        const enemyPlayers: Player[] = this._board.players.filter((p: Player) => {
+            return p !== this._player && !p.defeated;
+        });
 
         // Evaluate each enemy player
         for (const enemy of enemyPlayers) {
             let threatLevel: number = 0;
-            const enemyPieces: Piece[] = this._board
-                .getPiecesByOwner(enemy)
-                .filter((p: Piece) => {
-                    return !p.dead && !p.hasStatus(UnitStatus.Structure);
-                });
+            const enemyPieces: Piece[] = this._board.getPiecesByOwner(enemy).filter((p: Piece) => {
+                return !p.dead && !p.hasStatus(UnitStatus.Structure);
+            });
 
             for (const enemyPiece of enemyPieces) {
                 threatLevel += enemyPiece.strength;
@@ -135,23 +131,19 @@ export class ComputerWizard implements RemotePlayer {
         const wizardPiece: Piece | null = this._player.castingPiece;
 
         if (!wizardPiece) {
-            console.error(
-                `Cannot evaluate enemy player priorities for ${this._player.name} as they have no wizard`,
-            );
+            console.error(`Cannot evaluate enemy player priorities for ${this._player.name} as they have no wizard`);
             return;
         }
 
         for (const [enemy, threatLevel] of this._enemyPlayerPriorities) {
-            const enemyPieces: Piece[] = this._board
-                .getPiecesByOwner(enemy)
-                .filter((p: Piece) => {
-                    return (
-                        !p.dead && // Not dead (corpses aren't usually owned, but just in case)
-                        !p.hasStatus(UnitStatus.Structure) && // Not a structure
-                        (p.canAttackPiece(wizardPiece) || // Can attack our wizard
-                            p.hasStatus(UnitStatus.Spreads)) // Or can spread (which is also dangerous for a wizard)
-                    );
-                });
+            const enemyPieces: Piece[] = this._board.getPiecesByOwner(enemy).filter((p: Piece) => {
+                return (
+                    !p.dead && // Not dead (corpses aren't usually owned, but just in case)
+                    !p.hasStatus(UnitStatus.Structure) && // Not a structure
+                    (p.canAttackPiece(wizardPiece) || // Can attack our wizard
+                        p.hasStatus(UnitStatus.Spreads)) // Or can spread (which is also dangerous for a wizard)
+                );
+            });
             let totalDistance: number = 0;
             if (enemyPieces.length === 0) {
                 // No threatening pieces, so just put the enemy wizard into the
@@ -159,29 +151,19 @@ export class ComputerWizard implements RemotePlayer {
                 enemyPieces.push(enemy.castingPiece);
             }
             for (const enemyPiece of enemyPieces) {
-                const distance: number = Board.distance(
-                    wizardPiece.position,
-                    enemyPiece.position,
-                );
+                const distance: number = Board.distance(wizardPiece.position, enemyPiece.position);
                 totalDistance += distance;
             }
             const averageDistance: number = totalDistance / enemyPieces.length;
-            const adjustedThreatLevel: number =
-                threatLevel / (averageDistance + 1);
+            const adjustedThreatLevel: number = threatLevel / (averageDistance + 1);
             this._enemyPlayerPriorities.set(enemy, adjustedThreatLevel);
         }
 
         // Normalise threat levels to 0-1 range, with 1 always being the highest
         // perceived threat
-        const maxThreatLevel: number = Math.max(
-            ...this._enemyPlayerPriorities.values(),
-            1,
-        );
+        const maxThreatLevel: number = Math.max(...this._enemyPlayerPriorities.values(), 1);
         for (const [enemy, threatLevel] of this._enemyPlayerPriorities) {
-            this._enemyPlayerPriorities.set(
-                enemy,
-                threatLevel / maxThreatLevel,
-            );
+            this._enemyPlayerPriorities.set(enemy, threatLevel / maxThreatLevel);
         }
 
         console.debug(
@@ -206,10 +188,7 @@ export class ComputerWizard implements RemotePlayer {
      * @param board the game board to search for targets on
      * @param spells the spells to find targets for
      */
-    public static findSpellTargets(
-        board: Board,
-        spells: Spell[],
-    ): Map<Spell, Piece[]> {
+    public static findSpellTargets(board: Board, spells: Spell[]): Map<Spell, Piece[]> {
         const targets: Map<Spell, Piece[]> = new Map();
 
         // Loop over all of the board pieces, and ask each spell if it can
@@ -229,10 +208,7 @@ export class ComputerWizard implements RemotePlayer {
         // targets whose owner has no other units to target. While they're
         // technically a valid target, it's not strategically sound to do so.
         const justiceSpells: Spell[] = spells.filter((spell: Spell) => {
-            return (
-                spell.type === SpellType.Attack &&
-                spell.properties.destroyWizardCreatures
-            );
+            return spell.type === SpellType.Attack && spell.properties.destroyWizardCreatures;
         });
 
         // No justice spells, nothing to filter
@@ -247,11 +223,9 @@ export class ComputerWizard implements RemotePlayer {
                 for (const piece of targets.get(justiceSpell)) {
                     if (piece.type === UnitType.Wizard) {
                         const wizardOwner: Player = piece.owner;
-                        const ownerUnits: Piece[] = board
-                            .getPiecesByOwner(wizardOwner)
-                            .filter((p: Piece) => {
-                                return p.type !== UnitType.Wizard && !p.dead;
-                            });
+                        const ownerUnits: Piece[] = board.getPiecesByOwner(wizardOwner).filter((p: Piece) => {
+                            return p.type !== UnitType.Wizard && !p.dead;
+                        });
                         // Only keep this wizard target if its owner has
                         // non-dead, non-wizard units
                         if (ownerUnits.length > 0) {
@@ -292,9 +266,7 @@ export class ComputerWizard implements RemotePlayer {
             // known non-illusion
             if (this._board.rollChance(forgetChance)) {
                 this._knownNonIllusionPieces.delete(pieceId);
-                console.debug(
-                    `${this._player.name} has forgotten that piece ID ${pieceId} is not an illusion`,
-                );
+                console.debug(`${this._player.name} has forgotten that piece ID ${pieceId} is not an illusion`);
             }
         }
     }
@@ -308,9 +280,7 @@ export class ComputerWizard implements RemotePlayer {
     public rememberNonIllusionPiece(pieceId: number): void {
         const rememberChance: number = 0.2 + this._difficulty; // Harder difficulties remember more often
         if (!this._board.rollChance(rememberChance)) {
-            console.debug(
-                `${this._player.name} failed to notice that piece ID ${pieceId} is not an illusion`,
-            );
+            console.debug(`${this._player.name} failed to notice that piece ID ${pieceId} is not an illusion`);
             return;
         }
         console.debug(
@@ -338,23 +308,14 @@ export class ComputerWizard implements RemotePlayer {
      * @param alignment the board's alignment tracker, used to compute the chance modifier
      * @returns the effective casting chance (0.1-1), or null if no matching spell found
      */
-    private static getSpellChanceForUnit(
-        unitId: string,
-        alignment: Alignment,
-    ): number | null {
+    private static getSpellChanceForUnit(unitId: string, alignment: Alignment): number | null {
         for (const spellConfig of Object.values(Spell.spells)) {
-            if (
-                spellConfig.unitId === unitId ||
-                spellConfig.unit?.id === unitId
-            ) {
+            if (spellConfig.unitId === unitId || spellConfig.unit?.id === unitId) {
                 // Apply the same alignment adjustment as Spell.chance
                 if (spellConfig.balance === 0) {
                     return spellConfig.chance;
                 }
-                const adjusted: number = alignment.adjustChance(
-                    spellConfig.chance,
-                    spellConfig.balance,
-                );
+                const adjusted: number = alignment.adjustChance(spellConfig.chance, spellConfig.balance);
                 return Math.min(Math.max(adjusted, 0.1), 1);
             }
         }
@@ -370,18 +331,11 @@ export class ComputerWizard implements RemotePlayer {
      * @param preferredId the preferred piece ID, or null
      * @returns a new array with the preferred target first, or the original
      */
-    static withPreferredFirst(
-        targets: Piece[],
-        preferredId: number | null,
-    ): Piece[] {
+    static withPreferredFirst(targets: Piece[], preferredId: number | null): Piece[] {
         if (preferredId == null) return targets;
         const idx: number = targets.findIndex((p) => p.id === preferredId);
         if (idx <= 0) return targets; // Not found or already first
-        return [
-            targets[idx],
-            ...targets.slice(0, idx),
-            ...targets.slice(idx + 1),
-        ];
+        return [targets[idx], ...targets.slice(0, idx), ...targets.slice(idx + 1)];
     }
 
     /**
@@ -410,8 +364,7 @@ export class ComputerWizard implements RemotePlayer {
             }
 
             // Filter out any spells that have no valid targets
-            const validSpellsTargets: Map<Spell, Piece[]> =
-                this.findSpellTargets(spells);
+            const validSpellsTargets: Map<Spell, Piece[]> = this.findSpellTargets(spells);
             spells = spells.filter((spell: Spell) => {
                 return (
                     spell.properties.unitId ||
@@ -425,23 +378,19 @@ export class ComputerWizard implements RemotePlayer {
             // consider preferring it against suspected illusions —
             // high-strength units with low casting chances are more likely
             // to have been cast as illusions
-            const disbelieveSpell: Spell | undefined = spells.find(
-                (spell: Spell) => {
-                    return spell.type === SpellType.Disbelieve;
-                },
-            );
+            const disbelieveSpell: Spell | undefined = spells.find((spell: Spell) => {
+                return spell.type === SpellType.Disbelieve;
+            });
             if (disbelieveSpell) {
-                const potentialTargets: Piece[] = this._board.pieces.filter(
-                    (p: Piece) => {
-                        return (
-                            p.owner !== this._player && // Enemy piece
-                            !p.dead && // Not dead
-                            p.canBeDisbelieved && // Can be disbelieved
-                            !p.raisedDead && // Not raised dead (can't be an illusion)
-                            !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
-                        );
-                    },
-                );
+                const potentialTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
+                    return (
+                        p.owner !== this._player && // Enemy piece
+                        !p.dead && // Not dead
+                        p.canBeDisbelieved && // Can be disbelieved
+                        !p.raisedDead && // Not raised dead (can't be an illusion)
+                        !this._knownNonIllusionPieces.has(p.id) // Not already known to be non-illusion
+                    );
+                });
                 if (potentialTargets.length === 0) {
                     // No valid targets for Disbelieve, remove it from the list
                     spells = spells.filter((spell: Spell) => {
@@ -452,29 +401,23 @@ export class ComputerWizard implements RemotePlayer {
                     // high strength + low casting chance = likely an illusion
                     const wizardPiece: Piece | null = this._player.castingPiece;
                     if (wizardPiece) {
-                        const wizardThreats: Set<Piece> =
-                            wizardPiece.findThreatPieces();
+                        const wizardThreats: Set<Piece> = wizardPiece.findThreatPieces();
 
                         let bestSuspicion: number = 0;
                         let bestTarget: Piece | null = null;
 
                         for (const piece of potentialTargets) {
-                            const castChance: number | null =
-                                ComputerWizard.getSpellChanceForUnit(
-                                    piece.properties.id,
-                                    this._board.alignment,
-                                );
+                            const castChance: number | null = ComputerWizard.getSpellChanceForUnit(
+                                piece.properties.id,
+                                this._board.alignment,
+                            );
                             if (castChance === null) continue;
 
-                            let suspicion: number =
-                                piece.strength * (1 - castChance);
+                            let suspicion: number = piece.strength * (1 - castChance);
 
                             // Dampen by distance — nearby pieces keep most
                             // of their suspicion, distant ones fade out
-                            const distance: number = Board.distance(
-                                wizardPiece.position,
-                                piece.position,
-                            );
+                            const distance: number = Board.distance(wizardPiece.position, piece.position);
                             suspicion *= 5 / (5 + distance);
 
                             // Boost if this piece actively threatens our wizard
@@ -493,13 +436,9 @@ export class ComputerWizard implements RemotePlayer {
                             // gate by difficulty. Higher contrast suppresses
                             // low-suspicion targets while keeping the AI
                             // aggressive against genuine threats.
-                            const normalised: number =
-                                Math.min(bestSuspicion / 25, 1);
+                            const normalised: number = Math.min(bestSuspicion / 25, 1);
                             const disbelievePreference: number = Math.min(
-                                Math.pow(
-                                    normalised,
-                                    ComputerWizard.DISBELIEVE_CONTRAST,
-                                ) * this._difficulty,
+                                Math.pow(normalised, ComputerWizard.DISBELIEVE_CONTRAST) * this._difficulty,
                                 1,
                             );
 
@@ -508,9 +447,7 @@ export class ComputerWizard implements RemotePlayer {
                                     `${this._player.name} suspects ${bestTarget.fullName} may be an illusion (suspicion: ${bestSuspicion.toFixed(1)}) and prefers Disbelieve`,
                                 );
                                 this._preferredTargetId = bestTarget.id;
-                                await this._player.pickSpell(
-                                    disbelieveSpell.id,
-                                );
+                                await this._player.pickSpell(disbelieveSpell.id);
                                 return true;
                             }
                         }
@@ -529,9 +466,7 @@ export class ComputerWizard implements RemotePlayer {
                 return 0;
             });
 
-            const pickedSpell: SummonSpell = this._board.rng.weightedPick(
-                spells,
-            ) as SummonSpell;
+            const pickedSpell: SummonSpell = this._board.rng.weightedPick(spells) as SummonSpell;
 
             if (!pickedSpell) {
                 console.debug(`${this._player.name} failed to pick a spell`);
@@ -555,10 +490,7 @@ export class ComputerWizard implements RemotePlayer {
             await this._player.pickSpell(pickedSpell.id);
             return true;
         } catch (error) {
-            console.error(
-                `Error selecting spell for ${this._player.name}:`,
-                error,
-            );
+            console.error(`Error selecting spell for ${this._player.name}:`, error);
             return false;
         } finally {
             this._board.events.emit(EngineEvent.AiActing);
@@ -578,8 +510,7 @@ export class ComputerWizard implements RemotePlayer {
         board.events.emit(EngineEvent.AiThinking);
         try {
             // Capture and clear the preferred target set by selectSpell
-            const preferredTargetId: number | null =
-                player.ai?.preferredTargetId ?? null;
+            const preferredTargetId: number | null = player.ai?.preferredTargetId ?? null;
             if (player.ai) {
                 player.ai.preferredTargetId = null;
             }
@@ -594,34 +525,22 @@ export class ComputerWizard implements RemotePlayer {
                     return true;
                 } else if (spell.type === SpellType.Attack) {
                     const attackSpell: AttackSpell = spell as AttackSpell;
-                    console.debug(
-                        `${player.name} is casting attack spell ${spell.name}`,
-                    );
+                    console.debug(`${player.name} is casting attack spell ${spell.name}`);
                     while (attackSpell.castTimes > 0) {
                         const targets: Piece[] = (
-                            ComputerWizard.findSpellTargets(board, [
-                                attackSpell,
-                            ]).get(attackSpell) || []
+                            ComputerWizard.findSpellTargets(board, [attackSpell]).get(attackSpell) || []
                         ).toSorted((a: Piece, b: Piece) => {
                             // Prefer wizard or high strength targets
-                            if (
-                                a.type === UnitType.Wizard &&
-                                b.type !== UnitType.Wizard
-                            ) {
+                            if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
                                 return -1;
                             }
-                            if (
-                                a.type !== UnitType.Wizard &&
-                                b.type === UnitType.Wizard
-                            ) {
+                            if (a.type !== UnitType.Wizard && b.type === UnitType.Wizard) {
                                 return 1;
                             }
                             return b.strength - a.strength;
                         });
                         if (!targets.length) {
-                            console.debug(
-                                `${player.name} has no valid targets to cast ${spell.name}`,
-                            );
+                            console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
                             if (successfullyCast) {
                                 player.discardSpell();
                             }
@@ -630,18 +549,11 @@ export class ComputerWizard implements RemotePlayer {
                             });
                             return false;
                         }
-                        console.debug(
-                            `${player.name} has ${targets.length} valid targets to cast ${spell.name}`,
-                        );
+                        console.debug(`${player.name} has ${targets.length} valid targets to cast ${spell.name}`);
                         const target: Piece = board.rng.weightedPick(
-                            ComputerWizard.withPreferredFirst(
-                                targets,
-                                preferredTargetId,
-                            ),
+                            ComputerWizard.withPreferredFirst(targets, preferredTargetId),
                         );
-                        console.debug(
-                            `${player.name} is casting ${spell.name} on target ${target.name}`,
-                        );
+                        console.debug(`${player.name} is casting ${spell.name} on target ${target.name}`);
                         board.events.emit(EngineEvent.FocusPieces, {
                             pieceIds: [target.id],
                         });
@@ -651,21 +563,17 @@ export class ComputerWizard implements RemotePlayer {
                     return true;
                 } else if (spell.type === SpellType.Disbelieve) {
                     console.debug(`${player.name} is casting Disbelieve`);
-                    const potentialTargets: Piece[] = board.pieces.filter(
-                        (p: Piece) => {
-                            return (
-                                p.owner !== player && // Enemy piece
-                                !p.dead && // Not dead
-                                p.canBeDisbelieved && // Can be disbelieved
-                                !player.ai?.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
-                            );
-                        },
-                    );
+                    const potentialTargets: Piece[] = board.pieces.filter((p: Piece) => {
+                        return (
+                            p.owner !== player && // Enemy piece
+                            !p.dead && // Not dead
+                            p.canBeDisbelieved && // Can be disbelieved
+                            !player.ai?.knowsPieceIsNonIllusion(p.id) // Not already known to be non-illusion
+                        );
+                    });
 
                     if (!potentialTargets.length) {
-                        console.debug(
-                            `${player.name} has no valid targets to cast Disbelieve`,
-                        );
+                        console.debug(`${player.name} has no valid targets to cast Disbelieve`);
                         board.events.emit(EngineEvent.EffectRequested, {
                             sound: "cancel",
                         });
@@ -679,9 +587,8 @@ export class ComputerWizard implements RemotePlayer {
                         // Disbelieve was chosen because of a specific
                         // suspected illusion — target it directly
                         target =
-                            potentialTargets.find(
-                                (p) => p.id === preferredTargetId,
-                            ) ?? board.rng.pick(potentialTargets);
+                            potentialTargets.find((p) => p.id === preferredTargetId) ??
+                            board.rng.pick(potentialTargets);
                     }
                     board.events.emit(EngineEvent.FocusPieces, {
                         pieceIds: [target.id],
@@ -690,36 +597,24 @@ export class ComputerWizard implements RemotePlayer {
                     return true;
                 } else if (spell.type === SpellType.Misc) {
                     if (spell.properties.target === "self") {
-                        await board.rules.doCastSpell(
-                            board,
-                            player.castingPiece,
-                        );
+                        await board.rules.doCastSpell(board, player.castingPiece);
                         return true;
-                    } else if (
-                        [SpellTarget.Piece, SpellTarget.Corpse].includes(
-                            spell.properties.target,
-                        )
-                    ) {
-                        const potentialTargets: Piece[] = board.pieces.filter(
-                            (p: Piece) => {
-                                return spell.getValidTarget(p, false);
-                            },
-                        );
+                    } else if ([SpellTarget.Piece, SpellTarget.Corpse].includes(spell.properties.target)) {
+                        const potentialTargets: Piece[] = board.pieces.filter((p: Piece) => {
+                            return spell.getValidTarget(p, false);
+                        });
 
                         if (!potentialTargets.length) {
-                            console.debug(
-                                `${player.name} has no valid targets to cast ${spell.name}`,
-                            );
+                            console.debug(`${player.name} has no valid targets to cast ${spell.name}`);
                             board.events.emit(EngineEvent.EffectRequested, {
                                 sound: "cancel",
                             });
                             return false;
                         }
-                        const miscReordered: Piece[] =
-                            ComputerWizard.withPreferredFirst(
-                                potentialTargets,
-                                preferredTargetId,
-                            );
+                        const miscReordered: Piece[] = ComputerWizard.withPreferredFirst(
+                            potentialTargets,
+                            preferredTargetId,
+                        );
                         const target: Piece =
                             preferredTargetId == null
                                 ? board.rng.pick(potentialTargets)
@@ -768,23 +663,17 @@ export class ComputerWizard implements RemotePlayer {
         if (piece.engaged) {
             console.debug(`${piece.fullName} is engaged`);
             // Try to attack the engaged enemy if possible
-            const engagedEnemies: Piece[] =
-                this._board.getAdjacentPiecesAtPosition(
-                    piece.position,
-                    (p: Piece) => {
-                        return (
-                            p.owner !== this._player && // Enemy piece
-                            !p.currentMount && // Not mounted
-                            piece.canAttackPiece(p) && // Can attack target
-                            piece.canAttackPossiblyUndeadPiece(p) // Can attack target even if undead
-                        ); // Can attack engaged piece
-                    },
-                );
+            const engagedEnemies: Piece[] = this._board.getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
+                return (
+                    p.owner !== this._player && // Enemy piece
+                    !p.currentMount && // Not mounted
+                    piece.canAttackPiece(p) && // Can attack target
+                    piece.canAttackPossiblyUndeadPiece(p) // Can attack target even if undead
+                ); // Can attack engaged piece
+            });
             if (engagedEnemies.length > 0) {
                 const target: Piece = this._board.rng.pick(engagedEnemies);
-                console.debug(
-                    `${piece.fullName} is engaged and attacks ${target.fullName}`,
-                );
+                console.debug(`${piece.fullName} is engaged and attacks ${target.fullName}`);
                 await this._board.attackPiece(piece.id, target.id);
             } else {
                 console.debug(`No engaged targets found for ${piece.fullName}`);
@@ -811,33 +700,22 @@ export class ComputerWizard implements RemotePlayer {
                         !p.currentMount && // Not mounted
                         piece.canAttackPiece(p) && // Can attack target
                         piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
-                        (p.canAttackPiece(piece) ||
-                            p.hasStatus(UnitStatus.Spreads))
+                        (p.canAttackPiece(piece) || p.hasStatus(UnitStatus.Spreads))
                     ); // Target can fight back or is dangerous
                 })
                 .toSorted((a: Piece, b: Piece) => {
                     // Prefer wizard targets
-                    if (
-                        a.type === UnitType.Wizard &&
-                        b.type !== UnitType.Wizard
-                    ) {
+                    if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
                         return -1;
                     }
-                    if (
-                        a.type !== UnitType.Wizard &&
-                        b.type === UnitType.Wizard
-                    ) {
+                    if (a.type !== UnitType.Wizard && b.type === UnitType.Wizard) {
                         return 1;
                     }
                     return 0;
                 });
             if (potentialAttackTargets.length > 0) {
-                const target: Piece = this._board.rng.weightedPick(
-                    potentialAttackTargets,
-                );
-                console.debug(
-                    `${piece.fullName} attacks target ${target.name}`,
-                );
+                const target: Piece = this._board.rng.weightedPick(potentialAttackTargets);
+                console.debug(`${piece.fullName} attacks target ${target.name}`);
                 await this._board.attackPiece(piece.id, target.id);
                 piece.moved = true;
                 piece.attacked = true;
@@ -845,52 +723,32 @@ export class ComputerWizard implements RemotePlayer {
                 console.debug(`No attack targets found for ${piece.fullName}`);
             }
         } else {
-            console.debug(
-                `${piece.fullName} cannot attack or has already attacked`,
-            );
+            console.debug(`${piece.fullName} cannot attack or has already attacked`);
         }
         if (!piece.moved && piece.canMove) {
             // Special case: if this is a wizard and there are mountable units
             // adjacent, consider mounting one of them
             if (piece.type === UnitType.Wizard && piece.currentMount == null) {
-                const mountablePieces: Piece[] =
-                    this._board.getAdjacentPiecesAtPosition(
-                        piece.position,
-                        (p: Piece) => {
-                            return piece.canMountPiece(p); // Can mount the piece
-                        },
-                    );
+                const mountablePieces: Piece[] = this._board.getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
+                    return piece.canMountPiece(p); // Can mount the piece
+                });
                 //
                 if (mountablePieces.length > 0) {
                     // Increase chance to mount if the wizard is in danger
                     let modifier: number = 0;
                     if (this._player.castingPiece.findThreatPieces().size > 0) {
-                        console.debug(
-                            `${piece.fullName} is in danger and more likely to mount`,
-                        );
+                        console.debug(`${piece.fullName} is in danger and more likely to mount`);
                         modifier = this._difficulty * 0.5; // More likely to mount if in danger
                     }
 
                     // Wizards usually want to mount, but lower difficulties may
                     // sometimes choose not to (75% for 0, 100% for 1)
-                    if (
-                        !this._board.rollChance(
-                            Math.min(
-                                0.75 + (this._difficulty + modifier) * 0.25,
-                                1,
-                            ),
-                        )
-                    ) {
-                        console.debug(
-                            `${piece.fullName} chooses not to mount this turn`,
-                        );
+                    if (!this._board.rollChance(Math.min(0.75 + (this._difficulty + modifier) * 0.25, 1))) {
+                        console.debug(`${piece.fullName} chooses not to mount this turn`);
                         return false;
                     }
-                    const mountable: Piece =
-                        this._board.rng.pick(mountablePieces);
-                    console.debug(
-                        `${piece.fullName} mounts ${mountable.fullName}`,
-                    );
+                    const mountable: Piece = this._board.rng.pick(mountablePieces);
+                    console.debug(`${piece.fullName} mounts ${mountable.fullName}`);
                     await this._board.mountPiece(piece.id, mountable.id);
                     // Select the mountable if it can attack or ranged attack
                     if (
@@ -901,19 +759,14 @@ export class ComputerWizard implements RemotePlayer {
                     }
                     return true;
                 } else {
-                    console.debug(
-                        `No friendly mountables found for ${piece.fullName}`,
-                    );
+                    console.debug(`No friendly mountables found for ${piece.fullName}`);
                 }
             }
 
             // Special case: if this is a flying unit, search all positions
             // within fly range for an attackable enemy and go for them with
             // a greater chance the higher the difficulty level.
-            if (
-                piece.hasStatus(UnitStatus.Flying) &&
-                this._board.rollChance(this.aggression)
-            ) {
+            if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(this.aggression)) {
                 const flyPoints: Point[] = this._board.getPointsInRange(
                     piece.position,
                     piece.stats.movement,
@@ -936,19 +789,14 @@ export class ComputerWizard implements RemotePlayer {
                 }
                 // If we found a target, go get it
                 if (targetPiece) {
-                    console.debug(
-                        `${piece.fullName} flies to attack ${targetPiece.fullName}`,
-                    );
+                    console.debug(`${piece.fullName} flies to attack ${targetPiece.fullName}`);
                     piece.moved = true;
                     await this._board.attackPiece(piece.id, targetPiece.id);
                     if (!piece.currentMount && piece.engaged) {
-                        const firstEngagingPiece: Piece | null =
-                            piece.getFirstEngagingPiece();
+                        const firstEngagingPiece: Piece | null = piece.getFirstEngagingPiece();
 
                         if (firstEngagingPiece) {
-                            console.debug(
-                                `${piece.fullName} is now engaged after attacking`,
-                            );
+                            console.debug(`${piece.fullName} is now engaged after attacking`);
                             piece.attacked = false;
                             await this.moveUnit(piece);
                         }
@@ -958,14 +806,10 @@ export class ComputerWizard implements RemotePlayer {
                     // below so units with a ranged capability can still fire
                     // after a fly-attack (whether it succeeded or failed).
                 } else {
-                    console.debug(
-                        `No attackable targets in fly range for ${piece.fullName}`,
-                    );
+                    console.debug(`No attackable targets in fly range for ${piece.fullName}`);
                 }
             } else {
-                console.debug(
-                    `${piece.fullName} is not flying or did not roll to attack terminal paths`,
-                );
+                console.debug(`${piece.fullName} is not flying or did not roll to attack terminal paths`);
             }
 
             // Find all valid reachable tiles. Re-check piece.moved here because
@@ -973,230 +817,193 @@ export class ComputerWizard implements RemotePlayer {
             if (piece.moved) {
                 // Fly-attack already used the move; skip to ranged attack below.
             } else {
-            const reachableTiles: Point[] = Array.from(
-                this._board.rangeGizmo.getAllValidPaths(),
-            )
-                .map((path: Path) => {
-                    // Get the last node in the path
-                    return path.nodes?.findLast((node) => node.traversable)
-                        ?.pos;
-                })
-                .filter((pt: Point) => {
-                    if (!pt) {
-                        return false;
-                    }
-                    // Ignore tile the piece is currently on
-                    return !Point.equals(pt, piece.position);
-                });
-            if (reachableTiles.length === 0) {
-                console.debug(`No reachable tiles for ${piece.fullName}`);
-                this._board.events.emit(EngineEvent.EffectRequested, {
-                    sound: "cancel",
-                });
-                return false;
-            }
-            // We're going to move to a point, but it may be random or it may
-            // be tactical, depending on the difficulty level
-            let movePt: Point = null;
+                const reachableTiles: Point[] = Array.from(this._board.rangeGizmo.getAllValidPaths())
+                    .map((path: Path) => {
+                        // Get the last node in the path
+                        return path.nodes?.findLast((node) => node.traversable)?.pos;
+                    })
+                    .filter((pt: Point) => {
+                        if (!pt) {
+                            return false;
+                        }
+                        // Ignore tile the piece is currently on
+                        return !Point.equals(pt, piece.position);
+                    });
+                if (reachableTiles.length === 0) {
+                    console.debug(`No reachable tiles for ${piece.fullName}`);
+                    this._board.events.emit(EngineEvent.EffectRequested, {
+                        sound: "cancel",
+                    });
+                    return false;
+                }
+                // We're going to move to a point, but it may be random or it may
+                // be tactical, depending on the difficulty level
+                let movePt: Point = null;
 
-            if (piece === this._player.castingPiece) {
-                // Wizard priority 1: seek a mountable unit if unmounted.
-                // Higher difficulties do this more reliably (50% at diff 0,
-                // 100% at diff 1). Adjacent mounts are already handled above,
-                // so we skip any that are already adjacent.
-                if (
-                    piece.currentMount == null &&
-                    this._board.rollChance(0.5 + this._difficulty * 0.5)
-                ) {
-                    const mountTargets: Piece[] = this._board.pieces.filter(
-                        (p: Piece) => {
+                if (piece === this._player.castingPiece) {
+                    // Wizard priority 1: seek a mountable unit if unmounted.
+                    // Higher difficulties do this more reliably (50% at diff 0,
+                    // 100% at diff 1). Adjacent mounts are already handled above,
+                    // so we skip any that are already adjacent.
+                    if (piece.currentMount == null && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
+                        const mountTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
                             if (p.dead) return false;
                             // Must be mountable by this wizard
                             if (!piece.canMountPiece(p)) return false;
                             // Skip pieces already adjacent (mounting handled separately)
-                            return (
-                                Board.distance(piece.position, p.position) > 1
-                            );
-                        },
-                    );
-                    if (mountTargets.length > 0) {
-                        let closestTile: Point | null = null;
-                        let closestDist: number = Infinity;
-                        let closestMount: Piece | null = null;
-                        for (const tile of reachableTiles) {
-                            for (const mount of mountTargets) {
-                                const dist: number = Board.distance(
-                                    tile,
-                                    mount.position,
+                            return Board.distance(piece.position, p.position) > 1;
+                        });
+                        if (mountTargets.length > 0) {
+                            let closestTile: Point | null = null;
+                            let closestDist: number = Infinity;
+                            let closestMount: Piece | null = null;
+                            for (const tile of reachableTiles) {
+                                for (const mount of mountTargets) {
+                                    const dist: number = Board.distance(tile, mount.position);
+                                    if (dist < closestDist) {
+                                        closestDist = dist;
+                                        closestTile = tile;
+                                        closestMount = mount;
+                                    }
+                                }
+                            }
+                            if (closestTile) {
+                                console.debug(
+                                    `${piece.fullName} moves towards mountable unit ${closestMount?.fullName}`,
                                 );
-                                if (dist < closestDist) {
-                                    closestDist = dist;
+                                movePt = closestTile;
+                            }
+                        }
+                    }
+                    // Wizard priority 2: move away from threats when threatened.
+                    // Higher difficulties do this more reliably (50% at diff 0,
+                    // 100% at diff 1).
+                    if (!movePt) {
+                        const threats: Set<Piece> = piece.findThreatPieces();
+                        if (threats.size > 0 && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
+                            const threatArray: Piece[] = Array.from(threats);
+                            let safestTile: Point | null = null;
+                            let maxMinDistance: number = -Infinity;
+                            for (const tile of reachableTiles) {
+                                const minDist: number = Math.min(
+                                    ...threatArray.map((t: Piece) => Board.distance(tile, t.position)),
+                                );
+                                if (minDist > maxMinDistance) {
+                                    maxMinDistance = minDist;
+                                    safestTile = tile;
+                                }
+                            }
+                            if (safestTile) {
+                                console.debug(`${piece.fullName} moves away from ${threats.size} threat(s)`);
+                                movePt = safestTile;
+                            }
+                        }
+                    }
+                } else if (this._board.rollChance(this.aggression)) {
+                    // Non-wizard: move towards the highest priority enemy
+                    const highestPriorityEnemy: Player | null =
+                        Array.from(this._enemyPlayerPriorities.entries()).toSorted((a, b) => b[1] - a[1])[0]?.[0] ||
+                        null;
+
+                    if (highestPriorityEnemy) {
+                        // Pick the closest reachable tile to any of that player's
+                        // pieces, preferentially targeting wizards
+                        let closestTile: Point | null = null;
+                        let closestDistance: number = Infinity;
+                        let closestPiece: Piece | null = null;
+                        const enemyPieces: Piece[] = this._board
+                            .getPiecesByOwner(highestPriorityEnemy)
+                            .filter((p: Piece) => {
+                                return (
+                                    !p.dead && // Not dead
+                                    piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
+                                    piece.canAttackPiece(p)
+                                ); // Can attack target
+                            });
+                        for (const tile of reachableTiles) {
+                            for (const enemyPiece of enemyPieces) {
+                                const distance: number = Board.distance(tile, enemyPiece.position);
+                                // Prefer wizard targets by reducing their effective
+                                // distance; the higher the difficulty, the more we
+                                // prefer wizards
+                                const effectiveDistance: number =
+                                    enemyPiece.type === UnitType.Wizard
+                                        ? distance * Math.max(0.1, 1 - this.difficulty)
+                                        : distance;
+                                if (effectiveDistance < closestDistance) {
+                                    closestDistance = effectiveDistance;
                                     closestTile = tile;
-                                    closestMount = mount;
+                                    closestPiece = enemyPiece;
                                 }
                             }
                         }
                         if (closestTile) {
-                            console.debug(
-                                `${piece.fullName} moves towards mountable unit ${closestMount?.fullName}`,
-                            );
-                            movePt = closestTile;
-                        }
-                    }
-                }
-                // Wizard priority 2: move away from threats when threatened.
-                // Higher difficulties do this more reliably (50% at diff 0,
-                // 100% at diff 1).
-                if (!movePt) {
-                    const threats: Set<Piece> = piece.findThreatPieces();
-                    if (
-                        threats.size > 0 &&
-                        this._board.rollChance(0.5 + this._difficulty * 0.5)
-                    ) {
-                        const threatArray: Piece[] = Array.from(threats);
-                        let safestTile: Point | null = null;
-                        let maxMinDistance: number = -Infinity;
-                        for (const tile of reachableTiles) {
-                            const minDist: number = Math.min(
-                                ...threatArray.map((t: Piece) =>
-                                    Board.distance(tile, t.position),
-                                ),
-                            );
-                            if (minDist > maxMinDistance) {
-                                maxMinDistance = minDist;
-                                safestTile = tile;
-                            }
-                        }
-                        if (safestTile) {
-                            console.debug(
-                                `${piece.fullName} moves away from ${threats.size} threat(s)`,
-                            );
-                            movePt = safestTile;
-                        }
-                    }
-                }
-            } else if (this._board.rollChance(this.aggression)) {
-                // Non-wizard: move towards the highest priority enemy
-                const highestPriorityEnemy: Player | null =
-                    Array.from(this._enemyPlayerPriorities.entries()).toSorted(
-                        (a, b) => b[1] - a[1],
-                    )[0]?.[0] || null;
-
-                if (highestPriorityEnemy) {
-                    // Pick the closest reachable tile to any of that player's
-                    // pieces, preferentially targeting wizards
-                    let closestTile: Point | null = null;
-                    let closestDistance: number = Infinity;
-                    let closestPiece: Piece | null = null;
-                    const enemyPieces: Piece[] = this._board
-                        .getPiecesByOwner(highestPriorityEnemy)
-                        .filter((p: Piece) => {
-                            return (
-                                !p.dead && // Not dead
-                                piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
-                                piece.canAttackPiece(p)
-                            ); // Can attack target
-                        });
-                    for (const tile of reachableTiles) {
-                        for (const enemyPiece of enemyPieces) {
-                            const distance: number = Board.distance(
-                                tile,
-                                enemyPiece.position,
-                            );
-                            // Prefer wizard targets by reducing their effective
-                            // distance; the higher the difficulty, the more we
-                            // prefer wizards
-                            const effectiveDistance: number =
-                                enemyPiece.type === UnitType.Wizard
-                                    ? distance *
-                                      Math.max(0.1, 1 - this.difficulty)
-                                    : distance;
-                            if (effectiveDistance < closestDistance) {
-                                closestDistance = effectiveDistance;
-                                closestTile = tile;
-                                closestPiece = enemyPiece;
-                            }
-                        }
-                    }
-                    if (closestTile) {
-                        // If the chosen tile is occupied by an enemy piece,
-                        // attack it rather than moving onto the same tile.
-                        const pieceAtTile: Piece | null =
-                            this._board.getPiecesAtPosition(
-                                closestTile,
-                                (p: Piece) => !p.dead && p.owner !== this._player,
-                            )[0] ?? null;
-                        if (pieceAtTile) {
-                            // Tile is occupied — attack if possible, otherwise
-                            // leave movePt unset and fall through to random move.
-                            if (
-                                piece.canAttackPossiblyUndeadPiece(
-                                    pieceAtTile,
-                                ) &&
-                                piece.canAttackPiece(pieceAtTile)
-                            ) {
-                                console.debug(
-                                    `${piece.fullName} chooses to attack ${pieceAtTile.fullName} rather than move towards them`,
-                                );
-                                await this._board.attackPiece(
-                                    piece.id,
-                                    pieceAtTile.id,
-                                );
-                                piece.attacked = true;
+                            // If the chosen tile is occupied by an enemy piece,
+                            // attack it rather than moving onto the same tile.
+                            const pieceAtTile: Piece | null =
+                                this._board.getPiecesAtPosition(
+                                    closestTile,
+                                    (p: Piece) => !p.dead && p.owner !== this._player,
+                                )[0] ?? null;
+                            if (pieceAtTile) {
+                                // Tile is occupied — attack if possible, otherwise
+                                // leave movePt unset and fall through to random move.
+                                if (
+                                    piece.canAttackPossiblyUndeadPiece(pieceAtTile) &&
+                                    piece.canAttackPiece(pieceAtTile)
+                                ) {
+                                    console.debug(
+                                        `${piece.fullName} chooses to attack ${pieceAtTile.fullName} rather than move towards them`,
+                                    );
+                                    await this._board.attackPiece(piece.id, pieceAtTile.id);
+                                    piece.attacked = true;
+                                } else {
+                                    console.debug(
+                                        `${piece.fullName} cannot move to or attack ${pieceAtTile.fullName}; skipping tactical move`,
+                                    );
+                                }
                             } else {
                                 console.debug(
-                                    `${piece.fullName} cannot move to or attack ${pieceAtTile.fullName}; skipping tactical move`,
+                                    `${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`,
                                 );
+                                movePt = closestTile;
                             }
                         } else {
-                            console.debug(
-                                `${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`,
-                            );
-                            movePt = closestTile;
+                            console.debug(`Could not find closest tile to enemy pieces for ${piece.fullName}`);
                         }
-                    } else {
-                        console.debug(
-                            `Could not find closest tile to enemy pieces for ${piece.fullName}`,
-                        );
                     }
                 }
-            }
-            // If we didn't find a tactical move point, pick a random unoccupied
-            // tile to move to
-            if (!movePt) {
-                movePt = this._board.rng.pick(reachableTiles.filter((pt: Point) => {
-                    const pieceAtTile: Piece | null =
-                        this._board.getPiecesAtPosition(
-                            pt,
-                            (p: Piece) => !p.dead,
-                        )[0] ?? null;
-                    return !pieceAtTile; // Only consider unoccupied tiles
-                }));
-                if (movePt) {
-                    console.debug(`${piece.fullName} chooses to move randomly`);
+                // If we didn't find a tactical move point, pick a random unoccupied
+                // tile to move to
+                if (!movePt) {
+                    movePt = this._board.rng.pick(
+                        reachableTiles.filter((pt: Point) => {
+                            const pieceAtTile: Piece | null =
+                                this._board.getPiecesAtPosition(pt, (p: Piece) => !p.dead)[0] ?? null;
+                            return !pieceAtTile; // Only consider unoccupied tiles
+                        }),
+                    );
+                    if (movePt) {
+                        console.debug(`${piece.fullName} chooses to move randomly`);
+                    }
                 }
-            }
-            if (!movePt) {
-                console.debug(
-                    `${piece.fullName} could not find a valid tile to move to`,
-                );
-                this._board.events.emit(EngineEvent.EffectRequested, {
-                    sound: "cancel",
-                });
-                return false;
-            }
+                if (!movePt) {
+                    console.debug(`${piece.fullName} could not find a valid tile to move to`);
+                    this._board.events.emit(EngineEvent.EffectRequested, {
+                        sound: "cancel",
+                    });
+                    return false;
+                }
 
-            console.debug(
-                `${piece.fullName} moves to (${movePt.x}, ${movePt.y})`,
-            );
-            this._board.events.emit(EngineEvent.FocusPosition, {
-                position: movePt,
-            });
-            await this._board.movePiece(piece.id, movePt);
-            if (piece.engaged) {
-                console.debug(`${piece.fullName} is now engaged after moving`);
-                await this.moveUnit(piece);
-            }
+                console.debug(`${piece.fullName} moves to (${movePt.x}, ${movePt.y})`);
+                this._board.events.emit(EngineEvent.FocusPosition, {
+                    position: movePt,
+                });
+                await this._board.movePiece(piece.id, movePt);
+                if (piece.engaged) {
+                    console.debug(`${piece.fullName} is now engaged after moving`);
+                    await this.moveUnit(piece);
+                }
             } // end else (piece.moved)
         }
         if (!piece.rangedAttacked && piece.canRangedAttack) {
@@ -1205,9 +1012,7 @@ export class ComputerWizard implements RemotePlayer {
                 .filter((p: Piece) => {
                     return (
                         p.owner !== this._player && // Enemy piece
-                        (p.stats.combat > 0 ||
-                            p.stats.rangedCombat > 0 ||
-                            p.hasStatus(UnitStatus.Spreads)) && // Is potentially dangerous
+                        (p.stats.combat > 0 || p.stats.rangedCombat > 0 || p.hasStatus(UnitStatus.Spreads)) && // Is potentially dangerous
                         !p.currentMount && // Not mounted (can't target riders without killing the mount first)
                         piece.canAttackPossiblyUndeadPiece(p) &&
                         piece.canRangedAttackPiece(p) // In ranged attack range
@@ -1215,41 +1020,28 @@ export class ComputerWizard implements RemotePlayer {
                 })
                 .toSorted((a: Piece, b: Piece) => {
                     // Prefer wizard targets
-                    if (
-                        a.type === UnitType.Wizard &&
-                        b.type !== UnitType.Wizard
-                    ) {
+                    if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
                         return -1;
                     }
-                    if (
-                        a.type !== UnitType.Wizard &&
-                        b.type === UnitType.Wizard
-                    ) {
+                    if (a.type !== UnitType.Wizard && b.type === UnitType.Wizard) {
                         return 1;
                     }
                     return 0;
                 });
             if (rangedTargets.length > 0) {
-                const target: Piece =
-                    this._board.rng.weightedPick(rangedTargets);
+                const target: Piece = this._board.rng.weightedPick(rangedTargets);
 
                 this._board.events.emit(EngineEvent.FocusPieces, {
                     pieceIds: [target.id],
                 });
-                console.debug(
-                    `${piece.fullName} performs ranged attack on ${target.fullName}`,
-                );
+                console.debug(`${piece.fullName} performs ranged attack on ${target.fullName}`);
                 await this._board.rangedAttackPiece(piece.id, target.id);
                 return true;
             } else {
-                console.debug(
-                    `No ranged attack targets found for ${piece.fullName}`,
-                );
+                console.debug(`No ranged attack targets found for ${piece.fullName}`);
             }
         } else {
-            console.debug(
-                `${piece.fullName} cannot ranged attack or has already ranged attacked`,
-            );
+            console.debug(`${piece.fullName} cannot ranged attack or has already ranged attacked`);
         }
 
         return true;
@@ -1267,16 +1059,14 @@ export class ComputerWizard implements RemotePlayer {
         this.evaluateEnemyPlayerPriorities();
 
         try {
-            const pieces: Piece[] = this._board
-                .getPiecesByOwner(this._player)
-                .filter((p: Piece) => {
-                    return (
-                        !p.currentMount && // Not mounted - mounted units move with their mounts
-                        p.canSelect && // Can be selected
-                        !p.hasStatus(UnitStatus.Structure) && // Not a structure
-                        !p.dead
-                    );
-                });
+            const pieces: Piece[] = this._board.getPiecesByOwner(this._player).filter((p: Piece) => {
+                return (
+                    !p.currentMount && // Not mounted - mounted units move with their mounts
+                    p.canSelect && // Can be selected
+                    !p.hasStatus(UnitStatus.Structure) && // Not a structure
+                    !p.dead
+                );
+            });
 
             if (!pieces.length) {
                 console.warn(`${this._player.name} has no pieces to move`);
@@ -1288,9 +1078,7 @@ export class ComputerWizard implements RemotePlayer {
                     break;
                 }
                 if (piece.turnOver) {
-                    console.debug(
-                        `${piece.fullName} has already taken its turn`,
-                    );
+                    console.debug(`${piece.fullName} has already taken its turn`);
                     continue;
                 }
                 console.debug(`Moving ${piece.fullName}`);

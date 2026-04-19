@@ -30,8 +30,7 @@ export class Spell<P extends Piece = Piece> extends Model {
     /**
      * All spell configurations loaded from JSON.
      */
-    public static readonly spells: { [key: string]: SpellConfig } =
-        spellJsonData as any;
+    public static readonly spells: { [key: string]: SpellConfig } = spellJsonData as any;
 
     /**
      * A reference to the game board.
@@ -132,10 +131,7 @@ export class Spell<P extends Piece = Piece> extends Model {
         if (this.balance === 0) {
             return this._properties.chance;
         }
-        const adjusted: number = this._board.alignment.adjustChance(
-            this._properties.chance,
-            this.balance,
-        );
+        const adjusted: number = this._board.alignment.adjustChance(this._properties.chance, this.balance);
         return Math.min(Math.max(adjusted, 0.1), 1);
     }
 
@@ -294,29 +290,19 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @returns Whether the spell can be cast at the given position
      */
     protected canCastAtPosition(point: Point, showReason?: boolean): boolean {
-        if (
-            this.lineOfSight &&
-            !this._board.hasLineOfSight(this._castingPiece.position, point)
-        ) {
+        if (this.lineOfSight && !this._board.hasLineOfSight(this._castingPiece.position, point)) {
             if (showReason) {
-                this._board.logger.log(
-                    `${this.name} requires line of sight to target`,
-                    Colour.Magenta,
-                );
+                this._board.logger.log(`${this.name} requires line of sight to target`, Colour.Magenta);
             }
             return false;
         }
         if (this._properties.tree) {
-            const neighbourTrees: P[] = this._board.getAdjacentPiecesAtPosition(
-                point,
-                (p: P) => p.hasStatus(UnitStatus.Tree),
+            const neighbourTrees: P[] = this._board.getAdjacentPiecesAtPosition(point, (p: P) =>
+                p.hasStatus(UnitStatus.Tree),
             );
             if (neighbourTrees.length > 0) {
                 if (showReason) {
-                    this._board.logger.log(
-                        `${this.name} cannot be cast adjacent to another tree`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} cannot be cast adjacent to another tree`, Colour.Magenta);
                 }
                 return false;
             }
@@ -331,21 +317,13 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param showReason Whether to log the reason if the target is invalid
      * @returns The valid target point or piece, or null if invalid
      */
-    getValidTarget(
-        target: Point | P,
-        showReason?: boolean,
-    ): SpellCastTarget<P> {
-        const targetPoint: Point = Point.isPoint(target)
-            ? target
-            : target.position;
+    getValidTarget(target: Point | P, showReason?: boolean): SpellCastTarget<P> {
+        const targetPoint: Point = Point.isPoint(target) ? target : target.position;
         const targetPiece: P = Piece.isPiece(target) ? target : null;
 
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
-                this._board.logger.log(
-                    `${this.name} target is out of range`,
-                    Colour.Magenta,
-                );
+                this._board.logger.log(`${this.name} target is out of range`, Colour.Magenta);
             }
             return null;
         }
@@ -353,31 +331,22 @@ export class Spell<P extends Piece = Piece> extends Model {
             return null;
         }
         // Only find actively targetable pieces
-        const targetPieces: P[] = (
-            targetPiece
-                ? [targetPiece]
-                : this._board.getPiecesAtPosition(targetPoint)
-        ).filter((piece: P) => {
-            return (
-                !piece.currentMount && // Cannot directly target mounted pieces
-                !piece.engulfed
-            ); // Nor engulfed pieces
-        });
-
-        const targetLivingPiece: P = targetPieces.find(
-            (piece: P) => !piece.dead,
+        const targetPieces: P[] = (targetPiece ? [targetPiece] : this._board.getPiecesAtPosition(targetPoint)).filter(
+            (piece: P) => {
+                return (
+                    !piece.currentMount && // Cannot directly target mounted pieces
+                    !piece.engulfed
+                ); // Nor engulfed pieces
+            },
         );
 
+        const targetLivingPiece: P = targetPieces.find((piece: P) => !piece.dead);
+
         if (this._properties.target === SpellTarget.Self) {
-            const wizard: P = targetPieces.find(
-                (piece: P) => piece.type === UnitType.Wizard,
-            );
+            const wizard: P = targetPieces.find((piece: P) => piece.type === UnitType.Wizard);
             if (wizard?.owner !== this._owner) {
                 if (showReason) {
-                    this._board.logger.log(
-                        `${this.name} can only be cast on your own wizard`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} can only be cast on your own wizard`, Colour.Magenta);
                 }
                 return null;
             }
@@ -388,14 +357,10 @@ export class Spell<P extends Piece = Piece> extends Model {
         if (this._properties.target === SpellTarget.Corpse) {
             if (
                 targetLivingPiece || // Cannot target living pieces
-                this._board.getPiecesAtPosition(targetPoint, (p: P) => !p.dead)
-                    .length > 0 // Cannot target if any living pieces are present on the same tile
+                this._board.getPiecesAtPosition(targetPoint, (p: P) => !p.dead).length > 0 // Cannot target if any living pieces are present on the same tile
             ) {
                 if (showReason) {
-                    this._board.logger.log(
-                        `${this.name} must be cast on a corpse`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} must be cast on a corpse`, Colour.Magenta);
                 }
                 return null;
             }
@@ -406,85 +371,55 @@ export class Spell<P extends Piece = Piece> extends Model {
         if (!targetLivingPiece) {
             if (showReason) {
                 if (targetPieces.filter((p: P) => p.dead).length === 0) {
-                    this._board.logger.log(
-                        `${this.name} cannot be cast on empty ground`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} cannot be cast on empty ground`, Colour.Magenta);
                 } else {
-                    this._board.logger.log(
-                        `${this.name} cannot be cast on a corpse`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} cannot be cast on a corpse`, Colour.Magenta);
                 }
             }
             return null;
         }
 
-        const targetEnemyLivingPiece: P =
-            targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
-        const targetEnemyWizard: P =
-            targetEnemyLivingPiece?.type === UnitType.Wizard
-                ? targetEnemyLivingPiece
-                : null;
+        const targetEnemyLivingPiece: P = targetLivingPiece.owner === this._owner ? null : targetLivingPiece;
+        const targetEnemyWizard: P = targetEnemyLivingPiece?.type === UnitType.Wizard ? targetEnemyLivingPiece : null;
 
         if (this._properties.target === SpellTarget.Piece) {
             if (this.properties.castOnEnemyUnit) {
                 if (!targetEnemyLivingPiece) {
                     if (showReason) {
-                        this._board.logger.log(
-                            `${this.name} must be cast on an enemy unit`,
-                            Colour.Magenta,
-                        );
+                        this._board.logger.log(`${this.name} must be cast on an enemy unit`, Colour.Magenta);
                     }
                     return null;
                 }
                 if (!this.properties.castOnWizard && targetEnemyWizard) {
                     if (showReason) {
-                        this._board.logger.log(
-                            `${this.name} cannot be cast on a wizard`,
-                            Colour.Magenta,
-                        );
+                        this._board.logger.log(`${this.name} cannot be cast on a wizard`, Colour.Magenta);
                     }
                     return null;
                 }
                 if (this.type === SpellType.Disbelieve) {
-                    const disbelievableTarget: P =
-                        targetEnemyLivingPiece.canBeDisbelieved
-                            ? targetEnemyLivingPiece
-                            : null;
+                    const disbelievableTarget: P = targetEnemyLivingPiece.canBeDisbelieved
+                        ? targetEnemyLivingPiece
+                        : null;
                     if (!disbelievableTarget) {
                         if (showReason) {
-                            this._board.logger.log(
-                                `${this.name} cannot be cast on this unit`,
-                                Colour.Magenta,
-                            );
+                            this._board.logger.log(`${this.name} cannot be cast on this unit`, Colour.Magenta);
                         }
                         return null;
                     }
                     return disbelievableTarget;
                 }
                 if (this.properties.id === "subversion") {
-                    const subversionTarget: P =
-                        targetEnemyLivingPiece.canBeSubverted
-                            ? targetEnemyLivingPiece
-                            : null;
+                    const subversionTarget: P = targetEnemyLivingPiece.canBeSubverted ? targetEnemyLivingPiece : null;
                     if (!subversionTarget) {
                         if (showReason) {
-                            this._board.logger.log(
-                                `${this.name} cannot be cast on this unit`,
-                                Colour.Magenta,
-                            );
+                            this._board.logger.log(`${this.name} cannot be cast on this unit`, Colour.Magenta);
                         }
                         return null;
                     }
                     return subversionTarget;
                 }
                 if (this.properties.damage > 0) {
-                    if (
-                        targetEnemyLivingPiece?.hasStatus(
-                            UnitStatus.Invulnerable,
-                        )
-                    ) {
+                    if (targetEnemyLivingPiece?.hasStatus(UnitStatus.Invulnerable)) {
                         if (showReason) {
                             this._board.logger.log(
                                 `${this.name} cannot be cast on an invulnerable unit`,
@@ -508,10 +443,7 @@ export class Spell<P extends Piece = Piece> extends Model {
             } else if (this.properties.castOnFriendlyUnit) {
                 if (targetEnemyLivingPiece) {
                     if (showReason) {
-                        this._board.logger.log(
-                            `${this.name} must be cast on a friendly unit`,
-                            Colour.Magenta,
-                        );
+                        this._board.logger.log(`${this.name} must be cast on a friendly unit`, Colour.Magenta);
                     }
                     return null;
                 }
@@ -539,11 +471,7 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param target The target point or piece of the spell
      * @returns The result of the spell cast
      */
-    async cast(
-        owner: Player<P>,
-        castingPiece: P,
-        target?: Point | P,
-    ): Promise<P | boolean | null> {
+    async cast(owner: Player<P>, castingPiece: P, target?: Point | P): Promise<P | boolean | null> {
         let castPoint: Point;
         let castPiece: P;
         if (Point.isPoint(target)) {
@@ -577,12 +505,7 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param targets The target pieces of the spell
      * @returns The result of the spell cast
      */
-    async doCast(
-        _owner: Player<P>,
-        _castingPiece: P,
-        _point?: Point,
-        _targets?: P[],
-    ): Promise<P | boolean | null> {
+    async doCast(_owner: Player<P>, _castingPiece: P, _point?: Point, _targets?: P[]): Promise<P | boolean | null> {
         return false;
     }
 
@@ -649,11 +572,7 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param filter Optional filter function to select spells
      * @returns A random spell configuration
      */
-    static getRandomSpell(
-        rng: IRNG,
-        gifted?: boolean,
-        filter?: (spell: SpellConfig) => boolean,
-    ): any {
+    static getRandomSpell(rng: IRNG, gifted?: boolean, filter?: (spell: SpellConfig) => boolean): any {
         if (!filter) {
             filter = () => true;
         }

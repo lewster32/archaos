@@ -16,7 +16,7 @@ Pieces cannot leave the constraints of the board. All gameplay takes place withi
 and height.
 
 Some spells and ranged attacks check for _line of sight_. This means that the target must be unobstructed by other
-pieces. Certain pieces such as *Ghost* and *Magic Fire* are `Transparent` and do not block line of sight.
+pieces. Certain pieces such as _Ghost_ and _Magic Fire_ are `Transparent` and do not block line of sight.
 
 ## Phases, states and turns
 

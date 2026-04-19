@@ -11,17 +11,35 @@
             "name": "Player 1",
             "position": { "x": 0, "y": 2 },
             "statuses": [],
-            "pieces": [
-
-            ],
+            "pieces": [],
             "computerControlled": false,
-            "spells": ["Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2","Chaos 2"],
+            "spells": [
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2",
+                "Chaos 2"
+            ],
             "wizardProperties": {
                 "movement": 0,
                 "manoeuvrability": 0,
                 "combat": 1
             }
-
         },
         {
             "id": 2,

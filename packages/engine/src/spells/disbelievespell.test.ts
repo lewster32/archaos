@@ -3,11 +3,7 @@ import { Spell } from "./spell";
 import { DisbelieveSpell } from "./disbelievespell";
 import { Point } from "../point";
 import type { Board } from "../board";
-import {
-    makeMockBoard,
-    makeMockPiece,
-    makeMockPlayer,
-} from "./spell.testhelpers";
+import { makeMockBoard, makeMockPiece, makeMockPlayer } from "./spell.testhelpers";
 
 describe("DisbelieveSpell.doCast", () => {
     let board: Board;
@@ -20,21 +16,14 @@ describe("DisbelieveSpell.doCast", () => {
         const mockAI = { rememberNonIllusionPiece: vi.fn() };
         owner = { ...makeMockPlayer(castingPiece), ai: mockAI };
         board = makeMockBoard({ players: [{ ai: mockAI }] });
-        spell = new DisbelieveSpell(
-            board,
-            1,
-            Spell.getSpellProperties("Disbelieve"),
-        );
+        spell = new DisbelieveSpell(board, 1, Spell.getSpellProperties("Disbelieve"));
         spell.owner = owner;
     });
 
     it("returns false when no disbelievable target in the list", async () => {
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [makeMockPiece({ canBeDisbelieved: false })],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [
+            makeMockPiece({ canBeDisbelieved: false }),
+        ]);
         expect(result).toBe(false);
     });
 
@@ -43,12 +32,7 @@ describe("DisbelieveSpell.doCast", () => {
             canBeDisbelieved: true,
             illusion: true,
         });
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [illusion],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [illusion]);
         expect(result).toBe(true);
         expect(illusion.kill).toHaveBeenCalledTimes(1);
     });
@@ -58,12 +42,7 @@ describe("DisbelieveSpell.doCast", () => {
             canBeDisbelieved: true,
             illusion: false,
         });
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [nonIllusion],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [nonIllusion]);
         expect(result).toBe(true);
         expect(nonIllusion.kill).not.toHaveBeenCalled();
     });
@@ -75,9 +54,7 @@ describe("DisbelieveSpell.doCast", () => {
             name: "Dragon",
         });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [illusion]);
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Dragon"),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Dragon"));
     });
 
     it("logs failure message for non-illusionary target", async () => {
@@ -87,9 +64,6 @@ describe("DisbelieveSpell.doCast", () => {
             name: "Lion",
         });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [nonIllusion]);
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Lion"),
-            expect.anything(),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Lion"), expect.anything());
     });
 });

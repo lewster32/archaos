@@ -34,12 +34,7 @@ function makeBoard(overrides: Partial<BoardDeps> = {}): Board {
     });
 }
 
-function makePieceConfig(
-    x: number,
-    y: number,
-    owner: Player,
-    status: UnitStatus[] = [],
-): PieceConfig {
+function makePieceConfig(x: number, y: number, owner: Player, status: UnitStatus[] = []): PieceConfig {
     return {
         type: UnitType.Creature,
         x,
@@ -142,10 +137,7 @@ describe("Board", () => {
             });
             const piece = await board.addPiece(makePieceConfig(0, 0, player));
             const destroyed: any[] = [];
-            board.boardEvents.on(
-                BoardEvent.PieceDestroyed,
-                (p: any) => destroyed.push(p),
-            );
+            board.boardEvents.on(BoardEvent.PieceDestroyed, (p: any) => destroyed.push(p));
             board.removePiece(piece.id);
             expect(destroyed).toContain(piece);
         });
@@ -179,19 +171,13 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const piece = await board.addPiece(
-                makePieceConfig(3, 4, player),
-            );
-            expect(
-                board.getPiecesAtPosition(new Point(3, 4)),
-            ).toContain(piece);
+            const piece = await board.addPiece(makePieceConfig(3, 4, player));
+            expect(board.getPiecesAtPosition(new Point(3, 4))).toContain(piece);
         });
 
         it("returns an empty array for an unoccupied cell", () => {
             const board = makeBoard();
-            expect(
-                board.getPiecesAtPosition(new Point(5, 5)),
-            ).toHaveLength(0);
+            expect(board.getPiecesAtPosition(new Point(5, 5))).toHaveLength(0);
         });
 
         it("respects a filter predicate", async () => {
@@ -201,10 +187,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             await board.addPiece(makePieceConfig(0, 0, player));
-            const result = board.getPiecesAtPosition(
-                new Point(0, 0),
-                () => false,
-            );
+            const result = board.getPiecesAtPosition(new Point(0, 0), () => false);
             expect(result).toHaveLength(0);
         });
     });
@@ -212,23 +195,17 @@ describe("Board", () => {
     describe("getAdjacentPoints", () => {
         it("returns 3 neighbours for a corner cell", () => {
             const board = makeBoard();
-            expect(
-                board.getAdjacentPoints(new Point(0, 0)),
-            ).toHaveLength(3);
+            expect(board.getAdjacentPoints(new Point(0, 0))).toHaveLength(3);
         });
 
         it("returns 5 neighbours for an edge cell", () => {
             const board = makeBoard();
-            expect(
-                board.getAdjacentPoints(new Point(6, 0)),
-            ).toHaveLength(5);
+            expect(board.getAdjacentPoints(new Point(6, 0))).toHaveLength(5);
         });
 
         it("returns 8 neighbours for a centre cell", () => {
             const board = makeBoard();
-            expect(
-                board.getAdjacentPoints(new Point(6, 6)),
-            ).toHaveLength(8);
+            expect(board.getAdjacentPoints(new Point(6, 6))).toHaveLength(8);
         });
 
         it("includes the origin when includeCentre is true", () => {
@@ -242,16 +219,12 @@ describe("Board", () => {
     describe("getPointsInRange", () => {
         it("returns empty for range 0 without includeCentre", () => {
             const board = makeBoard();
-            expect(
-                board.getPointsInRange(new Point(6, 6), 0),
-            ).toHaveLength(0);
+            expect(board.getPointsInRange(new Point(6, 6), 0)).toHaveLength(0);
         });
 
         it("includes the origin when includeCentre is true at range 0", () => {
             const board = makeBoard();
-            expect(
-                board.getPointsInRange(new Point(6, 6), 0, true),
-            ).toHaveLength(1);
+            expect(board.getPointsInRange(new Point(6, 6), 0, true)).toHaveLength(1);
         });
 
         it("clamps results to board bounds near an edge", () => {
@@ -264,28 +237,13 @@ describe("Board", () => {
 
         it("Foot range returns all 8 immediate neighbours at range 1", () => {
             const board = makeBoard();
-            expect(
-                board.getPointsInRange(
-                    new Point(6, 6),
-                    1,
-                    false,
-                    RangeType.Foot,
-                ),
-            ).toHaveLength(8);
+            expect(board.getPointsInRange(new Point(6, 6), 1, false, RangeType.Foot)).toHaveLength(8);
         });
 
         it("Fly range excludes double-diagonal cells at range 2", () => {
             const board = makeBoard();
-            const pts = board.getPointsInRange(
-                new Point(6, 6),
-                2,
-                false,
-                RangeType.Fly,
-            );
-            const hasDoubleDiag = pts.some(
-                (p) =>
-                    Math.abs(p.x - 6) === 2 && Math.abs(p.y - 6) === 2,
-            );
+            const pts = board.getPointsInRange(new Point(6, 6), 2, false, RangeType.Fly);
+            const hasDoubleDiag = pts.some((p) => Math.abs(p.x - 6) === 2 && Math.abs(p.y - 6) === 2);
             expect(hasDoubleDiag).toBe(false);
         });
     });
@@ -301,9 +259,7 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const piece = await board.addPiece(
-                makePieceConfig(3, 3, player),
-            );
+            const piece = await board.addPiece(makePieceConfig(3, 3, player));
             (piece as any)._dead = true;
             expect(board.isBlocker(new Point(3, 3))).toBe(false);
         });
@@ -314,9 +270,7 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            await board.addPiece(
-                makePieceConfig(3, 3, player, [UnitStatus.Transparent]),
-            );
+            await board.addPiece(makePieceConfig(3, 3, player, [UnitStatus.Transparent]));
             expect(board.isBlocker(new Point(3, 3))).toBe(false);
         });
 
@@ -333,21 +287,11 @@ describe("Board", () => {
 
     describe("hasLineOfSight", () => {
         it("returns true when no pieces intervene", () => {
-            expect(
-                makeBoard().hasLineOfSight(
-                    new Point(0, 0),
-                    new Point(6, 6),
-                ),
-            ).toBe(true);
+            expect(makeBoard().hasLineOfSight(new Point(0, 0), new Point(6, 6))).toBe(true);
         });
 
         it("returns true for adjacent cells", () => {
-            expect(
-                makeBoard().hasLineOfSight(
-                    new Point(5, 5),
-                    new Point(6, 5),
-                ),
-            ).toBe(true);
+            expect(makeBoard().hasLineOfSight(new Point(5, 5), new Point(6, 5))).toBe(true);
         });
 
         it("returns false when a blocker is on the horizontal path", async () => {
@@ -357,9 +301,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             await board.addPiece(makePieceConfig(3, 0, player));
-            expect(
-                board.hasLineOfSight(new Point(0, 0), new Point(6, 0)),
-            ).toBe(false);
+            expect(board.hasLineOfSight(new Point(0, 0), new Point(6, 0))).toBe(false);
         });
 
         it("returns false when a blocker is on the vertical path", async () => {
@@ -369,9 +311,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             await board.addPiece(makePieceConfig(0, 3, player));
-            expect(
-                board.hasLineOfSight(new Point(0, 0), new Point(0, 6)),
-            ).toBe(false);
+            expect(board.hasLineOfSight(new Point(0, 0), new Point(0, 6))).toBe(false);
         });
 
         it("returns false when a blocker is on the diagonal path", async () => {
@@ -381,74 +321,34 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             await board.addPiece(makePieceConfig(3, 3, player));
-            expect(
-                board.hasLineOfSight(new Point(0, 0), new Point(6, 6)),
-            ).toBe(false);
+            expect(board.hasLineOfSight(new Point(0, 0), new Point(6, 6))).toBe(false);
         });
     });
 
     describe("Board.distance (static)", () => {
         it("returns 0 for the same point", () => {
-            expect(
-                Board.distance(new Point(3, 3), new Point(3, 3)),
-            ).toBe(0);
+            expect(Board.distance(new Point(3, 3), new Point(3, 3))).toBe(0);
         });
 
         it("returns 1 for a cardinal step in both range types", () => {
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(1, 0),
-                    RangeType.Foot,
-                ),
-            ).toBe(1);
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(1, 0),
-                    RangeType.Fly,
-                ),
-            ).toBe(1);
+            expect(Board.distance(new Point(0, 0), new Point(1, 0), RangeType.Foot)).toBe(1);
+            expect(Board.distance(new Point(0, 0), new Point(1, 0), RangeType.Fly)).toBe(1);
         });
 
         it("Foot: pure diagonal (1,1) = 1", () => {
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(1, 1),
-                    RangeType.Foot,
-                ),
-            ).toBe(1);
+            expect(Board.distance(new Point(0, 0), new Point(1, 1), RangeType.Foot)).toBe(1);
         });
 
         it("Fly: pure diagonal (1,1) = 1.5", () => {
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(1, 1),
-                    RangeType.Fly,
-                ),
-            ).toBe(1.5);
+            expect(Board.distance(new Point(0, 0), new Point(1, 1), RangeType.Fly)).toBe(1.5);
         });
 
         it("Foot: mixed (2,1) = 2", () => {
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(2, 1),
-                    RangeType.Foot,
-                ),
-            ).toBe(2);
+            expect(Board.distance(new Point(0, 0), new Point(2, 1), RangeType.Foot)).toBe(2);
         });
 
         it("Fly: mixed (2,1) = 2.5", () => {
-            expect(
-                Board.distance(
-                    new Point(0, 0),
-                    new Point(2, 1),
-                    RangeType.Fly,
-                ),
-            ).toBe(2.5);
+            expect(Board.distance(new Point(0, 0), new Point(2, 1), RangeType.Fly)).toBe(2.5);
         });
     });
 
@@ -457,8 +357,8 @@ describe("Board", () => {
             // toIsometric({x, y}) = {x - y, (x + y) / 2}
             const p = new Point(4, 2);
             const iso = Board.toIsometric(p);
-            expect(iso.x).toBeCloseTo(2);  // 4 - 2
-            expect(iso.y).toBeCloseTo(3);  // (4 + 2) / 2
+            expect(iso.x).toBeCloseTo(2); // 4 - 2
+            expect(iso.y).toBeCloseTo(3); // (4 + 2) / 2
         });
 
         it("fromIsometric inverts toIsometric when applied to (0,0)", () => {
@@ -567,9 +467,7 @@ describe("Board", () => {
             });
             (p2 as any)._defeated = true;
             const emitted: string[] = [];
-            board.boardEvents.on(BoardEvent.GameOver, () =>
-                emitted.push("GameOver"),
-            );
+            board.boardEvents.on(BoardEvent.GameOver, () => emitted.push("GameOver"));
             expect(await board.checkWinCondition()).toBe(true);
             expect(board.state).toBe(BoardState.GameOver);
             expect(emitted).toContain("GameOver");
@@ -593,10 +491,7 @@ describe("Board", () => {
             // "Dave" appears in the draw message — a Red Dwarf reference
             // ("Everybody's dead Dave"); the message text is defined in
             // board.ts.
-            expect(logger.log).toHaveBeenCalledWith(
-                expect.stringContaining("Dave"),
-                expect.anything(),
-            );
+            expect(logger.log).toHaveBeenCalledWith(expect.stringContaining("Dave"), expect.anything());
         });
     });
 
@@ -604,9 +499,7 @@ describe("Board", () => {
         it("sets state to GameOver and emits BoardEvent.GameOver", () => {
             const board = makeBoard();
             const emitted: string[] = [];
-            board.boardEvents.on(BoardEvent.GameOver, () =>
-                emitted.push("GameOver"),
-            );
+            board.boardEvents.on(BoardEvent.GameOver, () => emitted.push("GameOver"));
             board.endGame();
             expect(board.state).toBe(BoardState.GameOver);
             expect(emitted).toContain("GameOver");
@@ -616,19 +509,14 @@ describe("Board", () => {
             const logger = { log: vi.fn() } as unknown as Logger;
             const board = makeBoard({ logger });
             board.endGame("Round over");
-            expect(logger.log).toHaveBeenCalledWith(
-                "Round over",
-                expect.anything(),
-            );
+            expect(logger.log).toHaveBeenCalledWith("Round over", expect.anything());
         });
 
         it("is a no-op when already GameOver", () => {
             const board = makeBoard();
             board.endGame();
             const emitted: string[] = [];
-            board.boardEvents.on(BoardEvent.GameOver, () =>
-                emitted.push("again"),
-            );
+            board.boardEvents.on(BoardEvent.GameOver, () => emitted.push("again"));
             board.endGame("again");
             expect(emitted).toHaveLength(0);
         });
@@ -643,18 +531,14 @@ describe("Board", () => {
             });
             const piece = await board.addPiece(makePieceConfig(0, 0, player));
             const selected: any[] = [];
-            board.boardEvents.on(BoardEvent.PieceSelected, (p: any) =>
-                selected.push(p),
-            );
+            board.boardEvents.on(BoardEvent.PieceSelected, (p: any) => selected.push(p));
             await board.selectPiece(piece.id);
             expect(board.selected).toBe(piece);
             expect(selected).toContain(piece);
         });
 
         it("selectPiece throws for an unknown id", async () => {
-            await expect(makeBoard().selectPiece(999)).rejects.toThrow(
-                "No piece with ID 999 found to select",
-            );
+            await expect(makeBoard().selectPiece(999)).rejects.toThrow("No piece with ID 999 found to select");
         });
 
         it("deselectPiece clears selected", async () => {
@@ -675,9 +559,7 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const wizard = await board.addPiece(
-                makePieceConfig(0, 0, player, [UnitStatus.Wizard]),
-            );
+            const wizard = await board.addPiece(makePieceConfig(0, 0, player, [UnitStatus.Wizard]));
             const result = await board.selectWizard(player);
             expect(result).toBe(wizard);
             expect(board.selected).toBe(wizard);
@@ -715,17 +597,15 @@ describe("Board", () => {
             });
             const piece = await board.addPiece(makePieceConfig(0, 0, player));
             const moved: any[] = [];
-            board.boardEvents.on(BoardEvent.PieceMoved, (p: any) =>
-                moved.push(p),
-            );
+            board.boardEvents.on(BoardEvent.PieceMoved, (p: any) => moved.push(p));
             await board.movePiece(piece.id, new Point(2, 2));
             expect(moved).toContain(piece);
         });
 
         it("throws for an unknown piece id", async () => {
-            await expect(
-                makeBoard().movePiece(999, new Point(0, 0)),
-            ).rejects.toThrow("Could not find piece with ID 999");
+            await expect(makeBoard().movePiece(999, new Point(0, 0))).rejects.toThrow(
+                "Could not find piece with ID 999",
+            );
         });
     });
 
@@ -737,9 +617,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             const events: string[] = [];
-            board.boardEvents.on(BoardEvent.NewTurn, () =>
-                events.push("NewTurn"),
-            );
+            board.boardEvents.on(BoardEvent.NewTurn, () => events.push("NewTurn"));
             await board.newTurn();
             expect(events).toContain("NewTurn");
             expect(board.phase).toBe(BoardPhase.Moving);
@@ -771,10 +649,7 @@ describe("Board", () => {
             // the per-turn accumulator.
             expect(board.balance).toBe(2);
             expect(board.balanceShift).toBe(0);
-            expect(logger.log).toHaveBeenCalledWith(
-                expect.stringContaining("law"),
-                expect.anything(),
-            );
+            expect(logger.log).toHaveBeenCalledWith(expect.stringContaining("law"), expect.anything());
         });
 
         it("transitions Spellbook -> Casting when a player has selected a spell", async () => {
@@ -863,9 +738,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             const newTurnEvents: string[] = [];
-            board.boardEvents.on(BoardEvent.NewTurn, () =>
-                newTurnEvents.push("NewTurn"),
-            );
+            board.boardEvents.on(BoardEvent.NewTurn, () => newTurnEvents.push("NewTurn"));
             await board.nextPlayer(); // index 0 -> newTurn called
             expect(newTurnEvents).toHaveLength(1);
             await board.nextPlayer(); // index 1
@@ -919,10 +792,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             // p2 is a remote/AI player with a spell.
-            const p2 = board.addPlayer(
-                { name: "P2", type: GameSetupPlayerType.Computer },
-                remote as any,
-            );
+            const p2 = board.addPlayer({ name: "P2", type: GameSetupPlayerType.Computer }, remote as any);
             p2.addSpell(makeMockSpell());
 
             // nextPlayer from index -1: increments to 0 → calls newTurn()
@@ -967,12 +837,8 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const defender = await board.addPiece(
-                makePieceConfig(1, 0, board.players[0]),
-            );
-            await expect(
-                board.attackPiece(999, defender.id),
-            ).rejects.toThrow("Could not find piece with ID 999");
+            const defender = await board.addPiece(makePieceConfig(1, 0, board.players[0]));
+            await expect(board.attackPiece(999, defender.id)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("throws when the defending piece does not exist", async () => {
@@ -981,12 +847,8 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const attacker = await board.addPiece(
-                makePieceConfig(0, 0, board.players[0]),
-            );
-            await expect(
-                board.attackPiece(attacker.id, 999),
-            ).rejects.toThrow("Could not find piece with ID 999");
+            const attacker = await board.addPiece(makePieceConfig(0, 0, board.players[0]));
+            await expect(board.attackPiece(attacker.id, 999)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("emits PieceAttacked and returns attacker", async () => {
@@ -999,17 +861,10 @@ describe("Board", () => {
                 name: "P2",
                 type: GameSetupPlayerType.Local,
             });
-            const attacker = await board.addPiece(
-                makePieceConfig(0, 0, p1),
-            );
-            const defender = await board.addPiece(
-                makePieceConfig(1, 0, p2),
-            );
+            const attacker = await board.addPiece(makePieceConfig(0, 0, p1));
+            const defender = await board.addPiece(makePieceConfig(1, 0, p2));
             const attacked: any[] = [];
-            board.boardEvents.on(
-                BoardEvent.PieceAttacked,
-                (...args: any[]) => attacked.push(args),
-            );
+            board.boardEvents.on(BoardEvent.PieceAttacked, (...args: any[]) => attacked.push(args));
             const result = await board.attackPiece(attacker.id, defender.id);
             expect(result).toBe(attacker);
             expect(attacked).toHaveLength(1);
@@ -1022,23 +877,15 @@ describe("Board", () => {
         it("throws when the attacking piece does not exist", async () => {
             const board = makeBoard();
             board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const defender = await board.addPiece(
-                makePieceConfig(1, 0, board.players[0]),
-            );
-            await expect(
-                board.rangedAttackPiece(999, defender.id),
-            ).rejects.toThrow("Could not find piece with ID 999");
+            const defender = await board.addPiece(makePieceConfig(1, 0, board.players[0]));
+            await expect(board.rangedAttackPiece(999, defender.id)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("throws when the defending piece does not exist", async () => {
             const board = makeBoard();
             board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const attacker = await board.addPiece(
-                makePieceConfig(0, 0, board.players[0]),
-            );
-            await expect(
-                board.rangedAttackPiece(attacker.id, 999),
-            ).rejects.toThrow("Could not find piece with ID 999");
+            const attacker = await board.addPiece(makePieceConfig(0, 0, board.players[0]));
+            await expect(board.rangedAttackPiece(attacker.id, 999)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("emits PieceRangedAttacked and returns attacker", async () => {
@@ -1051,21 +898,11 @@ describe("Board", () => {
                 name: "P2",
                 type: GameSetupPlayerType.Local,
             });
-            const attacker = await board.addPiece(
-                makePieceConfig(0, 0, p1),
-            );
-            const defender = await board.addPiece(
-                makePieceConfig(1, 0, p2),
-            );
+            const attacker = await board.addPiece(makePieceConfig(0, 0, p1));
+            const defender = await board.addPiece(makePieceConfig(1, 0, p2));
             const attacked: any[] = [];
-            board.boardEvents.on(
-                BoardEvent.PieceRangedAttacked,
-                (...args: any[]) => attacked.push(args),
-            );
-            const result = await board.rangedAttackPiece(
-                attacker.id,
-                defender.id,
-            );
+            board.boardEvents.on(BoardEvent.PieceRangedAttacked, (...args: any[]) => attacked.push(args));
+            const result = await board.rangedAttackPiece(attacker.id, defender.id);
             expect(result).toBe(attacker);
             expect(attacked).toHaveLength(1);
         });
@@ -1077,18 +914,14 @@ describe("Board", () => {
         it("mountPiece throws when the mounting piece does not exist", async () => {
             const board = makeBoard();
             board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const mount = await board.addPiece(
-                makePieceConfig(1, 0, board.players[0], [UnitStatus.MountAny]),
-            );
+            const mount = await board.addPiece(makePieceConfig(1, 0, board.players[0], [UnitStatus.MountAny]));
             await expect(board.mountPiece(999, mount.id)).rejects.toThrow("Could not find piece with ID 999");
         });
 
         it("mountPiece throws when the mounted piece does not exist", async () => {
             const board = makeBoard();
             board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const rider = await board.addPiece(
-                makePieceConfig(0, 0, board.players[0], [UnitStatus.Wizard]),
-            );
+            const rider = await board.addPiece(makePieceConfig(0, 0, board.players[0], [UnitStatus.Wizard]));
             await expect(board.mountPiece(rider.id, 999)).rejects.toThrow("Could not find piece with ID 999");
         });
 
@@ -1125,10 +958,7 @@ describe("Board", () => {
             await piece.kill(); // now dead
             await board.addPiece(makePieceConfig(6, 5, p1)); // alive
             const centre = new Point(5, 5);
-            const alive = board.getAdjacentPiecesAtPosition(
-                centre,
-                (p) => !p.dead,
-            );
+            const alive = board.getAdjacentPiecesAtPosition(centre, (p) => !p.dead);
             expect(alive).toHaveLength(1);
         });
 
@@ -1140,11 +970,7 @@ describe("Board", () => {
             });
             await board.addPiece(makePieceConfig(5, 5, p1)); // at centre
             const centre = new Point(5, 5);
-            const withCentre = board.getAdjacentPiecesAtPosition(
-                centre,
-                undefined,
-                true,
-            );
+            const withCentre = board.getAdjacentPiecesAtPosition(centre, undefined, true);
             expect(withCentre).toHaveLength(1);
         });
     });
@@ -1234,7 +1060,7 @@ describe("Board", () => {
         });
 
         it("throws when player or config is missing", () => {
-            Board.registerSpellFactory((_b, _id, _cfg) => ({} as any));
+            Board.registerSpellFactory((_b, _id, _cfg) => ({}) as any);
             const board = makeBoard();
             const _player = board.addPlayer({
                 name: "P1",
@@ -1383,9 +1209,7 @@ describe("Board", () => {
             const board = makeBoard();
             expect(board.alignment).toBeDefined();
             expect(board.balance).toBe(board.alignment.value);
-            expect(board.balanceShift).toBe(
-                board.alignment.valueAccumulated,
-            );
+            expect(board.balanceShift).toBe(board.alignment.valueAccumulated);
         });
 
         it("balance and balanceShift track alignment.shift()", () => {
@@ -1415,9 +1239,7 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const piece = await board.addPiece(
-                makePieceConfig(0, 0, p1),
-            );
+            const piece = await board.addPiece(makePieceConfig(0, 0, p1));
             await board.selectPiece(piece.id);
             await board.selectPlayer(p1.id);
             board.deselectPlayer();
@@ -1443,10 +1265,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             // p2 is remote/AI with no spells
-            board.addPlayer(
-                { name: "P2", type: GameSetupPlayerType.Computer },
-                remote as any,
-            );
+            board.addPlayer({ name: "P2", type: GameSetupPlayerType.Computer }, remote as any);
 
             // Drive the FSM into the moving phase manually
             await board.newTurn(); // idle→moving (no spells)
@@ -1545,12 +1364,8 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const wizard = await board.addPiece(
-                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
-            );
-            const horse = await board.addPiece(
-                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
-            );
+            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
+            const horse = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
             const result = await board.mountPiece(wizard.id, horse.id);
             expect(result).toBe(wizard);
             expect(wizard.currentMount).toBe(horse);
@@ -1563,15 +1378,9 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const wizard = await board.addPiece(
-                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
-            );
-            const horse1 = await board.addPiece(
-                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
-            );
-            const horse2 = await board.addPiece(
-                makePieceConfig(2, 0, p1, [UnitStatus.Mount]),
-            );
+            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
+            const horse1 = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
+            const horse2 = await board.addPiece(makePieceConfig(2, 0, p1, [UnitStatus.Mount]));
             // Wire up the wizard as already mounted on horse1 without
             // consuming the moved flag (canMountPiece requires !moved).
             (wizard as any)._currentMount = horse1;
@@ -1587,12 +1396,8 @@ describe("Board", () => {
                 name: "P1",
                 type: GameSetupPlayerType.Local,
             });
-            const wizard = await board.addPiece(
-                makePieceConfig(0, 0, p1, [UnitStatus.Wizard]),
-            );
-            const horse = await board.addPiece(
-                makePieceConfig(1, 0, p1, [UnitStatus.Mount]),
-            );
+            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
+            const horse = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
             (wizard as any)._currentMount = horse;
             (horse as any)._currentRider = wizard;
             const result = await board.dismountPiece(wizard.id);

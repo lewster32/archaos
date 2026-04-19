@@ -3,11 +3,7 @@ import { Spell } from "./spell";
 import { SubversionSpell } from "./subversionspell";
 import { Point } from "../point";
 import type { Board } from "../board";
-import {
-    makeMockBoard,
-    makeMockPiece,
-    makeMockPlayer,
-} from "./spell.testhelpers";
+import { makeMockBoard, makeMockPiece, makeMockPlayer } from "./spell.testhelpers";
 
 describe("SubversionSpell.doCast", () => {
     let board: Board;
@@ -19,32 +15,18 @@ describe("SubversionSpell.doCast", () => {
         castingPiece = makeMockPiece();
         owner = makeMockPlayer(castingPiece);
         board = makeMockBoard({ players: [{ ai: null }] });
-        spell = new SubversionSpell(
-            board,
-            1,
-            Spell.getSpellProperties("Subversion"),
-        );
+        spell = new SubversionSpell(board, 1, Spell.getSpellProperties("Subversion"));
         spell.owner = owner;
     });
 
     it("returns false when no enemy piece in the targets list", async () => {
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), []);
         expect(result).toBe(false);
     });
 
     it("returns true when an enemy piece is present (regardless of roll outcome)", async () => {
         const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false });
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [enemy],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(result).toBe(true);
     });
 
@@ -82,9 +64,6 @@ describe("SubversionSpell.doCast", () => {
             name: "Dragon",
         });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Dragon"),
-            expect.anything(),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Dragon"), expect.anything());
     });
 });

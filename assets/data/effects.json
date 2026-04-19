@@ -321,29 +321,13 @@
             "speed": { "min": 10, "max": 180 },
             "angle": { "start": 0, "end": 360, "steps": 8 },
             "scale": { "start": 3, "end": 0 },
-            "tint": [
-                "0000ff",
-                "ff0000",
-                "ff00ff",
-                "00ff00",
-                "00ffff",
-                "ffff00",
-                "ffffff"
-            ],
+            "tint": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"],
             "lifespan": 400,
             "blendMode": "ADD"
         },
         "targetEffect": {
             "type": "explode",
-            "colors": [
-                "0000ff",
-                "ff0000",
-                "ff00ff",
-                "00ff00",
-                "00ffff",
-                "ffff00",
-                "ffffff"
-            ]
+            "colors": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"]
         }
     },
     "RaiseDeadBeam": {
@@ -418,15 +402,7 @@
             "gravityY": 260,
             "lifespan": 250,
             "blendMode": "ADD",
-            "tint": [
-                "0000ff",
-                "ff0000",
-                "ff00ff",
-                "00ff00",
-                "00ffff",
-                "ffff00",
-                "ffffff"
-            ]
+            "tint": ["0000ff", "ff0000", "ff00ff", "00ff00", "00ffff", "ffff00", "ffffff"]
         }
     },
     "NoCorpseDeath": {

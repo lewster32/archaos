@@ -1,9 +1,4 @@
-import {
-    BoardEvent,
-    EventType,
-    GameScenarioData,
-    GameScenarioPlayer,
-} from "@archaos/engine";
+import { BoardEvent, EventType, GameScenarioData, GameScenarioPlayer } from "@archaos/engine";
 import { Math as PMath } from "phaser";
 import type { Board } from "../board";
 import { Logger } from "../services/logger";
@@ -96,12 +91,7 @@ export type TutorialMessageType = "intro" | "hint" | "outro";
 /**
  * The position for tutorial messages.
  */
-export type TutorialMessagePosition =
-    | "top"
-    | "bottom"
-    | "left"
-    | "right"
-    | "center";
+export type TutorialMessagePosition = "top" | "bottom" | "left" | "right" | "center";
 
 /**
  * Event payload emitted via Logger's global emitter when the tutorial needs
@@ -152,12 +142,7 @@ export abstract class TutorialStep {
      */
     private readonly _zIndex?: number;
 
-    constructor(
-        hint?: string,
-        name?: string,
-        position: TutorialMessagePosition = "center",
-        zIndex?: number,
-    ) {
+    constructor(hint?: string, name?: string, position: TutorialMessagePosition = "center", zIndex?: number) {
         this._hint = hint ?? "";
         this._name = name ?? "";
         this._position = position;
@@ -208,11 +193,7 @@ export abstract class TutorialStep {
      *              piece that died, the spell that was cast, etc.).
      * @returns true if the step's completion condition is satisfied.
      */
-    abstract checkCondition(
-        board: Board,
-        event?: BoardEvent,
-        ...args: any[]
-    ): boolean;
+    abstract checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean;
 
     /**
      * Called when this step becomes the current active step. Override to
@@ -248,57 +229,33 @@ export abstract class TutorialStep {
      * @param duration Optional duration in milliseconds for how long the pointer should be shown (default `2000`)
      * @returns A point representing the board position.
      */
-    protected static pointAtPosition(
-        board: Board,
-        pos: PMath.Vector2,
-        duration: number = 2000,
-    ): void {
+    protected static pointAtPosition(board: Board, pos: PMath.Vector2, duration: number = 2000): void {
         board.centreOnWorldPosition(pos);
-        board.playEffect(
-            EffectType.PointAtPosition,
-            pos,
-            undefined,
-            undefined,
-            duration,
-        );
+        board.playEffect(EffectType.PointAtPosition, pos, undefined, undefined, duration);
     }
 
     /**
      * Displays pointers at the board positions and centers the camera on their
      * centroid.
-     * 
+     *
      * @param board The game board, providing access to the current game state.
      * @param positions The positions to point at in world space.
      * @param duration Optional duration in milliseconds for how long the pointers should be shown (default `2000`)
      */
-    protected static pointAtPositions(
-        board: Board,
-        positions: PMath.Vector2[],
-        duration: number = 2000,
-    ): void {
+    protected static pointAtPositions(board: Board, positions: PMath.Vector2[], duration: number = 2000): void {
         // Get the centroid of the positions to point the camera at
-        const centroid: PMath.Vector2 = positions.reduce(
-            (acc, pos) => {
-                acc.x += pos.x;
-                acc.y += pos.y;
-                return acc;
-            },
-            new PMath.Vector2(0, 0),
-        );
+        const centroid: PMath.Vector2 = positions.reduce((acc, pos) => {
+            acc.x += pos.x;
+            acc.y += pos.y;
+            return acc;
+        }, new PMath.Vector2(0, 0));
         centroid.x /= positions.length;
         centroid.y /= positions.length;
         board.centreOnWorldPosition(centroid);
         for (const pos of positions) {
-            board.playEffect(
-                EffectType.PointAtPosition,
-                pos,
-                undefined,
-                undefined,
-                duration,
-            );
+            board.playEffect(EffectType.PointAtPosition, pos, undefined, undefined, duration);
         }
     }
-
 }
 
 // ─── Tutorial ───────────────────────────────────────────────────────────────
@@ -342,8 +299,7 @@ export abstract class Tutorial {
      * Per-event listener references so we can unsubscribe the exact same
      * functions in `end()`.
      */
-    private readonly _eventListeners: Map<string, (...args: any[]) => void> =
-        new Map();
+    private readonly _eventListeners: Map<string, (...args: any[]) => void> = new Map();
 
     /**
      * Where are we currently at in the tutorial steps?
@@ -460,9 +416,7 @@ export abstract class Tutorial {
             return true;
         }
         try {
-            const progress = JSON.parse(
-                storage.getItem("tutorialProgress") || "{}",
-            );
+            const progress = JSON.parse(storage.getItem("tutorialProgress") || "{}");
             return !!progress[this.id];
         } catch {
             return false;
@@ -472,9 +426,7 @@ export abstract class Tutorial {
     set done(value: boolean) {
         this._done = value;
         try {
-            const progress = JSON.parse(
-                storage.getItem("tutorialProgress") || "{}",
-            );
+            const progress = JSON.parse(storage.getItem("tutorialProgress") || "{}");
             progress[this.id] = value;
             storage.setItem("tutorialProgress", JSON.stringify(progress));
         } catch {
@@ -501,10 +453,7 @@ export abstract class Tutorial {
         }
         await this.showIntro();
         this._steps[0]?.onEnter?.(board);
-        await this.showStepHint(
-            this.currentStep?.position,
-            this.currentStep?.zIndex,
-        );
+        await this.showStepHint(this.currentStep?.position, this.currentStep?.zIndex);
         this.onStart(board);
     }
 
@@ -587,18 +536,9 @@ export abstract class Tutorial {
      * Shows the current step's hint modal and waits for the user to dismiss
      * it. Resolves immediately if the current step has no hint text.
      */
-    async showStepHint(
-        position: TutorialMessagePosition = "center",
-        zIndex?: number,
-    ): Promise<void> {
+    async showStepHint(position: TutorialMessagePosition = "center", zIndex?: number): Promise<void> {
         const step = this.currentStep;
-        await this.showMessage(
-            "hint",
-            position,
-            step?.hint ?? "",
-            step?.name ?? this.name,
-            zIndex,
-        );
+        await this.showMessage("hint", position, step?.hint ?? "", step?.name ?? this.name, zIndex);
         if (step?.hint && this._board) {
             step.onDismissHint?.(this._board);
         }
@@ -643,8 +583,7 @@ export abstract class Tutorial {
  * text, based on the user's device capabilities.
  */
 export const clickOrTap = (capitalised: boolean = false): string => {
-    const matchMedia: boolean =
-        globalThis.matchMedia("(pointer: coarse)").matches;
+    const matchMedia: boolean = globalThis.matchMedia("(pointer: coarse)").matches;
     if (capitalised) {
         return matchMedia ? "Tap" : "Click";
     }

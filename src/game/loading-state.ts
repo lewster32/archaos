@@ -1,9 +1,7 @@
 import { ref } from "vue";
 import type { Ref } from "vue";
 
-const params: URLSearchParams = new URLSearchParams(
-    globalThis.location?.search,
-);
+const params: URLSearchParams = new URLSearchParams(globalThis.location?.search);
 
 /**
  * When `?debugLoading` is in the URL, freeze the loading screen at 50% for

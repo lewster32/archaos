@@ -64,14 +64,11 @@ class TestRangeGizmo extends RangeGizmo {
  * invokes the filter callback, so lambda bodies inside
  * checkNodeTraversal (line 72) are exercised.
  */
-function makeBoardWithRealFilter(
-    pieces: Piece[],
-): Board {
+function makeBoardWithRealFilter(pieces: Piece[]): Board {
     return {
         ...makeMockBoard(),
-        getPiecesAtPosition: vi.fn(
-            (_pt: Point, filter?: (p: Piece) => boolean) =>
-                filter ? pieces.filter(filter) : pieces,
+        getPiecesAtPosition: vi.fn((_pt: Point, filter?: (p: Piece) => boolean) =>
+            filter ? pieces.filter(filter) : pieces,
         ),
     } as unknown as Board;
 }
@@ -112,9 +109,7 @@ describe("checkNodeTraversal", () => {
         });
         // The piece under test should report canMountPiece
         // true for `other`.
-        (piece.canMountPiece as ReturnType<typeof vi.fn>).mockImplementation(
-            (p: Piece) => p === other,
-        );
+        (piece.canMountPiece as ReturnType<typeof vi.fn>).mockImplementation((p: Piece) => p === other);
         vi.mocked(board.getPiecesAtPosition).mockReturnValue([other]);
         const node = new Node(2, 2);
         gizmo.testCheckNodeTraversal(node);
@@ -123,9 +118,7 @@ describe("checkNodeTraversal", () => {
 
     it("attackable piece → terminal", () => {
         const enemy = makeMockPiece();
-        (piece.canAttackPiece as ReturnType<typeof vi.fn>).mockImplementation(
-            (p: Piece) => p === enemy,
-        );
+        (piece.canAttackPiece as ReturnType<typeof vi.fn>).mockImplementation((p: Piece) => p === enemy);
         vi.mocked(board.getPiecesAtPosition).mockReturnValue([enemy]);
         const node = new Node(3, 3);
         gizmo.testCheckNodeTraversal(node);
@@ -163,10 +156,7 @@ describe("checkNodeTraversal", () => {
         const movingPiece = makeMockPiece({
             currentRider: rider,
         });
-        const realFilterBoard = makeBoardWithRealFilter([
-            movingPiece as unknown as Piece,
-            rider,
-        ]);
+        const realFilterBoard = makeBoardWithRealFilter([movingPiece as unknown as Piece, rider]);
         const g = new TestRangeGizmo(realFilterBoard);
         g.setPiece(movingPiece as unknown as Piece);
         const node = new Node(0, 0);
@@ -545,10 +535,7 @@ describe("generate", () => {
             stats: { movement: 2 },
             hasStatus: vi.fn(() => true),
         });
-        vi.mocked(board.getPointsInRange).mockReturnValue([
-            new Point(1, 0),
-            new Point(2, 0),
-        ]);
+        vi.mocked(board.getPointsInRange).mockReturnValue([new Point(1, 0), new Point(2, 0)]);
         vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
         vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
 
@@ -574,19 +561,14 @@ describe("generate", () => {
 
         // getPointsInRange returns the start + one adjacent
         // + one that will be isolated (no connecting nodes).
-        vi.mocked(board.getPointsInRange).mockReturnValue([
-            new Point(0, 0),
-            new Point(1, 0),
-        ]);
+        vi.mocked(board.getPointsInRange).mockReturnValue([new Point(0, 0), new Point(1, 0)]);
         vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
         vi.mocked(board.getAdjacentPiecesAtPosition).mockReturnValue([]);
 
         await gizmo.generate(groundPiece);
 
         // (1,0) is adjacent to (0,0), so a path should exist.
-        const nodeAtOne = gizmo
-            .getValidNodes()
-            .find((n) => n.x === 1 && n.y === 0);
+        const nodeAtOne = gizmo.getValidNodes().find((n) => n.x === 1 && n.y === 0);
         expect(nodeAtOne).toBeDefined();
     });
 
@@ -605,11 +587,7 @@ describe("generate", () => {
             canEngagePiece: vi.fn(() => true),
         });
 
-        vi.mocked(board.getPointsInRange).mockReturnValue([
-            new Point(0, 0),
-            new Point(1, 0),
-            new Point(2, 0),
-        ]);
+        vi.mocked(board.getPointsInRange).mockReturnValue([new Point(0, 0), new Point(1, 0), new Point(2, 0)]);
         vi.mocked(board.getPiecesAtPosition).mockReturnValue([]);
         vi.mocked(board.getAdjacentPiecesAtPosition).mockImplementation(
             (_pt: Point, filter?: (p: Piece) => boolean) => {
@@ -624,9 +602,7 @@ describe("generate", () => {
 
         await gizmo.generate(piece);
 
-        const warned = gizmo
-            .getValidNodes()
-            .find((n) => n.x === 1 && n.y === 0);
+        const warned = gizmo.getValidNodes().find((n) => n.x === 1 && n.y === 0);
         expect(warned?.warning).toBe(true);
     });
 
@@ -692,9 +668,7 @@ describe("generate", () => {
         await gizmo.generate(groundPiece);
 
         // (3,0) is 3 steps from (0,0): path cost 3 > 2 → non-traversable
-        const farNode = gizmo
-            .getValidNodes()
-            .find((n) => n.x === 3 && n.y === 0);
+        const farNode = gizmo.getValidNodes().find((n) => n.x === 3 && n.y === 0);
         expect(farNode).toBeDefined();
         // traversable must be false: path cost 3 > movement+1=2
         expect(farNode?.traversable).toBe(false);

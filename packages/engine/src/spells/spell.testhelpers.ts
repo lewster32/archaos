@@ -35,12 +35,7 @@ export function makeMockBoard(
         players?: any[];
     } = {},
 ): Board {
-    const {
-        balance = 0,
-        classicBalance = false,
-        rollChanceResult = true,
-        players = [],
-    } = opts;
+    const { balance = 0, classicBalance = false, rollChanceResult = true, players = [] } = opts;
     const alignment: Alignment = makeAlignment(balance, classicBalance);
     return {
         alignment,

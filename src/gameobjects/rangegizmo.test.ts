@@ -1,14 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { Math as PMath } from "phaser";
 import { RangeGizmo } from "./rangegizmo";
-import {
-    Node,
-    Path,
-    diagonalHeuristic,
-    isOpen,
-    isClosed,
-    buildPath,
-} from "@archaos/engine";
+import { Node, Path, diagonalHeuristic, isOpen, isClosed, buildPath } from "@archaos/engine";
 import type { Board } from "./board";
 // ─── Mock helpers ────────────────────────────────────────────────────────────
 
@@ -451,10 +444,7 @@ describe("RangeGizmo", () => {
         it("returns null when start node is not in valid nodes", () => {
             const board = makeMockBoard();
             const gizmo = new RangeGizmo(board);
-            const result = gizmo.findPath(
-                new PMath.Vector2(0, 0),
-                new PMath.Vector2(1, 0),
-            );
+            const result = gizmo.findPath(new PMath.Vector2(0, 0), new PMath.Vector2(1, 0));
             expect(result).toBeNull();
         });
     });

@@ -4,11 +4,7 @@ import { TurmoilSpell } from "./turmoilspell";
 import { UnitType } from "../enums/unittype";
 import { EngineEvent } from "../enums/engineevent";
 import { Point } from "../point";
-import {
-    makeMockBoard,
-    makeMockPiece,
-    makeMockPlayer,
-} from "./spell.testhelpers";
+import { makeMockBoard, makeMockPiece, makeMockPlayer } from "./spell.testhelpers";
 import type { TurmoilBatchPayload } from "../actions";
 
 describe("TurmoilSpell.doCast", () => {
@@ -39,17 +35,13 @@ describe("TurmoilSpell.doCast", () => {
         const randomSpace = new Point(5, 5);
         const board = makeMockBoard();
         (board as any).pieces = [piece1, piece2, corpse, wizard];
-        (board as any).getRandomEmptySpace = vi
-            .fn()
-            .mockReturnValue(randomSpace);
+        (board as any).getRandomEmptySpace = vi.fn().mockReturnValue(randomSpace);
 
         const config = Spell.getSpellProperties("Turmoil");
         const spell = new TurmoilSpell(board, 1, config);
         spell.owner = owner;
 
-        const result = await spell.doCast(owner, wizard, new Point(0, 0), [
-            wizard,
-        ]);
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [wizard]);
         expect(result).toBe(true);
 
         // Verify pieces were moved
@@ -58,9 +50,7 @@ describe("TurmoilSpell.doCast", () => {
         expect(corpse.moveTo).not.toHaveBeenCalled();
 
         // Verify batch event emitted
-        const batchCall = (board.events.emit as any).mock.calls.find(
-            (c: any) => c[0] === EngineEvent.TurmoilBatch,
-        );
+        const batchCall = (board.events.emit as any).mock.calls.find((c: any) => c[0] === EngineEvent.TurmoilBatch);
         expect(batchCall).toBeDefined();
         const payload: TurmoilBatchPayload = batchCall[1];
         expect(payload.castingPieceId).toBe(3);
@@ -89,9 +79,7 @@ describe("TurmoilSpell.doCast", () => {
         const spell = new TurmoilSpell(board, 1, config);
         spell.owner = owner;
 
-        const result = await spell.doCast(owner, wizard, new Point(0, 0), [
-            creature,
-        ]);
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [creature]);
         expect(result).toBe(false);
     });
 
@@ -107,15 +95,11 @@ describe("TurmoilSpell.doCast", () => {
         const config = Spell.getSpellProperties("Turmoil");
         const spell = new TurmoilSpell(board, 1, config);
         spell.owner = owner;
-        const result = await spell.doCast(owner, wizard, new Point(0, 0), [
-            wizard,
-        ]);
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [wizard]);
         expect(result).toBe(true);
         expect(wizard.moveTo).not.toHaveBeenCalled();
 
-        const batchCall = (board.events.emit as any).mock.calls.find(
-            (c: any) => c[0] === EngineEvent.TurmoilBatch,
-        );
+        const batchCall = (board.events.emit as any).mock.calls.find((c: any) => c[0] === EngineEvent.TurmoilBatch);
         expect(batchCall[1].moves).toHaveLength(0);
     });
 });

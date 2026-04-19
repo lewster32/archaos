@@ -48,10 +48,7 @@ describe("Logger", () => {
 
         it("includes the message in the emitted payload", () => {
             logger.log("test message");
-            expect(emitSpy).toHaveBeenCalledWith(
-                "log",
-                expect.objectContaining({ message: "test message" }),
-            );
+            expect(emitSpy).toHaveBeenCalledWith("log", expect.objectContaining({ message: "test message" }));
         });
 
         it("starts id at 1 on the first log call", () => {
@@ -63,10 +60,8 @@ describe("Logger", () => {
         it("increments the id with each successive log call", () => {
             logger.log("first");
             logger.log("second");
-            const id1 = (emitSpy.mock.calls[0][1] as Record<string, unknown>)
-                .id;
-            const id2 = (emitSpy.mock.calls[1][1] as Record<string, unknown>)
-                .id;
+            const id1 = (emitSpy.mock.calls[0][1] as Record<string, unknown>).id;
+            const id2 = (emitSpy.mock.calls[1][1] as Record<string, unknown>).id;
             expect(id2).toBe((id1 as number) + 1);
         });
 
@@ -78,10 +73,7 @@ describe("Logger", () => {
 
         it("includes colour in the emitted payload when provided", () => {
             logger.log("msg", Colour.Red);
-            expect(emitSpy).toHaveBeenCalledWith(
-                "log",
-                expect.objectContaining({ colour: Colour.Red }),
-            );
+            expect(emitSpy).toHaveBeenCalledWith("log", expect.objectContaining({ colour: Colour.Red }));
         });
 
         it("emits with colour undefined when not provided", () => {

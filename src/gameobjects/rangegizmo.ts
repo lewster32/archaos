@@ -133,12 +133,9 @@ export class RangeGizmo extends EngineRangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
                 alpha: 0,
-                delay: this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "last",
-                    },
-                ),
+                delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                    from: "last",
+                }),
                 onComplete: async () => {
                     this._rangeLayer.removeAll();
                     this._pathLayer.removeAll();
@@ -173,10 +170,7 @@ export class RangeGizmo extends EngineRangeGizmo {
                         node.traversable = false;
                     } else {
                         node.path = path;
-                        const isoPosition: PMath.Vector2 =
-                            this._clientBoard.getIsoPosition(
-                            node.pos,
-                        );
+                        const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(node.pos);
                         let cursorImage: GameObjects.Image;
 
                         if (node.warning) {
@@ -204,12 +198,9 @@ export class RangeGizmo extends EngineRangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                    from: "first",
+                }),
                 onComplete: () => {
                     resolve();
                 },
@@ -260,33 +251,20 @@ export class RangeGizmo extends EngineRangeGizmo {
         return new Promise((resolve: Function) => {
             for (let yy: number = 0; yy < this._clientBoard.height; yy++) {
                 for (let xx: number = 0; xx < this._clientBoard.width; xx++) {
-                    const currentDistance: number = gridDistance(
-                        startPosition,
-                        new PMath.Vector2(xx, yy),
-                    );
+                    const currentDistance: number = gridDistance(startPosition, new PMath.Vector2(xx, yy));
                     if (currentDistance > distance) {
                         continue;
                     }
-                    if (
-                        lineOfSight &&
-                        !this._clientBoard.hasLineOfSight(
-                            startPosition,
-                            new PMath.Vector2(xx, yy),
-                        )
-                    ) {
+                    if (lineOfSight && !this._clientBoard.hasLineOfSight(startPosition, new PMath.Vector2(xx, yy))) {
                         continue;
                     }
-                    const isoPosition: PMath.Vector2 =
-                        this._clientBoard.getIsoPosition(
-                            new PMath.Vector2(xx, yy),
-                        );
-                    const cursorImage: GameObjects.Image =
-                        this._clientBoard.scene.add.image(
-                            isoPosition.x,
-                            isoPosition.y,
-                            "cursors",
-                            cursor,
-                        );
+                    const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(new PMath.Vector2(xx, yy));
+                    const cursorImage: GameObjects.Image = this._clientBoard.scene.add.image(
+                        isoPosition.x,
+                        isoPosition.y,
+                        "cursors",
+                        cursor,
+                    );
                     cursorImage.setOrigin(0.5, 0.5);
                     if (!force) {
                         cursorImage.setAlpha(0);
@@ -306,12 +284,9 @@ export class RangeGizmo extends EngineRangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                    from: "first",
+                }),
                 onComplete: () => {
                     resolve();
                 },
@@ -336,13 +311,7 @@ export class RangeGizmo extends EngineRangeGizmo {
         cursor: CursorType = CursorType.RangeCast,
         lineOfSight?: boolean,
     ): Promise<void> {
-        await this.generateSimpleRange(
-            position,
-            distance,
-            cursor,
-            lineOfSight,
-            true,
-        );
+        await this.generateSimpleRange(position, distance, cursor, lineOfSight, true);
 
         this._rangeLayer.getChildren().forEach((child: GameObjects.Image) => {
             child.setAlpha(0);
@@ -352,12 +321,9 @@ export class RangeGizmo extends EngineRangeGizmo {
             targets: this._rangeLayer.getChildren(),
             alpha: 1,
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-            delay: this._clientBoard.scene.tweens.stagger(
-                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                {
-                    from: "first",
-                },
-            ),
+            delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                from: "first",
+            }),
         });
     }
 
@@ -375,12 +341,9 @@ export class RangeGizmo extends EngineRangeGizmo {
             targets: this._rangeLayer.getChildren(),
             duration: RangeGizmo.GIZMO_REVEAL_DURATION,
             alpha: 0,
-            delay: this._clientBoard.scene.tweens.stagger(
-                RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                {
-                    from: "last",
-                },
-            ),
+            delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                from: "last",
+            }),
         });
     }
 
@@ -397,10 +360,7 @@ export class RangeGizmo extends EngineRangeGizmo {
             this._validNodes
                 .filter((node: Node) => node?.isValid())
                 .forEach((node: Node) => {
-                    const isoPosition: PMath.Vector2 =
-                        this._clientBoard.getIsoPosition(
-                            node.pos,
-                        );
+                    const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(node.pos);
                     let cursorImage: GameObjects.Image;
 
                     if (node.warning) {
@@ -427,12 +387,9 @@ export class RangeGizmo extends EngineRangeGizmo {
                 targets: this._rangeLayer.getChildren(),
                 alpha: 1,
                 duration: RangeGizmo.GIZMO_REVEAL_DURATION,
-                delay: this._clientBoard.scene.tweens.stagger(
-                    RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY,
-                    {
-                        from: "first",
-                    },
-                ),
+                delay: this._clientBoard.scene.tweens.stagger(RangeGizmo.GIZMO_REVEAL_STAGGER_DELAY, {
+                    from: "first",
+                }),
                 onComplete: () => {
                     resolve();
                 },
@@ -452,8 +409,7 @@ export class RangeGizmo extends EngineRangeGizmo {
         if (
             !this._piece ||
             this._piece.hasStatus(UnitStatus.Flying) ||
-            (toPt.x === this._piece.position.x &&
-                toPt.y === this._piece.position.y)
+            (toPt.x === this._piece.position.x && toPt.y === this._piece.position.y)
         ) {
             return;
         }
@@ -467,22 +423,17 @@ export class RangeGizmo extends EngineRangeGizmo {
         // ends one node before it, so we need to show the path
         // including the last node
         const destinationNode = this.getNode(toPt);
-        const endIndex = destinationNode?.terminal
-            ? path.nodes.length
-            : path.nodes.length - 1;
+        const endIndex = destinationNode?.terminal ? path.nodes.length : path.nodes.length - 1;
 
         for (let n: number = 1; n < endIndex; n++) {
-            const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(
-                path.nodes[n].pos,
-            );
+            const isoPosition: PMath.Vector2 = this._clientBoard.getIsoPosition(path.nodes[n].pos);
 
-            const cursorImage: GameObjects.Image =
-                this._clientBoard.scene.add.image(
-                    isoPosition.x,
-                    isoPosition.y,
-                    "cursors",
-                    Cursor.getCursorAngle(path.angles[n]),
-                );
+            const cursorImage: GameObjects.Image = this._clientBoard.scene.add.image(
+                isoPosition.x,
+                isoPosition.y,
+                "cursors",
+                Cursor.getCursorAngle(path.angles[n]),
+            );
             cursorImage.setOrigin(0.5, 0.5);
             this._pathLayer.add(cursorImage);
         }

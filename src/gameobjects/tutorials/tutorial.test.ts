@@ -1,12 +1,6 @@
 import { BoardEvent, EventType } from "@archaos/engine";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-    Tutorial,
-    TutorialStep,
-    TutorialData,
-    TutorialMessageEvent,
-    clickOrTap,
-} from "./tutorial";
+import { Tutorial, TutorialStep, TutorialData, TutorialMessageEvent, clickOrTap } from "./tutorial";
 import type { Board } from "../board";
 import { Logger, _resetLoggerForTesting } from "../services/logger";
 import { Events } from "phaser";
@@ -20,11 +14,7 @@ import { Events } from "phaser";
 class TestStep extends TutorialStep {
     conditionMet = false;
 
-    checkCondition(
-        _board: Board,
-        _event?: BoardEvent,
-        ..._args: any[]
-    ): boolean {
+    checkCondition(_board: Board, _event?: BoardEvent, ..._args: any[]): boolean {
         return this.conditionMet;
     }
 }
@@ -57,10 +47,7 @@ function createMockBoard(): Board {
 
 let mockBoard: Board = createMockBoard();
 
-function makeConfig(
-    steps: TutorialStep[],
-    overrides: Partial<TutorialData> = {},
-): TutorialData {
+function makeConfig(steps: TutorialStep[], overrides: Partial<TutorialData> = {}): TutorialData {
     return {
         id: "test-tutorial",
         name: "Test Tutorial",
@@ -141,13 +128,7 @@ describe("TutorialStep", () => {
         });
 
         it("accepts all valid positions", () => {
-            for (const pos of [
-                "top",
-                "bottom",
-                "left",
-                "right",
-                "center",
-            ] as const) {
+            for (const pos of ["top", "bottom", "left", "right", "center"] as const) {
                 const step = new TestStep("hint", "name", pos);
                 expect(step.position).toBe(pos);
             }
@@ -235,13 +216,7 @@ describe("TutorialStep", () => {
             const pos = { x: 10, y: 20 };
             step.triggerPoint(board, pos as any, 3000);
 
-            expect((board as any).playEffect).toHaveBeenCalledWith(
-                "PointAtPosition",
-                pos,
-                undefined,
-                undefined,
-                3000,
-            );
+            expect((board as any).playEffect).toHaveBeenCalledWith("PointAtPosition", pos, undefined, undefined, 3000);
         });
 
         it("uses default duration of 2000 when not specified", () => {
@@ -282,9 +257,7 @@ describe("Tutorial", () => {
 
     describe("constructor", () => {
         it("throws when config is null", () => {
-            expect(() => new TestTutorial(null as any)).toThrow(
-                "Tutorial config must include at least one step.",
-            );
+            expect(() => new TestTutorial(null as any)).toThrow("Tutorial config must include at least one step.");
         });
 
         it("throws when config has no steps property", () => {
@@ -297,15 +270,11 @@ describe("Tutorial", () => {
                 board: { width: 5, height: 5 },
                 players: [],
             } as any;
-            expect(() => new TestTutorial(config)).toThrow(
-                "Tutorial config must include at least one step.",
-            );
+            expect(() => new TestTutorial(config)).toThrow("Tutorial config must include at least one step.");
         });
 
         it("throws when steps array is empty", () => {
-            expect(() => new TestTutorial(makeConfig([]))).toThrow(
-                "Tutorial config must include at least one step.",
-            );
+            expect(() => new TestTutorial(makeConfig([]))).toThrow("Tutorial config must include at least one step.");
         });
 
         it("creates a tutorial with valid config", () => {
@@ -400,9 +369,7 @@ describe("Tutorial", () => {
     describe("isComplete", () => {
         it("is false when the tutorial has not started advancing", async () => {
             autoResolveTutorialMessages();
-            const tutorial = new TestTutorial(
-                makeConfig([new TestStep(), new TestStep()]),
-            );
+            const tutorial = new TestTutorial(makeConfig([new TestStep(), new TestStep()]));
             await tutorial.start(mockBoard);
             expect(tutorial.isComplete).toBe(false);
         });
@@ -482,9 +449,7 @@ describe("Tutorial", () => {
             step1.conditionMet = true;
             step2.conditionMet = true;
             step3.conditionMet = true;
-            const tutorial = new TestTutorial(
-                makeConfig([step1, step2, step3]),
-            );
+            const tutorial = new TestTutorial(makeConfig([step1, step2, step3]));
             await tutorial.start(mockBoard);
 
             expect(await tutorial.advance()).toBe(true);
@@ -675,9 +640,7 @@ describe("Tutorial", () => {
     describe("tutorial message events", () => {
         it("start emits an intro message", async () => {
             const spy = autoResolveTutorialMessages();
-            const tutorial = new TestTutorial(
-                makeConfig([new TestStep()], { intro: "<p>Hello!</p>" }),
-            );
+            const tutorial = new TestTutorial(makeConfig([new TestStep()], { intro: "<p>Hello!</p>" }));
             await tutorial.start(mockBoard);
 
             const introCall = findMessage(spy, "intro");
@@ -738,9 +701,7 @@ describe("Tutorial", () => {
             const spy = autoResolveTutorialMessages();
             const step = new TestStep();
             step.conditionMet = true;
-            const tutorial = new TestTutorial(
-                makeConfig([step], { outro: "<p>Finished!</p>" }),
-            );
+            const tutorial = new TestTutorial(makeConfig([step], { outro: "<p>Finished!</p>" }));
             await tutorial.start(mockBoard);
 
             spy.mockClear();
@@ -767,9 +728,7 @@ describe("Tutorial", () => {
 
         it("showMessage resolves immediately for empty text", async () => {
             const spy = autoResolveTutorialMessages();
-            const tutorial = new TestTutorial(
-                makeConfig([new TestStep()], { intro: "" }),
-            );
+            const tutorial = new TestTutorial(makeConfig([new TestStep()], { intro: "" }));
             // showIntro with empty text should not emit
             await tutorial.showIntro();
             expect(spy).not.toHaveBeenCalled();
@@ -777,12 +736,9 @@ describe("Tutorial", () => {
 
         it("showMessage awaits resolve callback before returning", async () => {
             let savedResolve: (() => void) | null = null;
-            Logger.getEventEmitter().on(
-                EventType.TutorialMessage,
-                (event: TutorialMessageEvent) => {
-                    savedResolve = event.resolve;
-                },
-            );
+            Logger.getEventEmitter().on(EventType.TutorialMessage, (event: TutorialMessageEvent) => {
+                savedResolve = event.resolve;
+            });
 
             const step = new TestStep("hint");
             const tutorial = new TestTutorial(makeConfig([step]));
@@ -863,9 +819,7 @@ describe("Tutorial", () => {
             const step1 = new TestStep();
             const step2 = new TestStep();
             const step3 = new TestStep();
-            const tutorial = new TestTutorial(
-                makeConfig([step1, step2, step3]),
-            );
+            const tutorial = new TestTutorial(makeConfig([step1, step2, step3]));
             await tutorial.start(mockBoard);
 
             step1.conditionMet = true;
@@ -891,10 +845,7 @@ describe("Tutorial", () => {
             const eventValues = Object.values(BoardEvent);
             expect(offSpy).toHaveBeenCalledTimes(eventValues.length);
             for (const event of eventValues) {
-                expect(offSpy).toHaveBeenCalledWith(
-                    event,
-                    expect.any(Function),
-                );
+                expect(offSpy).toHaveBeenCalledWith(event, expect.any(Function));
             }
         });
 
@@ -963,17 +914,12 @@ describe("Tutorial", () => {
             await tutorial.start(mockBoard);
 
             // onDismissHint fires during start (for the first step's hint)
-            const callsAfterStart = (
-                step.onDismissHint as ReturnType<typeof vi.fn>
-            ).mock.calls.length;
+            const callsAfterStart = (step.onDismissHint as ReturnType<typeof vi.fn>).mock.calls.length;
 
             await tutorial.advance(); // completes tutorial — shows outro, not a hint
 
             // Should not have been called again during advance
-            expect(
-                (step.onDismissHint as ReturnType<typeof vi.fn>).mock.calls
-                    .length,
-            ).toBe(callsAfterStart);
+            expect((step.onDismissHint as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterStart);
         });
     });
 
@@ -984,9 +930,7 @@ describe("Tutorial", () => {
             const outroFn = vi.fn().mockReturnValue("<p>Dynamic outro</p>");
             const step = new TestStep();
             step.conditionMet = true;
-            const tutorial = new TestTutorial(
-                makeConfig([step], { outro: outroFn }),
-            );
+            const tutorial = new TestTutorial(makeConfig([step], { outro: outroFn }));
 
             expect(tutorial.outro).toBe("<p>Dynamic outro</p>");
             expect(outroFn).toHaveBeenCalled();
@@ -996,9 +940,7 @@ describe("Tutorial", () => {
             const spy = autoResolveTutorialMessages();
             const step = new TestStep();
             step.conditionMet = true;
-            const tutorial = new TestTutorial(
-                makeConfig([step], { outro: () => "<p>Computed!</p>" }),
-            );
+            const tutorial = new TestTutorial(makeConfig([step], { outro: () => "<p>Computed!</p>" }));
             await tutorial.start(mockBoard);
 
             spy.mockClear();

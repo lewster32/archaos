@@ -65,23 +65,12 @@
         <div class="unit-stats__status unit-statuses">
             <span v-if="owner && !isWizard" class="unit-statuses__item">
                 Owned by
-                <span
-                    :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`"
-                    >{{ owner }}</span
-                >
+                <span :style="`color: color-mix(in oklab, var(--tint-colour), white 20%)`">{{ owner }}</span>
             </span>
-            <span
-                class="unit-statuses__item c-white"
-                v-if="isWizard"
-                title="The spell casting unit of each player"
+            <span class="unit-statuses__item c-white" v-if="isWizard" title="The spell casting unit of each player"
                 >Wizard</span
             >
-            <span
-                class="unit-statuses__item c-grey"
-                v-if="isDead"
-                title="R.I.P."
-                >Dead</span
-            >
+            <span class="unit-statuses__item c-grey" v-if="isDead" title="R.I.P.">Dead</span>
             <span
                 class="unit-statuses__item c-yellow"
                 v-if="hasStatus('flying')"
@@ -106,10 +95,7 @@
                 title="Has a chance to multiply and harm units it spreads over"
                 >Spreads</span
             >
-            <span
-                class="unit-statuses__item c-cyan"
-                v-if="hasStatus('invuln')"
-                title="Cannot be attacked by any means"
+            <span class="unit-statuses__item c-cyan" v-if="hasStatus('invuln')" title="Cannot be attacked by any means"
                 >Invulnerable</span
             >
             <span
@@ -118,12 +104,7 @@
                 title="Immune to magical attacks"
                 >Sanctity</span
             >
-            <span
-                class="unit-statuses__item c-green"
-                v-if="hasStatus('tree')"
-                title="Cannot move"
-                >Tree</span
-            >
+            <span class="unit-statuses__item c-green" v-if="hasStatus('tree')" title="Cannot move">Tree</span>
             <span
                 class="unit-statuses__item c-yellow"
                 v-if="hasStatus('expires')"
@@ -274,9 +255,7 @@ const clampedNum = (num: number | undefined) => {
         height: 36px;
         line-height: 38px;
         text-align: center;
-        background-image:
-            var(--stat-num, none), var(--stat-icon, none),
-            url("@assets/images/ui/stat-bg.png");
+        background-image: var(--stat-num, none), var(--stat-icon, none), url("@assets/images/ui/stat-bg.png");
         background-size: 36px;
         user-select: none;
         &[title] {

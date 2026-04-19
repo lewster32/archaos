@@ -11,12 +11,7 @@ import { TestRNG } from "../rng";
 
 import type { Board } from "../board";
 
-import {
-    makeMockBoard,
-    makeMockPiece,
-    makeMockPlayer,
-    makeConfig,
-} from "./spell.testhelpers";
+import { makeMockBoard, makeMockPiece, makeMockPlayer, makeConfig } from "./spell.testhelpers";
 
 // ─── Static methods ───────────────────────────────────────────────────────────
 
@@ -85,12 +80,7 @@ describe("Spell.getSpellsByType", () => {
     });
 
     it("contains no duplicates", () => {
-        for (const type of [
-            SpellType.Summon,
-            SpellType.Attack,
-            SpellType.Buff,
-            SpellType.Misc,
-        ]) {
+        for (const type of [SpellType.Summon, SpellType.Attack, SpellType.Buff, SpellType.Misc]) {
             const spells = Spell.getSpellsByType(type);
             expect(spells.length).toBe(new Set(spells).size);
         }
@@ -127,13 +117,9 @@ describe("Spell.getRandomSpell", () => {
 
     it("includes gift-only spells when gifted=true", () => {
         // Run enough times that we're very likely to see a gift-only spell
-        const results = Array.from({ length: 100 }, () =>
-            Spell.getRandomSpell(rng, true),
-        );
+        const results = Array.from({ length: 100 }, () => Spell.getRandomSpell(rng, true));
         // Just verify it returns valid configs (the gifted path is now exercised)
-        expect(results.every((s) => s && typeof s.name === "string")).toBe(
-            true,
-        );
+        expect(results.every((s) => s && typeof s.name === "string")).toBe(true);
     });
 });
 
@@ -146,44 +132,26 @@ describe("Spell constructor", () => {
     });
 
     it("throws when config is null", () => {
-        expect(() => new Spell(board, 1, null as any)).toThrow(
-            "No spell config provided",
-        );
+        expect(() => new Spell(board, 1, null as any)).toThrow("No spell config provided");
     });
 
     it("sets type to Buff for Self-target spells (non-turmoil)", () => {
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Self, id: "shadow-form" }),
-        );
+        const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Self, id: "shadow-form" }));
         expect(s.type).toBe(SpellType.Buff);
     });
 
     it("sets type to Misc for turmoil even though target is Self", () => {
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Self, id: "turmoil" }),
-        );
+        const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Self, id: "turmoil" }));
         expect(s.type).toBe(SpellType.Misc);
     });
 
     it('sets type to Disbelieve for id "disbelieve"', () => {
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ id: "disbelieve", target: SpellTarget.Piece }),
-        );
+        const s = new Spell(board, 1, makeConfig({ id: "disbelieve", target: SpellTarget.Piece }));
         expect(s.type).toBe(SpellType.Disbelieve);
     });
 
     it("sets type to Misc for all other spells", () => {
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Piece }),
-        );
+        const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Piece }));
         expect(s.type).toBe(SpellType.Misc);
     });
 
@@ -213,21 +181,15 @@ describe("Spell getters", () => {
     });
 
     it("spellId", () => {
-        expect(new Spell(board, 1, makeConfig({ id: "foo" })).spellId).toBe(
-            "foo",
-        );
+        expect(new Spell(board, 1, makeConfig({ id: "foo" })).spellId).toBe("foo");
     });
 
     it("name", () => {
-        expect(new Spell(board, 1, makeConfig({ name: "Fireball" })).name).toBe(
-            "Fireball",
-        );
+        expect(new Spell(board, 1, makeConfig({ name: "Fireball" })).name).toBe("Fireball");
     });
 
     it("balance", () => {
-        expect(new Spell(board, 1, makeConfig({ balance: -3 })).balance).toBe(
-            -3,
-        );
+        expect(new Spell(board, 1, makeConfig({ balance: -3 })).balance).toBe(-3);
     });
 
     it("range defaults to 1.5", () => {
@@ -243,9 +205,7 @@ describe("Spell getters", () => {
     });
 
     it("persist reads from config", () => {
-        expect(new Spell(board, 1, makeConfig({ persist: true })).persist).toBe(
-            true,
-        );
+        expect(new Spell(board, 1, makeConfig({ persist: true })).persist).toBe(true);
     });
 
     it("lineOfSight defaults to false", () => {
@@ -253,9 +213,7 @@ describe("Spell getters", () => {
     });
 
     it("lineOfSight reads from config", () => {
-        expect(
-            new Spell(board, 1, makeConfig({ lineOfSight: true })).lineOfSight,
-        ).toBe(true);
+        expect(new Spell(board, 1, makeConfig({ lineOfSight: true })).lineOfSight).toBe(true);
     });
 
     it("properties returns the config object", () => {
@@ -305,11 +263,7 @@ describe("Spell.chance", () => {
                 balance: 0.2,
                 classicBalance: true,
             });
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ chance: 0.5, balance: 1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ chance: 0.5, balance: 1 }));
             expect(s.chance).toBeCloseTo(0.7);
         });
 
@@ -320,11 +274,7 @@ describe("Spell.chance", () => {
                 balance: 0.2,
                 classicBalance: true,
             });
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ chance: 0.5, balance: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ chance: 0.5, balance: -1 }));
             expect(s.chance).toBeCloseTo(0.5);
         });
 
@@ -333,11 +283,7 @@ describe("Spell.chance", () => {
                 balance: -0.2,
                 classicBalance: true,
             });
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ chance: 0.5, balance: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ chance: 0.5, balance: -1 }));
             // board balance < 0, spell balance < 0: offset *= -1 → +0.2
             expect(s.chance).toBeCloseTo(0.7);
         });
@@ -349,11 +295,7 @@ describe("Spell.chance", () => {
                 balance: -0.2,
                 classicBalance: true,
             });
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ chance: 0.5, balance: 1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ chance: 0.5, balance: 1 }));
             expect(s.chance).toBeCloseTo(0.5);
         });
     });
@@ -364,11 +306,7 @@ describe("Spell.chance", () => {
 describe("Spell.description", () => {
     it("returns the config description when provided", () => {
         const board = makeMockBoard();
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ description: "Custom desc", chance: 0.8, balance: 0 }),
-        );
+        const s = new Spell(board, 1, makeConfig({ description: "Custom desc", chance: 0.8, balance: 0 }));
         expect(s.description).toBe("Custom desc");
     });
 
@@ -452,11 +390,7 @@ describe("Spell.hasValidTargetsInRange", () => {
     });
 
     it("returns true for Buff spells", () => {
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Self, id: "shadow-form" }),
-        );
+        const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Self, id: "shadow-form" }));
         s.owner = owner;
         expect(s.hasValidTargetsInRange()).toBe(true);
     });
@@ -581,9 +515,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeMagicAttacked: true,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([enemy]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([enemy]);
             const s = new Spell(
                 board,
                 1,
@@ -616,22 +548,14 @@ describe("Spell.getValidTarget", () => {
     describe("line of sight", () => {
         it("returns null when LOS required but blocked", () => {
             (board as any).hasLineOfSight = vi.fn().mockReturnValue(false);
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ lineOfSight: true, range: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ lineOfSight: true, range: -1 }));
             s.owner = owner;
             expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
         it("logs LOS reason when showReason=true", () => {
             (board as any).hasLineOfSight = vi.fn().mockReturnValue(false);
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ lineOfSight: true, range: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ lineOfSight: true, range: -1 }));
             s.owner = owner;
             s.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
@@ -649,15 +573,9 @@ describe("Spell.getValidTarget", () => {
             (board as any).getAdjacentPiecesAtPosition = vi
                 .fn()
                 .mockImplementation((_pt: any, filter?: any) =>
-                    filter
-                        ? [adjacentTree].filter((p) => filter(p))
-                        : [adjacentTree],
+                    filter ? [adjacentTree].filter((p) => filter(p)) : [adjacentTree],
                 );
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ tree: true, range: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ tree: true, range: -1 }));
             s.owner = owner;
             expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
@@ -668,15 +586,9 @@ describe("Spell.getValidTarget", () => {
             (board as any).getAdjacentPiecesAtPosition = vi
                 .fn()
                 .mockImplementation((_pt: any, filter?: any) =>
-                    filter
-                        ? [adjacentTree].filter((p) => filter(p))
-                        : [adjacentTree],
+                    filter ? [adjacentTree].filter((p) => filter(p)) : [adjacentTree],
                 );
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ tree: true, range: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ tree: true, range: -1 }));
             s.owner = owner;
             s.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
@@ -691,14 +603,10 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeMagicAttacked: true,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([enemy]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([enemy]);
             (board as any).getAdjacentPiecesAtPosition = vi
                 .fn()
-                .mockImplementation((_pt: any, filter?: any) =>
-                    filter ? [].filter((p: any) => filter(p)) : [],
-                );
+                .mockImplementation((_pt: any, filter?: any) => (filter ? [].filter((p: any) => filter(p)) : []));
             const s = new Spell(
                 board,
                 1,
@@ -718,28 +626,20 @@ describe("Spell.getValidTarget", () => {
     describe("SpellTarget.Self", () => {
         let spell: Spell;
         beforeEach(() => {
-            spell = new Spell(
-                board,
-                1,
-                makeConfig({ target: SpellTarget.Self, id: "shadow-form" }),
-            );
+            spell = new Spell(board, 1, makeConfig({ target: SpellTarget.Self, id: "shadow-form" }));
             spell.owner = owner;
         });
 
         it("returns the wizard piece when one is at the target position", () => {
             const wizard = makeMockPiece({ type: UnitType.Wizard, owner });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([wizard]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([wizard]);
             expect(spell.getValidTarget(new Point(0, 0))).toBe(wizard);
         });
 
         it("returns the wizard piece when multiple pieces are at the target position but only one is a wizard", () => {
             const wizard = makeMockPiece({ type: UnitType.Wizard, owner });
             const creature = makeMockPiece({ type: UnitType.Creature, owner });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([creature, wizard]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([creature, wizard]);
             expect(spell.getValidTarget(new Point(0, 0))).toBe(wizard);
         });
 
@@ -761,11 +661,7 @@ describe("Spell.getValidTarget", () => {
     describe("SpellTarget.Corpse", () => {
         let spell: Spell;
         beforeEach(() => {
-            spell = new Spell(
-                board,
-                1,
-                makeConfig({ target: SpellTarget.Corpse, range: -1 }),
-            );
+            spell = new Spell(board, 1, makeConfig({ target: SpellTarget.Corpse, range: -1 }));
             spell.owner = owner;
         });
 
@@ -773,17 +669,13 @@ describe("Spell.getValidTarget", () => {
             const corpse = makeMockPiece({ dead: true });
             (board as any).getPiecesAtPosition = vi
                 .fn()
-                .mockImplementation((_pt: any, filter?: any) =>
-                    filter ? [] : [corpse],
-                );
+                .mockImplementation((_pt: any, filter?: any) => (filter ? [] : [corpse]));
             expect(spell.getValidTarget(new Point(0, 0))).toBe(corpse);
         });
 
         it("returns null when a living piece is at the position", () => {
             const living = makeMockPiece({ dead: false });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([living]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([living]);
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
@@ -803,9 +695,7 @@ describe("Spell.getValidTarget", () => {
             (board as any).getPiecesAtPosition = vi
                 .fn()
                 .mockImplementation((_pt: any, filter?: any) =>
-                    filter
-                        ? [mountedLiving].filter((p) => filter(p))
-                        : [mountedLiving],
+                    filter ? [mountedLiving].filter((p) => filter(p)) : [mountedLiving],
                 );
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
@@ -817,14 +707,9 @@ describe("Spell.getValidTarget", () => {
 
         it("logs corpse reason when living piece present and showReason=true", () => {
             const living = makeMockPiece({ dead: false });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([living]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([living]);
             spell.getValidTarget(new Point(0, 0), true);
-            expect(board.logger.log as any).toHaveBeenCalledWith(
-                expect.stringContaining("corpse"),
-                expect.anything(),
-            );
+            expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("corpse"), expect.anything());
         });
     });
 
@@ -838,9 +723,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeMagicAttacked: true,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([enemy]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([enemy]);
             spell = new Spell(
                 board,
                 1,
@@ -860,9 +743,7 @@ describe("Spell.getValidTarget", () => {
 
         it("returns null when targeting a friendly piece", () => {
             const friendly = makeMockPiece({ type: UnitType.Creature, owner });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([friendly]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([friendly]);
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
@@ -888,14 +769,9 @@ describe("Spell.getValidTarget", () => {
 
         it('returns null and logs "corpse" when only dead pieces present', () => {
             const corpse = makeMockPiece({ dead: true, owner: { id: 99 } });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([corpse]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([corpse]);
             spell.getValidTarget(new Point(0, 0), true);
-            expect(board.logger.log as any).toHaveBeenCalledWith(
-                expect.stringContaining("corpse"),
-                expect.anything(),
-            );
+            expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("corpse"), expect.anything());
         });
 
         it("returns null for invulnerable target and logs reason", () => {
@@ -928,9 +804,7 @@ describe("Spell.getValidTarget", () => {
                 type: UnitType.Wizard,
                 owner: { id: 99 },
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([wizard]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([wizard]);
             const s = new Spell(
                 board,
                 2,
@@ -950,9 +824,7 @@ describe("Spell.getValidTarget", () => {
                 type: UnitType.Wizard,
                 owner: { id: 99 },
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([wizard]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([wizard]);
             const s = new Spell(
                 board,
                 2,
@@ -973,9 +845,7 @@ describe("Spell.getValidTarget", () => {
 
         it('returns null and logs "must be cast on an enemy unit" when targeting friendly', () => {
             const friendly = makeMockPiece({ type: UnitType.Creature, owner });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([friendly]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([friendly]);
             spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("enemy unit"),
@@ -1006,9 +876,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeDisbelieved: true,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([illusion]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([illusion]);
             expect(spell.getValidTarget(new Point(0, 0))).toBe(illusion);
         });
 
@@ -1017,9 +885,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeDisbelieved: false,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([solid]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([solid]);
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
@@ -1028,9 +894,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeDisbelieved: false,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([solid]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([solid]);
             spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("cannot be cast on this unit"),
@@ -1061,9 +925,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeSubverted: true,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([target]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([target]);
             expect(spell.getValidTarget(new Point(0, 0))).toBe(target);
         });
 
@@ -1072,9 +934,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeSubverted: false,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([target]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([target]);
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
@@ -1083,9 +943,7 @@ describe("Spell.getValidTarget", () => {
                 owner: { id: 99 },
                 canBeSubverted: false,
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([target]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([target]);
             spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("cannot be cast on this unit"),
@@ -1097,15 +955,9 @@ describe("Spell.getValidTarget", () => {
     describe("SpellTarget.Piece — no targeting flags", () => {
         it("returns null when neither castOnEnemyUnit nor castOnFriendlyUnit is set", () => {
             const piece = makeMockPiece({ owner: { id: 99 } });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([piece]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([piece]);
             // SpellTarget.Piece with no castOnEnemyUnit/castOnFriendlyUnit falls through to final return null
-            const s = new Spell(
-                board,
-                1,
-                makeConfig({ target: SpellTarget.Piece, range: -1 }),
-            );
+            const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Piece, range: -1 }));
             s.owner = owner;
             expect(s.getValidTarget(new Point(0, 0))).toBeNull();
         });
@@ -1129,9 +981,7 @@ describe("Spell.getValidTarget", () => {
 
         it("returns the friendly piece", () => {
             const friendly = makeMockPiece({ type: UnitType.Creature, owner });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([friendly]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([friendly]);
             expect(spell.getValidTarget(new Point(0, 0))).toBe(friendly);
         });
 
@@ -1140,9 +990,7 @@ describe("Spell.getValidTarget", () => {
                 type: UnitType.Creature,
                 owner: { id: 99 },
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([enemy]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([enemy]);
             expect(spell.getValidTarget(new Point(0, 0))).toBeNull();
         });
 
@@ -1151,9 +999,7 @@ describe("Spell.getValidTarget", () => {
                 type: UnitType.Creature,
                 owner: { id: 99 },
             });
-            (board as any).getPiecesAtPosition = vi
-                .fn()
-                .mockReturnValue([enemy]);
+            (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([enemy]);
             spell.getValidTarget(new Point(0, 0), true);
             expect(board.logger.log as any).toHaveBeenCalledWith(
                 expect.stringContaining("friendly unit"),
@@ -1282,13 +1128,10 @@ describe("Spell.castFail", () => {
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
         await s.castFail(owner, piece);
-        expect((board as any).events.emitAsync).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            {
-                type: EffectType.WizardCastFail,
-                pieceId: 42,
-            },
-        );
+        expect((board as any).events.emitAsync).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCastFail,
+            pieceId: 42,
+        });
     });
 });
 
@@ -1299,21 +1142,14 @@ describe("Spell.showRange", () => {
         const board = makeMockBoard();
         const piece = makeMockPiece({ x: 2, y: 3 });
         const owner = makeMockPlayer(piece);
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ range: 5, lineOfSight: true }),
-        );
+        const s = new Spell(board, 1, makeConfig({ range: 5, lineOfSight: true }));
         s.owner = owner;
         await s.showRange(true);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.ShowCastRange,
-            {
-                position: piece.position,
-                range: 5,
-                lineOfSight: true,
-            },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.ShowCastRange, {
+            position: piece.position,
+            range: 5,
+            lineOfSight: true,
+        });
     });
 
     it("emits ResetCastRange when show=false", async () => {
@@ -1322,9 +1158,7 @@ describe("Spell.showRange", () => {
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
         await s.showRange(false);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.ResetCastRange,
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.ResetCastRange);
     });
 });
 
@@ -1335,11 +1169,7 @@ describe("Spell.doCast — fallthrough", () => {
         const board = makeMockBoard();
         const castingPiece = makeMockPiece();
         const owner = makeMockPlayer(castingPiece);
-        const s = new Spell(
-            board,
-            1,
-            makeConfig({ target: SpellTarget.Piece, castOnEnemyUnit: true }),
-        );
+        const s = new Spell(board, 1, makeConfig({ target: SpellTarget.Piece, castOnEnemyUnit: true }));
         s.owner = owner;
         const result = await s.doCast(owner, castingPiece, new Point(0, 0), []);
         expect(result).toBe(false);

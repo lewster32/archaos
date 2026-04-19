@@ -44,10 +44,7 @@ class Movement5 extends TutorialStep {
     }
 
     checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
-        if (
-            event === BoardEvent.PieceMoved &&
-            args[0].properties.name === "King Cobra"
-        ) {
+        if (event === BoardEvent.PieceMoved && args[0].properties.name === "King Cobra") {
             return true;
         }
         return false;
@@ -92,19 +89,12 @@ class Movement6 extends TutorialStep {
 
     onDismissHint(board: Board): void {
         if (this.wolfPiece) {
-            TutorialStep.pointAtPosition(
-                board,
-                this.wolfPiece.screenPosition,
-                2000,
-            );
+            TutorialStep.pointAtPosition(board, this.wolfPiece.screenPosition, 2000);
         }
     }
 
     checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
-        if (
-            event === BoardEvent.PieceMoved &&
-            args[0].properties.name === "Dire Wolf"
-        ) {
+        if (event === BoardEvent.PieceMoved && args[0].properties.name === "Dire Wolf") {
             return true;
         }
         return false;
@@ -141,19 +131,12 @@ class Movement7 extends TutorialStep {
 
     onDismissHint(board: Board): void {
         if (this.batPiece) {
-            TutorialStep.pointAtPosition(
-                board,
-                this.batPiece.screenPosition,
-                2000,
-            );
+            TutorialStep.pointAtPosition(board, this.batPiece.screenPosition, 2000);
         }
     }
 
     checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
-        if (
-            event === BoardEvent.PieceMoved &&
-            args[0].properties.name === "Bat"
-        ) {
+        if (event === BoardEvent.PieceMoved && args[0].properties.name === "Bat") {
             return true;
         }
         return false;
@@ -178,18 +161,11 @@ class Movement10 extends TutorialStep {
     }
 
     onDismissHint(board: Board): void {
-        TutorialStep.pointAtPosition(
-            board,
-            (board.getPlayer(1)!.castingPiece as Piece).screenPosition,
-            2000,
-        );
+        TutorialStep.pointAtPosition(board, (board.getPlayer(1)!.castingPiece as Piece).screenPosition, 2000);
     }
 
     checkCondition(board: Board, event?: BoardEvent): boolean {
-        if (
-            event === BoardEvent.PhaseChange &&
-            board.phase === BoardPhase.Spellbook
-        ) {
+        if (event === BoardEvent.PhaseChange && board.phase === BoardPhase.Spellbook) {
             return true;
         }
         return false;
@@ -211,10 +187,7 @@ class Movement20 extends TutorialStep {
     }
 
     checkCondition(board: Board, event?: BoardEvent): boolean {
-        if (
-            event === BoardEvent.PhaseChange &&
-            board.phase === BoardPhase.Spreading
-        ) {
+        if (event === BoardEvent.PhaseChange && board.phase === BoardPhase.Spreading) {
             return true;
         }
         return false;
@@ -244,16 +217,11 @@ class Movement25 extends TutorialStep {
     }
 
     checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
-        if (
-            event === BoardEvent.PhaseChange &&
-            board.phase === BoardPhase.Moving
-        ) {
+        if (event === BoardEvent.PhaseChange && board.phase === BoardPhase.Moving) {
             this.runawayHorseCountdown--;
             if (this.runawayHorseCountdown <= 0) {
                 // The horse gets tired of waiting and gallops away, ending the tutorial
-                const horse = board
-                    .getPiecesByOwner(board.getPlayer(1)!)
-                    .find((p) => p.properties.name === "Horse");
+                const horse = board.getPiecesByOwner(board.getPlayer(1)!).find((p) => p.properties.name === "Horse");
                 if (horse) {
                     horse.destroy();
                 }
@@ -261,37 +229,25 @@ class Movement25 extends TutorialStep {
                 return false;
             }
         }
-        if (
-            event === BoardEvent.PieceDied &&
-            args[0].properties.name === "Horse"
-        ) {
+        if (event === BoardEvent.PieceDied && args[0].properties.name === "Horse") {
             board.endGame("Your horse was slain. Better luck next time!");
             return false;
         }
-        if (
-            event === BoardEvent.PieceSelected &&
-            args[0].id === board.getPlayer(1)?.castingPiece.id
-        ) {
-            const horse = board
-                .getPiecesByOwner(board.getPlayer(1)!)
-                .find((p) => p.properties.name === "Horse");
+        if (event === BoardEvent.PieceSelected && args[0].id === board.getPlayer(1)?.castingPiece.id) {
+            const horse = board.getPiecesByOwner(board.getPlayer(1)!).find((p) => p.properties.name === "Horse");
             // Are we selecting the wizard while the horse is adjacent? If so,
             // point at the horse to hint at mounting it
             if (
                 horse &&
-                board.getAdjacentPiecesAtPosition(
-                    horse.position,
-                    (p) => p.id === board.getPlayer(1)?.castingPiece.id,
-                ).length > 0
+                board.getAdjacentPiecesAtPosition(horse.position, (p) => p.id === board.getPlayer(1)?.castingPiece.id)
+                    .length > 0
             ) {
                 TutorialStep.pointAtPosition(board, horse.screenPosition, 2000);
             }
         }
         if (
             event === BoardEvent.PieceMoved &&
-            board
-                .getPiecesByOwner(board.getPlayer(1)!)
-                .find((p) => p.currentMount !== null)
+            board.getPiecesByOwner(board.getPlayer(1)!).find((p) => p.currentMount !== null)
         ) {
             return true;
         }
@@ -319,10 +275,7 @@ class Movement30 extends TutorialStep {
 
     onDismissHint(board: Board): void {
         const remainingPiecesToMove = board.pieces.filter(
-            (p) =>
-                p.owner === board.getPlayer(1) &&
-                !p.currentMount &&
-                !p.turnOver,
+            (p) => p.owner === board.getPlayer(1) && !p.currentMount && !p.turnOver,
         );
         if (remainingPiecesToMove.length > 0) {
             TutorialStep.pointAtPositions(
@@ -334,9 +287,7 @@ class Movement30 extends TutorialStep {
     }
 
     checkCondition(board: Board, event?: BoardEvent, ...args: any[]): boolean {
-        const horse = board
-            .getPiecesByOwner(board.getPlayer(1)!)
-            .find((p) => p.properties.name === "Horse");
+        const horse = board.getPiecesByOwner(board.getPlayer(1)!).find((p) => p.properties.name === "Horse");
         if (event === BoardEvent.PieceMoved && args[0].id === horse?.id) {
             return true;
         }

@@ -298,15 +298,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const pm = this._stateManager;
         if (pm.isActive(pm.states.movingPlayer)) {
             if (pm.isActive(pm.states.pieceAttacking)) return BoardState.Attack;
-            if (pm.isActive(pm.states.pieceRangedAttacking))
-                return BoardState.RangedAttack;
-            if (pm.isActive(pm.states.pieceDismounting))
-                return BoardState.Dismount;
+            if (pm.isActive(pm.states.pieceRangedAttacking)) return BoardState.RangedAttack;
+            if (pm.isActive(pm.states.pieceDismounting)) return BoardState.Dismount;
             return BoardState.Move;
         }
         if (pm.isActive(pm.states.castingPlayer)) return BoardState.CastSpell;
-        if (pm.isActive(pm.states.spellbookPlayer))
-            return BoardState.SelectSpell;
+        if (pm.isActive(pm.states.spellbookPlayer)) return BoardState.SelectSpell;
         if (pm.isActive(pm.states.spreading)) return BoardState.Idle;
 
         return this._state;
@@ -431,10 +428,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * @param remote Optional remote-player controller (AI or network).
      * @returns The newly created player.
      */
-    addPlayer(
-        config: PlayerConfig,
-        remote?: RemotePlayer | null,
-    ): Player<P> {
+    addPlayer(config: PlayerConfig, remote?: RemotePlayer | null): Player<P> {
         const player = new Player<P>(
             this,
             this._idCounter++,
@@ -453,17 +447,13 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * circular dependency (board → spellfactory →
      * attackspell → board).
      */
-    private static _spellFactory:
-        | ((board: Board, id: number, config: SpellConfig) => Spell)
-        | null = null;
+    private static _spellFactory: ((board: Board, id: number, config: SpellConfig) => Spell) | null = null;
 
     /**
      * Register the spell factory function. Must be
      * called once before `addSpell` is used.
      */
-    static registerSpellFactory(
-        factory: (board: Board, id: number, config: SpellConfig) => Spell,
-    ): void {
+    static registerSpellFactory(factory: (board: Board, id: number, config: SpellConfig) => Spell): void {
         Board._spellFactory = factory;
     }
 
@@ -482,11 +472,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     "first.",
             );
         }
-        const spell = Board._spellFactory(
-            this,
-            this._idCounter++,
-            config,
-        ) as Spell<P>;
+        const spell = Board._spellFactory(this, this._idCounter++, config) as Spell<P>;
         player.addSpell(spell);
         return spell;
     }
@@ -565,12 +551,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
         for (let x: number = point.x - 1; x <= point.x + 1; x++) {
             for (let y: number = point.y - 1; y <= point.y + 1; y++) {
-                if (
-                    x >= 0 &&
-                    y >= 0 &&
-                    x < this.width &&
-                    y < this.height
-                ) {
+                if (x >= 0 && y >= 0 && x < this.width && y < this.height) {
                     if (!includeCentre && x === point.x && y === point.y) {
                         continue;
                     }
@@ -582,12 +563,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         return points;
     }
 
-    getPointsInRange(
-        point: Point,
-        range: number,
-        includeCentre?: boolean,
-        rangeType?: RangeType,
-    ): Point[] {
+    getPointsInRange(point: Point, range: number, includeCentre?: boolean, rangeType?: RangeType): Point[] {
         const points: Point[] = [];
         for (let x: number = point.x - range; x <= point.x + range; x++) {
             for (let y: number = point.y - range; y <= point.y + range; y++) {
@@ -596,8 +572,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     y >= 0 &&
                     x < this.width &&
                     y < this.height &&
-                    Board.distance(point, new Point(x, y), rangeType) <=
-                        range + (rangeType === RangeType.Fly ? 0.5 : 0)
+                    Board.distance(point, new Point(x, y), rangeType) <= range + (rangeType === RangeType.Fly ? 0.5 : 0)
                 ) {
                     if (!includeCentre && x === point.x && y === point.y) {
                         continue;
@@ -609,11 +584,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         return points;
     }
 
-    getAdjacentPiecesAtPosition(
-        point: Point,
-        filter?: (piece: P) => boolean,
-        includeCentre?: boolean,
-    ): P[] {
+    getAdjacentPiecesAtPosition(point: Point, filter?: (piece: P) => boolean, includeCentre?: boolean): P[] {
         const neighbours: Set<P> = new Set();
         const position: Point = Point.clone(point);
         for (const direction of Board.NEIGHBOUR_DIRECTIONS) {
@@ -626,10 +597,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
         }
         if (includeCentre) {
-            const centreNeighbours: P[] = this.getPiecesAtPosition(
-                position,
-                filter,
-            );
+            const centreNeighbours: P[] = this.getPiecesAtPosition(position, filter);
             if (centreNeighbours) {
                 centreNeighbours.forEach((piece) => neighbours.add(piece));
             }
@@ -640,10 +608,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     getPiecesAtPosition(point: Point, filter?: (piece: P) => boolean): P[] {
         return Array.from(
             this.pieces.filter((piece: P) => {
-                return (
-                    Point.equals(piece.position, point) &&
-                    (filter ? filter(piece) : true)
-                );
+                return Point.equals(piece.position, point) && (filter ? filter(piece) : true);
             }),
         );
     }
@@ -704,11 +669,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
     /* ── Distance / coordinate calculations ──────── */
 
-    static distance(
-        startPosition: Point,
-        endPosition: Point,
-        rangeType: RangeType = RangeType.Fly,
-    ): number {
+    static distance(startPosition: Point, endPosition: Point, rangeType: RangeType = RangeType.Fly): number {
         if (Point.equals(startPosition, endPosition)) {
             return 0;
         }
@@ -769,9 +730,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this.phase !== BoardPhase.Idle ||
             this.pieces.some((piece: P) => piece.hasStatus(UnitStatus.Wizard))
         ) {
-            throw new Error(
-                "Cannot create wizards - game not in initialising state",
-            );
+            throw new Error("Cannot create wizards - game not in initialising state");
         }
         Wizard.createAll(this, this.players);
     }
@@ -838,32 +797,19 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Rolls combat, emits event, and kills the
      * defender on success.
      */
-    async attackPiece(
-        attackingPieceId: number,
-        defendingPieceId: number,
-    ): Promise<P | null> {
+    async attackPiece(attackingPieceId: number, defendingPieceId: number): Promise<P | null> {
         const attackingPiece = this.getPiece(attackingPieceId);
         const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${attackingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
         }
         if (!defendingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${defendingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
 
         this._busy = true;
-        const attackResult: boolean =
-            await attackingPiece.attack(defendingPiece);
-        this._boardEvents.emit(
-            BoardEvent.PieceAttacked,
-            attackingPiece,
-            defendingPiece,
-            attackResult,
-        );
+        const attackResult: boolean = await attackingPiece.attack(defendingPiece);
+        this._boardEvents.emit(BoardEvent.PieceAttacked, attackingPiece, defendingPiece, attackResult);
         this._busy = false;
         return attackingPiece;
     }
@@ -873,32 +819,19 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Rolls ranged combat, emits event, and kills the
      * defender on success.
      */
-    async rangedAttackPiece(
-        attackingPieceId: number,
-        defendingPieceId: number,
-    ): Promise<P | null> {
+    async rangedAttackPiece(attackingPieceId: number, defendingPieceId: number): Promise<P | null> {
         const attackingPiece = this.getPiece(attackingPieceId);
         const defendingPiece = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${attackingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
         }
         if (!defendingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${defendingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
         }
 
         this._busy = true;
-        const attackResult: boolean =
-            await attackingPiece.rangedAttack(defendingPiece);
-        this._boardEvents.emit(
-            BoardEvent.PieceRangedAttacked,
-            attackingPiece,
-            defendingPiece,
-            attackResult,
-        );
+        const attackResult: boolean = await attackingPiece.rangedAttack(defendingPiece);
+        this._boardEvents.emit(BoardEvent.PieceRangedAttacked, attackingPiece, defendingPiece, attackResult);
         this._busy = false;
         return attackingPiece;
     }
@@ -908,21 +841,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * mounting piece is already mounted, dismount
      * first.
      */
-    async mountPiece(
-        mountingPieceId: number,
-        mountedPieceId: number,
-    ): Promise<P | null> {
+    async mountPiece(mountingPieceId: number, mountedPieceId: number): Promise<P | null> {
         const mountingPiece = this.getPiece(mountingPieceId);
         const mountedPiece = this.getPiece(mountedPieceId);
         if (!mountingPiece) {
-            throw new Error(
-                `Could not find piece with ID ${mountingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${mountingPieceId}`);
         }
         if (!mountedPiece) {
-            throw new Error(
-                `Could not find piece with ID ${mountedPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${mountedPieceId}`);
         }
 
         // Dismount first if already mounted
@@ -933,10 +859,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
         mountingPiece.mount(mountedPiece);
 
-        mountingPiece.position.setTo(
-            mountedPiece.position.x,
-            mountedPiece.position.y,
-        );
+        mountingPiece.position.setTo(mountedPiece.position.x, mountedPiece.position.y);
 
         this.emitBoardUpdateEvent();
         return mountingPiece;
@@ -948,9 +871,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     async dismountPiece(dismountingPieceId: number): Promise<P | null> {
         const piece = this.getPiece(dismountingPieceId);
         if (!piece) {
-            throw new Error(
-                `Could not find piece with ID ${dismountingPieceId}`,
-            );
+            throw new Error(`Could not find piece with ID ${dismountingPieceId}`);
         }
         piece.dismount();
         this.emitBoardUpdateEvent();
@@ -962,26 +883,18 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     /**
      * Roll an attack vs defence check.
      */
-    roll(
-        attack: number,
-        defence: number,
-        attackingPlayer?: Player<P>,
-    ): boolean {
+    roll(attack: number, defence: number, attackingPlayer?: Player<P>): boolean {
         if (attackingPlayer?.forceHit != null) {
             return attackingPlayer.forceHit;
         }
-        const cheatForceHit = (
-            this.constructor as unknown as { CHEAT_FORCE_HIT: boolean | null }
-        ).CHEAT_FORCE_HIT;
+        const cheatForceHit = (this.constructor as unknown as { CHEAT_FORCE_HIT: boolean | null }).CHEAT_FORCE_HIT;
         if (cheatForceHit !== null) {
             return cheatForceHit;
         }
         const attackRoll: number = this._rng.between(0, 10 + attack);
         const defenceRoll: number = this._rng.between(0, 10 + defence);
         console.debug(
-            `Rolled ${attackRoll} vs ${defenceRoll}; attack ${
-                attackRoll > defenceRoll ? "succeeds" : "fails"
-            }`,
+            `Rolled ${attackRoll} vs ${defenceRoll}; attack ${attackRoll > defenceRoll ? "succeeds" : "fails"}`,
         );
         return attackRoll > defenceRoll;
     }
@@ -993,24 +906,16 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (castingPlayer?.forceCast != null) {
             return castingPlayer.forceCast;
         }
-        const cheatForceCast = (
-            this.constructor as unknown as { CHEAT_FORCE_CAST: boolean | null }
-        ).CHEAT_FORCE_CAST;
+        const cheatForceCast = (this.constructor as unknown as { CHEAT_FORCE_CAST: boolean | null }).CHEAT_FORCE_CAST;
         if (cheatForceCast !== null) {
             return cheatForceCast;
         }
         const defenceRoll: number = this._rng.frac();
         if (attack < 0 || attack > 1) {
-            console.warn(
-                `Chance value ${attack} is out of bounds, clamping to 0-1`,
-            );
+            console.warn(`Chance value ${attack} is out of bounds, clamping to 0-1`);
             attack = Math.max(0, Math.min(1, attack));
         }
-        console.debug(
-            `Rolled ${attack} vs ${defenceRoll}; chance ${
-                attack > defenceRoll ? "succeeds" : "fails"
-            }`,
-        );
+        console.debug(`Rolled ${attack} vs ${defenceRoll}; chance ${attack > defenceRoll ? "succeeds" : "fails"}`);
         return attack > defenceRoll;
     }
 
@@ -1022,22 +927,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (this.state === BoardState.GameOver) {
             return true;
         }
-        const undefeated: Player<P>[] = this.players.filter(
-            (player) => !player.defeated,
-        );
+        const undefeated: Player<P>[] = this.players.filter((player) => !player.defeated);
         if (undefeated?.length < 2) {
             this.state = BoardState.GameOver;
             this.stateManager.evaluate(new GameEnd());
             if (undefeated.length === 1) {
-                this._logger.log(
-                    `Game over! ${undefeated[0].name} wins!`,
-                    Colour.Yellow,
-                );
+                this._logger.log(`Game over! ${undefeated[0].name} wins!`, Colour.Yellow);
             } else if (undefeated.length < 1) {
-                this._logger.log(
-                    `Game over! Everybody's dead Dave.`,
-                    Colour.Yellow,
-                );
+                this._logger.log(`Game over! Everybody's dead Dave.`, Colour.Yellow);
             }
             await this.delay(2000);
             this.emitUIEvent(EventType.GameOver, true);
@@ -1192,35 +1089,25 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 this._alignment.resetAccumulated();
                 await this.idleDelay();
             }
-            const anySpellsLeft = this.players.some(
-                (p) => !p.defeated && p.spells.length > 0,
-            );
+            const anySpellsLeft = this.players.some((p) => !p.defeated && p.spells.length > 0);
             if (anySpellsLeft) {
                 pm.evaluate(new SpellbookReady());
                 await this.idleDelay();
             } else {
-                this._logger.log(
-                    `No spells to cast, skipping to movement`,
-                    Colour.Green,
-                );
+                this._logger.log(`No spells to cast, skipping to movement`, Colour.Green);
                 pm.evaluate(new SkipSpellbook());
                 pm.evaluate(new MovingReady());
                 await this.idleDelay();
             }
         } else if (pm.isActive(pm.states.spellbook)) {
             // Skip casting phase if no player selected a spell
-            const anySpellSelected = this.players.some(
-                (p) => !p.defeated && p.selectedSpell,
-            );
+            const anySpellSelected = this.players.some((p) => !p.defeated && p.selectedSpell);
             if (anySpellSelected) {
                 pm.evaluate(new SpellsDone());
                 pm.evaluate(new CastingReady());
                 await this.idleDelay();
             } else {
-                this._logger.log(
-                    `No spells to cast, skipping to movement`,
-                    Colour.Green,
-                );
+                this._logger.log(`No spells to cast, skipping to movement`, Colour.Green);
                 pm.evaluate(new NoSpellsCast());
 
                 const previousPlayer = this.currentPlayer;
@@ -1262,15 +1149,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     async nextPlayer(): Promise<void> {
         this.emitBoardUpdateEvent();
         while (true) {
-            if (
-                this.state === BoardState.GameOver ||
-                (await this.checkWinCondition())
-            ) {
+            if (this.state === BoardState.GameOver || (await this.checkWinCondition())) {
                 return;
             }
 
-            this._currentPlayerIndex =
-                (this._currentPlayerIndex + 1) % this._players.size;
+            this._currentPlayerIndex = (this._currentPlayerIndex + 1) % this._players.size;
             this.deselectPlayer();
 
             if (this._currentPlayerIndex === 0) {
@@ -1278,9 +1161,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
 
             // Skip defeated players before selecting them
-            const playerId = Array.from(this._players.keys())[
-                this._currentPlayerIndex
-            ];
+            const playerId = Array.from(this._players.keys())[this._currentPlayerIndex];
             if (this.getPlayer(playerId)?.defeated) {
                 continue;
             }
@@ -1297,10 +1178,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                             this.currentPlayer.selectedSpell,
                         );
                     } else {
-                        console.log(
-                            "Remote player could not" +
-                                " select spell, skipping...",
-                        );
+                        console.log("Remote player could not" + " select spell, skipping...");
                     }
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
@@ -1330,10 +1208,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                         continue;
                     } else if (spell?.range === 0) {
                         this._stateManager.evaluate(new SpellTargeting());
-                        await this.rules.doCastSpell(
-                            this,
-                            this.currentPlayer.castingPiece,
-                        );
+                        await this.rules.doCastSpell(this, this.currentPlayer.castingPiece);
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
@@ -1344,27 +1219,15 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                             lineOfSight: spell.lineOfSight,
                         });
                         if (this.currentPlayer?.remote) {
-                            if (
-                                !(await this.currentPlayer.remote.castSpell())
-                            ) {
-                                console.log(
-                                    "Remote player could" +
-                                        " not cast spell," +
-                                        " skipping...",
-                                );
+                            if (!(await this.currentPlayer.remote.castSpell())) {
+                                console.log("Remote player could" + " not cast spell," + " skipping...");
                             }
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
-                            if (
-                                !(await this.currentPlayer.remote.castSpell())
-                            ) {
-                                console.log(
-                                    "Remote player could" +
-                                        " not cast spell," +
-                                        " skipping...",
-                                );
+                            if (!(await this.currentPlayer.remote.castSpell())) {
+                                console.log("Remote player could" + " not cast spell," + " skipping...");
                             }
                             continue;
                         }
@@ -1377,10 +1240,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 }
             }
 
-            if (
-                this.phase === BoardPhase.Moving &&
-                this.currentPlayer?.remote
-            ) {
+            if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
                 await this.currentPlayer.remote.moveAllUnits();
                 continue;
             }

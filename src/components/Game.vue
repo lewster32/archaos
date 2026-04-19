@@ -9,16 +9,8 @@
         ref="container"
     />
     <LoadingScreen v-if="loadingProgress < 1" />
-    <GameMenu
-        v-else-if="!gameStarted"
-        @start="onGameStart"
-        @start-tutorial="onGameStartTutorial"
-    />
-    <Spellbook
-        :data="spellbook"
-        @select="spellSelect"
-        v-if="gameStarted && spellbook"
-    />
+    <GameMenu v-else-if="!gameStarted" @start="onGameStart" @start-tutorial="onGameStartTutorial" />
+    <Spellbook :data="spellbook" @select="spellSelect" v-if="gameStarted && spellbook" />
     <Log :logs="logs" />
     <Minimap
         :pieces="pieces"
@@ -37,17 +29,9 @@
         @cancel="cancel"
         @dismount="dismount"
     />
-    <UnitInfo
-        :class="{ 'unitinfo--show': currentUnit != null }"
-        :unit="currentUnit"
-        @close="closeUnitInfo()"
-    />
+    <UnitInfo :class="{ 'unitinfo--show': currentUnit != null }" :unit="currentUnit" @close="closeUnitInfo()" />
     <TutorialMessage />
-    <ConsentBanner
-        v-if="showConsentBanner"
-        @accept="onConsentAccept"
-        @decline="onConsentDecline"
-    />
+    <ConsentBanner v-if="showConsentBanner" @accept="onConsentAccept" @decline="onConsentDecline" />
 </template>
 
 <script setup lang="ts">
@@ -124,10 +108,7 @@ const onConsentAccept = () => {
     storage.acceptConsent();
     // If localStorage already has saved data, reload so components pick it up
     // (they read storage at initialisation time, before consent was granted).
-    if (
-        globalThis.localStorage?.getItem("setup") ||
-        globalThis.localStorage?.getItem("tutorialProgress")
-    ) {
+    if (globalThis.localStorage?.getItem("setup") || globalThis.localStorage?.getItem("tutorialProgress")) {
         globalThis.location.reload();
         return;
     }
@@ -165,10 +146,7 @@ const onGameStart = (data: GameSetupData) => {
     classicBalance.value = data.classicBalance ?? false;
 };
 
-const onGameStartTutorial = (
-    tutorialId: string,
-    data: { muteAudio: boolean },
-) => {
+const onGameStartTutorial = (tutorialId: string, data: { muteAudio: boolean }) => {
     const tutorial = getTutorial(tutorialId);
     tutorial.config.muteAudio = data.muteAudio;
     if (tutorial) {
@@ -209,21 +187,18 @@ onMounted(async () => {
         });
     });
 
-    eventEmitter.value.on(
-        EventType.SpellbookOpen,
-        (event: SpellbookOpenEventData) => {
-            spellbook.value.show = true;
-            spellbook.value.spells = event.data.spells;
-            spellbook.value.caster = event.data.caster;
-            spellbook.value.onSelect = event.callback;
-            if (event.data.soloMode) {
-                nextTick(() => {
-                    spellbook.value.minimised = false;
-                });
-            }
-            spellbook.value.preventSkip = event.data.preventSkip ?? false;
-        },
-    );
+    eventEmitter.value.on(EventType.SpellbookOpen, (event: SpellbookOpenEventData) => {
+        spellbook.value.show = true;
+        spellbook.value.spells = event.data.spells;
+        spellbook.value.caster = event.data.caster;
+        spellbook.value.onSelect = event.callback;
+        if (event.data.soloMode) {
+            nextTick(() => {
+                spellbook.value.minimised = false;
+            });
+        }
+        spellbook.value.preventSkip = event.data.preventSkip ?? false;
+    });
 
     eventEmitter.value.on(EventType.SpellbookClose, () => {
         spellbook.value.show = false;
@@ -232,15 +207,12 @@ onMounted(async () => {
         spellbook.value.onSelect = null;
     });
 
-    eventEmitter.value.on(
-        EventType.BoardUpdate,
-        (data: BoardUpdateEventData) => {
-            pieces.value = data.pieces;
-            board.value = data.board;
-            balance.value = data.balance;
-            balanceShift.value = data.balanceShift;
-        },
-    );
+    eventEmitter.value.on(EventType.BoardUpdate, (data: BoardUpdateEventData) => {
+        pieces.value = data.pieces;
+        board.value = data.board;
+        balance.value = data.balance;
+        balanceShift.value = data.balanceShift;
+    });
 
     eventEmitter.value.on(EventType.CancelAvailable, (state: boolean) => {
         canCancel.value = state;
@@ -269,16 +241,13 @@ onMounted(async () => {
             `${import.meta.env.BASE_URL}scenarios/${scenario.toLowerCase().trim()}.json`,
         );
         if (scenarioResponse.ok) {
-            const scenarioData: GameScenarioData =
-                await scenarioResponse.json();
+            const scenarioData: GameScenarioData = await scenarioResponse.json();
             gameStarted.value = true;
             setTimeout(() => {
                 eventEmitter.value?.emit("start-scenario", scenarioData);
             }, 500);
         } else {
-            console.error(
-                `Failed to load scenario data for scenario: ${scenario}`,
-            );
+            console.error(`Failed to load scenario data for scenario: ${scenario}`);
         }
     }
 

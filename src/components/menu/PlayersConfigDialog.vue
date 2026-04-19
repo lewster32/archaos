@@ -1,15 +1,9 @@
 <template>
     <dialog v-if="setup.playerCount > 0" class="callout" ref="dialog">
         <div class="callout__row">
-            <label
-                for="playercount"
-                title="The number of players in the game."
-                >Number of players:</label
-            >
+            <label for="playercount" title="The number of players in the game.">Number of players:</label>
             <select v-model="setup.playerCount" id="playercount">
-                <option v-for="n in 7" :key="n" :value="n + 1">
-                    {{ n + 1 }} Players
-                </option>
+                <option v-for="n in 7" :key="n" :value="n + 1">{{ n + 1 }} Players</option>
             </select>
         </div>
         <div
@@ -21,12 +15,7 @@
             }"
         >
             <label :for="`player${index}`" style="width: 20ch"
-                >{{
-                    setup.players[index].computerControlled
-                        ? "Computer"
-                        : "Human"
-                }}
-                {{ index + 1 }}'s name:</label
+                >{{ setup.players[index].computerControlled ? "Computer" : "Human" }} {{ index + 1 }}'s name:</label
             >
             <input
                 v-model="setup.players[index].name"
@@ -39,7 +28,7 @@
                 class="button button--small"
                 @click="configurePlayer(setup.players[index])"
                 title="Configure player options"
-                >
+            >
                 <i class="icon icon--settings"></i>
             </button>
         </div>
@@ -61,20 +50,13 @@
                 class="difficulty__input"
                 :disabled="!hasComputerPlayers"
             />
-            <span class="difficulty__value">{{
-                Math.round(setup.difficulty * 10)
-            }}</span>
+            <span class="difficulty__value">{{ Math.round(setup.difficulty * 10) }}</span>
         </div>
         <div class="callout__buttons">
-            <button class="button button--green button--important" @click="dialog?.close()">
-                Done
-            </button>
+            <button class="button button--green button--important" @click="dialog?.close()">Done</button>
         </div>
     </dialog>
-    <PlayerConfigDialog
-        ref="playerConfigDialog"
-        :player="currentlyConfiguringPlayer"
-    />
+    <PlayerConfigDialog ref="playerConfigDialog" :player="currentlyConfiguringPlayer" />
 </template>
 
 <script setup lang="ts">
@@ -94,10 +76,7 @@ const playerConfigDialog = ref<InstanceType<typeof PlayerConfigDialog> | null>(n
  * Check any of the active players are computer-controlled.
  */
 const hasComputerPlayers = computed(
-    () =>
-        props.setup.players
-            .slice(0, props.setup.playerCount)
-            .some((p) => p.computerControlled) || false,
+    () => props.setup.players.slice(0, props.setup.playerCount).some((p) => p.computerControlled) || false,
 );
 
 defineExpose({
@@ -110,13 +89,8 @@ const currentlyConfiguringPlayer = ref<SetupPlayer | null>(null);
 const configurePlayer = async (player: SetupPlayer) => {
     currentlyConfiguringPlayer.value = player;
     await nextTick();
-    (
-        playerConfigDialog.value as InstanceType<
-            typeof PlayerConfigDialog
-        >
-    )?.showModal()
+    (playerConfigDialog.value as InstanceType<typeof PlayerConfigDialog>)?.showModal();
 };
-
 </script>
 
 <style lang="scss" scoped>

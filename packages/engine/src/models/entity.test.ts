@@ -23,18 +23,12 @@ describe("Entity", () => {
     });
 
     it("should throw error if board is null", () => {
-        expect(() => new Entity(null as any, 1, 0, 0)).toThrow(
-            "Board cannot be null or undefined.",
-        );
+        expect(() => new Entity(null as any, 1, 0, 0)).toThrow("Board cannot be null or undefined.");
     });
 
     it("should throw error if coordinates are not integers", () => {
-        expect(() => new Entity(mockBoard, 1, 10.5, 20)).toThrow(
-            "Coordinates must be integers.",
-        );
-        expect(() => new Entity(mockBoard, 1, 10, 20.5)).toThrow(
-            "Coordinates must be integers.",
-        );
+        expect(() => new Entity(mockBoard, 1, 10.5, 20)).toThrow("Coordinates must be integers.");
+        expect(() => new Entity(mockBoard, 1, 10, 20.5)).toThrow("Coordinates must be integers.");
     });
 
     it("should create entity at origin (0, 0)", () => {

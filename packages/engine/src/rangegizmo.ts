@@ -1,14 +1,7 @@
 import { Point } from "./point";
 import { RangeType } from "./enums/rangetype";
 import { UnitStatus } from "./enums/unitstatus";
-import {
-    Node,
-    Path,
-    diagonalHeuristic,
-    buildPath,
-    isOpen,
-    isClosed,
-} from "./pathfinding";
+import { Node, Path, diagonalHeuristic, buildPath, isOpen, isClosed } from "./pathfinding";
 import type { Board } from "./board";
 import type { Piece } from "./piece";
 
@@ -67,10 +60,7 @@ export class RangeGizmo {
      * @returns The updated node
      */
     protected checkNodeTraversal(node: Node): Node {
-        const livePieces = this._board.getPiecesAtPosition(
-            new Point(node.x, node.y),
-            (piece: Piece) => !piece.dead,
-        );
+        const livePieces = this._board.getPiecesAtPosition(new Point(node.x, node.y), (piece: Piece) => !piece.dead);
 
         if (!livePieces.length) {
             node.traversable = true;
@@ -85,9 +75,7 @@ export class RangeGizmo {
 
         // If the only pieces here are the moving piece (and
         // possibly its rider), the tile is traversable.
-        const otherPieces = livePieces.filter(
-            (p) => p !== this._piece && p !== rider,
-        );
+        const otherPieces = livePieces.filter((p) => p !== this._piece && p !== rider);
         if (otherPieces.length === 0) {
             node.traversable = true;
             node.terminal = false;
@@ -96,10 +84,7 @@ export class RangeGizmo {
 
         // Evaluate each piece at this position.
         for (const livePiece of otherPieces) {
-            if (
-                this._piece.canMountPiece(livePiece) ||
-                this._piece.canAttackPiece(livePiece)
-            ) {
+            if (this._piece.canMountPiece(livePiece) || this._piece.canAttackPiece(livePiece)) {
                 node.terminal = true;
             } else {
                 node.traversable = false;
@@ -130,18 +115,11 @@ export class RangeGizmo {
         const potentiallyValidNodes: Map<string, Node> = new Map();
 
         // Determine range type based on flying status.
-        const rangeType: RangeType = unit.hasStatus(UnitStatus.Flying)
-            ? RangeType.Fly
-            : RangeType.Foot;
+        const rangeType: RangeType = unit.hasStatus(UnitStatus.Flying) ? RangeType.Fly : RangeType.Foot;
 
         // Get all points in movement range and build nodes.
         this._board
-            .getPointsInRange(
-                unit.position,
-                unit.stats.movement,
-                true,
-                rangeType,
-            )
+            .getPointsInRange(unit.position, unit.stats.movement, true, rangeType)
             .map((pt: Point) => new Node(pt.x, pt.y))
             .filter((node: Node) => {
                 node = this.checkNodeTraversal(node);
@@ -154,22 +132,19 @@ export class RangeGizmo {
         // Apply warning flags: a node is a warning node if
         // there is an engageable enemy adjacent to it.
         potentiallyValidNodes.forEach((node: Node) => {
-            const enemies = this._board.getAdjacentPiecesAtPosition(
-                node.pos,
-                (piece: Piece) => piece.canEngagePiece(this._piece),
+            const enemies = this._board.getAdjacentPiecesAtPosition(node.pos, (piece: Piece) =>
+                piece.canEngagePiece(this._piece),
             );
             if (!enemies.length) {
                 return;
             }
             enemies.forEach((enemy: Piece) => {
-                this._board
-                    .getAdjacentPoints(enemy.position, false)
-                    .forEach((adjPt: Point) => {
-                        const key = adjPt.x + "," + adjPt.y;
-                        if (potentiallyValidNodes.has(key)) {
-                            potentiallyValidNodes.get(key).warning = true;
-                        }
-                    });
+                this._board.getAdjacentPoints(enemy.position, false).forEach((adjPt: Point) => {
+                    const key = adjPt.x + "," + adjPt.y;
+                    if (potentiallyValidNodes.has(key)) {
+                        potentiallyValidNodes.get(key).warning = true;
+                    }
+                });
             });
         });
 
@@ -214,10 +189,7 @@ export class RangeGizmo {
     public getNode(pt: { x: number; y: number }): Node | null {
         return (
             this._validNodes.find(
-                (node: Node) =>
-                    node.x === pt.x &&
-                    node.y === pt.y &&
-                    (node.traversable || node.terminal),
+                (node: Node) => node.x === pt.x && node.y === pt.y && (node.traversable || node.terminal),
             ) ?? null
         );
     }
@@ -324,11 +296,7 @@ export class RangeGizmo {
         let currentNode: Node = firstNode;
 
         currentNode.g = 0;
-        currentNode.h = diagonalHeuristic(
-            currentNode,
-            destinationNode,
-            travelCost,
-        );
+        currentNode.h = diagonalHeuristic(currentNode, destinationNode, travelCost);
         currentNode.f = currentNode.g + currentNode.h;
 
         while (currentNode !== destinationNode) {
@@ -338,27 +306,15 @@ export class RangeGizmo {
             for (let i: number = 0; i < l; ++i) {
                 const testNode: Node = connectedNodes[i];
 
-                if (
-                    testNode === currentNode ||
-                    (!testNode.traversable && !testNode.terminal)
-                ) {
+                if (testNode === currentNode || (!testNode.traversable && !testNode.terminal)) {
                     continue;
                 }
 
-                const g: number =
-                    currentNode.g +
-                    diagonalHeuristic(currentNode, testNode, travelCost);
-                const h: number = diagonalHeuristic(
-                    testNode,
-                    destinationNode,
-                    travelCost,
-                );
+                const g: number = currentNode.g + diagonalHeuristic(currentNode, testNode, travelCost);
+                const h: number = diagonalHeuristic(testNode, destinationNode, travelCost);
                 const f: number = g + h;
 
-                if (
-                    isOpen(testNode, openNodes) ||
-                    isClosed(testNode, closedNodes)
-                ) {
+                if (isOpen(testNode, openNodes) || isClosed(testNode, closedNodes)) {
                     if (testNode.f > f) {
                         testNode.f = f;
                         testNode.g = g;
@@ -380,9 +336,7 @@ export class RangeGizmo {
                 return null;
             }
 
-            openNodes.sort((n1: Node, n2: Node): number =>
-                n1.f < n2.f ? -1 : 1,
-            );
+            openNodes.sort((n1: Node, n2: Node): number => (n1.f < n2.f ? -1 : 1));
             currentNode = openNodes.shift();
         }
 

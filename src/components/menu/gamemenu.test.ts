@@ -29,48 +29,34 @@ describe("GameMenu", () => {
 
         it("reveals the player count select when Configure players is clicked", async () => {
             const screen = await renderMenu();
-            await screen
-                .getByRole("button", { name: /Configure players/ })
-                .click();
-            await expect
-                .element(screen.getByLabelText("Number of players:"))
-                .toBeVisible();
+            await screen.getByRole("button", { name: /Configure players/ }).click();
+            await expect.element(screen.getByLabelText("Number of players:")).toBeVisible();
         });
 
         it("renders 7 options in the player count select (2–8 players)", async () => {
             const screen = await renderMenu();
-            const playerSelect = screen
-                .getByLabelText("Number of players:")
-                .element() as HTMLSelectElement;
+            const playerSelect = screen.getByLabelText("Number of players:").element() as HTMLSelectElement;
             expect(playerSelect.options).toHaveLength(7);
         });
 
         it("renders the board size select", async () => {
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByLabelText("Board size:"))
-                .toBeVisible();
+            await expect.element(screen.getByLabelText("Board size:")).toBeVisible();
         });
 
         it("renders the spell count select", async () => {
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByLabelText("Spell count:"))
-                .toBeVisible();
+            await expect.element(screen.getByLabelText("Spell count:")).toBeVisible();
         });
 
         it("renders the Start Game button", async () => {
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByRole("button", { name: "Start Game" }))
-                .toBeVisible();
+            await expect.element(screen.getByRole("button", { name: "Start Game" })).toBeVisible();
         });
 
         it("defaults to 2 players", async () => {
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByLabelText("Number of players:"))
-                .toHaveValue("2");
+            await expect.element(screen.getByLabelText("Number of players:")).toHaveValue("2");
         });
     });
 
@@ -113,9 +99,7 @@ describe("GameMenu", () => {
                 }),
             );
             const screen = await renderMenu();
-            await expect
-                .element(screen.getByLabelText("Number of players:"))
-                .toHaveValue("4");
+            await expect.element(screen.getByLabelText("Number of players:")).toHaveValue("4");
         });
     });
 
@@ -136,28 +120,17 @@ describe("GameMenu", () => {
             );
             const screen = await renderMenu();
             // The watcher should have upgraded boardSize from 9 to 13.
-            await expect
-                .element(screen.getByLabelText("Board size:"))
-                .toHaveValue("13");
+            await expect.element(screen.getByLabelText("Board size:")).toHaveValue("13");
         });
 
         it("disables the small board option for more than 4 players", async () => {
             const screen = await renderMenu();
             // Open the player config dialog to access the player count select
-            await screen
-                .getByRole("button", { name: /Configure players/ })
-                .click();
+            await screen.getByRole("button", { name: /Configure players/ }).click();
             // Switch to 5 players
-            await userEvent.selectOptions(
-                screen.getByLabelText("Number of players:"),
-                "5",
-            );
-            const boardSizeSelect = screen
-                .getByLabelText("Board size:")
-                .element() as HTMLSelectElement;
-            const smallOption = Array.from(boardSizeSelect.options).find(
-                (o) => o.value === "9",
-            );
+            await userEvent.selectOptions(screen.getByLabelText("Number of players:"), "5");
+            const boardSizeSelect = screen.getByLabelText("Board size:").element() as HTMLSelectElement;
+            const smallOption = Array.from(boardSizeSelect.options).find((o) => o.value === "9");
             expect(smallOption?.disabled).toBe(true);
         });
     });

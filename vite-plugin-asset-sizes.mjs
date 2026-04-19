@@ -22,7 +22,7 @@ const PHASER_ASSET_FILES = new Set([
     "chaossounds.json",
     "rexcolorreplacepipelineplugin.min.js",
     "rain.png",
-    "rain.json"
+    "rain.json",
 ]);
 
 /**
@@ -108,9 +108,7 @@ export function phaserAssetSizesPlugin() {
 
             // --- Audio: one format per stem ---
             const audioFiles = files.filter((f) => /\.(ogg|mp3|m4a)$/.test(f));
-            const audioStems = new Set(
-                audioFiles.map((f) => f.replace(/\.(ogg|mp3|m4a)$/, "")),
-            );
+            const audioStems = new Set(audioFiles.map((f) => f.replace(/\.(ogg|mp3|m4a)$/, "")));
             for (const stem of audioStems) {
                 const file = preferredAudioFile(stem, files);
                 if (file) {
@@ -148,8 +146,7 @@ export function phaserAssetSizesPlugin() {
                 "//",
                 "// Assets counted (bytes, uncompressed):",
                 ...counted.map(
-                    ({ file, size, note }) =>
-                        `//   ${file.padEnd(48)} ${String(size).padStart(9)} B  (${note})`,
+                    ({ file, size, note }) => `//   ${file.padEnd(48)} ${String(size).padStart(9)} B  (${note})`,
                 ),
                 `//   ${"TOTAL".padEnd(48)} ${String(total).padStart(9)} B`,
                 "",
@@ -158,10 +155,7 @@ export function phaserAssetSizesPlugin() {
                 "",
             ];
 
-            writeFileSync(
-                join(process.cwd(), "src/game/asset-sizes.ts"),
-                lines.join("\n"),
-            );
+            writeFileSync(join(process.cwd(), "src/game/asset-sizes.ts"), lines.join("\n"));
             console.info(
                 `\n[phaser-asset-sizes] Counted ${counted.length} assets — ` +
                     `total ${(total / 1024 / 1024).toFixed(2)} MB`,

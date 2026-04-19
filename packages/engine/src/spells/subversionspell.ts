@@ -12,22 +12,13 @@ import { Point } from "../point";
  * magic resistance.
  */
 export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.owner !== this.owner);
         if (!target) {
             return false;
         }
 
-        const rollSuccess: boolean = this._board.roll(
-            10,
-            target.stats.magicResistance,
-            this._owner,
-        );
+        const rollSuccess: boolean = this._board.roll(10, target.stats.magicResistance, this._owner);
 
         this._board.events.emit(EngineEvent.EffectRequested, {
             sound: "cast-beam",
@@ -46,14 +37,9 @@ export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
                 pieceId: target.id,
             });
             target.owner = this.owner;
-            this._board.logger.log(
-                `${target.name} was subverted and now belongs to ${owner.name}`,
-            );
+            this._board.logger.log(`${target.name} was subverted and now belongs to ${owner.name}`);
         } else {
-            this._board.logger.log(
-                `${target.name} resisted ${this.name}`,
-                Colour.Magenta,
-            );
+            this._board.logger.log(`${target.name} resisted ${this.name}`, Colour.Magenta);
         }
         await this._board.idleDelay();
         return true;

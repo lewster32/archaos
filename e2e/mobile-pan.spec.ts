@@ -20,10 +20,7 @@ async function waitForBoard(page: import("@playwright/test").Page) {
  * Helper: wait until a player's turn has started (currentPlayer is set).
  */
 async function waitForPlayerTurn(page: import("@playwright/test").Page) {
-    await page.waitForFunction(
-        () => globalThis.currentBoard?.currentPlayer != null,
-        { timeout: 15_000 },
-    );
+    await page.waitForFunction(() => globalThis.currentBoard?.currentPlayer != null, { timeout: 15_000 });
 }
 
 test.describe("Mobile camera panning", () => {
@@ -32,9 +29,7 @@ test.describe("Mobile camera panning", () => {
         await waitForBoard(page);
     });
 
-    test("camera viewport is narrower than board on mobile", async ({
-        page,
-    }) => {
+    test("camera viewport is narrower than board on mobile", async ({ page }) => {
         const result = await page.evaluate(() => {
             const board = globalThis.currentBoard;
             const camera = board.scene.cameras.main;
@@ -50,9 +45,7 @@ test.describe("Mobile camera panning", () => {
         expect(result.cameraWidth).toBeLessThan(result.boundsWidth);
     });
 
-    test("camera viewport is shorter than board on mobile", async ({
-        page,
-    }) => {
+    test("camera viewport is shorter than board on mobile", async ({ page }) => {
         const result = await page.evaluate(() => {
             const board = globalThis.currentBoard;
             const camera = board.scene.cameras.main;
@@ -66,17 +59,13 @@ test.describe("Mobile camera panning", () => {
         expect(result.cameraHeight).toBeLessThan(result.boundsHeight);
     });
 
-    test("auto-pans to first player's wizard on turn start", async ({
-        page,
-    }) => {
+    test("auto-pans to first player's wizard on turn start", async ({ page }) => {
         await waitForPlayerTurn(page);
 
         // Allow the pan tween to complete (shortDelay is enabled in the scenario)
         await page.waitForTimeout(500);
 
-        const scrollX = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const scrollX = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         // Player 1 wizard is at grid (34, 0) → iso x ≈ 476.
         // Camera should have scrolled right, so scrollX should be positive
@@ -88,9 +77,7 @@ test.describe("Mobile camera panning", () => {
         await waitForPlayerTurn(page);
         await page.waitForTimeout(500);
 
-        const firstScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const firstScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         // Skip the first player's turn via the EndTurn event
         await page.evaluate(() => {
@@ -100,15 +87,10 @@ test.describe("Mobile camera panning", () => {
         await page.waitForTimeout(500);
 
         // Wait for second player's turn
-        await page.waitForFunction(
-            () => globalThis.currentBoard?.currentPlayer?.name === "Left",
-            { timeout: 15_000 },
-        );
+        await page.waitForFunction(() => globalThis.currentBoard?.currentPlayer?.name === "Left", { timeout: 15_000 });
         await page.waitForTimeout(500);
 
-        const secondScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const secondScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         // "Left" wizard is at grid (0, 34) → iso x ≈ -476 (far left).
         // Camera should have scrolled left, so scrollX should be much less
@@ -121,9 +103,7 @@ test.describe("Mobile camera panning", () => {
         await waitForPlayerTurn(page);
         await page.waitForTimeout(500);
 
-        const initialScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const initialScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         // Perform a horizontal drag on the canvas
         const canvas = page.locator("canvas");
@@ -142,9 +122,7 @@ test.describe("Mobile camera panning", () => {
         await page.mouse.move(startX + 80, startY, { steps: 10 });
         await page.mouse.up();
 
-        const newScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const newScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         // Dragging right should decrease scrollX (panning the view left)
         expect(newScrollX).toBeLessThan(initialScrollX);
@@ -154,9 +132,7 @@ test.describe("Mobile camera panning", () => {
         await waitForPlayerTurn(page);
         await page.waitForTimeout(500);
 
-        const initialScrollY: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollY,
-        );
+        const initialScrollY: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollY);
 
         const canvas = page.locator("canvas");
         const box = await canvas.boundingBox();
@@ -171,9 +147,7 @@ test.describe("Mobile camera panning", () => {
         await page.mouse.move(startX, startY - 40, { steps: 10 });
         await page.mouse.up();
 
-        const newScrollY: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollY,
-        );
+        const newScrollY: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollY);
 
         // Dragging up should increase scrollY (panning the view down)
         expect(newScrollY).toBeGreaterThan(initialScrollY);
@@ -181,9 +155,7 @@ test.describe("Mobile camera panning", () => {
 });
 
 test.describe("Viewport transition panning", () => {
-    test("canvas resizes correctly when viewport narrows past the threshold then further", async ({
-        page,
-    }) => {
+    test("canvas resizes correctly when viewport narrows past the threshold then further", async ({ page }) => {
         // Start with a wide viewport
         await page.setViewportSize({ width: 1200, height: 874 });
         await page.goto("/?scenario=mobile");
@@ -203,15 +175,11 @@ test.describe("Viewport transition panning", () => {
 
         // The camera width must track the actual viewport, not the width
         // when the media query first matched.
-        const cameraWidth = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.width,
-        );
+        const cameraWidth = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.width);
         expect(cameraWidth).toBe(Math.floor(402 / 2));
     });
 
-    test("drag-to-pan works after narrowing viewport in two steps", async ({
-        page,
-    }) => {
+    test("drag-to-pan works after narrowing viewport in two steps", async ({ page }) => {
         await page.setViewportSize({ width: 1200, height: 874 });
         await page.goto("/?scenario=mobile");
         await waitForBoard(page);
@@ -224,9 +192,7 @@ test.describe("Viewport transition panning", () => {
         await page.setViewportSize({ width: 402, height: 874 });
         await page.waitForTimeout(300);
 
-        const initialScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const initialScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         const canvas = page.locator("canvas");
         const box = await canvas.boundingBox();
@@ -243,9 +209,7 @@ test.describe("Viewport transition panning", () => {
         await page.mouse.move(startX + 80, startY, { steps: 10 });
         await page.mouse.up();
 
-        const newScrollX: number = await page.evaluate(
-            () => globalThis.currentBoard.scene.cameras.main.scrollX,
-        );
+        const newScrollX: number = await page.evaluate(() => globalThis.currentBoard.scene.cameras.main.scrollX);
 
         expect(newScrollX).toBeLessThan(initialScrollX);
     });

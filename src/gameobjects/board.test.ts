@@ -18,9 +18,7 @@ describe("weightedRandomPick", () => {
     const rng = new StatisticalRNG();
 
     it("throws on an empty array", () => {
-        expect(() => weightedRandomPick(rng, [], 1)).toThrow(
-            "Cannot pick from an empty array",
-        );
+        expect(() => weightedRandomPick(rng, [], 1)).toThrow("Cannot pick from an empty array");
     });
 
     it("always returns the only element for a single-element array", () => {
@@ -171,8 +169,7 @@ describe("weightedRandomPick", () => {
         });
 
         it("matches expected probabilities for exponential weight=+2", () => {
-            const total =
-                Math.exp(0) + Math.exp(2 / 3) + Math.exp(4 / 3) + Math.exp(2);
+            const total = Math.exp(0) + Math.exp(2 / 3) + Math.exp(4 / 3) + Math.exp(2);
             const expected = [
                 Math.exp(0) / total,
                 Math.exp(2 / 3) / total,
@@ -181,9 +178,7 @@ describe("weightedRandomPick", () => {
             ];
             const { counts } = sample(indices, 2, N, true);
             for (let i = 0; i < indices.length; i++) {
-                expect(Math.abs(counts[i] / N - expected[i])).toBeLessThan(
-                    TOLERANCE,
-                );
+                expect(Math.abs(counts[i] / N - expected[i])).toBeLessThan(TOLERANCE);
             }
         });
 

@@ -84,28 +84,20 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
     }
 
     protected roll(): boolean {
-        return (
-            this.illusion || this._board.rollChance(this.chance, this._owner)
-        );
+        return this.illusion || this._board.rollChance(this.chance, this._owner);
     }
 
     getValidTarget(target: Point | P, showReason?: boolean): Point | null {
         if (Piece.isPiece(target)) {
             if (showReason) {
-                this._board.logger.log(
-                    `${this.name} cannot be cast in occupied positions`,
-                    Colour.Magenta,
-                );
+                this._board.logger.log(`${this.name} cannot be cast in occupied positions`, Colour.Magenta);
             }
             return null;
         }
         const targetPoint: Point = target;
         if (!this.inCastingRange(targetPoint)) {
             if (showReason) {
-                this._board.logger.log(
-                    `${this.name} target is out of range`,
-                    Colour.Magenta,
-                );
+                this._board.logger.log(`${this.name} target is out of range`, Colour.Magenta);
             }
             return null;
         }
@@ -113,21 +105,15 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
             return null;
         }
 
-        const targetPieces: P[] = this._board.getPiecesAtPosition(
-            targetPoint,
-            (piece: P) => {
-                return !piece.currentMount && !piece.engulfed && !piece.dead;
-            },
-        );
+        const targetPieces: P[] = this._board.getPiecesAtPosition(targetPoint, (piece: P) => {
+            return !piece.currentMount && !piece.engulfed && !piece.dead;
+        });
 
         // Summon spells
         if (this._properties.target === SpellTarget.Empty) {
             if (targetPieces.length > 0) {
                 if (showReason) {
-                    this._board.logger.log(
-                        `${this.name} must be cast in an empty position`,
-                        Colour.Magenta,
-                    );
+                    this._board.logger.log(`${this.name} must be cast in an empty position`, Colour.Magenta);
                 }
                 return null;
             }
@@ -173,8 +159,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                projectileType:
-                    unit.projectileType || UnitRangedProjectileType.Arrow,
+                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: unit.status || [],
             },
             shadowScale: unit.shadowScale,
@@ -198,10 +183,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
 
         newPiece.turnOver = true;
 
-        this._board.logger.log(
-            `${owner.name} successfully casts '${this.name}'`,
-            Colour.Green,
-        );
+        this._board.logger.log(`${owner.name} successfully casts '${this.name}'`, Colour.Green);
 
         return newPiece;
     }
@@ -218,8 +200,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
      *          to be cancelled entirely before any cast succeeded
      */
     async autoCast(player: Player<P>): Promise<boolean> {
-        const isSpreading: boolean =
-            this.unitProperties?.status?.includes(UnitStatus.Spreads) ?? false;
+        const isSpreading: boolean = this.unitProperties?.status?.includes(UnitStatus.Spreads) ?? false;
         const isWall: boolean = this.name === "Wall";
         const wizardPos: Point | null = player.castingPiece?.position ?? null;
         // Track the last two wall positions across casts to infer run direction.
@@ -241,9 +222,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
             }
 
             if (!validTiles.length) {
-                console.debug(
-                    `${player.name} has no valid tiles to cast ${this.name}`,
-                );
+                console.debug(`${player.name} has no valid tiles to cast ${this.name}`);
                 if (successfullyCast) {
                     player.discardSpell();
                 }
@@ -264,13 +243,12 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
                 this.unitProperties?.status?.includes(UnitStatus.Structure) &&
                 this.unitProperties?.status?.includes(UnitStatus.Invulnerable)
             ) {
-                chosenTile = this._board.rng.pick(validTiles.filter((pt) =>
-                    Board.distance(pt, wizardPos ?? new Point()) <= 1.5,
-                ));
+                chosenTile = this._board.rng.pick(
+                    validTiles.filter((pt) => Board.distance(pt, wizardPos ?? new Point()) <= 1.5),
+                );
                 if (chosenTile) {
                     console.debug(
-                        `${player.name} is casting ${this.name} adjacent to ` +
-                        `the wizard for immediate mounting`,
+                        `${player.name} is casting ${this.name} adjacent to ` + `the wizard for immediate mounting`,
                     );
                     await this._board.rules.doCastSpell(this._board, chosenTile);
                     successfullyCast = true;
@@ -278,38 +256,17 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
                 }
             }
 
-            if (
-                isSpreading &&
-                this._board.rollChance(0.5 + (player.ai?.difficulty ?? 0) * 0.5)
-            ) {
-                chosenTile = this.selectSpreadingTile(
-                    player,
-                    wizardPos,
-                    validTiles,
-                );
+            if (isSpreading && this._board.rollChance(0.5 + (player.ai?.difficulty ?? 0) * 0.5)) {
+                chosenTile = this.selectSpreadingTile(player, wizardPos, validTiles);
             } else if (this.properties.autoPlace) {
                 chosenTile = this.selectMagicWoodTile(wizardPos, validTiles);
-            } else if (
-                this.properties.tree &&
-                this.unitProperties?.properties.com > 0
-            ) {
-                chosenTile = this.selectShadowWoodTile(
-                    player,
-                    wizardPos,
-                    validTiles,
-                );
+            } else if (this.properties.tree && this.unitProperties?.properties.com > 0) {
+                chosenTile = this.selectShadowWoodTile(player, wizardPos, validTiles);
             } else if (isWall) {
-                const result = this.trySelectWallTile(
-                    player,
-                    wizardPos,
-                    validTiles,
-                    lastWallPt,
-                    prevWallPt,
-                );
+                const result = this.trySelectWallTile(player, wizardPos, validTiles, lastWallPt, prevWallPt);
                 if (result === null) {
                     console.debug(
-                        `${player.name} cancelled remaining wall casts — ` +
-                            `all valid tiles are adjacent to wizard`,
+                        `${player.name} cancelled remaining wall casts — ` + `all valid tiles are adjacent to wizard`,
                     );
                     if (successfullyCast) {
                         player.discardSpell();
@@ -326,11 +283,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
             } else {
                 const difficulty = player.ai?.difficulty ?? 0;
                 if (this._board.rollChance(difficulty)) {
-                    chosenTile = this.selectDefaultTile(
-                        player,
-                        wizardPos,
-                        validTiles,
-                    );
+                    chosenTile = this.selectDefaultTile(player, wizardPos, validTiles);
                 } else {
                     console.debug(
                         `${player.name} is casting ${this.name} with no ` +
@@ -356,16 +309,9 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
      * tiles closest to it — either blocking the threat's path to the wizard
      * or staging the summoned unit for a short approach.
      */
-    private selectDefaultTile(
-        player: Player<P>,
-        wizardPos: Point | null,
-        validTiles: Point[],
-    ): Point {
+    private selectDefaultTile(player: Player<P>, wizardPos: Point | null, validTiles: Point[]): Point {
         const enemies: P[] = this._board.pieces.filter(
-            (p: P) =>
-                p.owner !== player &&
-                !p.dead &&
-                !p.hasStatus(UnitStatus.Structure),
+            (p: P) => p.owner !== player && !p.dead && !p.hasStatus(UnitStatus.Structure),
         );
 
         if (enemies.length > 0 && wizardPos) {
@@ -390,9 +336,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
 
             // Sort tiles ascending by distance to the threat — closer first
             validTiles.sort(
-                (a, b) =>
-                    Board.distance(a, highestThreat.position) -
-                    Board.distance(b, highestThreat.position),
+                (a, b) => Board.distance(a, highestThreat.position) - Board.distance(b, highestThreat.position),
             );
         }
 
@@ -407,30 +351,17 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
      * near enemies so the spread engulfs them; falls back to tiles far from
      * the wizard when no enemies are present.
      */
-    private selectSpreadingTile(
-        player: Player<P>,
-        wizardPos: Point | null,
-        validTiles: Point[],
-    ): Point {
-        const enemies: P[] = this._board.pieces.filter(
-            (p: P) => p.owner !== player && !p.dead,
-        );
+    private selectSpreadingTile(player: Player<P>, wizardPos: Point | null, validTiles: Point[]): Point {
+        const enemies: P[] = this._board.pieces.filter((p: P) => p.owner !== player && !p.dead);
         if (enemies.length > 0) {
             validTiles.sort((a, b) => {
-                const nearestA = Math.min(
-                    ...enemies.map((e) => Board.distance(a, e.position)),
-                );
-                const nearestB = Math.min(
-                    ...enemies.map((e) => Board.distance(b, e.position)),
-                );
+                const nearestA = Math.min(...enemies.map((e) => Board.distance(a, e.position)));
+                const nearestB = Math.min(...enemies.map((e) => Board.distance(b, e.position)));
                 return nearestA - nearestB; // ascending: closest to enemy first
             });
         } else if (wizardPos) {
             // No enemies — at least cast away from ourselves
-            validTiles.sort(
-                (a, b) =>
-                    Board.distance(b, wizardPos) - Board.distance(a, wizardPos),
-            );
+            validTiles.sort((a, b) => Board.distance(b, wizardPos) - Board.distance(a, wizardPos));
         }
         return this._board.rng.weightedPick(validTiles); // favours earlier (better) entries
     }
@@ -440,15 +371,9 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
      * so the wizard can quickly mount them for protection or escape.
      * The no-adjacent-tree rule prevents over-clustering.
      */
-    private selectMagicWoodTile(
-        wizardPos: Point | null,
-        validTiles: Point[],
-    ): Point {
+    private selectMagicWoodTile(wizardPos: Point | null, validTiles: Point[]): Point {
         if (wizardPos) {
-            validTiles.sort(
-                (a, b) =>
-                    Board.distance(a, wizardPos) - Board.distance(b, wizardPos),
-            );
+            validTiles.sort((a, b) => Board.distance(a, wizardPos) - Board.distance(b, wizardPos));
         }
         // Favour closer tiles much more heavily to create tight clusters
         return this._board.rng.weightedRandomPick(validTiles, -4);
@@ -459,36 +384,21 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
      * enemy line-of-sight to the wizard, and by proximity to enemies so the
      * trees can attack them in melee each turn.
      */
-    private selectShadowWoodTile(
-        player: Player<P>,
-        wizardPos: Point | null,
-        validTiles: Point[],
-    ): Point {
-        const enemies: P[] = this._board.pieces.filter(
-            (p: P) => p.owner !== player && !p.dead,
-        );
+    private selectShadowWoodTile(player: Player<P>, wizardPos: Point | null, validTiles: Point[]): Point {
+        const enemies: P[] = this._board.pieces.filter((p: P) => p.owner !== player && !p.dead);
         if (enemies.length > 0 && wizardPos) {
             const scores: Map<Point, number> = new Map();
             for (const tile of validTiles) {
                 let score = 0;
                 for (const enemy of enemies) {
-                    score += this.scoreLoSBlock(
-                        tile,
-                        enemy.position,
-                        wizardPos,
-                    );
+                    score += this.scoreLoSBlock(tile, enemy.position, wizardPos);
                     // Proximity bonus: Shadow Wood attacks adjacent enemies
-                    score += Math.max(
-                        0,
-                        3 - Board.distance(tile, enemy.position),
-                    );
+                    score += Math.max(0, 3 - Board.distance(tile, enemy.position));
                 }
                 scores.set(tile, score);
             }
             // Sort descending — best tile at index 0 for weightedPick
-            validTiles.sort(
-                (a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0),
-            );
+            validTiles.sort((a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0));
         }
         // Favour higher-scoring tiles, but still allow some randomness so
         // placement isn't too predictable
@@ -512,13 +422,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
         prevWallPt: Point | null,
     ): Point | null {
         const candidates: Point[] = wizardPos
-            ? validTiles.filter(
-                  (t) =>
-                      Math.max(
-                          Math.abs(t.x - wizardPos.x),
-                          Math.abs(t.y - wizardPos.y),
-                      ) > 1,
-              )
+            ? validTiles.filter((t) => Math.max(Math.abs(t.x - wizardPos.x), Math.abs(t.y - wizardPos.y)) > 1)
             : validTiles.slice();
 
         if (candidates.length === 0) {
@@ -526,15 +430,9 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
         }
 
         const difficulty: number = player.ai?.difficulty ?? 0.5;
-        const enemies: P[] = this._board.pieces.filter(
-            (p: P) => p.owner !== player && !p.dead,
-        );
+        const enemies: P[] = this._board.pieces.filter((p: P) => p.owner !== player && !p.dead);
 
-        if (
-            enemies.length > 0 &&
-            wizardPos &&
-            this._board.rollChance(0.3 + difficulty * 0.7)
-        ) {
+        if (enemies.length > 0 && wizardPos && this._board.rollChance(0.3 + difficulty * 0.7)) {
             // Infer run direction from the previous two wall positions
             let wallDirX = 0;
             let wallDirY = 0;
@@ -549,19 +447,12 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
 
                 // LoS-blocking score
                 for (const enemy of enemies) {
-                    score += this.scoreLoSBlock(
-                        tile,
-                        enemy.position,
-                        wizardPos,
-                    );
+                    score += this.scoreLoSBlock(tile, enemy.position, wizardPos);
                 }
 
                 // Contiguity: prefer tiles touching the last placed wall
                 if (lastWallPt) {
-                    const chebyDist = Math.max(
-                        Math.abs(tile.x - lastWallPt.x),
-                        Math.abs(tile.y - lastWallPt.y),
-                    );
+                    const chebyDist = Math.max(Math.abs(tile.x - lastWallPt.x), Math.abs(tile.y - lastWallPt.y));
                     if (chebyDist === 1) {
                         score += 4;
                         // Direction: reward straight runs and clean 90-degree turns
@@ -579,9 +470,7 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
 
                 scores.set(tile, score);
             }
-            candidates.sort(
-                (a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0),
-            );
+            candidates.sort((a, b) => (scores.get(b) ?? 0) - (scores.get(a) ?? 0));
         }
 
         return this._board.rng.weightedRandomPick(candidates, -8); // favour higher-scoring tiles, but with some randomness

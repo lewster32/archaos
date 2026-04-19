@@ -28,10 +28,7 @@ const mockBoard = vi.mocked({
  * than a real Spell instance to avoid the real owner setter throwing when
  * castingPiece is null (which it always is in unit tests).
  */
-function makeSpell(
-    id: number,
-    opts: { persist?: boolean; castTimes?: number } = {},
-): Spell {
+function makeSpell(id: number, opts: { persist?: boolean; castTimes?: number } = {}): Spell {
     const { persist = false, castTimes = 1 } = opts;
     let _castTimes = castTimes;
     return {
@@ -70,9 +67,7 @@ function makeMockPiece(id: number, owner: Player, isWizard = false) {
 describe("Player", () => {
     describe("constructor validation", () => {
         it("throws when no config is provided", () => {
-            expect(
-                () => new Player(mockBoard, 1, null as any, 0x0000ff),
-            ).toThrow("Player must be given a config");
+            expect(() => new Player(mockBoard, 1, null as any, 0x0000ff)).toThrow("Player must be given a config");
         });
     });
 
@@ -80,12 +75,7 @@ describe("Player", () => {
         let player: Player;
 
         beforeEach(() => {
-            player = new Player(
-                mockBoard,
-                1,
-                { name: "Alice", type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            player = new Player(mockBoard, 1, { name: "Alice", type: GameSetupPlayerType.Local }, 0x0000ff);
         });
 
         it("returns the configured name", () => {
@@ -93,32 +83,17 @@ describe("Player", () => {
         });
 
         it("returns a default name when none is provided", () => {
-            const p = new Player(
-                mockBoard,
-                3,
-                { type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            const p = new Player(mockBoard, 3, { type: GameSetupPlayerType.Local }, 0x0000ff);
             expect(p.name).toBe("Player 3");
         });
 
         it("returns a default name when a blank name is provided", () => {
-            const p = new Player(
-                mockBoard,
-                4,
-                { name: "   ", type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            const p = new Player(mockBoard, 4, { name: "   ", type: GameSetupPlayerType.Local }, 0x0000ff);
             expect(p.name).toBe("Player 4");
         });
 
         it("returns a default name when none is provided", () => {
-            const p = new Player(
-                mockBoard,
-                3,
-                { type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            const p = new Player(mockBoard, 3, { type: GameSetupPlayerType.Local }, 0x0000ff);
             expect(p.name).toBe("Player 3");
         });
 
@@ -157,12 +132,7 @@ describe("Player", () => {
         });
 
         it("generates a random wizCode when not provided", () => {
-            const p = new Player(
-                mockBoard,
-                6,
-                { name: "Dana", type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            const p = new Player(mockBoard, 6, { name: "Dana", type: GameSetupPlayerType.Local }, 0x0000ff);
             expect(p.wizCode).toMatch(/^[0-9a-f]{10}$/);
         });
     });
@@ -171,12 +141,7 @@ describe("Player", () => {
         let player: Player;
 
         beforeEach(() => {
-            player = new Player(
-                mockBoard,
-                1,
-                { name: "Bob", type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            player = new Player(mockBoard, 1, { name: "Bob", type: GameSetupPlayerType.Local }, 0x0000ff);
             // castingPiece must be set so that addSpell can set spell.owner
             // (with our mock spells this is not needed, but real Spell would need it)
         });
@@ -209,9 +174,7 @@ describe("Player", () => {
             });
 
             it("throws when the player does not have the requested spell", async () => {
-                await expect(player.pickSpell(999)).rejects.toThrow(
-                    "This player does not have that spell",
-                );
+                await expect(player.pickSpell(999)).rejects.toThrow("This player does not have that spell");
             });
         });
 
@@ -367,12 +330,7 @@ describe("Player", () => {
         let player: Player;
 
         beforeEach(() => {
-            player = new Player(
-                mockBoard,
-                1,
-                { name: "Bob", type: GameSetupPlayerType.Local },
-                0x0000ff,
-            );
+            player = new Player(mockBoard, 1, { name: "Bob", type: GameSetupPlayerType.Local }, 0x0000ff);
         });
 
         it("starts as not defeated", () => {
@@ -388,11 +346,7 @@ describe("Player", () => {
             const wizardPiece = makeMockPiece(1, player, true);
             const piece1 = makeMockPiece(2, player, false);
             const piece2 = makeMockPiece(3, player, false);
-            mockBoard.getPiecesByOwner.mockReturnValue([
-                wizardPiece,
-                piece1,
-                piece2,
-            ]);
+            mockBoard.getPiecesByOwner.mockReturnValue([wizardPiece, piece1, piece2]);
             await player.defeat();
             expect(piece1.destroy).toHaveBeenCalledTimes(1);
             expect(piece2.destroy).toHaveBeenCalledTimes(1);
@@ -401,10 +355,7 @@ describe("Player", () => {
 
         it("logs a defeat message", () => {
             player.defeat();
-            expect(mockBoard.logger.log).toHaveBeenCalledWith(
-                `Game over for ${player.name}`,
-                Colour.Red,
-            );
+            expect(mockBoard.logger.log).toHaveBeenCalledWith(`Game over for ${player.name}`, Colour.Red);
         });
     });
 });

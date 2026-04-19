@@ -69,13 +69,7 @@ export class Player<P extends Piece = Piece> extends Model {
      * @param colour The colour of this player.
      * @param remote Optional remote player controller.
      */
-    constructor(
-        board: Board<P>,
-        id: number,
-        config: PlayerConfig,
-        colour: number,
-        remote?: RemotePlayer | null,
-    ) {
+    constructor(board: Board<P>, id: number, config: PlayerConfig, colour: number, remote?: RemotePlayer | null) {
         super(id);
         if (!config) {
             throw new Error("Player must be given a config");
@@ -139,10 +133,7 @@ export class Player<P extends Piece = Piece> extends Model {
 
     set castingPiece(piece: P | null) {
         if (piece && piece.owner !== this) {
-            throw new Error(
-                "Cannot set casting piece to a " +
-                    "piece not owned by this player",
-            );
+            throw new Error("Cannot set casting piece to a " + "piece not owned by this player");
         }
         this._castingPiece = piece;
     }

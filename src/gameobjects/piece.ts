@@ -160,8 +160,7 @@ export class Piece extends EnginePiece {
         for (let i = 0; i < Piece.DEFAULT_FLASH_HIGHLIGHT_STEPS; i++) {
             this._sprite.setTint(0xffffff).setTintMode(TintModes.FILL);
             await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
-            this._sprite.setTint(this.owner?.colour ?? 0x000000)
-                .setTintMode(TintModes.FILL);
+            this._sprite.setTint(this.owner?.colour ?? 0x000000).setTintMode(TintModes.FILL);
             await this.clientBoard.delay(Piece.DEFAULT_FLASH_HIGHLIGHT_DURATION);
         }
         this._sprite.clearTint();
@@ -191,17 +190,11 @@ export class Piece extends EnginePiece {
         super.engulfed = engulfed;
         setTimeout(() => {
             if (this.engulfed) {
-                this.clientBoard.logger.log(
-                    `${this.name} was engulfed`,
-                    Colour.Magenta,
-                );
+                this.clientBoard.logger.log(`${this.name} was engulfed`, Colour.Magenta);
                 this.sprite?.setVisible(false);
                 this.shadow?.setVisible(false);
             } else {
-                this.clientBoard.logger.log(
-                    `${this.name} was released`,
-                    Colour.Green,
-                );
+                this.clientBoard.logger.log(`${this.name} was released`, Colour.Green);
                 this.sprite?.setVisible(true);
                 this.shadow?.setVisible(true);
             }
@@ -241,16 +234,10 @@ export class Piece extends EnginePiece {
         if (state) {
             if (this._raisedDead) {
                 this._sprite.setTint(
-                    Display.Color.ValueToColor(Piece.RAISED_DEAD_TINT).darken(
-                        Piece.MOVED_DARKEN_AMOUNT,
-                    ).color,
+                    Display.Color.ValueToColor(Piece.RAISED_DEAD_TINT).darken(Piece.MOVED_DARKEN_AMOUNT).color,
                 );
             } else {
-                this._sprite.setTint(
-                    Display.Color.ValueToColor(0xffffff).darken(
-                        Piece.MOVED_DARKEN_AMOUNT,
-                    ).color,
-                );
+                this._sprite.setTint(Display.Color.ValueToColor(0xffffff).darken(Piece.MOVED_DARKEN_AMOUNT).color);
             }
             this.highlighted = false;
         } else if (this._raisedDead) {
@@ -277,9 +264,7 @@ export class Piece extends EnginePiece {
 
         // When dismounting, make the piece visible again,
         // but if we still have shadow form, keep it semi-transparent
-        const visibleAlpha: number = this.hasStatus(UnitStatus.ShadowForm)
-            ? Piece.SHADOW_FORM_ALPHA
-            : 1;
+        const visibleAlpha: number = this.hasStatus(UnitStatus.ShadowForm) ? Piece.SHADOW_FORM_ALPHA : 1;
 
         this.clientBoard.scene.tweens.add({
             targets: [this._sprite, this._shadow, ...this._effects.values()],
@@ -333,22 +318,15 @@ export class Piece extends EnginePiece {
     /**
      * Visually update the position of this piece on the board with a tween.
      */
-    async updatePosition(
-        duration: number = Piece.DEFAULT_MOVE_DURATION,
-    ): Promise<void> {
+    async updatePosition(duration: number = Piece.DEFAULT_MOVE_DURATION): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 return;
             }
 
-            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-                this.position,
-            );
+            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
-            const difference: number = Board.distance(
-                new PMath.Vector2(this._sprite.x, this._sprite.y),
-                isoPosition,
-            );
+            const difference: number = Board.distance(new PMath.Vector2(this._sprite.x, this._sprite.y), isoPosition);
 
             // A little hop for the piece as it moves
             this.clientBoard.scene.tweens.add({
@@ -389,18 +367,13 @@ export class Piece extends EnginePiece {
      * Update the facing direction of this piece based on movement from one
      * point to another.
      */
-    protected updateDirection(
-        fromPoint: SimplePoint,
-        toPoint: SimplePoint,
-    ) {
-        const isoXOffset: number =
-            Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
+    protected updateDirection(fromPoint: SimplePoint, toPoint: SimplePoint) {
+        const isoXOffset: number = Board.toIsometric(toPoint).x - Board.toIsometric(fromPoint).x;
 
         if (isoXOffset === 0) {
             return;
         }
-        this.direction =
-            isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
+        this.direction = isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
     }
 
     /**
@@ -423,10 +396,7 @@ export class Piece extends EnginePiece {
             );
 
             // Face the unit towards the target
-            this.updateDirection(
-                this.position,
-                targetPos,
-            );
+            this.updateDirection(this.position, targetPos);
 
             // Arc: swoop upward during the first half then settle at hover height
             this.clientBoard.scene.tweens.add({
@@ -456,9 +426,7 @@ export class Piece extends EnginePiece {
                 onUpdate: () => {
                     // Depth based on ground-plane projection so the hovering
                     // unit sorts correctly relative to other pieces
-                    this._sprite?.setDepth(
-                        this._sprite.y + Piece.HOVER_HEIGHT,
-                    );
+                    this._sprite?.setDepth(this._sprite.y + Piece.HOVER_HEIGHT);
                 },
                 onCompleteScope: this,
                 onComplete: () => {
@@ -474,10 +442,7 @@ export class Piece extends EnginePiece {
      * board position after a failed fly-attack. Does not update the
      * logical position.
      */
-    async flyReturn(
-        originPos: SimplePoint,
-        targetPos: SimplePoint,
-    ): Promise<void> {
+    async flyReturn(originPos: SimplePoint, targetPos: SimplePoint): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 resolve();
@@ -522,9 +487,7 @@ export class Piece extends EnginePiece {
                 onUpdate: () => {
                     // Piece descends from hover height; keep depth based on
                     // ground-plane projection throughout the return
-                    this._sprite?.setDepth(
-                        this._sprite.y + Piece.HOVER_HEIGHT,
-                    );
+                    this._sprite?.setDepth(this._sprite.y + Piece.HOVER_HEIGHT);
                 },
                 onCompleteScope: this,
                 onComplete: () => {
@@ -547,8 +510,7 @@ export class Piece extends EnginePiece {
         }
         if (
             this.currentMount &&
-            !(this.currentMount.position.x === this.position.x &&
-                this.currentMount.position.y === this.position.y)
+            !(this.currentMount.position.x === this.position.x && this.currentMount.position.y === this.position.y)
         ) {
             await this.clientBoard.dismountPiece(this.id);
         }
@@ -596,26 +558,17 @@ export class Piece extends EnginePiece {
     /**
      * Perform an attack on the given piece.
      */
-    override async attack(
-        piece: EnginePiece,
-        options?: { silentMove?: boolean },
-    ): Promise<boolean> {
+    override async attack(piece: EnginePiece, options?: { silentMove?: boolean }): Promise<boolean> {
         if (this.canAttackPiece(piece)) {
             if (!this.canAttackPossiblyUndeadPiece(piece)) {
-                this.clientBoard.logger.log(
-                    `${this.name} cannot attack the undead`,
-                    Colour.Cyan,
-                );
+                this.clientBoard.logger.log(`${this.name} cannot attack the undead`, Colour.Cyan);
                 await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
                 });
                 return false;
             }
 
-            this.updateDirection(
-                this.position,
-                piece.position,
-            );
+            this.updateDirection(this.position, piece.position);
             this.attacked = true;
             this.moved = true;
 
@@ -626,10 +579,7 @@ export class Piece extends EnginePiece {
             );
 
             this.clientBoard.sound.play("attack");
-            this.clientBoard.logger.log(
-                `${this.name} ${this.properties.attackType} ${piece.name}`,
-                Colour.Yellow,
-            );
+            this.clientBoard.logger.log(`${this.name} ${this.properties.attackType} ${piece.name}`, Colour.Yellow);
             await this.clientBoard.playEffect(
                 EffectType.AttackHit,
                 (piece as Piece).sprite.getCenter(),
@@ -644,26 +594,16 @@ export class Piece extends EnginePiece {
             }
 
             if (rollSuccess) {
-                this.clientBoard.logger.log(
-                    `${this.fullName} defeated ${piece.fullName}`,
-                    Colour.Red,
-                );
+                this.clientBoard.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
                 this.clientBoard.sound.play("die");
                 await piece.kill();
                 if (
-                    this.clientBoard.getPiecesAtPosition(
-                        piece.position,
-                        (p: Piece) => {
-                            return !p.dead;
-                        },
-                    ).length === 0 &&
+                    this.clientBoard.getPiecesAtPosition(piece.position, (p: Piece) => {
+                        return !p.dead;
+                    }).length === 0 &&
                     this.canMove
                 ) {
-                    await this.clientBoard.movePiece(
-                        this.id,
-                        piece.position,
-                        options?.silentMove,
-                    );
+                    await this.clientBoard.movePiece(this.id, piece.position, options?.silentMove);
                 }
                 return true;
             }
@@ -680,16 +620,10 @@ export class Piece extends EnginePiece {
                 await this.clientBoard.sound.playAsync("undead", {
                     delay: Board.DEFAULT_DELAY,
                 });
-                this.clientBoard.logger.log(
-                    `${this.name} cannot attack the undead`,
-                    Colour.Cyan,
-                );
+                this.clientBoard.logger.log(`${this.name} cannot attack the undead`, Colour.Cyan);
                 return false;
             }
-            this.updateDirection(
-                this.position,
-                piece.position,
-            );
+            this.updateDirection(this.position, piece.position);
 
             let beamEffectType: EffectType;
             let hitEffectType: EffectType;
@@ -739,12 +673,7 @@ export class Piece extends EnginePiece {
             );
 
             this.clientBoard.sound.play(hitSound);
-            await this.clientBoard.playEffect(
-                hitEffectType,
-                (piece as Piece).sprite.getCenter(),
-                null,
-                piece as Piece,
-            );
+            await this.clientBoard.playEffect(hitEffectType, (piece as Piece).sprite.getCenter(), null, piece as Piece);
 
             this.rangedAttacked = true;
             this.attacked = true;
@@ -756,10 +685,7 @@ export class Piece extends EnginePiece {
                 this.owner as any,
             );
 
-            this.clientBoard.logger.log(
-                `${this.name} ${this.properties.rangedType} ${piece.name}`,
-                Colour.Orange,
-            );
+            this.clientBoard.logger.log(`${this.name} ${this.properties.rangedType} ${piece.name}`, Colour.Orange);
 
             await this.clientBoard.delay(Board.DEFAULT_DELAY / 2);
 
@@ -768,10 +694,7 @@ export class Piece extends EnginePiece {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
                 this.clientBoard.sound.play("die");
-                this.clientBoard.logger.log(
-                    `${this.fullName} defeated ${piece.fullName}`,
-                    Colour.Red,
-                );
+                this.clientBoard.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
                 await piece.kill();
                 return true;
             }
@@ -799,20 +722,11 @@ export class Piece extends EnginePiece {
         this._dead = true;
         this.owner = null;
         if (this.illusion) {
-            await this.clientBoard.playEffect(
-                EffectType.DisbelieveHit,
-                this.sprite.getCenter(),
-            );
+            await this.clientBoard.playEffect(EffectType.DisbelieveHit, this.sprite.getCenter());
             await this.destroy();
-        } else if (
-            this.hasStatus(UnitStatus.NoCorpse) ||
-            this.hasStatus(UnitStatus.Undead)
-        ) {
+        } else if (this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
             silent = true;
-            await this.clientBoard.playEffect(
-                EffectType.NoCorpseDeath,
-                this.sprite.getCenter(),
-            );
+            await this.clientBoard.playEffect(EffectType.NoCorpseDeath, this.sprite.getCenter());
             await this.destroy();
         }
         if (!silent) {
@@ -822,11 +736,7 @@ export class Piece extends EnginePiece {
             this.clientBoard.boardEvents?.emit(BoardEvent.PieceDied, this);
             return;
         }
-        if (
-            this._sprite.texture.has(
-                this._properties.id + `_${this._direction}_d`,
-            )
-        ) {
+        if (this._sprite.texture.has(this._properties.id + `_${this._direction}_d`)) {
             this._sprite.setDepth(this._sprite.depth - 1);
             this.playAnim();
         } else {
@@ -850,13 +760,8 @@ export class Piece extends EnginePiece {
 
         this.currentMount = piece as Piece;
         piece.currentRider = this;
-        await this.clientBoard.movePiece(
-            this.id,
-            piece.position,
-        );
-        this.clientBoard.logger.log(
-            `${this.fullName} mounted ${piece.fullName}`,
-        );
+        await this.clientBoard.movePiece(this.id, piece.position);
+        this.clientBoard.logger.log(`${this.fullName} mounted ${piece.fullName}`);
         (piece as unknown as Piece).createShaders(true, this.owner as any);
     }
 
@@ -871,9 +776,7 @@ export class Piece extends EnginePiece {
 
         this.moved = true;
         this.currentMount.turnOver = true;
-        this.clientBoard.logger.log(
-            `${this.fullName} dismounted ${this.currentMount.fullName}`,
-        );
+        this.clientBoard.logger.log(`${this.fullName} dismounted ${this.currentMount.fullName}`);
         this.currentMount.createShaders(true);
         this.currentMount = null;
     }
@@ -915,10 +818,7 @@ export class Piece extends EnginePiece {
             return;
         }
 
-        this._sprite.anims.playAfterDelay(
-            this._properties.id + `_${this.direction}`,
-            Math.random() * 400,
-        );
+        this._sprite.anims.playAfterDelay(this._properties.id + `_${this.direction}`, Math.random() * 400);
         this._sprite.anims.setProgress(Math.random());
     }
 
@@ -932,9 +832,7 @@ export class Piece extends EnginePiece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
-        );
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
         this._shadow = this.clientBoard.scene.add.image(
             isoPosition.x,
@@ -959,13 +857,9 @@ export class Piece extends EnginePiece {
             return this._sprite;
         }
 
-        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
-        );
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
-        const group: string = Piece.getUnitConfig(this._properties.id).group
-            ? this._properties.id
-            : "classicunits";
+        const group: string = Piece.getUnitConfig(this._properties.id).group ? this._properties.id : "classicunits";
 
         this._sprite = this.clientBoard.scene.add.sprite(
             isoPosition.x,
@@ -1005,22 +899,15 @@ export class Piece extends EnginePiece {
         this._ownerHighlightTween?.stop?.().destroy?.();
 
         const startColor: Display.Color = new Display.Color(0, 0, 0);
-        const endColor: Display.Color = Display.Color.ValueToColor(
-            tempOwner?.colour ?? this.owner?.colour ?? 0,
-        );
+        const endColor: Display.Color = Display.Color.ValueToColor(tempOwner?.colour ?? this.owner?.colour ?? 0);
 
         this._sprite.enableFilters();
-        this._ownerHighlightFilter = new ColorReplaceFilter(
-            this._sprite.filterCamera!,
-            [0, 0, 0],
-            0,
-        );
+        this._ownerHighlightFilter = new ColorReplaceFilter(this._sprite.filterCamera!, [0, 0, 0], 0);
         this._sprite.filters!.internal.add(this._ownerHighlightFilter);
 
-        const tweenColours: Types.Display.ColorObject[] =
-            Array.from<Types.Display.ColorObject>({
-                length: Piece.DEFAULT_HIGHLIGHT_STEPS,
-            });
+        const tweenColours: Types.Display.ColorObject[] = Array.from<Types.Display.ColorObject>({
+            length: Piece.DEFAULT_HIGHLIGHT_STEPS,
+        });
         for (let i = 0; i < Piece.DEFAULT_HIGHLIGHT_STEPS; i++) {
             tweenColours[i] = Display.Color.Interpolate.ColorWithColor(
                 startColor,
@@ -1037,14 +924,9 @@ export class Piece extends EnginePiece {
             repeat: -1,
             yoyo: true,
             onUpdate: (tween) => {
-                const newColor: Types.Display.ColorObject =
-                    tweenColours[Math.round(tween.getValue())];
+                const newColor: Types.Display.ColorObject = tweenColours[Math.round(tween.getValue())];
 
-                this._ownerHighlightFilter!.setNewColor(
-                    newColor.r / 255,
-                    newColor.g / 255,
-                    newColor.b / 255,
-                );
+                this._ownerHighlightFilter!.setNewColor(newColor.r / 255, newColor.g / 255, newColor.b / 255);
             },
         });
 

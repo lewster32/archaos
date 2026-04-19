@@ -11,12 +11,7 @@ import { Point } from "../point";
  * casting wizard.
  */
 export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.dead);
         if (!target) {
             return false;
@@ -37,10 +32,7 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             pieceId: target.id,
         });
         await target.raiseDead(this.owner);
-        this._board.logger.log(
-            `${target.name} was reanimated and now belongs to ${owner.name}`,
-            Colour.LightBlue,
-        );
+        this._board.logger.log(`${target.name} was reanimated and now belongs to ${owner.name}`, Colour.LightBlue);
 
         // Raised dead units are not illusionary, since they came from a
         // corpse and illusionary units don't leave corpses. Ipso facto.

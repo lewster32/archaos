@@ -12,11 +12,7 @@ import { RangeType } from "./enums/rangetype";
  * @param rangeType The movement type
  * @returns The calculated distance
  */
-export function distance(
-    start: Point,
-    end: Point,
-    rangeType: RangeType = RangeType.Fly,
-): number {
+export function distance(start: Point, end: Point, rangeType: RangeType = RangeType.Fly): number {
     if (Point.equals(start, end)) {
         return 0;
     }
@@ -40,9 +36,7 @@ export function distance(
  * @returns An integer 0–7 representing the octant
  */
 export function getAngle(fromPt: Point, toPt: Point): number {
-    let a: number = Math.floor(
-        Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI),
-    );
+    let a: number = Math.floor(Math.atan2(toPt.y - fromPt.y, toPt.x - fromPt.x) * (180 / Math.PI));
     a += 22.5;
     a = a < 0 ? a + 360 : a;
     return Math.floor(a / 45);
@@ -75,9 +69,7 @@ export function diagonalHeuristic(
     const straight: number = dx + dy;
 
     if (node.warning || node.terminal) {
-        return (
-            diagonalCost * diag + cost * (straight - 2 * diag) + terminalCost
-        );
+        return diagonalCost * diag + cost * (straight - 2 * diag) + terminalCost;
     }
 
     return diagonalCost * diag + cost * (straight - 2 * diag);

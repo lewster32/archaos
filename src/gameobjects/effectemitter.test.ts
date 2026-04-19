@@ -72,19 +72,13 @@ vi.mock("phaser", () => ({
     BlendModes: { ADD: 1 },
     Display: {
         Color: {
-            GetColor: (r: number, g: number, b: number) =>
-                (r << 16) | (g << 8) | b,
+            GetColor: (r: number, g: number, b: number) => (r << 16) | (g << 8) | b,
         },
     },
     Scene: vi.fn(),
 }));
 
-import {
-    EffectEmitter,
-    EffectType,
-    createEffect,
-    registerCustomEffect,
-} from "./effectemitter";
+import { EffectEmitter, EffectType, createEffect, registerCustomEffect } from "./effectemitter";
 import type { Piece } from "./piece";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -286,11 +280,7 @@ describe("EffectEmitter", () => {
                 resolve,
             );
 
-            expect(scene.cameras.main.shake).toHaveBeenCalledWith(
-                150,
-                0.005,
-                true,
-            );
+            expect(scene.cameras.main.shake).toHaveBeenCalledWith(150, 0.005, true);
         });
 
         it("should not trigger camera shake when cameraShake is not defined", () => {
@@ -456,10 +446,7 @@ describe("EffectEmitter", () => {
             // Should also add a sprite+shadow fade-out tween
             expect(scene.tweens.add).toHaveBeenCalled();
             const fadeOutTween = scene.tweenAdds[0];
-            expect(fadeOutTween.targets).toEqual([
-                target.sprite,
-                target.shadow,
-            ]);
+            expect(fadeOutTween.targets).toEqual([target.sprite, target.shadow]);
             expect(fadeOutTween.alpha).toEqual({ from: 1, to: 0 });
             expect(fadeOutTween.duration).toBe(500);
             expect(fadeOutTween.delay).toBe(250);
@@ -608,11 +595,7 @@ describe("EffectEmitter", () => {
                 resolve,
             );
 
-            expect(scene.cameras.main.shake).toHaveBeenCalledWith(
-                300,
-                0.0125,
-                true,
-            );
+            expect(scene.cameras.main.shake).toHaveBeenCalledWith(300, 0.0125, true);
             // cycleTint counter + duration counter
             expect(scene.tweenCounters).toHaveLength(2);
         });
@@ -685,29 +668,13 @@ describe("createEffect", () => {
 
     it("returns an EffectEmitter for a data-driven effect type", () => {
         const resolve = vi.fn();
-        const result = createEffect(
-            scene as any,
-            EffectType.SummonPiece,
-            point(0, 0),
-            null,
-            null,
-            null,
-            resolve,
-        );
+        const result = createEffect(scene as any, EffectType.SummonPiece, point(0, 0), null, null, null, resolve);
         expect(result).toBeInstanceOf(EffectEmitter);
     });
 
     it("passes the duration override to EffectEmitter", () => {
         const resolve = vi.fn();
-        createEffect(
-            scene as any,
-            EffectType.SummonPiece,
-            point(0, 0),
-            null,
-            null,
-            1234,
-            resolve,
-        );
+        createEffect(scene as any, EffectType.SummonPiece, point(0, 0), null, null, 1234, resolve);
         const durationTween = scene.tweenCounters.at(-1);
         expect(durationTween.duration).toBe(1234);
     });
@@ -733,23 +700,8 @@ describe("createEffect", () => {
         // We test the dispatch path: factory is found and called.
         const factory = vi.fn().mockReturnValue({ id: "mock-container" });
         registerCustomEffect(EffectType.PointAtPosition, factory);
-        createEffect(
-            fullScene as any,
-            EffectType.PointAtPosition,
-            point(10, 20),
-            null,
-            null,
-            3000,
-            resolve,
-        );
-        expect(factory).toHaveBeenCalledWith(
-            fullScene,
-            point(10, 20),
-            null,
-            null,
-            3000,
-            resolve,
-        );
+        createEffect(fullScene as any, EffectType.PointAtPosition, point(10, 20), null, null, 3000, resolve);
+        expect(factory).toHaveBeenCalledWith(fullScene, point(10, 20), null, null, 3000, resolve);
     });
 });
 
@@ -762,25 +714,10 @@ describe("registerCustomEffect", () => {
 
         const scene = makeMockScene();
         const resolve = vi.fn();
-        createEffect(
-            scene as any,
-            EffectType.GiveSpell,
-            point(5, 5),
-            null,
-            null,
-            null,
-            resolve,
-        );
+        createEffect(scene as any, EffectType.GiveSpell, point(5, 5), null, null, null, resolve);
 
         expect(customFactory).toHaveBeenCalledOnce();
-        expect(customFactory).toHaveBeenCalledWith(
-            scene,
-            point(5, 5),
-            null,
-            null,
-            null,
-            resolve,
-        );
+        expect(customFactory).toHaveBeenCalledWith(scene, point(5, 5), null, null, null, resolve);
     });
 
     it("overrides an existing custom factory when re-registered", () => {
@@ -790,15 +727,7 @@ describe("registerCustomEffect", () => {
         registerCustomEffect(EffectType.GiveSpell, second);
 
         const scene = makeMockScene();
-        createEffect(
-            scene as any,
-            EffectType.GiveSpell,
-            point(0, 0),
-            null,
-            null,
-            null,
-            vi.fn(),
-        );
+        createEffect(scene as any, EffectType.GiveSpell, point(0, 0), null, null, null, vi.fn());
 
         expect(second).toHaveBeenCalledOnce();
         expect(first).not.toHaveBeenCalled();

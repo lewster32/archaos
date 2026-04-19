@@ -53,22 +53,10 @@ import { Rules } from "./services/rules";
 import { SoundEffects } from "./soundeffects";
 import { Wizard } from "./wizard";
 import type { Tutorial } from "./tutorials/tutorial";
-import {
-    Display,
-    GameObjects,
-    Scene,
-    Math as PMath,
-    Cameras,
-    TintModes,
-} from "phaser";
+import { Display, GameObjects, Scene, Math as PMath, Cameras, TintModes } from "phaser";
 
 // Weather
-import {
-    RainEffect,
-    SnowEffect,
-    WeatherEffect,
-    WeatherType,
-} from "./boardeffects/weather";
+import { RainEffect, SnowEffect, WeatherEffect, WeatherType } from "./boardeffects/weather";
 
 /**
  * The main game board. This is where the magic (literally) happens.
@@ -127,8 +115,7 @@ export class Board extends EngineBoard<Piece> {
     /**
      * Abort controller for the viewport media query listener.
      */
-    private readonly _viewportListenerAbort: AbortController =
-        new AbortController();
+    private readonly _viewportListenerAbort: AbortController = new AbortController();
 
     constructor(
         scene: Scene,
@@ -150,10 +137,8 @@ export class Board extends EngineBoard<Piece> {
         this._layers.set(BoardLayer.Pieces, this.scene.add.layer());
 
         this._scene.game.scale.resize(
-            this.width * Board.DEFAULT_CELLSIZE * 2 +
-                Board.DEFAULT_CELLSIZE * Board.HORIZONTAL_PAD_CELLS * 2,
-            this.height * Board.DEFAULT_CELLSIZE +
-                Board.DEFAULT_CELLSIZE * Board.VERTICAL_PAD_CELLS * 2,
+            this.width * Board.DEFAULT_CELLSIZE * 2 + Board.DEFAULT_CELLSIZE * Board.HORIZONTAL_PAD_CELLS * 2,
+            this.height * Board.DEFAULT_CELLSIZE + Board.DEFAULT_CELLSIZE * Board.VERTICAL_PAD_CELLS * 2,
         );
 
         // Camera bounds cover the full board regardless of viewport size.
@@ -187,10 +172,7 @@ export class Board extends EngineBoard<Piece> {
             ) {
                 return;
             }
-            if (
-                (!this.selected.moved || this.selected.stats.movement === 0) &&
-                this.selected.currentRider
-            ) {
+            if ((!this.selected.moved || this.selected.stats.movement === 0) && this.selected.currentRider) {
                 this.logger.log(
                     `Dismount ${this.selected.currentRider.owner.name}? (${Cursor.CANCEL_KEY} to cancel)`,
                     Colour.Yellow,
@@ -207,13 +189,10 @@ export class Board extends EngineBoard<Piece> {
 
         this._sound.play("screenactive", false);
 
-        document.addEventListener(
-            "highlight-owned-units",
-            (event: CustomEvent) => {
-                const owner: Player = event.detail;
-                this.highlightOwnedUnitsForPlayer(this.getPlayer(owner.id));
-            },
-        );
+        document.addEventListener("highlight-owned-units", (event: CustomEvent) => {
+            const owner: Player = event.detail;
+            this.highlightOwnedUnitsForPlayer(this.getPlayer(owner.id));
+        });
 
         // Engine event subscriptions — the engine
         // emits these; the client handles rendering.
@@ -223,23 +202,13 @@ export class Board extends EngineBoard<Piece> {
         this.events.on(EngineEvent.AiActing, () => {
             this.cursor.enabled = false;
         });
-        this.events.on(
-            EngineEvent.FocusPieces,
-            (data: { pieceIds: number[] }) => {
-                const pieces = data.pieceIds
-                    .map((pid) => this.getPiece(pid))
-                    .filter(Boolean) as Piece[];
-                this.centreOnPieces(pieces);
-            },
-        );
-        this.events.on(
-            EngineEvent.FocusPosition,
-            (data: { position: SimplePoint }) => {
-                this.centreOnPosition(
-                    new PMath.Vector2(data.position.x, data.position.y),
-                );
-            },
-        );
+        this.events.on(EngineEvent.FocusPieces, (data: { pieceIds: number[] }) => {
+            const pieces = data.pieceIds.map((pid) => this.getPiece(pid)).filter(Boolean) as Piece[];
+            this.centreOnPieces(pieces);
+        });
+        this.events.on(EngineEvent.FocusPosition, (data: { position: SimplePoint }) => {
+            this.centreOnPosition(new PMath.Vector2(data.position.x, data.position.y));
+        });
         this.events.on(
             EngineEvent.EffectRequested,
             async (data: {
@@ -256,38 +225,21 @@ export class Board extends EngineBoard<Piece> {
             }) => {
                 if (data.sound) {
                     if (data.soundOptions) {
-                        await this.sound.playAsync(
-                            data.sound,
-                            data.soundOptions,
-                        );
+                        await this.sound.playAsync(data.sound, data.soundOptions);
                     } else {
                         this.sound.play(data.sound);
                     }
                 }
                 if (data.type) {
-                    const piece = data.pieceId
-                        ? this.getPiece(data.pieceId)
-                        : null;
-                    const startPiece = data.startPieceId
-                        ? this.getPiece(data.startPieceId)
-                        : null;
+                    const piece = data.pieceId ? this.getPiece(data.pieceId) : null;
+                    const startPiece = data.startPieceId ? this.getPiece(data.startPieceId) : null;
                     const startPos = startPiece
                         ? startPiece.sprite.getCenter()
                         : data.startPosition
-                          ? this.getIsoPosition(
-                                new PMath.Vector2(
-                                    data.startPosition.x,
-                                    data.startPosition.y,
-                                ),
-                            )
+                          ? this.getIsoPosition(new PMath.Vector2(data.startPosition.x, data.startPosition.y))
                           : null;
                     const targetPos = data.targetPosition
-                        ? this.getIsoPosition(
-                              new PMath.Vector2(
-                                  data.targetPosition.x,
-                                  data.targetPosition.y,
-                              ),
-                          )
+                        ? this.getIsoPosition(new PMath.Vector2(data.targetPosition.x, data.targetPosition.y))
                         : piece
                           ? piece.sprite.getCenter()
                           : null;
@@ -302,11 +254,7 @@ export class Board extends EngineBoard<Piece> {
         );
         this.events.on(
             EngineEvent.ShowCastRange,
-            async (data: {
-                position: SimplePoint;
-                range: number;
-                lineOfSight: boolean;
-            }) => {
+            async (data: { position: SimplePoint; range: number; lineOfSight: boolean }) => {
                 await this.rangeGizmo.showSimpleRange(
                     data.position,
                     data.range,
@@ -318,90 +266,65 @@ export class Board extends EngineBoard<Piece> {
         this.events.on(EngineEvent.ResetCastRange, () => {
             this.rangeGizmo.reset();
         });
-        this.events.on(
-            EngineEvent.SpreadBatch,
-            async (payload: SpreadBatchPayload) => {
-                for (const iteration of payload.iterations) {
-                    const focusPieces = iteration.focusPieceIds
-                        .map((pid) => this.getPiece(pid))
-                        .filter(Boolean) as Piece[];
-                    if (focusPieces.length) {
-                        this.centreOnPieces(focusPieces);
+        this.events.on(EngineEvent.SpreadBatch, async (payload: SpreadBatchPayload) => {
+            for (const iteration of payload.iterations) {
+                const focusPieces = iteration.focusPieceIds.map((pid) => this.getPiece(pid)).filter(Boolean) as Piece[];
+                if (focusPieces.length) {
+                    this.centreOnPieces(focusPieces);
+                }
+                for (const result of iteration.results) {
+                    if (result.action === "none") continue;
+                    if (result.action === "shrink") {
+                        // Shrink animation is spread-specific
+                        // visual — not handled by kill()/destroy()
+                        const piece = this.getPiece(result.pieceId);
+                        if (piece) {
+                            await piece.playShrinkAnimation();
+                        }
+                        continue;
                     }
-                    for (const result of iteration.results) {
-                        if (result.action === "none") continue;
-                        if (result.action === "shrink") {
-                            // Shrink animation is spread-specific
-                            // visual — not handled by kill()/destroy()
-                            const piece = this.getPiece(result.pieceId);
-                            if (piece) {
-                                await piece.playShrinkAnimation();
-                            }
-                            continue;
-                        }
-                        // result.action === "spread"
-                        // Kill/destroy visuals already fired via
-                        // polymorphic overrides during engine
-                        // spread(). Only handle spread-specific
-                        // visuals here: new piece sprites and
-                        // blob sounds.
-                        const newPiece = this.getPiece(result.newPieceId);
-                        if (newPiece && !newPiece.sprite) {
-                            newPiece.initSprites();
-                        }
-                        this.sound.play(
-                            `blob${Math.random() < 0.5 ? 1 : 2}`,
-                            false,
-                        );
-                        if (
-                            result.killedPieceId != null ||
-                            result.destroyedPieceIds.length > 0 ||
-                            result.newPieceEngulfedId != null
-                        ) {
-                            await this.idleDelay(Piece.DEFAULT_MOVE_DURATION);
-                        }
+                    // result.action === "spread"
+                    // Kill/destroy visuals already fired via
+                    // polymorphic overrides during engine
+                    // spread(). Only handle spread-specific
+                    // visuals here: new piece sprites and
+                    // blob sounds.
+                    const newPiece = this.getPiece(result.newPieceId);
+                    if (newPiece && !newPiece.sprite) {
+                        newPiece.initSprites();
                     }
-                    this.emitBoardUpdateEvent();
-                    await this.idleDelay(Board.SPREAD_DELAY);
+                    this.sound.play(`blob${Math.random() < 0.5 ? 1 : 2}`, false);
+                    if (
+                        result.killedPieceId != null ||
+                        result.destroyedPieceIds.length > 0 ||
+                        result.newPieceEngulfedId != null
+                    ) {
+                        await this.idleDelay(Piece.DEFAULT_MOVE_DURATION);
+                    }
                 }
-            },
-        );
-        this.events.on(
-            EngineEvent.TurmoilBatch,
-            async (payload: TurmoilBatchPayload) => {
-                const caster = this.getPiece(payload.castingPieceId);
-                if (caster) {
-                    this.sound.play("die");
-                    await this.playEffect(
-                        EffectType.WizardCasting,
-                        caster.sprite.getCenter(),
-                    );
-                }
-                for (const move of payload.moves) {
-                    const piece = this.getPiece(move.pieceId);
-                    if (!piece) continue;
-                    this.sound.play("die");
-                    const startPos = this.getIsoPosition(
-                        new PMath.Vector2(move.from.x, move.from.y),
-                    );
-                    const endPos = this.getIsoPosition(
-                        new PMath.Vector2(move.to.x, move.to.y),
-                    );
-                    await this.playEffect(
-                        EffectType.TurmoilBeam,
-                        startPos,
-                        endPos,
-                        piece,
-                    );
-                    await piece.updatePosition(500);
-                }
-                await this.idleDelay(Board.DEFAULT_DELAY);
-            },
-        );
+                this.emitBoardUpdateEvent();
+                await this.idleDelay(Board.SPREAD_DELAY);
+            }
+        });
+        this.events.on(EngineEvent.TurmoilBatch, async (payload: TurmoilBatchPayload) => {
+            const caster = this.getPiece(payload.castingPieceId);
+            if (caster) {
+                this.sound.play("die");
+                await this.playEffect(EffectType.WizardCasting, caster.sprite.getCenter());
+            }
+            for (const move of payload.moves) {
+                const piece = this.getPiece(move.pieceId);
+                if (!piece) continue;
+                this.sound.play("die");
+                const startPos = this.getIsoPosition(new PMath.Vector2(move.from.x, move.from.y));
+                const endPos = this.getIsoPosition(new PMath.Vector2(move.to.x, move.to.y));
+                await this.playEffect(EffectType.TurmoilBeam, startPos, endPos, piece);
+                await piece.updatePosition(500);
+            }
+            await this.idleDelay(Board.DEFAULT_DELAY);
+        });
         this.events.on(EventType.PieceInfo, (data: any) => {
-            globalThis.dispatchEvent(
-                new CustomEvent(EventType.PieceInfo, { detail: data }),
-            );
+            globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
         });
 
         // 30% chance of weather on a fresh board. Scenarios can override
@@ -420,9 +343,7 @@ export class Board extends EngineBoard<Piece> {
 
     /* #region Timing */
 
-    override async delay(
-        time: number = (this.constructor as typeof Board).DEFAULT_DELAY,
-    ): Promise<void> {
+    override async delay(time: number = (this.constructor as typeof Board).DEFAULT_DELAY): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
 
@@ -434,16 +355,9 @@ export class Board extends EngineBoard<Piece> {
      * Override FSM state-change to emit UI button events.
      */
     protected override onStateChange(newState: BoardState): void {
-        if (
-            newState === BoardState.Move ||
-            newState === BoardState.SelectSpell
-        ) {
+        if (newState === BoardState.Move || newState === BoardState.SelectSpell) {
             setTimeout(() => {
-                if (
-                    this.currentPlayer &&
-                    !this.currentPlayer.remote &&
-                    !this.tutorial?.config.disableEndTurn
-                ) {
+                if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableEndTurn) {
                     this.emitUIEvent(EventType.EndTurnAvailable, true);
                 } else {
                     this.emitUIEvent(EventType.EndTurnAvailable, false);
@@ -451,11 +365,7 @@ export class Board extends EngineBoard<Piece> {
             });
         } else {
             setTimeout(() => {
-                if (
-                    this.currentPlayer &&
-                    !this.currentPlayer.remote &&
-                    !this.tutorial?.config.disableCancelSpell
-                ) {
+                if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableCancelSpell) {
                     this.emitUIEvent(EventType.CancelAvailable, true);
                 } else {
                     this.emitUIEvent(EventType.CancelAvailable, false);
@@ -482,11 +392,7 @@ export class Board extends EngineBoard<Piece> {
             case BoardState.Move:
             case BoardState.SelectSpell:
                 setTimeout(() => {
-                    if (
-                        this.currentPlayer &&
-                        !this.currentPlayer.remote &&
-                        !this.tutorial?.config.disableEndTurn
-                    ) {
+                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableEndTurn) {
                         this.emitUIEvent(EventType.EndTurnAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.EndTurnAvailable, false);
@@ -495,11 +401,7 @@ export class Board extends EngineBoard<Piece> {
                 break;
             default:
                 setTimeout(() => {
-                    if (
-                        this.currentPlayer &&
-                        !this.currentPlayer.remote &&
-                        !this.tutorial?.config.disableCancelSpell
-                    ) {
+                    if (this.currentPlayer && !this.currentPlayer.remote && !this.tutorial?.config.disableCancelSpell) {
                         this.emitUIEvent(EventType.CancelAvailable, true);
                     } else {
                         this.emitUIEvent(EventType.CancelAvailable, false);
@@ -572,16 +474,11 @@ export class Board extends EngineBoard<Piece> {
                 this._alignment.resetAccumulated();
                 await this.idleDelay(Board.DEFAULT_DELAY);
             }
-            const anySpellsLeft = this.players.some(
-                (p) => !p.defeated && p.spells.length > 0,
-            );
+            const anySpellsLeft = this.players.some((p) => !p.defeated && p.spells.length > 0);
             // Skip spell selection phase if no player has a spell to cast and
             // we're in a tutorial, for brevity.
             if (!anySpellsLeft && this.tutorial != null) {
-                this._logger.log(
-                    `No spells to cast, skipping to movement`,
-                    Colour.Green,
-                );
+                this._logger.log(`No spells to cast, skipping to movement`, Colour.Green);
                 pm.evaluate(new SkipSpellbook());
                 pm.evaluate(new MovingReady());
                 await this.idleDelay(Board.END_TURN_DELAY);
@@ -591,14 +488,9 @@ export class Board extends EngineBoard<Piece> {
             }
         } else if (pm.isActive(pm.states.spellbook)) {
             // Skip casting phase if no player has a spell to cast
-            const anySpellSelected = this.players.some(
-                (p) => !p.defeated && p.selectedSpell,
-            );
+            const anySpellSelected = this.players.some((p) => !p.defeated && p.selectedSpell);
             if (!anySpellSelected) {
-                this._logger.log(
-                    `No spells to cast, skipping to movement`,
-                    Colour.Green,
-                );
+                this._logger.log(`No spells to cast, skipping to movement`, Colour.Green);
                 pm.evaluate(new NoSpellsCast());
 
                 const previousPlayer: Player = this.currentPlayer;
@@ -689,8 +581,7 @@ export class Board extends EngineBoard<Piece> {
         if (
             this._disableCancelSpell &&
             eventType === EventType.CancelAvailable &&
-            (this._state === BoardState.CastSpell ||
-                this._state === BoardState.SelectSpell)
+            (this._state === BoardState.CastSpell || this._state === BoardState.SelectSpell)
         ) {
             console.log("Cancel spell disabled, ignoring event");
             return;
@@ -731,13 +622,9 @@ export class Board extends EngineBoard<Piece> {
             this.state === BoardState.GameOver ||
             this.state !== BoardState.Idle ||
             this.phase !== BoardPhase.Idle ||
-            this.pieces.some((piece: Piece) =>
-                piece.hasStatus(UnitStatus.Wizard),
-            )
+            this.pieces.some((piece: Piece) => piece.hasStatus(UnitStatus.Wizard))
         ) {
-            throw new Error(
-                "Cannot create wizards - game not in initialising state",
-            );
+            throw new Error("Cannot create wizards - game not in initialising state");
         }
         Wizard.createAll(this, this.players);
     }
@@ -796,28 +683,20 @@ export class Board extends EngineBoard<Piece> {
             if (this.selected.hasStatus(UnitStatus.ShadowForm)) {
                 this.selected.engaged = false;
             } else {
-                firstEngagingPiece =
-                    this.selected.getFirstEngagingPiece() as Piece | null;
+                firstEngagingPiece = this.selected.getFirstEngagingPiece() as Piece | null;
             }
 
             if (firstEngagingPiece) {
                 if (
                     this.selected.engaged ||
                     this.selected.properties.manoeuvrability < 0 || // A negative manoeuvrability means the unit stays engaged if near engageable enemies
-                    firstEngagingPiece.properties.manoeuvrability ===
-                        Infinity || // An infinite manoeuvrability means the unit always engages nearby enemies
-                    this.roll(
-                        firstEngagingPiece.stats.manoeuvrability,
-                        this.selected.stats.manoeuvrability,
-                    )
+                    firstEngagingPiece.properties.manoeuvrability === Infinity || // An infinite manoeuvrability means the unit always engages nearby enemies
+                    this.roll(firstEngagingPiece.stats.manoeuvrability, this.selected.stats.manoeuvrability)
                 ) {
                     await this.selected.engage(firstEngagingPiece);
                     await this.rangeGizmo.reset();
                 } else {
-                    this.logger.log(
-                        `${this.selected.name} disengaged from ${firstEngagingPiece.name}`,
-                        Colour.Green,
-                    );
+                    this.logger.log(`${this.selected.name} disengaged from ${firstEngagingPiece.name}`, Colour.Green);
                     if (!this.selected.moved) {
                         await this.rangeGizmo.generate(this.selected);
                     }
@@ -878,9 +757,8 @@ export class Board extends EngineBoard<Piece> {
         this.emitUIEvent(EventType.CancelAvailable, false);
 
         const turnOver: boolean =
-            this.getPiecesByOwner(this.currentPlayer).every(
-                (piece) => piece.turnOver,
-            ) || this.phase === BoardPhase.Casting;
+            this.getPiecesByOwner(this.currentPlayer).every((piece) => piece.turnOver) ||
+            this.phase === BoardPhase.Casting;
 
         if (turnOver) {
             this.deselectPlayer();
@@ -917,14 +795,8 @@ export class Board extends EngineBoard<Piece> {
         throw new Error(`Player '${player.name}' does not own a wizard`);
     }
 
-    override getPiecesAtPosition(
-        point: SimplePoint,
-        filter?: (piece: Piece) => boolean,
-    ): Piece[] {
-        return super.getPiecesAtPosition(
-            new Point(point.x, point.y),
-            filter,
-        ) as Piece[];
+    override getPiecesAtPosition(point: SimplePoint, filter?: (piece: Piece) => boolean): Piece[] {
+        return super.getPiecesAtPosition(new Point(point.x, point.y), filter) as Piece[];
     }
 
     override getAdjacentPiecesAtPosition(
@@ -932,11 +804,7 @@ export class Board extends EngineBoard<Piece> {
         filter?: (piece: Piece) => boolean,
         includeCentre?: boolean,
     ): Piece[] {
-        return super.getAdjacentPiecesAtPosition(
-            new Point(point.x, point.y),
-            filter,
-            includeCentre,
-        ) as Piece[];
+        return super.getAdjacentPiecesAtPosition(new Point(point.x, point.y), filter, includeCentre) as Piece[];
     }
 
     /**
@@ -951,13 +819,9 @@ export class Board extends EngineBoard<Piece> {
             return;
         }
         this.sound.play("step");
-        await piece.moveTo(
-            path.nodes.shift().pos,
-            Piece.DEFAULT_STEP_MOVE_DURATION,
-        );
+        await piece.moveTo(path.nodes.shift().pos, Piece.DEFAULT_STEP_MOVE_DURATION);
         // Check for engagement after each step
-        const firstEngagingPiece: Piece | null =
-            piece.getFirstEngagingPiece() as Piece | null;
+        const firstEngagingPiece: Piece | null = piece.getFirstEngagingPiece() as Piece | null;
         if (firstEngagingPiece) {
             // Cancel movement if engagement occurs
             await this.rangeGizmo.reset();
@@ -978,11 +842,7 @@ export class Board extends EngineBoard<Piece> {
      * @param silent Optional flag to suppress movement sound effects.
      * @returns A promise that resolves to the moved piece.
      */
-    async movePiece(
-        id: number,
-        position: SimplePoint,
-        silent?: boolean,
-    ): Promise<Piece> {
+    async movePiece(id: number, position: SimplePoint, silent?: boolean): Promise<Piece> {
         const piece: Piece | null = this.getPiece(id);
         if (!piece) {
             throw new Error(`Could not find piece with ID ${id}`);
@@ -1014,8 +874,7 @@ export class Board extends EngineBoard<Piece> {
         this.cursor.enabled = true;
 
         if (!piece.currentMount && !piece.engaged) {
-            const firstEngagingPiece: Piece | null =
-                piece.getFirstEngagingPiece() as Piece | null;
+            const firstEngagingPiece: Piece | null = piece.getFirstEngagingPiece() as Piece | null;
 
             if (firstEngagingPiece) {
                 await piece.engage(firstEngagingPiece);
@@ -1045,10 +904,7 @@ export class Board extends EngineBoard<Piece> {
      * @param defendingPieceId The ID of the defending piece.
      * @returns The attacking piece, or null if either piece was not found.
      */
-    async attackPiece(
-        attackingPieceId: number,
-        defendingPieceId: number,
-    ): Promise<Piece | null> {
+    async attackPiece(attackingPieceId: number, defendingPieceId: number): Promise<Piece | null> {
         const attackingPiece: Piece | null = this.getPiece(attackingPieceId);
         const defendingPiece: Piece | null = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
@@ -1062,33 +918,20 @@ export class Board extends EngineBoard<Piece> {
         // Flying units that aren't adjacent animate a swoop to the target
         const isFlyAttack: boolean =
             attackingPiece.hasStatus(UnitStatus.Flying) &&
-            Board.distance(
-                attackingPiece.position,
-                defendingPiece.position,
-            ) > 1.5;
+            Board.distance(attackingPiece.position, defendingPiece.position) > 1.5;
 
         let originPos: PMath.Vector2 | null = null;
         if (isFlyAttack) {
-            originPos = new PMath.Vector2(
-                attackingPiece.position.x,
-                attackingPiece.position.y,
-            );
+            originPos = new PMath.Vector2(attackingPiece.position.x, attackingPiece.position.y);
             this.sound.play("fly");
-            await attackingPiece.flyApproach(
-                defendingPiece.position,
-            );
+            await attackingPiece.flyApproach(defendingPiece.position);
         }
 
         const attackResult: boolean = await attackingPiece.attack(
             defendingPiece,
             isFlyAttack ? { silentMove: true } : undefined,
         );
-        this._boardEvents.emit(
-            BoardEvent.PieceAttacked,
-            attackingPiece,
-            defendingPiece,
-            attackResult,
-        );
+        this._boardEvents.emit(BoardEvent.PieceAttacked, attackingPiece, defendingPiece, attackResult);
 
         // Return to origin if: attack missed, OR attack succeeded but the
         // tile was still occupied (e.g. killing a mount dismounts its wizard),
@@ -1099,10 +942,7 @@ export class Board extends EngineBoard<Piece> {
             originPos.x === attackingPiece.position.x &&
             originPos.y === attackingPiece.position.y;
         if (didNotMove) {
-            await attackingPiece.flyReturn(
-                originPos,
-                defendingPiece.position,
-            );
+            await attackingPiece.flyReturn(originPos, defendingPiece.position);
         }
 
         this._busy = false;
@@ -1119,10 +959,7 @@ export class Board extends EngineBoard<Piece> {
      * @param defendingPieceId The ID of the defending piece.
      * @returns
      */
-    async rangedAttackPiece(
-        attackingPieceId: number,
-        defendingPieceId: number,
-    ): Promise<Piece | null> {
+    async rangedAttackPiece(attackingPieceId: number, defendingPieceId: number): Promise<Piece | null> {
         const attackingPiece: Piece | null = this.getPiece(attackingPieceId);
         const defendingPiece: Piece | null = this.getPiece(defendingPieceId);
         if (!attackingPiece) {
@@ -1136,10 +973,7 @@ export class Board extends EngineBoard<Piece> {
         // Replicate that here so the ranged attack is visible.
         if (this.currentPlayer?.remote) {
             this.sound.play("ranged-select");
-            this.logger.log(
-                `${attackingPiece.name}'s turn to ranged attack`,
-                Colour.Yellow,
-            );
+            this.logger.log(`${attackingPiece.name}'s turn to ranged attack`, Colour.Yellow);
             await this.rangeGizmo.showSimpleRange(
                 attackingPiece.position,
                 attackingPiece.stats.range,
@@ -1150,14 +984,8 @@ export class Board extends EngineBoard<Piece> {
         }
         this._busy = true;
         if (attackingPiece && defendingPiece) {
-            const attackResult: boolean =
-                await attackingPiece.rangedAttack(defendingPiece);
-            this._boardEvents.emit(
-                BoardEvent.PieceRangedAttacked,
-                attackingPiece,
-                defendingPiece,
-                attackResult,
-            );
+            const attackResult: boolean = await attackingPiece.rangedAttack(defendingPiece);
+            this._boardEvents.emit(BoardEvent.PieceRangedAttacked, attackingPiece, defendingPiece, attackResult);
             this._busy = false;
             if (attackResult) {
                 await this.rangeGizmo.reset();
@@ -1175,10 +1003,7 @@ export class Board extends EngineBoard<Piece> {
      * @param mountedPieceId The ID of the piece to be mounted.
      * @returns The mounting piece, or null if the mount failed.
      */
-    async mountPiece(
-        mountingPieceId: number,
-        mountedPieceId: number,
-    ): Promise<Piece | null> {
+    async mountPiece(mountingPieceId: number, mountedPieceId: number): Promise<Piece | null> {
         await this.rangeGizmo.reset();
         const mountingPiece: Piece | null = this.getPiece(mountingPieceId);
         const mountedPiece: Piece | null = this.getPiece(mountedPieceId);
@@ -1210,8 +1035,7 @@ export class Board extends EngineBoard<Piece> {
      * @returns The dismounting piece, or null if the dismount failed.
      */
     async dismountPiece(dismountingPieceId: number): Promise<Piece | null> {
-        const dismountingPiece: Piece | null =
-            this.getPiece(dismountingPieceId);
+        const dismountingPiece: Piece | null = this.getPiece(dismountingPieceId);
         if (!dismountingPiece) {
             console.error(`Could not find piece with ID ${dismountingPieceId}`);
             return null;
@@ -1262,16 +1086,8 @@ export class Board extends EngineBoard<Piece> {
      *               client Player sets up AI internally from config).
      * @returns The newly added player.
      */
-    override addPlayer(
-        config: PlayerConfig,
-        _remote?: RemotePlayer | null,
-    ): Player {
-        const player: Player = new Player(
-            this,
-            this._idCounter++,
-            config,
-            Player.PLAYER_COLOURS[this._players.size],
-        );
+    override addPlayer(config: PlayerConfig, _remote?: RemotePlayer | null): Player {
+        const player: Player = new Player(this, this._idCounter++, config, Player.PLAYER_COLOURS[this._players.size]);
         this._players.set(player.id, player);
         return player;
     }
@@ -1317,22 +1133,14 @@ export class Board extends EngineBoard<Piece> {
             if (this.currentPlayer?.colour) {
                 document.body.style.setProperty(
                     "--bg-colour",
-                    `${
-                        Display.Color.ValueToColor(this.currentPlayer.colour)
-                            .rgba
-                    }`,
+                    `${Display.Color.ValueToColor(this.currentPlayer.colour).rgba}`,
                 );
                 this.getLayer(BoardLayer.Floor)
                     .getChildren()
                     .forEach((child) => {
-                        const tintColour: Display.Color =
-                            Display.Color.ValueToColor(
-                                this.currentPlayer.colour,
-                            );
+                        const tintColour: Display.Color = Display.Color.ValueToColor(this.currentPlayer.colour);
                         const noiseValue: number = child.getData("noiseValue");
-                        (child as GameObjects.Sprite).setTint(
-                            tintColour.brighten(70 - noiseValue * 10).color,
-                        );
+                        (child as GameObjects.Sprite).setTint(tintColour.brighten(70 - noiseValue * 10).color);
                     });
             } else {
                 this.getLayer(BoardLayer.Floor)
@@ -1340,9 +1148,7 @@ export class Board extends EngineBoard<Piece> {
                     .forEach((child) => {
                         const noiseValue: number = child.getData("noiseValue");
                         (child as GameObjects.Sprite).setTint(
-                            Display.Color.ValueToColor(0xffffff).darken(
-                                noiseValue * 20,
-                            ).color,
+                            Display.Color.ValueToColor(0xffffff).darken(noiseValue * 20).color,
                         );
                     });
                 document.body.style.removeProperty("--bg-colour");
@@ -1379,9 +1185,7 @@ export class Board extends EngineBoard<Piece> {
         }
 
         const units: Piece[] = this.pieces.filter(
-            (piece: Piece) =>
-                piece.owner === this.currentPlayer ||
-                piece.currentRider?.owner === this.currentPlayer,
+            (piece: Piece) => piece.owner === this.currentPlayer || piece.currentRider?.owner === this.currentPlayer,
         );
 
         await this.updateBackgroundColour();
@@ -1398,9 +1202,7 @@ export class Board extends EngineBoard<Piece> {
         switch (this.phase) {
             case BoardPhase.Spellbook:
                 this.sound.play("new-turn");
-                this.logger.log(
-                    `${this.currentPlayer?.name}'s turn to select a spell`,
-                );
+                this.logger.log(`${this.currentPlayer?.name}'s turn to select a spell`);
                 break;
             case BoardPhase.Casting:
                 if (this.currentPlayer?.selectedSpell) {
@@ -1434,8 +1236,7 @@ export class Board extends EngineBoard<Piece> {
                         units.forEach((piece: Piece) => {
                             const target: GameObjects.Sprite = piece.sprite;
                             if (currentVal === 0) {
-                                target.setTint(this.currentPlayer?.colour || 0xffffff)
-                                    .setTintMode(TintModes.FILL);
+                                target.setTint(this.currentPlayer?.colour || 0xffffff).setTintMode(TintModes.FILL);
                             } else {
                                 target.setTint(piece.defaultTint).setTintMode(TintModes.MULTIPLY);
                             }
@@ -1470,24 +1271,17 @@ export class Board extends EngineBoard<Piece> {
      * @param playerIndex The index of the player whose units to highlight.
      * @param silent Whether to suppress logging output (default: false).
      */
-    async highlightOwnedUnitsForPlayerIndex(
-        playerIndex: number,
-        silent?: boolean,
-    ): Promise<void> {
+    async highlightOwnedUnitsForPlayerIndex(playerIndex: number, silent?: boolean): Promise<void> {
         const playerId: number = Array.from(this._players.keys())[playerIndex];
         const player: Player | null = this.getPlayer(playerId);
         if (!player) {
             return;
         }
         const units: Piece[] = this.pieces.filter(
-            (piece: Piece) =>
-                piece.owner === player || piece.currentRider?.owner === player,
+            (piece: Piece) => piece.owner === player || piece.currentRider?.owner === player,
         );
         if (!silent) {
-            this.logger.log(
-                `Highlighting ${player.name}'s units`,
-                Colour.Yellow,
-            );
+            this.logger.log(`Highlighting ${player.name}'s units`, Colour.Yellow);
         }
         await Promise.all(
             units.map(async (piece: Piece) => {
@@ -1502,13 +1296,8 @@ export class Board extends EngineBoard<Piece> {
      * @param player The player whose units to highlight.
      * @param silent Whether to suppress logging output (default: false).
      */
-    async highlightOwnedUnitsForPlayer(
-        player: Player,
-        silent?: boolean,
-    ): Promise<void> {
-        const playerIndex: number = Array.from(this._players.keys()).indexOf(
-            player.id,
-        );
+    async highlightOwnedUnitsForPlayer(player: Player, silent?: boolean): Promise<void> {
+        const playerIndex: number = Array.from(this._players.keys()).indexOf(player.id);
         await this.highlightOwnedUnitsForPlayerIndex(playerIndex, silent);
     }
 
@@ -1523,12 +1312,8 @@ export class Board extends EngineBoard<Piece> {
             return;
         }
 
-        const avgX: number =
-            pieces.reduce((sum, piece) => sum + piece.position.x, 0) /
-            pieces.length;
-        const avgY: number =
-            pieces.reduce((sum, piece) => sum + piece.position.y, 0) /
-            pieces.length;
+        const avgX: number = pieces.reduce((sum, piece) => sum + piece.position.x, 0) / pieces.length;
+        const avgY: number = pieces.reduce((sum, piece) => sum + piece.position.y, 0) / pieces.length;
         return this.centreOnPosition(new PMath.Vector2(avgX, avgY));
     }
 
@@ -1550,13 +1335,8 @@ export class Board extends EngineBoard<Piece> {
      */
     async centreOnScreenPosition(screenPosition: SimplePoint): Promise<void> {
         const camera: Cameras.Scene2D.Camera = this.scene.cameras.main;
-        const worldVector = camera.getWorldPoint(
-            screenPosition.x,
-            screenPosition.y,
-        );
-        return this.centreOnWorldPosition(
-            new PMath.Vector2(worldVector.x, worldVector.y),
-        );
+        const worldVector = camera.getWorldPoint(screenPosition.x, screenPosition.y);
+        return this.centreOnWorldPosition(new PMath.Vector2(worldVector.x, worldVector.y));
     }
 
     /**
@@ -1565,9 +1345,7 @@ export class Board extends EngineBoard<Piece> {
      * @param isoPos The world position to centre the camera on.
      * @returns A promise that resolves when the camera has centred.
      */
-    async centreOnWorldPosition(
-        isoPos: PMath.Vector2,
-    ): Promise<void> {
+    async centreOnWorldPosition(isoPos: PMath.Vector2): Promise<void> {
         if (!this.needsPanning) {
             return;
         }
@@ -1638,9 +1416,7 @@ export class Board extends EngineBoard<Piece> {
             this.stateManager.evaluate(new CastingDone());
         }
 
-        console.log(
-            `Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`,
-        );
+        console.log(`Resuming game at player index ${this._currentPlayerIndex} and phase ${BoardPhase[this.phase]}`);
         await this.nextPlayer();
     }
 
@@ -1650,15 +1426,11 @@ export class Board extends EngineBoard<Piece> {
     async nextPlayer(): Promise<void> {
         this.emitBoardUpdateEvent();
         while (true) {
-            if (
-                this.state == BoardState.GameOver ||
-                (await this.checkWinCondition())
-            ) {
+            if (this.state == BoardState.GameOver || (await this.checkWinCondition())) {
                 return;
             }
 
-            this._currentPlayerIndex =
-                (this._currentPlayerIndex + 1) % this._players.size;
+            this._currentPlayerIndex = (this._currentPlayerIndex + 1) % this._players.size;
             this.deselectPlayer();
 
             if (this._currentPlayerIndex === 0) {
@@ -1666,9 +1438,7 @@ export class Board extends EngineBoard<Piece> {
             }
 
             // Skip defeated players before selecting them
-            const playerId = Array.from(this._players.keys())[
-                this._currentPlayerIndex
-            ];
+            const playerId = Array.from(this._players.keys())[this._currentPlayerIndex];
             if (this.getPlayer(playerId)?.defeated) {
                 continue;
             }
@@ -1685,40 +1455,24 @@ export class Board extends EngineBoard<Piece> {
                             this.currentPlayer.selectedSpell,
                         );
                     } else {
-                        console.log(
-                            "Remote player could not select spell, skipping...",
-                        );
+                        console.log("Remote player could not select spell, skipping...");
                     }
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
                     return new Promise<void>((resolve) => {
-                        this.emitUIEvent(EventType.SpellbookOpen, <
-                            SpellbookOpenEventData
-                        >{
+                        this.emitUIEvent(EventType.SpellbookOpen, <SpellbookOpenEventData>{
                             data: {
                                 caster: this.currentPlayer?.name,
                                 spells: this.currentPlayer?.spells,
-                                soloMode:
-                                    this.players.filter(
-                                        (p) => !p.defeated && !p.remote,
-                                    ).length === 1,
-                                preventSkip:
-                                    this.tutorial?.config.disableCancelSpell ??
-                                    false,
+                                soloMode: this.players.filter((p) => !p.defeated && !p.remote).length === 1,
+                                preventSkip: this.tutorial?.config.disableCancelSpell ?? false,
                             },
                             callback: async (spell: Spell | null) => {
                                 if (spell) {
                                     this.currentPlayer?.pickSpell(spell.id);
-                                    this._boardEvents.emit(
-                                        BoardEvent.SpellSelected,
-                                        this.currentPlayer,
-                                        spell,
-                                    );
+                                    this._boardEvents.emit(BoardEvent.SpellSelected, this.currentPlayer, spell);
                                 }
-                                this.emitUIEvent(
-                                    EventType.SpellbookClose,
-                                    true,
-                                );
+                                this.emitUIEvent(EventType.SpellbookClose, true);
                                 resolve();
                                 void this.nextPlayer();
                             },
@@ -1749,10 +1503,7 @@ export class Board extends EngineBoard<Piece> {
                         continue;
                     } else if (spell?.range === 0) {
                         this.stateManager.evaluate(new SpellTargeting());
-                        await this.rules.doCastSpell(
-                            this as any,
-                            this.currentPlayer.castingPiece as Piece,
-                        );
+                        await this.rules.doCastSpell(this as any, this.currentPlayer.castingPiece as Piece);
                         this.emitBoardUpdateEvent();
                         continue;
                     } else if (spell?.range > 0) {
@@ -1764,23 +1515,15 @@ export class Board extends EngineBoard<Piece> {
                             spell.lineOfSight,
                         );
                         if (this.currentPlayer?.remote) {
-                            if (
-                                !(await this.currentPlayer.remote.castSpell())
-                            ) {
-                                console.log(
-                                    "Remote player could not cast spell, skipping...",
-                                );
+                            if (!(await this.currentPlayer.remote.castSpell())) {
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
-                            if (
-                                !(await this.currentPlayer.remote.castSpell())
-                            ) {
-                                console.log(
-                                    "Remote player could not cast spell, skipping...",
-                                );
+                            if (!(await this.currentPlayer.remote.castSpell())) {
+                                console.log("Remote player could not cast spell, skipping...");
                             }
                             continue;
                         }
@@ -1793,10 +1536,7 @@ export class Board extends EngineBoard<Piece> {
                 }
             }
 
-            if (
-                this.phase === BoardPhase.Moving &&
-                this.currentPlayer?.remote
-            ) {
+            if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
                 await this.currentPlayer.remote.moveAllUnits();
                 continue;
             }
@@ -1824,38 +1564,22 @@ export class Board extends EngineBoard<Piece> {
         // varies the pattern each game.
         const noiseConfig = {
             noiseCells: [0.25, 0.25],
-            noiseSeed: [
-                Math.floor(Math.random() * 1_000_000),
-                Math.floor(Math.random() * 1_000_000),
-            ],
+            noiseSeed: [Math.floor(Math.random() * 1_000_000), Math.floor(Math.random() * 1_000_000)],
         };
 
         for (let x: number = 0; x < this.width; x++) {
             for (let y: number = 0; y < this.height; y++) {
-                const isoPos: PMath.Vector2 = this.getIsoPosition(
-                    new PMath.Vector2(x, y),
-                );
+                const isoPos: PMath.Vector2 = this.getIsoPosition(new PMath.Vector2(x, y));
 
-                const tile: GameObjects.Image = this.scene.add.image(
-                    isoPos.x,
-                    isoPos.y,
-                    "board",
-                    "empty",
-                );
+                const tile: GameObjects.Image = this.scene.add.image(isoPos.x, isoPos.y, "board", "empty");
 
                 tile.setDisplayOrigin(14, 1);
                 tile.setActive(false);
 
                 // Set tint based on noise value (range -1 to 1)
-                const noiseValue: number = PMath.HashSimplex(
-                    [x, y],
-                    noiseConfig,
-                );
+                const noiseValue: number = PMath.HashSimplex([x, y], noiseConfig);
                 tile.setData("noiseValue", noiseValue);
-                tile.setTint(
-                    Display.Color.ValueToColor(0xffffff).darken(noiseValue * 20)
-                        .color,
-                );
+                tile.setTint(Display.Color.ValueToColor(0xffffff).darken(noiseValue * 20).color);
 
                 floorLayer.add(tile);
             }
@@ -1933,10 +1657,7 @@ export class Board extends EngineBoard<Piece> {
             return false;
         }
         const bounds = camera.getBounds();
-        return (
-            camera.width < (bounds?.width ?? camera.width) ||
-            camera.height < (bounds?.height ?? camera.height)
-        );
+        return camera.width < (bounds?.width ?? camera.width) || camera.height < (bounds?.height ?? camera.height);
     }
 
     /**
@@ -2014,22 +1735,13 @@ export class Board extends EngineBoard<Piece> {
      * viewport becomes narrower (or wider) than the full board.  This keeps
      * the canvas correctly sized after device rotation, browser resize, etc.
      */
-    private setupViewportResizing(
-        boardPixelWidth: number,
-        boardPixelHeight: number,
-    ): void {
+    private setupViewportResizing(boardPixelWidth: number, boardPixelHeight: number): void {
         const zoom: number = this._scene.game.scale.zoom;
-        const widthQuery: MediaQueryList = globalThis.matchMedia(
-            `(max-width: ${boardPixelWidth * zoom}px)`,
-        );
-        const heightQuery: MediaQueryList = globalThis.matchMedia(
-            `(max-height: ${boardPixelHeight * zoom}px)`,
-        );
+        const widthQuery: MediaQueryList = globalThis.matchMedia(`(max-width: ${boardPixelWidth * zoom}px)`);
+        const heightQuery: MediaQueryList = globalThis.matchMedia(`(max-height: ${boardPixelHeight * zoom}px)`);
 
         const handler = (): void => {
-            const targetWidth: number = widthQuery.matches
-                ? Math.floor(globalThis.innerWidth / zoom)
-                : boardPixelWidth;
+            const targetWidth: number = widthQuery.matches ? Math.floor(globalThis.innerWidth / zoom) : boardPixelWidth;
             const targetHeight: number = heightQuery.matches
                 ? Math.floor(globalThis.innerHeight / zoom)
                 : boardPixelHeight;
@@ -2041,16 +1753,13 @@ export class Board extends EngineBoard<Piece> {
                     this.centreOnPieces(
                         this.pieces.filter(
                             (piece: Piece) =>
-                                piece.owner === this.currentPlayer ||
-                                piece.currentRider?.owner ===
-                                    this.currentPlayer,
+                                piece.owner === this.currentPlayer || piece.currentRider?.owner === this.currentPlayer,
                         ),
                     );
                 }
             }
             if (this._cursor) {
-                this._cursor.panningEnabled =
-                    widthQuery.matches || heightQuery.matches;
+                this._cursor.panningEnabled = widthQuery.matches || heightQuery.matches;
             }
         };
 
@@ -2109,14 +1818,8 @@ export class Board extends EngineBoard<Piece> {
      *                 by the effect class — see e.g. `RainEffect` for the
      *                 supported keys. Omit to use random defaults.
      */
-    public startWeather(
-        type: WeatherType = null,
-        options?: Record<string, unknown>,
-    ): void {
-        type ??= this.rng.pick([
-            WeatherType.Rain,
-            WeatherType.Snow
-        ]);
+    public startWeather(type: WeatherType = null, options?: Record<string, unknown>): void {
+        type ??= this.rng.pick([WeatherType.Rain, WeatherType.Snow]);
 
         if (this._weatherEffect) {
             this._weatherEffect.destroy();

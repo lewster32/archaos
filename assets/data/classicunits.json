@@ -10,10 +10,7 @@
             "mnv": 3,
             "res": 6
         },
-        "status": [
-            "wizard",
-            "noCorpse"
-        ],
+        "status": ["wizard", "noCorpse"],
         "name": "Wizard",
         "rangedType": "shot",
         "projectileType": "arrow"
@@ -31,12 +28,7 @@
         },
         "status": [],
         "name": "King Cobra",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4,
         "shadowScale": 2
     },
@@ -53,12 +45,7 @@
         },
         "status": [],
         "name": "Dire Wolf",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 3,
         "shadowScale": 2
     },
@@ -75,12 +62,7 @@
         },
         "status": [],
         "name": "Crocodile",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 5
     },
     "faun": {
@@ -96,12 +78,7 @@
         },
         "status": [],
         "name": "Faun",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "lion": {
@@ -117,12 +94,7 @@
         },
         "status": [],
         "name": "Lion",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "elf": {
@@ -141,13 +113,7 @@
         "status": [],
         "name": "Elf",
         "indefiniteArticle": "an",
-        "animFrames": [
-            0,
-            1,
-            2,
-            3,
-            0
-        ],
+        "animFrames": [0, 1, 2, 3, 0],
         "animSpeed": 4
     },
     "orc": {
@@ -164,12 +130,7 @@
         "status": [],
         "name": "Orc",
         "indefiniteArticle": "an",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 5
     },
     "bear": {
@@ -185,12 +146,7 @@
         },
         "status": [],
         "name": "Bear",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "unicorn": {
@@ -204,17 +160,10 @@
             "mnv": 7,
             "res": 9
         },
-        "status": [
-            "mount"
-        ],
+        "status": ["mount"],
         "name": "Unicorn",
         "indefiniteArticle": "a",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "centaur": {
@@ -230,16 +179,9 @@
             "mnv": 5,
             "res": 5
         },
-        "status": [
-            "mount"
-        ],
+        "status": ["mount"],
         "name": "Centaur",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "pegasus": {
@@ -253,17 +195,9 @@
             "mnv": 7,
             "res": 6
         },
-        "status": [
-            "mount",
-            "flying"
-        ],
+        "status": ["mount", "flying"],
         "name": "Pegasus",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "gryphon": {
@@ -277,17 +211,9 @@
             "mnv": 6,
             "res": 5
         },
-        "status": [
-            "mount",
-            "flying"
-        ],
+        "status": ["mount", "flying"],
         "name": "Gryphon",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "manticore": {
@@ -303,17 +229,9 @@
             "mnv": 8,
             "res": 6
         },
-        "status": [
-            "mount",
-            "flying"
-        ],
+        "status": ["mount", "flying"],
         "name": "Manticore",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "bat": {
@@ -327,16 +245,9 @@
             "mnv": 4,
             "res": 9
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Bat",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 1,
         "shadowScale": 1
     },
@@ -353,16 +264,9 @@
             "mnv": 4,
             "res": 4
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Green Dragon",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 8
     },
     "red-dragon": {
@@ -378,16 +282,9 @@
             "mnv": 5,
             "res": 4
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Red Dragon",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 8
     },
     "golden-dragon": {
@@ -403,16 +300,9 @@
             "mnv": 5,
             "res": 4
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Golden Dragon",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 8
     },
     "harpy": {
@@ -426,16 +316,9 @@
             "mnv": 5,
             "res": 8
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Harpy",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 3,
         "shadowScale": 2
     },
@@ -450,17 +333,9 @@
             "mnv": 3,
             "res": 2
         },
-        "status": [
-            "undead",
-            "noCorpse"
-        ],
+        "status": ["undead", "noCorpse"],
         "name": "Zombie",
-        "animFrames": [
-            3,
-            2,
-            1,
-            0
-        ],
+        "animFrames": [3, 2, 1, 0],
         "animSpeed": 6
     },
     "magic-wood": {
@@ -473,20 +348,9 @@
             "mnv": 0,
             "res": 9
         },
-        "status": [
-            "mountAny",
-            "tree",
-            "expires",
-            "expiresGivesSpell",
-            "noCorpse"
-        ],
+        "status": ["mountAny", "tree", "expires", "expiresGivesSpell", "noCorpse"],
         "name": "Magic Wood",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "shadow-wood": {
@@ -500,17 +364,9 @@
             "mnv": 0,
             "res": 9
         },
-        "status": [
-            "tree",
-            "noCorpse"
-        ],
+        "status": ["tree", "noCorpse"],
         "name": "Shadow Wood",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "magic-fire": {
@@ -524,19 +380,9 @@
             "mnv": 0,
             "res": 0
         },
-        "status": [
-            "invuln",
-            "spread",
-            "trans",
-            "noCorpse"
-        ],
+        "status": ["invuln", "spread", "trans", "noCorpse"],
         "name": "Magic Fire",
-        "animFrames": [
-            3,
-            2,
-            1,
-            0
-        ],
+        "animFrames": [3, 2, 1, 0],
         "animSpeed": 1,
         "shadowScale": 0
     },
@@ -551,18 +397,9 @@
             "mnv": 0,
             "res": 0
         },
-        "status": [
-            "spread",
-            "engulf",
-            "noCorpse"
-        ],
+        "status": ["spread", "engulf", "noCorpse"],
         "name": "Gooey Blob",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 6
     },
     "magic-castle": {
@@ -575,17 +412,9 @@
             "mnv": 0,
             "res": 0
         },
-        "status": [
-            "mount",
-            "invuln",
-            "expires",
-            "struct",
-            "noCorpse"
-        ],
+        "status": ["mount", "invuln", "expires", "struct", "noCorpse"],
         "name": "Magic Castle",
-        "animFrames": [
-            0
-        ],
+        "animFrames": [0],
         "offY": 2,
         "shadowScale": 4
     },
@@ -599,17 +428,9 @@
             "mnv": 0,
             "res": 0
         },
-        "status": [
-            "mount",
-            "invuln",
-            "expires",
-            "struct",
-            "noCorpse"
-        ],
+        "status": ["mount", "invuln", "expires", "struct", "noCorpse"],
         "name": "Dark Citadel",
-        "animFrames": [
-            0
-        ],
+        "animFrames": [0],
         "offY": 2,
         "shadowScale": 4
     },
@@ -623,15 +444,9 @@
             "mnv": 0,
             "res": 0
         },
-        "status": [
-            "invuln",
-            "struct",
-            "noCorpse"
-        ],
+        "status": ["invuln", "struct", "noCorpse"],
         "name": "Wall",
-        "animFrames": [
-            0
-        ],
+        "animFrames": [0],
         "offY": -2,
         "shadowScale": 3
     },
@@ -647,12 +462,7 @@
         },
         "status": [],
         "name": "Goblin",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 3
     },
     "gorilla": {
@@ -668,12 +478,7 @@
         },
         "status": [],
         "name": "Gorilla",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "ogre": {
@@ -690,12 +495,7 @@
         "status": [],
         "name": "Ogre",
         "indefiniteArticle": "an",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "hydra": {
@@ -711,12 +511,7 @@
         },
         "status": [],
         "name": "Hydra",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 6
     },
     "giant-rat": {
@@ -732,12 +527,7 @@
         },
         "status": [],
         "name": "Giant Rat",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 3
     },
     "giant": {
@@ -753,12 +543,7 @@
         },
         "status": [],
         "name": "Giant",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 6,
         "offY": 2
     },
@@ -773,16 +558,9 @@
             "mnv": 1,
             "res": 8
         },
-        "status": [
-            "mount"
-        ],
+        "status": ["mount"],
         "name": "Horse",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     },
     "eagle": {
@@ -796,17 +574,10 @@
             "mnv": 2,
             "res": 8
         },
-        "status": [
-            "flying"
-        ],
+        "status": ["flying"],
         "name": "Eagle",
         "indefiniteArticle": "an",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 5,
         "shadowScale": 2
     },
@@ -821,19 +592,9 @@
             "mnv": 5,
             "res": 6
         },
-        "status": [
-            "undead",
-            "trans",
-            "flying",
-            "noCorpse"
-        ],
+        "status": ["undead", "trans", "flying", "noCorpse"],
         "name": "Vampire",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 5
     },
     "ghost": {
@@ -847,19 +608,9 @@
             "mnv": 6,
             "res": 9
         },
-        "status": [
-            "undead",
-            "trans",
-            "flying",
-            "noCorpse"
-        ],
+        "status": ["undead", "trans", "flying", "noCorpse"],
         "name": "Ghost",
-        "animFrames": [
-            0,
-            1,
-            2,
-            3
-        ],
+        "animFrames": [0, 1, 2, 3],
         "animSpeed": 4,
         "shadowScale": 0
     },
@@ -874,18 +625,9 @@
             "mnv": 4,
             "res": 6
         },
-        "status": [
-            "undead",
-            "trans",
-            "noCorpse"
-        ],
+        "status": ["undead", "trans", "noCorpse"],
         "name": "Spectre",
-        "animFrames": [
-            0,
-            1,
-            2,
-            3
-        ],
+        "animFrames": [0, 1, 2, 3],
         "animSpeed": 2,
         "shadowScale": 0
     },
@@ -900,17 +642,9 @@
             "mnv": 5,
             "res": 4
         },
-        "status": [
-            "undead",
-            "noCorpse"
-        ],
+        "status": ["undead", "noCorpse"],
         "name": "Wraith",
-        "animFrames": [
-            0,
-            1,
-            2,
-            3
-        ],
+        "animFrames": [0, 1, 2, 3],
         "animSpeed": 2,
         "shadowScale": 0
     },
@@ -925,17 +659,9 @@
             "mnv": 4,
             "res": 3
         },
-        "status": [
-            "undead",
-            "noCorpse"
-        ],
+        "status": ["undead", "noCorpse"],
         "name": "Skeleton",
-        "animFrames": [
-            0,
-            1,
-            2,
-            1
-        ],
+        "animFrames": [0, 1, 2, 1],
         "animSpeed": 4
     }
 }

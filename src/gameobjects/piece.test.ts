@@ -1,9 +1,4 @@
-import {
-    PieceConfig,
-    UnitDirection,
-    UnitStatus,
-    UnitType,
-} from "@archaos/engine";
+import { PieceConfig, UnitDirection, UnitStatus, UnitType } from "@archaos/engine";
 import { describe, it, expect, vi } from "vitest";
 // Wizard must be imported first to resolve the circular dependency chain:
 // Piece → Board → Player → Wizard → (extends Piece). If Piece is imported
@@ -137,16 +132,14 @@ class MockPiece extends Piece {
 
     protected createSprite() {
         if (!this._sprite) {
-            this._sprite =
-                makeMockSprite() as unknown as Phaser.GameObjects.Sprite;
+            this._sprite = makeMockSprite() as unknown as Phaser.GameObjects.Sprite;
         }
         return this._sprite;
     }
 
     protected createShadow() {
         if (!this._shadow) {
-            this._shadow =
-                makeMockImage() as unknown as Phaser.GameObjects.Image;
+            this._shadow = makeMockImage() as unknown as Phaser.GameObjects.Image;
         }
         return this._shadow;
     }
@@ -158,10 +151,7 @@ class MockPiece extends Piece {
     }
 }
 
-function makePiece(
-    overrides: Partial<PieceConfig> = {},
-    boardOverrides: Partial<Record<string, any>> = {},
-): MockPiece {
+function makePiece(overrides: Partial<PieceConfig> = {}, boardOverrides: Partial<Record<string, any>> = {}): MockPiece {
     return new MockPiece(makeMockBoard(boardOverrides), 0, {
         type: UnitType.Creature,
         properties: { ...BASE_PROPERTIES, status: [] },
@@ -207,10 +197,7 @@ function makeRangedPiece(overrides: Partial<PieceConfig> = {}): MockPiece {
 
 /** Create a MockPiece on a specific board instance. The MockPiece constructor
  *  calls initSprites internally, so callers must not call it again. */
-function makePieceOnBoard(
-    board: Board,
-    overrides: Partial<PieceConfig> = {},
-): MockPiece {
+function makePieceOnBoard(board: Board, overrides: Partial<PieceConfig> = {}): MockPiece {
     return new MockPiece(board, 0, {
         type: UnitType.Creature,
         properties: { ...BASE_PROPERTIES, status: [] },
@@ -425,59 +412,45 @@ describe("Piece", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.ShadowForm);
             expect(piece.stats.movement).toBe(3);
-            expect(piece.stats.defence).toBe(
-                Math.min(BASE_PROPERTIES.defence + 3, 9),
-            );
+            expect(piece.stats.defence).toBe(Math.min(BASE_PROPERTIES.defence + 3, 9));
         });
 
         it("MagicSword increases combat (capped at 9)", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicSword);
-            expect(piece.stats.combat).toBe(
-                Math.min(BASE_PROPERTIES.combat + 6, 9),
-            );
+            expect(piece.stats.combat).toBe(Math.min(BASE_PROPERTIES.combat + 6, 9));
         });
 
         it("MagicKnife increases combat (capped at 9)", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicKnife);
-            expect(piece.stats.combat).toBe(
-                Math.min(BASE_PROPERTIES.combat + 3, 9),
-            );
+            expect(piece.stats.combat).toBe(Math.min(BASE_PROPERTIES.combat + 3, 9));
         });
 
         it("MagicSword takes priority over MagicKnife for combat boost", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicSword);
             piece.addStatus(UnitStatus.MagicKnife);
-            expect(piece.stats.combat).toBe(
-                Math.min(BASE_PROPERTIES.combat + 6, 9),
-            );
+            expect(piece.stats.combat).toBe(Math.min(BASE_PROPERTIES.combat + 6, 9));
         });
 
         it("MagicArmour increases defence (capped at 9)", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicArmour);
-            expect(piece.stats.defence).toBe(
-                Math.min(BASE_PROPERTIES.defence + 6, 9),
-            );
+            expect(piece.stats.defence).toBe(Math.min(BASE_PROPERTIES.defence + 6, 9));
         });
 
         it("MagicShield increases defence", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicShield);
-            expect(piece.stats.defence).toBe(
-                Math.min(BASE_PROPERTIES.defence + 3, 9),
-            );
+            expect(piece.stats.defence).toBe(Math.min(BASE_PROPERTIES.defence + 3, 9));
         });
 
         it("MagicArmour takes priority over MagicShield for defence boost", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicArmour);
             piece.addStatus(UnitStatus.MagicShield);
-            expect(piece.stats.defence).toBe(
-                Math.min(BASE_PROPERTIES.defence + 6, 9),
-            );
+            expect(piece.stats.defence).toBe(Math.min(BASE_PROPERTIES.defence + 6, 9));
         });
 
         it("MagicBow sets rangedCombat to 3 and range to 6", () => {
@@ -812,14 +785,10 @@ describe("Piece", () => {
         it("logs an error and does not set rider when piece is not mountable", () => {
             const piece = makePiece(); // no Mount status
             const rider = makePiece();
-            const consoleSpy = vi
-                .spyOn(console, "error")
-                .mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
             piece.currentRider = rider;
             expect(piece.currentRider).toBeNull();
-            expect(consoleSpy).toHaveBeenCalledWith(
-                "Cannot mount an unmountable unit",
-            );
+            expect(consoleSpy).toHaveBeenCalledWith("Cannot mount an unmountable unit");
             consoleSpy.mockRestore();
         });
 
@@ -1438,28 +1407,19 @@ describe("Piece", () => {
 
     describe("canAttack", () => {
         it("returns false when the piece is dead", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             (piece as any)._dead = true;
             expect(piece.canAttack).toBe(false);
         });
 
         it("returns false when the piece is engulfed", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             (piece as any)._engulfed = true;
             expect(piece.canAttack).toBe(false);
         });
 
         it("returns false when the piece has already attacked", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             piece.attacked = true;
             expect(piece.canAttack).toBe(false);
         });
@@ -1473,10 +1433,7 @@ describe("Piece", () => {
         });
 
         it("returns false when there are no neighbours", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             expect(piece.canAttack).toBe(false);
         });
 
@@ -1484,10 +1441,7 @@ describe("Piece", () => {
             const owner = makeMockPlayer("me");
             const enemyOwner = makeMockPlayer("enemy");
             const enemy = makePiece({ owner: enemyOwner });
-            const piece = makePiece(
-                { owner },
-                { getAdjacentPiecesAtPosition: () => [enemy] },
-            );
+            const piece = makePiece({ owner }, { getAdjacentPiecesAtPosition: () => [enemy] });
             expect(piece.canAttack).toBe(true);
         });
     });
@@ -1520,20 +1474,14 @@ describe("Piece", () => {
 
     describe("getFirstEngagingPiece", () => {
         it("returns null when there are no neighbours", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             expect(piece.getFirstEngagingPiece()).toBeNull();
         });
 
         it("returns null when neighbours cannot be engaged", () => {
             const owner = makeMockPlayer();
             const ally = makePiece({ owner });
-            const piece = makePiece(
-                { owner },
-                { getAdjacentPiecesAtPosition: () => [ally] },
-            );
+            const piece = makePiece({ owner }, { getAdjacentPiecesAtPosition: () => [ally] });
             expect(piece.getFirstEngagingPiece()).toBeNull();
         });
 
@@ -1575,9 +1523,7 @@ describe("Piece", () => {
         it("reflects buffed stats from active status effects", () => {
             const piece = makePiece();
             piece.addStatus(UnitStatus.MagicSword);
-            expect(piece.unitConfig.properties.com).toBe(
-                Math.min(BASE_PROPERTIES.combat + 6, 9),
-            );
+            expect(piece.unitConfig.properties.com).toBe(Math.min(BASE_PROPERTIES.combat + 6, 9));
         });
 
         it("includes status array in the returned config", () => {
@@ -1590,9 +1536,7 @@ describe("Piece", () => {
 
     describe("static getUnitConfig", () => {
         it("returns undefined for an unknown unit ID", () => {
-            expect(
-                Piece.getUnitConfig("definitely-not-a-real-unit-id"),
-            ).toBeUndefined();
+            expect(Piece.getUnitConfig("definitely-not-a-real-unit-id")).toBeUndefined();
         });
 
         it("returns a config object for a known unit ID", () => {
@@ -1621,12 +1565,8 @@ describe("Piece", () => {
         it("matches names case-insensitively", () => {
             const config = Piece.getUnitConfig("king-cobra");
             if (!config) return;
-            const upper = Piece.getUnitPropertiesByName(
-                config.name.toUpperCase(),
-            );
-            const lower = Piece.getUnitPropertiesByName(
-                config.name.toLowerCase(),
-            );
+            const upper = Piece.getUnitPropertiesByName(config.name.toUpperCase());
+            const lower = Piece.getUnitPropertiesByName(config.name.toLowerCase());
             expect(upper).not.toBeNull();
             expect(lower).not.toBeNull();
             expect(upper?.id).toBe(lower?.id);
@@ -1670,9 +1610,7 @@ describe("Piece", () => {
     describe("raiseDead", () => {
         it("throws when the piece is not dead", async () => {
             const piece = makePiece();
-            await expect(piece.raiseDead(null)).rejects.toThrow(
-                "Cannot raise a piece that is not dead",
-            );
+            await expect(piece.raiseDead(null)).rejects.toThrow("Cannot raise a piece that is not dead");
         });
 
         it("raises a dead piece and assigns the new owner", async () => {
@@ -1754,10 +1692,7 @@ describe("Piece", () => {
 
     describe("getNeighbours", () => {
         it("returns empty array when board returns no adjacent pieces", () => {
-            const piece = makePiece(
-                {},
-                { getAdjacentPiecesAtPosition: () => [] },
-            );
+            const piece = makePiece({}, { getAdjacentPiecesAtPosition: () => [] });
             expect(piece.getNeighbours()).toEqual([]);
         });
 
@@ -1768,10 +1703,8 @@ describe("Piece", () => {
             // The board mock filters out dead pieces via the callback in getNeighbours
             // We need the board's getAdjacentPiecesAtPosition to honour the filter callback
             const board = makeMockBoard({
-                getAdjacentPiecesAtPosition: (
-                    _pos: any,
-                    filter: (p: Piece) => boolean,
-                ) => [living, dead].filter(filter),
+                getAdjacentPiecesAtPosition: (_pos: any, filter: (p: Piece) => boolean) =>
+                    [living, dead].filter(filter),
             });
             const piece = makePieceOnBoard(board);
             expect(piece.getNeighbours()).toEqual([living]);
@@ -1823,20 +1756,14 @@ describe("Piece", () => {
         it("sets direction to Left when iso x offset is negative", () => {
             const piece = makePiece({ x: 3, y: 0 });
             // from (3,0) to (0,3): toIsometric(0,3).x=0-3=-3, toIsometric(3,0).x=3-0=3 → offset=-3-3=-6 < 0 → Left
-            (piece as any).updateDirection(
-                new PMath.Vector2(3, 0),
-                new PMath.Vector2(0, 3),
-            );
+            (piece as any).updateDirection(new PMath.Vector2(3, 0), new PMath.Vector2(0, 3));
             expect(piece.direction).toBe(UnitDirection.Left);
         });
 
         it("sets direction to Right when iso x offset is positive", () => {
             const piece = makePiece({ x: 0, y: 3 });
             // from (0,3) to (3,0): toIsometric(3,0).x=3, toIsometric(0,3).x=-3 → offset=3-(-3)=6 > 0 → Right
-            (piece as any).updateDirection(
-                new PMath.Vector2(0, 3),
-                new PMath.Vector2(3, 0),
-            );
+            (piece as any).updateDirection(new PMath.Vector2(0, 3), new PMath.Vector2(3, 0));
             expect(piece.direction).toBe(UnitDirection.Right);
         });
 
@@ -1846,10 +1773,7 @@ describe("Piece", () => {
             // from (1,0) to (0,1): both have iso x = 1-0=1 and 0-1=-1... let's use symmetric case
             // from (1,2) to (2,1): toIsometric(2,1).x=2-1=1, toIsometric(1,2).x=1-2=-1 → not zero
             // Use same point: from (2,2) to (2,2) → offset=0
-            (piece as any).updateDirection(
-                new PMath.Vector2(2, 2),
-                new PMath.Vector2(2, 2),
-            );
+            (piece as any).updateDirection(new PMath.Vector2(2, 2), new PMath.Vector2(2, 2));
             // Direction should remain unchanged
             expect(piece.direction).toBe(UnitDirection.Left);
         });
@@ -1899,10 +1823,7 @@ describe("Piece", () => {
         it("does not update the logical position", async () => {
             const { board } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            const originalPos = new PMath.Vector2(
-                piece.position.x,
-                piece.position.y,
-            );
+            const originalPos = new PMath.Vector2(piece.position.x, piece.position.y);
             await piece.flyApproach(new PMath.Vector2(5, 5));
             expect(piece.position).toEqual(originalPos);
         });
@@ -1912,9 +1833,7 @@ describe("Piece", () => {
             const piece = makePieceOnBoard(board);
             await piece.flyApproach(new PMath.Vector2(5, 5));
             const spriteTween = tweenSpy.mock.calls.find(
-                (call: any[]) =>
-                    Array.isArray(call[0].targets) &&
-                    call[0].targets.includes(piece.sprite),
+                (call: any[]) => Array.isArray(call[0].targets) && call[0].targets.includes(piece.sprite),
             );
             expect(spriteTween).toBeDefined();
         });
@@ -1924,10 +1843,7 @@ describe("Piece", () => {
         it("does not update the logical position", async () => {
             const { board } = makeTweenBoard();
             const piece = makePieceOnBoard(board);
-            const originalPos = new PMath.Vector2(
-                piece.position.x,
-                piece.position.y,
-            );
+            const originalPos = new PMath.Vector2(piece.position.x, piece.position.y);
             await piece.flyReturn(new PMath.Vector2(0, 0), new PMath.Vector2(5, 5));
             expect(piece.position).toEqual(originalPos);
         });
@@ -1937,9 +1853,7 @@ describe("Piece", () => {
             const piece = makePieceOnBoard(board);
             await piece.flyReturn(new PMath.Vector2(0, 0), new PMath.Vector2(5, 5));
             const spriteTween = tweenSpy.mock.calls.find(
-                (call: any[]) =>
-                    Array.isArray(call[0].targets) &&
-                    call[0].targets.includes(piece.sprite),
+                (call: any[]) => Array.isArray(call[0].targets) && call[0].targets.includes(piece.sprite),
             );
             expect(spriteTween).toBeDefined();
         });
@@ -1990,9 +1904,7 @@ describe("Piece", () => {
 
         it("delegates to sprite.getCenter()", () => {
             const piece = makePiece();
-            const getCenterSpy = vi
-                .spyOn((piece as any)._sprite, "getCenter")
-                .mockReturnValue({ x: 42, y: 99 });
+            const getCenterSpy = vi.spyOn((piece as any)._sprite, "getCenter").mockReturnValue({ x: 42, y: 99 });
             expect(piece.screenPosition).toEqual({ x: 42, y: 99 });
             expect(getCenterSpy).toHaveBeenCalled();
         });

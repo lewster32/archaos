@@ -70,11 +70,7 @@ export class Wizard extends Piece {
     /**
      * Magical weapon statuses.
      */
-    static readonly MAGIC_WEAPONS: UnitStatus[] = [
-        UnitStatus.MagicKnife,
-        UnitStatus.MagicSword,
-        UnitStatus.MagicBow,
-    ];
+    static readonly MAGIC_WEAPONS: UnitStatus[] = [UnitStatus.MagicKnife, UnitStatus.MagicSword, UnitStatus.MagicBow];
 
     /**
      * The WizCode for this wizard. Defines their
@@ -99,9 +95,7 @@ export class Wizard extends Piece {
                 ...config.properties,
             },
         });
-        this._wizCode = Wizard.parseWizCode(
-            config.wizCode || Wizard.randomWizCode(),
-        );
+        this._wizCode = Wizard.parseWizCode(config.wizCode || Wizard.randomWizCode());
         if (this.owner) {
             this.owner.castingPiece = this as any;
         } else {
@@ -320,16 +314,8 @@ export class Wizard extends Piece {
                 // Pentagon
                 for (let i = 0; i < 5; i++) {
                     const angle: number = (i / 5) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.5 +
-                            board.width / 2 +
-                            (board.width / 2) * Math.cos(angle),
-                    );
-                    const y: number = Math.round(
-                        -0.5 +
-                            board.height / 2 +
-                            (board.height / 2) * Math.sin(angle),
-                    );
+                    const x: number = Math.round(-0.5 + board.width / 2 + (board.width / 2) * Math.cos(angle));
+                    const y: number = Math.round(-0.5 + board.height / 2 + (board.height / 2) * Math.sin(angle));
                     board.addWizard({
                         owner: players[(i + 2) % 5],
                         x: x,
@@ -342,16 +328,8 @@ export class Wizard extends Piece {
                 // Hexagon
                 for (let i = 0; i < 6; i++) {
                     const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.6 +
-                            board.width / 2 +
-                            (board.width / 2 + 0.5) * Math.cos(angle),
-                    );
-                    const y: number = Math.round(
-                        -0.5 +
-                            board.height / 2 +
-                            (board.height / 2 - 0.5) * Math.sin(angle),
-                    );
+                    const x: number = Math.round(-0.6 + board.width / 2 + (board.width / 2 + 0.5) * Math.cos(angle));
+                    const y: number = Math.round(-0.5 + board.height / 2 + (board.height / 2 - 0.5) * Math.sin(angle));
                     board.addWizard({
                         owner: players[(i + 2) % 6],
                         x: x,
@@ -370,16 +348,8 @@ export class Wizard extends Piece {
                 });
                 for (let i = 1; i < 7; i++) {
                     const angle: number = (i / 6) * Math.PI * 2 - Math.PI / 2;
-                    const x: number = Math.round(
-                        -0.6 +
-                            board.width / 2 +
-                            (board.width / 2 + 0.5) * Math.cos(angle),
-                    );
-                    const y: number = Math.round(
-                        -0.5 +
-                            board.height / 2 +
-                            (board.height / 2 - 0.5) * Math.sin(angle),
-                    );
+                    const x: number = Math.round(-0.6 + board.width / 2 + (board.width / 2 + 0.5) * Math.cos(angle));
+                    const y: number = Math.round(-0.5 + board.height / 2 + (board.height / 2 - 0.5) * Math.sin(angle));
                     board.addWizard({
                         owner: players[((i + 2) % 6) + 1],
                         x: x,
@@ -392,20 +362,9 @@ export class Wizard extends Piece {
                 // All corners and middles
                 {
                     let playerIndex = 0;
-                    for (const xx of [
-                        0,
-                        Math.floor(board.width / 2),
-                        board.width - 1,
-                    ]) {
-                        for (const yy of [
-                            board.height - 1,
-                            Math.floor(board.height / 2),
-                            0,
-                        ]) {
-                            if (
-                                xx === Math.floor(board.width / 2) &&
-                                yy === Math.floor(board.height / 2)
-                            ) {
+                    for (const xx of [0, Math.floor(board.width / 2), board.width - 1]) {
+                        for (const yy of [board.height - 1, Math.floor(board.height / 2), 0]) {
+                            if (xx === Math.floor(board.width / 2) && yy === Math.floor(board.height / 2)) {
                                 continue;
                             }
                             board.addWizard({

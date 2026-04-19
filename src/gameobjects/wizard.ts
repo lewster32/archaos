@@ -1,11 +1,4 @@
-import {
-    WizardConfig,
-    BoardLayer,
-    UnitDirection,
-    UnitStatus,
-    WizCode,
-    Wizard as EngineWizard,
-} from "@archaos/engine";
+import { WizardConfig, BoardLayer, UnitDirection, UnitStatus, WizCode, Wizard as EngineWizard } from "@archaos/engine";
 import { wizcodes, effectOffsets } from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
@@ -64,9 +57,7 @@ export class Wizard extends Piece {
                 ...config.properties,
             },
         });
-        this._wizCode = Wizard.parseWizCode(
-            config.wizCode || Wizard.randomWizCode(),
-        );
+        this._wizCode = Wizard.parseWizCode(config.wizCode || Wizard.randomWizCode());
         if (this.owner) {
             this.owner.castingPiece = this;
         } else {
@@ -114,11 +105,8 @@ export class Wizard extends Piece {
         this._effects.forEach((sprite, status) => {
             sprite.x =
                 this._sprite.x +
-                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
-                    (this._direction === UnitDirection.Left ? -1 : 1);
-            (sprite as GameObjects.Sprite).setFlipX(
-                this._direction === UnitDirection.Left,
-            );
+                (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) * (this._direction === UnitDirection.Left ? -1 : 1);
+            (sprite as GameObjects.Sprite).setFlipX(this._direction === UnitDirection.Left);
         });
     }
 
@@ -139,22 +127,15 @@ export class Wizard extends Piece {
      * @returns A promise that resolves when the
      *          animation is complete.
      */
-    async updatePosition(
-        duration: number = Piece.DEFAULT_MOVE_DURATION,
-    ): Promise<void> {
+    async updatePosition(duration: number = Piece.DEFAULT_MOVE_DURATION): Promise<void> {
         return new Promise((resolve) => {
             if (!this._sprite) {
                 return;
             }
 
-            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-                this.position,
-            );
+            const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
-            const difference: number = Board.distance(
-                new PMath.Vector2(this._sprite.x, this._sprite.y),
-                isoPosition,
-            );
+            const difference: number = Board.distance(new PMath.Vector2(this._sprite.x, this._sprite.y), isoPosition);
 
             // Animate the wizard and its effects
             // together.
@@ -172,9 +153,7 @@ export class Wizard extends Piece {
                         isoPosition.x +
                         (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                             (this._direction === UnitDirection.Left ? -1 : 1),
-                    y:
-                        isoPosition.y +
-                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    y: isoPosition.y + (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     duration: duration,
                     ease: PMath.Easing.Cubic.InOut,
                 });
@@ -230,12 +209,7 @@ export class Wizard extends Piece {
     async kill(): Promise<void> {
         // WOBWOBWOBWOBWOBWOB
         this.clientBoard.sound.play("deadwizard1", false);
-        await this.clientBoard.playEffect(
-            EffectType.WizardDefeated,
-            this.sprite.getCenter(),
-            null,
-            this,
-        );
+        await this.clientBoard.playEffect(EffectType.WizardDefeated, this.sprite.getCenter(), null, this);
         // If the wizard is mounted, silently clear
         // the relationship before destroy() so that
         // destroyCreations() killing the mount later
@@ -245,9 +219,7 @@ export class Wizard extends Piece {
             this._currentMount.currentRider = null;
             this._currentMount = null;
         }
-        const ownedPieceCount: number = this.clientBoard.getPiecesByOwner(
-            this.owner as any,
-        ).length;
+        const ownedPieceCount: number = this.clientBoard.getPiecesByOwner(this.owner as any).length;
         await this.destroy();
         await this.owner?.defeat();
         if (ownedPieceCount < 1) {
@@ -282,9 +254,7 @@ export class Wizard extends Piece {
             this.removeStatus(UnitStatus.MagicKnife);
         }
 
-        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
-        );
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
         let effectSprite: GameObjects.Sprite | GameObjects.Image;
         switch (status) {
             // Visual effects
@@ -300,8 +270,7 @@ export class Wizard extends Piece {
                     isoPosition.x +
                         (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                             (this._direction === UnitDirection.Left ? -1 : 1),
-                    isoPosition.y +
-                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    isoPosition.y + (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     "effects",
                 );
                 (effectSprite as GameObjects.Sprite).anims.play({
@@ -320,8 +289,7 @@ export class Wizard extends Piece {
                     isoPosition.x +
                         (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
                             (this._direction === UnitDirection.Left ? -1 : 1),
-                    isoPosition.y +
-                        (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    isoPosition.y + (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
                     "magic-armour",
                     this._wizCode.wiz,
                 );
@@ -393,17 +361,11 @@ export class Wizard extends Piece {
                 if (!this._effects.has(status)) {
                     break;
                 }
-                const sprite: GameObjects.Sprite | GameObjects.Image =
-                    this._effects.get(status);
+                const sprite: GameObjects.Sprite | GameObjects.Image = this._effects.get(status);
                 if (sprite) {
                     try {
-                        if (
-                            sprite.getData("_effectTween") instanceof
-                            Tweens.Tween
-                        ) {
-                            (sprite.getData("_effectTween") as Tweens.Tween)
-                                ?.stop()
-                                ?.destroy();
+                        if (sprite.getData("_effectTween") instanceof Tweens.Tween) {
+                            (sprite.getData("_effectTween") as Tweens.Tween)?.stop()?.destroy();
                         }
                     } catch {
                         // Ignore
@@ -472,16 +434,9 @@ export class Wizard extends Piece {
             return this._sprite;
         }
 
-        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
-        );
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
-        this._sprite = new WizardSprite(
-            this.clientBoard.scene,
-            isoPosition.x,
-            isoPosition.y,
-            this._wizCode,
-        );
+        this._sprite = new WizardSprite(this.clientBoard.scene, isoPosition.x, isoPosition.y, this._wizCode);
 
         this.updateDepth();
 
@@ -500,15 +455,9 @@ export class Wizard extends Piece {
         if (this._shadow) {
             return this._shadow;
         }
-        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(
-            this.position,
-        );
+        const isoPosition: PMath.Vector2 = this.clientBoard.getIsoPosition(this.position);
 
-        this._shadow = this.clientBoard.scene.add.image(
-            isoPosition.x,
-            isoPosition.y,
-            "unit-glow",
-        );
+        this._shadow = this.clientBoard.scene.add.image(isoPosition.x, isoPosition.y, "unit-glow");
 
         // Tint the glow to match the wizard's owner
         // colour.

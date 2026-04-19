@@ -1,15 +1,6 @@
 <template>
-    <div
-        class="unitinfo"
-        :style="
-            unit?.owner?.colour
-                ? `--tint-colour: ${cssColour(unit?.owner.colour)}`
-                : ''
-        "
-    >
-        <button class="unitinfo__close button button--small" @click="close()">
-            &times;
-        </button>
+    <div class="unitinfo" :style="unit?.owner?.colour ? `--tint-colour: ${cssColour(unit?.owner.colour)}` : ''">
+        <button class="unitinfo__close button button--small" @click="close()">&times;</button>
         <div class="unitinfo__inner callout">
             <h2>
                 {{ unit?.name }}<template v-if="unit?.dead">'s corpse</template>
@@ -45,9 +36,7 @@ const props = defineProps<{
 }>();
 
 const highlightOwnedUnits: (owner: Player) => void = (owner) => {
-    document.dispatchEvent(
-        new CustomEvent("highlight-owned-units", { detail: owner }),
-    );
+    document.dispatchEvent(new CustomEvent("highlight-owned-units", { detail: owner }));
 };
 
 const emit = defineEmits<(e: "close") => void>();

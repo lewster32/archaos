@@ -14,9 +14,7 @@ const COOKIE_NAME = "storageConsent";
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
 
 function getCookie(name: string): string | null {
-    const match = document.cookie.match(
-        new RegExp(`(?:^|;\\s*)${name}=([^;]*)`),
-    );
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
     return match ? decodeURIComponent(match[1]) : null;
 }
 

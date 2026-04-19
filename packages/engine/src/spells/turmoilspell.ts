@@ -13,24 +13,15 @@ import type { TurmoilBatchPayload, TurmoilMoveResult } from "../actions";
  * spell.
  */
 export class TurmoilSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
-        const target: P = targets.find(
-            (p: P) => p.type === UnitType.Wizard && p.owner === this.owner,
-        );
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
+        const target: P = targets.find((p: P) => p.type === UnitType.Wizard && p.owner === this.owner);
         if (!target) {
             return false;
         }
 
         const moves: TurmoilMoveResult[] = [];
 
-        for (const piece of this._board.pieces.filter(
-            (p: P) => !p.dead && !p.currentMount && !p.engulfed,
-        )) {
+        for (const piece of this._board.pieces.filter((p: P) => !p.dead && !p.currentMount && !p.engulfed)) {
             const randomEmptySpace: Point = this._board.getRandomEmptySpace();
             if (randomEmptySpace) {
                 const from = {
@@ -55,10 +46,7 @@ export class TurmoilSpell<P extends Piece = Piece> extends Spell<P> {
         };
         this._board.events.emit(EngineEvent.TurmoilBatch, payload);
 
-        this._board.logger.log(
-            `${target.name} successfully casts '${this.name}'`,
-            Colour.Green,
-        );
+        this._board.logger.log(`${target.name} successfully casts '${this.name}'`, Colour.Green);
 
         return true;
     }

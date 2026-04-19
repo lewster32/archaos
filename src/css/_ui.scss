@@ -54,10 +54,8 @@ dialog.callout {
     &::backdrop {
         // checkerboard pattern
         background-image:
-            linear-gradient(45deg, #000 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #000 75%),
-            linear-gradient(45deg, transparent 75%, #000 75%),
-            linear-gradient(45deg, #000 25%, transparent 25%);
+            linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%),
+            linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(45deg, #000 25%, transparent 25%);
         --size: 2px;
         background-size: calc(var(--size) * 2) calc(var(--size) * 2);
         background-position:
@@ -92,10 +90,8 @@ dialog.callout {
         bottom: 0;
         z-index: 10;
         background-image:
-            linear-gradient(45deg, #0007 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #0007 75%),
-            linear-gradient(45deg, transparent 75%, #0007 75%),
-            linear-gradient(45deg, #0007 25%, transparent 25%);
+            linear-gradient(45deg, #0007 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #0007 75%),
+            linear-gradient(45deg, transparent 75%, #0007 75%), linear-gradient(45deg, #0007 25%, transparent 25%);
         --size: 2px;
         background-size: calc(var(--size) * 2) calc(var(--size) * 2);
         background-position:
@@ -156,11 +152,7 @@ input[type="checkbox"] {
         background-color: var(--accent-color, var(--color-yellow));
     }
     &:hover {
-        background-color: color-mix(
-            in srgb,
-            var(--accent-color, var(--color-yellow)) 20%,
-            transparent 80%
-        );
+        background-color: color-mix(in srgb, var(--accent-color, var(--color-yellow)) 20%, transparent 80%);
     }
 }
 
@@ -180,15 +172,13 @@ input[type="range"] {
         appearance: none;
         width: 24px;
         height: 24px;
-        background: url("@assets/images/ui/button-cyan.png") no-repeat
-            center center / 100% 100%;
+        background: url("@assets/images/ui/button-cyan.png") no-repeat center center / 100% 100%;
     }
     &:disabled {
         pointer-events: none;
         &::-webkit-slider-thumb,
         &::-moz-range-thumb {
-            background: url("@assets/images/ui/button-header.png")
-                no-repeat center center / 100% 100%;
+            background: url("@assets/images/ui/button-header.png") no-repeat center center / 100% 100%;
         }
     }
 }

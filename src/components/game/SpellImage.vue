@@ -1,22 +1,7 @@
 <template>
-    <div
-        class="spell-icon spell__image"
-        :class="spellClasses"
-        :style="spellStyles"
-    >
-        <canvas
-            v-if="spell && usesAtlasIcon"
-            ref="canvasRef"
-            class="spell-icon__image"
-            width="18"
-            height="18"
-        />
-        <img
-            v-else-if="spell"
-            class="spell-icon__image"
-            :src="spellImage"
-            :alt="spell.name"
-        />
+    <div class="spell-icon spell__image" :class="spellClasses" :style="spellStyles">
+        <canvas v-if="spell && usesAtlasIcon" ref="canvasRef" class="spell-icon__image" width="18" height="18" />
+        <img v-else-if="spell" class="spell-icon__image" :src="spellImage" :alt="spell.name" />
     </div>
 </template>
 <script lang="ts">
@@ -32,10 +17,7 @@ import classicunitsData from "@assets/spritesheets/classicunits.json";
 type FrameRect = { x: number; y: number; w: number; h: number };
 
 const _classicFrames = new Map<string, FrameRect>(
-    classicunitsData.textures[0].frames.map((f) => [
-        f.filename,
-        f.frame as FrameRect,
-    ]),
+    classicunitsData.textures[0].frames.map((f) => [f.filename, f.frame as FrameRect]),
 );
 
 // Enhanced spells carry their atlas frame data inline in the spell JSON.
@@ -44,10 +26,7 @@ const _classicFrames = new Map<string, FrameRect>(
 type EnhancedAtlasInfo = { imageUrl: string; frames: Map<string, FrameRect> };
 const _enhancedFrames = new Map<string, EnhancedAtlasInfo>();
 
-const _enhancedFiles: Record<string, any> = import.meta.glob(
-    "@assets/data/enhanced/*.json",
-    { eager: true },
-);
+const _enhancedFiles: Record<string, any> = import.meta.glob("@assets/data/enhanced/*.json", { eager: true });
 
 for (const data of Object.values(_enhancedFiles)) {
     const unit = data.spell?.unit;
@@ -55,9 +34,7 @@ for (const data of Object.values(_enhancedFiles)) {
     const texture = unit.textures[0];
     _enhancedFrames.set(unit.id, {
         imageUrl: `${import.meta.env.BASE_URL}images/units/enhanced/${texture.image}`,
-        frames: new Map<string, FrameRect>(
-            texture.frames.map((f: any) => [f.filename, f.frame as FrameRect]),
-        ),
+        frames: new Map<string, FrameRect>(texture.frames.map((f: any) => [f.filename, f.frame as FrameRect])),
     });
 }
 
@@ -95,11 +72,7 @@ let _scanCanvas: HTMLCanvasElement | null = null;
  * and columns, expressed as { top, visibleHeight, left, visibleWidth }. Results
  * are cached by frame name so the pixel scan only runs once per unique frame.
  */
-function _getTrimBounds(
-    img: HTMLImageElement,
-    frame: FrameRect,
-    frameName: string,
-): TrimBounds {
+function _getTrimBounds(img: HTMLImageElement, frame: FrameRect, frameName: string): TrimBounds {
     const cached = _trimCache.get(frameName);
     if (cached) return cached;
 
@@ -110,17 +83,7 @@ function _getTrimBounds(
     }
     const ctx = _scanCanvas.getContext("2d")!;
     ctx.clearRect(0, 0, frame.w, frame.h);
-    ctx.drawImage(
-        img,
-        frame.x,
-        frame.y,
-        frame.w,
-        frame.h,
-        0,
-        0,
-        frame.w,
-        frame.h,
-    );
+    ctx.drawImage(img, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
     const { data } = ctx.getImageData(0, 0, frame.w, frame.h);
 
     const isRowOpaque = (row: number) => {
@@ -243,11 +206,7 @@ watch(
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const { top, visibleHeight, left, visibleWidth } = _getTrimBounds(
-            img,
-            frame,
-            frameName,
-        );
+        const { top, visibleHeight, left, visibleWidth } = _getTrimBounds(img, frame, frameName);
         const destX = Math.round((canvas.width - visibleWidth) / 2);
         const destY = Math.round((canvas.height - visibleHeight) / 2);
         ctx.drawImage(
@@ -432,31 +391,22 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
             border-image: linear-gradient(
                     to bottom,
                     var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 7),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 7)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 7)
                         calc(var(--spell-grad-pixel-step) * 8),
-                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 8)
-                        calc(var(--spell-grad-pixel-step) * 9),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 9)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 8) calc(var(--spell-grad-pixel-step) * 9),
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 9)
                         calc(var(--spell-grad-pixel-step) * 10),
-                    var(--spell-grad-top)
-                        calc(var(--spell-grad-pixel-step) * 10)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 10)
                         calc(var(--spell-grad-pixel-step) * 11),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 11)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 11)
                         calc(var(--spell-grad-pixel-step) * 12),
-                    var(--spell-grad-top)
-                        calc(var(--spell-grad-pixel-step) * 12)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 12)
                         calc(var(--spell-grad-pixel-step) * 13),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 13)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 13)
                         calc(var(--spell-grad-pixel-step) * 14),
-                    var(--spell-grad-top)
-                        calc(var(--spell-grad-pixel-step) * 14)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 14)
                         calc(var(--spell-grad-pixel-step) * 15),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 15)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 15)
                 )
                 1;
         }
@@ -467,33 +417,23 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
             border-image: linear-gradient(
                     to bottom,
                     var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 3),
-                    var(--spell-grad-middle)
-                        calc(var(--spell-grad-pixel-step) * 3)
+                    var(--spell-grad-middle) calc(var(--spell-grad-pixel-step) * 3)
                         calc(var(--spell-grad-pixel-step) * 4),
-                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 4)
-                        calc(var(--spell-grad-pixel-step) * 5),
-                    var(--spell-grad-middle)
-                        calc(var(--spell-grad-pixel-step) * 5)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 4) calc(var(--spell-grad-pixel-step) * 5),
+                    var(--spell-grad-middle) calc(var(--spell-grad-pixel-step) * 5)
                         calc(var(--spell-grad-pixel-step) * 6),
-                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 6)
-                        calc(var(--spell-grad-pixel-step) * 7),
-                    var(--spell-grad-middle)
-                        calc(var(--spell-grad-pixel-step) * 7)
+                    var(--spell-grad-top) calc(var(--spell-grad-pixel-step) * 6) calc(var(--spell-grad-pixel-step) * 7),
+                    var(--spell-grad-middle) calc(var(--spell-grad-pixel-step) * 7)
                         calc(var(--spell-grad-pixel-step) * 17),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 17)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 17)
                         calc(var(--spell-grad-pixel-step) * 18),
-                    var(--spell-grad-middle)
-                        calc(var(--spell-grad-pixel-step) * 18)
+                    var(--spell-grad-middle) calc(var(--spell-grad-pixel-step) * 18)
                         calc(var(--spell-grad-pixel-step) * 19),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 19)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 19)
                         calc(var(--spell-grad-pixel-step) * 20),
-                    var(--spell-grad-middle)
-                        calc(var(--spell-grad-pixel-step) * 20)
+                    var(--spell-grad-middle) calc(var(--spell-grad-pixel-step) * 20)
                         calc(var(--spell-grad-pixel-step) * 21),
-                    var(--spell-grad-bottom)
-                        calc(var(--spell-grad-pixel-step) * 21)
+                    var(--spell-grad-bottom) calc(var(--spell-grad-pixel-step) * 21)
                 )
                 1;
         }
@@ -505,13 +445,7 @@ const getImageUrl: (spell: Spell) => string = (spell: Spell) => {
         content: "";
         border-width: 1px;
         border-style: solid;
-        border-color: var(
-            --spell-grad-top,
-            var(
-                --spell-grad-middle,
-                var(--spell-grad-bottom, var(--spell-unknown))
-            )
-        );
+        border-color: var(--spell-grad-top, var(--spell-grad-middle, var(--spell-grad-bottom, var(--spell-unknown))));
         z-index: 10;
     }
 }

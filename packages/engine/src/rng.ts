@@ -87,11 +87,7 @@ export class GameRNG implements IRNG {
         return array;
     }
 
-    weightedRandomPick<T>(
-        array: T[],
-        weight: number,
-        exponential: boolean = true,
-    ): T {
+    weightedRandomPick<T>(array: T[], weight: number, exponential: boolean = true): T {
         return weightedRandomPick(this, array, weight, exponential);
     }
 }
@@ -140,11 +136,7 @@ export class TestRNG implements IRNG {
     shuffle<T>(array: T[]): T[] {
         return array;
     }
-    weightedRandomPick<T>(
-        array: T[],
-        _weight: number,
-        _exponential?: boolean,
-    ): T {
+    weightedRandomPick<T>(array: T[], _weight: number, _exponential?: boolean): T {
         return array[0];
     }
 }
@@ -166,12 +158,7 @@ export class TestRNG implements IRNG {
  * @param weight      bias strength; positive -> later elements, negative -> earlier
  * @param exponential use exponential slot weights instead of linear (default true)
  */
-export function weightedRandomPick<T>(
-    rng: IRNG,
-    array: T[],
-    weight: number,
-    exponential: boolean = true,
-): T {
+export function weightedRandomPick<T>(rng: IRNG, array: T[], weight: number, exponential: boolean = true): T {
     if (array.length === 0) {
         throw new Error("Cannot pick from an empty array");
     }
@@ -183,9 +170,7 @@ export function weightedRandomPick<T>(
     const slotWeights: number[] = Array.from({ length: n });
     let totalWeight = 0;
     for (let i = 0; i < n; i++) {
-        slotWeights[i] = exponential
-            ? Math.exp((i * absW) / (n - 1))
-            : 1 + (i * absW) / (n - 1);
+        slotWeights[i] = exponential ? Math.exp((i * absW) / (n - 1)) : 1 + (i * absW) / (n - 1);
         totalWeight += slotWeights[i];
     }
     const randomWeight: number = rng.frac() * totalWeight;

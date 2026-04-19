@@ -1,9 +1,4 @@
-import {
-    State,
-    PseudoState,
-    PseudoStateKind,
-    Instance,
-} from "@steelbreeze/state";
+import { State, PseudoState, PseudoStateKind, Instance } from "@steelbreeze/state";
 
 /* ------------------------------------------------------------------ */
 /*  Event classes                                                      */
@@ -197,28 +192,17 @@ function createModel(): {
     const pieceIdle = new State("pieceIdle", movingPlayer);
     const pieceMoving = new State("pieceMoving", movingPlayer);
     const pieceAttacking = new State("pieceAttacking", movingPlayer);
-    const pieceRangedAttacking = new State(
-        "pieceRangedAttacking",
-        movingPlayer,
-    );
+    const pieceRangedAttacking = new State("pieceRangedAttacking", movingPlayer);
     const pieceDismounting = new State("pieceDismounting", movingPlayer);
 
     // --- Initial pseudo-states ---
     new PseudoState("initial", game, PseudoStateKind.Initial).to(idle);
     new PseudoState("initial", playing, PseudoStateKind.Initial).to(spellbook);
-    new PseudoState("initial", spellbook, PseudoStateKind.Initial).to(
-        spellbookSetup,
-    );
-    new PseudoState("initial", casting, PseudoStateKind.Initial).to(
-        castingSetup,
-    );
-    new PseudoState("initial", castingPlayer, PseudoStateKind.Initial).to(
-        castIdle,
-    );
+    new PseudoState("initial", spellbook, PseudoStateKind.Initial).to(spellbookSetup);
+    new PseudoState("initial", casting, PseudoStateKind.Initial).to(castingSetup);
+    new PseudoState("initial", castingPlayer, PseudoStateKind.Initial).to(castIdle);
     new PseudoState("initial", moving, PseudoStateKind.Initial).to(movingSetup);
-    new PseudoState("initial", movingPlayer, PseudoStateKind.Initial).to(
-        pieceIdle,
-    );
+    new PseudoState("initial", movingPlayer, PseudoStateKind.Initial).to(pieceIdle);
 
     // --- Transitions ---
 
@@ -357,9 +341,7 @@ export class PhaseMachine {
 
         // Leaf states are simple states (no children). We check them in
         // order to find the deepest active one.
-        this._leafStates = Object.entries(states).filter(([, state]) =>
-            state.isSimple(),
-        );
+        this._leafStates = Object.entries(states).filter(([, state]) => state.isSimple());
 
         // Wire up entry actions for callback notification
         if (callback) {

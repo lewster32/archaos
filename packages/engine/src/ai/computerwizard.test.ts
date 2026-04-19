@@ -264,19 +264,12 @@ describe("ComputerWizard", () => {
             const p2 = makePieceStub({ id: 2 });
             const board = makeBoardStub({ pieces: [p1, p2] });
             const spellA = makeSpellStub({
-                getValidTarget: vi
-                    .fn()
-                    .mockImplementation((p: any) => (p.id === 1 ? p : null)),
+                getValidTarget: vi.fn().mockImplementation((p: any) => (p.id === 1 ? p : null)),
             });
             const spellB = makeSpellStub({
-                getValidTarget: vi
-                    .fn()
-                    .mockImplementation((p: any) => (p.id === 2 ? p : null)),
+                getValidTarget: vi.fn().mockImplementation((p: any) => (p.id === 2 ? p : null)),
             });
-            const result = ComputerWizard.findSpellTargets(board, [
-                spellA,
-                spellB,
-            ]);
+            const result = ComputerWizard.findSpellTargets(board, [spellA, spellB]);
             expect(result.get(spellA)).toEqual([p1]);
             expect(result.get(spellB)).toEqual([p2]);
         });
@@ -303,18 +296,14 @@ describe("ComputerWizard", () => {
                 });
                 const board = makeBoardStub({
                     pieces: [wizardPiece],
-                    getPiecesByOwner: vi
-                        .fn()
-                        .mockReturnValue([wizardPiece, creaturePiece]),
+                    getPiecesByOwner: vi.fn().mockReturnValue([wizardPiece, creaturePiece]),
                 });
                 const justiceSpell = makeSpellStub({
                     type: SpellType.Attack,
                     properties: { destroyWizardCreatures: true },
                     getValidTarget: vi.fn().mockReturnValue(wizardPiece),
                 });
-                const result = ComputerWizard.findSpellTargets(board, [
-                    justiceSpell,
-                ]);
+                const result = ComputerWizard.findSpellTargets(board, [justiceSpell]);
                 // creaturePiece is alive and non-wizard → wizard target is kept
                 expect(result.get(justiceSpell)).toContain(wizardPiece);
             });
@@ -336,9 +325,7 @@ describe("ComputerWizard", () => {
                     properties: { destroyWizardCreatures: true },
                     getValidTarget: vi.fn().mockReturnValue(wizardPiece),
                 });
-                const result = ComputerWizard.findSpellTargets(board, [
-                    justiceSpell,
-                ]);
+                const result = ComputerWizard.findSpellTargets(board, [justiceSpell]);
                 // No non-wizard units → wizard target is filtered out
                 const targets = result.get(justiceSpell);
                 expect(targets).toBeDefined();
@@ -352,9 +339,7 @@ describe("ComputerWizard", () => {
                     properties: { destroyWizardCreatures: true },
                     getValidTarget: vi.fn().mockReturnValue(null),
                 });
-                const result = ComputerWizard.findSpellTargets(board, [
-                    justiceSpell,
-                ]);
+                const result = ComputerWizard.findSpellTargets(board, [justiceSpell]);
                 expect(result.has(justiceSpell)).toBe(false);
             });
 
@@ -377,9 +362,7 @@ describe("ComputerWizard", () => {
                     properties: { destroyWizardCreatures: true },
                     getValidTarget: vi.fn().mockReturnValue(creature),
                 });
-                const result = ComputerWizard.findSpellTargets(board, [
-                    justiceSpell,
-                ]);
+                const result = ComputerWizard.findSpellTargets(board, [justiceSpell]);
                 // Non-wizard pieces are filtered out of justice spell targets
                 const targets = result.get(justiceSpell);
                 expect(targets).toBeDefined();
@@ -404,9 +387,7 @@ describe("ComputerWizard", () => {
             } as unknown as Player;
             const board = makeBoardStub({ players: [player], pieces: [] });
             const cw = new ComputerWizard(board, player);
-            expect(() =>
-                (cw as any).evaluateEnemyPlayerPriorities(),
-            ).not.toThrow();
+            expect(() => (cw as any).evaluateEnemyPlayerPriorities()).not.toThrow();
         });
 
         it("logs an error and returns early when the own wizard piece is missing", () => {
@@ -424,13 +405,9 @@ describe("ComputerWizard", () => {
                 players: [player, enemy],
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
             });
-            const consoleSpy = vi
-                .spyOn(console, "error")
-                .mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
             const cw = new ComputerWizard(board, player);
-            expect(() =>
-                (cw as any).evaluateEnemyPlayerPriorities(),
-            ).not.toThrow();
+            expect(() => (cw as any).evaluateEnemyPlayerPriorities()).not.toThrow();
             consoleSpy.mockRestore();
         });
 
@@ -473,8 +450,7 @@ describe("ComputerWizard", () => {
             (cw as any).evaluateEnemyPlayerPriorities();
 
             // After normalisation the single enemy's priority should be capped at most 1
-            const priorities: Map<Player, number> = (cw as any)
-                ._enemyPlayerPriorities;
+            const priorities: Map<Player, number> = (cw as any)._enemyPlayerPriorities;
             expect(priorities.size).toBe(1);
             const [, level] = [...priorities.entries()][0];
             expect(level).toBeGreaterThanOrEqual(0);
@@ -502,8 +478,7 @@ describe("ComputerWizard", () => {
             });
             const cw = new ComputerWizard(board, player);
             (cw as any).evaluateEnemyPlayerPriorities();
-            const priorities: Map<Player, number> = (cw as any)
-                ._enemyPlayerPriorities;
+            const priorities: Map<Player, number> = (cw as any)._enemyPlayerPriorities;
             // Defeated player should not appear in the map
             expect(priorities.size).toBe(0);
         });
@@ -545,9 +520,7 @@ describe("ComputerWizard", () => {
 
             const cw = new ComputerWizard(board, player);
             // Should not throw even when the fallback wizard path is taken
-            expect(() =>
-                (cw as any).evaluateEnemyPlayerPriorities(),
-            ).not.toThrow();
+            expect(() => (cw as any).evaluateEnemyPlayerPriorities()).not.toThrow();
         });
     });
 
@@ -572,12 +545,7 @@ describe("ComputerWizard", () => {
 
         it("returns the chance for a classic spell matched by unitId", () => {
             inject({ chance: 0.3, balance: 0 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(0),
-                ),
-            ).toBe(0.3);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(0))).toBe(0.3);
         });
 
         it("returns the chance for an enhanced spell matched by unit.id", () => {
@@ -587,72 +555,37 @@ describe("ComputerWizard", () => {
                 name: "Test Enhanced",
                 unit: { id: "enhanced-unit" },
             };
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "enhanced-unit",
-                    makeAlignment(0),
-                ),
-            ).toBe(0.4);
+            expect((ComputerWizard as any).getSpellChanceForUnit("enhanced-unit", makeAlignment(0))).toBe(0.4);
         });
 
         it("returns null when no spell matches the unit ID", () => {
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "no-such-unit",
-                    makeAlignment(0),
-                ),
-            ).toBeNull();
+            expect((ComputerWizard as any).getSpellChanceForUnit("no-such-unit", makeAlignment(0))).toBeNull();
         });
 
         it("increases chance for a chaotic spell on a chaotic board", () => {
             // spell balance -2, alignment -0.3 → adjustChance adds +0.3
             inject({ chance: 0.1, balance: -2 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(-0.3),
-                ),
-            ).toBeCloseTo(0.4);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(-0.3))).toBeCloseTo(0.4);
         });
 
         it("increases chance for a lawful spell on a lawful board", () => {
             inject({ chance: 0.3, balance: 2 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(0.2),
-                ),
-            ).toBeCloseTo(0.5);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(0.2))).toBeCloseTo(0.5);
         });
 
         it("returns base chance unchanged for neutral spells", () => {
             inject({ chance: 0.5, balance: 0 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(-0.5),
-                ),
-            ).toBe(0.5);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(-0.5))).toBe(0.5);
         });
 
         it("clamps the adjusted chance to a maximum of 1", () => {
             inject({ chance: 0.5, balance: -2 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(-1),
-                ),
-            ).toBe(1);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(-1))).toBe(1);
         });
 
         it("clamps the adjusted chance to a minimum of 0.1", () => {
             inject({ chance: 0.1, balance: 2 });
-            expect(
-                (ComputerWizard as any).getSpellChanceForUnit(
-                    "test-unit",
-                    makeAlignment(-0.5),
-                ),
-            ).toBe(0.1);
+            expect((ComputerWizard as any).getSpellChanceForUnit("test-unit", makeAlignment(-0.5))).toBe(0.1);
         });
     });
 
@@ -696,10 +629,7 @@ describe("ComputerWizard", () => {
             } as unknown as Spell;
         }
 
-        function makeDragon(
-            owner: any,
-            extra: Record<string, unknown> = {},
-        ): Piece {
+        function makeDragon(owner: any, extra: Record<string, unknown> = {}): Piece {
             return {
                 id: 50,
                 type: UnitType.Creature,
@@ -742,9 +672,7 @@ describe("ComputerWizard", () => {
                 dragonStrength = 30,
                 dragonChance = 0.1,
                 dragonBalance = -2,
-                rollChanceReturn = ((c: number) => c > 0) as
-                    | boolean
-                    | ((c: number) => boolean),
+                rollChanceReturn = ((c: number) => c > 0) as boolean | ((c: number) => boolean),
                 threatening = false,
                 knownNonIllusion = false,
                 raisedDead = false,
@@ -768,11 +696,7 @@ describe("ComputerWizard", () => {
             const wizardPiece = makePieceStub({
                 type: UnitType.Wizard,
                 position: new Point(0, 0),
-                findThreatPieces: vi
-                    .fn()
-                    .mockReturnValue(
-                        threatening && dragon ? new Set([dragon]) : new Set(),
-                    ),
+                findThreatPieces: vi.fn().mockReturnValue(threatening && dragon ? new Set([dragon]) : new Set()),
             });
 
             const player = {
@@ -812,13 +736,8 @@ describe("ComputerWizard", () => {
             const cw = new ComputerWizard(board, player, difficulty);
 
             // Stub methods that aren't under test
-            vi.spyOn(
-                cw as any,
-                "evaluateEnemyPlayerPriorities",
-            ).mockImplementation(() => {});
-            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
-                () => {},
-            );
+            vi.spyOn(cw as any, "evaluateEnemyPlayerPriorities").mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(() => {});
 
             // findSpellTargets: return the dragon as a target for Disbelieve
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
@@ -887,8 +806,7 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await noThreat.cw.selectSpell();
-            const noThreatArg = (noThreat.board.rollChance as any).mock
-                .calls[0][0];
+            const noThreatArg = (noThreat.board.rollChance as any).mock.calls[0][0];
 
             // With threat: suspicion ≈ 8.44 * 2 ≈ 16.88
             // pref ≈ 0.34
@@ -899,8 +817,7 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await withThreat.cw.selectSpell();
-            const threatArg = (withThreat.board.rollChance as any).mock
-                .calls[0][0];
+            const threatArg = (withThreat.board.rollChance as any).mock.calls[0][0];
 
             expect(threatArg).toBeGreaterThan(noThreatArg);
         });
@@ -915,8 +832,7 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await neutral.cw.selectSpell();
-            const neutralArg = (neutral.board.rollChance as any).mock
-                .calls[0][0];
+            const neutralArg = (neutral.board.rollChance as any).mock.calls[0][0];
 
             // Same dragon on chaotic board: effective chance = 0.4
             // → lower suspicion → lower preference
@@ -928,8 +844,7 @@ describe("ComputerWizard", () => {
                 rollChanceReturn: false,
             });
             await chaotic.cw.selectSpell();
-            const chaoticArg = (chaotic.board.rollChance as any).mock
-                .calls[0][0];
+            const chaoticArg = (chaotic.board.rollChance as any).mock.calls[0][0];
 
             expect(chaoticArg).toBeLessThan(neutralArg);
         });
@@ -1116,16 +1031,9 @@ describe("ComputerWizard", () => {
             };
 
             const cw = new ComputerWizard(board, player, 1);
-            vi.spyOn(
-                cw as any,
-                "evaluateEnemyPlayerPriorities",
-            ).mockImplementation(() => {});
-            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
-                () => {},
-            );
-            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
-                new Map([[disbelieve, [dragon]]]),
-            );
+            vi.spyOn(cw as any, "evaluateEnemyPlayerPriorities").mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(() => {});
+            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(new Map([[disbelieve, [dragon]]]));
 
             await cw.selectSpell();
 
@@ -1213,16 +1121,9 @@ describe("ComputerWizard", () => {
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, player, 1);
-            vi.spyOn(
-                cw as any,
-                "evaluateEnemyPlayerPriorities",
-            ).mockImplementation(() => {});
-            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(
-                () => {},
-            );
-            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(
-                new Map([[disbelieve, [goblin]]]),
-            );
+            vi.spyOn(cw as any, "evaluateEnemyPlayerPriorities").mockImplementation(() => {});
+            vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(() => {});
+            vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(new Map([[disbelieve, [goblin]]]));
 
             await cw.selectSpell();
 

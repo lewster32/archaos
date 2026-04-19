@@ -31,12 +31,7 @@ export class Player extends EnginePlayer<Piece> {
      * @param config The configuration for this player.
      * @param colour The colour of this player.
      */
-    constructor(
-        board: Board,
-        id: number,
-        config: PlayerConfig,
-        colour: number,
-    ) {
+    constructor(board: Board, id: number, config: PlayerConfig, colour: number) {
         super(
             board as any,
             id,
@@ -53,14 +48,8 @@ export class Player extends EnginePlayer<Piece> {
         // If this is a computer player, create the
         // AI controller now that super() is done.
         if (config.type === GameSetupPlayerType.Computer) {
-            (this as any)._remote = new ComputerWizard(
-                board as any,
-                this as any,
-                config.difficulty ?? 0.5,
-            );
-            console.log(
-                `${this.name} will be controlled by AI, with difficulty ${this.ai.difficulty}.`,
-            );
+            (this as any)._remote = new ComputerWizard(board as any, this as any, config.difficulty ?? 0.5);
+            console.log(`${this.name} will be controlled by AI, with difficulty ${this.ai.difficulty}.`);
         }
     }
 
@@ -71,22 +60,12 @@ export class Player extends EnginePlayer<Piece> {
      */
     override async defeat(): Promise<void> {
         this._defeated = true;
-        (this.board as unknown as Board).logger.log(
-            `Game over for ${this.name}`,
-            Colour.Red,
-        );
-        await (this.board as unknown as Board).sound.playAsync(
-            "deadwizard2",
-            { delay: Board.DEFAULT_DELAY },
-            false,
-        );
+        (this.board as unknown as Board).logger.log(`Game over for ${this.name}`, Colour.Red);
+        await (this.board as unknown as Board).sound.playAsync("deadwizard2", { delay: Board.DEFAULT_DELAY }, false);
         await this.destroyCreations();
         // Let's really dwell on this for a bit
         await (this.board as unknown as Board).idleDelay(Board.END_TURN_DELAY);
-        (this.board as unknown as Board).boardEvents.emit(
-            BoardEvent.PlayerDefeated,
-            this,
-        );
+        (this.board as unknown as Board).boardEvents.emit(BoardEvent.PlayerDefeated, this);
     }
 
     /**
@@ -102,12 +81,8 @@ export class Player extends EnginePlayer<Piece> {
                     return new Promise((resolve) => {
                         setTimeout(
                             async () => {
-                                (this.board as unknown as Board).sound.play(
-                                    "destroy",
-                                );
-                                await (
-                                    this.board as unknown as Board
-                                ).playEffect(
+                                (this.board as unknown as Board).sound.play("destroy");
+                                await (this.board as unknown as Board).playEffect(
                                     EffectType.DisbelieveHit,
                                     (piece as Piece).sprite.getCenter(),
                                     null,

@@ -46,9 +46,7 @@ function makeMockBoard(rng = new TestRNG()): Board {
             emit: vi.fn(),
             emitAsync: vi.fn().mockResolvedValue(undefined),
         },
-        getAdjacentPoints: vi
-            .fn()
-            .mockReturnValue([new Point(1, 0), new Point(0, 1)]),
+        getAdjacentPoints: vi.fn().mockReturnValue([new Point(1, 0), new Point(0, 1)]),
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
         removePiece: vi.fn(),
         addPiece: vi.fn().mockImplementation(() => ({
@@ -163,9 +161,7 @@ describe("Piece.spread", () => {
             },
             owner: { name: "P1" } as any,
         } as PieceConfig);
-        await expect(piece.spread()).rejects.toThrow(
-            "Cannot spread a non-spreading or dead piece",
-        );
+        await expect(piece.spread()).rejects.toThrow("Cannot spread a non-spreading or dead piece");
     });
 });
 
@@ -187,9 +183,7 @@ function makeCombatBoard(rollResult: boolean): Board {
             emit: vi.fn(),
             emitAsync: vi.fn().mockResolvedValue(undefined),
         },
-        getAdjacentPoints: vi
-            .fn()
-            .mockReturnValue([new Point(1, 0), new Point(0, 1)]),
+        getAdjacentPoints: vi.fn().mockReturnValue([new Point(1, 0), new Point(0, 1)]),
         getAdjacentPiecesAtPosition: vi.fn().mockReturnValue([]),
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
         removePiece: vi.fn(),
@@ -264,9 +258,7 @@ describe("Piece.kill", () => {
         const board = makeMockBoard();
         const piece = makeCreature(board, 1, 0, 0);
         await piece.kill();
-        await expect(piece.kill()).rejects.toThrow(
-            "Cannot kill unit that is already dead",
-        );
+        await expect(piece.kill()).rejects.toThrow("Cannot kill unit that is already dead");
     });
 
     it("releases an engulfed piece on kill", async () => {
@@ -304,25 +296,21 @@ describe("Piece.kill", () => {
             owner: OWNER_A,
         } as PieceConfig);
         await piece.kill();
-        expect((board.removePiece as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+        expect(board.removePiece as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
 
     it("destroys pieces with NoCorpse status immediately", async () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.NoCorpse],
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.NoCorpse]);
         await piece.kill();
-        expect((board.removePiece as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+        expect(board.removePiece as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
 
     it("destroys undead pieces immediately", async () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Undead],
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Undead]);
         await piece.kill();
-        expect((board.removePiece as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+        expect(board.removePiece as ReturnType<typeof vi.fn>).toHaveBeenCalled();
     });
 });
 
@@ -333,7 +321,7 @@ describe("Piece.destroy", () => {
         const board = makeMockBoard();
         const piece = makeCreature(board, 1, 0, 0);
         await piece.destroy();
-        expect((board.removePiece as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(1);
+        expect(board.removePiece as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(1);
     });
 
     it("marks the piece as dead", async () => {
@@ -361,9 +349,7 @@ describe("Piece.raiseDead", () => {
     it("throws when raising a piece that is not dead", async () => {
         const board = makeMockBoard();
         const piece = makeCreature(board, 1, 0, 0);
-        await expect(piece.raiseDead(OWNER_A)).rejects.toThrow(
-            "Cannot raise a piece that is not dead",
-        );
+        await expect(piece.raiseDead(OWNER_A)).rejects.toThrow("Cannot raise a piece that is not dead");
     });
 });
 
@@ -380,9 +366,7 @@ describe("Piece.moveTo", () => {
 
     it("moves the rider along with the mount", async () => {
         const board = makeCombatBoard(true);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         // Bypass canMountPiece validation by directly wiring up the relationship
         (mount as any)._currentRider = rider;
@@ -423,9 +407,7 @@ describe("Piece.attack", () => {
     it("returns false if the target is undead and attacker cannot attack undead", async () => {
         const board = makeCombatBoard(true);
         const attacker = makeCreature(board, 1, 0, 0, OWNER_A);
-        const defender = makeCreature(
-            board, 2, 1, 0, OWNER_B, [UnitStatus.Undead],
-        );
+        const defender = makeCreature(board, 2, 1, 0, OWNER_B, [UnitStatus.Undead]);
         const result = await attacker.attack(defender);
         expect(result).toBe(false);
     });
@@ -458,9 +440,7 @@ describe("Piece.attack", () => {
 
     it("removes ShadowForm from attacker regardless of outcome", async () => {
         const board = makeCombatBoard(false);
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.ShadowForm],
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.ShadowForm]);
         const defender = makeCreature(board, 2, 1, 0, OWNER_B);
         await attacker.attack(defender);
         expect(attacker.hasStatus(UnitStatus.ShadowForm)).toBe(false);
@@ -483,10 +463,7 @@ describe("Piece.rangedAttack", () => {
         const board = makeCombatBoard(true);
         // Attacker needs: moved=true, rangedCombat>0, range>0, and the
         // canRangedAttackPiece check passes.
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A, [],
-            { rangedCombat: 3, range: 6 },
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
         const defender = makeCreature(board, 2, 3, 0, OWNER_B);
         // canRangedAttackPiece requires moved=true
         (attacker as any)._moved = true;
@@ -497,11 +474,7 @@ describe("Piece.rangedAttack", () => {
 
     it("removes ShadowForm on a successful ranged attack", async () => {
         const board = makeCombatBoard(true);
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A,
-            [UnitStatus.ShadowForm],
-            { rangedCombat: 3, range: 6 },
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.ShadowForm], { rangedCombat: 3, range: 6 });
         const defender = makeCreature(board, 2, 3, 0, OWNER_B);
         (attacker as any)._moved = true;
         await attacker.rangedAttack(defender);
@@ -510,13 +483,8 @@ describe("Piece.rangedAttack", () => {
 
     it("returns false when target is undead and attacker cannot attack undead", async () => {
         const board = makeCombatBoard(true);
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A, [],
-            { rangedCombat: 3, range: 6 },
-        );
-        const defender = makeCreature(
-            board, 2, 3, 0, OWNER_B, [UnitStatus.Undead],
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
+        const defender = makeCreature(board, 2, 3, 0, OWNER_B, [UnitStatus.Undead]);
         (attacker as any)._moved = true;
         const result = await attacker.rangedAttack(defender);
         expect(result).toBe(false);
@@ -528,10 +496,7 @@ describe("Piece.rangedAttack", () => {
 describe("Piece.stats status-effect modifiers", () => {
     it("ShadowForm adds +3 defence (capped at 9) and sets movement to 3", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.ShadowForm],
-            { movement: 1, defence: 3 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.ShadowForm], { movement: 1, defence: 3 });
         const stats = piece.stats;
         expect(stats.movement).toBe(3);
         expect(stats.defence).toBe(6);
@@ -539,33 +504,25 @@ describe("Piece.stats status-effect modifiers", () => {
 
     it("MagicSword adds +6 combat (capped at 9)", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.MagicSword], { combat: 3 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.MagicSword], { combat: 3 });
         expect(piece.stats.combat).toBe(9);
     });
 
     it("MagicKnife adds +3 combat (when no MagicSword)", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.MagicKnife], { combat: 3 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.MagicKnife], { combat: 3 });
         expect(piece.stats.combat).toBe(6);
     });
 
     it("MagicArmour adds +6 defence", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.MagicArmour], { defence: 2 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.MagicArmour], { defence: 2 });
         expect(piece.stats.defence).toBe(8);
     });
 
     it("MagicShield adds +3 defence (when no MagicArmour)", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.MagicShield], { defence: 2 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.MagicShield], { defence: 2 });
         expect(piece.stats.defence).toBe(5);
     });
 
@@ -578,9 +535,7 @@ describe("Piece.stats status-effect modifiers", () => {
 
     it("MagicWings sets movement to 6", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.MagicWings], { movement: 2 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.MagicWings], { movement: 2 });
         expect(piece.stats.movement).toBe(6);
     });
 });
@@ -599,20 +554,15 @@ describe("Piece.strength", () => {
 
     it("adds +2 strength for undead pieces", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Undead],
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Undead]);
         expect(piece.strength).toBeGreaterThan(9);
     });
 
     it("adds range contribution when rangedCombat > 0", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [], { rangedCombat: 2, range: 3 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 2, range: 3 });
         // strength += rangedCombat + range = 5
-        const base = piece.stats.combat + piece.stats.movement + piece.stats.defence
-            + piece.stats.magicResistance / 2;
+        const base = piece.stats.combat + piece.stats.movement + piece.stats.defence + piece.stats.magicResistance / 2;
         expect(piece.strength).toBe(base + 2 + 3);
     });
 });
@@ -636,25 +586,19 @@ describe("Piece capability checks", () => {
 
         it("returns false for a piece with movement=0", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [], { movement: 0 },
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [], { movement: 0 });
             expect(piece.canMove).toBe(false);
         });
 
         it("returns false for a Structure piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Structure],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Structure]);
             expect(piece.canMove).toBe(false);
         });
 
         it("returns false for a Tree piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Tree],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Tree]);
             expect(piece.canMove).toBe(false);
         });
 
@@ -675,33 +619,25 @@ describe("Piece capability checks", () => {
 
         it("returns false for a wizard", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard]);
             expect(piece.canBeDisbelieved).toBe(false);
         });
 
         it("returns false for a spreading piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Spreads],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Spreads]);
             expect(piece.canBeDisbelieved).toBe(false);
         });
 
         it("returns false for a structure", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Structure],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Structure]);
             expect(piece.canBeDisbelieved).toBe(false);
         });
 
         it("returns false for a tree", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Tree],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Tree]);
             expect(piece.canBeDisbelieved).toBe(false);
         });
     });
@@ -715,17 +651,13 @@ describe("Piece capability checks", () => {
 
         it("returns false for a wizard", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard]);
             expect(piece.canBeSubverted).toBe(false);
         });
 
         it("returns false for an invulnerable piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Invulnerable],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Invulnerable]);
             expect(piece.canBeSubverted).toBe(false);
         });
     });
@@ -739,17 +671,13 @@ describe("Piece capability checks", () => {
 
         it("returns false for an invulnerable piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Invulnerable],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Invulnerable]);
             expect(piece.canBeMagicAttacked).toBe(false);
         });
 
         it("returns false for a piece with Sanctity", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Sanctity],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Sanctity]);
             expect(piece.canBeMagicAttacked).toBe(false);
         });
     });
@@ -763,17 +691,13 @@ describe("Piece capability checks", () => {
 
         it("returns false for an engulfing piece", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Engulfs],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Engulfs]);
             expect(piece.canBeSpreadOn).toBe(false);
         });
 
         it("returns false for a structure", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Structure],
-            );
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Structure]);
             expect(piece.canBeSpreadOn).toBe(false);
         });
     });
@@ -795,9 +719,7 @@ describe("Piece capability checks", () => {
         it("returns false when the defender is invulnerable", () => {
             const board = makeMockBoard();
             const a = makeCreature(board, 1, 0, 0, OWNER_A);
-            const b = makeCreature(
-                board, 2, 1, 0, OWNER_B, [UnitStatus.Invulnerable],
-            );
+            const b = makeCreature(board, 2, 1, 0, OWNER_B, [UnitStatus.Invulnerable]);
             expect(a.canAttackPiece(b)).toBe(false);
         });
 
@@ -819,9 +741,7 @@ describe("Piece capability checks", () => {
 
         it("returns false when either piece has manoeuvrability=0", () => {
             const board = makeMockBoard();
-            const a = makeCreature(
-                board, 1, 0, 0, OWNER_A, [], { manoeuvrability: 0 },
-            );
+            const a = makeCreature(board, 1, 0, 0, OWNER_A, [], { manoeuvrability: 0 });
             const b = makeCreature(board, 2, 1, 0, OWNER_B);
             expect(a.canEngagePiece(b)).toBe(false);
         });
@@ -841,43 +761,28 @@ describe("Piece status helpers", () => {
     describe("hasAnyStatus", () => {
         it("returns true when the piece has at least one of the given statuses", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Flying],
-            );
-            expect(
-                piece.hasAnyStatus([UnitStatus.Flying, UnitStatus.Undead]),
-            ).toBe(true);
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying]);
+            expect(piece.hasAnyStatus([UnitStatus.Flying, UnitStatus.Undead])).toBe(true);
         });
 
         it("returns false when the piece has none of the given statuses", () => {
             const board = makeMockBoard();
             const piece = makeCreature(board, 1, 0, 0);
-            expect(
-                piece.hasAnyStatus([UnitStatus.Flying, UnitStatus.Undead]),
-            ).toBe(false);
+            expect(piece.hasAnyStatus([UnitStatus.Flying, UnitStatus.Undead])).toBe(false);
         });
     });
 
     describe("hasAllStatuses", () => {
         it("returns true when the piece has all of the given statuses", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A,
-                [UnitStatus.Flying, UnitStatus.Undead],
-            );
-            expect(
-                piece.hasAllStatuses([UnitStatus.Flying, UnitStatus.Undead]),
-            ).toBe(true);
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying, UnitStatus.Undead]);
+            expect(piece.hasAllStatuses([UnitStatus.Flying, UnitStatus.Undead])).toBe(true);
         });
 
         it("returns false when the piece is missing one status", () => {
             const board = makeMockBoard();
-            const piece = makeCreature(
-                board, 1, 0, 0, OWNER_A, [UnitStatus.Flying],
-            );
-            expect(
-                piece.hasAllStatuses([UnitStatus.Flying, UnitStatus.Undead]),
-            ).toBe(false);
+            const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying]);
+            expect(piece.hasAllStatuses([UnitStatus.Flying, UnitStatus.Undead])).toBe(false);
         });
     });
 });
@@ -969,9 +874,7 @@ describe("Piece.reset", () => {
 describe("Piece.moved setter with rider", () => {
     it("propagates moved flag to the current rider", () => {
         const board = makeMockBoard();
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         mount.moved = true;
@@ -999,17 +902,13 @@ describe("Piece.fullName", () => {
 describe("Piece.inRangedAttackRange", () => {
     it("returns true when the target is within range", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
         expect(piece.inRangedAttackRange({ x: 4, y: 0 })).toBe(true);
     });
 
     it("returns false when the target is beyond range", () => {
         const board = makeMockBoard();
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 2 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 2 });
         expect(piece.inRangedAttackRange({ x: 10, y: 0 })).toBe(false);
     });
 });
@@ -1072,9 +971,7 @@ describe("Piece.attacked getter", () => {
 describe("Piece.attacked setter with rider", () => {
     it("propagates attacked flag to the current rider", () => {
         const board = makeMockBoard();
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         mount.attacked = true;
@@ -1087,9 +984,7 @@ describe("Piece.attacked setter with rider", () => {
 describe("Piece.rangedAttacked setter", () => {
     it("propagates to rider when rangedAttacked is set on mount", () => {
         const board = makeMockBoard();
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A, [], {
             rangedCombat: 3,
             range: 6,
@@ -1102,9 +997,7 @@ describe("Piece.rangedAttacked setter", () => {
 
     it("propagates to mount when rangedAttacked is set on rider", () => {
         const board = makeMockBoard();
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A, [], {
             rangedCombat: 3,
             range: 6,
@@ -1123,9 +1016,7 @@ describe("Piece.currentRider setter", () => {
         const board = makeMockBoard();
         const nonMount = makeCreature(board, 1, 0, 0, OWNER_A);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(
-            () => {},
-        );
+        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         nonMount.currentRider = rider;
         expect(nonMount.currentRider).toBeNull();
         consoleSpy.mockRestore();
@@ -1168,9 +1059,7 @@ describe("Piece.turnOver getter", () => {
 describe("Piece.reset with rider", () => {
     it("propagates reset to the current rider", () => {
         const board = makeMockBoard();
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         rider.turnOver = true;
@@ -1198,9 +1087,7 @@ describe("Piece.reset with rider", () => {
 describe("Piece.kill with rider – scenario A (mount not yet moved)", () => {
     it("dismounts the rider and clears mount references", async () => {
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         (rider as any)._currentMount = mount;
@@ -1214,9 +1101,7 @@ describe("Piece.kill with rider – scenario A (mount not yet moved)", () => {
         // canRangedAttack is true, so turnOver is false and reset() is called,
         // restoring moved=false so the rider can also move on foot.
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A, [], {
             rangedCombat: 3,
             range: 6,
@@ -1233,9 +1118,7 @@ describe("Piece.kill with rider – scenario A (mount not yet moved)", () => {
     it("does not reset the rider when its turn was already over", async () => {
         // Rider has no stats, so turnOver is true immediately after dismount.
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A, [], {
             movement: 0,
             combat: 0,
@@ -1254,9 +1137,7 @@ describe("Piece.kill with rider – scenario B (mount already moved)", () => {
         // which is what the mount's moved setter propagates to the rider.
         // Even with an enemy in ranged range, the rider must not get a free turn.
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A, [], {
             rangedCombat: 3,
             range: 6,
@@ -1277,9 +1158,7 @@ describe("Piece.kill with rider – scenario B (mount already moved)", () => {
 describe("Piece.destroy with rider", () => {
     it("dismounts the rider when the mount is destroyed", async () => {
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         (rider as any)._currentMount = mount;
@@ -1294,10 +1173,7 @@ describe("Piece.destroy with rider", () => {
 describe("Piece.rangedAttack roll-fail branch", () => {
     it("returns false when roll fails", async () => {
         const board = makeCombatBoard(false); // roll returns false
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A, [],
-            { rangedCombat: 3, range: 6 },
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
         const defender = makeCreature(board, 2, 3, 0, OWNER_B);
         // canRangedAttackPiece requires this.moved === true
         (attacker as any)._moved = true;
@@ -1314,19 +1190,13 @@ describe("Piece.mount", () => {
         const board = makeCombatBoard(false);
         const attacker = makeCreature(board, 1, 0, 0, OWNER_A);
         const target = makeCreature(board, 2, 1, 0, OWNER_B);
-        await expect(attacker.mount(target)).rejects.toThrow(
-            "cannot mount",
-        );
+        await expect(attacker.mount(target)).rejects.toThrow("cannot mount");
     });
 
     it("sets flags and calls board.movePiece on success", async () => {
         const board = makeCombatBoard(false);
-        const wizard = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard],
-        );
-        const horse = makeCreature(
-            board, 2, 1, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const wizard = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard]);
+        const horse = makeCreature(board, 2, 1, 0, OWNER_A, [UnitStatus.Mount]);
         await wizard.mount(horse);
         expect(wizard.currentMount).toBe(horse);
         expect(horse.currentRider).toBe(wizard);
@@ -1345,9 +1215,7 @@ describe("Piece.dismount", () => {
 
     it("clears currentMount and marks rider as moved", async () => {
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         (rider as any)._currentMount = mount;
@@ -1363,9 +1231,7 @@ describe("Piece.dismount", () => {
 describe("Piece.moveTo with mount left behind", () => {
     it("calls board.dismountPiece when mount position differs from new position", async () => {
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         // Wire up relationship without going through mount() to bypass
         // movement validation.
@@ -1387,8 +1253,7 @@ describe("Piece.spread – occupied square branches", () => {
         const spreader = makeSpreader(board, 1, 0, 0);
         // Use the same owner object reference so owner === check passes
         const ally = makeCreature(board, 2, 1, 0, spreader.owner as any);
-        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([ally]);
+        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([ally]);
         const result = await spreader.spread();
         expect(result).toEqual({ action: "none" });
     });
@@ -1398,12 +1263,9 @@ describe("Piece.spread – occupied square branches", () => {
         (rng as any).weightedRandomPick = () => SpreadAction.Spread;
         const board = makeMockBoard(rng);
         const spreader = makeSpreader(board, 1, 0, 0);
-        const wizard = makeCreature(
-            board, 2, 1, 0, OWNER_B, [UnitStatus.Wizard],
-        );
-        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([wizard]);
-        const result = await spreader.spread() as any;
+        const wizard = makeCreature(board, 2, 1, 0, OWNER_B, [UnitStatus.Wizard]);
+        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([wizard]);
+        const result = (await spreader.spread()) as any;
         expect(result.killedPieceId).toBe(wizard.id);
         expect(wizard.dead).toBe(true);
     });
@@ -1415,9 +1277,8 @@ describe("Piece.spread – occupied square branches", () => {
         const spreader = makeSpreader(board, 1, 0, 0);
         // Non-wizard, non-same-owner, non-Invulnerable enemy
         const victim = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([victim]);
-        const result = await spreader.spread() as any;
+        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([victim]);
+        const result = (await spreader.spread()) as any;
         expect(result.engulfedPieceId).toBe(victim.id);
         expect(victim.engulfed).toBe(true);
     });
@@ -1428,17 +1289,15 @@ describe("Piece.spread – occupied square branches", () => {
         const board = makeMockBoard(rng);
         const spreader = makeSpreader(board, 1, 0, 0);
         const victim = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([victim]);
+        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([victim]);
         // New piece returned by addPiece has Engulfs so lines 894-895 execute
         const newPieceMock = {
             id: 99,
             hasStatus: (s: UnitStatus) => s === UnitStatus.Engulfs,
             currentEngulfed: null as any,
         };
-        (board.addPiece as ReturnType<typeof vi.fn>)
-            .mockResolvedValue(newPieceMock);
-        const result = await spreader.spread() as any;
+        (board.addPiece as ReturnType<typeof vi.fn>).mockResolvedValue(newPieceMock);
+        const result = (await spreader.spread()) as any;
         expect(result.newPieceEngulfedId).toBe(victim.id);
         expect(newPieceMock.currentEngulfed).toBe(victim);
     });
@@ -1469,9 +1328,8 @@ describe("Piece.spread – occupied square branches", () => {
             owner: { id: 1, name: "Player 1" } as any,
         } as PieceConfig);
         const victim = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([victim]);
-        const result = await nonEngulfSpreader.spread() as any;
+        (board.getPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([victim]);
+        const result = (await nonEngulfSpreader.spread()) as any;
         expect(result.destroyedPieceIds).toContain(victim.id);
         expect(victim.dead).toBe(true);
     });
@@ -1517,9 +1375,7 @@ describe("Piece.canSelect", () => {
     it("returns true for a mount with an active rider from current player", () => {
         const board = makeCombatBoard(false);
         (board as any).currentPlayer = OWNER_A;
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (mount as any)._currentRider = rider;
         // rider.turnOver is false (fresh creature with stats > 0)
@@ -1535,9 +1391,7 @@ describe("Piece.canSelect", () => {
 
     it("returns false when piece has Structure status", () => {
         const board = makeCombatBoard(false);
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Structure],
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Structure]);
         expect(piece.canSelect).toBe(false);
     });
 
@@ -1565,8 +1419,7 @@ describe("Piece.canAttack", () => {
         const board = makeCombatBoard(false);
         const attacker = makeCreature(board, 1, 0, 0, OWNER_A);
         const enemy = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([enemy]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([enemy]);
         expect(attacker.canAttack).toBe(true);
     });
 
@@ -1574,8 +1427,7 @@ describe("Piece.canAttack", () => {
         const board = makeCombatBoard(false);
         const attacker = makeCreature(board, 1, 0, 0, OWNER_A);
         const ally = makeCreature(board, 2, 1, 0, OWNER_A);
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([ally]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([ally]);
         expect(attacker.canAttack).toBe(false);
     });
 
@@ -1584,8 +1436,7 @@ describe("Piece.canAttack", () => {
         const attacker = makeCreature(board, 1, 0, 0, OWNER_A);
         (attacker as any)._attacked = true;
         const enemy = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([enemy]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([enemy]);
         expect(attacker.canAttack).toBe(false);
     });
 });
@@ -1595,10 +1446,7 @@ describe("Piece.canAttack", () => {
 describe("Piece.canRangedAttack", () => {
     it("returns true when a valid ranged target exists on the board", () => {
         const board = makeCombatBoard(false);
-        const attacker = makeCreature(
-            board, 1, 0, 0, OWNER_A, [],
-            { rangedCombat: 3, range: 6 },
-        );
+        const attacker = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
         const enemy = makeCreature(board, 2, 3, 0, OWNER_B);
         // canRangedAttackPiece requires attacker.moved === true
         (attacker as any)._moved = true;
@@ -1621,14 +1469,10 @@ describe("Piece.getNeighbours", () => {
         const board = makeCombatBoard(false);
         const piece = makeCreature(board, 1, 0, 0, OWNER_A);
         const neighbour = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([neighbour]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([neighbour]);
         const result = piece.getNeighbours();
         expect(result).toEqual([neighbour]);
-        expect(board.getAdjacentPiecesAtPosition).toHaveBeenCalledWith(
-            piece.position,
-            expect.any(Function),
-        );
+        expect(board.getAdjacentPiecesAtPosition).toHaveBeenCalledWith(piece.position, expect.any(Function));
     });
 });
 
@@ -1639,8 +1483,7 @@ describe("Piece.getFirstEngagingPiece", () => {
         const board = makeCombatBoard(false);
         const piece = makeCreature(board, 1, 0, 0, OWNER_A);
         const enemy = makeCreature(board, 2, 1, 0, OWNER_B);
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([enemy]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([enemy]);
         const result = piece.getFirstEngagingPiece();
         expect(result).toBe(enemy);
     });
@@ -1649,8 +1492,7 @@ describe("Piece.getFirstEngagingPiece", () => {
         const board = makeCombatBoard(false);
         const piece = makeCreature(board, 1, 0, 0, OWNER_A);
         const ally = makeCreature(board, 2, 1, 0, OWNER_A); // same owner
-        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>)
-            .mockReturnValue([ally]);
+        (board.getAdjacentPiecesAtPosition as ReturnType<typeof vi.fn>).mockReturnValue([ally]);
         const result = piece.getFirstEngagingPiece();
         expect(result).toBeNull();
     });
@@ -1681,14 +1523,8 @@ describe("Piece.findThreatPieces", () => {
         const board = makeCombatBoard(false);
         // us also needs range >= 3 so inRangedAttackRange(archer.position)
         // returns true (findThreatPieces checks this.inRangedAttackRange)
-        const us = makeCreature(
-            board, 1, 0, 0, OWNER_A, [],
-            { rangedCombat: 3, range: 6 },
-        );
-        const archer = makeCreature(
-            board, 2, 3, 0, OWNER_B, [],
-            { rangedCombat: 3, range: 6 },
-        );
+        const us = makeCreature(board, 1, 0, 0, OWNER_A, [], { rangedCombat: 3, range: 6 });
+        const archer = makeCreature(board, 2, 3, 0, OWNER_B, [], { rangedCombat: 3, range: 6 });
         // archer needs to have moved for canRangedAttackPiece
         (archer as any)._moved = true;
         (board as any).pieces = [us, archer];
@@ -1699,12 +1535,10 @@ describe("Piece.findThreatPieces", () => {
     it("includes a spreader within distance 3 as a threat", () => {
         const board = makeCombatBoard(false);
         const us = makeCreature(board, 1, 0, 0, OWNER_A);
-        const spreader = makeCreature(
-            board, 2, 2, 0, OWNER_B, [UnitStatus.Spreads], {
-                movement: 0,
-                combat: 0,
-            },
-        );
+        const spreader = makeCreature(board, 2, 2, 0, OWNER_B, [UnitStatus.Spreads], {
+            movement: 0,
+            combat: 0,
+        });
         (board as any).pieces = [us, spreader];
         const threats = us.findThreatPieces();
         expect(threats.has(spreader)).toBe(true);
@@ -1722,9 +1556,7 @@ describe("Piece.inMovementRange", () => {
 
     it("returns false when mounted and target is more than 1.5 away", () => {
         const board = makeCombatBoard(false);
-        const mount = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Mount],
-        );
+        const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
         (rider as any)._currentMount = mount;
         expect(rider.inMovementRange({ x: 5, y: 5 })).toBe(false);
@@ -1732,20 +1564,14 @@ describe("Piece.inMovementRange", () => {
 
     it("returns true for a flying piece within fly-distance", () => {
         const board = makeCombatBoard(false);
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Flying],
-            { movement: 4 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying], { movement: 4 });
         // Fly distance to (3,0): approx 3 ≤ 4.5 → true
         expect(piece.inMovementRange({ x: 3, y: 0 })).toBe(true);
     });
 
     it("returns false for a flying piece beyond fly-distance", () => {
         const board = makeCombatBoard(false);
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Flying],
-            { movement: 2 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying], { movement: 2 });
         expect(piece.inMovementRange({ x: 10, y: 0 })).toBe(false);
     });
 
@@ -1758,8 +1584,11 @@ describe("Piece.inMovementRange", () => {
 
     it("returns true for ground piece when rangeGizmo provides a path", () => {
         const board = makeCombatBoard(false);
-        (board.rangeGizmo.getPathTo as ReturnType<typeof vi.fn>)
-            .mockReturnValue([{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]);
+        (board.rangeGizmo.getPathTo as ReturnType<typeof vi.fn>).mockReturnValue([
+            { x: 1, y: 0 },
+            { x: 2, y: 0 },
+            { x: 3, y: 0 },
+        ]);
         const piece = makeCreature(board, 1, 0, 0, OWNER_A);
         expect(piece.inMovementRange({ x: 3, y: 0 })).toBe(true);
     });
@@ -1783,10 +1612,7 @@ describe("Piece.inAttackRange", () => {
 
     it("returns true for flying piece that can reach the point", () => {
         const board = makeCombatBoard(false);
-        const piece = makeCreature(
-            board, 1, 0, 0, OWNER_A, [UnitStatus.Flying],
-            { movement: 6 },
-        );
+        const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying], { movement: 6 });
         // !moved && inMovementRange(point) && Flying → true
         expect(piece.inAttackRange({ x: 3, y: 0 })).toBe(true);
     });

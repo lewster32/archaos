@@ -50,9 +50,7 @@ export const balanceIndicator = (balance: number): string => {
 export const friendlyBalance = (balance: number): string => {
     // Determine the amount description based on balance value. A maximum of
     // "greatly" is used for balances of 4 or higher.
-    const amount: string = ["slightly", "moderately", "highly", "greatly"][
-        Math.min(Math.abs(balance) - 1, 3)
-    ];
+    const amount: string = ["slightly", "moderately", "highly", "greatly"][Math.min(Math.abs(balance) - 1, 3)];
     if (balance > 0) {
         return `Increases lawfulness ${amount}`;
     } else if (balance < 0) {

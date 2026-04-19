@@ -61,9 +61,7 @@ describe("TestRNG", () => {
 describe("weightedRandomPick", () => {
     it("throws on empty array", () => {
         const rng = new TestRNG();
-        expect(() => weightedRandomPick(rng, [], 1)).toThrow(
-            "Cannot pick from an empty array",
-        );
+        expect(() => weightedRandomPick(rng, [], 1)).toThrow("Cannot pick from an empty array");
     });
 
     it("returns single element for length-1 array", () => {
@@ -82,7 +80,11 @@ describe("weightedRandomPick distribution", () => {
         const rng = new GameRNG("wrp-pos");
         const arr = ["a", "b", "c", "d", "e"];
         const counts: Record<string, number> = {
-            a: 0, b: 0, c: 0, d: 0, e: 0,
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
         };
         for (let i = 0; i < 1000; i++) {
             counts[weightedRandomPick(rng, arr, 2)]++;
@@ -95,7 +97,11 @@ describe("weightedRandomPick distribution", () => {
         const rng = new GameRNG("wrp-neg");
         const arr = ["a", "b", "c", "d", "e"];
         const counts: Record<string, number> = {
-            a: 0, b: 0, c: 0, d: 0, e: 0,
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
         };
         for (let i = 0; i < 1000; i++) {
             counts[weightedRandomPick(rng, arr, -2)]++;

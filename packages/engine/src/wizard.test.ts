@@ -99,15 +99,11 @@ describe("Wizard.parseWizCode", () => {
     });
 
     it("throws for a whitespace-only string", () => {
-        expect(() => Wizard.parseWizCode("   ")).toThrow(
-            "WizCode cannot be empty",
-        );
+        expect(() => Wizard.parseWizCode("   ")).toThrow("WizCode cannot be empty");
     });
 
     it("throws for a non-hex string", () => {
-        expect(() => Wizard.parseWizCode("zzzzzzzzzz")).toThrow(
-            "Invalid WizCode",
-        );
+        expect(() => Wizard.parseWizCode("zzzzzzzzzz")).toThrow("Invalid WizCode");
     });
 
     it("throws for a WizCode that is too short", () => {
@@ -115,9 +111,7 @@ describe("Wizard.parseWizCode", () => {
     });
 
     it("throws for a WizCode that is too long", () => {
-        expect(() => Wizard.parseWizCode("010203040506")).toThrow(
-            "Invalid WizCode",
-        );
+        expect(() => Wizard.parseWizCode("010203040506")).toThrow("Invalid WizCode");
     });
 });
 

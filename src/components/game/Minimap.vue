@@ -1,17 +1,13 @@
 <template>
     <div class="minimap" v-if="show && board?.width && board?.height">
-        <button class="minimap__close button button--small" @click="close()">
-            &times;
-        </button>
+        <button class="minimap__close button button--small" @click="close()">&times;</button>
         <button
             class="minimap__info callout button--small c-white"
             @click="toggleInfo()"
             title="Show universe balance info"
         >
             <span v-if="balanceShift < 0" class="c-magenta">&lt;&lt; </span>
-            <span
-                :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
-            >
+            <span :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }">
                 {{ `${balance < 0 ? "*" : balance > 0 ? "^" : "-"}` }}
             </span>
             {{ balancePercent ? `(+${balancePercent}%)` : "" }}
@@ -22,9 +18,7 @@
                 <div
                     class="map__piece"
                     :class="{
-                        'map__piece--wizard': piece.hasStatus(
-                            UnitStatus.Wizard,
-                        ),
+                        'map__piece--wizard': piece.hasStatus(UnitStatus.Wizard),
                         'map__piece--corpse': piece.dead,
                     }"
                     v-for="piece in pieces"
@@ -35,17 +29,9 @@
         </div>
     </div>
     <dialog class="minimap-info callout" ref="infoDialog">
-        <button
-            class="minimap-info__close button button--small"
-            @click="infoDialog.close()"
-        >
-            &times;
-        </button>
+        <button class="minimap-info__close button button--small" @click="infoDialog.close()">&times;</button>
         <div class="minimap-info__balance balance-info">
-            <p
-                class="balance-info__value"
-                :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
-            >
+            <p class="balance-info__value" :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }">
                 <span class="balance-info__name">
                     {{
                         `${balance < 0 ? `${balanceIndicator(balanceNormalised)} Chaotic` : balance > 0 ? `${balanceIndicator(balanceNormalised)} Lawful` : "Neutral"}`
@@ -57,37 +43,31 @@
             </p>
             <p v-if="balance != 0">
                 The universe is currently
-                <span
-                    :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }"
-                    >{{ balance < 0 ? "chaotic (*)" : "lawful (^)" }}</span
-                ><template v-if="balancePercent != 0">, giving
-                    <span class="c-green">higher</span> chance to cast spells
-                    with this alignment<template v-if="!classicBalance">, and a
-                        <span class="c-red">lower</span> chance to cast
+                <span :class="{ 'c-magenta': balance < 0, 'c-cyan': balance > 0 }">{{
+                    balance < 0 ? "chaotic (*)" : "lawful (^)"
+                }}</span
+                ><template v-if="balancePercent != 0"
+                    >, giving <span class="c-green">higher</span> chance to cast spells with this alignment<template
+                        v-if="!classicBalance"
+                        >, and a <span class="c-red">lower</span> chance to cast
                         <span
                             :class="{
                                 'c-cyan': balance < 0,
                                 'c-magenta': balance > 0,
                             }"
-                            >{{
-                                balance < 0 ? "lawful (^)" : "chaotic (*)"
-                            }}</span
+                            >{{ balance < 0 ? "lawful (^)" : "chaotic (*)" }}</span
                         >
-                        spells</template></template>.
+                        spells</template
+                    ></template
+                >.
             </p>
-            <p v-else>
-                The universe is currently neutral (-); all spells will have their
-                normal casting chance.
-            </p>
+            <p v-else>The universe is currently neutral (-); all spells will have their normal casting chance.</p>
             <p>
-                The balance of the universe is changed every time a non-neutral
-                spell is <span class="c-green">successfully cast</span>, and
-                affects every player's chance to cast subsequent spells.
+                The balance of the universe is changed every time a non-neutral spell is
+                <span class="c-green">successfully cast</span>, and affects every player's chance to cast subsequent
+                spells.
             </p>
-            <p>
-                Neutral (-) spells are not affected by, nor affect universe
-                balance.
-            </p>
+            <p>Neutral (-) spells are not affected by, nor affect universe balance.</p>
         </div>
     </dialog>
 </template>

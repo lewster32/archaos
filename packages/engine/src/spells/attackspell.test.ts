@@ -88,11 +88,7 @@ function makeMockPiece(
         canBeMagicAttacked,
         position: new Point(x, y),
         stats: { magicResistance: 0 },
-        hasStatus: vi
-            .fn()
-            .mockImplementation((s: string) =>
-                s === UnitStatus.Wizard ? wizardStatus : false,
-            ),
+        hasStatus: vi.fn().mockImplementation((s: string) => (s === UnitStatus.Wizard ? wizardStatus : false)),
         sprite: { getCenter: vi.fn().mockReturnValue({ x: 0, y: 0 }) },
         kill: vi.fn().mockResolvedValue(undefined),
         fullName,
@@ -156,11 +152,7 @@ describe("AttackSpell.damage", () => {
     });
 
     it("returns 0 when damage is not set in config", () => {
-        const s = new AttackSpell(
-            board,
-            1,
-            makeAttackConfig({ damage: undefined }),
-        );
+        const s = new AttackSpell(board, 1, makeAttackConfig({ damage: undefined }));
         expect(s.damage).toBe(0);
     });
 });
@@ -174,38 +166,22 @@ describe("AttackSpell.description", () => {
     });
 
     it('includes "Attack with <name>"', () => {
-        const s = new AttackSpell(
-            board,
-            1,
-            makeAttackConfig({ name: "Magic Bolt", chance: 1, balance: 0 }),
-        );
+        const s = new AttackSpell(board, 1, makeAttackConfig({ name: "Magic Bolt", chance: 1, balance: 0 }));
         expect(s.description).toContain("Attack with Magic Bolt");
     });
 
     it("includes destroyWizardCreatures note when flag is set", () => {
-        const s = new AttackSpell(
-            board,
-            1,
-            makeAttackConfig({ destroyWizardCreatures: true }),
-        );
+        const s = new AttackSpell(board, 1, makeAttackConfig({ destroyWizardCreatures: true }));
         expect(s.description).toContain("destroy their creations");
     });
 
     it("does not include destroyWizardCreatures note when flag is absent", () => {
-        const s = new AttackSpell(
-            board,
-            1,
-            makeAttackConfig({ destroyWizardCreatures: false }),
-        );
+        const s = new AttackSpell(board, 1, makeAttackConfig({ destroyWizardCreatures: false }));
         expect(s.description).not.toContain("destroy their creations");
     });
 
     it("appends the base Spell description when chance is low and balance is chaotic", () => {
-        const s = new AttackSpell(
-            board,
-            1,
-            makeAttackConfig({ chance: 0.1, balance: -1 }),
-        );
+        const s = new AttackSpell(board, 1, makeAttackConfig({ chance: 0.1, balance: -1 }));
         expect(s.description).toContain("Attack with");
         expect(s.description).toContain("chaotic");
     });
@@ -233,9 +209,7 @@ describe("AttackSpell.doCast", () => {
     it("throws when targets list is empty", async () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
-        await expect(
-            s.doCast(owner, castingPiece, new Point(0, 0), []),
-        ).rejects.toThrow("No targets");
+        await expect(s.doCast(owner, castingPiece, new Point(0, 0), [])).rejects.toThrow("No targets");
     });
 
     it("throws when no target passes getValidTarget", async () => {
@@ -243,17 +217,13 @@ describe("AttackSpell.doCast", () => {
         (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
-        await expect(
-            s.doCast(owner, castingPiece, new Point(0, 0), [enemy]),
-        ).rejects.toThrow("No valid target");
+        await expect(s.doCast(owner, castingPiece, new Point(0, 0), [enemy])).rejects.toThrow("No valid target");
     });
 
     it("returns true on a successful attack", async () => {
         const s = new AttackSpell(board, 1, makeAttackConfig());
         s.owner = owner;
-        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
-            enemy,
-        ]);
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(result).toBe(true);
     });
 
@@ -277,10 +247,7 @@ describe("AttackSpell.doCast", () => {
         s.owner = owner;
         enemy.fullName = "Giant Rat";
         await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Giant Rat"),
-            expect.anything(),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Giant Rat"), expect.anything());
     });
 
     describe("Lightning projectile", () => {
@@ -298,18 +265,14 @@ describe("AttackSpell.doCast", () => {
 
         it('emits "lightning4" beam sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "lightning-beam" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+                sound: "lightning-beam",
+            });
         });
 
         it('emits "lightningexplode" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "bolt-hit" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "bolt-hit" });
         });
 
         it("emits beam + hit effects", async () => {
@@ -344,18 +307,14 @@ describe("AttackSpell.doCast", () => {
 
         it('emits "magic-bolt-beam" beam sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "magic-bolt-beam" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+                sound: "magic-bolt-beam",
+            });
         });
 
         it('emits "bolt-hit" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "bolt-hit" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "bolt-hit" });
         });
     });
 
@@ -374,10 +333,7 @@ describe("AttackSpell.doCast", () => {
 
         it('emits "justice" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "justice" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "justice" });
         });
 
         it("emits hit effect only (no beam)", async () => {
@@ -412,10 +368,7 @@ describe("AttackSpell.doCast", () => {
 
         it('emits "justice" hit sound', async () => {
             await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
-            expect((board as any).events.emit).toHaveBeenCalledWith(
-                EngineEvent.EffectRequested,
-                { sound: "justice" },
-            );
+            expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "justice" });
         });
 
         it("emits hit effect only (no beam)", async () => {
@@ -431,11 +384,7 @@ describe("AttackSpell.doCast", () => {
 
     describe("unknown / unspecified projectile", () => {
         it("emits no beam or hit sound events", async () => {
-            const s = new AttackSpell(
-                board,
-                1,
-                makeAttackConfig({ projectile: undefined }),
-            );
+            const s = new AttackSpell(board, 1, makeAttackConfig({ projectile: undefined }));
             s.owner = owner;
             (board as any).roll.mockReturnValue(false); // prevent "killcreature" sound
             await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
@@ -446,11 +395,7 @@ describe("AttackSpell.doCast", () => {
         });
 
         it("emits no effect type events", async () => {
-            const s = new AttackSpell(
-                board,
-                1,
-                makeAttackConfig({ projectile: undefined }),
-            );
+            const s = new AttackSpell(board, 1, makeAttackConfig({ projectile: undefined }));
             s.owner = owner;
             (board as any).roll.mockReturnValue(false);
             await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
@@ -491,33 +436,23 @@ describe("AttackSpell.doCast", () => {
         });
 
         it("calls destroyCreations when roll succeeds on a wizard target", async () => {
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                wizardTarget,
-            ]);
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [wizardTarget]);
             expect(wizardOwner.destroyCreations).toHaveBeenCalledTimes(1);
         });
 
         it("does not kill the wizard directly (creations are destroyed instead)", async () => {
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                wizardTarget,
-            ]);
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [wizardTarget]);
             expect(wizardTarget.kill).not.toHaveBeenCalled();
         });
 
         it("logs a creations-dispelled message", async () => {
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                wizardTarget,
-            ]);
-            expect(board.logger.log as any).toHaveBeenCalledWith(
-                expect.stringContaining("dispelled"),
-            );
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [wizardTarget]);
+            expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("dispelled"));
         });
 
         it("does not call destroyCreations when roll fails", async () => {
             (board as any).roll = vi.fn().mockReturnValue(false);
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                wizardTarget,
-            ]);
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [wizardTarget]);
             expect(wizardOwner.destroyCreations).not.toHaveBeenCalled();
         });
 
@@ -527,9 +462,7 @@ describe("AttackSpell.doCast", () => {
                 canBeMagicAttacked: true,
             });
             wireEnemy(board, creature);
-            await spell.doCast(owner, castingPiece, new Point(0, 0), [
-                creature,
-            ]);
+            await spell.doCast(owner, castingPiece, new Point(0, 0), [creature]);
             expect(creature.kill).toHaveBeenCalledTimes(1);
         });
     });
@@ -538,27 +471,21 @@ describe("AttackSpell.doCast", () => {
         const config = Spell.getSpellProperties("Magic Bolt");
         const s = new AttackSpell(board, 1, config);
         s.owner = owner;
-        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
-            enemy,
-        ]);
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(result).toBe(true);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "magic-bolt-beam" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+            sound: "magic-bolt-beam",
+        });
     });
 
     it("uses the real Lightning spell config from JSON", async () => {
         const config = Spell.getSpellProperties("Lightning");
         const s = new AttackSpell(board, 1, config);
         s.owner = owner;
-        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [
-            enemy,
-        ]);
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(result).toBe(true);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "lightning-beam" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+            sound: "lightning-beam",
+        });
     });
 });

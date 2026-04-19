@@ -4,11 +4,7 @@ import { Spell } from "./spell";
 import { RaiseDeadSpell } from "./raisedeadspell";
 import { Point } from "../point";
 import type { Board } from "../board";
-import {
-    makeMockBoard,
-    makeMockPiece,
-    makeMockPlayer,
-} from "./spell.testhelpers";
+import { makeMockBoard, makeMockPiece, makeMockPlayer } from "./spell.testhelpers";
 
 describe("RaiseDeadSpell.doCast", () => {
     let board: Board;
@@ -21,33 +17,19 @@ describe("RaiseDeadSpell.doCast", () => {
         const mockAI = { rememberNonIllusionPiece: vi.fn() };
         owner = { ...makeMockPlayer(castingPiece), ai: mockAI };
         board = makeMockBoard({ players: [{ ai: mockAI }] });
-        spell = new RaiseDeadSpell(
-            board,
-            1,
-            Spell.getSpellProperties("Raise Dead"),
-        );
+        spell = new RaiseDeadSpell(board, 1, Spell.getSpellProperties("Raise Dead"));
         spell.owner = owner;
     });
 
     it("returns false when no dead piece in the targets list", async () => {
         const living = makeMockPiece({ dead: false });
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [living],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [living]);
         expect(result).toBe(false);
     });
 
     it("reanimates the dead piece and returns true", async () => {
         const corpse = makeMockPiece({ dead: true, name: "Elf" });
-        const result = await spell.doCast(
-            owner,
-            castingPiece,
-            new Point(0, 0),
-            [corpse],
-        );
+        const result = await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
         expect(result).toBe(true);
         expect(corpse.raiseDead).toHaveBeenCalledWith(owner);
     });
@@ -55,22 +37,13 @@ describe("RaiseDeadSpell.doCast", () => {
     it("logs a reanimation message", async () => {
         const corpse = makeMockPiece({ dead: true, name: "Elf" });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Elf"),
-            expect.anything(),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Elf"), expect.anything());
     });
 
     it("emits sound effect events", async () => {
         const corpse = makeMockPiece({ dead: true });
         await spell.doCast(owner, castingPiece, new Point(0, 0), [corpse]);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "cast-beam" },
-        );
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "die" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cast-beam" });
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
     });
 });

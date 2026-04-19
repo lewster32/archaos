@@ -1,22 +1,12 @@
 <template>
-    <div
-        class="game-log"
-        :class="{ 'game-log--minimised': isMinimised }"
-        v-if="props.logs?.length > 0"
-    >
+    <div class="game-log" :class="{ 'game-log--minimised': isMinimised }" v-if="props.logs?.length > 0">
         <button class="game-log__toggle button button--small" @click="toggle()">
             {{ minimised ? "+" : "-" }}
         </button>
         <ul class="game-log__scroll">
             <li class="game-log__item" v-for="log in logsSorted" :key="log.id">
-                <span v-if="showTimestamps" class="game-log__timestamp"
-                    >{{ formatDate(log.timestamp) }}:
-                </span>
-                <span
-                    class="game-log__message"
-                    :style="getColour(log)"
-                    v-html="log.message"
-                ></span>
+                <span v-if="showTimestamps" class="game-log__timestamp">{{ formatDate(log.timestamp) }}: </span>
+                <span class="game-log__message" :style="getColour(log)" v-html="log.message"></span>
             </li>
         </ul>
     </div>

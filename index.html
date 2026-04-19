@@ -8,13 +8,7 @@
         <link rel="stylesheet" href="/src/css/style.scss" />
         <title>Archaos</title>
         <link rel="preload" href="./assets/images/bg.png" as="image" />
-        <link
-            rel="preload"
-            href="./assets/fonts/chaos.woff2"
-            as="font"
-            type="font/woff2"
-            crossorigin
-        />
+        <link rel="preload" href="./assets/fonts/chaos.woff2" as="font" type="font/woff2" crossorigin />
         <style>
             .tauri-app {
                 > *:not(input, select, textarea) {
@@ -57,37 +51,19 @@
             <div class="controls">
                 <button id="titlebar-minimize" title="minimize">
                     <!-- https://api.iconify.design/mdi:window-minimize.svg -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M19 13H5v-2h14z" />
                     </svg>
                 </button>
                 <button id="titlebar-maximize" title="maximize">
                     <!-- https://api.iconify.design/mdi:window-maximize.svg -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            fill="currentColor"
-                            d="M4 4h16v16H4zm2 4v10h12V8z"
-                        />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M4 4h16v16H4zm2 4v10h12V8z" />
                     </svg>
                 </button>
                 <button id="titlebar-close" title="close">
                     <!-- https://api.iconify.design/mdi:close.svg -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                         <path
                             fill="currentColor"
                             d="M13.46 12L19 17.54V19h-1.46L12 13.46L6.46 19H5v-1.46L10.54 12L5 6.46V5h1.46L12 10.54L17.54 5H19v1.46z"
@@ -100,42 +76,26 @@
         <script type="module" src="/src/main.ts"></script>
         <script type="module">
             if (globalThis.__TAURI_INTERNALS__) {
-                const { getCurrentWindow } =
-                    await import("@tauri-apps/api/window");
+                const { getCurrentWindow } = await import("@tauri-apps/api/window");
                 try {
                     const appWindow = getCurrentWindow();
 
                     if (appWindow) {
                         document
                             .getElementById("titlebar-minimize")
-                            ?.addEventListener("click", () =>
-                                appWindow.minimize(),
-                            );
+                            ?.addEventListener("click", () => appWindow.minimize());
                         document
                             .getElementById("titlebar-maximize")
-                            ?.addEventListener("click", () =>
-                                appWindow.toggleMaximize(),
-                            );
-                        document
-                            .getElementById("titlebar-close")
-                            ?.addEventListener("click", () =>
-                                appWindow.close(),
-                            );
+                            ?.addEventListener("click", () => appWindow.toggleMaximize());
+                        document.getElementById("titlebar-close")?.addEventListener("click", () => appWindow.close());
 
-                        document
-                            .getElementById("titlebar")
-                            ?.style.removeProperty("display");
-                        document
-                            .querySelector("body")
-                            ?.classList.add("tauri-app");
+                        document.getElementById("titlebar")?.style.removeProperty("display");
+                        document.querySelector("body")?.classList.add("tauri-app");
                     } else {
                         console.error("Failed to get current window");
                     }
                 } catch (error) {
-                    console.error(
-                        "Failed to initialise titlebar controls",
-                        error,
-                    );
+                    console.error("Failed to initialise titlebar controls", error);
                 }
             }
         </script>

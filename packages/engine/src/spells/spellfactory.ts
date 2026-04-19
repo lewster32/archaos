@@ -11,11 +11,7 @@ import { SubversionSpell } from "./subversionspell";
 import { SummonSpell } from "./summonspell";
 import { TurmoilSpell } from "./turmoilspell";
 
-type SpellConstructor<P extends Piece = Piece> = new (
-    board: Board<P>,
-    id: number,
-    config: SpellConfig,
-) => Spell<P>;
+type SpellConstructor<P extends Piece = Piece> = new (board: Board<P>, id: number, config: SpellConfig) => Spell<P>;
 
 /**
  * An array of rules to determine which Spell subclass to instantiate based on
@@ -42,12 +38,7 @@ const SPELL_RULES: [(config: SpellConfig) => boolean, SpellConstructor][] = [
  * @param config The configuration object that defines the spell's properties and behavior.
  * @returns An instance of a Spell subclass that matches the provided configuration, or a generic Spell if no specific match is found.
  */
-export function createSpell<P extends Piece = Piece>(
-    board: Board<P>,
-    id: number,
-    config: SpellConfig,
-): Spell<P> {
-    const SpellClass =
-        SPELL_RULES.find(([match]) => match(config))?.[1] ?? Spell;
+export function createSpell<P extends Piece = Piece>(board: Board<P>, id: number, config: SpellConfig): Spell<P> {
+    const SpellClass = SPELL_RULES.find(([match]) => match(config))?.[1] ?? Spell;
     return new SpellClass(board, id, config) as Spell<P>;
 }

@@ -25,76 +25,52 @@ describe("GameControls", () => {
 
     it("hides all buttons when game has not started", async () => {
         const screen = await render(GameControls, { props: allHidden });
-        await expect
-            .element(screen.getByTitle("End Turn"))
-            .toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Cancel"))
-            .toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Dismount"))
-            .toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("End Turn")).toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Cancel")).toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Dismount")).toHaveClass("big-button--hide");
     });
 
     it("shows all buttons when game started and all actions available", async () => {
         const screen = await render(GameControls, { props: allVisible });
-        await expect
-            .element(screen.getByTitle("End Turn"))
-            .not.toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Cancel"))
-            .not.toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Dismount"))
-            .not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("End Turn")).not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Cancel")).not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Dismount")).not.toHaveClass("big-button--hide");
     });
 
     it("hides end-turn button when canEndTurn is false", async () => {
         const screen = await render(GameControls, {
             props: { ...allVisible, canEndTurn: false },
         });
-        await expect
-            .element(screen.getByTitle("End Turn"))
-            .toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("End Turn")).toHaveClass("big-button--hide");
     });
 
     it("shows end-turn button when gameStarted and canEndTurn are true", async () => {
         const screen = await render(GameControls, { props: allVisible });
-        await expect
-            .element(screen.getByTitle("End Turn"))
-            .not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("End Turn")).not.toHaveClass("big-button--hide");
     });
 
     it("hides cancel button when canCancel is false", async () => {
         const screen = await render(GameControls, {
             props: { ...allVisible, canCancel: false },
         });
-        await expect
-            .element(screen.getByTitle("Cancel"))
-            .toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Cancel")).toHaveClass("big-button--hide");
     });
 
     it("shows cancel button when gameStarted and canCancel are true", async () => {
         const screen = await render(GameControls, { props: allVisible });
-        await expect
-            .element(screen.getByTitle("Cancel"))
-            .not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Cancel")).not.toHaveClass("big-button--hide");
     });
 
     it("hides dismount button when canDismount is false", async () => {
         const screen = await render(GameControls, {
             props: { ...allVisible, canDismount: false },
         });
-        await expect
-            .element(screen.getByTitle("Dismount"))
-            .toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Dismount")).toHaveClass("big-button--hide");
     });
 
     it("shows dismount button when gameStarted and canDismount are true", async () => {
         const screen = await render(GameControls, { props: allVisible });
-        await expect
-            .element(screen.getByTitle("Dismount"))
-            .not.toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Dismount")).not.toHaveClass("big-button--hide");
     });
 
     it("emits end-turn when end-turn button is clicked", async () => {
@@ -133,14 +109,8 @@ describe("GameControls", () => {
                 canDismount: true,
             },
         });
-        await expect
-            .element(screen.getByTitle("End Turn"))
-            .toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Cancel"))
-            .toHaveClass("big-button--hide");
-        await expect
-            .element(screen.getByTitle("Dismount"))
-            .toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("End Turn")).toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Cancel")).toHaveClass("big-button--hide");
+        await expect.element(screen.getByTitle("Dismount")).toHaveClass("big-button--hide");
     });
 });

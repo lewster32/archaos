@@ -23,18 +23,14 @@ describe("UnitStats", () => {
             const screen = await render(UnitStats, {
                 props: { unit: makeUnit() },
             });
-            await expect
-                .element(screen.getByTitle("Movement range: 2"))
-                .toBeInTheDocument();
+            await expect.element(screen.getByTitle("Movement range: 2")).toBeInTheDocument();
         });
 
         it("shows the fly stat title when the unit has flying status", async () => {
             const screen = await render(UnitStats, {
                 props: { unit: makeUnit({ status: ["flying"] }) },
             });
-            await expect
-                .element(screen.getByTitle("Flying range: 2"))
-                .toBeInTheDocument();
+            await expect.element(screen.getByTitle("Flying range: 2")).toBeInTheDocument();
         });
 
         it("does not show flying stat title when not flying", async () => {
@@ -50,9 +46,7 @@ describe("UnitStats", () => {
             const screen = await render(UnitStats, {
                 props: { unit: makeUnit() },
             });
-            expect(
-                screen.getByTitle("Ranged combat rating: 0").query(),
-            ).toBeNull();
+            expect(screen.getByTitle("Ranged combat rating: 0").query()).toBeNull();
         });
 
         it("shows ranged combat stat when rcm is non-zero", async () => {
@@ -71,12 +65,8 @@ describe("UnitStats", () => {
                     }),
                 },
             });
-            await expect
-                .element(screen.getByTitle("Ranged combat rating: 4"))
-                .toBeInTheDocument();
-            await expect
-                .element(screen.getByTitle("Ranged combat range: 6"))
-                .toBeInTheDocument();
+            await expect.element(screen.getByTitle("Ranged combat rating: 4")).toBeInTheDocument();
+            await expect.element(screen.getByTitle("Ranged combat range: 6")).toBeInTheDocument();
         });
     });
 
@@ -148,9 +138,7 @@ describe("UnitStats", () => {
             const screen = await render(UnitStats, {
                 props: { unit: makeUnit({ status: ["invuln"] }) },
             });
-            await expect
-                .element(screen.getByText("Invulnerable"))
-                .toBeVisible();
+            await expect.element(screen.getByText("Invulnerable")).toBeVisible();
         });
 
         it("shows Tree badge for units with tree status", async () => {

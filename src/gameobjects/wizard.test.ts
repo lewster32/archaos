@@ -108,16 +108,14 @@ function makeMockPlayer(name: string = "Test Wizard") {
 class MockWizard extends Wizard {
     createSprite() {
         if (!this._sprite) {
-            this._sprite =
-                makeMockSprite() as unknown as Phaser.GameObjects.Sprite;
+            this._sprite = makeMockSprite() as unknown as Phaser.GameObjects.Sprite;
         }
         return this._sprite;
     }
 
     createShadow() {
         if (!this._shadow) {
-            this._shadow =
-                makeMockImage() as unknown as Phaser.GameObjects.Image;
+            this._shadow = makeMockImage() as unknown as Phaser.GameObjects.Image;
         }
         return this._shadow;
     }
@@ -127,11 +125,7 @@ class MockWizard extends Wizard {
     }
 }
 
-function makeWizard(
-    wizCode = "010203040f",
-    name = "Test Wizard",
-    board?: Board,
-) {
+function makeWizard(wizCode = "010203040f", name = "Test Wizard", board?: Board) {
     return new MockWizard(board ?? makeMockBoard(), 0, {
         wizCode,
         x: 0,
@@ -156,53 +150,37 @@ describe("Wizard.parseWizCode", () => {
 
     describe("validation errors", () => {
         it("throws when given an empty string", () => {
-            expect(() => Wizard.parseWizCode("")).toThrow(
-                "WizCode cannot be empty",
-            );
+            expect(() => Wizard.parseWizCode("")).toThrow("WizCode cannot be empty");
         });
 
         it("throws when given a null value", () => {
-            expect(() =>
-                Wizard.parseWizCode(null as unknown as string),
-            ).toThrow("WizCode cannot be empty");
+            expect(() => Wizard.parseWizCode(null as unknown as string)).toThrow("WizCode cannot be empty");
         });
 
         it("throws when given undefined", () => {
-            expect(() =>
-                Wizard.parseWizCode(undefined as unknown as string),
-            ).toThrow("WizCode cannot be empty");
+            expect(() => Wizard.parseWizCode(undefined as unknown as string)).toThrow("WizCode cannot be empty");
         });
 
         it("throws when given only whitespace", () => {
-            expect(() => Wizard.parseWizCode("   ")).toThrow(
-                "WizCode cannot be empty",
-            );
+            expect(() => Wizard.parseWizCode("   ")).toThrow("WizCode cannot be empty");
         });
 
         it("throws when given non-hex characters", () => {
-            expect(() => Wizard.parseWizCode("gggggggggg")).toThrow(
-                "Invalid WizCode",
-            );
+            expect(() => Wizard.parseWizCode("gggggggggg")).toThrow("Invalid WizCode");
         });
 
         it("throws when the string is too short (fewer than 10 hex chars)", () => {
-            expect(() => Wizard.parseWizCode("abcdef")).toThrow(
-                "Invalid WizCode",
-            );
+            expect(() => Wizard.parseWizCode("abcdef")).toThrow("Invalid WizCode");
         });
     });
 
     describe("valid parsing", () => {
         it("throws when given a WizCode that is too long", () => {
-            expect(() => Wizard.parseWizCode("0f1a2b3c4d00")).toThrow(
-                "Invalid WizCode",
-            );
+            expect(() => Wizard.parseWizCode("0f1a2b3c4d00")).toThrow("Invalid WizCode");
         });
 
         it("throws when given a WizCode that is too short", () => {
-            expect(() => Wizard.parseWizCode("0f1a2b3c")).toThrow(
-                "Invalid WizCode",
-            );
+            expect(() => Wizard.parseWizCode("0f1a2b3c")).toThrow("Invalid WizCode");
         });
 
         it("parses a valid lowercase WizCode", () => {
@@ -307,12 +285,8 @@ describe("Wizard instance methods", () => {
             expect(wiz.properties.movement).toBe(0);
             // Default wizard properties should be preserved
             expect(wiz.hasStatus(UnitStatus.Wizard)).toBe(true);
-            expect(wiz.properties.combat).toBe(
-                Wizard.DEFAULT_WIZARD_CONFIG.properties.combat,
-            );
-            expect(wiz.properties.defence).toBe(
-                Wizard.DEFAULT_WIZARD_CONFIG.properties.defence,
-            );
+            expect(wiz.properties.combat).toBe(Wizard.DEFAULT_WIZARD_CONFIG.properties.combat);
+            expect(wiz.properties.defence).toBe(Wizard.DEFAULT_WIZARD_CONFIG.properties.defence);
         });
 
         it("should throw if the owner is missing", () => {
@@ -535,9 +509,7 @@ describe("Wizard instance methods", () => {
         it("does not throw when removing MagicArmour", () => {
             const wiz = makeWizard();
             wiz.addStatus(UnitStatus.MagicArmour);
-            expect(() =>
-                wiz.removeStatus(UnitStatus.MagicArmour),
-            ).not.toThrow();
+            expect(() => wiz.removeStatus(UnitStatus.MagicArmour)).not.toThrow();
             expect(wiz.hasStatus(UnitStatus.MagicArmour)).toBe(false);
         });
 
@@ -571,9 +543,7 @@ describe("Wizard instance methods", () => {
             (wiz as any)._currentMount = { id: 99, name: "Horse" };
             wiz.addStatus(UnitStatus.MagicKnife);
             // The MagicKnife effect sprite should have had setVisible(false) called
-            const effectSprite = (wiz as any)._effects.get(
-                UnitStatus.MagicKnife,
-            );
+            const effectSprite = (wiz as any)._effects.get(UnitStatus.MagicKnife);
             expect(effectSprite).toBeDefined();
             // setVisible is a vi.fn() on makeMockImage/makeMockSprite, check it was called
             expect(effectSprite.setVisible).toHaveBeenCalledWith(false);
@@ -639,12 +609,10 @@ describe("Wizard instance methods", () => {
                 return {};
             });
             // Override tweens.add to capture configs
-            (board as any).scene.tweens.add = vi
-                .fn()
-                .mockImplementation((cfg: any) => {
-                    tweenConfigs.push(cfg);
-                    return {};
-                });
+            (board as any).scene.tweens.add = vi.fn().mockImplementation((cfg: any) => {
+                tweenConfigs.push(cfg);
+                return {};
+            });
 
             const wiz = makeWizard("010203040f", "Test Wizard", board);
 
@@ -660,12 +628,10 @@ describe("Wizard instance methods", () => {
         it("fires onUpdate without throwing", async () => {
             const tweenConfigs: any[] = [];
             const board = makeMockBoard();
-            (board as any).scene.tweens.add = vi
-                .fn()
-                .mockImplementation((cfg: any) => {
-                    tweenConfigs.push(cfg);
-                    return {};
-                });
+            (board as any).scene.tweens.add = vi.fn().mockImplementation((cfg: any) => {
+                tweenConfigs.push(cfg);
+                return {};
+            });
 
             const wiz = makeWizard("010203040f", "Test Wizard", board);
             const updatePromise = wiz.updatePosition(100);
@@ -681,12 +647,10 @@ describe("Wizard instance methods", () => {
         it("also iterates effect sprites when effects are present", async () => {
             const tweenConfigs: any[] = [];
             const board = makeMockBoard();
-            (board as any).scene.tweens.add = vi
-                .fn()
-                .mockImplementation((cfg: any) => {
-                    tweenConfigs.push(cfg);
-                    return {};
-                });
+            (board as any).scene.tweens.add = vi.fn().mockImplementation((cfg: any) => {
+                tweenConfigs.push(cfg);
+                return {};
+            });
 
             const wiz = makeWizard("010203040f", "Test Wizard", board);
             wiz.addStatus(UnitStatus.MagicKnife);
@@ -724,10 +688,7 @@ describe("Wizard instance methods", () => {
             await vi.runAllTimersAsync();
             await killPromise;
 
-            expect((board as any).sound.play).toHaveBeenCalledWith(
-                "deadwizard1",
-                false,
-            );
+            expect((board as any).sound.play).toHaveBeenCalledWith("deadwizard1", false);
             expect((board as any).sound.play).toHaveBeenCalledWith("destroy");
             expect((board as any).playEffect).toHaveBeenCalled();
             expect((board as any).checkWinCondition).toHaveBeenCalled();

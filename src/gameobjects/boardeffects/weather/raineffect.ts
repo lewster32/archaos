@@ -1,10 +1,7 @@
 import type { SimplePoint } from "@archaos/engine";
 import { Board } from "../../board";
 
-import {
-    GameObjects,
-    Math as PMath,
-} from "phaser";
+import { GameObjects, Math as PMath } from "phaser";
 
 import type { WeatherEffect } from "./weathereffect";
 
@@ -78,12 +75,8 @@ export class RainEffect implements WeatherEffect {
         this.scene = board.scene;
         this.width = board.width;
         this.height = board.height;
-        this.intensity = RainEffect.parseRainIntensity(
-            rawOptions.intensity,
-        );
-        this._lightningOverride = RainEffect.parseLightning(
-            rawOptions.lightning,
-        );
+        this.intensity = RainEffect.parseRainIntensity(rawOptions.intensity);
+        this._lightningOverride = RainEffect.parseLightning(rawOptions.lightning);
     }
 
     /**
@@ -95,9 +88,7 @@ export class RainEffect implements WeatherEffect {
             return Math.min(1, Math.max(0.1, raw));
         }
         if (raw !== undefined) {
-            console.warn(
-                `RainEffect: ignoring invalid intensity ${JSON.stringify(raw)}`,
-            );
+            console.warn(`RainEffect: ignoring invalid intensity ${JSON.stringify(raw)}`);
         }
         return Math.random() * 0.9 + 0.1;
     }
@@ -111,9 +102,7 @@ export class RainEffect implements WeatherEffect {
             return raw;
         }
         if (raw !== undefined) {
-            console.warn(
-                `RainEffect: ignoring invalid lightning ${JSON.stringify(raw)}`,
-            );
+            console.warn(`RainEffect: ignoring invalid lightning ${JSON.stringify(raw)}`);
         }
         return undefined;
     }
@@ -137,21 +126,13 @@ export class RainEffect implements WeatherEffect {
             quantity: 3 * this.intensity,
             frequency: 40 / this.intensity, // More intense rain has more frequent drops
             lifespan,
-            alpha: { start: 0, end: .25 },
+            alpha: { start: 0, end: 0.25 },
             scale: 1,
             deathCallback: (particle: any) => {
-                const splash = this.scene.add.sprite(
-                    particle.x,
-                    particle.y,
-                    "rain",
-                    "splash_1",
-                );
+                const splash = this.scene.add.sprite(particle.x, particle.y, "rain", "splash_1");
                 splash.play("rain_splash");
                 splash.setAlpha(0.15);
-                splash.on(
-                    "animationcomplete",
-                    () => splash.destroy(),
-                );
+                splash.on("animationcomplete", () => splash.destroy());
             },
         });
 
@@ -171,8 +152,8 @@ export class RainEffect implements WeatherEffect {
         };
         // Offset the spawn zone so particles land on the
         // board: each axis is the average speed × lifespan.
-        const spawnOffsetX = -(avgSpeedX * lifespan / 1000);
-        const spawnOffsetY = -(avgSpeedY * lifespan / 1000);
+        const spawnOffsetX = -((avgSpeedX * lifespan) / 1000);
+        const spawnOffsetY = -((avgSpeedY * lifespan) / 1000);
         this.emitter.addEmitZone({
             type: "random",
             source: {
@@ -189,8 +170,7 @@ export class RainEffect implements WeatherEffect {
 
         // Give a 30% chance of lightning accompanying heavier rain, unless
         // the lightning behaviour has been explicitly overridden.
-        const enableLightning = this._lightningOverride
-            ?? (Math.random() <= 0.3 && this.intensity > 0.5);
+        const enableLightning = this._lightningOverride ?? (Math.random() <= 0.3 && this.intensity > 0.5);
         if (!enableLightning) {
             return;
         }
@@ -199,9 +179,7 @@ export class RainEffect implements WeatherEffect {
         const FRAME: number = 1000 / 30;
         const scheduleStrike = () => {
             if (this._destroyed) return;
-            this.lightningTimer = this.scene.time.delayedCall(
-                PMath.Between(4000, 12000), strike,
-            );
+            this.lightningTimer = this.scene.time.delayedCall(PMath.Between(4000, 12000), strike);
         };
         const strike: () => void = () => {
             // Frames is 1,0 repeated 1-3 times
@@ -214,7 +192,9 @@ export class RainEffect implements WeatherEffect {
                 this.scene.time.delayedCall(i * FRAME, () => {
                     if (this._destroyed) return;
                     const intensity: number = Math.random() * 0.5 + 0.5;
-                    this.scene.game.canvas.style.filter = flash ? `contrast(${100 - intensity * 100}%) brightness(${intensity * 100}%)` : `none`;
+                    this.scene.game.canvas.style.filter = flash
+                        ? `contrast(${100 - intensity * 100}%) brightness(${intensity * 100}%)`
+                        : `none`;
                     if (flash) {
                         globalThis.document.body.style.setProperty("--bg-colour", `rgba(255, 255, 255, ${intensity})`);
                     } else {

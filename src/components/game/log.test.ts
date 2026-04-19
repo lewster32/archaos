@@ -24,13 +24,8 @@ import { Colour } from "@archaos/engine";
 // the <li>. We read element.style.color directly to avoid CSS-variable
 // resolution issues with toHaveStyle (which checks computed style).
 function msgStyle(screen: Awaited<ReturnType<typeof render>>) {
-    return (
-        screen
-            .getByRole("listitem")
-            .first()
-            .element()
-            .querySelector(".game-log__message") as HTMLElement
-    ).style.color;
+    return (screen.getByRole("listitem").first().element().querySelector(".game-log__message") as HTMLElement).style
+        .color;
 }
 
 function makeLog(overrides: Partial<LogEntry> = {}): LogEntry {
@@ -120,9 +115,7 @@ describe("Log", () => {
         });
 
         it("shows all entries when fewer than 25 are provided", async () => {
-            const logs: LogEntry[] = Array.from({ length: 5 }, (_, i) =>
-                makeLog({ id: i, message: `Entry ${i}` }),
-            );
+            const logs: LogEntry[] = Array.from({ length: 5 }, (_, i) => makeLog({ id: i, message: `Entry ${i}` }));
             const screen = await render(Log, { props: { logs } });
             await screen.getByRole("button").click();
             expect(screen.getByRole("listitem").elements()).toHaveLength(5);
@@ -132,35 +125,25 @@ describe("Log", () => {
     describe("toggle", () => {
         it('toggle button shows "+" when minimised (default)', async () => {
             const screen = await render(Log, { props: { logs: [makeLog()] } });
-            await expect
-                .element(screen.getByRole("button"))
-                .toHaveTextContent("+");
+            await expect.element(screen.getByRole("button")).toHaveTextContent("+");
         });
 
         it('toggle button shows "-" after clicking to expand', async () => {
             const screen = await render(Log, { props: { logs: [makeLog()] } });
             await screen.getByRole("button").click();
-            await expect
-                .element(screen.getByRole("button"))
-                .toHaveTextContent("-");
+            await expect.element(screen.getByRole("button")).toHaveTextContent("-");
         });
 
         it("adds the minimised class by default", async () => {
             const screen = await render(Log, { props: { logs: [makeLog()] } });
-            const root = screen
-                .getByRole("list")
-                .element()
-                .closest(".game-log") as HTMLElement;
+            const root = screen.getByRole("list").element().closest(".game-log") as HTMLElement;
             await expect.element(root).toHaveClass("game-log--minimised");
         });
 
         it("removes the minimised class after toggling open", async () => {
             const screen = await render(Log, { props: { logs: [makeLog()] } });
             await screen.getByRole("button").click();
-            const root = screen
-                .getByRole("list")
-                .element()
-                .closest(".game-log") as HTMLElement;
+            const root = screen.getByRole("list").element().closest(".game-log") as HTMLElement;
             await expect.element(root).not.toHaveClass("game-log--minimised");
         });
 
@@ -169,10 +152,7 @@ describe("Log", () => {
             const btn = screen.getByRole("button");
             await btn.click();
             await btn.click();
-            const root = screen
-                .getByRole("list")
-                .element()
-                .closest(".game-log") as HTMLElement;
+            const root = screen.getByRole("list").element().closest(".game-log") as HTMLElement;
             await expect.element(root).toHaveClass("game-log--minimised");
         });
     });
@@ -205,18 +185,12 @@ describe("Log", () => {
     describe("timestamp formatting", () => {
         it("formats timestamps as HH:MM:SS", async () => {
             // Pin toLocaleString to a stable string independent of test-environment locale.
-            const spy = vi
-                .spyOn(Date.prototype, "toLocaleString")
-                .mockReturnValue("1/1/2024, 12:34:56 PM");
+            const spy = vi.spyOn(Date.prototype, "toLocaleString").mockReturnValue("1/1/2024, 12:34:56 PM");
 
-            const screen = await renderWithTimestamps([
-                makeLog({ timestamp: new Date("2024-01-01T12:34:56") }),
-            ]);
+            const screen = await renderWithTimestamps([makeLog({ timestamp: new Date("2024-01-01T12:34:56") })]);
             // formatDate splits by ' ' and takes index [1]: '12:34:56'
             // The template appends ': ' after the time, trimmed to ':' by text().
-            await expect
-                .element(screen.getByRole("listitem").first())
-                .toHaveTextContent("12:34:56:");
+            await expect.element(screen.getByRole("listitem").first()).toHaveTextContent("12:34:56:");
             spy.mockRestore();
         });
     });

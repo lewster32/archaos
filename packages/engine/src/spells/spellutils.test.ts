@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-    chancePercent,
-    chanceRounded,
-    balanceIndicator,
-    friendlyBalance,
-} from "./spellutils";
+import { chancePercent, chanceRounded, balanceIndicator, friendlyBalance } from "./spellutils";
 describe("chancePercent", () => {
     it("converts 0 to 0%", () => {
         expect(chancePercent(0)).toBe(0);

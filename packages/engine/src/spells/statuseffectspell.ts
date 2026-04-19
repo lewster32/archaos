@@ -23,15 +23,8 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
         "magic-wings": UnitStatus.MagicWings,
     };
 
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
-        const target: P = targets.find(
-            (p: P) => p.type === UnitType.Wizard && p.owner === this.owner,
-        );
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
+        const target: P = targets.find((p: P) => p.type === UnitType.Wizard && p.owner === this.owner);
         if (!target) {
             return false;
         }
@@ -45,11 +38,7 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
         });
 
         if (this.properties.id in StatusEffectSpell.STATUS_MAP) {
-            if (
-                !target.addStatus(
-                    StatusEffectSpell.STATUS_MAP[this.properties.id],
-                )
-            ) {
+            if (!target.addStatus(StatusEffectSpell.STATUS_MAP[this.properties.id])) {
                 this._board.logger.log(
                     `${target.name} already has ${this.name} - this spell has no effect`,
                     Colour.Magenta,
@@ -59,10 +48,7 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
             }
         }
 
-        this._board.logger.log(
-            `${target.name} successfully casts '${this.name}'`,
-            Colour.Green,
-        );
+        this._board.logger.log(`${target.name} successfully casts '${this.name}'`, Colour.Green);
 
         await this._board.idleDelay();
         return true;

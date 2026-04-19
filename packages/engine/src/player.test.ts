@@ -96,10 +96,9 @@ describe("Player constructor", () => {
 
     it("throws when no config is provided", () => {
         const board = makeBoard();
-        expect(
-            () =>
-                new Player(board, 1, undefined as any, Player.PLAYER_COLOURS[0]),
-        ).toThrow("Player must be given a config");
+        expect(() => new Player(board, 1, undefined as any, Player.PLAYER_COLOURS[0])).toThrow(
+            "Player must be given a config",
+        );
     });
 
     it("stores the wizCode from config", () => {
@@ -133,10 +132,7 @@ describe("Player constructor", () => {
             castSpell: vi.fn(),
             moveAllUnits: vi.fn(),
         } as any;
-        const player = board.addPlayer(
-            { name: "Remote", type: GameSetupPlayerType.Computer },
-            remote,
-        );
+        const player = board.addPlayer({ name: "Remote", type: GameSetupPlayerType.Computer }, remote);
         expect(player.remote).toBe(remote);
     });
 
@@ -253,10 +249,7 @@ describe("Player.ai", () => {
             difficulty: 5,
             preferredTargetId: null,
         } as any;
-        const player = board.addPlayer(
-            { name: "AI", type: GameSetupPlayerType.Computer },
-            remote,
-        );
+        const player = board.addPlayer({ name: "AI", type: GameSetupPlayerType.Computer }, remote);
         expect(player.ai).toBe(remote);
     });
 });
@@ -319,9 +312,7 @@ describe("Player spells", () => {
             name: "P",
             type: GameSetupPlayerType.Local,
         });
-        await expect(player.pickSpell(999)).rejects.toThrow(
-            "This player does not have that spell",
-        );
+        await expect(player.pickSpell(999)).rejects.toThrow("This player does not have that spell");
     });
 });
 

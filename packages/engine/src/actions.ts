@@ -5,10 +5,7 @@ import type { PieceConfig } from "./configs/piececonfig";
  * one iteration. Captures what happened so the
  * client can replay it visually.
  */
-export type SpreadResult =
-    | { action: "none" }
-    | SpreadShrinkResult
-    | SpreadGrowResult;
+export type SpreadResult = { action: "none" } | SpreadShrinkResult | SpreadGrowResult;
 
 export interface SpreadShrinkResult {
     action: "shrink";

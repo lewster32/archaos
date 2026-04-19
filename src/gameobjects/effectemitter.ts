@@ -1,15 +1,7 @@
 import { EffectType } from "@archaos/engine";
 import { Piece } from "./piece";
 
-import {
-    Scene,
-    GameObjects,
-    Math as PMath,
-    Curves,
-    BlendModes,
-    Display,
-    TintModes,
-} from "phaser";
+import { Scene, GameObjects, Math as PMath, Curves, BlendModes, Display, TintModes } from "phaser";
 
 import effectsData from "@assets/data/effects.json";
 
@@ -43,11 +35,7 @@ const parseHexColor = (hex: string): number => {
     return Number.parseInt(hex, 16);
 };
 
-const buildParticleConfig = (
-    def: EffectDefinition,
-    startPosition: PMath.Vector2,
-    endPosition?: PMath.Vector2,
-): any => {
+const buildParticleConfig = (def: EffectDefinition, startPosition: PMath.Vector2, endPosition?: PMath.Vector2): any => {
     const config: any = { ...def.particle };
 
     if (config.anim) {
@@ -77,15 +65,9 @@ const buildParticleConfig = (
         let path: Curves.Path;
         if (def.emitZone.shape === "circle") {
             const radius = def.emitZone.radius!;
-            path = new Curves.Path(
-                startPosition.x + radius,
-                startPosition.y,
-            ).circleTo(radius);
+            path = new Curves.Path(startPosition.x + radius, startPosition.y).circleTo(radius);
         } else {
-            path = new Curves.Path(startPosition.x, startPosition.y).lineTo(
-                endPosition!.x,
-                endPosition!.y,
-            );
+            path = new Curves.Path(startPosition.x, startPosition.y).lineTo(endPosition!.x, endPosition!.y);
         }
         config.emitZone = {
             type: "edge",
@@ -116,13 +98,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
         resolve: Function,
     ) {
         const def = (effectsData as Record<string, EffectDefinition>)[type];
-        super(
-            scene,
-            0,
-            0,
-            "effects",
-            buildParticleConfig(def, startPosition, endPosition),
-        );
+        super(scene, 0, 0, "effects", buildParticleConfig(def, startPosition, endPosition));
         this._def = def;
         this._target = target;
         this.playEffect(resolve, duration ?? def.duration);
@@ -162,7 +138,8 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     to: te.to!,
                     duration,
                     onUpdate: (tween) => {
-                        target.sprite.setTint(colors![Math.floor(tween.getValue()) % colors!.length])
+                        target.sprite
+                            .setTint(colors![Math.floor(tween.getValue()) % colors!.length])
                             .setTintMode(TintModes.FILL);
                     },
                     onComplete: () => {
@@ -178,8 +155,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     duration: duration / 2,
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue());
-                        target.sprite.setTint(Display.Color.GetColor(value, value, value))
-                            .setTintMode(TintModes.FILL);
+                        target.sprite.setTint(Display.Color.GetColor(value, value, value)).setTintMode(TintModes.FILL);
                     },
                 });
                 this.scene.tweens.add({
@@ -198,7 +174,8 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
                     onUpdate: (tween) => {
                         const value: number = Math.floor(tween.getValue()) % 5;
                         if (value === 0) {
-                            target.sprite.setTint(colors![Math.floor(Math.random() * colors!.length)])
+                            target.sprite
+                                .setTint(colors![Math.floor(Math.random() * colors!.length)])
                                 .setTintMode(TintModes.FILL);
                         }
                     },
@@ -217,11 +194,7 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
         const duration = effectDuration ?? this._def.duration;
 
         if (this._def.cameraShake) {
-            this.scene.cameras.main.shake(
-                this._def.cameraShake.duration,
-                this._def.cameraShake.intensity,
-                true,
-            );
+            this.scene.cameras.main.shake(this._def.cameraShake.duration, this._def.cameraShake.intensity, true);
         }
 
         if (this._target) {
@@ -248,18 +221,10 @@ export class EffectEmitter extends GameObjects.Particles.ParticleEmitter {
  * Used by tutorial steps to point the player towards the relevant position.
  */
 class PointAtPositionEffect extends GameObjects.Container {
-    constructor(
-        scene: Scene,
-        startPosition: PMath.Vector2,
-        duration: number = 3500,
-        resolve: Function = () => {},
-    ) {
+    constructor(scene: Scene, startPosition: PMath.Vector2, duration: number = 3500, resolve: Function = () => {}) {
         super(scene, startPosition.x, startPosition.y);
 
-        const arrow: GameObjects.Image = scene.add
-            .image(0, -30, "pointer-arrow")
-            .setOrigin(0.5, 0)
-            .setAlpha(0);
+        const arrow: GameObjects.Image = scene.add.image(0, -30, "pointer-arrow").setOrigin(0.5, 0).setAlpha(0);
         this.add(arrow);
 
         scene.tweens.add({
@@ -314,10 +279,7 @@ const CUSTOM_EFFECT_REGISTRY = new Map<EffectType, CustomEffectFactory>([
  * Registers an additional custom effect factory. Use this to add code-defined
  * effects without modifying this file.
  */
-export const registerCustomEffect = (
-    type: EffectType,
-    factory: CustomEffectFactory,
-): void => {
+export const registerCustomEffect = (type: EffectType, factory: CustomEffectFactory): void => {
     CUSTOM_EFFECT_REGISTRY.set(type, factory);
 };
 
@@ -337,22 +299,7 @@ export const createEffect = (
 ): GameObjects.GameObject => {
     const factory = CUSTOM_EFFECT_REGISTRY.get(type);
     if (factory) {
-        return factory(
-            scene,
-            startPosition,
-            endPosition,
-            target,
-            duration,
-            resolve,
-        );
+        return factory(scene, startPosition, endPosition, target, duration, resolve);
     }
-    return new EffectEmitter(
-        scene,
-        type,
-        startPosition,
-        endPosition,
-        target,
-        duration,
-        resolve,
-    );
+    return new EffectEmitter(scene, type, startPosition, endPosition, target, duration, resolve);
 };

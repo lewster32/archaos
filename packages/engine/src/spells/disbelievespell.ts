@@ -11,12 +11,7 @@ import { Point } from "../point";
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
 export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(
-        owner: Player<P>,
-        castingPiece: P,
-        point?: Point,
-        targets?: P[],
-    ): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.canBeDisbelieved);
         if (!target) {
             return false;
@@ -34,14 +29,9 @@ export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
                 sound: "disbelieve",
             });
             await target.kill();
-            this._board.logger.log(
-                `Disbelieve succeeded on illusionary ${target.name}`,
-            );
+            this._board.logger.log(`Disbelieve succeeded on illusionary ${target.name}`);
         } else {
-            this._board.logger.log(
-                `Disbelieve failed on non-illusionary ${target.name}`,
-                Colour.Magenta,
-            );
+            this._board.logger.log(`Disbelieve failed on non-illusionary ${target.name}`, Colour.Magenta);
             // Inform AI players that this piece is not an illusion
             this._board.players.forEach((player: Player<P>) => {
                 player.ai?.rememberNonIllusionPiece(target.id);

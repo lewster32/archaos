@@ -83,9 +83,7 @@ describe("Rules", () => {
 
             const result = await rules.processIntent(board);
             expect(result).toBe(ActionType.Attack);
-            expect(attacker.inAttackRange).toHaveBeenCalledWith(
-                defender.position,
-            );
+            expect(attacker.inAttackRange).toHaveBeenCalledWith(defender.position);
         });
     });
 
@@ -99,11 +97,7 @@ describe("Rules", () => {
                     position: new Point(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(true),
-                    hasStatus: vi
-                        .fn()
-                        .mockImplementation(
-                            (s: UnitStatus) => s === UnitStatus.Flying,
-                        ),
+                    hasStatus: vi.fn().mockImplementation((s: UnitStatus) => s === UnitStatus.Flying),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -117,17 +111,10 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
                 // Should NOT have moved first (flying units attack from position)
                 expect(board.movePiece).not.toHaveBeenCalled();
             });
@@ -138,11 +125,7 @@ describe("Rules", () => {
                     position: new Point(0, 0),
                     canAttackPiece: vi.fn().mockReturnValue(true),
                     inAttackRange: vi.fn().mockReturnValue(false),
-                    hasStatus: vi
-                        .fn()
-                        .mockImplementation(
-                            (s: UnitStatus) => s === UnitStatus.Flying,
-                        ),
+                    hasStatus: vi.fn().mockImplementation((s: UnitStatus) => s === UnitStatus.Flying),
                 });
                 const defender = createMockPiece({
                     id: 2,
@@ -155,11 +138,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.attackPiece).not.toHaveBeenCalled();
@@ -184,21 +163,11 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.position,
-                );
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.movePiece).toHaveBeenCalledWith(attacker.id, defender.position);
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("adjacent attack succeeds without moving", async () => {
@@ -221,18 +190,11 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
                 expect(board.movePiece).not.toHaveBeenCalled();
-                expect(board.attackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("returns Invalid when canAttackPiece is false", async () => {
@@ -252,11 +214,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.Attack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.attackPiece).not.toHaveBeenCalled();
@@ -281,17 +239,10 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.RangedAttack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.RangedAttack);
-                expect(board.rangedAttackPiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.id,
-                );
+                expect(board.rangedAttackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
             it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
@@ -311,11 +262,7 @@ describe("Rules", () => {
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
-                const result = await rules.processAction(
-                    board,
-                    ActionType.RangedAttack,
-                    InputType.Click,
-                );
+                const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
                 expect(board.rangedAttackPiece).not.toHaveBeenCalled();
@@ -331,9 +278,7 @@ describe("Rules.doSpread", () => {
                 {
                     id: 1,
                     dead: false,
-                    hasStatus: vi.fn(
-                        (s: UnitStatus) => s === UnitStatus.Spreads,
-                    ),
+                    hasStatus: vi.fn((s: UnitStatus) => s === UnitStatus.Spreads),
                     spread: vi.fn().mockResolvedValue({
                         action: "none",
                     }),
@@ -348,9 +293,7 @@ describe("Rules.doSpread", () => {
         const rules = Rules.getInstance();
         await rules.doSpread(board);
 
-        const batchCall = (board.events.emit as any).mock.calls.find(
-            (c: any) => c[0] === EngineEvent.SpreadBatch,
-        );
+        const batchCall = (board.events.emit as any).mock.calls.find((c: any) => c[0] === EngineEvent.SpreadBatch);
         expect(batchCall).toBeDefined();
         const payload: SpreadBatchPayload = batchCall[1];
         expect(payload.iterations).toHaveLength(2);
@@ -383,9 +326,9 @@ describe("Rules.doSpread", () => {
         const rules = Rules.getInstance();
         await rules.doSpread(board);
 
-        const payload: SpreadBatchPayload = (
-            board.events.emit as any
-        ).mock.calls.find((c: any) => c[0] === EngineEvent.SpreadBatch)[1];
+        const payload: SpreadBatchPayload = (board.events.emit as any).mock.calls.find(
+            (c: any) => c[0] === EngineEvent.SpreadBatch,
+        )[1];
         expect(payload.iterations[0].results).toHaveLength(1);
         expect(payload.iterations[0].results[0]).toEqual({
             action: "shrink",
@@ -726,22 +669,14 @@ describe("Rules.processAction – additional branches", () => {
         const board = createMockBoard({ state: BoardState.Move });
         const rules = Rules.getInstance();
         // InputType.Unknown is not Click or Cancel
-        const result = await rules.processAction(
-            board,
-            ActionType.Move,
-            "unknown" as any,
-        );
+        const result = await rules.processAction(board, ActionType.Move, "unknown" as any);
         expect(result).toBe(ActionType.Idle);
     });
 
     it("returns None when state is Idle", async () => {
         const board = createMockBoard({ state: BoardState.Idle });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Move,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Move, InputType.Click);
         expect(result).toBe(ActionType.None);
     });
 
@@ -753,10 +688,7 @@ describe("Rules.processAction – additional branches", () => {
         });
         const rules = Rules.getInstance();
         await rules.processAction(board, ActionType.Info, InputType.Click);
-        expect((board.events.emit as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
-            EventType.PieceInfo,
-            piece,
-        );
+        expect(board.events.emit as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(EventType.PieceInfo, piece);
     });
 
     it("Click + Select picks the hovered piece", async () => {
@@ -766,11 +698,7 @@ describe("Rules.processAction – additional branches", () => {
             getPiecesAtPosition: vi.fn().mockReturnValue([piece]),
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Select,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.Select);
         expect(board.selectPiece).toHaveBeenCalledWith(10);
     });
@@ -787,16 +715,9 @@ describe("Rules.processAction – additional branches", () => {
             getPiecesAtPosition: vi.fn().mockReturnValue([]),
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Move,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Move, InputType.Click);
         expect(result).toBe(ActionType.Move);
-        expect(board.movePiece).toHaveBeenCalledWith(
-            3,
-            board.cursorPosition,
-        );
+        expect(board.movePiece).toHaveBeenCalledWith(3, board.cursorPosition);
     });
 
     it("Click + Move returns Invalid when piece cannot reach cursor", async () => {
@@ -811,11 +732,7 @@ describe("Rules.processAction – additional branches", () => {
             getPiecesAtPosition: vi.fn().mockReturnValue([]),
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Move,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Move, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
     });
 
@@ -825,11 +742,7 @@ describe("Rules.processAction – additional branches", () => {
             currentPlayer: null,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.None);
     });
 
@@ -839,11 +752,7 @@ describe("Rules.processAction – additional branches", () => {
             currentPlayer: { id: 1, remote: {} } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.None);
     });
 
@@ -859,11 +768,7 @@ describe("Rules.processAction – additional branches", () => {
             currentPlayer: { id: 1, remote: null } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
         expect(board.deselectPiece).toHaveBeenCalled();
     });
@@ -874,11 +779,7 @@ describe("Rules.processAction – additional branches", () => {
             currentPlayer: { id: 1, remote: null } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.None);
     });
 });
@@ -894,17 +795,12 @@ describe("Rules.dispatchEvent", () => {
         const board = createMockBoard({ state: BoardState.Move });
         const rules = Rules.getInstance();
         rules.dispatchEvent(EventType.PieceInfo, { id: 1 }, board);
-        expect((board.events.emit as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
-            EventType.PieceInfo,
-            { id: 1 },
-        );
+        expect(board.events.emit as ReturnType<typeof vi.fn>).toHaveBeenCalledWith(EventType.PieceInfo, { id: 1 });
     });
 
     it("does not throw when no board is provided", () => {
         const rules = Rules.getInstance();
-        expect(() =>
-            rules.dispatchEvent(EventType.PieceInfo, { id: 1 }),
-        ).not.toThrow();
+        expect(() => rules.dispatchEvent(EventType.PieceInfo, { id: 1 })).not.toThrow();
     });
 });
 
@@ -941,12 +837,8 @@ describe("Rules.rollChance", () => {
     it("returns player.forceCast when set", () => {
         const rules = Rules.getInstance();
         const rng = new TestRNG();
-        expect(
-            rules.rollChance(0.5, rng, { forceCast: true } as any),
-        ).toBe(true);
-        expect(
-            rules.rollChance(0.5, rng, { forceCast: false } as any),
-        ).toBe(false);
+        expect(rules.rollChance(0.5, rng, { forceCast: true } as any)).toBe(true);
+        expect(rules.rollChance(0.5, rng, { forceCast: false } as any)).toBe(false);
     });
 
     it("succeeds when chance > frac (frac=0.3, chance=0.7)", () => {
@@ -988,9 +880,7 @@ describe("Rules.doExpire", () => {
             id: 1,
             name: "Test Structure",
             dead: false,
-            hasStatus: vi.fn((s: UnitStatus) =>
-                s === UnitStatus.Expires || s === UnitStatus.Structure,
-            ),
+            hasStatus: vi.fn((s: UnitStatus) => s === UnitStatus.Expires || s === UnitStatus.Structure),
             currentRider: null,
             kill: vi.fn().mockResolvedValue(undefined),
         };
@@ -1019,9 +909,7 @@ describe("Rules.doExpire", () => {
             id: 1,
             name: "Test Structure",
             dead: false,
-            hasStatus: vi.fn((s: UnitStatus) =>
-                s === UnitStatus.Expires || s === UnitStatus.Structure,
-            ),
+            hasStatus: vi.fn((s: UnitStatus) => s === UnitStatus.Expires || s === UnitStatus.Structure),
             currentRider: null,
             kill: vi.fn().mockResolvedValue(undefined),
         };
@@ -1149,9 +1037,7 @@ describe("Rules.doCastSpell", () => {
         });
         const rules = Rules.getInstance();
         await rules.doCastSpell(board, { id: 1 } as any);
-        expect(
-            (board as any).logger.log,
-        ).toHaveBeenCalledWith(
+        expect((board as any).logger.log).toHaveBeenCalledWith(
             expect.stringContaining("failed to cast"),
             expect.anything(),
         );
@@ -1168,12 +1054,8 @@ describe("Rules.doAutoCastSpell", () => {
     it("delegates to ComputerWizard.autoCastSpell and returns its result", async () => {
         const { board } = makeCastBoard();
         // ComputerWizard.autoCastSpell is a static method — spy on it.
-        const { ComputerWizard } = await import(
-            "./ai/computerwizard"
-        );
-        const spy = vi
-            .spyOn(ComputerWizard, "autoCastSpell")
-            .mockResolvedValue(true);
+        const { ComputerWizard } = await import("./ai/computerwizard");
+        const spy = vi.spyOn(ComputerWizard, "autoCastSpell").mockResolvedValue(true);
         const rules = Rules.getInstance();
         const result = await rules.doAutoCastSpell(board);
         expect(result).toBe(true);
@@ -1204,15 +1086,11 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
         });
         const board = createMockBoard({
             state: BoardState.Move,
-            getPiecesAtPosition: vi
-                .fn()
-                .mockReturnValue([aliveNoRider, aliveWithRider]),
+            getPiecesAtPosition: vi.fn().mockReturnValue([aliveNoRider, aliveWithRider]),
         });
         const rules = Rules.getInstance();
         await rules.processAction(board, ActionType.Info, InputType.Click);
-        const emitCalls = (
-            board.events.emit as ReturnType<typeof vi.fn>
-        ).mock.calls;
+        const emitCalls = (board.events.emit as ReturnType<typeof vi.fn>).mock.calls;
         const infoCall = emitCalls.find((c: any) => c[0] === EventType.PieceInfo);
         expect(infoCall?.[1]).toBe(aliveWithRider);
     });
@@ -1228,15 +1106,11 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
         const dead = createMockPiece({ id: 10, dead: true, currentRider: null });
         const board = createMockBoard({
             state: BoardState.Move,
-            getPiecesAtPosition: vi
-                .fn()
-                .mockReturnValue([aliveNoRider, dead]),
+            getPiecesAtPosition: vi.fn().mockReturnValue([aliveNoRider, dead]),
         });
         const rules = Rules.getInstance();
         await rules.processAction(board, ActionType.Info, InputType.Click);
-        const emitCalls = (
-            board.events.emit as ReturnType<typeof vi.fn>
-        ).mock.calls;
+        const emitCalls = (board.events.emit as ReturnType<typeof vi.fn>).mock.calls;
         const infoCall = emitCalls.find((c: any) => c[0] === EventType.PieceInfo);
         expect(infoCall?.[1]).toBe(aliveNoRider);
     });
@@ -1259,9 +1133,7 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
         });
         const rules = Rules.getInstance();
         // No assertion on order — just ensure the comparator runs without error
-        await expect(
-            rules.processAction(board, ActionType.Info, InputType.Click),
-        ).resolves.toBe(ActionType.Info);
+        await expect(rules.processAction(board, ActionType.Info, InputType.Click)).resolves.toBe(ActionType.Info);
     });
 
     it("Cast click returns Cast when doCastSpell succeeds", async () => {
@@ -1298,11 +1170,7 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
             nextPlayer: vi.fn().mockResolvedValue(undefined),
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Cast,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Cast, InputType.Click);
         expect(result).toBe(ActionType.Cast);
     });
 
@@ -1322,18 +1190,14 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
             } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Cast,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Cast, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
     });
 
     it("Cast click calls nextPlayer and returns Cancel when doCastSpell returns false", async () => {
         const spell = {
             name: "Fireball",
-            castTimes: 0,  // spell runs out after cast → doCastSpell returns false
+            castTimes: 0, // spell runs out after cast → doCastSpell returns false
             failed: false,
             lineOfSight: false,
             cast: vi.fn().mockResolvedValue(undefined),
@@ -1364,11 +1228,7 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
             nextPlayer,
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.Cast,
-            InputType.Click,
-        );
+        const result = await rules.processAction(board, ActionType.Cast, InputType.Click);
         expect(result).toBe(ActionType.Cancel);
         expect(nextPlayer).toHaveBeenCalled();
     });
@@ -1400,11 +1260,7 @@ describe("Rules.processAction – Mount action (Click)", () => {
             cursorPosition: new Point(1, 0),
             getPiecesAtPosition: vi.fn().mockReturnValue([mount]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Mount,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Mount);
         expect(board.mountPiece).toHaveBeenCalledWith(rider.id, mount.id);
         expect(board.movePiece).not.toHaveBeenCalled();
@@ -1430,11 +1286,7 @@ describe("Rules.processAction – Mount action (Click)", () => {
             cursorPosition: new Point(3, 0),
             getPiecesAtPosition: vi.fn().mockReturnValue([mount]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Mount,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Mount);
         expect(board.movePiece).toHaveBeenCalledWith(rider.id, mount.position);
         expect(board.mountPiece).toHaveBeenCalledWith(rider.id, mount.id);
@@ -1460,11 +1312,7 @@ describe("Rules.processAction – Mount action (Click)", () => {
             cursorPosition: new Point(1, 0),
             getPiecesAtPosition: vi.fn().mockReturnValue([mount]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Mount,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
         expect(board.mountPiece).not.toHaveBeenCalled();
     });
@@ -1482,11 +1330,7 @@ describe("Rules.processAction – Mount action (Click)", () => {
             cursorPosition: new Point(1, 0),
             getPiecesAtPosition: vi.fn().mockReturnValue([mount]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Mount,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
     });
 });
@@ -1510,17 +1354,10 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
             selected: null,
             getPiecesAtPosition: vi.fn().mockReturnValue([mount]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Select,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.Move);
         expect(board.selectPiece).toHaveBeenCalledWith(mount.id);
-        expect(board.emitUIEvent).toHaveBeenCalledWith(
-            EventType.DismountAvailable,
-            true,
-        );
+        expect(board.emitUIEvent).toHaveBeenCalledWith(EventType.DismountAvailable, true);
     });
 
     it("Select: hovered piece not selectable and has no selectable rider → returns Invalid", async () => {
@@ -1534,11 +1371,7 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
             selected: null,
             getPiecesAtPosition: vi.fn().mockReturnValue([piece]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Select,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
     });
 
@@ -1548,11 +1381,7 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
             selected: null,
             getPiecesAtPosition: vi.fn().mockReturnValue([]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Select,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.None);
     });
 
@@ -1569,11 +1398,7 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
             selected,
             getPiecesAtPosition: vi.fn().mockReturnValue([dead]),
         });
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Attack,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Attack, InputType.Click);
         expect(result).toBe(ActionType.Idle);
     });
 
@@ -1591,11 +1416,7 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
             getPiecesAtPosition: vi.fn().mockReturnValue([hovered]),
         });
         // Use an action type that doesn't match Mount/Attack/RangedAttack
-        const result = await Rules.getInstance().processAction(
-            board,
-            ActionType.Idle,
-            InputType.Click,
-        );
+        const result = await Rules.getInstance().processAction(board, ActionType.Idle, InputType.Click);
         expect(result).toBe(ActionType.None);
     });
 });
@@ -1620,11 +1441,7 @@ describe("Rules.processCancel – additional branches", () => {
             currentPlayer: { id: 1, remote: null } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
         expect(rider.moved).toBe(true);
         expect(rider.turnOver).toBe(true);
@@ -1639,11 +1456,7 @@ describe("Rules.processCancel – additional branches", () => {
             nextPlayer: vi.fn().mockResolvedValue(undefined),
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
         expect((board as any).nextPlayer).toHaveBeenCalled();
     });
@@ -1656,11 +1469,7 @@ describe("Rules.processCancel – additional branches", () => {
             nextPlayer: vi.fn().mockResolvedValue(undefined),
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
         expect((board as any).nextPlayer).toHaveBeenCalled();
     });
@@ -1702,11 +1511,7 @@ describe("Rules.processCancel – additional branches", () => {
             stateManager,
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Move);
         expect(board.selectPiece).toHaveBeenCalledWith(mount.id);
     });
@@ -1728,10 +1533,7 @@ describe("Rules.processCancel – additional branches", () => {
         } as any);
         const rules = Rules.getInstance();
         await rules.processAction(board, ActionType.None, InputType.Cancel);
-        expect(board.emitUIEvent).toHaveBeenCalledWith(
-            EventType.DismountAvailable,
-            false,
-        );
+        expect(board.emitUIEvent).toHaveBeenCalledWith(EventType.DismountAvailable, false);
     });
 
     it("Cancel with unmoved piece and unmoved rider triggers RequestDismount", async () => {
@@ -1750,11 +1552,7 @@ describe("Rules.processCancel – additional branches", () => {
             stateManager,
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Dismount);
     });
 
@@ -1773,11 +1571,7 @@ describe("Rules.processCancel – additional branches", () => {
             currentPlayer: { id: 1, remote: null } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.None);
         expect(piece.attacked).toBe(true);
     });
@@ -1836,11 +1630,7 @@ describe("Rules.processCancel – additional branches", () => {
             currentPlayer: { id: 1, remote: null } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.None);
         expect(board.deselectPiece).toHaveBeenCalled();
     });
@@ -1865,11 +1655,7 @@ describe("Rules.processCancel – additional branches", () => {
             nextPlayer: vi.fn().mockResolvedValue(undefined),
         } as any);
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
         expect((board as any).nextPlayer).toHaveBeenCalled();
         expect(selected.turnOver).toBe(true);
@@ -1886,11 +1672,7 @@ describe("Rules.processCancel – additional branches", () => {
             } as any,
         });
         const rules = Rules.getInstance();
-        const result = await rules.processAction(
-            board,
-            ActionType.None,
-            InputType.Cancel,
-        );
+        const result = await rules.processAction(board, ActionType.None, InputType.Cancel);
         expect(result).toBe(ActionType.Cancel);
     });
 });
@@ -1950,10 +1732,7 @@ describe("Rules.doExpire – ExpiresGivesSpell", () => {
             id: 2,
             name: "Magic Steed",
             currentRider: rider,
-            hasStatus: vi.fn((s: UnitStatus) =>
-                s === UnitStatus.Expires ||
-                s === UnitStatus.ExpiresGivesSpell,
-            ),
+            hasStatus: vi.fn((s: UnitStatus) => s === UnitStatus.Expires || s === UnitStatus.ExpiresGivesSpell),
             kill: vi.fn().mockResolvedValue(undefined),
         };
         const board = {
@@ -1985,10 +1764,7 @@ describe("Rules.doExpire – ExpiresGivesSpell", () => {
             id: 3,
             name: "Magic Steed",
             currentRider: rider,
-            hasStatus: vi.fn((s: UnitStatus) =>
-                s === UnitStatus.Expires ||
-                s === UnitStatus.ExpiresGivesSpell,
-            ),
+            hasStatus: vi.fn((s: UnitStatus) => s === UnitStatus.Expires || s === UnitStatus.ExpiresGivesSpell),
             kill: vi.fn().mockResolvedValue(undefined),
         };
         const board = {

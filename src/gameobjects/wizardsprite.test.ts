@@ -106,9 +106,7 @@ describe("WizardSprite", () => {
             );
             const canvas = makeMockCanvas(pixels);
 
-            WizardSprite.replaceColors(canvas as any, [
-                [searchColors.primaryDark, replaceColors[0].dark],
-            ]);
+            WizardSprite.replaceColors(canvas as any, [[searchColors.primaryDark, replaceColors[0].dark]]);
 
             expect(pixels[0]).toBe(replaceColors[0].dark[0]);
             expect(pixels[1]).toBe(replaceColors[0].dark[1]);
@@ -152,9 +150,7 @@ describe("WizardSprite", () => {
             );
             const canvas = makeMockCanvas(pixels);
 
-            WizardSprite.replaceColors(canvas as any, [
-                [searchColors.primaryDark, [99, 99, 99]],
-            ]);
+            WizardSprite.replaceColors(canvas as any, [[searchColors.primaryDark, [99, 99, 99]]]);
 
             expect(pixels[0]).toBe(161); // unchanged
             expect(pixels[4]).toBe(161); // unchanged
@@ -166,9 +162,7 @@ describe("WizardSprite", () => {
             );
             const canvas = makeMockCanvas(pixels);
 
-            WizardSprite.replaceColors(canvas as any, [
-                [searchColors.primaryDark, [99, 99, 99]],
-            ]);
+            WizardSprite.replaceColors(canvas as any, [[searchColors.primaryDark, [99, 99, 99]]]);
 
             expect(pixels[0]).toBe(42);
             expect(pixels[1]).toBe(42);
@@ -238,11 +232,7 @@ describe("WizardSprite", () => {
 
             const _sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
-            expect(scene.textures.createCanvas).toHaveBeenCalledWith(
-                wizCode.code,
-                36,
-                24,
-            );
+            expect(scene.textures.createCanvas).toHaveBeenCalledWith(wizCode.code, 36, 24);
         });
     });
 
@@ -256,18 +246,8 @@ describe("WizardSprite", () => {
             const _sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
             const canvas = scene._canvas;
-            expect(canvas.drawFrame).toHaveBeenCalledWith(
-                "wizards",
-                6,
-                0,
-                expect.any(Number),
-            );
-            expect(canvas.drawFrame).toHaveBeenCalledWith(
-                "wizards",
-                7,
-                18,
-                expect.any(Number),
-            );
+            expect(canvas.drawFrame).toHaveBeenCalledWith("wizards", 6, 0, expect.any(Number));
+            expect(canvas.drawFrame).toHaveBeenCalledWith("wizards", 7, 18, expect.any(Number));
         });
 
         it("calls replaceColors and refresh", () => {
@@ -289,18 +269,8 @@ describe("WizardSprite", () => {
             const _sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
             const canvas = scene._canvas;
-            expect(canvas.drawFrame).toHaveBeenCalledWith(
-                "hats",
-                10,
-                2,
-                expect.any(Number),
-            );
-            expect(canvas.drawFrame).toHaveBeenCalledWith(
-                "hats",
-                11,
-                20,
-                expect.any(Number),
-            );
+            expect(canvas.drawFrame).toHaveBeenCalledWith("hats", 10, 2, expect.any(Number));
+            expect(canvas.drawFrame).toHaveBeenCalledWith("hats", 11, 20, expect.any(Number));
         });
 
         it("does not draw hat frames when hat is 0", () => {
@@ -310,9 +280,7 @@ describe("WizardSprite", () => {
             const _sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
             const canvas = scene._canvas;
-            const hatCalls = canvas.drawFrame.mock.calls.filter(
-                (c: any[]) => c[0] === "hats",
-            );
+            const hatCalls = canvas.drawFrame.mock.calls.filter((c: any[]) => c[0] === "hats");
             expect(hatCalls).toHaveLength(0);
         });
 
@@ -323,22 +291,8 @@ describe("WizardSprite", () => {
             const _sprite = new WizardSprite(scene as any, 0, 0, wizCode);
 
             const canvas = scene._canvas;
-            expect(canvas.add).toHaveBeenCalledWith(
-                "mycode_r",
-                0,
-                0,
-                0,
-                18,
-                24,
-            );
-            expect(canvas.add).toHaveBeenCalledWith(
-                "mycode_l",
-                0,
-                18,
-                0,
-                18,
-                24,
-            );
+            expect(canvas.add).toHaveBeenCalledWith("mycode_r", 0, 0, 0, 18, 24);
+            expect(canvas.add).toHaveBeenCalledWith("mycode_l", 0, 18, 0, 18, 24);
         });
 
         it("sets texture to the generated code", () => {
@@ -363,9 +317,7 @@ describe("WizardSprite", () => {
             mockSuperDestroy.mockClear();
             sprite.destroy();
 
-            const removed = scene.textures.remove.mock.calls.map(
-                (c: any[]) => c[0],
-            );
+            const removed = scene.textures.remove.mock.calls.map((c: any[]) => c[0]);
             expect(removed).toContain("dz");
             expect(mockSuperDestroy).toHaveBeenCalled();
         });

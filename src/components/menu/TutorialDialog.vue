@@ -1,23 +1,10 @@
 <template>
-    <dialog
-        v-if="tutorials.length > 0"
-        class="callout callout--min-width"
-        ref="dialog"
-    >
+    <dialog v-if="tutorials.length > 0" class="callout callout--min-width" ref="dialog">
         <h2 class="callout__title">Tutorials</h2>
-        <div
-            class="callout__row"
-            v-for="(tut, index) in tutorials"
-            :key="index"
-        >
-            <button
-                class="button tutorial-button"
-                @click="emit('select', tut.id)"
-            >
+        <div class="callout__row" v-for="(tut, index) in tutorials" :key="index">
+            <button class="button tutorial-button" @click="emit('select', tut.id)">
                 <span class="tutorial-button__name">
-                    <span class="tutorial-button__index"
-                        >{{ index + 1 }}.</span
-                    >
+                    <span class="tutorial-button__index">{{ index + 1 }}.</span>
                     {{ tut.name }}
                 </span>
                 <i
@@ -33,12 +20,7 @@
             </button>
         </div>
         <div class="callout__row">
-            <button
-                class="button button--red"
-                @click="dialog?.close()"
-            >
-                Cancel
-            </button>
+            <button class="button button--red" @click="dialog?.close()">Cancel</button>
         </div>
     </dialog>
 </template>

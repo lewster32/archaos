@@ -2,38 +2,48 @@
     <div class="wiz-code-editor">
         <div class="wiz-code-editor__sliders">
             <label for="wiz">Character style</label>
-            <SliderControl id="wiz" :min="0" :max="15"
+            <SliderControl
+                id="wiz"
+                :min="0"
+                :max="15"
                 :model-value="modelCode.wiz"
                 @update:model-value="modelCode = { ...modelCode, wiz: $event }"
             />
             <label for="primary">Primary colour</label>
-            <SliderControl id="primary" :min="0" :max="35"
+            <SliderControl
+                id="primary"
+                :min="0"
+                :max="35"
                 :model-value="modelCode.pri"
                 @update:model-value="modelCode = { ...modelCode, pri: $event }"
             />
             <label for="secondary">Secondary colour</label>
-            <SliderControl id="secondary" :min="0" :max="35"
+            <SliderControl
+                id="secondary"
+                :min="0"
+                :max="35"
                 :model-value="modelCode.sec"
                 @update:model-value="modelCode = { ...modelCode, sec: $event }"
             />
             <label for="skin">Skin colour</label>
-            <SliderControl id="skin" :min="0" :max="9"
+            <SliderControl
+                id="skin"
+                :min="0"
+                :max="9"
                 :model-value="modelCode.skin"
                 @update:model-value="modelCode = { ...modelCode, skin: $event }"
             />
             <label for="hat">Hat type</label>
-            <SliderControl id="hat" :min="0" :max="50"
+            <SliderControl
+                id="hat"
+                :min="0"
+                :max="50"
                 :model-value="modelCode.hat"
                 @update:model-value="modelCode = { ...modelCode, hat: $event }"
             />
         </div>
         <div class="wiz-code-editor__preview-container">
-            <canvas
-                ref="canvas"
-                class="wiz-code-editor__preview"
-                :width="FRAME_W"
-                :height="CANVAS_H"
-            />
+            <canvas ref="canvas" class="wiz-code-editor__preview" :width="FRAME_W" :height="CANVAS_H" />
             <input
                 type="text"
                 v-model="model"
@@ -111,7 +121,7 @@ const modelCode = computed({
             parsed.hat.toString(16).padStart(2, "0"),
         ].join("");
     },
-}); 
+});
 
 function loadImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
@@ -124,10 +134,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 async function ensureImages() {
     if (imagesLoaded) return;
-    [wizardsImg, hatsImg] = await Promise.all([
-        loadImage(wizardsUrl),
-        loadImage(hatsUrl),
-    ]);
+    [wizardsImg, hatsImg] = await Promise.all([loadImage(wizardsUrl), loadImage(hatsUrl)]);
     imagesLoaded = true;
 }
 
@@ -155,23 +162,10 @@ function drawFrame(
     const framesPerRow = Math.floor(img.width / frameW);
     const col = frameIndex % framesPerRow;
     const row = Math.floor(frameIndex / framesPerRow);
-    ctx.drawImage(
-        img,
-        col * frameW,
-        row * frameH,
-        frameW,
-        frameH,
-        destX,
-        destY,
-        frameW,
-        frameH,
-    );
+    ctx.drawImage(img, col * frameW, row * frameH, frameW, frameH, destX, destY, frameW, frameH);
 }
 
-function applyColorReplacements(
-    ctx: CanvasRenderingContext2D,
-    replacements: [search: number[], replace: number[]][],
-) {
+function applyColorReplacements(ctx: CanvasRenderingContext2D, replacements: [search: number[], replace: number[]][]) {
     const imgData = ctx.getImageData(0, 0, FRAME_W, CANVAS_H);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
@@ -180,11 +174,7 @@ function applyColorReplacements(
         const g = data[i + 1];
         const b = data[i + 2];
         for (const [search, replace] of replacements) {
-            if (
-                r === search[0] &&
-                g === search[1] &&
-                b === search[2]
-            ) {
+            if (r === search[0] && g === search[1] && b === search[2]) {
                 data[i] = replace[0];
                 data[i + 1] = replace[1];
                 data[i + 2] = replace[2];
@@ -213,15 +203,7 @@ async function render() {
 
     // Draw right-facing wizard frame (frame wiz*2) at (0, 5+yFix)
     ctx.imageSmoothingEnabled = false;
-    drawFrame(
-        ctx,
-        wizardsImg,
-        parsed.wiz * 2,
-        FRAME_W,
-        FRAME_H,
-        0,
-        5 + yFix,
-    );
+    drawFrame(ctx, wizardsImg, parsed.wiz * 2, FRAME_W, FRAME_H, 0, 5 + yFix);
 
     // Replace wizard colors
     applyColorReplacements(ctx, [
@@ -237,15 +219,7 @@ async function render() {
 
     // Draw hat on top
     if (parsed.hat > 0) {
-        drawFrame(
-            ctx,
-            hatsImg,
-            parsed.hat * 2,
-            HAT_W,
-            HAT_H,
-            2,
-            yFix,
-        );
+        drawFrame(ctx, hatsImg, parsed.hat * 2, HAT_W, HAT_H, 2, yFix);
     }
 }
 
@@ -300,5 +274,4 @@ watch(model, render);
         }
     }
 }
-
 </style>

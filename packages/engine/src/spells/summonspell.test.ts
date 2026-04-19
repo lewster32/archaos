@@ -37,9 +37,7 @@ function makeMockBoard(): Board {
         logger: { log: vi.fn() },
         sound: { play: vi.fn() },
         rangeGizmo: { showSimpleRange: vi.fn(), reset: vi.fn() },
-        addPiece: vi
-            .fn()
-            .mockResolvedValue({ turnOver: false, name: "Summoned" }),
+        addPiece: vi.fn().mockResolvedValue({ turnOver: false, name: "Summoned" }),
         getIsoPosition: vi.fn().mockReturnValue({ x: 0, y: 0 }),
         pieces: [],
         players: [],
@@ -122,11 +120,7 @@ describe("SummonSpell.unitId", () => {
     });
 
     it("returns unitId from config", () => {
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ unitId: "dragon" }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ unitId: "dragon" }));
         expect(s.unitId).toBe("dragon");
     });
 
@@ -143,26 +137,14 @@ describe("SummonSpell.unitId", () => {
     });
 
     it("returns empty string when neither unitId nor unit.id is set", () => {
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ unitId: undefined }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ unitId: undefined }));
         expect(s.unitId).toBe("");
     });
 
     it("returns an appropriate spellFrame value from config or defaults to 0", () => {
-        const s1 = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ spellFrame: 5 }),
-        );
+        const s1 = new SummonSpell(board, 1, makeSummonConfig({ spellFrame: 5 }));
         expect(s1.spellFrame).toBe(5);
-        const s2 = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ spellFrame: undefined }),
-        );
+        const s2 = new SummonSpell(board, 1, makeSummonConfig({ spellFrame: undefined }));
         expect(s2.spellFrame).toBe(0);
     });
 });
@@ -198,49 +180,29 @@ describe("SummonSpell.allowIllusion", () => {
     });
 
     it("defaults to true when allowIllusion is not set", () => {
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ allowIllusion: undefined }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ allowIllusion: undefined }));
         expect(s.allowIllusion).toBe(true);
     });
 
     it("is true when allowIllusion is explicitly true", () => {
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ allowIllusion: true }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ allowIllusion: true }));
         expect(s.allowIllusion).toBe(true);
     });
 
     it("is false when allowIllusion is explicitly false", () => {
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ allowIllusion: false }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ allowIllusion: false }));
         expect(s.allowIllusion).toBe(false);
     });
 
     it("is false when board.disableIllusions is true, even if spell allows it", () => {
         board.disableIllusions = true;
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ allowIllusion: true }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ allowIllusion: true }));
         expect(s.allowIllusion).toBe(false);
     });
 
     it("is false when board.disableIllusions is true and allowIllusion is undefined", () => {
         board.disableIllusions = true;
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ allowIllusion: undefined }),
-        );
+        const s = new SummonSpell(board, 1, makeSummonConfig({ allowIllusion: undefined }));
         expect(s.allowIllusion).toBe(false);
     });
 });
@@ -257,9 +219,7 @@ describe("SummonSpell.roll (via cast)", () => {
         castingPiece = makeMockCastingPiece();
         owner = makeMockPlayer(castingPiece);
         board = makeMockBoard();
-        getUnitConfigSpy = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig({ name: "Wolf" }));
+        getUnitConfigSpy = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig({ name: "Wolf" }));
     });
 
     afterEach(() => {
@@ -326,9 +286,7 @@ describe("SummonSpell.description", () => {
     });
 
     it("uses indefiniteArticle override when provided", () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ name: "Unicorn", indefiniteArticle: "the only" }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ name: "Unicorn", indefiniteArticle: "the only" }));
         const s = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         expect(s.description).toContain("Summon the only Unicorn");
     });
@@ -340,17 +298,13 @@ describe("SummonSpell.description", () => {
     });
 
     it("includes undead note when unit has undead status", () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: ["undead"] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ["undead"] }));
         const s = new SummonSpell(board, 1, makeSummonConfig());
         expect(s.description).toContain("Undead units");
     });
 
     it("includes mount+struct note for structures that can be occupied", () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: ["mount", "struct"] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ["mount", "struct"] }));
         const s = new SummonSpell(board, 1, makeSummonConfig());
         expect(s.description).toContain("occupied by the owning wizard");
     });
@@ -362,17 +316,13 @@ describe("SummonSpell.description", () => {
     });
 
     it("includes expires note when unit has expires status", () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: ["expires"] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ["expires"] }));
         const s = new SummonSpell(board, 1, makeSummonConfig());
         expect(s.description).toContain("expire");
     });
 
     it("includes expiresGivesSpell note when both expires flags are present", () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: ["expires", "expiresGivesSpell"] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: ["expires", "expiresGivesSpell"] }));
         const s = new SummonSpell(board, 1, makeSummonConfig());
         expect(s.description).toContain("grants a new spell");
     });
@@ -383,14 +333,8 @@ describe("SummonSpell.description", () => {
 describe("SummonSpell.unitProperties", () => {
     it("calls Piece.getUnitConfig with the unitId", () => {
         const board = makeMockBoard();
-        const stub = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig());
-        const s = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ unitId: "lion" }),
-        );
+        const stub = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig());
+        const s = new SummonSpell(board, 1, makeSummonConfig({ unitId: "lion" }));
         const props = s.unitProperties;
         expect(stub).toHaveBeenCalledWith("lion");
         expect(props).toBeDefined();
@@ -462,11 +406,7 @@ describe("SummonSpell.getValidTarget", () => {
 
     it("returns null when line of sight is blocked", () => {
         (board as any).hasLineOfSight = vi.fn().mockReturnValue(false);
-        const s = new SummonSpell(
-            board,
-            2,
-            makeSummonConfig({ lineOfSight: true, range: -1 }),
-        );
+        const s = new SummonSpell(board, 2, makeSummonConfig({ lineOfSight: true, range: -1 }));
         s.owner = makeMockPlayer(makeMockCastingPiece());
         expect(s.getValidTarget(new Point(0, 0))).toBeNull();
     });
@@ -476,15 +416,9 @@ describe("SummonSpell.getValidTarget", () => {
         (board as any).getAdjacentPiecesAtPosition = vi
             .fn()
             .mockImplementation((_pt: any, filter?: any) =>
-                filter
-                    ? [adjacentTree].filter((p) => filter(p))
-                    : [adjacentTree],
+                filter ? [adjacentTree].filter((p) => filter(p)) : [adjacentTree],
             );
-        const s = new SummonSpell(
-            board,
-            2,
-            makeSummonConfig({ tree: true, range: -1 }),
-        );
+        const s = new SummonSpell(board, 2, makeSummonConfig({ tree: true, range: -1 }));
         s.owner = makeMockPlayer(makeMockCastingPiece());
         expect(s.getValidTarget(new Point(0, 0))).toBeNull();
     });
@@ -499,9 +433,7 @@ describe("SummonSpell.getValidTarget", () => {
         (board as any).getPiecesAtPosition = vi
             .fn()
             .mockImplementation((_pt: any, filter?: any) =>
-                filter
-                    ? [mountedPiece].filter((p) => filter(p))
-                    : [mountedPiece],
+                filter ? [mountedPiece].filter((p) => filter(p)) : [mountedPiece],
             );
         const pt = new Point(0, 0);
         expect(spell.getValidTarget(pt)).toBe(pt);
@@ -511,11 +443,7 @@ describe("SummonSpell.getValidTarget", () => {
         // target instanceof Piece: false for plain objects → falls through to
         // the SpellTarget.Empty check with no matching enum → returns null
         // We test this by using a non-Empty target type:
-        const s = new SummonSpell(
-            board,
-            2,
-            makeSummonConfig({ target: SpellTarget.Piece as any, range: -1 }),
-        );
+        const s = new SummonSpell(board, 2, makeSummonConfig({ target: SpellTarget.Piece as any, range: -1 }));
         s.owner = makeMockPlayer(makeMockCastingPiece());
         (board as any).getPiecesAtPosition = vi.fn().mockReturnValue([]);
         expect(s.getValidTarget(new Point(0, 0))).toBeNull();
@@ -554,9 +482,7 @@ describe("SummonSpell.doCast", () => {
         castingPiece = makeMockCastingPiece();
         owner = makeMockPlayer(castingPiece);
         board = makeMockBoard();
-        getUnitConfigSpy = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig({ name: "Lion" }));
+        getUnitConfigSpy = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig({ name: "Lion" }));
         spell = new SummonSpell(board, 1, makeSummonConfig());
         spell.owner = owner;
     });
@@ -592,46 +518,30 @@ describe("SummonSpell.doCast", () => {
 
     it("calls board.addPiece with illusion=false by default", async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect((board as any).addPiece).toHaveBeenCalledWith(
-            expect.objectContaining({ illusion: false }),
-        );
+        expect((board as any).addPiece).toHaveBeenCalledWith(expect.objectContaining({ illusion: false }));
     });
 
     it("calls board.addPiece with illusion=true when spell.illusion is set", async () => {
         spell.illusion = true;
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect((board as any).addPiece).toHaveBeenCalledWith(
-            expect.objectContaining({ illusion: true }),
-        );
+        expect((board as any).addPiece).toHaveBeenCalledWith(expect.objectContaining({ illusion: true }));
     });
 
     it('emits "cast-beam" and "die" sound events', async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "cast-beam" },
-        );
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "die" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cast-beam" });
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
     });
 
     it("logs a success message", async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
-        expect(board.logger.log as any).toHaveBeenCalledWith(
-            expect.stringContaining("Caster"),
-            expect.anything(),
-        );
+        expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Caster"), expect.anything());
     });
 
     it("emits WizardCasting, WizardCastBeam, and SummonPiece effects", async () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0));
         const emitCalls = (board as any).events.emitAsync.mock.calls
-            .filter(
-                (c: any[]) =>
-                    c[0] === EngineEvent.EffectRequested && c[1]?.type,
-            )
+            .filter((c: any[]) => c[0] === EngineEvent.EffectRequested && c[1]?.type)
             .map((c: any[]) => c[1].type);
         expect(emitCalls).toHaveLength(3);
     });
@@ -676,62 +586,38 @@ describe("SummonSpell.scoreLoSBlock (private)", () => {
 
     it("returns 0 when tile projects before the segment (proj <= 0.05)", () => {
         // Enemy at (0,0), wizard at (10,0). Tile at (-1,0) projects behind enemy.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(-1, 0),
-            new Point(0, 0),
-            new Point(10, 0),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(-1, 0), new Point(0, 0), new Point(10, 0));
         expect(result).toBe(0);
     });
 
     it("returns 0 when tile projects beyond the segment (proj >= 0.95)", () => {
         // Enemy at (0,0), wizard at (10,0). Tile at (11,0) projects beyond wizard.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(11, 0),
-            new Point(0, 0),
-            new Point(10, 0),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(11, 0), new Point(0, 0), new Point(10, 0));
         expect(result).toBe(0);
     });
 
     it("returns 3 when tile lies exactly on the segment midpoint", () => {
         // Enemy at (0,0), wizard at (10,0). Tile at (5,0) is exactly on the line.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(5, 0),
-            new Point(0, 0),
-            new Point(10, 0),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(5, 0), new Point(0, 0), new Point(10, 0));
         expect(result).toBeCloseTo(3, 5);
     });
 
     it("returns a value between 0 and 3 for a tile near but off the segment", () => {
         // Enemy at (0,0), wizard at (10,0). Tile at (5,1) is 1 unit off the midpoint.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(5, 1),
-            new Point(0, 0),
-            new Point(10, 0),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(5, 1), new Point(0, 0), new Point(10, 0));
         expect(result).toBeGreaterThan(0);
         expect(result).toBeLessThan(3);
     });
 
     it("returns 0 when tile is more than 1.5 units from the segment", () => {
         // Enemy at (0,0), wizard at (10,0). Tile at (5,2) is 2 units off the midpoint.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(5, 2),
-            new Point(0, 0),
-            new Point(10, 0),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(5, 2), new Point(0, 0), new Point(10, 0));
         expect(result).toBe(0);
     });
 
     it("scores a diagonal segment correctly (non-zero for on-path tile)", () => {
         // Enemy at (0,0), wizard at (4,4). Tile at (2,2) is exactly on the diagonal.
-        const result = (spell as any).scoreLoSBlock(
-            new Point(2, 2),
-            new Point(0, 0),
-            new Point(4, 4),
-        );
+        const result = (spell as any).scoreLoSBlock(new Point(2, 2), new Point(0, 0), new Point(4, 4));
         expect(result).toBeCloseTo(3, 5);
     });
 });
@@ -768,11 +654,7 @@ describe("SummonSpell.selectSpreadingTile (private)", () => {
         const far = new Point(0, 0);
         const validTiles = [far, near];
         // weightedPick returns arr[0] — should be the nearest tile after sort
-        const result = (spell as any).selectSpreadingTile(
-            player,
-            new Point(0, 0),
-            validTiles,
-        );
+        const result = (spell as any).selectSpreadingTile(player, new Point(0, 0), validTiles);
         expect(result).toBe(near);
     });
 
@@ -783,11 +665,7 @@ describe("SummonSpell.selectSpreadingTile (private)", () => {
         const near = new Point(1, 0);
         const far = new Point(5, 5);
         const validTiles = [near, far];
-        const result = (spell as any).selectSpreadingTile(
-            player,
-            new Point(0, 0),
-            validTiles,
-        );
+        const result = (spell as any).selectSpreadingTile(player, new Point(0, 0), validTiles);
         expect(result).toBe(far);
     });
 
@@ -797,11 +675,7 @@ describe("SummonSpell.selectSpreadingTile (private)", () => {
         const t1 = new Point(2, 3);
         const t2 = new Point(4, 5);
         const validTiles = [t1, t2];
-        const result = (spell as any).selectSpreadingTile(
-            player,
-            null,
-            validTiles,
-        );
+        const result = (spell as any).selectSpreadingTile(player, null, validTiles);
         // weightedPick returns arr[0] — no sort applied, so first tile returned
         expect(result).toBe(t1);
     });
@@ -826,11 +700,7 @@ describe("SummonSpell.selectSpreadingTile (private)", () => {
         const t1 = new Point(0, 0);
         const validTiles = [t1];
         // No enemies after filter → falls to wizardPos branch but wizardPos is null
-        const result = (spell as any).selectSpreadingTile(
-            player,
-            null,
-            validTiles,
-        );
+        const result = (spell as any).selectSpreadingTile(player, null, validTiles);
         expect(result).toBe(t1);
     });
 });
@@ -843,11 +713,7 @@ describe("SummonSpell.selectMagicWoodTile (private)", () => {
 
     beforeEach(() => {
         board = makeMockBoard();
-        spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ autoPlace: true }),
-        );
+        spell = new SummonSpell(board, 1, makeSummonConfig({ autoPlace: true }));
     });
 
     it("sorts tiles ascending by distance from wizard when wizardPos is provided", () => {
@@ -856,10 +722,7 @@ describe("SummonSpell.selectMagicWoodTile (private)", () => {
         const far = new Point(5, 5);
         const validTiles = [far, near];
         // Mock board.weightedRandomPick picks arr[0]
-        const result = (spell as any).selectMagicWoodTile(
-            new Point(0, 0),
-            validTiles,
-        );
+        const result = (spell as any).selectMagicWoodTile(new Point(0, 0), validTiles);
         // After ascending sort by distance, nearest tile is at index 0
         expect(result).toBe(near);
     });
@@ -876,9 +739,7 @@ describe("SummonSpell.selectMagicWoodTile (private)", () => {
 
     it("handles a single tile", () => {
         const only = new Point(2, 2);
-        const result = (spell as any).selectMagicWoodTile(new Point(0, 0), [
-            only,
-        ]);
+        const result = (spell as any).selectMagicWoodTile(new Point(0, 0), [only]);
         expect(result).toBe(only);
     });
 });
@@ -892,9 +753,7 @@ describe("SummonSpell.selectShadowWoodTile (private)", () => {
 
     beforeEach(() => {
         board = makeMockBoard();
-        getUnitConfigSpy = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig({ status: ["tree"] }));
+        getUnitConfigSpy = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig({ status: ["tree"] }));
         spell = new SummonSpell(board, 1, makeSummonConfig({ tree: true }));
     });
 
@@ -906,11 +765,9 @@ describe("SummonSpell.selectShadowWoodTile (private)", () => {
     it("returns a tile from validTiles when no enemies are present", () => {
         (board as any).pieces = [];
         const t = new Point(2, 2);
-        const result = (spell as any).selectShadowWoodTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            new Point(0, 0),
-            [t],
-        );
+        const result = (spell as any).selectShadowWoodTile(makeMockPlayer(makeMockCastingPiece()), new Point(0, 0), [
+            t,
+        ]);
         expect(result).toBe(t);
     });
 
@@ -941,11 +798,7 @@ describe("SummonSpell.selectShadowWoodTile (private)", () => {
         const onLine = new Point(2, 0); // near midpoint of enemy-wizard line
         const offBoard = new Point(5, 5); // far from both
         const validTiles = [offBoard, onLine];
-        const result = (spell as any).selectShadowWoodTile(
-            player,
-            wizard,
-            validTiles,
-        );
+        const result = (spell as any).selectShadowWoodTile(player, wizard, validTiles);
         // onLine should score higher (LoS block + proximity bonus) → index 0 after sort
         expect(result).toBe(onLine);
     });
@@ -970,11 +823,7 @@ describe("SummonSpell.selectShadowWoodTile (private)", () => {
         const close = new Point(1, 1); // proximity bonus > 0
         const nowhere = new Point(0, 8); // proximity 0, LoS 0
         const validTiles = [nowhere, close];
-        const result = (spell as any).selectShadowWoodTile(
-            player,
-            wizard,
-            validTiles,
-        );
+        const result = (spell as any).selectShadowWoodTile(player, wizard, validTiles);
         // close tile scores higher via proximity bonus → index 0 after descending sort
         expect(result).toBe(close);
     });
@@ -1080,13 +929,7 @@ describe("SummonSpell.trySelectWallTile (private)", () => {
         const player = makeMockPlayer(makeMockCastingPiece());
         const onLine = new Point(2, 0);
         const offLine = new Point(3, 7);
-        const result = (spell as any).trySelectWallTile(
-            player,
-            wizardPos,
-            [offLine, onLine],
-            null,
-            null,
-        );
+        const result = (spell as any).trySelectWallTile(player, wizardPos, [offLine, onLine], null, null);
         // onLine scores higher — ends up at index 0 after sort
         expect(result).toBe(onLine);
     });
@@ -1103,13 +946,7 @@ describe("SummonSpell.trySelectWallTile (private)", () => {
         const player = makeMockPlayer(makeMockCastingPiece());
         const t1 = new Point(3, 3);
         const t2 = new Point(4, 4);
-        const result = (spell as any).trySelectWallTile(
-            player,
-            wizardPos,
-            [t1, t2],
-            null,
-            null,
-        );
+        const result = (spell as any).trySelectWallTile(player, wizardPos, [t1, t2], null, null);
         expect(result).toBe(t1);
     });
 
@@ -1127,13 +964,7 @@ describe("SummonSpell.trySelectWallTile (private)", () => {
         const lastWallPt = new Point(5, 5);
         const adjacent = new Point(6, 5);
         const isolated = new Point(3, 3);
-        const result = (spell as any).trySelectWallTile(
-            player,
-            wizardPos,
-            [isolated, adjacent],
-            lastWallPt,
-            null,
-        );
+        const result = (spell as any).trySelectWallTile(player, wizardPos, [isolated, adjacent], lastWallPt, null);
         expect(result).toBe(adjacent);
     });
 
@@ -1153,13 +984,7 @@ describe("SummonSpell.trySelectWallTile (private)", () => {
         const lastWallPt = new Point(5, 5);
         const straight = new Point(6, 5);
         const turn = new Point(5, 6);
-        const result = (spell as any).trySelectWallTile(
-            player,
-            wizardPos,
-            [turn, straight],
-            lastWallPt,
-            prevWallPt,
-        );
+        const result = (spell as any).trySelectWallTile(player, wizardPos, [turn, straight], lastWallPt, prevWallPt);
         expect(result).toBe(straight);
     });
 
@@ -1205,13 +1030,7 @@ describe("SummonSpell.trySelectWallTile (private)", () => {
             ai: null,
         };
         const safeTile = new Point(3, 3);
-        const result = (spell as any).trySelectWallTile(
-            playerNoAi,
-            wizardPos,
-            [safeTile],
-            null,
-            null,
-        );
+        const result = (spell as any).trySelectWallTile(playerNoAi, wizardPos, [safeTile], null, null);
         expect(result).toBe(safeTile);
     });
 });
@@ -1248,9 +1067,7 @@ describe("SummonSpell.autoCast", () => {
 
     beforeEach(() => {
         board = makeAutoCastBoard();
-        getUnitConfigSpy = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig({ status: [] }));
+        getUnitConfigSpy = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig({ status: [] }));
     });
 
     afterEach(() => {
@@ -1262,23 +1079,14 @@ describe("SummonSpell.autoCast", () => {
         board.getPiecesAtPosition = vi
             .fn()
             .mockImplementation((_pt: any, filter: any) =>
-                filter
-                    ? [{ currentMount: null, engulfed: false, dead: false }]
-                    : [],
+                filter ? [{ currentMount: null, engulfed: false, dead: false }] : [],
             );
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "cancel" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cancel" });
         expect(player.discardSpell).not.toHaveBeenCalled();
     });
 
@@ -1286,80 +1094,53 @@ describe("SummonSpell.autoCast", () => {
         // First iteration: tiles available → cast succeeds and decrements castTimes.
         // Second iteration (castTimes=1 multi-cast): no tiles left.
         let callCount = 0;
-        board.getPiecesAtPosition = vi
-            .fn()
-            .mockImplementation((_pt: any, filter: any) => {
-                callCount++;
-                // First 4 calls (first iteration grid scan): empty → tiles valid
-                // Subsequent calls (second iteration grid scan): occupied → no valid tiles
-                if (callCount <= 4) {
-                    return [];
-                }
-                return filter
-                    ? [{ currentMount: null, engulfed: false, dead: false }]
-                    : [];
-            });
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 2 }),
-        );
+        board.getPiecesAtPosition = vi.fn().mockImplementation((_pt: any, filter: any) => {
+            callCount++;
+            // First 4 calls (first iteration grid scan): empty → tiles valid
+            // Subsequent calls (second iteration grid scan): occupied → no valid tiles
+            if (callCount <= 4) {
+                return [];
+            }
+            return filter ? [{ currentMount: null, engulfed: false, dead: false }] : [];
+        });
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 2 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
         // doCastSpell decrements _castTimes by calling cast → simulate that directly
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
         expect(player.discardSpell).toHaveBeenCalled();
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "cancel" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cancel" });
     });
 
     it("returns true and calls discardSpell after casting all times (random path)", async () => {
         // Standard summon (not spreading, not autoPlace, not tree, not Wall).
         // rollChance is not consulted for random path.
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const result = await spell.autoCast(player);
         expect(result).toBe(true);
         expect(player.discardSpell).toHaveBeenCalled();
     });
 
     it("uses selectSpreadingTile path when unit has Spreads status and rollChance favours it", async () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: [UnitStatus.Spreads] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: [UnitStatus.Spreads] }));
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(true);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectSpreadingTile");
         const result = await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1370,18 +1151,12 @@ describe("SummonSpell.autoCast", () => {
         // autoPlace overrides spreading/tree branches
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(false); // not spreading
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, autoPlace: true }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, autoPlace: true }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectMagicWoodTile");
         await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1392,18 +1167,12 @@ describe("SummonSpell.autoCast", () => {
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(false); // not spreading
         // combat > 0 is provided by default makeUnitConfig (com: 3)
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, tree: true }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, tree: true }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectShadowWoodTile");
         await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1411,19 +1180,13 @@ describe("SummonSpell.autoCast", () => {
 
     it("uses trySelectWallTile path for Wall spell and returns true on success", async () => {
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, name: "Wall" }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: "Wall" }));
         const player = makeAutoCastPlayer();
         player.castingPiece.position = new Point(9, 9); // wizard far from valid tiles
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "trySelectWallTile");
         const result = await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1434,20 +1197,14 @@ describe("SummonSpell.autoCast", () => {
         // First iteration: wall cast succeeds (castTimes goes 2→1).
         // Second iteration: trySelectWallTile returns null → returns true (already cast once).
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 2, name: "Wall" }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 2, name: "Wall" }));
         const player = makeAutoCastPlayer();
         player.castingPiece.position = new Point(9, 9);
         spell.owner = player;
         let tryCallCount = 0;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         vi.spyOn(spell as any, "trySelectWallTile").mockImplementation(() => {
             tryCallCount++;
             if (tryCallCount === 1) return new Point(0, 0);
@@ -1460,39 +1217,26 @@ describe("SummonSpell.autoCast", () => {
 
     it('plays "cancel" and returns false when trySelectWallTile returns null on first cast', async () => {
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, name: "Wall" }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: "Wall" }));
         const player = makeAutoCastPlayer();
         player.castingPiece.position = new Point(9, 9);
         spell.owner = player;
         vi.spyOn(spell as any, "trySelectWallTile").mockReturnValue(null);
         const result = await spell.autoCast(player);
         expect(result).toBe(false);
-        expect((board as any).events.emit).toHaveBeenCalledWith(
-            EngineEvent.EffectRequested,
-            { sound: "cancel" },
-        );
+        expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cancel" });
         expect(player.discardSpell).not.toHaveBeenCalled();
     });
 
     it("tracks lastWallPt and prevWallPt across wall casts", async () => {
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 3, name: "Wall" }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 3, name: "Wall" }));
         const player = makeAutoCastPlayer();
         player.castingPiece.position = new Point(9, 9);
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const pt1 = new Point(0, 0);
         const pt2 = new Point(1, 0);
         const pt3 = new Point(2, 0);
@@ -1500,15 +1244,13 @@ describe("SummonSpell.autoCast", () => {
         const capturedArgs: Array<{ lastPt: unknown; prevPt: unknown }> = [];
         const tryMock = vi
             .spyOn(spell as any, "trySelectWallTile")
-            .mockImplementation(
-                (_p: any, _w: any, _v: any, lastPt: any, prevPt: any) => {
-                    capturedArgs.push({ lastPt, prevPt });
-                    tryCallCount++;
-                    if (tryCallCount === 1) return pt1;
-                    if (tryCallCount === 2) return pt2;
-                    return pt3;
-                },
-            );
+            .mockImplementation((_p: any, _w: any, _v: any, lastPt: any, prevPt: any) => {
+                capturedArgs.push({ lastPt, prevPt });
+                tryCallCount++;
+                if (tryCallCount === 1) return pt1;
+                if (tryCallCount === 2) return pt2;
+                return pt3;
+            });
         await spell.autoCast(player);
         expect(tryMock).toHaveBeenCalledTimes(3);
         expect(capturedArgs[0].lastPt).toBeNull();
@@ -1519,24 +1261,16 @@ describe("SummonSpell.autoCast", () => {
     });
 
     it("uses ai.difficulty when player has an ai controller (spreading path)", async () => {
-        getUnitConfigSpy.mockReturnValue(
-            makeUnitConfig({ status: [UnitStatus.Spreads] }),
-        );
+        getUnitConfigSpy.mockReturnValue(makeUnitConfig({ status: [UnitStatus.Spreads] }));
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(true);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         player.ai = { difficulty: 1 };
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const result = await spell.autoCast(player);
         // rollChance was called with 0.5 + 1 * 0.5 = 1.0 — should have taken spreading path
         expect((board as any).rollChance).toHaveBeenCalledWith(1);
@@ -1547,18 +1281,12 @@ describe("SummonSpell.autoCast", () => {
         // getUnitConfig returns null — unitProperties?.status?.includes(...) ?? false → false
         getUnitConfigSpy.mockReturnValue(null as any);
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         // Should not throw and should use the random path
         const result = await spell.autoCast(player);
         expect(result).toBe(true);
@@ -1566,11 +1294,7 @@ describe("SummonSpell.autoCast", () => {
 
     it("treats wizardPos as null when player.castingPiece is null (covers ?? null branch)", async () => {
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         // castingPiece has no position — spell.owner setter requires a castingPiece but position
         // comes from player.castingPiece?.position ?? null inside autoCast
         const playerNoCastPos = {
@@ -1582,11 +1306,9 @@ describe("SummonSpell.autoCast", () => {
         // owner setter requires castingPiece; use a fully-formed player for that, then swap
         const ownerForSetter = makeAutoCastPlayer();
         spell.owner = ownerForSetter;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         // Call autoCast with a player whose castingPiece.position is undefined → wizardPos = null
         const result = await spell.autoCast(playerNoCastPos as any);
         expect(result).toBe(true);
@@ -1597,11 +1319,7 @@ describe("SummonSpell.autoCast", () => {
     it("returns true without calling discardSpell when _castTimes is already 0 (line 284 false branch)", async () => {
         // Force the while loop to be skipped entirely so successfullyCast stays false.
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
         (spell as any)._castTimes = 0; // skip the loop
@@ -1624,18 +1342,12 @@ describe("SummonSpell.autoCast", () => {
             position: new Point(5, 5),
         };
         (board as any).pieces = [enemy];
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, tree: true }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, tree: true }));
         const player = makeAutoCastPlayer();
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectShadowWoodTile");
         const result = await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1656,19 +1368,13 @@ describe("SummonSpell.autoCast", () => {
         };
         (board as any).pieces = [enemy];
         // Wizard far from the 2×2 grid tiles so all candidates pass the adjacency filter.
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1, name: "Wall" }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1, name: "Wall" }));
         const player = makeAutoCastPlayer();
         player.castingPiece.position = new Point(5, 5);
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "trySelectWallTile");
         const result = await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1683,19 +1389,13 @@ describe("SummonSpell.autoCast", () => {
         // so autoCast falls into the else branch and tests rollChance(difficulty).
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(true);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         player.ai = { difficulty: 0.8 };
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
         const result = await spell.autoCast(player);
         expect(selectSpy).toHaveBeenCalled();
@@ -1708,19 +1408,13 @@ describe("SummonSpell.autoCast", () => {
         // rollChance false → random tile via rng.pick; selectDefaultTile must NOT be called.
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
         (board as any).rollChance = vi.fn().mockReturnValue(false);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         player.ai = { difficulty: 0.5 };
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
         const pickSpy = vi.spyOn((board as any).rng, "pick");
         const result = await spell.autoCast(player);
@@ -1733,23 +1427,15 @@ describe("SummonSpell.autoCast", () => {
         // player.ai is null → difficulty defaults to 0 → rollChance(0) always false
         // → random rng.pick path.
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const rollChanceSpy = vi
-            .fn()
-            .mockImplementation((chance: number) => chance > 0);
+        const rollChanceSpy = vi.fn().mockImplementation((chance: number) => chance > 0);
         (board as any).rollChance = rollChanceSpy;
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         player.ai = null;
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const selectSpy = vi.spyOn(spell as any, "selectDefaultTile");
         await spell.autoCast(player);
         // rollChance should have been called with 0 (difficulty default)
@@ -1764,28 +1450,18 @@ describe("SummonSpell.autoCast", () => {
         // rather than any other tile-selection strategy.
         getUnitConfigSpy.mockReturnValue(
             makeUnitConfig({
-                status: [
-                    UnitStatus.Mount,
-                    UnitStatus.Structure,
-                    UnitStatus.Invulnerable,
-                ],
+                status: [UnitStatus.Mount, UnitStatus.Structure, UnitStatus.Invulnerable],
             }),
         );
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         // Wizard at (0,0): all tiles in the 2×2 board are within distance 1.5
         player.castingPiece.position = new Point(0, 0);
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const result = await spell.autoCast(player);
         expect(result).toBe(true);
         // doCastSpell should have been called via the adjacent-mount branch
@@ -1799,29 +1475,19 @@ describe("SummonSpell.autoCast", () => {
         // falls through to the normal tile-selection branches (random pick).
         getUnitConfigSpy.mockReturnValue(
             makeUnitConfig({
-                status: [
-                    UnitStatus.Mount,
-                    UnitStatus.Structure,
-                    UnitStatus.Invulnerable,
-                ],
+                status: [UnitStatus.Mount, UnitStatus.Structure, UnitStatus.Invulnerable],
             }),
         );
         board.getPiecesAtPosition = vi.fn().mockReturnValue([]);
-        const spell = new SummonSpell(
-            board,
-            1,
-            makeSummonConfig({ castTimes: 1 }),
-        );
+        const spell = new SummonSpell(board, 1, makeSummonConfig({ castTimes: 1 }));
         const player = makeAutoCastPlayer();
         // Wizard far from any valid tile: distance to each of the 2×2 tiles
         // from (99,99) is > 1.5, so the adjacent filter yields nothing.
         player.castingPiece.position = new Point(99, 99);
         spell.owner = player;
-        (board as any).rules.doCastSpell = vi
-            .fn()
-            .mockImplementation(async () => {
-                (spell as any)._castTimes--;
-            });
+        (board as any).rules.doCastSpell = vi.fn().mockImplementation(async () => {
+            (spell as any)._castTimes--;
+        });
         const result = await spell.autoCast(player);
         // Falls through to rng.pick (random path) and still succeeds
         expect(result).toBe(true);
@@ -1838,9 +1504,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
 
     beforeEach(() => {
         board = makeMockBoard();
-        getUnitConfigSpy = vi
-            .spyOn(Piece, "getUnitConfig")
-            .mockReturnValue(makeUnitConfig({ status: [] }));
+        getUnitConfigSpy = vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig({ status: [] }));
         spell = new SummonSpell(board, 1, makeSummonConfig());
     });
 
@@ -1849,12 +1513,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
     });
 
     /** Helper: a minimal enemy piece stub. */
-    function makeEnemy(
-        x: number,
-        y: number,
-        strength: number,
-        owner = "foe",
-    ): any {
+    function makeEnemy(x: number, y: number, strength: number, owner = "foe"): any {
         return {
             owner,
             dead: false,
@@ -1870,11 +1529,10 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         const t1 = new Point(2, 3);
         const t2 = new Point(4, 5);
         // TestRNG.weightedRandomPick returns array[0] — no sort when no enemies
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            new Point(0, 0),
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), new Point(0, 0), [
+            t1,
+            t2,
+        ]);
         expect(result).toBe(t1);
     });
 
@@ -1884,11 +1542,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         const t1 = new Point(3, 3);
         const t2 = new Point(6, 6);
         // No sort because wizardPos is null — first tile stays at index 0
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            null,
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), null, [t1, t2]);
         expect(result).toBe(t1);
     });
 
@@ -1903,11 +1557,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         const near = new Point(7, 7); // close to enemy
         const far = new Point(0, 1); // far from enemy
         // TestRNG.weightedRandomPick returns array[0]
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            wizardPos,
-            [far, near],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), wizardPos, [far, near]);
         expect(result).toBe(near);
     });
 
@@ -1923,11 +1573,10 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         (board as any).pieces = [enemyA, enemyB];
         const nearB = new Point(4, 0); // dist to (5,0) = 1
         const farB = new Point(0, 1); // dist to (5,0) = ~5.1
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            wizardPos,
-            [farB, nearB],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), wizardPos, [
+            farB,
+            nearB,
+        ]);
         expect(result).toBe(nearB);
     });
 
@@ -1946,11 +1595,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         (board as any).pieces = [ownPiece];
         const t1 = new Point(1, 1);
         const t2 = new Point(2, 2);
-        const result = (spell as any).selectDefaultTile(
-            playerObj,
-            new Point(0, 0),
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(playerObj, new Point(0, 0), [t1, t2]);
         // Own piece excluded → no enemies → no sort → array[0] = t1
         expect(result).toBe(t1);
     });
@@ -1968,11 +1613,10 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         (board as any).pieces = [deadEnemy];
         const t1 = new Point(1, 1);
         const t2 = new Point(2, 2);
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            new Point(0, 0),
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), new Point(0, 0), [
+            t1,
+            t2,
+        ]);
         // Dead enemy excluded → no live enemies → no sort → array[0] = t1
         expect(result).toBe(t1);
     });
@@ -1991,11 +1635,10 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         (board as any).pieces = [structEnemy];
         const t1 = new Point(1, 1);
         const t2 = new Point(2, 2);
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            new Point(0, 0),
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), new Point(0, 0), [
+            t1,
+            t2,
+        ]);
         // Structure excluded → no eligible enemies → no sort → array[0] = t1
         expect(result).toBe(t1);
     });
@@ -2026,11 +1669,9 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
     it("handles a single valid tile (no enemies)", () => {
         (board as any).pieces = [];
         const only = new Point(3, 3);
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            new Point(0, 0),
-            [only],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), new Point(0, 0), [
+            only,
+        ]);
         expect(result).toBe(only);
     });
 
@@ -2043,11 +1684,7 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         const t1 = new Point(3, 0); // dist to (5,0) = 2
         const t2 = new Point(7, 0); // dist to (5,0) = 2
         // Both distances equal; stable sort keeps t1 first
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            wizardPos,
-            [t1, t2],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), wizardPos, [t1, t2]);
         expect(result).toBe(t1);
     });
 
@@ -2065,11 +1702,10 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         (board as any).pieces = [enemyA, enemyB];
         const nearA = new Point(1, 1); // dist to (1,0) = 1
         const farA = new Point(5, 5); // dist to (1,0) ≈ 6.4
-        const result = (spell as any).selectDefaultTile(
-            makeMockPlayer(makeMockCastingPiece()),
-            wizardPos,
-            [farA, nearA],
-        );
+        const result = (spell as any).selectDefaultTile(makeMockPlayer(makeMockCastingPiece()), wizardPos, [
+            farA,
+            nearA,
+        ]);
         expect(result).toBe(nearA);
     });
 });

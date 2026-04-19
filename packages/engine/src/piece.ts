@@ -8,11 +8,7 @@ import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
 import type { PieceConfig } from "./configs/piececonfig";
-import type {
-    SpreadResult,
-    SpreadShrinkResult,
-    SpreadGrowResult,
-} from "./actions";
+import type { SpreadResult, SpreadShrinkResult, SpreadGrowResult } from "./actions";
 import type { UnitProperties, IUnitStats } from "./interfaces/unitproperties";
 import type { UnitConfig, UnitStats } from "./interfaces/ui";
 import type { Player } from "./player";
@@ -106,8 +102,7 @@ export class Piece extends Entity {
                 attackType: "hit",
                 rangedType: "shot",
                 status: [] as UnitStatus[],
-                group:
-                    Piece.units[config.properties.id]?.group || "classicunits",
+                group: Piece.units[config.properties.id]?.group || "classicunits",
             } as UnitProperties,
             config.properties ?? {},
         ) as UnitProperties;
@@ -116,20 +111,14 @@ export class Piece extends Entity {
 
         let directionOffset: number = this.position.x - this.position.y;
         if (directionOffset === 0) {
-            directionOffset =
-                this.position.x +
-                this.position.y -
-                (this.board.width / 2 + this.board.height / 2);
+            directionOffset = this.position.x + this.position.y - (this.board.width / 2 + this.board.height / 2);
         }
         if (directionOffset > 0) {
             this._direction = UnitDirection.Left;
         } else if (directionOffset < 0) {
             this._direction = UnitDirection.Right;
         } else {
-            this._direction =
-                this.board.rng.frac() < 0.5
-                    ? UnitDirection.Left
-                    : UnitDirection.Right;
+            this._direction = this.board.rng.frac() < 0.5 ? UnitDirection.Left : UnitDirection.Right;
         }
 
         this._dead = false;
@@ -438,10 +427,7 @@ export class Piece extends Entity {
             this._currentRider = null;
             return;
         }
-        if (
-            !this.hasStatus(UnitStatus.Mount) &&
-            !this.hasStatus(UnitStatus.MountAny)
-        ) {
+        if (!this.hasStatus(UnitStatus.Mount) && !this.hasStatus(UnitStatus.MountAny)) {
             console.error("Cannot mount an unmountable unit");
             return;
         }
@@ -511,17 +497,12 @@ export class Piece extends Entity {
      * Update the facing direction of this piece based
      * on movement from one point to another.
      */
-    protected updateDirection(
-        fromPoint: { x: number; y: number },
-        toPoint: { x: number; y: number },
-    ): void {
-        const isoXOffset: number =
-            toPoint.x - toPoint.y - (fromPoint.x - fromPoint.y);
+    protected updateDirection(fromPoint: { x: number; y: number }, toPoint: { x: number; y: number }): void {
+        const isoXOffset: number = toPoint.x - toPoint.y - (fromPoint.x - fromPoint.y);
         if (isoXOffset === 0) {
             return;
         }
-        this.direction =
-            isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
+        this.direction = isoXOffset < 0 ? UnitDirection.Left : UnitDirection.Right;
     }
 
     // ── Combat / lifecycle ─────────────────────────
@@ -557,11 +538,7 @@ export class Piece extends Entity {
         }
         this._dead = true;
         this.owner = null;
-        if (
-            this.illusion ||
-            this.hasStatus(UnitStatus.NoCorpse) ||
-            this.hasStatus(UnitStatus.Undead)
-        ) {
+        if (this.illusion || this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
             await this.destroy();
         }
         this._board.boardEvents.emit(BoardEvent.PieceDied, this);
@@ -588,10 +565,7 @@ export class Piece extends Entity {
             this.attacked = false;
             piece.engaged = true;
         }
-        this.board.logger.log(
-            `${this.name} is engaged with ${piece.name}`,
-            Colour.Yellow,
-        );
+        this.board.logger.log(`${this.name} is engaged with ${piece.name}`, Colour.Yellow);
     }
 
     /**
@@ -604,21 +578,14 @@ export class Piece extends Entity {
             return false;
         }
         if (!this.canAttackPossiblyUndeadPiece(piece)) {
-            this._board.logger.log(
-                `${this.name} cannot attack the undead`,
-                Colour.Cyan,
-            );
+            this._board.logger.log(`${this.name} cannot attack the undead`, Colour.Cyan);
             return false;
         }
         this.updateDirection(this.position, piece.position);
         this.attacked = true;
         this.moved = true;
 
-        const rollSuccess: boolean = this._board.roll(
-            this.stats.combat,
-            piece.stats.defence,
-            this.owner,
-        );
+        const rollSuccess: boolean = this._board.roll(this.stats.combat, piece.stats.defence, this.owner);
 
         this._board.logger.log(`${this.name} attacks ${piece.name}`);
 
@@ -628,10 +595,7 @@ export class Piece extends Entity {
         }
 
         if (rollSuccess) {
-            this._board.logger.log(
-                `${this.fullName} defeated ${piece.fullName}`,
-                Colour.Red,
-            );
+            this._board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
             await piece.kill();
             return true;
         }
@@ -648,10 +612,7 @@ export class Piece extends Entity {
             return false;
         }
         if (!this.canAttackPossiblyUndeadPiece(piece)) {
-            this._board.logger.log(
-                `${this.name} cannot attack the undead`,
-                Colour.Cyan,
-            );
+            this._board.logger.log(`${this.name} cannot attack the undead`, Colour.Cyan);
             return false;
         }
         this.updateDirection(this.position, piece.position);
@@ -659,11 +620,7 @@ export class Piece extends Entity {
         this.attacked = true;
         this.moved = true;
 
-        const rollSuccess: boolean = this._board.roll(
-            this.stats.rangedCombat,
-            piece.stats.defence,
-            this.owner,
-        );
+        const rollSuccess: boolean = this._board.roll(this.stats.rangedCombat, piece.stats.defence, this.owner);
 
         this._board.logger.log(`${this.name} ranged attacks ${piece.name}`);
 
@@ -672,10 +629,7 @@ export class Piece extends Entity {
             if (this.hasStatus(UnitStatus.ShadowForm)) {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
-            this._board.logger.log(
-                `${this.fullName} defeated ${piece.fullName}`,
-                Colour.Red,
-            );
+            this._board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
             await piece.kill();
             return true;
         }
@@ -695,9 +649,7 @@ export class Piece extends Entity {
         this.currentMount = piece;
         piece.currentRider = this;
         await this.board.movePiece(this.id, piece.position);
-        this._board.logger.log(
-            `${this.fullName} mounted ${piece.fullName}`,
-        );
+        this._board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
     }
 
     /**
@@ -710,9 +662,7 @@ export class Piece extends Entity {
         this.currentMount.currentRider = null;
         this.moved = true;
         this.currentMount.turnOver = true;
-        this._board.logger.log(
-            `${this.fullName} dismounted ${this.currentMount.fullName}`,
-        );
+        this._board.logger.log(`${this.fullName} dismounted ${this.currentMount.fullName}`);
         this.currentMount = null;
     }
 
@@ -722,19 +672,13 @@ export class Piece extends Entity {
      * Dismounts if the current mount is left behind.
      * Client overrides to also animate movement.
      */
-    async moveTo(
-        point: { x: number; y: number },
-        _stepDuration?: number,
-    ): Promise<void> {
+    async moveTo(point: { x: number; y: number }, _stepDuration?: number): Promise<void> {
         this.updateDirection(this.position, point);
         this.position = new Point(point.x, point.y);
         if (this.currentRider) {
             this.currentRider.position = new Point(point.x, point.y);
         }
-        if (
-            this.currentMount &&
-            !Point.equals(this.currentMount.position, this.position)
-        ) {
+        if (this.currentMount && !Point.equals(this.currentMount.position, this.position)) {
             this._board.dismountPiece(this.id);
         }
     }
@@ -783,9 +727,7 @@ export class Piece extends Entity {
                 this.currentEngulfed.engulfed = false;
                 result.releasedPieceId = this.currentEngulfed.id;
                 this._board.logger.log(
-                    `${this.currentEngulfed.fullName}` +
-                        ` was released from ` +
-                        `${this.fullName}`,
+                    `${this.currentEngulfed.fullName}` + ` was released from ` + `${this.fullName}`,
                     Colour.Green,
                 );
             }
@@ -794,14 +736,9 @@ export class Piece extends Entity {
         }
 
         // SpreadAction.Spread
-        const adjacentPoints: Point[] = this._board.getAdjacentPoints(
-            this.position,
-        );
+        const adjacentPoints: Point[] = this._board.getAdjacentPoints(this.position);
         const spreadPoint: Point = this._board.rng.pick(adjacentPoints);
-        const spreadPieces: Piece[] = this._board.getPiecesAtPosition(
-            spreadPoint,
-            (piece: Piece) => !piece.dead,
-        );
+        const spreadPieces: Piece[] = this._board.getPiecesAtPosition(spreadPoint, (piece: Piece) => !piece.dead);
 
         const result: SpreadGrowResult = {
             action: "spread",
@@ -816,44 +753,24 @@ export class Piece extends Entity {
         };
 
         if (spreadPieces.length > 0) {
-            if (
-                spreadPieces.some(
-                    (piece) =>
-                        piece.owner === this.owner || !piece.canBeSpreadOn,
-                )
-            ) {
+            if (spreadPieces.some((piece) => piece.owner === this.owner || !piece.canBeSpreadOn)) {
                 return { action: "none" };
             }
-            if (
-                spreadPieces.some((piece) => piece.hasStatus(UnitStatus.Wizard))
-            ) {
-                const killedPiece = spreadPieces.find((piece) =>
-                    piece.hasStatus(UnitStatus.Wizard),
-                );
+            if (spreadPieces.some((piece) => piece.hasStatus(UnitStatus.Wizard))) {
+                const killedPiece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
                 this._board.logger.log(
-                    `${killedPiece.fullName} was ` +
-                        `destroyed by ` +
-                        `${this.fullName}!`,
+                    `${killedPiece.fullName} was ` + `destroyed by ` + `${this.fullName}!`,
                     Colour.Red,
                 );
                 await killedPiece.kill();
                 result.killedPieceId = killedPiece.id;
             } else if (this.hasStatus(UnitStatus.Engulfs)) {
-                this._board.logger.log(
-                    `${this.fullName} has engulfed ` +
-                        `${spreadPieces[0].fullName}`,
-                    Colour.Yellow,
-                );
+                this._board.logger.log(`${this.fullName} has engulfed ` + `${spreadPieces[0].fullName}`, Colour.Yellow);
                 spreadPieces[0].engulfed = true;
                 result.engulfedPieceId = spreadPieces[0].id;
             } else {
                 for (const piece of spreadPieces) {
-                    this._board.logger.log(
-                        `${piece.fullName} was ` +
-                            `destroyed by ` +
-                            `${this.fullName}`,
-                        Colour.Red,
-                    );
+                    this._board.logger.log(`${piece.fullName} was ` + `destroyed by ` + `${this.fullName}`, Colour.Red);
                     await piece.destroy();
                     result.destroyedPieceIds.push(piece.id);
                 }
@@ -878,8 +795,7 @@ export class Piece extends Entity {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                projectileType:
-                    unit.projectileType || UnitRangedProjectileType.Arrow,
+                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: [...(unit.status || [])],
             },
             shadowScale: unit.shadowScale,
@@ -930,9 +846,7 @@ export class Piece extends Entity {
      */
     removeStatus(status: UnitStatus): boolean {
         if (this.hasStatus(status)) {
-            this._properties.status = this._properties.status.filter(
-                (s) => s !== status,
-            );
+            this._properties.status = this._properties.status.filter((s) => s !== status);
             return true;
         }
         return false;
@@ -971,11 +885,7 @@ export class Piece extends Entity {
         if (this.dead || this.engulfed) {
             return false;
         }
-        if (
-            this.stats.movement > 0 ||
-            this.stats.combat > 0 ||
-            this.stats.rangedCombat > 0
-        ) {
+        if (this.stats.movement > 0 || this.stats.combat > 0 || this.stats.rangedCombat > 0) {
             return true;
         }
         return false;
@@ -989,8 +899,7 @@ export class Piece extends Entity {
             return false;
         }
         if (
-            (this.hasStatus(UnitStatus.Mount) ||
-                this.hasStatus(UnitStatus.MountAny)) &&
+            (this.hasStatus(UnitStatus.Mount) || this.hasStatus(UnitStatus.MountAny)) &&
             this.currentRider?.owner === this.board.currentPlayer &&
             !this.currentRider.turnOver
         ) {
@@ -1000,9 +909,7 @@ export class Piece extends Entity {
             this.dead ||
             this.turnOver ||
             this.hasStatus(UnitStatus.Structure) ||
-            (this.stats.combat === 0 &&
-                this.stats.rangedCombat === 0 &&
-                this.stats.movement === 0)
+            (this.stats.combat === 0 && this.stats.rangedCombat === 0 && this.stats.movement === 0)
         ) {
             return false;
         }
@@ -1027,8 +934,7 @@ export class Piece extends Entity {
      */
     get canBeSpreadOn(): boolean {
         return (
-            (this.type === UnitType.Creature ||
-                this.type === UnitType.Wizard) &&
+            (this.type === UnitType.Creature || this.type === UnitType.Wizard) &&
             !this.hasStatus(UnitStatus.Engulfs) &&
             !this.hasStatus(UnitStatus.Invulnerable) &&
             !this.hasStatus(UnitStatus.Structure) &&
@@ -1057,10 +963,7 @@ export class Piece extends Entity {
      * Check if this piece can be magic attacked.
      */
     get canBeMagicAttacked(): boolean {
-        return (
-            !this.hasStatus(UnitStatus.Invulnerable) &&
-            !this.hasStatus(UnitStatus.Sanctity)
-        );
+        return !this.hasStatus(UnitStatus.Invulnerable) && !this.hasStatus(UnitStatus.Sanctity);
     }
 
     /**
@@ -1075,9 +978,7 @@ export class Piece extends Entity {
             this.attacked ||
             this.stats.combat === 0 ||
             neighbours.length === 0 ||
-            neighbours.filter((neighbour: Piece) =>
-                this.canAttackPiece(neighbour),
-            ).length === 0
+            neighbours.filter((neighbour: Piece) => this.canAttackPiece(neighbour)).length === 0
         ) {
             return false;
         }
@@ -1109,9 +1010,7 @@ export class Piece extends Entity {
             this.engulfed ||
             this.rangedAttacked ||
             this.stats.rangedCombat === 0 ||
-            this.board.pieces.filter((piece: Piece) =>
-                this.canRangedAttackPiece(piece),
-            ).length === 0
+            this.board.pieces.filter((piece: Piece) => this.canRangedAttackPiece(piece)).length === 0
         ) {
             return false;
         }
@@ -1194,9 +1093,7 @@ export class Piece extends Entity {
             !this.moved &&
             this.hasStatus(UnitStatus.Wizard) &&
             !piece.currentRider &&
-            ((piece.hasStatus(UnitStatus.Mount) &&
-                piece.owner === this.owner) ||
-                piece.hasStatus(UnitStatus.MountAny))
+            ((piece.hasStatus(UnitStatus.Mount) && piece.owner === this.owner) || piece.hasStatus(UnitStatus.MountAny))
         ) {
             return true;
         }
@@ -1231,10 +1128,7 @@ export class Piece extends Entity {
      * Get all neighbouring pieces that are not dead.
      */
     getNeighbours(): Piece[] {
-        return this.board.getAdjacentPiecesAtPosition(
-            this.position,
-            (piece: Piece) => !piece.dead,
-        );
+        return this.board.getAdjacentPiecesAtPosition(this.position, (piece: Piece) => !piece.dead);
     }
 
     /**
@@ -1257,23 +1151,12 @@ export class Piece extends Entity {
     findThreatPieces(): Set<Piece> {
         const threats = new Set<Piece>();
         for (const piece of this.board.pieces) {
-            if (
-                piece.owner === this.owner ||
-                piece.dead ||
-                piece.currentRider ||
-                piece.engulfed
-            ) {
+            if (piece.owner === this.owner || piece.dead || piece.currentRider || piece.engulfed) {
                 continue;
             }
-            const melee =
-                piece.canAttackPiece(this) &&
-                this.inAttackRange(piece.position);
-            const ranged =
-                piece.canRangedAttackPiece(this) &&
-                this.inRangedAttackRange(piece.position);
-            const spreads =
-                piece.hasStatus(UnitStatus.Spreads) &&
-                distance(piece.position, this.position) <= 3;
+            const melee = piece.canAttackPiece(this) && this.inAttackRange(piece.position);
+            const ranged = piece.canRangedAttackPiece(this) && this.inRangedAttackRange(piece.position);
+            const spreads = piece.hasStatus(UnitStatus.Spreads) && distance(piece.position, this.position) <= 3;
             if (melee || ranged || spreads) {
                 threats.add(piece);
             }
@@ -1292,8 +1175,7 @@ export class Piece extends Entity {
         // other than Foot.
         const dx = Math.abs(this.position.x - point.x);
         const dy = Math.abs(this.position.y - point.y);
-        const dist =
-            Math.max(dx, dy) - Math.min(dx, dy) + Math.min(dx, dy) * 1.5;
+        const dist = Math.max(dx, dy) - Math.min(dx, dy) + Math.min(dx, dy) * 1.5;
         return dist <= this.stats.range;
     }
 
@@ -1312,13 +1194,7 @@ export class Piece extends Entity {
             }
         }
         if (this.hasStatus(UnitStatus.Flying)) {
-            return (
-                distance(
-                    this.position,
-                    new Point(point.x, point.y),
-                    RangeType.Fly,
-                ) <= this.stats.movement + 0.5
-            );
+            return distance(this.position, new Point(point.x, point.y), RangeType.Fly) <= this.stats.movement + 0.5;
         }
         if (!this.board.rangeGizmo.getPathTo(point)) {
             return false;
@@ -1335,8 +1211,7 @@ export class Piece extends Entity {
         if (
             !this.moved &&
             this.inMovementRange(point) &&
-            (this.hasStatus(UnitStatus.Flying) ||
-                this.board.rangeGizmo.getPathTo(point))
+            (this.hasStatus(UnitStatus.Flying) || this.board.rangeGizmo.getPathTo(point))
         ) {
             return true;
         }
@@ -1411,8 +1286,7 @@ export class Piece extends Entity {
             magicResistance: unit.properties.res,
             attackType: unit.attackType || "attacked",
             rangedType: unit.rangedType || "shot",
-            projectileType:
-                unit.projectileType || UnitRangedProjectileType.Arrow,
+            projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
             status: [...(unit.status || [])],
             group: unit.group || "classicunits",
         };
@@ -1451,8 +1325,7 @@ export class Piece extends Entity {
                 magicResistance: unit.properties.res,
                 attackType: unit.attackType || "attacked",
                 rangedType: unit.rangedType || "shot",
-                projectileType:
-                    unit.projectileType || UnitRangedProjectileType.Arrow,
+                projectileType: unit.projectileType || UnitRangedProjectileType.Arrow,
                 status: [...(unit.status || [])],
             },
             shadowScale: unit.shadowScale,

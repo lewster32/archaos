@@ -17,23 +17,17 @@ describe("Model", () => {
 
     it("should throw RangeError for negative ID", () => {
         expect(() => new TestModel(-1)).toThrow(RangeError);
-        expect(() => new TestModel(-1)).toThrow(
-            "Model ID must be a non-negative integer.",
-        );
+        expect(() => new TestModel(-1)).toThrow("Model ID must be a non-negative integer.");
     });
 
     it("should throw RangeError for non-integer ID", () => {
         expect(() => new TestModel(3.14)).toThrow(RangeError);
-        expect(() => new TestModel(3.14)).toThrow(
-            "Model ID must be a non-negative integer.",
-        );
+        expect(() => new TestModel(3.14)).toThrow("Model ID must be a non-negative integer.");
     });
 
     it("should throw RangeError for NaN ID", () => {
         expect(() => new TestModel(Number.NaN)).toThrow(RangeError);
-        expect(() => new TestModel(Number.NaN)).toThrow(
-            "Model ID must be a non-negative integer.",
-        );
+        expect(() => new TestModel(Number.NaN)).toThrow("Model ID must be a non-negative integer.");
     });
 
     it("should have a readonly id property", () => {

@@ -125,27 +125,19 @@ export class Cursor {
             }
         });
 
-        this._board.scene.input.on(
-            "pointermove",
-            async (pointer: Input.Pointer) => {
-                if (this._panningEnabled && pointer.isDown) {
-                    const dx: number = pointer.position.x - this._dragStartX;
-                    const dy: number = pointer.position.y - this._dragStartY;
-                    if (
-                        Math.abs(dx) >= Cursor.DRAG_THRESHOLD ||
-                        Math.abs(dy) >= Cursor.DRAG_THRESHOLD
-                    ) {
-                        this._dragging = true;
-                        this._board.scene.cameras.main.scrollX =
-                            this._dragStartScrollX - dx;
-                        this._board.scene.cameras.main.scrollY =
-                            this._dragStartScrollY - dy;
-                        return;
-                    }
+        this._board.scene.input.on("pointermove", async (pointer: Input.Pointer) => {
+            if (this._panningEnabled && pointer.isDown) {
+                const dx: number = pointer.position.x - this._dragStartX;
+                const dy: number = pointer.position.y - this._dragStartY;
+                if (Math.abs(dx) >= Cursor.DRAG_THRESHOLD || Math.abs(dy) >= Cursor.DRAG_THRESHOLD) {
+                    this._dragging = true;
+                    this._board.scene.cameras.main.scrollX = this._dragStartScrollX - dx;
+                    this._board.scene.cameras.main.scrollY = this._dragStartScrollY - dy;
+                    return;
                 }
-                await this.update();
-            },
-        );
+            }
+            await this.update();
+        });
 
         this._board.scene.input.on("pointerup", async () => {
             if (this._dragging) {
@@ -155,26 +147,17 @@ export class Cursor {
             await this.action(InputType.Click);
         });
 
-        this._board.scene.input.keyboard.on(
-            "keyup",
-            async (event: KeyboardEvent) => {
-                if (event.key === Cursor.CANCEL_KEY) {
-                    await this.action(InputType.Cancel);
-                } else {
-                    // Bind 1-8 keys to highlight owned units
-                    const keyNumber: number = Number.parseInt(event.key, 10);
-                    if (
-                        !Number.isNaN(keyNumber) &&
-                        keyNumber >= 1 &&
-                        keyNumber <= 8
-                    ) {
-                        this._board.highlightOwnedUnitsForPlayerIndex(
-                            keyNumber - 1,
-                        );
-                    }
+        this._board.scene.input.keyboard.on("keyup", async (event: KeyboardEvent) => {
+            if (event.key === Cursor.CANCEL_KEY) {
+                await this.action(InputType.Cancel);
+            } else {
+                // Bind 1-8 keys to highlight owned units
+                const keyNumber: number = Number.parseInt(event.key, 10);
+                if (!Number.isNaN(keyNumber) && keyNumber >= 1 && keyNumber <= 8) {
+                    this._board.highlightOwnedUnitsForPlayerIndex(keyNumber - 1);
                 }
-            },
-        );
+            }
+        });
 
         this._board.scene.game.events.on(EventType.Cancel, async () => {
             await this.action(InputType.Cancel);
@@ -212,15 +195,10 @@ export class Cursor {
 
         const pointer: Input.Pointer = this._board.scene.input.activePointer;
 
-        const translatedIsoPosition: PMath.Vector2 = this.translateCursorPosition(
-            pointer.position,
-        );
+        const translatedIsoPosition: PMath.Vector2 = this.translateCursorPosition(pointer.position);
 
         // Only perform one intent check per tile (unless forced)
-        if (
-            !force &&
-            translatedIsoPosition.equals(this._position)
-        ) {
+        if (!force && translatedIsoPosition.equals(this._position)) {
             return ActionType.None;
         }
         this._position.setTo(translatedIsoPosition.x, translatedIsoPosition.y);
@@ -239,9 +217,7 @@ export class Cursor {
         this._image.setFlipX(false);
         this._image.setVisible(true);
 
-        const allowedAction: ActionType = await this._board.rules.processIntent(
-            this._board as any,
-        );
+        const allowedAction: ActionType = await this._board.rules.processIntent(this._board as any);
 
         const selectedPiece: Piece | null = this._board.selected;
 
@@ -266,19 +242,12 @@ export class Cursor {
                 break;
             case ActionType.Move:
                 if (selectedPiece) {
-                    this._board.rangeGizmo.showPath(
+                    this._board.rangeGizmo.showPath(this._position);
+                    const neighbours: Piece[] = this._board.getAdjacentPiecesAtPosition(
                         this._position,
+                        (piece: Piece) => piece !== selectedPiece,
                     );
-                    const neighbours: Piece[] =
-                        this._board.getAdjacentPiecesAtPosition(
-                            this._position,
-                            (piece: Piece) => piece !== selectedPiece,
-                        );
-                    if (
-                        neighbours?.some((neighbour: Piece) =>
-                            selectedPiece.canEngagePiece(neighbour),
-                        )
-                    ) {
+                    if (neighbours?.some((neighbour: Piece) => selectedPiece.canEngagePiece(neighbour))) {
                         this.type = CursorType.Warning;
                         break;
                     }
@@ -290,25 +259,15 @@ export class Cursor {
                         this.type = CursorType.Dismount;
                         break;
                     }
-                    this.type = Cursor.getMovementDirectionType(
-                        selectedPiece.position,
-                        this._position,
-                    );
+                    this.type = Cursor.getMovementDirectionType(selectedPiece.position, this._position);
                 }
                 break;
             case ActionType.Mount:
                 if (selectedPiece.stats.movement > 1) {
-                    this._board.rangeGizmo.showPath(
-                        this._position,
-                    );
+                    this._board.rangeGizmo.showPath(this._position);
                 }
                 this._image.setFlipX(
-                    Board.toIsometric(
-                        this._position,
-                    ).x <
-                        Board.toIsometric(
-                            selectedPiece?.position,
-                        ).x,
+                    Board.toIsometric(this._position).x < Board.toIsometric(selectedPiece?.position).x,
                 );
                 this.type = CursorType.Mount;
                 break;
@@ -317,9 +276,7 @@ export class Cursor {
                 break;
             case ActionType.Attack:
                 if (selectedPiece.stats.movement > 1) {
-                    this._board.rangeGizmo.showPath(
-                        this._position,
-                    );
+                    this._board.rangeGizmo.showPath(this._position);
                 }
                 this.type = CursorType.Attack;
                 break;
@@ -355,8 +312,7 @@ export class Cursor {
         if (
             (input === InputType.Cancel &&
                 this._board.disableCancelSpell &&
-                (this._board.state === BoardState.CastSpell ||
-                    this._board.state === BoardState.SelectSpell)) ||
+                (this._board.state === BoardState.CastSpell || this._board.state === BoardState.SelectSpell)) ||
             (input === InputType.Cancel &&
                 this._board.disableCancelAction &&
                 (this._board.state === BoardState.Move ||
@@ -374,11 +330,7 @@ export class Cursor {
             input,
         );
 
-        if (
-            actionState === ActionType.None ||
-            actionState === ActionType.Invalid ||
-            actionState === ActionType.Idle
-        ) {
+        if (actionState === ActionType.None || actionState === ActionType.Invalid || actionState === ActionType.Idle) {
             return;
         }
 
@@ -397,14 +349,9 @@ export class Cursor {
                 // can check for ranged attack. This logic doesn't belong in
                 // the cursor class.
                 if (selected.canRangedAttack) {
-                    this._board.stateManager.evaluate(
-                        new AdvanceToRangedAttack(),
-                    );
+                    this._board.stateManager.evaluate(new AdvanceToRangedAttack());
                     this._board.sound.play("ranged-select");
-                    this._board.logger.log(
-                        `${selected.name}'s turn to ranged attack`,
-                        Colour.Yellow,
-                    );
+                    this._board.logger.log(`${selected.name}'s turn to ranged attack`, Colour.Yellow);
                     await this._board.rangeGizmo.showSimpleRange(
                         this._board.selected.position,
                         this._board.selected.stats.range,
@@ -519,10 +466,7 @@ export class Cursor {
      * @param toPoint the ending point
      * @returns the cursor type representing the direction
      */
-    static getMovementDirectionType(
-        fromPoint: SimplePoint,
-        toPoint: SimplePoint,
-    ): CursorType {
+    static getMovementDirectionType(fromPoint: SimplePoint, toPoint: SimplePoint): CursorType {
         const dx: number = PMath.Clamp(toPoint.x - fromPoint.x, -1, 1);
         const dy: number = PMath.Clamp(toPoint.y - fromPoint.y, -1, 1);
 

@@ -78,17 +78,13 @@ export class SnowEffect implements WeatherEffect {
             return Math.min(1, Math.max(0.1, raw));
         }
         if (raw !== undefined) {
-            console.warn(
-                `SnowEffect: ignoring invalid intensity ${JSON.stringify(raw)}`,
-            );
+            console.warn(`SnowEffect: ignoring invalid intensity ${JSON.stringify(raw)}`);
         }
         return Math.random() * 0.9 + 0.1;
     }
 
     public start(): void {
-        console.debug(
-            `Starting snow with intensity ${this.intensity.toFixed(2)}`,
-        );
+        console.debug(`Starting snow with intensity ${this.intensity.toFixed(2)}`);
         const cs = Board.DEFAULT_CELLSIZE;
         const corner = (gx: number, gy: number) => ({
             x: (gx - gy) * cs,
@@ -98,8 +94,7 @@ export class SnowEffect implements WeatherEffect {
         const lifespan: number = 4000;
         const fallSpeed: number = 50;
         // Wind drift, signed, scaled by intensity. Like rain's avgSpeedX.
-        const windDrift: number =
-            (Math.random() * 30 - 15) * this.intensity;
+        const windDrift: number = (Math.random() * 30 - 15) * this.intensity;
         // Position-space wave amplitude in pixels, scaled by intensity.
         const waveAmplitude: number = 15 * this.intensity;
         // Number of full sine waves over a particle's lifetime.
@@ -132,9 +127,7 @@ export class SnowEffect implements WeatherEffect {
                 particle.__wavePhase = Math.random() * Math.PI * 2;
             }
             const elapsedSeconds = t * lifespanSeconds;
-            const wave = Math.sin(
-                particle.__wavePhase + t * Math.PI * 2 * waveCycles,
-            ) * waveAmplitude;
+            const wave = Math.sin(particle.__wavePhase + t * Math.PI * 2 * waveCycles) * waveAmplitude;
             return particle.__spawnX + windDrift * elapsedSeconds + wave;
         };
 
@@ -165,8 +158,8 @@ export class SnowEffect implements WeatherEffect {
             x: corner(pad, this.height - pad).x - top.x,
             y: corner(pad, this.height - pad).y - top.y,
         };
-        const spawnOffsetX = -(windDrift * lifespan / 1000);
-        const spawnOffsetY = -(fallSpeed * lifespan / 1000);
+        const spawnOffsetX = -((windDrift * lifespan) / 1000);
+        const spawnOffsetY = -((fallSpeed * lifespan) / 1000);
         this.emitter.addEmitZone({
             type: "random",
             source: {

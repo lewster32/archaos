@@ -38,24 +38,17 @@ const FRAG = [
  * This class uses Phaser's prototype-based class system so that
  * it can extend `BaseFilterShader` at runtime.
  */
-export class FilterColorReplaceRenderNode
-    extends RenderNodes.BaseFilterShader {
-
+export class FilterColorReplaceRenderNode extends RenderNodes.BaseFilterShader {
     /**
      * The render node key used when registering with the game.
      */
     static readonly KEY = "FilterColorReplace";
 
-    constructor(
-        manager: Phaser.Renderer.WebGL.RenderNodes.RenderNodeManager,
-    ) {
+    constructor(manager: Phaser.Renderer.WebGL.RenderNodes.RenderNodeManager) {
         super(FilterColorReplaceRenderNode.KEY, manager, undefined, FRAG);
     }
 
-    setupUniforms(
-        controller: Phaser.Filters.Controller,
-        _drawingContext: Phaser.Renderer.WebGL.DrawingContext,
-    ): void {
+    setupUniforms(controller: Phaser.Filters.Controller, _drawingContext: Phaser.Renderer.WebGL.DrawingContext): void {
         const pm = this.programManager;
         const c = controller as import("./colorreplace").ColorReplaceFilter;
         pm.setUniform("uTargetColor", c.targetColor);
