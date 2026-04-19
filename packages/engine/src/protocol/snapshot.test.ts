@@ -117,6 +117,16 @@ describe("snapshot", () => {
         expect(s.boardWidth).toBe(13);
     });
 
+    test("ScenarioState index signature accepts extra fields", () => {
+        const s: ScenarioState = {
+            boardWidth: 13,
+            boardHeight: 13,
+            weather: {},
+            customField: "value",
+        };
+        expect(s["customField"]).toBe("value");
+    });
+
     test("SnapshotMessage round-trips cleanly", () => {
         const msg: SnapshotMessage = {
             type: "snapshot",
@@ -147,6 +157,6 @@ describe("snapshot", () => {
             pieces: [],
             self: { spells: [], pickedSpell: null },
         };
-        expect(Object.keys(state).sort()).toEqual(["board", "phase", "pieces", "players", "scenario", "self"]);
+        expect(Object.keys(state).toSorted()).toEqual(["board", "phase", "pieces", "players", "scenario", "self"]);
     });
 });
