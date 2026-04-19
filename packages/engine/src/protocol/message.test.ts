@@ -1,6 +1,16 @@
 import { describe, expect, test } from "vitest";
 import type { ServerToClientMessage } from "./message";
 
+function handle(msg: ServerToClientMessage): string {
+    if (msg.type === "snapshot") {
+        return `snap@${msg.sequence}`;
+    }
+    if (msg.type === "event") {
+        return `event@${msg.sequence}`;
+    }
+    return `private-event:${msg.kind}`;
+}
+
 describe("ServerToClientMessage union", () => {
     test("accepts a snapshot message", () => {
         const msg: ServerToClientMessage = {
@@ -44,15 +54,6 @@ describe("ServerToClientMessage union", () => {
     });
 
     test("narrows on the `type` discriminator", () => {
-        function handle(msg: ServerToClientMessage): string {
-            if (msg.type === "snapshot") {
-                return `snap@${msg.sequence}`;
-            }
-            if (msg.type === "event") {
-                return `event@${msg.sequence}`;
-            }
-            return `private-event:${msg.kind}`;
-        }
         expect(
             handle({
                 type: "snapshot",

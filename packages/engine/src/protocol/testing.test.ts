@@ -35,21 +35,21 @@ describe("expectJsonSafe", () => {
 
     test("fails when the value contains undefined properties", () => {
         const input = { a: 1, b: undefined as unknown as number };
-        expect(() => expectJsonSafe(input)).toThrow();
+        expect(() => expectJsonSafe(input)).toThrow(/Non-JSON-safe/);
     });
 
     test("fails when the value contains a Map", () => {
         const input = { m: new Map([["k", "v"]]) } as unknown;
-        expect(() => expectJsonSafe(input)).toThrow();
+        expect(() => expectJsonSafe(input)).toThrow(/Non-JSON-safe/);
     });
 
     test("fails when the value contains a Set", () => {
         const input = { s: new Set(["a", "b"]) } as unknown;
-        expect(() => expectJsonSafe(input)).toThrow();
+        expect(() => expectJsonSafe(input)).toThrow(/Non-JSON-safe/);
     });
 
     test("fails when the value contains a function", () => {
         const input = { fn: () => 42 } as unknown;
-        expect(() => expectJsonSafe(input)).toThrow();
+        expect(() => expectJsonSafe(input)).toThrow(/Non-JSON-safe/);
     });
 });

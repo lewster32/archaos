@@ -12,8 +12,9 @@ import { expect } from "vitest";
  * Returns the parsed clone typed as the input, which is useful for
  * asserting that the declared TypeScript type is also the runtime shape.
  *
- * Throws via Vitest's `expect` if the round-trip is lossy, naming the
- * offending key paths in the failure message.
+ * Throws if the round-trip is lossy. The thrown error names the
+ * offending key paths, and the final round-trip equality is verified
+ * via Vitest's `expect`.
  *
  * @param value the value to test
  * @returns the parsed clone, typed as the input
@@ -26,7 +27,9 @@ export function expectJsonSafe<T>(value: T): T {
         }
         return val;
     });
-    expect(unsafeKeys, `Non-JSON-safe values at keys: ${unsafeKeys.join(", ")}`).toEqual([]);
+    if (unsafeKeys.length > 0) {
+        throw new Error(`Non-JSON-safe values at keys: ${unsafeKeys.join(", ")}`);
+    }
     const parsed: unknown = JSON.parse(stringified);
     expect(parsed).toEqual(value);
     return parsed as T;
