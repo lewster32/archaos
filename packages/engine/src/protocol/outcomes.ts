@@ -205,6 +205,11 @@ export interface PlayerEndedSpellPickOutcome {
 // 4.3 Pieces
 // ---------------------------------------------------------------------------
 
+/**
+ * A piece has been spawned on the board — typically via a summon spell,
+ * Raise Dead, or a scenario's initial placement when emitted inside the
+ * `game-started` outcome.
+ */
 export interface PieceSpawnedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-spawned";
@@ -230,6 +235,11 @@ export interface PieceMovedOutcome {
     path?: Point[];
 }
 
+/**
+ * A melee attack resolution between two pieces. `succeeded` is the public
+ * outcome bit; any resulting `piece-died` / `piece-moved` outcomes follow
+ * in the same `outcomes` array.
+ */
 export interface PieceAttackedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-attacked";
@@ -241,6 +251,11 @@ export interface PieceAttackedOutcome {
     succeeded: boolean;
 }
 
+/**
+ * A ranged attack resolution between two pieces. Unlike melee, a successful
+ * ranged attack does not move the attacker; the dead defender is the only
+ * state change.
+ */
 export interface PieceRangedAttackedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-ranged-attacked";
@@ -267,6 +282,10 @@ export type PieceDiedCause =
     | "subverted-away"
     | string;
 
+/**
+ * A piece has died. The `cause` field records how — see
+ * {@link PieceDiedCause} for canonical causes.
+ */
 export interface PieceDiedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-died";
@@ -276,6 +295,11 @@ export interface PieceDiedOutcome {
     cause: PieceDiedCause;
 }
 
+/**
+ * A rider has mounted a mountable piece. The rider's position is now
+ * synchronised with the mount; subsequent `piece-moved` outcomes on the
+ * mount implicitly move the rider too.
+ */
 export interface PieceMountedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-mounted";
@@ -299,6 +323,10 @@ export interface PieceDismountedOutcome {
     riderId: PieceId;
 }
 
+/**
+ * A subset of a piece's effective stats has changed (e.g. buff, debuff,
+ * transformation).
+ */
 export interface PieceStatsChangedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-stats-changed";
@@ -308,6 +336,11 @@ export interface PieceStatsChangedOutcome {
     stats: import("./piecestate").PartialStats;
 }
 
+/**
+ * A piece's status set has changed. `added` and `removed` are disjoint
+ * lists of status identifiers (serialised from the `UnitStatus` enum's
+ * string values).
+ */
 export interface PieceStatusesChangedOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-statuses-changed";
@@ -366,6 +399,11 @@ export interface PiecePersistentFlagChangedOutcome {
  */
 export type PieceActionCancelledAction = "select" | "move" | "attack" | "rangedAttack" | "mount" | "dismount" | string;
 
+/**
+ * A player explicitly cancelled a pending action on a piece without ending
+ * the piece's turn — e.g. backing out of an engaged-piece attack choice,
+ * or declining a ranged-attack opportunity.
+ */
 export interface PieceActionCancelledOutcome {
     /** Discriminant for this outcome kind. */
     kind: "piece-action-cancelled";
