@@ -150,3 +150,187 @@ describe("outcomes — spells", () => {
         expect(JSON.parse(JSON.stringify(o))).toEqual(o);
     });
 });
+
+describe("outcomes — pieces", () => {
+    test("piece-spawned carries a full PieceState", () => {
+        const o: import("./outcomes").PieceSpawnedOutcome = {
+            kind: "piece-spawned",
+            piece: {
+                id: 101,
+                typeId: "goblin",
+                ownerId: 1,
+                position: { x: 0, y: 0 },
+                stats: {
+                    mov: 1,
+                    com: 3,
+                    rcm: 0,
+                    rng: 0,
+                    def: 3,
+                    mnv: 3,
+                    res: 3,
+                },
+                statuses: [],
+                flags: {
+                    turn: {
+                        moved: false,
+                        attacked: false,
+                        rangedAttacked: false,
+                        engaged: false,
+                        turnOver: false,
+                    },
+                    persistent: { dead: false, raisedDead: false },
+                },
+                currentMountId: null,
+                mountedById: null,
+            },
+        };
+        expect(JSON.parse(JSON.stringify(o))).toEqual(o);
+    });
+
+    test("piece-moved has optional path", () => {
+        const withoutPath: import("./outcomes").PieceMovedOutcome = {
+            kind: "piece-moved",
+            pieceId: 101,
+            from: { x: 0, y: 0 },
+            to: { x: 1, y: 0 },
+        };
+        const withPath: import("./outcomes").PieceMovedOutcome = {
+            ...withoutPath,
+            path: [
+                { x: 0, y: 0 },
+                { x: 1, y: 0 },
+            ],
+        };
+        expect(withoutPath.path).toBeUndefined();
+        expect(withPath.path).toHaveLength(2);
+    });
+
+    test("piece-attacked carries attacker, target, succeeded", () => {
+        const o: import("./outcomes").PieceAttackedOutcome = {
+            kind: "piece-attacked",
+            attackerId: 101,
+            targetId: 102,
+            succeeded: true,
+        };
+        expect(o.succeeded).toBe(true);
+    });
+
+    test("piece-ranged-attacked carries attacker, target, succeeded", () => {
+        const o: import("./outcomes").PieceRangedAttackedOutcome = {
+            kind: "piece-ranged-attacked",
+            attackerId: 101,
+            targetId: 102,
+            succeeded: false,
+        };
+        expect(o.succeeded).toBe(false);
+    });
+
+    test("piece-died cause covers the canonical strings", () => {
+        const causes: import("./outcomes").PieceDiedCause[] = [
+            "combat",
+            "ranged",
+            "spell",
+            "disbelieve",
+            "expired",
+            "spread",
+            "subverted-away",
+        ];
+        expect(causes).toHaveLength(7);
+        const o: import("./outcomes").PieceDiedOutcome = {
+            kind: "piece-died",
+            pieceId: 101,
+            cause: "combat",
+        };
+        expect(o.cause).toBe("combat");
+    });
+
+    test("piece-mounted and piece-dismounted round-trip", () => {
+        const mounted: import("./outcomes").PieceMountedOutcome = {
+            kind: "piece-mounted",
+            mountId: 50,
+            riderId: 1,
+        };
+        const dismounted: import("./outcomes").PieceDismountedOutcome = {
+            kind: "piece-dismounted",
+            mountId: 50,
+            riderId: 1,
+        };
+        expect(JSON.parse(JSON.stringify(mounted))).toEqual(mounted);
+        expect(JSON.parse(JSON.stringify(dismounted))).toEqual(dismounted);
+    });
+
+    test("piece-stats-changed accepts a partial stats diff", () => {
+        const o: import("./outcomes").PieceStatsChangedOutcome = {
+            kind: "piece-stats-changed",
+            pieceId: 1,
+            stats: { def: 8 },
+        };
+        expect(o.stats.def).toBe(8);
+    });
+
+    test("piece-statuses-changed has added and removed arrays", () => {
+        const o: import("./outcomes").PieceStatusesChangedOutcome = {
+            kind: "piece-statuses-changed",
+            pieceId: 1,
+            added: ["shadow-form"],
+            removed: [],
+        };
+        expect(o.added).toEqual(["shadow-form"]);
+        expect(o.removed).toEqual([]);
+    });
+
+    test("piece-owner-changed carries newOwnerId", () => {
+        const o: import("./outcomes").PieceOwnerChangedOutcome = {
+            kind: "piece-owner-changed",
+            pieceId: 1,
+            newOwnerId: 2,
+        };
+        expect(o.newOwnerId).toBe(2);
+    });
+
+    test("piece-turn-flag-changed accepts partial turn flags", () => {
+        const o: import("./outcomes").PieceTurnFlagChangedOutcome = {
+            kind: "piece-turn-flag-changed",
+            pieceId: 1,
+            flags: { turnOver: true },
+        };
+        expect(o.flags.turnOver).toBe(true);
+    });
+
+    test("piece-persistent-flag-changed accepts partial persistent flags", () => {
+        const o: import("./outcomes").PiecePersistentFlagChangedOutcome = {
+            kind: "piece-persistent-flag-changed",
+            pieceId: 1,
+            flags: { raisedDead: true },
+        };
+        expect(o.flags.raisedDead).toBe(true);
+    });
+
+    test("piece-action-cancelled action accepts the canonical set", () => {
+        const actions: import("./outcomes").PieceActionCancelledAction[] = [
+            "select",
+            "move",
+            "attack",
+            "rangedAttack",
+            "mount",
+            "dismount",
+        ];
+        expect(actions).toHaveLength(6);
+        const o: import("./outcomes").PieceActionCancelledOutcome = {
+            kind: "piece-action-cancelled",
+            pieceId: 1,
+            action: "move",
+        };
+        expect(o.action).toBe("move");
+    });
+
+    test("piece-resisted-spell round-trips", () => {
+        const o: import("./outcomes").PieceResistedSpellOutcome = {
+            kind: "piece-resisted-spell",
+            pieceId: 1,
+            spellId: 10,
+            spellTypeId: "disbelieve",
+        };
+        expect(JSON.parse(JSON.stringify(o))).toEqual(o);
+    });
+});

@@ -200,3 +200,194 @@ export interface PlayerEndedSpellPickOutcome {
     /** The player whose spellbook pick has ended. */
     playerId: PlayerId;
 }
+
+// ---------------------------------------------------------------------------
+// 4.3 Pieces
+// ---------------------------------------------------------------------------
+
+export interface PieceSpawnedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-spawned";
+    /** The newly-spawned piece's full state. */
+    piece: PieceState;
+}
+
+/**
+ * If the moved piece has a `mountedById`, the rider identified by that id
+ * has its position synchronised to the same destination without a
+ * separate outcome.
+ */
+export interface PieceMovedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-moved";
+    /** The piece being moved. */
+    pieceId: PieceId;
+    /** Tile the piece moved from. */
+    from: Point;
+    /** Tile the piece moved to. */
+    to: Point;
+    /** Optional full path for animated traversal. */
+    path?: Point[];
+}
+
+export interface PieceAttackedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-attacked";
+    /** The attacking piece. */
+    attackerId: PieceId;
+    /** The defending piece. */
+    targetId: PieceId;
+    /** Whether the attack succeeded (killed the defender). */
+    succeeded: boolean;
+}
+
+export interface PieceRangedAttackedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-ranged-attacked";
+    /** The attacking piece. */
+    attackerId: PieceId;
+    /** The defending piece. */
+    targetId: PieceId;
+    /** Whether the ranged attack succeeded. */
+    succeeded: boolean;
+}
+
+/**
+ * Canonical cause strings for piece deaths. The string is open-ended so
+ * new content can add causes; consumers should treat unknown values
+ * gracefully.
+ */
+export type PieceDiedCause =
+    | "combat"
+    | "ranged"
+    | "spell"
+    | "disbelieve"
+    | "expired"
+    | "spread"
+    | "subverted-away"
+    | string;
+
+export interface PieceDiedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-died";
+    /** The piece that died. */
+    pieceId: PieceId;
+    /** What killed it. */
+    cause: PieceDiedCause;
+}
+
+export interface PieceMountedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-mounted";
+    /** The mount (e.g. horse). */
+    mountId: PieceId;
+    /** The rider now sitting on the mount. */
+    riderId: PieceId;
+}
+
+/**
+ * If the rider dismounts to an adjacent tile or piece, a separate
+ * piece-moved or piece-mounted outcome follows within the same event's
+ * `outcomes` array.
+ */
+export interface PieceDismountedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-dismounted";
+    /** The mount the rider is leaving. */
+    mountId: PieceId;
+    /** The rider dismounting. */
+    riderId: PieceId;
+}
+
+export interface PieceStatsChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-stats-changed";
+    /** The piece whose stats changed. */
+    pieceId: PieceId;
+    /** The subset of stats that changed, with their new values. */
+    stats: import("./piecestate").PartialStats;
+}
+
+export interface PieceStatusesChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-statuses-changed";
+    /** The piece whose status set changed. */
+    pieceId: PieceId;
+    /** Statuses added to the piece. */
+    added: string[];
+    /** Statuses removed from the piece. */
+    removed: string[];
+}
+
+/**
+ * Fires when a piece changes owner (e.g. Subversion).
+ */
+export interface PieceOwnerChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-owner-changed";
+    /** The piece whose ownership changed. */
+    pieceId: PieceId;
+    /** The new owner's player id. */
+    newOwnerId: PlayerId;
+}
+
+/**
+ * Partial update to any of {moved, attacked, rangedAttacked, engaged,
+ * turnOver}. Engagement is rolled at select time and emits this outcome
+ * only if the roll succeeds.
+ */
+export interface PieceTurnFlagChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-turn-flag-changed";
+    /** The piece whose turn flags changed. */
+    pieceId: PieceId;
+    /** The subset of turn flags that changed, with their new values. */
+    flags: import("./piecestate").PartialTurnFlags;
+}
+
+/**
+ * Partial update to any persistent flag (raisedDead and future
+ * additions). The `dead` flag is set via piece-died rather than this
+ * outcome.
+ */
+export interface PiecePersistentFlagChangedOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-persistent-flag-changed";
+    /** The piece whose persistent flags changed. */
+    pieceId: PieceId;
+    /** The subset of persistent flags that changed, with their new values. */
+    flags: import("./piecestate").PartialPersistentFlags;
+}
+
+/**
+ * Enumerated set of action categories that can be cancelled by a player.
+ * `select` covers the case where a piece was selected but the player
+ * backed out before committing to any action.
+ */
+export type PieceActionCancelledAction = "select" | "move" | "attack" | "rangedAttack" | "mount" | "dismount" | string;
+
+export interface PieceActionCancelledOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-action-cancelled";
+    /** The piece whose action was cancelled. */
+    pieceId: PieceId;
+    /** The category of action that was cancelled. */
+    action: PieceActionCancelledAction;
+}
+
+/**
+ * Broadcast when a target successfully resists a spell cast on it,
+ * whether by magic resistance or (for Disbelieve) by not being an
+ * illusion. Clients observing this outcome within a Disbelieve cast
+ * commit the piece to their "confirmed real" memory.
+ */
+export interface PieceResistedSpellOutcome {
+    /** Discriminant for this outcome kind. */
+    kind: "piece-resisted-spell";
+    /** The piece that resisted the spell. */
+    pieceId: PieceId;
+    /** The unique instance id of the spell that was resisted. */
+    spellId: SpellId;
+    /** The type reference for the spell. */
+    spellTypeId: SpellTypeId;
+}
