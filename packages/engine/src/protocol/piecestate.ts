@@ -23,8 +23,8 @@ export interface PieceStats {
 }
 
 /**
- * A subset of {@link PieceStats} used in piece-stats-changed outcomes to
- * express only the fields that changed.
+ * A subset of {@link PieceStats} used wherever only a subset of stats needs
+ * to be expressed, such as in piece-stats-changed outcomes.
  */
 export type PartialStats = Partial<PieceStats>;
 
@@ -72,7 +72,9 @@ export type PartialPersistentFlags = Partial<PersistentFlags>;
  * Combined flag groups on a piece.
  */
 export interface PieceFlags {
+    /** Per-turn flags that reset at the start of each movement turn. */
     turn: TurnFlags;
+    /** Flags that persist across turns. */
     persistent: PersistentFlags;
 }
 
