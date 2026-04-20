@@ -854,6 +854,13 @@ export class Board extends EngineBoard<Piece> {
         const path: Path = this.rangeGizmo.getPathTo(position);
         const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
 
+        // Capture the logical start position before animation mutates it.
+        // After moveTo / movePath, piece.position is at the destination.
+        // We restore it below so super.movePiece's setPosition call can
+        // correctly record from → to in the piece-moved outcome.
+        const fromX: number = piece.position.x;
+        const fromY: number = piece.position.y;
+
         if (isFlying || Board.distance(piece.position, new Point(position.x, position.y)) <= 1.5) {
             if (!silent) {
                 this.sound.play(isFlying ? "fly" : "step");
@@ -871,6 +878,14 @@ export class Board extends EngineBoard<Piece> {
             throw new Error(`No path to ${position.x}, ${position.y}`);
         }
         await this.rangeGizmo.reset();
+
+        // Restore the logical start position so that super.movePiece's
+        // internal setPosition captures the correct from co-ordinates for
+        // the piece-moved outcome. The position setter is a plain setTo
+        // mutation with no side-effects; super will immediately overwrite
+        // it with the destination.
+        piece.position = new Point(fromX, fromY);
+
         // Record the broadcast event (piece-moved + piece-turn-flag-changed
         // outcomes) and emit BoardEvent.PieceMoved via the engine. The client
         // has no real command context yet; synthetic ids are used until the

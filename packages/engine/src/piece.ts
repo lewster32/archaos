@@ -651,9 +651,8 @@ export class Piece extends Entity {
         if (!this.canMountPiece(piece)) {
             throw new Error(`${this.name} cannot mount ${piece.name}`);
         }
-        this.moved = true;
-        this.attacked = true;
-        piece.moved = true;
+        this.setTurnFlags({ moved: true, attacked: true });
+        piece.setTurnFlags({ moved: true });
         this.currentMount = piece;
         piece.currentRider = this;
         await this.board.movePiece(this.id, piece.position, `sys-internal-${this.id}`, this.owner?.id ?? 0);
@@ -682,9 +681,9 @@ export class Piece extends Entity {
      */
     async moveTo(point: { x: number; y: number }, _stepDuration?: number): Promise<void> {
         this.updateDirection(this.position, point);
-        this.position = new Point(point.x, point.y);
+        this.setPosition(new Point(point.x, point.y));
         if (this.currentRider) {
-            this.currentRider.position = new Point(point.x, point.y);
+            this.currentRider.setPosition(new Point(point.x, point.y));
         }
         if (this.currentMount && !Point.equals(this.currentMount.position, this.position)) {
             this._board.dismountPiece(this.id);

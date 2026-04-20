@@ -55,6 +55,7 @@ function makeMockBoard(rng = new TestRNG()): Board {
             hasStatus: vi.fn().mockReturnValue(false),
             currentEngulfed: null,
         })),
+        pushOutcome: vi.fn(),
     } as unknown as Board;
 }
 
@@ -193,6 +194,7 @@ function makeCombatBoard(rollResult: boolean): Board {
         hasLineOfSight: vi.fn().mockReturnValue(true),
         dismountPiece: vi.fn(),
         movePiece: vi.fn().mockResolvedValue(undefined),
+        pushOutcome: vi.fn(),
         pieces: [],
         rangeGizmo: {
             getPathTo: vi.fn().mockReturnValue(null),
