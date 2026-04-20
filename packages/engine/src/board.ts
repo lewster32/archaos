@@ -621,7 +621,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     ): Promise<BroadcastEventMessage> {
         if (this._activeEvent !== null) {
             throw new Error(
-                "Board.recordEvent: nested recordEvent is not permitted" + " (an event context is already active).",
+                "Board.recordEvent: nested recordEvent is not permitted (an event context is already active).",
             );
         }
         const builder = new EventBuilder();
