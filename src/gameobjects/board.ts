@@ -1418,15 +1418,22 @@ export class Board extends EngineBoard<Piece> {
     }
 
     /**
-     * Start a new game.
+     * Start a new game. Delegates to the engine super to emit the
+     * sequence-1 `game-started` broadcast event, then performs the
+     * client-side game-loop setup (reset FSM, advance to the first
+     * player).
      */
-    async startGame(): Promise<void> {
+    async startGame(): Promise<BroadcastEventMessage> {
+        const event: BroadcastEventMessage = await super.startGame();
+
         this._currentPlayerIndex = -1;
         this.currentPlayer = null;
         this.state = BoardState.Idle;
         this.stateManager.reset();
 
         await this.nextPlayer();
+
+        return event;
     }
 
     /**
