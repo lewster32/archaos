@@ -595,7 +595,6 @@ export class Piece extends EnginePiece {
 
             if (rollSuccess) {
                 this.clientBoard.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
-                this.clientBoard.sound.play("die");
                 await piece.kill();
                 if (
                     this.clientBoard.getPiecesAtPosition(piece.position, (p: Piece) => {
@@ -700,7 +699,6 @@ export class Piece extends EnginePiece {
                 if (this.hasStatus(UnitStatus.ShadowForm)) {
                     this.removeStatus(UnitStatus.ShadowForm);
                 }
-                this.clientBoard.sound.play("die");
                 this.clientBoard.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
                 await piece.kill();
                 return true;
@@ -732,7 +730,6 @@ export class Piece extends EnginePiece {
             await this.clientBoard.playEffect(EffectType.DisbelieveHit, this.sprite.getCenter());
             await this.destroy();
         } else if (this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
-            silent = true;
             await this.clientBoard.playEffect(EffectType.NoCorpseDeath, this.sprite.getCenter());
             await this.destroy();
         }

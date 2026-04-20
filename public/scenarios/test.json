@@ -11,40 +11,26 @@
             "name": "Player 1",
             "position": { "x": 0, "y": 2 },
             "statuses": [],
-            "pieces": [],
+            "pieces": [
+                {
+                    "type": "Elf",
+                    "position": { "x": 1, "y": 2 }
+                }
+            ],
             "computerControlled": false,
             "spells": [
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2",
-                "Chaos 2"
+                "*"
             ],
             "wizardProperties": {
-                "movement": 0,
-                "manoeuvrability": 0,
-                "combat": 1
+                "movement": 9,
+                "manoeuvrability": 9,
+                "combat": 9
             }
         },
         {
             "id": 2,
             "name": "Player 2",
-            "position": { "x": 8, "y": 2 },
+            "position": { "x": 4, "y": 2 },
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
@@ -58,9 +44,9 @@
         }
     ],
     "corpses": [],
-    "phase": "casting",
+    "phase": "moving",
     "cheats": {
-        "forceHit": false,
+        "forceHit": true,
         "forceCast": true,
         "shortDelay": true
     },

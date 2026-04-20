@@ -198,6 +198,10 @@ function delaysToSamples(delays: number[]): Float32Array {
  * [-1,1] here so Web Audio plays them at full amplitude without relying on
  * hardware AC-coupling. Returns a Promise that resolves when playback finishes.
  */
+// The ZX Spectrum 48K beeper is monophonic — only one tone can sound at a time.
+// Track the active source so a new playback can pre-empt the previous one.
+let activeSource: AudioBufferSourceNode | null = null;
+
 function playSamples(samples: Float32Array, context: AudioContext): Promise<void> {
     const centred = new Float32Array(samples.length);
     for (let i = 0; i < samples.length; i++) centred[i] = (samples[i] - 0.5) * 2 * VOLUME;
@@ -208,10 +212,26 @@ function playSamples(samples: Float32Array, context: AudioContext): Promise<void
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(context.destination);
+
+    if (activeSource) {
+        try {
+            activeSource.stop();
+        } catch {
+            // already stopped/ended — safe to ignore
+        }
+    }
+    activeSource = source;
     source.start();
 
     return new Promise((resolve) => {
-        source.addEventListener("ended", () => resolve(), { once: true });
+        source.addEventListener(
+            "ended",
+            () => {
+                if (activeSource === source) activeSource = null;
+                resolve();
+            },
+            { once: true },
+        );
     });
 }
 
