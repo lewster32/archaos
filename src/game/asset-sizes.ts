@@ -5,7 +5,7 @@
 //   board.json                                            4654 B  (Phaser preload)
 //   board.png                                             2158 B  (Phaser preload)
 //   chaossounds.json                                      3835 B  (Phaser preload)
-//   classicunits.json                                   189887 B  (Phaser preload)
+//   classicunits.json                                   195908 B  (Phaser preload)
 //   classicunits.png                                     32187 B  (Phaser preload)
 //   cursors.json                                         16156 B  (Phaser preload)
 //   cursors.png                                           2507 B  (Phaser preload)
@@ -14,19 +14,24 @@
 //   hats.png                                              5101 B  (Phaser preload)
 //   magic-armour.png                                      2702 B  (Phaser preload)
 //   pointer-arrow.png                                     1018 B  (Phaser preload)
-//   rain.json                                              908 B  (Phaser preload)
+//   rain.json                                              910 B  (Phaser preload)
 //   rain.png                                               969 B  (Phaser preload)
-//   rexperlinplugin.min.js                               10068 B  (Phaser preload)
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)
 //   chaossounds.ogg                                     147151 B  (audio (preferred format))
 //   Game.css                                             20235 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     1223 B  (lazy CSS bundle)
-//   Game.js                                             304123 B  (lazy JS bundle)
-//   LoadingScreen.js                                     70474 B  (lazy JS bundle)
-//   phaser.js                                          1350419 B  (lazy JS bundle)
+//   main.css                                             10468 B  (lazy CSS bundle)
+//   chaossounds.js                                       10226 B  (lazy JS bundle)
+//   debug.js                                              1339 B  (lazy JS bundle)
+//   Game.js                                             311257 B  (lazy JS bundle)
+//   LoadingScreen.js                                      1235 B  (lazy JS bundle)
+//   main.js                                               9032 B  (lazy JS bundle)
+//   modulepreload-polyfill.js                              698 B  (lazy JS bundle)
+//   phaser.js                                          1352831 B  (lazy JS bundle)
+//   runtime-dom.esm-bundler.js                           69670 B  (lazy JS bundle)
 //   window.js                                            14825 B  (lazy JS bundle)
-//   TOTAL                                              2203732 B
+//   TOTAL                                              2241427 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 2203732;
+export const TOTAL_GAME_ASSET_BYTES = 2241427;
