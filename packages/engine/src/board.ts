@@ -41,6 +41,7 @@ import { RangeGizmo } from "./rangegizmo";
 import { Alignment } from "./alignment";
 import { EventLog } from "./eventlog";
 import type { BroadcastEventMessage, CommandId, Outcome, PlayerId } from "./protocol";
+import { buildSnapshot } from "./snapshotbuilder";
 
 /**
  * Simple point type without all the baggage of
@@ -637,6 +638,35 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const elapsedMs: number = this._now() - this._gameStartMs;
         const finalised: Omit<BroadcastEventMessage, "sequence"> = builder.finalise(correlation, elapsedMs);
         return this._eventLog.append(finalised);
+    }
+
+    /**
+     * Explicit bootstrap entry point. Captures `_gameStartMs`, emits the
+     * sequence-1 `game-started` event built from the current board state,
+     * and returns it.
+     *
+     * Throws if called more than once or if no players have been added.
+     *
+     * @returns The sequence-1 broadcast event.
+     */
+    async startGame(): Promise<BroadcastEventMessage> {
+        if (this._eventLog.head() !== 0) {
+            throw new Error("Board.startGame() may only be called once.");
+        }
+        const firstPlayer = this.players[0];
+        if (!firstPlayer) {
+            throw new Error("Board.startGame() requires at least one player.");
+        }
+        this._gameStartMs = this._now();
+        return await this.recordEvent({}, () => {
+            const snapshot = buildSnapshot(this, firstPlayer.id);
+            this.pushOutcome({
+                kind: "game-started",
+                scenario: snapshot.state.scenario,
+                players: snapshot.state.players,
+                initialPieces: snapshot.state.pieces,
+            });
+        });
     }
 
     /**

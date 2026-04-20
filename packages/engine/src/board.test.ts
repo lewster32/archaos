@@ -1580,3 +1580,84 @@ describe("event-log clock infrastructure", () => {
         expect(board.gameStartMs).toBe(0);
     });
 });
+
+describe("startGame", () => {
+    function addPlayer(board: Board, _id: number, name: string): void {
+        board.addPlayer({ name, type: GameSetupPlayerType.Local });
+    }
+
+    test("emits a sequence-1 event with a single game-started outcome", async () => {
+        let clock = 1000;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        addPlayer(board, 1, "Alice");
+
+        const event = await board.startGame();
+
+        expect(event.sequence).toBe(1);
+        expect(event.elapsedMs).toBe(0);
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0].kind).toBe("game-started");
+        expect(event.commandId).toBeUndefined();
+        expect(event.actorId).toBeUndefined();
+    });
+
+    test("game-started outcome carries scenario, players, initialPieces", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        addPlayer(board, 1, "Alice");
+        addPlayer(board, 2, "Bob");
+
+        const event = await board.startGame();
+
+        const outcome = event.outcomes[0] as {
+            kind: "game-started";
+            scenario: { boardWidth: number };
+            players: unknown[];
+            initialPieces: unknown[];
+        };
+        expect(outcome.scenario.boardWidth).toBe(13);
+        expect(outcome.players).toHaveLength(2);
+        expect(outcome.initialPieces).toBeDefined();
+    });
+
+    test("gameStartMs captures the clock at startGame invocation", async () => {
+        let clock = 500;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        addPlayer(board, 1, "Alice");
+
+        await board.startGame();
+
+        expect(board.gameStartMs).toBe(500);
+    });
+
+    test("subsequent events use elapsedMs relative to startGame", async () => {
+        let clock = 500;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        addPlayer(board, 1, "Alice");
+
+        await board.startGame();
+        clock = 750;
+        const event = await board.recordEvent({}, () => {
+            board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 });
+        });
+
+        expect(event.elapsedMs).toBe(250);
+    });
+
+    test("throws if called more than once", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        addPlayer(board, 1, "Alice");
+
+        await board.startGame();
+
+        await expect(board.startGame()).rejects.toThrow(/already|once/i);
+    });
+});
