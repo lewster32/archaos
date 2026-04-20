@@ -40,8 +40,8 @@ import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
 import { Alignment } from "./alignment";
 import { EventLog } from "./eventlog";
-import type { BroadcastEventMessage, CommandId, Outcome, PlayerId } from "./protocol";
-import { buildSnapshot } from "./snapshotbuilder";
+import type { BroadcastEventMessage, CommandId, Outcome, PhaseKind, PlayerId } from "./protocol";
+import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 
 /**
  * Simple point type without all the baggage of
@@ -303,6 +303,24 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     break;
             }
             this._boardEvents.emit(BoardEvent.PhaseChange, newPhase);
+            // Emit a spontaneous phase-changed broadcast event once the game
+            // has started (head >= 1). Pre-startGame transitions are silently
+            // skipped. We use void because phase transitions are
+            // fire-and-forget; we don't await inside this synchronous handler.
+            if (this._eventLog.head() >= 1) {
+                const phaseKind: PhaseKind = toPhaseKind(newPhase);
+                const currentPlayerId: PlayerId | null = this._currentPlayer?.id ?? null;
+                // turnNumber will be wired in a future spec; hardcoded for now.
+                const turnNumber: number = 0;
+                void this.recordEvent({}, () => {
+                    this.pushOutcome({
+                        kind: "phase-changed",
+                        phase: phaseKind,
+                        turnNumber,
+                        ...(currentPlayerId === null ? {} : { currentPlayerId }),
+                    });
+                });
+            }
         }
 
         let newState: BoardState | null = null;

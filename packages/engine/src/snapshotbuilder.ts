@@ -11,7 +11,7 @@ import type { PhaseKind, PieceState, PlayerId, PlayerPublicState, SnapshotMessag
  * protocol equivalent; it is treated as `"spellbook"` until
  * the game formally starts.
  */
-function toPhaseKind(phase: BoardPhase): PhaseKind {
+export function toPhaseKind(phase: BoardPhase): PhaseKind {
     switch (phase) {
         case BoardPhase.Spellbook:
             return "spellbook";
