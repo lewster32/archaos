@@ -1717,3 +1717,78 @@ describe("Piece.setPosition", () => {
         expect(event.outcomes[0]).not.toHaveProperty("path");
     });
 });
+
+// ── Piece.setTurnFlags ────────────────────────────────────────────────────────
+
+describe("Piece.setTurnFlags mutator", () => {
+    test("without an active event context, mutates flags and emits nothing", () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        piece.setTurnFlags({ moved: true, attacked: true });
+
+        expect(piece.moved).toBe(true);
+        expect(piece.attacked).toBe(true);
+        expect(board.eventLog.head()).toBe(0);
+    });
+
+    test("inside recordEvent, emits one piece-turn-flag-changed with the delta subset", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            piece.setTurnFlags({ moved: true, turnOver: true });
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-turn-flag-changed",
+            pieceId: piece.id,
+            flags: { moved: true, turnOver: true },
+        });
+        expect(piece.moved).toBe(true);
+        expect(piece.turnOver).toBe(true);
+    });
+
+    test("emits nothing when the partial is empty", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            piece.setTurnFlags({});
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+    });
+
+    test("emits nothing when all requested values already match state", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+        // piece.moved defaults to false; request false means no change.
+
+        const event = await board.recordEvent({}, () => {
+            piece.setTurnFlags({ moved: false, attacked: false });
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+    });
+
+    test("only the genuinely-changed subset appears in the outcome", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+        // Prime: set moved to true first (outside recordEvent so no emission).
+        piece.setTurnFlags({ moved: true });
+
+        const event = await board.recordEvent({}, () => {
+            // moved stays true; attacked flips to true.
+            piece.setTurnFlags({ moved: true, attacked: true });
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-turn-flag-changed",
+            pieceId: piece.id,
+            flags: { attacked: true },
+        });
+    });
+});

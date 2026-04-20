@@ -18,6 +18,7 @@ import { Point } from "./point";
 // Board is imported only as a type to avoid a circular
 // dependency at runtime (Board → Piece → Board).
 import type { Board } from "./board";
+import type { PartialTurnFlags, TurnFlags } from "./protocol";
 
 export enum PieceState {
     Idle,
@@ -73,6 +74,7 @@ export class Piece extends Entity {
     protected _attacked: boolean;
     protected _rangedAttacked: boolean;
     protected _engaged: boolean;
+    protected _turnOver: boolean;
     protected _illusion: boolean;
 
     protected _state: PieceState;
@@ -128,6 +130,7 @@ export class Piece extends Entity {
         this._attacked = false;
         this._rangedAttacked = false;
         this._engaged = false;
+        this._turnOver = false;
 
         this._state = PieceState.Idle;
 
@@ -459,10 +462,14 @@ export class Piece extends Entity {
     // ── Turn state ──────────────────────────────────────
 
     /**
-     * Check if this piece's turn is over.
+     * Check if this piece's turn is over. Returns `true` if the
+     * `_turnOver` flag was explicitly set (e.g. via `setTurnFlags`),
+     * or if the computed condition (moved with no remaining actions,
+     * dead, engulfed, or all action flags exhausted) is satisfied.
      */
     get turnOver(): boolean {
         return (
+            this._turnOver ||
             (this.moved && !this.canAttack && !this.canRangedAttack) ||
             this.dead ||
             this.engulfed ||
@@ -476,6 +483,7 @@ export class Piece extends Entity {
      * visual tinting.
      */
     set turnOver(state: boolean) {
+        this._turnOver = state;
         this.moved = this.attacked = this.rangedAttacked = state;
     }
 
@@ -703,6 +711,49 @@ export class Piece extends Entity {
             from: { x: fromX, y: fromY },
             to: { x: to.x, y: to.y },
             ...(options?.path === undefined ? {} : { path: options.path.map((p) => ({ x: p.x, y: p.y })) }),
+        });
+    }
+
+    /**
+     * Primitive mutator for the five per-turn flags. Computes the
+     * delta between `partial` and current state; if any flag genuinely
+     * changes, updates the field values and pushes a single
+     * `piece-turn-flag-changed` outcome carrying exactly the changed
+     * subset. If `partial` is empty or all values match current state,
+     * the call is a no-op.
+     *
+     * Does not cascade to rider / mount. Cross-piece flag
+     * synchronisation is the orchestrator's responsibility (see
+     * invariant 6 in the engine gameplay-event emission spec).
+     */
+    setTurnFlags(partial: PartialTurnFlags): void {
+        const current: Record<keyof TurnFlags, boolean> = {
+            moved: this._moved,
+            attacked: this._attacked,
+            rangedAttacked: this._rangedAttacked,
+            engaged: this._engaged,
+            turnOver: this._turnOver,
+        };
+        const delta: PartialTurnFlags = {};
+        for (const key of Object.keys(partial) as (keyof TurnFlags)[]) {
+            const requested: boolean | undefined = partial[key];
+            if (requested === undefined) continue;
+            if (current[key] !== requested) {
+                delta[key] = requested;
+            }
+        }
+        if (Object.keys(delta).length === 0) {
+            return;
+        }
+        if (delta.moved !== undefined) this._moved = delta.moved;
+        if (delta.attacked !== undefined) this._attacked = delta.attacked;
+        if (delta.rangedAttacked !== undefined) this._rangedAttacked = delta.rangedAttacked;
+        if (delta.engaged !== undefined) this._engaged = delta.engaged;
+        if (delta.turnOver !== undefined) this._turnOver = delta.turnOver;
+        this._board.pushOutcome({
+            kind: "piece-turn-flag-changed",
+            pieceId: this.id,
+            flags: delta,
         });
     }
 
