@@ -753,7 +753,7 @@ export class Piece extends Entity {
         this._board.pushOutcome({
             kind: "piece-turn-flag-changed",
             pieceId: this.id,
-            flags: delta,
+            flags: { ...delta },
         });
     }
 
