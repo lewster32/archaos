@@ -22,6 +22,11 @@ export interface BroadcastEventMessage {
     type: "event";
     /** The monotonic sequence number assigned by the server. */
     sequence: Sequence;
+    /**
+     * Milliseconds elapsed since `Board.startGame()`. The `game-started`
+     * event at sequence 1 carries `elapsedMs: 0` by convention.
+     */
+    elapsedMs: number;
     /** The client-generated id of the triggering command, if any. */
     commandId?: CommandId;
     /** The player responsible for this event, if any. */
@@ -44,6 +49,8 @@ export interface SpellbookDeliveredPrivateEvent {
     type: "private-event";
     /** The broadcast sequence this delivery accompanies. */
     sequenceRef: SequenceRef;
+    /** Milliseconds elapsed since `Board.startGame()`. */
+    elapsedMs: number;
     /** The recipient player. */
     recipient: PlayerId;
     /** Discriminant for this private event kind. */
@@ -61,6 +68,8 @@ export interface SpellGainedPrivateEvent {
     type: "private-event";
     /** The broadcast sequence this private event accompanies. */
     sequenceRef: SequenceRef;
+    /** Milliseconds elapsed since `Board.startGame()`. */
+    elapsedMs: number;
     /** The recipient player. */
     recipient: PlayerId;
     /** Discriminant for this private event kind. */
@@ -93,6 +102,8 @@ export interface CommandRejectedPrivateEvent {
     type: "private-event";
     /** The recipient player (the command's sender). */
     recipient: PlayerId;
+    /** Milliseconds elapsed since `Board.startGame()`. */
+    elapsedMs: number;
     /** Discriminant for this private event kind. */
     kind: "command-rejected";
     /** The client-generated id of the rejected command. */

@@ -13,6 +13,7 @@ describe("BroadcastEventMessage", () => {
         const msg: BroadcastEventMessage = {
             type: "event",
             sequence: 43,
+            elapsedMs: 0,
             commandId: "c_27",
             actorId: 3,
             outcomes: [{ kind: "player-picked-spell", playerId: 3 }],
@@ -24,6 +25,7 @@ describe("BroadcastEventMessage", () => {
         const msg: BroadcastEventMessage = {
             type: "event",
             sequence: 99,
+            elapsedMs: 0,
             outcomes: [
                 {
                     kind: "weather-changed",
@@ -39,6 +41,7 @@ describe("BroadcastEventMessage", () => {
         const msg: BroadcastEventMessage = {
             type: "event",
             sequence: 1,
+            elapsedMs: 0,
             outcomes: [],
         };
         expect(msg.outcomes).toHaveLength(0);
@@ -50,6 +53,7 @@ describe("PrivateEventMessage", () => {
         const msg: SpellbookDeliveredPrivateEvent = {
             type: "private-event",
             sequenceRef: 1,
+            elapsedMs: 0,
             recipient: 3,
             kind: "spellbook-delivered",
             spells: [{ spellTypeId: "magic-fire", id: 10 }],
@@ -61,6 +65,7 @@ describe("PrivateEventMessage", () => {
         const msg: SpellGainedPrivateEvent = {
             type: "private-event",
             sequenceRef: 17,
+            elapsedMs: 0,
             recipient: 3,
             kind: "spell-gained",
             spellId: 42,
@@ -73,6 +78,7 @@ describe("PrivateEventMessage", () => {
         const msg: CommandRejectedPrivateEvent = {
             type: "private-event",
             recipient: 3,
+            elapsedMs: 0,
             kind: "command-rejected",
             commandId: "c_27",
             reason: "spell-not-in-book",
@@ -100,6 +106,7 @@ describe("PrivateEventMessage", () => {
             {
                 type: "private-event",
                 sequenceRef: 1,
+                elapsedMs: 0,
                 recipient: 1,
                 kind: "spellbook-delivered",
                 spells: [],
@@ -107,6 +114,7 @@ describe("PrivateEventMessage", () => {
             {
                 type: "private-event",
                 sequenceRef: 5,
+                elapsedMs: 0,
                 recipient: 2,
                 kind: "spell-gained",
                 spellId: 3,
@@ -115,6 +123,7 @@ describe("PrivateEventMessage", () => {
             {
                 type: "private-event",
                 recipient: 1,
+                elapsedMs: 0,
                 kind: "command-rejected",
                 commandId: "c_1",
                 reason: "unauthorised",

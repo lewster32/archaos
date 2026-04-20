@@ -65,6 +65,7 @@ describe("server \u2192 client messages round-trip through JSON", () => {
         const msg: ServerToClientMessage = {
             type: "event",
             sequence: 43,
+            elapsedMs: 0,
             commandId: "c_27",
             actorId: 3,
             outcomes: [
@@ -83,6 +84,7 @@ describe("server \u2192 client messages round-trip through JSON", () => {
         const msg: ServerToClientMessage = {
             type: "event",
             sequence: 50,
+            elapsedMs: 0,
             outcomes: [
                 { kind: "phase-changed", phase: "spreading", turnNumber: 7 },
                 {
@@ -98,6 +100,7 @@ describe("server \u2192 client messages round-trip through JSON", () => {
         const msg: ServerToClientMessage = {
             type: "private-event",
             sequenceRef: 1,
+            elapsedMs: 0,
             recipient: 1,
             kind: "spellbook-delivered",
             spells: [
@@ -112,6 +115,7 @@ describe("server \u2192 client messages round-trip through JSON", () => {
         const msg: ServerToClientMessage = {
             type: "private-event",
             sequenceRef: 17,
+            elapsedMs: 0,
             recipient: 2,
             kind: "spell-gained",
             spellId: 99,
@@ -124,6 +128,7 @@ describe("server \u2192 client messages round-trip through JSON", () => {
         const msg: ServerToClientMessage = {
             type: "private-event",
             recipient: 3,
+            elapsedMs: 0,
             kind: "command-rejected",
             commandId: "c_27",
             reason: "spell-not-in-book",
@@ -275,6 +280,7 @@ describe("every private event kind round-trips", () => {
         {
             type: "private-event",
             sequenceRef: 1,
+            elapsedMs: 0,
             recipient: 1,
             kind: "spellbook-delivered",
             spells: [],
@@ -282,6 +288,7 @@ describe("every private event kind round-trips", () => {
         {
             type: "private-event",
             sequenceRef: 5,
+            elapsedMs: 0,
             recipient: 1,
             kind: "spell-gained",
             spellId: 99,
@@ -290,6 +297,7 @@ describe("every private event kind round-trips", () => {
         {
             type: "private-event",
             recipient: 1,
+            elapsedMs: 0,
             kind: "command-rejected",
             commandId: "c_1",
             reason: "unauthorised",
