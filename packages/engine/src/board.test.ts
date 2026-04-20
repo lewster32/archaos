@@ -583,7 +583,7 @@ describe("Board", () => {
                 type: GameSetupPlayerType.Local,
             });
             const piece = await board.addPiece(makePieceConfig(0, 0, player));
-            await board.movePiece(piece.id, new Point(5, 3));
+            await board.movePiece(piece.id, new Point(5, 3), "test-cmd", 1);
             expect(piece.position.x).toBe(5);
             expect(piece.position.y).toBe(3);
             expect(piece.moved).toBe(true);
@@ -598,12 +598,12 @@ describe("Board", () => {
             const piece = await board.addPiece(makePieceConfig(0, 0, player));
             const moved: any[] = [];
             board.boardEvents.on(BoardEvent.PieceMoved, (p: any) => moved.push(p));
-            await board.movePiece(piece.id, new Point(2, 2));
+            await board.movePiece(piece.id, new Point(2, 2), "test-cmd", 1);
             expect(moved).toContain(piece);
         });
 
         it("throws for an unknown piece id", async () => {
-            await expect(makeBoard().movePiece(999, new Point(0, 0))).rejects.toThrow(
+            await expect(makeBoard().movePiece(999, new Point(0, 0), "test-cmd", 1)).rejects.toThrow(
                 "Could not find piece with ID 999",
             );
         });
@@ -1712,5 +1712,49 @@ describe("phase-changed wiring", () => {
 
         // At minimum, headAfterStart should be >= 1 (game-started).
         expect(headAfterStart).toBeGreaterThanOrEqual(1);
+    });
+});
+
+describe("movePiece wiring", () => {
+    test("emits one event with piece-moved + piece-turn-flag-changed outcomes", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        const player = board.addPlayer({ name: "Alice", type: GameSetupPlayerType.Local });
+        const piece = await board.addPiece(makePieceConfig(0, 0, player));
+        await board.startGame();
+
+        const event = await board.movePiece(piece.id, new Point(5, 5), "c_42", 1);
+
+        expect(event.commandId).toBe("c_42");
+        expect(event.actorId).toBe(1);
+        expect(event.outcomes).toHaveLength(2);
+        expect(event.outcomes[0].kind).toBe("piece-moved");
+        expect(event.outcomes[1]).toEqual({
+            kind: "piece-turn-flag-changed",
+            pieceId: piece.id,
+            flags: { moved: true },
+        });
+        expect(piece.position.x).toBe(5);
+        expect(piece.position.y).toBe(5);
+        expect(piece.moved).toBe(true);
+    });
+
+    test("path parameter appears in the piece-moved outcome when supplied", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        const player = board.addPlayer({ name: "Alice", type: GameSetupPlayerType.Local });
+        const piece = await board.addPiece(makePieceConfig(0, 0, player));
+        await board.startGame();
+        const path = [
+            { x: piece.position.x, y: piece.position.y },
+            { x: 4, y: 4 },
+            { x: 5, y: 5 },
+        ];
+
+        const event = await board.movePiece(piece.id, new Point(5, 5), "c_1", 1, path);
+
+        const outcome = event.outcomes[0] as {
+            kind: "piece-moved";
+            path?: { x: number; y: number }[];
+        };
+        expect(outcome.path).toEqual(path);
     });
 });

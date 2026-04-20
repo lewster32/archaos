@@ -152,7 +152,12 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(attacker.id, defender.position);
+                expect(board.movePiece).toHaveBeenCalledWith(
+                    attacker.id,
+                    defender.position,
+                    expect.any(String),
+                    expect.any(Number),
+                );
                 expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 

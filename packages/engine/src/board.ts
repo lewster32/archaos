@@ -956,19 +956,45 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Move a piece to a new position. Synchronous
-     * state update with event emission.
+     * Move a piece to a new position. Records a broadcast event
+     * carrying `piece-moved` and `piece-turn-flag-changed` outcomes
+     * for the piece (and its current rider, if any), then emits the
+     * rendering-side `BoardEvent.PieceMoved` event.
+     *
+     * @param id The id of the piece to move.
+     * @param to The target tile.
+     * @param commandId Correlation id from the originating command.
+     * @param actorId The player responsible for the move.
+     * @param path Optional full path for animated traversal; included
+     *     in the `piece-moved` outcome when supplied.
+     * @returns The appended broadcast event.
      */
-    async movePiece(id: number, position: Point): Promise<P> {
+    async movePiece(
+        id: number,
+        to: Point,
+        commandId: CommandId,
+        actorId: PlayerId,
+        path?: Point[],
+    ): Promise<BroadcastEventMessage> {
         const piece: P | null = this.getPiece(id);
         if (!piece) {
             throw new Error(`Could not find piece with ID ${id}`);
         }
-        piece.position.setTo(position.x, position.y);
-        piece.moved = true;
+        const rider: P | null = piece.currentRider as P | null;
+        const event = await this.recordEvent({ commandId, actorId }, () => {
+            piece.setPosition(to, path === undefined ? undefined : { path });
+            piece.setTurnFlags({ moved: true });
+            if (rider) {
+                // Orchestrator composition: rider follows the mount AND
+                // inherits the moved flag.
+                rider.setPosition(to);
+                rider.setTurnFlags({ moved: true });
+            }
+        });
+        // Rendering-side event stays for the client.
         this._boardEvents.emit(BoardEvent.PieceMoved, piece);
         this.emitBoardUpdateEvent();
-        return piece;
+        return event;
     }
 
     /**

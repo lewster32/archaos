@@ -166,7 +166,12 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(attacker.id, defender.position);
+                expect(board.movePiece).toHaveBeenCalledWith(
+                    attacker.id,
+                    defender.position,
+                    expect.any(String),
+                    expect.any(Number),
+                );
                 expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
             });
 
@@ -717,7 +722,7 @@ describe("Rules.processAction – additional branches", () => {
         const rules = Rules.getInstance();
         const result = await rules.processAction(board, ActionType.Move, InputType.Click);
         expect(result).toBe(ActionType.Move);
-        expect(board.movePiece).toHaveBeenCalledWith(3, board.cursorPosition);
+        expect(board.movePiece).toHaveBeenCalledWith(3, board.cursorPosition, expect.any(String), expect.any(Number));
     });
 
     it("Click + Move returns Invalid when piece cannot reach cursor", async () => {
@@ -1288,7 +1293,7 @@ describe("Rules.processAction – Mount action (Click)", () => {
         });
         const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Mount);
-        expect(board.movePiece).toHaveBeenCalledWith(rider.id, mount.position);
+        expect(board.movePiece).toHaveBeenCalledWith(rider.id, mount.position, expect.any(String), expect.any(Number));
         expect(board.mountPiece).toHaveBeenCalledWith(rider.id, mount.id);
         // moved flag must be restored to false after the pre-mount move
         expect(rider.moved).toBe(false);

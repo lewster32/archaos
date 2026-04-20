@@ -332,7 +332,12 @@ export class Rules {
         }
         if (actionType === ActionType.Move) {
             if (!selectedPiece.moved && selectedPiece.inMovementRange(board.cursorPosition)) {
-                await board.movePiece(selectedPiece.id, board.cursorPosition);
+                await board.movePiece(
+                    selectedPiece.id,
+                    board.cursorPosition,
+                    `rules-${selectedPiece.id}-${Date.now()}`,
+                    board.currentPlayer?.id ?? 0,
+                );
                 this.dispatchEvent(EventType.PieceInfo, null, board);
                 return ActionType.Move;
             } else {
@@ -357,7 +362,12 @@ export class Rules {
                         selectedPiece.inMovementRange(currentAliveHoveredPiece.position) &&
                         Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
-                        await board.movePiece(selectedPiece.id, currentAliveHoveredPiece.position);
+                        await board.movePiece(
+                            selectedPiece.id,
+                            currentAliveHoveredPiece.position,
+                            `rules-${selectedPiece.id}-${Date.now()}`,
+                            board.currentPlayer?.id ?? 0,
+                        );
                         selectedPiece.moved = false;
                     }
                     if (selectedPiece.engaged) {
@@ -380,7 +390,12 @@ export class Rules {
                         selectedPiece.inMovementRange(currentAliveHoveredPiece.position) &&
                         Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
-                        await board.movePiece(selectedPiece.id, currentAliveHoveredPiece.position);
+                        await board.movePiece(
+                            selectedPiece.id,
+                            currentAliveHoveredPiece.position,
+                            `rules-${selectedPiece.id}-${Date.now()}`,
+                            board.currentPlayer?.id ?? 0,
+                        );
                         selectedPiece.moved = false;
                     } else if (!selectedPiece.inAttackRange(currentAliveHoveredPiece.position)) {
                         return ActionType.Invalid;

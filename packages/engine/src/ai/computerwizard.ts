@@ -999,7 +999,12 @@ export class ComputerWizard implements RemotePlayer {
                 this._board.events.emit(EngineEvent.FocusPosition, {
                     position: movePt,
                 });
-                await this._board.movePiece(piece.id, movePt);
+                await this._board.movePiece(
+                    piece.id,
+                    movePt,
+                    `ai-${this._player.id}-${piece.id}-${Date.now()}`,
+                    this._player.id,
+                );
                 if (piece.engaged) {
                     console.debug(`${piece.fullName} is now engaged after moving`);
                     await this.moveUnit(piece);

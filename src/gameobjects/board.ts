@@ -835,7 +835,9 @@ export class Board extends EngineBoard<Piece> {
 
     /**
      * Move a piece to a given position, handling pathfinding and movement
-     * rules.
+     * rules. Calls the engine super to record a broadcast event with
+     * `piece-moved` and `piece-turn-flag-changed` outcomes, then
+     * handles client-side animation, sound, and engagement checks.
      *
      * @param id The ID of the piece to move.
      * @param position The position to move the piece to.
@@ -869,8 +871,16 @@ export class Board extends EngineBoard<Piece> {
             throw new Error(`No path to ${position.x}, ${position.y}`);
         }
         await this.rangeGizmo.reset();
-        piece.moved = true;
-        this._boardEvents.emit(BoardEvent.PieceMoved, piece);
+        // Record the broadcast event (piece-moved + piece-turn-flag-changed
+        // outcomes) and emit BoardEvent.PieceMoved via the engine. The client
+        // has no real command context yet; synthetic ids are used until the
+        // command pipeline is wired end-to-end.
+        await super.movePiece(
+            id,
+            new Point(position.x, position.y),
+            `client-move-${id}-${Date.now()}`,
+            piece.owner?.id ?? 0,
+        );
         this.cursor.enabled = true;
 
         if (!piece.currentMount && !piece.engaged) {

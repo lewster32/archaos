@@ -656,7 +656,7 @@ export class Piece extends Entity {
         piece.moved = true;
         this.currentMount = piece;
         piece.currentRider = this;
-        await this.board.movePiece(this.id, piece.position);
+        await this.board.movePiece(this.id, piece.position, `sys-internal-${this.id}`, this.owner?.id ?? 0);
         this._board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
     }
 
