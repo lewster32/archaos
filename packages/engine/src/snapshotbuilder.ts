@@ -63,40 +63,41 @@ export function buildSnapshot(board: Board, recipient: PlayerId): SnapshotMessag
         pickedSpell: p.selectedSpell ? true : null,
     }));
 
-    const pieces: PieceState[] = board.pieces.map((piece: Piece) => ({
-        id: piece.id,
-        typeId: piece.properties.id,
-        ...((piece as { wizCode?: string }).wizCode !== undefined && {
-            wizCode: (piece as { wizCode: string }).wizCode,
-        }),
-        ownerId: piece.owner ? piece.owner.id : 0,
-        position: { x: piece.position.x, y: piece.position.y },
-        stats: {
-            mov: piece.stats.movement,
-            com: piece.stats.combat,
-            rcm: piece.stats.rangedCombat,
-            rng: piece.stats.range,
-            def: piece.stats.defence,
-            mnv: piece.stats.manoeuvrability,
-            res: piece.stats.magicResistance,
-        },
-        statuses: piece.properties.status.map(String),
-        flags: {
-            turn: {
-                moved: piece.moved,
-                attacked: piece.attacked,
-                rangedAttacked: piece.rangedAttacked,
-                engaged: piece.engaged,
-                turnOver: piece.turnOver,
+    const pieces: PieceState[] = board.pieces.map((piece: Piece) => {
+        const wizCode: string | undefined = (piece as unknown as { wizCode?: string }).wizCode;
+        return {
+            id: piece.id,
+            typeId: piece.properties.id ?? String(piece.id),
+            ...(wizCode === undefined ? {} : { wizCode }),
+            ownerId: piece.owner ? piece.owner.id : 0,
+            position: { x: piece.position.x, y: piece.position.y },
+            stats: {
+                mov: piece.stats.movement,
+                com: piece.stats.combat,
+                rcm: piece.stats.rangedCombat,
+                rng: piece.stats.range,
+                def: piece.stats.defence,
+                mnv: piece.stats.manoeuvrability,
+                res: piece.stats.magicResistance,
             },
-            persistent: {
-                dead: piece.dead,
-                raisedDead: piece.raisedDead,
+            statuses: piece.properties.status.map(String),
+            flags: {
+                turn: {
+                    moved: piece.moved,
+                    attacked: piece.attacked,
+                    rangedAttacked: piece.rangedAttacked,
+                    engaged: piece.engaged,
+                    turnOver: piece.turnOver,
+                },
+                persistent: {
+                    dead: piece.dead,
+                    raisedDead: piece.raisedDead,
+                },
             },
-        },
-        currentMountId: piece.currentMount ? piece.currentMount.id : null,
-        mountedById: piece.currentRider ? piece.currentRider.id : null,
-    }));
+            currentMountId: piece.currentMount ? piece.currentMount.id : null,
+            mountedById: piece.currentRider ? piece.currentRider.id : null,
+        };
+    });
 
     const recipientPlayer = board.players.find((p) => p.id === recipient);
     const spells: SpellbookEntry[] = recipientPlayer
