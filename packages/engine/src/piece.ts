@@ -758,10 +758,7 @@ export class Piece extends Entity {
             }
             if (spreadPieces.some((piece) => piece.hasStatus(UnitStatus.Wizard))) {
                 const killedPiece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
-                this._board.logger.log(
-                    `${killedPiece.fullName} was destroyed by ${this.fullName}!`,
-                    Colour.Red,
-                );
+                this._board.logger.log(`${killedPiece.fullName} was destroyed by ${this.fullName}!`, Colour.Red);
                 await killedPiece.kill();
                 result.killedPieceId = killedPiece.id;
             } else if (this.hasStatus(UnitStatus.Engulfs)) {

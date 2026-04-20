@@ -453,9 +453,7 @@ export class Rules {
                     board.stateManager.evaluate(new SpellCastComplete());
                     const wasted: Spell | null = await board.currentPlayer.discardSpell();
                     if (wasted) {
-                        board.logger.log(
-                            `Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`,
-                        );
+                        board.logger.log(`Discarded ${board.currentPlayer.name}'s spell '${wasted.name}'`);
                     }
                     if (board.selected) {
                         board.selected.turnOver = true;
@@ -581,9 +579,7 @@ export class Rules {
             console.warn(`Chance value ${attack} is out of bounds, clamping to 0-1`);
             attack = Math.max(0, Math.min(1, attack));
         }
-        console.debug(
-            `Rolled ${attack} vs ${defenceRoll}; chance ${attack > defenceRoll ? "succeeds" : "fails"}`,
-        );
+        console.debug(`Rolled ${attack} vs ${defenceRoll}; chance ${attack > defenceRoll ? "succeeds" : "fails"}`);
         return attack > defenceRoll;
     }
 
@@ -637,10 +633,7 @@ export class Rules {
                 }
             } else if (piece.hasStatus(UnitStatus.ExpiresGivesSpell) && piece.currentRider && board.roll(4, 10)) {
                 const owner: Player = piece.currentRider.owner;
-                board.logger.log(
-                    `${piece.name} has expired and gifted ${owner.name} a new spell`,
-                    Colour.Cyan,
-                );
+                board.logger.log(`${piece.name} has expired and gifted ${owner.name} a new spell`, Colour.Cyan);
                 await board.events.emitAsync(EngineEvent.EffectRequested, {
                     type: EffectType.GiveSpell,
                     pieceId: piece.id,
