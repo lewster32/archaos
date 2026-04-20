@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, test, expect, vi } from "vitest";
 import { Piece } from "./piece";
 import { Board } from "./board";
 import { TestRNG } from "./rng";
 import { Point } from "./point";
+import { Logger } from "./logger";
 import { UnitStatus } from "./enums/unitstatus";
 import { UnitType } from "./enums/unittype";
 import { UnitDirection } from "./enums/unitdirection";
@@ -1615,5 +1616,104 @@ describe("Piece.inAttackRange", () => {
         const piece = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Flying], { movement: 6 });
         // !moved && inMovementRange(point) && Flying → true
         expect(piece.inAttackRange({ x: 3, y: 0 })).toBe(true);
+    });
+});
+
+// ── Piece.setPosition ─────────────────────────────────────────────────────────
+
+/**
+ * Build a minimal real Board suitable for setPosition tests.
+ * Omits rules — no game phases are triggered in these tests.
+ */
+function makeRealBoard(): Board {
+    return new Board(1, 13, 13, false, undefined, {
+        rng: new TestRNG(),
+        logger: { log: vi.fn() } as unknown as Logger,
+    });
+}
+
+/**
+ * Build a plain Piece at the given coordinates on a real Board.
+ */
+function makeRealPiece(board: Board, id: number, x: number, y: number): Piece {
+    return new Piece(board, id, {
+        type: UnitType.Creature,
+        x,
+        y,
+        properties: {
+            id: "creature",
+            name: "Creature",
+            movement: 3,
+            combat: 3,
+            rangedCombat: 0,
+            range: 0,
+            defence: 3,
+            manoeuvrability: 3,
+            magicResistance: 0,
+            attackType: "hit",
+            rangedType: "shot",
+            status: [],
+        },
+        owner: OWNER_A,
+    } as PieceConfig);
+}
+
+describe("Piece.setPosition", () => {
+    test("without an active event context, mutates position and emits nothing", () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        piece.setPosition(new Point(3, 4));
+
+        expect(piece.position.x).toBe(3);
+        expect(piece.position.y).toBe(4);
+        expect(board.eventLog.head()).toBe(0);
+    });
+
+    test("inside recordEvent, mutates position and pushes a piece-moved outcome", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+        const from = { x: piece.position.x, y: piece.position.y };
+
+        const event = await board.recordEvent({ commandId: "c_1", actorId: 1 }, () => {
+            piece.setPosition(new Point(5, 5));
+        });
+
+        expect(piece.position.x).toBe(5);
+        expect(piece.position.y).toBe(5);
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-moved",
+            pieceId: piece.id,
+            from,
+            to: { x: 5, y: 5 },
+        });
+    });
+
+    test("path option is included in the outcome when provided", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+        const path = [
+            { x: 2, y: 2 },
+            { x: 3, y: 3 },
+            { x: 5, y: 5 },
+        ];
+
+        const event = await board.recordEvent({ commandId: "c_1", actorId: 1 }, () => {
+            piece.setPosition(new Point(5, 5), { path });
+        });
+
+        expect(event.outcomes[0]).toHaveProperty("path", path);
+    });
+
+    test("path is omitted from the outcome when not provided", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            piece.setPosition(new Point(5, 5));
+        });
+
+        expect(event.outcomes[0]).not.toHaveProperty("path");
     });
 });

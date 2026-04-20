@@ -684,6 +684,29 @@ export class Piece extends Entity {
     }
 
     /**
+     * Primitive mutator for position. Updates the piece's tracked
+     * coordinates and — if a `Board.recordEvent` context is active —
+     * pushes a `piece-moved` outcome with the from/to positions and
+     * optional `path`.
+     *
+     * Does not cascade to rider / mount. Cross-piece position
+     * synchronisation is the orchestrator's responsibility (see
+     * invariant 6 in the engine gameplay-event emission spec).
+     */
+    setPosition(to: Point, options?: { path?: Point[] }): void {
+        const fromX: number = this.position.x;
+        const fromY: number = this.position.y;
+        this.position = new Point(to.x, to.y);
+        this._board.pushOutcome({
+            kind: "piece-moved",
+            pieceId: this.id,
+            from: { x: fromX, y: fromY },
+            to: { x: to.x, y: to.y },
+            ...(options?.path === undefined ? {} : { path: options.path.map((p) => ({ x: p.x, y: p.y })) }),
+        });
+    }
+
+    /**
      * Raise this piece from the dead, assigning a new
      * owner. Client overrides to also restore the sprite.
      */
