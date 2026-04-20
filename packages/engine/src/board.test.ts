@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, test, expect, vi, afterEach } from "vitest";
 import { Board } from "./board";
 import type { BoardDeps } from "./board";
 import { Player } from "./player";
@@ -1455,6 +1455,107 @@ describe("Board", () => {
         });
     });
 }); // closes describe("Board")
+
+describe("recordEvent", () => {
+    test("invokes the callback and appends one broadcast event", async () => {
+        let clock = 0;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        clock = 500;
+
+        const event = await board.recordEvent({ commandId: "c_1", actorId: 1 }, () => {
+            board.pushOutcome({ kind: "player-picked-spell", playerId: 1 });
+        });
+
+        expect(event.sequence).toBe(1);
+        expect(event.commandId).toBe("c_1");
+        expect(event.actorId).toBe(1);
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({ kind: "player-picked-spell", playerId: 1 });
+        expect(board.eventLog.head()).toBe(1);
+    });
+
+    test("elapsedMs reflects the injected clock delta from gameStart", async () => {
+        let clock = 1000;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        // gameStartMs is 0 until startGame runs; elapsedMs = now - 0 = 1500
+        clock = 1500;
+        const event = await board.recordEvent({}, () => {
+            board.pushOutcome({ kind: "phase-changed", phase: "spellbook", turnNumber: 1 });
+        });
+        expect(event.elapsedMs).toBe(1500);
+    });
+
+    test("outcomes accumulate in order across the callback", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        const event = await board.recordEvent({}, () => {
+            board.pushOutcome({
+                kind: "alignment-changed",
+                delta: 1,
+                newAlignment: { value: 1, accumulatedValue: 1 },
+            });
+            board.pushOutcome({ kind: "weather-changed", weather: { type: "clear" } });
+        });
+        expect(event.outcomes.map((o) => o.kind)).toEqual(["alignment-changed", "weather-changed"]);
+    });
+
+    test("spontaneous events omit commandId and actorId", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        const event = await board.recordEvent({}, () => {
+            board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 });
+        });
+        expect(event.commandId).toBeUndefined();
+        expect(event.actorId).toBeUndefined();
+    });
+
+    test("nested recordEvent throws", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        await expect(
+            board.recordEvent({}, async () => {
+                await board.recordEvent({}, () => {
+                    board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 });
+                });
+            }),
+        ).rejects.toThrow(/recordEvent.*nested|already active/i);
+    });
+
+    test("exception in callback clears context and appends nothing", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        await expect(
+            board.recordEvent({}, () => {
+                board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 });
+                throw new Error("boom");
+            }),
+        ).rejects.toThrow("boom");
+        expect(board.eventLog.head()).toBe(0);
+
+        // Subsequent recordEvent succeeds.
+        const event = await board.recordEvent({}, () => {
+            board.pushOutcome({ kind: "phase-changed", phase: "movement", turnNumber: 1 });
+        });
+        expect(event.sequence).toBe(1);
+    });
+
+    test("pushOutcome outside any context is a silent no-op", () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        expect(() => board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 })).not.toThrow();
+        expect(board.eventLog.head()).toBe(0);
+    });
+
+    test("supports async callbacks and awaits them", async () => {
+        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
+        const event = await board.recordEvent({}, async () => {
+            await Promise.resolve();
+            board.pushOutcome({ kind: "phase-changed", phase: "casting", turnNumber: 1 });
+        });
+        expect(event.outcomes).toHaveLength(1);
+    });
+});
 
 describe("event-log clock infrastructure", () => {
     it("BoardDeps.now defaults to Date.now when omitted", () => {

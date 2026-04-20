@@ -40,6 +40,7 @@ import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
 import { Alignment } from "./alignment";
 import { EventLog } from "./eventlog";
+import type { BroadcastEventMessage, CommandId, Outcome, PlayerId } from "./protocol";
 
 /**
  * Simple point type without all the baggage of
@@ -62,6 +63,32 @@ export interface BoardDeps {
      * timing.
      */
     now?: () => number;
+}
+
+/**
+ * Internal builder collecting outcomes during a `recordEvent` callback.
+ * Not exported — callers interact through `Board.recordEvent` and
+ * `Board.pushOutcome`.
+ */
+class EventBuilder {
+    readonly outcomes: Outcome[] = [];
+
+    push(outcome: Outcome): void {
+        this.outcomes.push(outcome);
+    }
+
+    finalise(
+        correlation: { commandId?: CommandId; actorId?: PlayerId },
+        elapsedMs: number,
+    ): Omit<BroadcastEventMessage, "sequence"> {
+        return {
+            type: "event",
+            elapsedMs,
+            ...(correlation.commandId === undefined ? {} : { commandId: correlation.commandId }),
+            ...(correlation.actorId === undefined ? {} : { actorId: correlation.actorId }),
+            outcomes: [...this.outcomes],
+        };
+    }
 }
 
 /**
@@ -178,6 +205,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * counter and ordered broadcast-event history.
      */
     private readonly _eventLog: EventLog = new EventLog();
+
+    /**
+     * The event builder currently open inside a `recordEvent` callback,
+     * or `null` when no context is active.
+     */
+    private _activeEvent: EventBuilder | null = null;
 
     /**
      * Monotonic clock used to compute `elapsedMs` on broadcast events.
@@ -565,6 +598,57 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     /** The authoritative game event log. */
     get eventLog(): EventLog {
         return this._eventLog;
+    }
+
+    /**
+     * Record a broadcast event. Opens an ambient event context, runs the
+     * callback (awaiting it if it returns a promise), then finalises and
+     * appends the event to the log.
+     *
+     * Non-reentrant: calling `recordEvent` inside an already-active
+     * callback throws. If the callback throws, the context is cleared
+     * and no event is appended; the exception propagates.
+     *
+     * @param correlation `{ commandId?, actorId? }` — both fields absent
+     *     for spontaneous events.
+     * @param callback synchronous or async; mutations inside push
+     *     outcomes via `pushOutcome`.
+     * @returns the appended event, with sequence assigned.
+     */
+    async recordEvent(
+        correlation: { commandId?: CommandId; actorId?: PlayerId },
+        callback: () => void | Promise<void>,
+    ): Promise<BroadcastEventMessage> {
+        if (this._activeEvent !== null) {
+            throw new Error(
+                "Board.recordEvent: nested recordEvent is not permitted" + " (an event context is already active).",
+            );
+        }
+        const builder = new EventBuilder();
+        this._activeEvent = builder;
+        try {
+            await callback();
+        } catch (err) {
+            this._activeEvent = null;
+            throw err;
+        }
+        this._activeEvent = null;
+
+        const elapsedMs: number = this._now() - this._gameStartMs;
+        const finalised: Omit<BroadcastEventMessage, "sequence"> = builder.finalise(correlation, elapsedMs);
+        return this._eventLog.append(finalised);
+    }
+
+    /**
+     * Push an outcome into the currently active event context. Silent
+     * no-op if no context is active — this is the mode future
+     * local-mirror mutations use when driven by an external event stream.
+     */
+    pushOutcome(outcome: Outcome): void {
+        if (this._activeEvent === null) {
+            return;
+        }
+        this._activeEvent.push(outcome);
     }
 
     /**
