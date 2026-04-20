@@ -1455,3 +1455,27 @@ describe("Board", () => {
         });
     });
 }); // closes describe("Board")
+
+describe("event-log clock infrastructure", () => {
+    it("BoardDeps.now defaults to Date.now when omitted", () => {
+        const board = new Board(1, 13, 13);
+        // Before startGame runs, _gameStartMs is 0.
+        expect(board.gameStartMs).toBe(0);
+    });
+
+    it("BoardDeps.now can be overridden with a controlled clock", () => {
+        let clock = 0;
+        const board = new Board(1, 13, 13, false, undefined, {
+            rng: new TestRNG(),
+            now: () => clock,
+        });
+        expect(board.now()).toBe(0);
+        clock = 500;
+        expect(board.now()).toBe(500);
+    });
+
+    it("gameStartMs is readable before startGame (returns 0)", () => {
+        const board = new Board(1, 13, 13);
+        expect(board.gameStartMs).toBe(0);
+    });
+});

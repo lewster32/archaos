@@ -56,6 +56,12 @@ export interface BoardDeps {
     rng?: IRNG;
     logger?: Logger;
     rules?: Rules;
+    /**
+     * Monotonic clock for computing `elapsedMs` on events. Defaults to
+     * `Date.now`. Tests inject a controlled counter for deterministic
+     * timing.
+     */
+    now?: () => number;
 }
 
 /**
@@ -169,11 +175,21 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
     /**
      * Authoritative event log for this game. Owns the monotonic sequence
-     * counter and ordered broadcast-event history. Task 4 will integrate
-     * this with game-started emission; added here to support the snapshot
-     * builder.
+     * counter and ordered broadcast-event history.
      */
     private readonly _eventLog: EventLog = new EventLog();
+
+    /**
+     * Monotonic clock used to compute `elapsedMs` on broadcast events.
+     * Defaults to `Date.now`; tests inject a controlled counter.
+     */
+    private readonly _now: () => number;
+
+    /**
+     * Milliseconds recorded when `startGame()` is called.
+     * Zero until the game has started.
+     */
+    private _gameStartMs: number = 0;
 
     constructor(
         id: number,
@@ -185,6 +201,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     ) {
         super(id);
         this._rng = deps?.rng ?? new GameRNG(seed);
+        this._now = deps?.now ?? Date.now;
         this._logger = deps?.logger ?? Logger.getInstance();
         this._rules = deps?.rules ?? Rules.getInstance();
         this._alignment = new Alignment(classicBalance);
@@ -548,6 +565,22 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     /** The authoritative game event log. */
     get eventLog(): EventLog {
         return this._eventLog;
+    }
+
+    /**
+     * Wall-clock reading used for `elapsedMs` on events. Reads from
+     * `BoardDeps.now`, defaulting to `Date.now`.
+     */
+    now(): number {
+        return this._now();
+    }
+
+    /**
+     * Milliseconds since `Board.startGame()` was called, or 0 if the
+     * game has not yet started.
+     */
+    get gameStartMs(): number {
+        return this._gameStartMs;
     }
 
     get cursorPosition(): Point {
