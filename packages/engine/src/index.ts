@@ -150,3 +150,8 @@ export { Node, Path, distance, getAngle, diagonalHeuristic, buildPath, isOpen, i
 
 // RangeGizmo
 export { RangeGizmo } from "./rangegizmo";
+
+// Protocol (message types for the authoritative engine / remote player
+// boundary). Re-exports the full protocol surface so the client can
+// participate in the same type system.
+export * from "./protocol";

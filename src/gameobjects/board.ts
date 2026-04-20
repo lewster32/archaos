@@ -34,6 +34,7 @@ import {
 } from "@archaos/engine";
 import type {
     BoardDeps,
+    BroadcastEventMessage,
     PieceConfig,
     WizardConfig,
     PlayerConfig,
@@ -844,11 +845,19 @@ export class Board extends EngineBoard<Piece> {
      * @param silent Optional flag to suppress movement sound effects.
      * @returns A promise that resolves to the moved piece.
      */
-    async movePiece(id: number, position: SimplePoint, silent?: boolean): Promise<Piece> {
+    async movePiece(
+        id: number,
+        to: SimplePoint,
+        commandId: string,
+        actorId: number,
+        _path?: SimplePoint[],
+        silent?: boolean,
+    ): Promise<BroadcastEventMessage> {
         const piece: Piece | null = this.getPiece(id);
         if (!piece) {
             throw new Error(`Could not find piece with ID ${id}`);
         }
+        const position: SimplePoint = to;
         this.cursor.enabled = false;
         this.emitUIEvent(EventType.DismountAvailable, false);
         const path: Path = this.rangeGizmo.getPathTo(position);
@@ -887,14 +896,14 @@ export class Board extends EngineBoard<Piece> {
         piece.position = new Point(fromX, fromY);
 
         // Record the broadcast event (piece-moved + piece-turn-flag-changed
-        // outcomes) and emit BoardEvent.PieceMoved via the engine. The client
-        // has no real command context yet; synthetic ids are used until the
-        // command pipeline is wired end-to-end.
-        await super.movePiece(
+        // outcomes) and emit BoardEvent.PieceMoved via the engine. Pass the
+        // caller-supplied commandId / actorId straight through so the log
+        // carries the real command correlation.
+        const event: BroadcastEventMessage = await super.movePiece(
             id,
             new Point(position.x, position.y),
-            `client-move-${id}-${Date.now()}`,
-            piece.owner?.id ?? 0,
+            commandId,
+            actorId,
         );
         this.cursor.enabled = true;
 
@@ -915,7 +924,7 @@ export class Board extends EngineBoard<Piece> {
             this.emitBoardUpdateEvent();
         }, 10);
 
-        return piece;
+        return event;
     }
 
     /**
