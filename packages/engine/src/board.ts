@@ -39,6 +39,7 @@ import type { RemotePlayer } from "./interfaces/remoteplayer";
 import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
 import { Alignment } from "./alignment";
+import { EventLog } from "./eventlog";
 
 /**
  * Simple point type without all the baggage of
@@ -165,6 +166,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Event emitter for board game events.
      */
     protected readonly _boardEvents: EventEmitter = new EventEmitter();
+
+    /**
+     * Authoritative event log for this game. Owns the monotonic sequence
+     * counter and ordered broadcast-event history. Task 4 will integrate
+     * this with game-started emission; added here to support the snapshot
+     * builder.
+     */
+    private readonly _eventLog: EventLog = new EventLog();
 
     constructor(
         id: number,
@@ -534,6 +543,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
     get events(): EventEmitter {
         return this._boardEvents;
+    }
+
+    /** The authoritative game event log. */
+    get eventLog(): EventLog {
+        return this._eventLog;
     }
 
     get cursorPosition(): Point {
