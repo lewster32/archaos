@@ -592,7 +592,7 @@
             "mnv": 5,
             "res": 6
         },
-        "status": ["undead", "trans", "flying", "noCorpse"],
+        "status": ["undead", "flying", "noCorpse"],
         "name": "Vampire",
         "animFrames": [0, 1, 2, 1],
         "animSpeed": 5
@@ -625,7 +625,7 @@
             "mnv": 4,
             "res": 6
         },
-        "status": ["undead", "trans", "noCorpse"],
+        "status": ["undead", "noCorpse"],
         "name": "Spectre",
         "animFrames": [0, 1, 2, 3],
         "animSpeed": 2,
@@ -642,7 +642,7 @@
             "mnv": 5,
             "res": 4
         },
-        "status": ["undead", "noCorpse"],
+        "status": ["undead", "noCorpse", "trans"],
         "name": "Wraith",
         "animFrames": [0, 1, 2, 3],
         "animSpeed": 2,
