@@ -52,6 +52,7 @@ import type {
     PickSpellCommand,
     PlayerId,
     RejectionReason,
+    SpellTarget,
 } from "./protocol";
 import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
@@ -811,6 +812,15 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }> = [];
 
     /**
+     * Test-only buffer of cast-pipeline outcomes (spell-revealed,
+     * spell-cast-attempted, spell-cast-succeeded, spell-cast-failed)
+     * accumulated during this game. The full broadcast-event wiring
+     * lands when the casting phase loop is rewritten in a later task;
+     * for now tests assert against this in-memory buffer.
+     */
+    readonly _castOutcomesForTests: Array<unknown> = [];
+
+    /**
      * Public entry point for every player command. Validates phase /
      * slot / barrier / dedup, then dispatches to the per-kind handler.
      * Token validation is a transport-layer concern and is not done
@@ -985,10 +995,93 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         });
     }
 
-    // Cast handlers — real implementations land in subsequent tasks.
-    private async _handleCastSpell(playerId: PlayerId, cmd: CastSpellCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    /**
+     * Resolve the protocol-level {@link SpellTarget} into the engine
+     * Point or Piece form expected by `Spell.getValidTarget` / `cast`.
+     * Returns null when the referenced piece does not exist or the
+     * envelope is malformed.
+     */
+    private _resolveCastTarget(
+        player: Player<P>,
+        target: SpellTarget,
+    ): Point | P | null {
+        if ("self" in target && target.self) {
+            return player.castingPiece;
+        }
+        if ("pieceId" in target) {
+            return this.getPiece(target.pieceId);
+        }
+        if ("point" in target) {
+            return new Point(target.point.x, target.point.y);
+        }
+        return null;
     }
+
+    private async _handleCastSpell(playerId: PlayerId, cmd: CastSpellCommand): Promise<void> {
+        const slot = this._expectedCommand;
+
+        // 1. Slot must be open and casting must be in progress.
+        if (!slot || this._currentCastingPlayerId === null) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+
+        // 2. Slot ownership.
+        if (slot.expectedPlayerId !== playerId || this._currentCastingPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+
+        // 3. Player must have a selected spell with casts remaining.
+        const player = this.getPlayer(playerId);
+        const spell = player?.selectedSpell ?? null;
+        if (!player || !spell || spell.castTimes <= 0) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+
+        // 4. Translate the protocol target and let the spell's existing
+        //    predicate decide whether it is valid.
+        const resolved = this._resolveCastTarget(player, cmd.target);
+        if (resolved === null || spell.getValidTarget(resolved) === null) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
+
+        // 5. Accept: emit spell-revealed (first cast only) and
+        //    spell-cast-attempted, then delegate to the existing
+        //    Spell.cast pipeline. Outcomes are buffered onto a
+        //    test-only field; broadcast-event emission is wired up
+        //    when the casting phase loop is rewritten.
+        if (!this._spellRevealedSpellIds.has(spell.id)) {
+            this._spellRevealedSpellIds.add(spell.id);
+            this._castOutcomesForTests.push({ kind: "spell-revealed", playerId });
+        }
+        this._castOutcomesForTests.push({
+            kind: "spell-cast-attempted",
+            playerId,
+            target: cmd.target,
+        });
+
+        const result = await spell.cast(player, player.castingPiece, resolved);
+
+        if (result !== null && spell.failed === false) {
+            this._castOutcomesForTests.push({
+                kind: "spell-cast-succeeded",
+                playerId,
+                castsLeft: spell.castTimes,
+            });
+        } else {
+            this._castOutcomesForTests.push({
+                kind: "spell-cast-failed",
+                playerId,
+            });
+        }
+
+        // 6. Hand the slot off so the casting phase loop can advance.
+        slot.submit(playerId, cmd);
+    }
+
     private async _handleCancelCast(playerId: PlayerId, cmd: CancelCastCommand): Promise<void> {
         this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
     }

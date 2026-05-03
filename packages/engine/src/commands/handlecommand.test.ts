@@ -54,6 +54,14 @@ function openSerialSlotFor(board: Board, playerId: number): void {
     );
 }
 
+function openCastSlotFor(board: Board, playerId: number): void {
+    (board as any)._expectedCommand = new ExpectedCommand(
+        playerId,
+        ["cast-spell", "cancel-cast"],
+    );
+    (board as any)._currentCastingPlayerId = playerId;
+}
+
 function openBarrierFor(board: Board, playerIds: number[]): SpellbookBarrier {
     const setTimeout = (cb: () => void, _ms: number): unknown => {
         return Symbol("noop");
@@ -62,6 +70,60 @@ function openBarrierFor(board: Board, playerIds: number[]): SpellbookBarrier {
     const barrier = new SpellbookBarrier(playerIds, 5000, setTimeout, clearTimeout);
     (board as any)._spellbookBarrier = barrier;
     return barrier;
+}
+
+function makeTestBoard(): Board {
+    const board = makeBoard();
+    addLocalPlayer(board, "P1");
+    return board;
+}
+
+/**
+ * Build a board where player `playerId` holds a single-cast spell whose
+ * `getValidTarget` always returns null (i.e. the spell rejects every
+ * target). Used to drive the cast handler's invalid-target path
+ * irrespective of board geometry.
+ */
+function makeTestBoardWithRangedSpell(playerId: number, range: number): Board {
+    const board = makeTestBoard();
+    const player = board.getPlayer(playerId);
+    const spell = makeMockSpell({
+        id: 100,
+        range,
+        castTimes: 1,
+        totalCastTimes: 1,
+        failed: false,
+        getValidTarget: vi.fn().mockReturnValue(null),
+        cast: vi.fn().mockResolvedValue(true),
+    });
+    (player as any)._spells.set(spell.id, spell);
+    (player as any)._selectedSpell = spell;
+    (player as any)._castingPiece = { id: 50, position: { x: 5, y: 5 } };
+    return board;
+}
+
+/**
+ * Build a board where player `playerId` holds a single-cast summon-style
+ * spell whose `getValidTarget` accepts the target unmodified and whose
+ * `cast` resolves true. Used to drive the cast handler's happy-path
+ * outcome buffering.
+ */
+function makeTestBoardWithSummonSpell(playerId: number): Board {
+    const board = makeTestBoard();
+    const player = board.getPlayer(playerId);
+    const spell = makeMockSpell({
+        id: 100,
+        range: 1.5,
+        castTimes: 1,
+        totalCastTimes: 1,
+        failed: false,
+        getValidTarget: vi.fn().mockImplementation((target) => target),
+        cast: vi.fn().mockResolvedValue(true),
+    });
+    (player as any)._spells.set(spell.id, spell);
+    (player as any)._selectedSpell = spell;
+    (player as any)._castingPiece = { id: 50, position: { x: 4, y: 5 } };
+    return board;
 }
 
 const pick = (commandId: string, spellId = 1): PickSpellCommand => ({
@@ -272,5 +334,75 @@ describe("end-spell-pick handler", () => {
         expect(board._rejectedCommandsForTests).toContainEqual({
             playerId: 2, commandId: "c1", reason: "not-your-turn",
         });
+    });
+});
+
+describe("cast-spell handler", () => {
+    it("rejects with wrong-phase when no casting slot is open", async () => {
+        const board = makeTestBoard();
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { self: true },
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual(
+            { playerId: 1, commandId: "c1", reason: "wrong-phase" },
+        );
+    });
+
+    it("rejects with not-your-turn when the slot is for another player", async () => {
+        const board = makeTestBoard();
+        addLocalPlayer(board, "P2");
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(2, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { self: true },
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual(
+            { playerId: 2, commandId: "c1", reason: "not-your-turn" },
+        );
+    });
+
+    it("rejects with wrong-phase when player has no selected spell", async () => {
+        const board = makeTestBoard();
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { self: true },
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual(
+            { playerId: 1, commandId: "c1", reason: "wrong-phase" },
+        );
+    });
+
+    it("rejects with invalid-target when target is out of range", async () => {
+        const board = makeTestBoardWithRangedSpell(1, 3);
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { point: { x: 99, y: 99 } },
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual(
+            { playerId: 1, commandId: "c1", reason: "invalid-target" },
+        );
+    });
+
+    it("happy path: emits spell-revealed + spell-cast-attempted via cast pipeline", async () => {
+        const board = makeTestBoardWithSummonSpell(1);
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+
+        expect(board._castOutcomesForTests).toEqual(
+            expect.arrayContaining([
+                { kind: "spell-revealed", playerId: 1 },
+                { kind: "spell-cast-attempted", playerId: 1, target: { point: { x: 5, y: 5 } } },
+            ]),
+        );
     });
 });
