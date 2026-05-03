@@ -718,7 +718,16 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const builder = new EventBuilder();
         this._activeEvent = builder;
         try {
-            await callback();
+            // Avoid `await callback()` which always yields a microtask
+            // even for synchronous callbacks. The yield would leave
+            // `_activeEvent` set while subsequent synchronous code (in
+            // particular `emit` listeners that re-enter the engine via
+            // `handleCommand`) runs, falsely tripping the re-entrancy
+            // guard above.
+            const result = callback();
+            if (result instanceof Promise) {
+                await result;
+            }
         } catch (err) {
             this._activeEvent = null;
             throw err;
