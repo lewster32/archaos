@@ -1898,6 +1898,13 @@ function skip(commandId = "skip"): EndSpellPickCommand {
     };
 }
 
+async function flushUntilPhase(board: Board, phase: BoardPhase): Promise<void> {
+    for (let i = 0; i < 200; i++) {
+        if (board.phase === phase) return;
+        await Promise.resolve();
+    }
+}
+
 describe("Board: serial-mode spellbook phase", () => {
     it("opens slots for each alive player in turn order and advances", async () => {
         const board = makeTestBoard({ players: 2 });
@@ -1907,7 +1914,10 @@ describe("Board: serial-mode spellbook phase", () => {
         await board.handleCommand(1, roundTrip(pickFor(board, 1, "c1")));
         // Slot advances to player 2; explicit skip.
         await board.handleCommand(2, roundTrip(skip("c2")));
-        await board.phaseFlow;
+        // Player 1 picked a real mock spell with no cast/getValidTarget,
+        // so the casting phase opens a slot and blocks. We assert the
+        // FSM has transitioned to Casting without awaiting phaseFlow.
+        await flushUntilPhase(board, BoardPhase.Casting);
         expect(board.phase).toBe(BoardPhase.Casting);
     });
 
@@ -1938,7 +1948,10 @@ describe("Board: barrier-mode spellbook phase", () => {
         // Barrier accepts in any order.
         await board.handleCommand(2, roundTrip(skip("c2")));
         await board.handleCommand(1, roundTrip(pickFor(board, 1, "c1")));
-        await board.phaseFlow;
+        // Player 1 picked a real mock spell with no cast/getValidTarget,
+        // so the casting phase opens a slot and blocks. Assert the FSM
+        // has transitioned to Casting without awaiting phaseFlow.
+        await flushUntilPhase(board, BoardPhase.Casting);
 
         expect(board.phase).toBe(BoardPhase.Casting);
     });
@@ -1976,5 +1989,180 @@ describe("Board: barrier-mode spellbook phase", () => {
         const ended = board._endedSpellPickOutcomesForTests;
         expect(ended.length).toBe(2);
         expect(ended.every((o) => o.timedOut)).toBe(true);
+    });
+});
+
+/* -- Casting phase loop integration tests --------------------- */
+
+interface CastingSpellOpts {
+    castTimes?: number;
+    persist?: boolean;
+}
+
+/**
+ * Build a board where each player's spellbook is replaced with a
+ * single configured mock spell, then walk the spellbook phase so that
+ * every player picks their spell and the casting phase opens its
+ * first slot. Returns once `_currentCastingPlayerId` has been set
+ * (i.e. the per-player loop has begun).
+ */
+async function makeTestBoardEnteringCasting(opts: {
+    players: number;
+    spells?: CastingSpellOpts[];
+}): Promise<Board> {
+    const board = makeTestBoard({ players: opts.players });
+    const spellOpts = opts.spells ?? [];
+
+    for (let i = 0; i < opts.players; i++) {
+        const player = board.getPlayer(i + 1);
+        const so = spellOpts[i] ?? {};
+        const castTimes = so.castTimes ?? 1;
+        const spell = makeMockSpell({
+            id: 1000 + i + 1,
+            range: 1.5,
+            castTimes,
+            totalCastTimes: castTimes,
+            failed: false,
+            persist: so.persist ?? false,
+            properties: { autoPlace: false, id: `mock-spell-${i + 1}` },
+            getValidTarget: vi.fn().mockImplementation((t) => t),
+            resetCastTimes: () => {},
+        });
+        (spell as any).cast = vi.fn().mockImplementation(async () => {
+            (spell as any).castTimes -= 1;
+            return true;
+        });
+        // Replace the auto-added single mock spell with the configured one.
+        (player as any)._spells.clear();
+        (player as any)._spells.set(spell.id, spell);
+        (player as any)._castingPiece = {
+            id: 50 + i,
+            position: { x: i, y: 0 },
+        };
+    }
+
+    await board.startGame();
+
+    // Walk the spellbook phase: each alive player picks their spell.
+    for (let i = 1; i <= opts.players; i++) {
+        const player = board.getPlayer(i);
+        const spellId = player.spells[0].id;
+        await board.handleCommand(i, roundTrip({
+            type: "command",
+            commandId: `pick-${i}`,
+            token: "",
+            kind: "pick-spell",
+            spellId,
+        }));
+    }
+
+    // Flush microtasks until the casting phase opens its first slot.
+    for (let i = 0; i < 200; i++) {
+        if ((board as any)._currentCastingPlayerId !== null) {
+            break;
+        }
+        await Promise.resolve();
+    }
+
+    return board;
+}
+
+/**
+ * Convenience wrapper for single-player multi-cast scenarios.
+ */
+async function makeTestBoardEnteringCastingWithMultiCast(
+    _playerId: number,
+    castTimes: number,
+): Promise<Board> {
+    return makeTestBoardEnteringCasting({
+        players: 1,
+        spells: [{ castTimes }],
+    });
+}
+
+describe("Board: casting phase", () => {
+    it("opens a slot for each player with a selected spell in turn order", async () => {
+        const board = await makeTestBoardEnteringCasting({
+            players: 2,
+            spells: [{}, {}],
+        });
+
+        // Player 1's slot is open first.
+        expect(board.phase).toBe(BoardPhase.Casting);
+        expect((board as any)._currentCastingPlayerId).toBe(1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c1",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+        // Slot advances to player 2.
+        expect((board as any)._currentCastingPlayerId).toBe(2);
+
+        await board.handleCommand(2, roundTrip({
+            type: "command",
+            commandId: "c2",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 6, y: 6 } },
+        }));
+        await board.phaseFlow;
+
+        // Casting phase complete; phase moved on (via existing CastingDone path).
+        expect(board.phase).not.toBe(BoardPhase.Casting);
+    });
+
+    it("re-opens the slot after a multi-cast intermediate cast", async () => {
+        const board = await makeTestBoardEnteringCastingWithMultiCast(1, 3);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c1",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+        // Still player 1's slot.
+        expect((board as any)._currentCastingPlayerId).toBe(1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c2",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 6, y: 6 } },
+        }));
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c3",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 7, y: 7 } },
+        }));
+        await board.phaseFlow;
+        // After 3 casts, slot advances (only player so the slot closes).
+        expect((board as any)._currentCastingPlayerId).not.toBe(1);
+    });
+
+    it("cancel-cast forfeits remaining casts and advances the slot", async () => {
+        const board = await makeTestBoardEnteringCastingWithMultiCast(1, 3);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c1",
+            token: "",
+            kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "c2",
+            token: "",
+            kind: "cancel-cast",
+        }));
+        await board.phaseFlow;
+        expect((board as any)._currentCastingPlayerId).not.toBe(1);
     });
 });

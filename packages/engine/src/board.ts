@@ -1115,11 +1115,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
 
         // 5. Accept: emit spell-revealed (first cast only) and
-        //    spell-cast-attempted, then delegate to the existing
-        //    Spell.cast pipeline. Outcomes are buffered onto a
-        //    test-only field; broadcast-event emission is wired up
-        //    when the casting phase loop is rewritten.
-        if (!this._spellRevealedSpellIds.has(spell.id)) {
+        //    spell-cast-attempted as a single broadcast event before
+        //    delegating to the existing Spell.cast pipeline. The
+        //    legacy test-only buffer is kept alongside until the
+        //    broadcast event log assertions take over in a later task.
+        const spellId: SpellId = spell.id;
+        const spellTypeId: SpellTypeId = this._spellTypeIdOf(spell);
+        const wasFirstReveal = !this._spellRevealedSpellIds.has(spell.id);
+        if (wasFirstReveal) {
             this._spellRevealedSpellIds.add(spell.id);
             this._castOutcomesForTests.push({ kind: "spell-revealed", playerId });
         }
@@ -1129,14 +1132,38 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             target: cmd.target,
         });
 
+        void this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            if (wasFirstReveal) {
+                this.pushOutcome({
+                    kind: "spell-revealed",
+                    playerId,
+                    spellId,
+                    spellTypeId,
+                });
+            }
+            this.pushOutcome({
+                kind: "spell-cast-attempted",
+                playerId,
+                spellId,
+                spellTypeId,
+                target: cmd.target,
+            });
+        });
+
         const result = await spell.cast(player, player.castingPiece, resolved);
         const succeeded = result !== null && spell.failed === false;
+        const castsLeft: number = spell.castTimes;
+        const totalCastTimes: number =
+            (spell as unknown as { totalCastTimes?: number }).totalCastTimes ?? 1;
+        const isMultiCast = totalCastTimes > 1;
+        const isFinal = !succeeded || castsLeft <= 0;
+        const persist = spell.persist === true;
 
         if (succeeded) {
             this._castOutcomesForTests.push({
                 kind: "spell-cast-succeeded",
                 playerId,
-                castsLeft: spell.castTimes,
+                castsLeft,
             });
         } else {
             this._castOutcomesForTests.push({
@@ -1144,6 +1171,41 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 playerId,
             });
         }
+
+        void this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            if (succeeded) {
+                const successOutcome: Outcome = isMultiCast
+                    ? {
+                          kind: "spell-cast-succeeded",
+                          playerId,
+                          spellId,
+                          spellTypeId,
+                          castsLeft,
+                      }
+                    : {
+                          kind: "spell-cast-succeeded",
+                          playerId,
+                          spellId,
+                          spellTypeId,
+                      };
+                this.pushOutcome(successOutcome);
+            } else {
+                this.pushOutcome({
+                    kind: "spell-cast-failed",
+                    playerId,
+                    spellId,
+                    spellTypeId,
+                });
+            }
+            if (isFinal && !persist) {
+                this.pushOutcome({
+                    kind: "spell-removed-from-book",
+                    playerId,
+                    spellId,
+                    spellTypeId,
+                });
+            }
+        });
 
         // 6. Slot lifecycle.
         //    Multi-cast intermediate success (castTimes still > 0):
@@ -1180,23 +1242,54 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             return;
         }
 
-        const spellId = spell.id;
+        const spellId: SpellId = spell.id;
+        const spellTypeId: SpellTypeId = this._spellTypeIdOf(spell);
+        const persist = spell.persist === true;
 
         // 4. Discard the spell — removes non-persist spells from the
         //    spellbook and clears the player's selection. Persist spells
         //    (e.g. Disbelieve) only have their cast counter reset.
         await player.discardSpell();
 
-        // 5. Buffer the cancellation outcomes onto the test-only field;
-        //    broadcast emission lands when the casting phase loop is
-        //    rewritten in a later task.
+        // 5. Buffer the cancellation outcomes onto the test-only field
+        //    and emit the real broadcast event. The legacy buffer pushes
+        //    spell-removed-from-book unconditionally; the broadcast
+        //    omits it for persist spells per protocol.
         this._castOutcomesForTests.push(
             { kind: "spell-cast-cancelled", playerId, spellId },
             { kind: "spell-removed-from-book", playerId, spellId },
         );
 
+        void this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            this.pushOutcome({
+                kind: "spell-cast-cancelled",
+                playerId,
+                spellId,
+                spellTypeId,
+            });
+            if (!persist) {
+                this.pushOutcome({
+                    kind: "spell-removed-from-book",
+                    playerId,
+                    spellId,
+                    spellTypeId,
+                });
+            }
+        });
+
         // 6. Hand the slot off so the casting phase loop can advance.
         slot.submit(playerId, cmd);
+    }
+
+    /**
+     * Derive the protocol-level {@link SpellTypeId} for a spell. The
+     * spell config's `id` (e.g. "summon-orc") is preferred; falls back
+     * to the unique spell instance id stringified when no config id is
+     * present (typically only the case for ad-hoc test mock spells).
+     */
+    private _spellTypeIdOf(spell: Spell<P>): SpellTypeId {
+        const properties = spell.properties as { id?: string } | undefined;
+        return properties?.id ?? String(spell.id);
     }
 
     /* ── Phase loop ──────────────────────────────────────────────── */
@@ -1236,7 +1329,60 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 pm.evaluate(new NoSpellsCast());
             }
         }
-        // Casting phase loop is wired in Task 12.
+
+        if (pm.isActive(pm.states.casting)) {
+            await this._runCastingPhase();
+            pm.evaluate(new CastingDone());
+        }
+    }
+
+    /**
+     * Run the casting phase serially in turn order. For each player
+     * with a selected spell, opens an ExpectedCommand slot accepting
+     * `cast-spell` or `cancel-cast` and re-opens fresh slots while
+     * the spell still has casts remaining (multi-cast). The loop
+     * exits for the current caster when the spell is exhausted, the
+     * player cancels, or the player is defeated mid-phase.
+     */
+    private async _runCastingPhase(): Promise<void> {
+        const casters = this.players
+            .filter((p) => !p.defeated && p.selectedSpell != null)
+            .map((p) => p.id);
+
+        for (const playerId of casters) {
+            const player = this.getPlayer(playerId);
+            if (!player?.selectedSpell) {
+                // The player may have been defeated mid-phase.
+                continue;
+            }
+
+            this._spellRevealedSpellIds.delete(player.selectedSpell.id);
+            this._currentCastingPlayerId = playerId;
+
+            // Multi-cast loop: keep opening fresh slots until either
+            // the spell is exhausted or the player cancels.
+            while (
+                player.selectedSpell != null &&
+                player.selectedSpell.castTimes > 0
+            ) {
+                const slot = new ExpectedCommand(playerId, [
+                    "cast-spell",
+                    "cancel-cast",
+                ]);
+                this._expectedCommand = slot;
+                try {
+                    await slot.untilAccepted();
+                } finally {
+                    this._expectedCommand = null;
+                }
+                // If the accepted command was cancel-cast, the
+                // player's selectedSpell is now null and the loop
+                // exits. Otherwise we may have another cast to issue.
+            }
+
+            this._currentCastingPlayerId = null;
+            this._spellRevealedSpellIds.clear();
+        }
     }
 
     /**
