@@ -40,8 +40,22 @@ import { Rules } from "./rules";
 import { RangeGizmo } from "./rangegizmo";
 import { Alignment } from "./alignment";
 import { EventLog } from "./eventlog";
-import type { BroadcastEventMessage, CommandId, Outcome, PhaseKind, PlayerId } from "./protocol";
+import type {
+    BroadcastEventMessage,
+    CancelCastCommand,
+    CastSpellCommand,
+    CommandId,
+    CommandMessage,
+    EndSpellPickCommand,
+    Outcome,
+    PhaseKind,
+    PickSpellCommand,
+    PlayerId,
+    RejectionReason,
+} from "./protocol";
 import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
+import { ExpectedCommand } from "./commands/expectedcommand";
+import { SpellbookBarrier } from "./commands/spellbookbarrier";
 
 /**
  * Simple point type without all the baggage of
@@ -747,6 +761,114 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             return;
         }
         this._activeEvent.push(outcome);
+    }
+
+    /* ── Command pipeline ───────────────────────────── */
+
+    /**
+     * Per-game set of commandIds already dispatched. Used to silently
+     * ignore duplicate commands (replay safety).
+     */
+    private readonly _processedCommandIds: Set<string> = new Set();
+
+    /**
+     * Active barrier when running spellbook phase in barrier mode.
+     * Null when in serial mode or outside the spellbook phase.
+     */
+    private _spellbookBarrier: SpellbookBarrier | null = null;
+
+    /**
+     * Active single-player slot when running serial-mode spellbook or
+     * casting phase. Null when no slot is open.
+     */
+    private _expectedCommand: ExpectedCommand | null = null;
+
+    /**
+     * The player whose casting slot is currently open, or null when no
+     * casting slot is open. Distinct from `currentPlayer` because the
+     * casting phase iterates explicitly via `_runCastingPhase`.
+     */
+    private _currentCastingPlayerId: PlayerId | null = null;
+
+    /**
+     * Set of spell ids for which `spell-revealed` has already been
+     * emitted in the current casting slot. Cleared at slot boundaries.
+     * Used to suppress duplicate `spell-revealed` emissions across
+     * multi-cast iterations.
+     */
+    private readonly _spellRevealedSpellIds: Set<number> = new Set();
+
+    /**
+     * Test-only buffer of `command-rejected` private events emitted
+     * during this game. Real private-event transport wiring lands with
+     * the next spec; for now the engine accumulates rejections here so
+     * tests can assert the emission and reasoning.
+     */
+    readonly _rejectedCommandsForTests: Array<{
+        playerId: PlayerId;
+        commandId: CommandId;
+        reason: RejectionReason;
+    }> = [];
+
+    /**
+     * Public entry point for every player command. Validates phase /
+     * slot / barrier / dedup, then dispatches to the per-kind handler.
+     * Token validation is a transport-layer concern and is not done
+     * here — callers must pass an authenticated `playerId`.
+     *
+     * @param playerId  The authenticated sender.
+     * @param cmd       The command message; must already be wire-safe.
+     */
+    async handleCommand(playerId: PlayerId, cmd: CommandMessage): Promise<void> {
+        // Silent dedup: a re-delivered commandId is a no-op.
+        if (this._processedCommandIds.has(cmd.commandId)) {
+            return;
+        }
+        this._processedCommandIds.add(cmd.commandId);
+
+        switch (cmd.kind) {
+            case "pick-spell":
+                return this._handlePickSpell(playerId, cmd);
+            case "end-spell-pick":
+                return this._handleEndSpellPick(playerId, cmd);
+            case "cast-spell":
+                return this._handleCastSpell(playerId, cmd);
+            case "cancel-cast":
+                return this._handleCancelCast(playerId, cmd);
+            default:
+                this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+                return;
+        }
+    }
+
+    /**
+     * Record a `command-rejected` private event. For now this writes to
+     * a test-only buffer; concrete transport wiring lands in a later
+     * spec.
+     */
+    private _emitCommandRejected(
+        playerId: PlayerId,
+        commandId: CommandId,
+        reason: RejectionReason,
+    ): void {
+        this._rejectedCommandsForTests.push({ playerId, commandId, reason });
+    }
+
+    // Stub handlers — real implementations land in subsequent tasks.
+    // Until then every handler emits wrong-phase so any command that
+    // arrives outside an open slot/barrier produces a deterministic
+    // rejection.
+    private async _handlePickSpell(playerId: PlayerId, cmd: PickSpellCommand): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+    private async _handleEndSpellPick(playerId: PlayerId, cmd: EndSpellPickCommand): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+    private async _handleCastSpell(playerId: PlayerId, cmd: CastSpellCommand): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+    private async _handleCancelCast(playerId: PlayerId, cmd: CancelCastCommand): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
     }
 
     /**
