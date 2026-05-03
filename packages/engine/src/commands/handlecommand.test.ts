@@ -2180,6 +2180,60 @@ describe("_handleAttackPiece", () => {
         const gameOver = outcomes.find((o: any) => o.kind === "game-over");
         expect(gameOver).toEqual({ kind: "game-over", winnerId: p1.id });
     });
+
+    it("flying attacker on successful swoop does NOT replace onto target tile", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const flier = await addPieceFor(board, p1, {
+            x: 2,
+            y: 2,
+            combat: 5,
+            movement: 5,
+            status: [UnitStatus.Flying],
+        });
+        const target = await addPieceFor(board, p2, {
+            x: 4,
+            y: 2,
+            combat: 1,
+        });
+        (board as any)._selected = flier;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        // Force the attack roll to succeed so the swoop kills the
+        // target and the replacement gate is exercised.
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "swoop",
+                token: "",
+                kind: "attack-piece",
+                attackerId: flier.id,
+                targetId: target.id,
+                // Path ends one tile from the target - the swoop
+                // brings the flier adjacent, but the replacement gate
+                // must NOT step it onto the target's tile.
+                path: [{ x: 3, y: 2 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+        // The flier's only piece-moved outcome should be the swoop
+        // step (2,2) -> (3,2). No replacement move onto (4,2).
+        const moves = outcomes.filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === flier.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        const replacement = moves.find((m) => m.to.x === 4 && m.to.y === 2);
+        expect(replacement).toBeUndefined();
+        // Flier ends at the swoop terminal, not on the target's tile.
+        expect(flier.position).toMatchObject({ x: 3, y: 2 });
+    });
 });
 
 describe("_handleRangedAttackPiece", () => {

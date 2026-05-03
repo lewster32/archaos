@@ -56,6 +56,7 @@ import type {
     SpellTarget,
     SpellTypeId,
 } from "./protocol";
+import type { PieceDiedCause } from "./protocol/outcomes";
 import type {
     AttackPieceCommand,
     CancelPieceActionCommand,
@@ -1499,23 +1500,34 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
     /**
      * Cascade-kill `target` with the given `cause`. Idempotent on
-     * already-dead pieces (relies on `setDead`'s idempotency).
+     * already-dead pieces (relies on `Piece.kill`/`setDead`'s
+     * idempotency, which means broadcast outcomes are emitted exactly
+     * once even if this is reached twice).
+     *
+     * Routes through `Piece.kill` so riders are dismounted, engulfed
+     * pieces are released, and illusions/NoCorpse/Undead pieces are
+     * destroyed - matching the lifecycle `Piece.kill` establishes
+     * elsewhere. The primitive `setDead` only flips the dead flag and
+     * deliberately omits this cleanup.
      *
      * If the target is a wizard and has an owner, sweeps the owner's
-     * other living non-wizard pieces with `setDead("spell")` and emits
-     * a `player-defeated` outcome. When only one (or zero) surviving
+     * other living non-wizard pieces with `kill("spell")` and emits a
+     * `player-defeated` outcome. When only one (or zero) surviving
      * players remain, also emits a `game-over` outcome carrying the
      * survivor's id (or `"draw"` if no survivors).
      *
      * Caller must invoke this inside an active `recordEvent` context.
      */
-    private _cascadeKill(target: P, cause: "combat" | "ranged" | "spell"): void {
+    private async _cascadeKill(target: P, cause: PieceDiedCause): Promise<void> {
         if (target.dead) {
             return;
         }
         const wasWizard: boolean = target.hasStatus(UnitStatus.Wizard);
+        // Snapshot the owner reference now - `Piece.kill` clears
+        // `target.owner` as part of its lifecycle, so reading it after
+        // the kill would yield null.
         const owner: Player<P> | null = target.owner as Player<P> | null;
-        target.setDead(cause);
+        await target.kill(cause);
         if (!wasWizard || !owner) {
             return;
         }
@@ -1525,7 +1537,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             if (piece === target || piece.dead) {
                 continue;
             }
-            piece.setDead("spell");
+            await piece.kill("spell");
         }
         this.pushOutcome({
             kind: "player-defeated",
@@ -1710,7 +1722,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
         }
         const attackerMov: number = attacker.stats.movement ?? 0;
-        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, async () => {
             // Walk the path; if engagement fires mid-path, the attack
             // is forfeited unless the engagement tile is still
             // adjacent to the target.
@@ -1737,7 +1749,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 succeeded,
             });
             if (succeeded) {
-                this._cascadeKill(target, "combat");
+                await this._cascadeKill(target, "combat");
                 // Replacement-on-kill: non-flying attackers with
                 // mov > 0 step onto the target's tile.
                 if (!isFlying && attackerMov > 0) {
@@ -1781,7 +1793,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
             return;
         }
-        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, async () => {
             const succeeded: boolean = this.roll(
                 attacker.stats.rangedCombat ?? 0,
                 target.stats.defence ?? 0,
@@ -1794,7 +1806,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 succeeded,
             });
             if (succeeded) {
-                this._cascadeKill(target, "ranged");
+                await this._cascadeKill(target, "ranged");
             }
             attacker.setTurnFlags({ moved: true, attacked: true, rangedAttacked: true });
         });
