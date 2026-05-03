@@ -126,6 +126,34 @@ function makeTestBoardWithSummonSpell(playerId: number): Board {
     return board;
 }
 
+/**
+ * Build a board where player `playerId` holds a multi-cast spell with
+ * the given remaining cast count. The mock `cast` decrements
+ * `castTimes` on each invocation so the handler observes a falling
+ * counter across iterations, matching real Spell.cast semantics.
+ */
+function makeTestBoardWithMultiCastSpell(playerId: number, castTimes: number): Board {
+    const board = makeTestBoard();
+    const player = board.getPlayer(playerId);
+    const spell = makeMockSpell({
+        id: 100,
+        range: 1.5,
+        castTimes,
+        totalCastTimes: castTimes,
+        failed: false,
+        persist: false,
+        getValidTarget: vi.fn().mockImplementation((target) => target),
+    });
+    (spell as any).cast = vi.fn().mockImplementation(async () => {
+        (spell as any).castTimes -= 1;
+        return true;
+    });
+    (player as any)._spells.set(spell.id, spell);
+    (player as any)._selectedSpell = spell;
+    (player as any)._castingPiece = { id: 50, position: { x: 4, y: 5 } };
+    return board;
+}
+
 const pick = (commandId: string, spellId = 1): PickSpellCommand => ({
     type: "command",
     commandId,
@@ -403,6 +431,74 @@ describe("cast-spell handler", () => {
                 { kind: "spell-revealed", playerId: 1 },
                 { kind: "spell-cast-attempted", playerId: 1, target: { point: { x: 5, y: 5 } } },
             ]),
+        );
+    });
+});
+
+describe("cast-spell multi-cast", () => {
+    it("keeps the slot open between casts and decrements castsLeft", async () => {
+        const board = makeTestBoardWithMultiCastSpell(1, 3);
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+
+        // Slot must still be open so the next cast-spell can land in it.
+        expect((board as any)._expectedCommand?.isOpen).toBe(true);
+        const succeeded = board._castOutcomesForTests.find(
+            (o: any) => o.kind === "spell-cast-succeeded",
+        ) as { castsLeft?: number } | undefined;
+        expect(succeeded?.castsLeft).toBe(2);
+    });
+
+    it("closes the slot on the final cast", async () => {
+        const board = makeTestBoardWithMultiCastSpell(1, 1);
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cast-spell",
+            target: { point: { x: 5, y: 5 } },
+        }));
+
+        expect((board as any)._expectedCommand?.isOpen).toBe(false);
+    });
+});
+
+describe("cancel-cast handler", () => {
+    it("emits spell-cast-cancelled + spell-removed-from-book and closes the slot", async () => {
+        const board = makeTestBoardWithMultiCastSpell(1, 3);
+        openCastSlotFor(board, 1);
+        const player = board.getPlayer(1);
+        const spellId = player.selectedSpell.id;
+
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cancel-cast",
+        }));
+
+        expect(board._castOutcomesForTests).toEqual(
+            expect.arrayContaining([
+                { kind: "spell-cast-cancelled", playerId: 1, spellId },
+                { kind: "spell-removed-from-book", playerId: 1, spellId },
+            ]),
+        );
+        expect((board as any)._expectedCommand?.isOpen).toBe(false);
+        expect(player.selectedSpell).toBeNull();
+        expect(player.spells.find((s) => s.id === spellId)).toBeUndefined();
+    });
+
+    it("rejects with not-your-turn for a different player", async () => {
+        const board = makeTestBoardWithMultiCastSpell(1, 3);
+        addLocalPlayer(board, "P2");
+        openCastSlotFor(board, 1);
+
+        await board.handleCommand(2, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "cancel-cast",
+        }));
+
+        expect(board._rejectedCommandsForTests).toContainEqual(
+            { playerId: 2, commandId: "c1", reason: "not-your-turn" },
         );
     });
 });

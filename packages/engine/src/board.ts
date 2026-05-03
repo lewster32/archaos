@@ -1064,8 +1064,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         });
 
         const result = await spell.cast(player, player.castingPiece, resolved);
+        const succeeded = result !== null && spell.failed === false;
 
-        if (result !== null && spell.failed === false) {
+        if (succeeded) {
             this._castOutcomesForTests.push({
                 kind: "spell-cast-succeeded",
                 playerId,
@@ -1078,12 +1079,58 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             });
         }
 
-        // 6. Hand the slot off so the casting phase loop can advance.
+        // 6. Slot lifecycle.
+        //    Multi-cast intermediate success (castTimes still > 0):
+        //    leave the slot open so the next cast-spell from the same
+        //    player can land in it.
+        //    Final cast (castTimes drained or first-cast failure):
+        //    submit so the phase loop can advance.
+        if (succeeded && spell.castTimes > 0) {
+            return;
+        }
         slot.submit(playerId, cmd);
     }
 
     private async _handleCancelCast(playerId: PlayerId, cmd: CancelCastCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const slot = this._expectedCommand;
+
+        // 1. Slot must be open and casting must be in progress.
+        if (!slot || this._currentCastingPlayerId === null) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+
+        // 2. Slot ownership.
+        if (slot.expectedPlayerId !== playerId || this._currentCastingPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+
+        // 3. There must be a spell to cancel.
+        const player = this.getPlayer(playerId);
+        const spell = player?.selectedSpell ?? null;
+        if (!player || !spell) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+
+        const spellId = spell.id;
+
+        // 4. Discard the spell — removes non-persist spells from the
+        //    spellbook and clears the player's selection. Persist spells
+        //    (e.g. Disbelieve) only have their cast counter reset.
+        await player.discardSpell();
+
+        // 5. Buffer the cancellation outcomes onto the test-only field;
+        //    broadcast emission lands when the casting phase loop is
+        //    rewritten in a later task.
+        this._castOutcomesForTests.push(
+            { kind: "spell-cast-cancelled", playerId, spellId },
+            { kind: "spell-removed-from-book", playerId, spellId },
+        );
+
+        // 6. Hand the slot off so the casting phase loop can advance.
+        slot.submit(playerId, cmd);
     }
 
     /**
