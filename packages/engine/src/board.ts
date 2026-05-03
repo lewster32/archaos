@@ -2069,6 +2069,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             await this._runCastingPhase();
             pm.evaluate(new CastingDone());
         }
+
+        if (this._autoRunPhaseLoop && pm.isActive(pm.states.moving)) {
+            await this._runMovementPhase();
+            pm.evaluate(new MovingDone());
+        }
     }
 
     /**
@@ -2257,6 +2262,73 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._currentCastingPlayerId = null;
             this._spellRevealedSpellIds.clear();
         }
+    }
+
+    /**
+     * Open a movement-phase slot for the given player. Re-opens fresh
+     * slots after each accepted command until either the player has no
+     * remaining selectable pieces or `end-movement-phase` was accepted.
+     *
+     * Used by the legacy `nextPlayer()` flow to drive AI movement turns
+     * through the command pipeline without enabling the full
+     * `_runGameFlow`. Mirrors `openSpellbookSlot` /
+     * `runCastingForPlayer`.
+     */
+    async openMovementSlotFor(playerId: PlayerId): Promise<void> {
+        this._movementPhaseEnded = false;
+        try {
+            while (
+                !this._movementPhaseEnded &&
+                this._hasSelectablePieces(playerId)
+            ) {
+                const slot = new ExpectedCommand(playerId, [
+                    "select-piece",
+                    "move-piece",
+                    "attack-piece",
+                    "ranged-attack-piece",
+                    "mount-piece",
+                    "dismount-piece",
+                    "cancel-piece-action",
+                    "end-piece-turn",
+                    "end-movement-phase",
+                ]);
+                this._expectedCommand = slot;
+                this._emitPhaseChanged(BoardPhase.Moving, playerId);
+                try {
+                    await slot.untilAccepted();
+                } finally {
+                    this._expectedCommand = null;
+                }
+            }
+        } finally {
+            this._movementPhaseEnded = false;
+        }
+    }
+
+    /**
+     * The full-phase movement loop (slot-loop variant). Iterates alive
+     * players in roster order and runs a per-player movement slot loop
+     * for each. Gated behind `BoardDeps.autoRunPhaseLoop` until the
+     * legacy `nextPlayer()` movement path is removed in a later task.
+     */
+    private async _runMovementPhase(): Promise<void> {
+        for (const player of this.players.filter((p) => !p.defeated)) {
+            this._currentPlayer = player;
+            await this.openMovementSlotFor(player.id);
+            this._currentPlayer = null;
+        }
+    }
+
+    /**
+     * Whether `playerId` has at least one piece eligible for selection
+     * during the current movement phase.
+     */
+    private _hasSelectablePieces(playerId: PlayerId): boolean {
+        const player = this.getPlayer(playerId);
+        if (!player) return false;
+        return this.getPiecesByOwner(player).some(
+            (p) => !p.dead && p.canSelect && !p.turnOver,
+        );
     }
 
     /**

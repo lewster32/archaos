@@ -21,6 +21,7 @@ import type {
     PickSpellCommand,
 } from "./protocol/commands";
 import { roundTrip } from "./protocol/wiresafety.testhelpers";
+import { MovingReady, SkipSpellbook, StartGame } from "./phasemachine";
 
 function makeRules(): Rules {
     return {
@@ -2349,3 +2350,117 @@ describe("Board.validatePath", () => {
         ).toBe(false);
     });
 });
+
+/**
+ * Drive an idle board's FSM through to the moving phase. Used by the
+ * `openMovementSlotFor` tests to set up a Moving phase without running
+ * the full `_runGameFlow` (which would race the per-player slot loop).
+ */
+function driveToMovingPhase(board: Board): void {
+    const pm = board.stateManager;
+    if (pm.isActive(pm.states.idle)) {
+        pm.evaluate(new StartGame());
+    }
+    if (pm.isActive(pm.states.spellbook)) {
+        pm.evaluate(new SkipSpellbook());
+        pm.evaluate(new MovingReady());
+    }
+}
+
+/**
+ * Add a generic 3/3/3 creature to `board` owned by `ownerId`. Used by
+ * the `openMovementSlotFor` tests to populate selectable pieces.
+ */
+async function addMovementPiece(
+    board: Board,
+    opts: { x: number; y: number; ownerId: number; movement?: number },
+): Promise<Piece> {
+    const owner = board.getPlayer(opts.ownerId);
+    return await board.addPiece({
+        type: UnitType.Creature,
+        x: opts.x,
+        y: opts.y,
+        properties: {
+            movement: opts.movement ?? 3,
+            combat: 3,
+            rangedCombat: 0,
+            range: 0,
+            defence: 4,
+            manoeuvrability: 3,
+            magicResistance: 0,
+            status: [],
+        },
+        owner: owner as any,
+    });
+}
+
+describe("Board.openMovementSlotFor", () => {
+    it("opens a slot accepting all movement-phase commands and resolves on close", async () => {
+        const board = makeBoard();
+        board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        driveToMovingPhase(board);
+        // Need at least one selectable piece so the loop enters.
+        await addMovementPiece(board, { x: 2, y: 2, ownerId: 1 });
+
+        const promise = board.openMovementSlotFor(1);
+        // Yield so the loop's first iteration has installed the slot.
+        await Promise.resolve();
+        const slot = (board as any)._expectedCommand;
+        expect(slot).not.toBeNull();
+        expect(slot.expectedPlayerId).toBe(1);
+
+        // Close it with end-movement-phase.
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "em1",
+            token: "",
+            kind: "end-movement-phase",
+        }));
+        await promise;
+        expect((board as any)._expectedCommand).toBeNull();
+    });
+
+    it("re-opens the slot after each accepted command until end-movement-phase or no selectable pieces", async () => {
+        const board = makeBoard();
+        board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        driveToMovingPhase(board);
+        const piece = await addMovementPiece(board, {
+            x: 2,
+            y: 2,
+            ownerId: 1,
+        });
+
+        const promise = board.openMovementSlotFor(1);
+        await Promise.resolve();
+
+        // Select.
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "s1",
+            token: "",
+            kind: "select-piece",
+            pieceId: piece.id,
+        }));
+        // End piece turn — flips piece.turnOver, so no more selectable
+        // pieces and the loop exits naturally.
+        await board.handleCommand(1, roundTrip({
+            type: "command",
+            commandId: "et1",
+            token: "",
+            kind: "end-piece-turn",
+            pieceId: piece.id,
+        }));
+        await promise;
+        expect((board as any)._expectedCommand).toBeNull();
+    });
+
+    it("exits immediately when the player has no selectable pieces", async () => {
+        const board = makeBoard();
+        board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        driveToMovingPhase(board);
+        // No pieces added — loop should never open a slot.
+        await board.openMovementSlotFor(1);
+        expect((board as any)._expectedCommand).toBeNull();
+    });
+});
+
