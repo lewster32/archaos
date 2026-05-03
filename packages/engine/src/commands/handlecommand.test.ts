@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { Board } from "../board";
 import type { BoardDeps } from "../board";
+import { ExpectedCommand } from "./expectedcommand";
+import { SpellbookBarrier } from "./spellbookbarrier";
+import { GameSetupPlayerType } from "../interfaces/ui";
+import type { Spell } from "../spells/spell";
+import type { Player } from "../player";
 import type { CommandMessage, PickSpellCommand } from "../protocol/commands";
 import { Logger } from "../logger";
 import { TestRNG } from "../rng";
@@ -23,6 +28,40 @@ function makeBoard(overrides: Partial<BoardDeps> = {}): Board {
         rules: makeRules(),
         ...overrides,
     });
+}
+
+function makeMockSpell(overrides: Record<string, any> = {}): Spell {
+    return {
+        id: 99,
+        range: -1,
+        lineOfSight: false,
+        castTimes: 1,
+        persist: false,
+        properties: { autoPlace: false },
+        resetCastTimes: () => {},
+        ...overrides,
+    } as unknown as Spell;
+}
+
+function addLocalPlayer(board: Board, name: string): Player {
+    return board.addPlayer({ name, type: GameSetupPlayerType.Local });
+}
+
+function openSerialSlotFor(board: Board, playerId: number): void {
+    (board as any)._expectedCommand = new ExpectedCommand(
+        playerId,
+        ["pick-spell", "end-spell-pick"],
+    );
+}
+
+function openBarrierFor(board: Board, playerIds: number[]): SpellbookBarrier {
+    const setTimeout = (cb: () => void, _ms: number): unknown => {
+        return Symbol("noop");
+    };
+    const clearTimeout = (_: unknown): void => {};
+    const barrier = new SpellbookBarrier(playerIds, 5000, setTimeout, clearTimeout);
+    (board as any)._spellbookBarrier = barrier;
+    return barrier;
 }
 
 const pick = (commandId: string, spellId = 1): PickSpellCommand => ({
@@ -110,6 +149,128 @@ describe("Board.handleCommand: dispatcher + dedup", () => {
         });
         expect(b._rejectedCommandsForTests).toContainEqual({
             playerId: 1, commandId: "shared-id", reason: "wrong-phase",
+        });
+    });
+});
+
+describe("pick-spell handler", () => {
+    it("rejects with wrong-phase when no spellbook slot/barrier is open", async () => {
+        const board = makeBoard();
+        addLocalPlayer(board, "P1");
+        await board.handleCommand(1, roundTrip(pick("c1", 99)));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1, commandId: "c1", reason: "wrong-phase",
+        });
+    });
+
+    it("rejects with not-your-turn in serial mode for the wrong player", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        p1.addSpell(makeMockSpell({ id: 10 }));
+        p2.addSpell(makeMockSpell({ id: 20 }));
+        openSerialSlotFor(board, p1.id);
+
+        await board.handleCommand(p2.id, roundTrip(pick("c2", 20)));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: p2.id, commandId: "c2", reason: "not-your-turn",
+        });
+    });
+
+    it("rejects with spell-pick-already-ended when the player has already submitted to the barrier", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        p1.addSpell(makeMockSpell({ id: 10 }));
+        p2.addSpell(makeMockSpell({ id: 20 }));
+        openBarrierFor(board, [p1.id, p2.id]);
+
+        await board.handleCommand(p1.id, roundTrip(pick("c1", 10)));
+        await board.handleCommand(p1.id, roundTrip(pick("c2", 10)));
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: p1.id, commandId: "c2", reason: "spell-pick-already-ended",
+        });
+    });
+
+    it("rejects with spell-not-in-book when spellId is not in the player's spellbook", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        p1.addSpell(makeMockSpell({ id: 10 }));
+        openBarrierFor(board, [p1.id]);
+
+        await board.handleCommand(p1.id, roundTrip(pick("c1", 999_999)));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: p1.id, commandId: "c1", reason: "spell-not-in-book",
+        });
+    });
+
+    it("on success records the player's pick in authoritative state", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        const spell10 = makeMockSpell({ id: 10 });
+        p1.addSpell(spell10);
+        p2.addSpell(makeMockSpell({ id: 20 }));
+        openBarrierFor(board, [p1.id, p2.id]);
+
+        await board.handleCommand(p1.id, roundTrip(pick("c1", 10)));
+
+        expect(p1.selectedSpell?.id).toBe(10);
+    });
+
+    it("on success closes the slot/barrier participation for that player", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        p1.addSpell(makeMockSpell({ id: 10 }));
+        p2.addSpell(makeMockSpell({ id: 20 }));
+        const barrier = openBarrierFor(board, [p1.id, p2.id]);
+
+        await board.handleCommand(p1.id, roundTrip(pick("c1", 10)));
+        expect(barrier.canAccept(p1.id)).toBe(false);
+        expect(barrier.canAccept(p2.id)).toBe(true);
+    });
+});
+
+describe("end-spell-pick handler", () => {
+    it("succeeds and discards any previously selected spell", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        p1.addSpell(makeMockSpell({ id: 10 }));
+        p2.addSpell(makeMockSpell({ id: 20 }));
+        openBarrierFor(board, [p1.id, p2.id]);
+
+        await board.handleCommand(p1.id, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
+        }));
+
+        expect(p1.selectedSpell).toBeNull();
+    });
+
+    it("rejects with wrong-phase when no slot/barrier is open", async () => {
+        const board = makeBoard();
+        addLocalPlayer(board, "P1");
+        await board.handleCommand(1, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1, commandId: "c1", reason: "wrong-phase",
+        });
+    });
+
+    it("rejects with not-your-turn in serial mode for the wrong player", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        addLocalPlayer(board, "P2");
+        openSerialSlotFor(board, p1.id);
+
+        await board.handleCommand(2, roundTrip({
+            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
+        }));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 2, commandId: "c1", reason: "not-your-turn",
         });
     });
 });

@@ -854,16 +854,138 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._rejectedCommandsForTests.push({ playerId, commandId, reason });
     }
 
-    // Stub handlers — real implementations land in subsequent tasks.
-    // Until then every handler emits wrong-phase so any command that
-    // arrives outside an open slot/barrier produces a deterministic
-    // rejection.
+    /**
+     * Validate a pick-spell or end-spell-pick command against the open
+     * spellbook slot/barrier. Returns null if the command is acceptable;
+     * otherwise returns the rejection reason.
+     */
+    private _checkSpellbookSubmission(
+        playerId: PlayerId,
+        cmd: PickSpellCommand | EndSpellPickCommand,
+    ): RejectionReason | null {
+        const barrier = this._spellbookBarrier;
+        const slot = this._expectedCommand;
+
+        if (barrier) {
+            if (!barrier.isExpected(playerId)) {
+                return "wrong-phase";
+            }
+            if (!barrier.canAccept(playerId)) {
+                // In-roster but already submitted (or barrier closed).
+                return "spell-pick-already-ended";
+            }
+            return null;
+        }
+
+        if (slot && slot.expectedPlayerId !== playerId) {
+            // Some other player's slot is open.
+            return "not-your-turn";
+        }
+        if (slot && !slot.isOpen) {
+            return "spell-pick-already-ended";
+        }
+        if (!slot) {
+            return "wrong-phase";
+        }
+        // Slot is open for this player; the command's kind is
+        // separately validated by ExpectedCommand.submit.
+        return null;
+    }
+
     private async _handlePickSpell(playerId: PlayerId, cmd: PickSpellCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const rejection = this._checkSpellbookSubmission(playerId, cmd);
+        if (rejection) {
+            this._emitCommandRejected(playerId, cmd.commandId, rejection);
+            return;
+        }
+
+        const player = this.getPlayer(playerId);
+        if (!player) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+
+        const spell = player.spells.find((s) => s.id === cmd.spellId);
+        if (!spell) {
+            this._emitCommandRejected(playerId, cmd.commandId, "spell-not-in-book");
+            return;
+        }
+
+        // Accept: record the pick in authoritative state.
+        await player.pickSpell(cmd.spellId);
+
+        // Apply the illusion bit when the spell supports it. The spell
+        // hierarchy currently exposes `illusion` only on SummonSpell.
+        if (cmd.illusion === true) {
+            const maybeIllusion = spell as unknown as { illusion?: boolean };
+            if ("illusion" in maybeIllusion) {
+                maybeIllusion.illusion = true;
+            }
+        }
+
+        // Update slot/barrier state.
+        const barrier = this._spellbookBarrier;
+        const slot = this._expectedCommand;
+        if (barrier) {
+            barrier.submit(playerId, cmd);
+        } else if (slot) {
+            slot.submit(playerId, cmd);
+        }
+
+        // Emit broadcast outcome via recordEvent.
+        this._recordPlayerPickedSpell(playerId, cmd.commandId);
     }
+
     private async _handleEndSpellPick(playerId: PlayerId, cmd: EndSpellPickCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const rejection = this._checkSpellbookSubmission(playerId, cmd);
+        if (rejection) {
+            this._emitCommandRejected(playerId, cmd.commandId, rejection);
+            return;
+        }
+
+        const player = this.getPlayer(playerId);
+        if (player) {
+            // Discard any previously-picked spell. Calling pickSpell
+            // is the only public path to write selectedSpell, so we
+            // route through discardSpell here for symmetry.
+            if (player.selectedSpell) {
+                await player.discardSpell();
+            }
+        }
+
+        const barrier = this._spellbookBarrier;
+        const slot = this._expectedCommand;
+        if (barrier) {
+            barrier.submit(playerId, cmd);
+        } else if (slot) {
+            slot.submit(playerId, cmd);
+        }
+
+        this._recordPlayerEndedSpellPick(playerId, cmd.commandId, /* timedOut */ false);
     }
+
+    /** Real recordEvent + pushOutcome wiring for an accepted pick. */
+    private _recordPlayerPickedSpell(playerId: PlayerId, commandId: CommandId): void {
+        void this.recordEvent({ commandId, actorId: playerId }, () => {
+            this.pushOutcome({ kind: "player-picked-spell", playerId });
+        });
+    }
+
+    /** Real recordEvent + pushOutcome wiring for an accepted skip. */
+    private _recordPlayerEndedSpellPick(
+        playerId: PlayerId,
+        commandId: CommandId,
+        timedOut: boolean,
+    ): void {
+        void this.recordEvent({ commandId, actorId: playerId }, () => {
+            const outcome: Outcome = timedOut
+                ? { kind: "player-ended-spell-pick", playerId, timedOut: true }
+                : { kind: "player-ended-spell-pick", playerId };
+            this.pushOutcome(outcome);
+        });
+    }
+
+    // Cast handlers — real implementations land in subsequent tasks.
     private async _handleCastSpell(playerId: PlayerId, cmd: CastSpellCommand): Promise<void> {
         this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
     }
