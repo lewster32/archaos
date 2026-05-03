@@ -126,3 +126,7 @@ test-results/
 .worktrees/
 scripts/fix-spell-unit-ids.mjs
 scripts/rename-unit-ids.mjs
+
+# OpenWolf
+
+.wolf/
