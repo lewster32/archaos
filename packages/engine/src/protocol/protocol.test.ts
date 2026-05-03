@@ -1,5 +1,6 @@
-import { describe, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { CommandMessage, Outcome, PrivateEventMessage, ServerToClientMessage } from "./index";
+import type { RejectionReason } from "./events";
 import { expectJsonSafe } from "./testing";
 
 /**
@@ -26,6 +27,13 @@ const samplePiece = {
     currentMountId: null,
     mountedById: null,
 } as const;
+
+describe("RejectionReason", () => {
+    test("RejectionReason includes invalid-move", () => {
+        const reason: RejectionReason = "invalid-move";
+        expect(reason).toBe("invalid-move");
+    });
+});
 
 describe("server \u2192 client messages round-trip through JSON", () => {
     test("snapshot", () => {
@@ -210,10 +218,6 @@ describe("every outcome kind round-trips", () => {
             pieceId: 101,
             from: { x: 0, y: 0 },
             to: { x: 1, y: 0 },
-            path: [
-                { x: 0, y: 0 },
-                { x: 1, y: 0 },
-            ],
         },
         {
             kind: "piece-attacked",
@@ -356,6 +360,7 @@ describe("every command kind round-trips", () => {
             kind: "move-piece",
             pieceId: 101,
             to: { x: 1, y: 1 },
+            path: [{ x: 1, y: 1 }],
         },
         {
             type: "command",
@@ -364,6 +369,7 @@ describe("every command kind round-trips", () => {
             kind: "attack-piece",
             attackerId: 101,
             targetId: 102,
+            path: [],
         },
         {
             type: "command",
@@ -380,6 +386,7 @@ describe("every command kind round-trips", () => {
             kind: "mount-piece",
             wizardId: 1,
             mountId: 50,
+            path: [],
         },
         {
             type: "command",
@@ -387,6 +394,7 @@ describe("every command kind round-trips", () => {
             token: "t",
             kind: "dismount-piece",
             wizardId: 1,
+            to: { x: 1, y: 1 },
         },
         {
             type: "command",

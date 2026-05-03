@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { CommandMessage } from "./commands";
-import type { PrivateEventMessage } from "./events";
+import type { PrivateEventMessage, RejectionReason } from "./events";
 import { roundTrip } from "./wiresafety.testhelpers";
 
 /**
@@ -49,6 +49,23 @@ describe("wire-safety: protocol kind exhaustiveness", () => {
     test("PrivateEventMessage kind list compiles against the union", () => {
         const kinds: PrivateEventMessage["kind"][] = [...PRIVATE_EVENT_KINDS];
         kinds.forEach((k) => expect(typeof k).toBe("string"));
+    });
+
+    test("RejectionReason union enumerates invalid-move", () => {
+        // Mirrors the union in events.ts verbatim. If a member is added,
+        // removed, or reordered there, this list must follow so the test
+        // acts as an exhaustiveness anchor.
+        const reasons: RejectionReason[] = [
+            "unauthorised",
+            "not-your-turn",
+            "wrong-phase",
+            "spell-not-in-book",
+            "piece-already-moved",
+            "invalid-target",
+            "invalid-move",
+            "spell-pick-already-ended",
+        ];
+        expect(reasons).toContain("invalid-move");
     });
 
     test("roundTrip preserves shape for primitives, arrays, and nested objects", () => {

@@ -98,6 +98,7 @@ export type RejectionReason =
     | "spell-not-in-book"
     | "piece-already-moved"
     | "invalid-target"
+    | "invalid-move"
     | "spell-pick-already-ended";
 
 /**

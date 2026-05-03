@@ -224,11 +224,14 @@ export interface PieceSpawnedOutcome {
 }
 
 /**
- * A piece has moved from one tile to another.
+ * A piece has moved from one tile to another. Multi-tile traversals
+ * are emitted as a sequence of piece-moved outcomes inside the same
+ * broadcast event, one per traversed tile, in canonical order
+ * (invariants 10 and 11 of the movement-phase command-wiring spec).
  *
- * If the moved piece has a `mountedById`, the rider identified by that id
- * has its position synchronised to the same destination without a
- * separate outcome.
+ * If the moved piece has a `mountedById`, the rider identified by that
+ * id has its position synchronised to the same destination via a
+ * separate paired `piece-moved` outcome emitted by the handler.
  */
 export interface PieceMovedOutcome {
     /** Discriminant for this outcome kind. */
@@ -239,8 +242,6 @@ export interface PieceMovedOutcome {
     from: Point;
     /** Tile the piece moved to. */
     to: Point;
-    /** Optional full path for animated traversal. */
-    path?: Point[];
 }
 
 /**

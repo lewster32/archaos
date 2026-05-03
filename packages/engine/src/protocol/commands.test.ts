@@ -121,6 +121,7 @@ describe("commands — movement phase", () => {
             kind: "move-piece",
             pieceId: 101,
             to: { x: 3, y: 4 },
+            path: [{ x: 3, y: 4 }],
         };
         expect(cmd.to).toEqual({ x: 3, y: 4 });
     });
@@ -133,6 +134,7 @@ describe("commands — movement phase", () => {
             kind: "attack-piece",
             attackerId: 101,
             targetId: 102,
+            path: [],
         };
         expect([cmd.attackerId, cmd.targetId]).toEqual([101, 102]);
     });
@@ -157,6 +159,7 @@ describe("commands — movement phase", () => {
             kind: "mount-piece",
             wizardId: 1,
             mountId: 50,
+            path: [],
         };
         expect([cmd.wizardId, cmd.mountId]).toEqual([1, 50]);
     });
@@ -168,8 +171,65 @@ describe("commands — movement phase", () => {
             token: "t",
             kind: "dismount-piece",
             wizardId: 1,
+            to: { x: 4, y: 4 },
         };
         expect(cmd.wizardId).toBe(1);
+    });
+
+    test("MovePieceCommand carries path: Point[]", () => {
+        const cmd: MovePieceCommand = {
+            type: "command",
+            commandId: "c1",
+            token: "",
+            kind: "move-piece",
+            pieceId: 10,
+            to: { x: 5, y: 5 },
+            path: [
+                { x: 3, y: 3 },
+                { x: 4, y: 4 },
+                { x: 5, y: 5 },
+            ],
+        };
+        expect(cmd.path).toHaveLength(3);
+        expect(cmd.path[2]).toEqual({ x: 5, y: 5 });
+    });
+
+    test("MountPieceCommand carries path: Point[]", () => {
+        const cmd: MountPieceCommand = {
+            type: "command",
+            commandId: "c2",
+            token: "",
+            kind: "mount-piece",
+            wizardId: 1,
+            mountId: 2,
+            path: [{ x: 3, y: 3 }],
+        };
+        expect(cmd.path).toEqual([{ x: 3, y: 3 }]);
+    });
+
+    test("AttackPieceCommand carries path: Point[]", () => {
+        const cmd: AttackPieceCommand = {
+            type: "command",
+            commandId: "c3",
+            token: "",
+            kind: "attack-piece",
+            attackerId: 1,
+            targetId: 2,
+            path: [],
+        };
+        expect(cmd.path).toEqual([]);
+    });
+
+    test("DismountPieceCommand carries to: Point", () => {
+        const cmd: DismountPieceCommand = {
+            type: "command",
+            commandId: "c4",
+            token: "",
+            kind: "dismount-piece",
+            wizardId: 1,
+            to: { x: 4, y: 4 },
+        };
+        expect(cmd.to).toEqual({ x: 4, y: 4 });
     });
 
     test("cancel-piece-action carries pieceId", () => {
@@ -303,8 +363,24 @@ describe("CommandMessage union discriminator", () => {
             { type: "command", commandId: "c_4", token: "t", kind: "cancel-cast" },
             // 6.3 Movement
             { type: "command", commandId: "c_5", token: "t", kind: "select-piece", pieceId: 101 },
-            { type: "command", commandId: "c_6", token: "t", kind: "move-piece", pieceId: 101, to: { x: 0, y: 0 } },
-            { type: "command", commandId: "c_7", token: "t", kind: "attack-piece", attackerId: 101, targetId: 102 },
+            {
+                type: "command",
+                commandId: "c_6",
+                token: "t",
+                kind: "move-piece",
+                pieceId: 101,
+                to: { x: 0, y: 0 },
+                path: [{ x: 0, y: 0 }],
+            },
+            {
+                type: "command",
+                commandId: "c_7",
+                token: "t",
+                kind: "attack-piece",
+                attackerId: 101,
+                targetId: 102,
+                path: [],
+            },
             {
                 type: "command",
                 commandId: "c_8",
@@ -313,8 +389,16 @@ describe("CommandMessage union discriminator", () => {
                 attackerId: 101,
                 targetId: 102,
             },
-            { type: "command", commandId: "c_9", token: "t", kind: "mount-piece", wizardId: 1, mountId: 50 },
-            { type: "command", commandId: "c_10", token: "t", kind: "dismount-piece", wizardId: 1 },
+            {
+                type: "command",
+                commandId: "c_9",
+                token: "t",
+                kind: "mount-piece",
+                wizardId: 1,
+                mountId: 50,
+                path: [],
+            },
+            { type: "command", commandId: "c_10", token: "t", kind: "dismount-piece", wizardId: 1, to: { x: 0, y: 0 } },
             { type: "command", commandId: "c_11", token: "t", kind: "cancel-piece-action", pieceId: 101 },
             { type: "command", commandId: "c_12", token: "t", kind: "end-piece-turn", pieceId: 101 },
             { type: "command", commandId: "c_13", token: "t", kind: "end-movement-phase" },

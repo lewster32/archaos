@@ -82,9 +82,9 @@ export interface SelectPieceCommand extends BaseCommand {
 }
 
 /**
- * Move a piece to a target tile. The server authoritatively validates
- * the move and may emit reconciliation outcomes (e.g. engagement on the
- * path).
+ * Move a piece to a target tile. The client supplies the full per-tile
+ * traversal it intends; the server authoritatively validates each step
+ * and may emit reconciliation outcomes (e.g. engagement on the path).
  */
 export interface MovePieceCommand extends BaseCommand {
     /** Discriminant for this command kind. */
@@ -93,10 +93,18 @@ export interface MovePieceCommand extends BaseCommand {
     pieceId: PieceId;
     /** Destination tile. */
     to: Point;
+    /**
+     * The full per-tile traversal from the piece's current position
+     * (exclusive) to the destination (inclusive). Each entry is one
+     * step; the last entry equals `to`.
+     */
+    path: Point[];
 }
 
 /**
- * Perform a melee attack from one piece against another.
+ * Perform a melee attack from one piece against another. The client
+ * supplies the traversal up to (but not into) the target's tile; the
+ * server validates and resolves the attack from the terminal step.
  */
 export interface AttackPieceCommand extends BaseCommand {
     /** Discriminant for this command kind. */
@@ -105,6 +113,13 @@ export interface AttackPieceCommand extends BaseCommand {
     attackerId: PieceId;
     /** The target of the attack. */
     targetId: PieceId;
+    /**
+     * The traversal up to a tile adjacent to the target. Empty if no
+     * movement is required (attacker is already adjacent or is flying).
+     * The terminal step must be adjacent to `targetId`'s tile; the
+     * server rejects with `invalid-move` otherwise.
+     */
+    path: Point[];
 }
 
 /**
@@ -120,7 +135,9 @@ export interface RangedAttackPieceCommand extends BaseCommand {
 }
 
 /**
- * Mount a wizard onto a mountable piece adjacent to the wizard.
+ * Mount a wizard onto a mountable piece. The client supplies the
+ * traversal up to (and including) the mount's tile; the server
+ * validates the path and resolves the mount on arrival.
  */
 export interface MountPieceCommand extends BaseCommand {
     /** Discriminant for this command kind. */
@@ -129,18 +146,25 @@ export interface MountPieceCommand extends BaseCommand {
     wizardId: PieceId;
     /** The mountable piece to ride. */
     mountId: PieceId;
+    /**
+     * The traversal up to (and including) the mount's tile. Empty when
+     * the wizard is already on the mount's tile.
+     */
+    path: Point[];
 }
 
 /**
- * Dismount a wizard from their current mount. The destination tile is
- * resolved by the server; a follow-up piece-moved or piece-mounted
- * outcome is emitted in the same outcomes array.
+ * Dismount a wizard from their current mount onto an adjacent tile.
+ * A follow-up piece-moved or piece-mounted outcome is emitted in the
+ * same outcomes array.
  */
 export interface DismountPieceCommand extends BaseCommand {
     /** Discriminant for this command kind. */
     kind: "dismount-piece";
     /** The wizard dismounting. */
     wizardId: PieceId;
+    /** The destination tile (must be adjacent to the current mount). */
+    to: Point;
 }
 
 /**

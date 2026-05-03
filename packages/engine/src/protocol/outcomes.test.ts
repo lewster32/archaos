@@ -202,22 +202,16 @@ describe("outcomes — pieces", () => {
         expect(JSON.parse(JSON.stringify(o))).toEqual(o);
     });
 
-    test("piece-moved has optional path", () => {
-        const withoutPath: import("./outcomes").PieceMovedOutcome = {
+    test("PieceMovedOutcome no longer carries a path field", () => {
+        const o: import("./outcomes").PieceMovedOutcome = {
             kind: "piece-moved",
-            pieceId: 101,
+            pieceId: 1,
             from: { x: 0, y: 0 },
-            to: { x: 1, y: 0 },
+            to: { x: 1, y: 1 },
         };
-        const withPath: import("./outcomes").PieceMovedOutcome = {
-            ...withoutPath,
-            path: [
-                { x: 0, y: 0 },
-                { x: 1, y: 0 },
-            ],
-        };
-        expect(withoutPath.path).toBeUndefined();
-        expect(withPath.path).toHaveLength(2);
+        // The path field should not exist on the type. This compiles
+        // only if the path field has been removed from the interface.
+        expect("path" in o).toBe(false);
     });
 
     test("piece-attacked carries attacker, target, succeeded", () => {
