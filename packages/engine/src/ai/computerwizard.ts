@@ -3,7 +3,6 @@ import { BoardPhase } from "../enums/boardphase";
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { UnitStatus } from "../enums/unitstatus";
-import { BoardState } from "../enums/boardstate";
 import { RangeType } from "../enums/rangetype";
 import { SpellTarget } from "../enums/spelltarget";
 import type { RemotePlayer } from "../interfaces/remoteplayer";
@@ -17,11 +16,18 @@ import type { Player } from "../player";
 import { Point } from "../point";
 import type { Alignment } from "../alignment";
 import type {
+    AttackPieceCommand,
     CancelCastCommand,
     CastSpellCommand,
+    EndMovementPhaseCommand,
+    EndPieceTurnCommand,
     EndSpellPickCommand,
+    MountPieceCommand,
+    MovePieceCommand,
     PhaseChangedOutcome,
     PickSpellCommand,
+    RangedAttackPieceCommand,
+    SelectPieceCommand,
     SpellTarget as CommandSpellTarget,
 } from "../protocol";
 import { toPhaseKind } from "../snapshotbuilder";
@@ -128,19 +134,13 @@ export class ComputerWizard implements RemotePlayer {
 
         if (outcome.phase === toPhaseKind(BoardPhase.Spellbook)) {
             const myId: number = this._player.id;
-            const isMyTurn: boolean =
-                outcome.currentPlayerId === undefined ||
-                outcome.currentPlayerId === myId;
+            const isMyTurn: boolean = outcome.currentPlayerId === undefined || outcome.currentPlayerId === myId;
             // Suppress dispatch when no slot is actually open for us.
             // The FSM-fired phase-changed inside newTurn() emits with
             // currentPlayerId=undefined before the per-player slot is
             // opened, which would otherwise be mistaken for a barrier
             // signal and land in a closed slot.
-            if (
-                isMyTurn &&
-                !this._spellbookSubmitted &&
-                this._board.canAcceptCommandFor(myId)
-            ) {
+            if (isMyTurn && !this._spellbookSubmitted && this._board.canAcceptCommandFor(myId)) {
                 this._spellbookSubmitted = true;
                 const cmd: PickSpellCommand | EndSpellPickCommand = this._computePickSpellCommand();
                 void this._board.handleCommand(myId, cmd);
@@ -150,12 +150,21 @@ export class ComputerWizard implements RemotePlayer {
             // open slot (one per multi-cast iteration). Issue exactly
             // one cast or cancel command per fire — but only when the
             // engine actually has a slot open for us.
-            if (
-                outcome.currentPlayerId === this._player.id &&
-                this._board.canAcceptCommandFor(this._player.id)
-            ) {
+            if (outcome.currentPlayerId === this._player.id && this._board.canAcceptCommandFor(this._player.id)) {
                 const cmd: CastSpellCommand | CancelCastCommand = this._computeCastSpellCommand();
                 void this._board.handleCommand(this._player.id, cmd);
+            }
+        } else if (outcome.phase === toPhaseKind(BoardPhase.Moving)) {
+            // The movement phase loop re-emits phase-changed once per
+            // open slot. Each fire dispatches one command; the loop
+            // re-fires after every command that submits its slot
+            // (move-piece, attack-piece, ranged-attack-piece,
+            // mount-piece, end-piece-turn, end-movement-phase). For
+            // commands that do not close their slot (select-piece,
+            // cancel-piece-action), `_dispatchMovementCommand` chains
+            // the follow-up itself.
+            if (outcome.currentPlayerId === this._player.id && this._board.canAcceptCommandFor(this._player.id)) {
+                void this._dispatchMovementCommand();
             }
         }
     }
@@ -814,10 +823,7 @@ export class ComputerWizard implements RemotePlayer {
         if (spell.type === SpellType.Disbelieve) {
             const potentialTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
                 return (
-                    p.owner !== this._player &&
-                    !p.dead &&
-                    p.canBeDisbelieved &&
-                    !this._knownNonIllusionPieces.has(p.id)
+                    p.owner !== this._player && !p.dead && p.canBeDisbelieved && !this._knownNonIllusionPieces.has(p.id)
                 );
             });
             if (!potentialTargets.length) return null;
@@ -825,7 +831,8 @@ export class ComputerWizard implements RemotePlayer {
             if (preferredTargetId == null) {
                 target = this._board.rng.pick(potentialTargets);
             } else {
-                target = potentialTargets.find((p) => p.id === preferredTargetId) ?? this._board.rng.pick(potentialTargets);
+                target =
+                    potentialTargets.find((p) => p.id === preferredTargetId) ?? this._board.rng.pick(potentialTargets);
             }
             this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [target.id] });
             return { pieceId: target.id };
@@ -908,52 +915,114 @@ export class ComputerWizard implements RemotePlayer {
     }
 
     /**
-     * Moves a single unit for the computer wizard. This includes moving,
-     * attacking, and ranged attacking as appropriate.
+     * Build the next movement-phase command for this AI's turn. Called
+     * from `_onPhaseChanged` whenever a movement-phase slot opens for
+     * this AI. The phase loop re-emits phase-changed after each
+     * slot-closing command (move, attack, ranged-attack, mount,
+     * end-piece-turn, end-movement-phase), which re-triggers this
+     * method for the next decision.
      *
-     * @param piece the piece to move
-     * @returns true if the unit was moved successfully, false otherwise
+     * For commands that do not close their slot (select-piece,
+     * cancel-piece-action), this method chains the follow-up itself by
+     * recursing.
+     *
+     * When the AI judges no remaining piece has a useful action, it
+     * dispatches `end-movement-phase` to close the player's slot loop.
      */
-    async moveUnit(piece: Piece): Promise<boolean> {
-        this._board.events.emit(EngineEvent.FocusPieces, {
-            pieceIds: [piece.id],
-        });
-        await this._board.selectPiece(piece.id);
-        await this._board.delay(250);
+    private async _dispatchMovementCommand(): Promise<void> {
+        // No piece selected yet: pick one and dispatch select-piece.
+        // Since select-piece does not close the slot, we then recurse
+        // to dispatch the follow-up action for the now-selected piece.
+        if (!this._board.selected) {
+            const candidate: Piece | null = this._chooseNextPieceToSelect();
+            if (!candidate) {
+                void this._board.handleCommand(this._player.id, this._buildEndMovementPhaseCommand());
+                return;
+            }
+            this._board.events.emit(EngineEvent.FocusPieces, {
+                pieceIds: [candidate.id],
+            });
+            await this._board.handleCommand(this._player.id, this._buildSelectPieceCommand(candidate));
+            // The slot stays open after select-piece. The rangegizmo
+            // needs to be populated before path computation, since the
+            // engine's _handleSelectPiece does not do this itself.
+            if (this._board.selected) {
+                await this._board.rangeGizmo.generate(this._board.selected);
+            }
+            // Recurse to dispatch the action for the selected piece.
+            if (this._board.canAcceptCommandFor(this._player.id)) {
+                await this._dispatchMovementCommand();
+            }
+            return;
+        }
+        const piece: Piece = this._board.selected;
+        const cmd = this._computeNextActionFor(piece);
+        void this._board.handleCommand(this._player.id, cmd);
+    }
 
-        if (piece.engaged) {
-            console.debug(`${piece.fullName} is engaged`);
-            // Try to attack the engaged enemy if possible
+    /**
+     * Pick the next own-piece eligible for selection during the
+     * movement phase. Mirrors the filter from the legacy
+     * `moveAllUnits`: must be alive, selectable, not mounted (mounted
+     * units move with their mounts), not turn-over, and not a
+     * structure.
+     */
+    private _chooseNextPieceToSelect(): Piece | null {
+        const candidate: Piece | undefined = this._board.getPiecesByOwner(this._player).find((p: Piece) => {
+            return !p.dead && !p.currentMount && !p.turnOver && p.canSelect && !p.hasStatus(UnitStatus.Structure);
+        });
+        return candidate ?? null;
+    }
+
+    /**
+     * Compute the next single command for the currently-selected
+     * piece, mirroring the decision tree of the legacy `moveUnit`. The
+     * legacy method walked engaged-attack -> melee-attack -> mount ->
+     * fly-attack -> move -> ranged-attack in one sweep, mutating the
+     * piece's turn flags between steps. The command pipeline only
+     * accepts one mutation per slot; this method picks the highest-
+     * priority single command and returns it. Subsequent phase-changed
+     * fires (after the previous command's slot closes) re-enter this
+     * method with the piece's flags now reflecting the prior action.
+     *
+     * Falls back to `end-piece-turn` when no useful action remains.
+     */
+    private _computeNextActionFor(
+        piece: Piece,
+    ): MovePieceCommand | AttackPieceCommand | RangedAttackPieceCommand | MountPieceCommand | EndPieceTurnCommand {
+        // Branch A: engaged-attack. An engaged piece may swing at one
+        // adjacent engaged enemy but cannot move. The legacy code
+        // handled this first and mutated piece.moved/attacked so the
+        // move block below would skip; here we simply return when an
+        // engaged-attack target exists.
+        if (piece.engaged && !piece.attacked) {
             const engagedEnemies: Piece[] = this._board.getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
                 return (
                     p.owner !== this._player && // Enemy piece
                     !p.currentMount && // Not mounted
                     piece.canAttackPiece(p) && // Can attack target
                     piece.canAttackPossiblyUndeadPiece(p) // Can attack target even if undead
-                ); // Can attack engaged piece
+                );
             });
             if (engagedEnemies.length > 0) {
                 const target: Piece = this._board.rng.pick(engagedEnemies);
                 console.debug(`${piece.fullName} is engaged and attacks ${target.fullName}`);
-                await this._board.attackPiece(piece.id, target.id);
-            } else {
-                console.debug(`No engaged targets found for ${piece.fullName}`);
+                return this._buildAttackCommand(piece, target);
             }
-            // Whether we attacked or not, if we're engaged then we consider our
-            // move for the turn done. We may still be able to ranged attack
-            // later though, so don't return yet.
-            piece.moved = true;
-            piece.attacked = true;
-        } else {
-            console.debug(`${piece.fullName} is not engaged`);
+            console.debug(`No engaged targets found for ${piece.fullName}`);
+            // Fall through to ranged check: an engaged piece may still
+            // ranged-attack if able. Skip the regular move/attack
+            // block - engagement prevents it.
         }
 
+        // Branch B: regular adjacent melee attack. Only when the piece
+        // is not engaged (engagement gates this off) and a successful
+        // aggression roll triggers it.
         const willAttack: boolean = this._board.rollChance(this.aggression);
         if (!willAttack) {
             console.debug(`${piece.fullName} will skip attacking this turn`);
         }
-        if (!piece.attacked && piece.canAttack && willAttack) {
-            // Try to attack a random hostile target in range
+        if (!piece.engaged && !piece.attacked && piece.canAttack && willAttack) {
             const potentialAttackTargets: Piece[] = this._board
                 .getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
                     return (
@@ -977,56 +1046,47 @@ export class ComputerWizard implements RemotePlayer {
             if (potentialAttackTargets.length > 0) {
                 const target: Piece = this._board.rng.weightedPick(potentialAttackTargets);
                 console.debug(`${piece.fullName} attacks target ${target.name}`);
-                await this._board.attackPiece(piece.id, target.id);
-                piece.moved = true;
-                piece.attacked = true;
-            } else {
-                console.debug(`No attack targets found for ${piece.fullName}`);
+                return this._buildAttackCommand(piece, target);
             }
+            console.debug(`No attack targets found for ${piece.fullName}`);
         } else {
             console.debug(`${piece.fullName} cannot attack or has already attacked`);
         }
-        if (!piece.moved && piece.canMove) {
-            // Special case: if this is a wizard and there are mountable units
-            // adjacent, consider mounting one of them
+
+        // Branch C: movement and movement-driven actions (mount, fly-
+        // attack, tactical move). Engagement gates this whole block.
+        if (!piece.engaged && !piece.moved && piece.canMove) {
+            // Sub-branch C.1: wizard adjacent-mount priority. If the
+            // wizard is unmounted and a mountable unit is adjacent,
+            // possibly mount it (subject to a difficulty/danger roll).
             if (piece.type === UnitType.Wizard && piece.currentMount == null) {
                 const mountablePieces: Piece[] = this._board.getAdjacentPiecesAtPosition(piece.position, (p: Piece) => {
-                    return piece.canMountPiece(p); // Can mount the piece
+                    return piece.canMountPiece(p);
                 });
-                //
                 if (mountablePieces.length > 0) {
-                    // Increase chance to mount if the wizard is in danger
                     let modifier: number = 0;
                     if (this._player.castingPiece.findThreatPieces().size > 0) {
                         console.debug(`${piece.fullName} is in danger and more likely to mount`);
-                        modifier = this._difficulty * 0.5; // More likely to mount if in danger
+                        modifier = this._difficulty * 0.5;
                     }
-
-                    // Wizards usually want to mount, but lower difficulties may
-                    // sometimes choose not to (75% for 0, 100% for 1)
-                    if (!this._board.rollChance(Math.min(0.75 + (this._difficulty + modifier) * 0.25, 1))) {
-                        console.debug(`${piece.fullName} chooses not to mount this turn`);
-                        return false;
+                    if (this._board.rollChance(Math.min(0.75 + (this._difficulty + modifier) * 0.25, 1))) {
+                        const mountable: Piece = this._board.rng.pick(mountablePieces);
+                        console.debug(`${piece.fullName} mounts ${mountable.fullName}`);
+                        return this._buildMountCommand(piece, mountable);
                     }
-                    const mountable: Piece = this._board.rng.pick(mountablePieces);
-                    console.debug(`${piece.fullName} mounts ${mountable.fullName}`);
-                    await this._board.mountPiece(piece.id, mountable.id);
-                    // Select the mountable if it can attack or ranged attack
-                    if (
-                        (mountable.canAttack && !mountable.attacked) ||
-                        (mountable.canRangedAttack && !mountable.rangedAttacked)
-                    ) {
-                        await this._board.selectPiece(mountable.id);
-                    }
-                    return true;
+                    console.debug(`${piece.fullName} chooses not to mount this turn`);
+                    // TODO(task-13): legacy moveUnit returned false (no
+                    // further action) when the wizard rolled to skip
+                    // an adjacent mount. Here we fall through so the
+                    // AI may still move or fly-attack on this slot.
                 } else {
                     console.debug(`No friendly mountables found for ${piece.fullName}`);
                 }
             }
 
-            // Special case: if this is a flying unit, search all positions
-            // within fly range for an attackable enemy and go for them with
-            // a greater chance the higher the difficulty level.
+            // Sub-branch C.2: flying attack. Search all positions
+            // within fly range for an attackable enemy and go for
+            // them with a greater chance the higher the difficulty.
             if (piece.hasStatus(UnitStatus.Flying) && this._board.rollChance(this.aggression)) {
                 const flyPoints: Point[] = this._board.getPointsInRange(
                     piece.position,
@@ -1048,70 +1108,52 @@ export class ComputerWizard implements RemotePlayer {
                         break;
                     }
                 }
-                // If we found a target, go get it
                 if (targetPiece) {
                     console.debug(`${piece.fullName} flies to attack ${targetPiece.fullName}`);
-                    piece.moved = true;
-                    await this._board.attackPiece(piece.id, targetPiece.id);
-                    if (!piece.currentMount && piece.engaged) {
-                        const firstEngagingPiece: Piece | null = piece.getFirstEngagingPiece();
-
-                        if (firstEngagingPiece) {
-                            console.debug(`${piece.fullName} is now engaged after attacking`);
-                            piece.attacked = false;
-                            await this.moveUnit(piece);
-                        }
-                    }
-                    piece.attacked = true;
-                    // Don't return — fall through to the ranged attack check
-                    // below so units with a ranged capability can still fire
-                    // after a fly-attack (whether it succeeded or failed).
-                } else {
-                    console.debug(`No attackable targets in fly range for ${piece.fullName}`);
+                    // TODO(task-13): the legacy moveUnit recursed back
+                    // into moveUnit if the fly-attack triggered an
+                    // engagement, then optionally fired a ranged
+                    // attack afterwards. The new flow returns the
+                    // attack command and relies on the next
+                    // phase-changed re-fire to compute the follow-up.
+                    return this._buildAttackCommand(piece, targetPiece);
                 }
+                console.debug(`No attackable targets in fly range for ${piece.fullName}`);
             } else {
                 console.debug(`${piece.fullName} is not flying or did not roll to attack terminal paths`);
             }
 
-            // Find all valid reachable tiles. Re-check piece.moved here because
-            // a fly-attack above may have consumed the move inside this block.
-            if (piece.moved) {
-                // Fly-attack already used the move; skip to ranged attack below.
+            // Sub-branch C.3: tactical move. Pick a destination tile
+            // using the same priority order as the legacy moveUnit.
+            const reachableTiles: Point[] = Array.from(this._board.rangeGizmo.getAllValidPaths())
+                .map((path: Path) => {
+                    return path.nodes?.findLast((node) => node.traversable)?.pos;
+                })
+                .filter((pt: Point) => {
+                    if (!pt) {
+                        return false;
+                    }
+                    return !Point.equals(pt, piece.position);
+                });
+            if (reachableTiles.length === 0) {
+                console.debug(`No reachable tiles for ${piece.fullName}`);
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
+                });
+                // Skip move; fall through to ranged then end-turn.
             } else {
-                const reachableTiles: Point[] = Array.from(this._board.rangeGizmo.getAllValidPaths())
-                    .map((path: Path) => {
-                        // Get the last node in the path
-                        return path.nodes?.findLast((node) => node.traversable)?.pos;
-                    })
-                    .filter((pt: Point) => {
-                        if (!pt) {
-                            return false;
-                        }
-                        // Ignore tile the piece is currently on
-                        return !Point.equals(pt, piece.position);
-                    });
-                if (reachableTiles.length === 0) {
-                    console.debug(`No reachable tiles for ${piece.fullName}`);
-                    this._board.events.emit(EngineEvent.EffectRequested, {
-                        sound: "cancel",
-                    });
-                    return false;
-                }
-                // We're going to move to a point, but it may be random or it may
-                // be tactical, depending on the difficulty level
-                let movePt: Point = null;
+                let movePt: Point | null = null;
 
                 if (piece === this._player.castingPiece) {
-                    // Wizard priority 1: seek a mountable unit if unmounted.
-                    // Higher difficulties do this more reliably (50% at diff 0,
-                    // 100% at diff 1). Adjacent mounts are already handled above,
-                    // so we skip any that are already adjacent.
+                    // Wizard priority 1: seek a mountable unit if
+                    // unmounted. Higher difficulties do this more
+                    // reliably (50% at diff 0, 100% at diff 1).
+                    // Adjacent mounts are already handled above, so
+                    // skip any that are already adjacent.
                     if (piece.currentMount == null && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
                         const mountTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
                             if (p.dead) return false;
-                            // Must be mountable by this wizard
                             if (!piece.canMountPiece(p)) return false;
-                            // Skip pieces already adjacent (mounting handled separately)
                             return Board.distance(piece.position, p.position) > 1;
                         });
                         if (mountTargets.length > 0) {
@@ -1136,9 +1178,9 @@ export class ComputerWizard implements RemotePlayer {
                             }
                         }
                     }
-                    // Wizard priority 2: move away from threats when threatened.
-                    // Higher difficulties do this more reliably (50% at diff 0,
-                    // 100% at diff 1).
+                    // Wizard priority 2: move away from threats when
+                    // threatened. Higher difficulties do this more
+                    // reliably (50% at diff 0, 100% at diff 1).
                     if (!movePt) {
                         const threats: Set<Piece> = piece.findThreatPieces();
                         if (threats.size > 0 && this._board.rollChance(0.5 + this._difficulty * 0.5)) {
@@ -1161,14 +1203,14 @@ export class ComputerWizard implements RemotePlayer {
                         }
                     }
                 } else if (this._board.rollChance(this.aggression)) {
-                    // Non-wizard: move towards the highest priority enemy
+                    // Non-wizard: move towards the highest priority
+                    // enemy. If the closest reachable tile is occupied
+                    // by an attackable enemy, attack rather than move.
                     const highestPriorityEnemy: Player | null =
                         Array.from(this._enemyPlayerPriorities.entries()).toSorted((a, b) => b[1] - a[1])[0]?.[0] ||
                         null;
 
                     if (highestPriorityEnemy) {
-                        // Pick the closest reachable tile to any of that player's
-                        // pieces, preferentially targeting wizards
                         let closestTile: Point | null = null;
                         let closestDistance: number = Infinity;
                         let closestPiece: Piece | null = null;
@@ -1178,15 +1220,12 @@ export class ComputerWizard implements RemotePlayer {
                                 return (
                                     !p.dead && // Not dead
                                     piece.canAttackPossiblyUndeadPiece(p) && // Can attack target even if undead
-                                    piece.canAttackPiece(p)
-                                ); // Can attack target
+                                    piece.canAttackPiece(p) // Can attack target
+                                );
                             });
                         for (const tile of reachableTiles) {
                             for (const enemyPiece of enemyPieces) {
                                 const distance: number = Board.distance(tile, enemyPiece.position);
-                                // Prefer wizard targets by reducing their effective
-                                // distance; the higher the difficulty, the more we
-                                // prefer wizards
                                 const effectiveDistance: number =
                                     enemyPiece.type === UnitType.Wizard
                                         ? distance * Math.max(0.1, 1 - this.difficulty)
@@ -1199,16 +1238,12 @@ export class ComputerWizard implements RemotePlayer {
                             }
                         }
                         if (closestTile) {
-                            // If the chosen tile is occupied by an enemy piece,
-                            // attack it rather than moving onto the same tile.
                             const pieceAtTile: Piece | null =
                                 this._board.getPiecesAtPosition(
                                     closestTile,
                                     (p: Piece) => !p.dead && p.owner !== this._player,
                                 )[0] ?? null;
                             if (pieceAtTile) {
-                                // Tile is occupied — attack if possible, otherwise
-                                // leave movePt unset and fall through to random move.
                                 if (
                                     piece.canAttackPossiblyUndeadPiece(pieceAtTile) &&
                                     piece.canAttackPiece(pieceAtTile)
@@ -1216,13 +1251,11 @@ export class ComputerWizard implements RemotePlayer {
                                     console.debug(
                                         `${piece.fullName} chooses to attack ${pieceAtTile.fullName} rather than move towards them`,
                                     );
-                                    await this._board.attackPiece(piece.id, pieceAtTile.id);
-                                    piece.attacked = true;
-                                } else {
-                                    console.debug(
-                                        `${piece.fullName} cannot move to or attack ${pieceAtTile.fullName}; skipping tactical move`,
-                                    );
+                                    return this._buildAttackCommand(piece, pieceAtTile);
                                 }
+                                console.debug(
+                                    `${piece.fullName} cannot move to or attack ${pieceAtTile.fullName}; skipping tactical move`,
+                                );
                             } else {
                                 console.debug(
                                     `${piece.fullName} chooses to move tactically towards ${closestPiece?.fullName ?? highestPriorityEnemy.name}`,
@@ -1234,46 +1267,36 @@ export class ComputerWizard implements RemotePlayer {
                         }
                     }
                 }
-                // If we didn't find a tactical move point, pick a random unoccupied
-                // tile to move to
+                // Fallback: pick a random unoccupied tile.
                 if (!movePt) {
                     movePt = this._board.rng.pick(
                         reachableTiles.filter((pt: Point) => {
                             const pieceAtTile: Piece | null =
                                 this._board.getPiecesAtPosition(pt, (p: Piece) => !p.dead)[0] ?? null;
-                            return !pieceAtTile; // Only consider unoccupied tiles
+                            return !pieceAtTile;
                         }),
                     );
                     if (movePt) {
                         console.debug(`${piece.fullName} chooses to move randomly`);
                     }
                 }
-                if (!movePt) {
-                    console.debug(`${piece.fullName} could not find a valid tile to move to`);
-                    this._board.events.emit(EngineEvent.EffectRequested, {
-                        sound: "cancel",
+                if (movePt) {
+                    console.debug(`${piece.fullName} moves to (${movePt.x}, ${movePt.y})`);
+                    this._board.events.emit(EngineEvent.FocusPosition, {
+                        position: movePt,
                     });
-                    return false;
+                    return this._buildMoveCommand(piece, movePt);
                 }
-
-                console.debug(`${piece.fullName} moves to (${movePt.x}, ${movePt.y})`);
-                this._board.events.emit(EngineEvent.FocusPosition, {
-                    position: movePt,
+                console.debug(`${piece.fullName} could not find a valid tile to move to`);
+                this._board.events.emit(EngineEvent.EffectRequested, {
+                    sound: "cancel",
                 });
-                await this._board.movePiece(
-                    piece.id,
-                    movePt,
-                    `ai-${this._player.id}-${piece.id}-${Date.now()}`,
-                    this._player.id,
-                );
-                if (piece.engaged) {
-                    console.debug(`${piece.fullName} is now engaged after moving`);
-                    await this.moveUnit(piece);
-                }
-            } // end else (piece.moved)
+            }
         }
+
+        // Branch D: ranged attack. May fire even when the piece is
+        // engaged (engagement only blocks melee, not ranged).
         if (!piece.rangedAttacked && piece.canRangedAttack) {
-            // Try to attack a random target in range
             const rangedTargets: Piece[] = this._board.pieces
                 .filter((p: Piece) => {
                     return (
@@ -1285,7 +1308,6 @@ export class ComputerWizard implements RemotePlayer {
                     );
                 })
                 .toSorted((a: Piece, b: Piece) => {
-                    // Prefer wizard targets
                     if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) {
                         return -1;
                     }
@@ -1296,63 +1318,196 @@ export class ComputerWizard implements RemotePlayer {
                 });
             if (rangedTargets.length > 0) {
                 const target: Piece = this._board.rng.weightedPick(rangedTargets);
-
                 this._board.events.emit(EngineEvent.FocusPieces, {
                     pieceIds: [target.id],
                 });
                 console.debug(`${piece.fullName} performs ranged attack on ${target.fullName}`);
-                await this._board.rangedAttackPiece(piece.id, target.id);
-                return true;
-            } else {
-                console.debug(`No ranged attack targets found for ${piece.fullName}`);
+                return this._buildRangedAttackCommand(piece, target);
             }
+            console.debug(`No ranged attack targets found for ${piece.fullName}`);
         } else {
             console.debug(`${piece.fullName} cannot ranged attack or has already ranged attacked`);
         }
 
-        return true;
+        // No useful action remains: end the piece's turn.
+        return this._fallbackEndPieceTurnFor(piece);
     }
 
     /**
-     * Moves all units for the computer wizard. This includes moving, attacking,
-     * and ranged attacking as appropriate.
+     * Construct a `SelectPieceCommand` for the given piece.
+     */
+    private _buildSelectPieceCommand(piece: Piece): SelectPieceCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "select-piece",
+            pieceId: piece.id,
+        };
+    }
+
+    /**
+     * Construct a `MovePieceCommand` for moving the given piece to
+     * the destination tile. The path is derived from the rangegizmo's
+     * cached A* path.
+     */
+    private _buildMoveCommand(piece: Piece, to: Point): MovePieceCommand {
+        const path: Point[] = this._computePathTo(piece, to);
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "move-piece",
+            pieceId: piece.id,
+            to: { x: to.x, y: to.y },
+            path: path.map((p) => ({ x: p.x, y: p.y })),
+        };
+    }
+
+    /**
+     * Construct an `AttackPieceCommand` from `piece` against `target`.
+     * The path stops one tile short of the target (the handler
+     * resolves the attack from the terminal step).
+     */
+    private _buildAttackCommand(piece: Piece, target: Piece): AttackPieceCommand {
+        const path: Point[] = this._computeAttackPath(piece, target);
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "attack-piece",
+            attackerId: piece.id,
+            targetId: target.id,
+            path: path.map((p) => ({ x: p.x, y: p.y })),
+        };
+    }
+
+    /**
+     * Construct a `RangedAttackPieceCommand` from `piece` against
+     * `target`. No path is required; the handler validates range.
+     */
+    private _buildRangedAttackCommand(piece: Piece, target: Piece): RangedAttackPieceCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "ranged-attack-piece",
+            attackerId: piece.id,
+            targetId: target.id,
+        };
+    }
+
+    /**
+     * Construct a `MountPieceCommand` for `wizard` to mount `mount`.
+     * The path is empty when the wizard is already on the mount's
+     * tile; otherwise it is the rangegizmo's cached path to the
+     * mount's tile.
+     */
+    private _buildMountCommand(wizard: Piece, mount: Piece): MountPieceCommand {
+        const path: Point[] =
+            wizard.position.x === mount.position.x && wizard.position.y === mount.position.y
+                ? []
+                : this._computePathTo(wizard, mount.position);
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "mount-piece",
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: path.map((p) => ({ x: p.x, y: p.y })),
+        };
+    }
+
+    /**
+     * Build an `EndPieceTurnCommand` as a no-action fallback when the
+     * piece has nothing useful to do this slot.
+     */
+    private _fallbackEndPieceTurnFor(piece: Piece): EndPieceTurnCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "end-piece-turn",
+            pieceId: piece.id,
+        };
+    }
+
+    /**
+     * Build an `EndMovementPhaseCommand` to close the AI's movement
+     * slot loop when no remaining piece has a useful action.
+     */
+    private _buildEndMovementPhaseCommand(): EndMovementPhaseCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "end-movement-phase",
+        };
+    }
+
+    /**
+     * Compute a path from the piece's current position (exclusive) to
+     * the destination tile (inclusive). Reads from the rangegizmo's
+     * cached A* paths populated by the prior `rangeGizmo.generate(piece)`
+     * call. Returns an empty array if no path exists.
+     */
+    private _computePathTo(piece: Piece, to: Point): Point[] {
+        const path: Path | null = this._board.rangeGizmo.getPathTo(to);
+        if (!path) return [];
+        const nodes = path.nodes ?? [];
+        const result: Point[] = [];
+        for (const node of nodes) {
+            if (node.pos.x === piece.position.x && node.pos.y === piece.position.y) continue;
+            result.push(new Point(node.pos.x, node.pos.y));
+        }
+        return result;
+    }
+
+    /**
+     * Compute a path that ends adjacent to (but not on) the target's
+     * tile. Walks all 8 adjacent tiles and picks the one with the
+     * cheapest path. Returns an empty array if no adjacent tile is
+     * reachable - the handler then rejects with `invalid-move` for
+     * non-flying / non-zero-mov attackers, or accepts the empty path
+     * for already-adjacent or flying attackers.
+     */
+    private _computeAttackPath(attacker: Piece, target: Piece): Point[] {
+        const adj: Point[] = this._board.getAdjacentPoints(target.position, false);
+        let best: Point[] = [];
+        let bestCost: number = Infinity;
+        for (const tile of adj) {
+            const path: Path | null = this._board.rangeGizmo.getPathTo(tile);
+            if (path && path.cost < bestCost) {
+                bestCost = path.cost;
+                best = (path.nodes ?? [])
+                    .filter((n) => !(n.pos.x === attacker.position.x && n.pos.y === attacker.position.y))
+                    .map((n) => new Point(n.pos.x, n.pos.y));
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Legacy entry point. Decision logic now flows through
+     * `_dispatchMovementCommand` on phase-changed events. The
+     * RemotePlayer interface still requires this method until a later
+     * task removes it.
+     */
+    async moveUnit(_piece: Piece): Promise<boolean> {
+        return false;
+    }
+
+    /**
+     * Legacy entry point. The slot loop in Board.openMovementSlotFor
+     * drives the AI movement-phase commands directly via the
+     * phase-changed event subscription. This method is retained as
+     * a no-op so the RemotePlayer interface still binds; we still
+     * call evaluateEnemyPlayerPriorities here so the threat data is
+     * fresh when _computeNextActionFor reads it on the first
+     * phase-changed fire.
      */
     async moveAllUnits(): Promise<void> {
-        this._board.events.emit(EngineEvent.AiThinking);
-
-        // Re-evaluate enemy players again, as that may have changed after
-        // the spell casting round
         this.evaluateEnemyPlayerPriorities();
-
-        try {
-            const pieces: Piece[] = this._board.getPiecesByOwner(this._player).filter((p: Piece) => {
-                return (
-                    !p.currentMount && // Not mounted - mounted units move with their mounts
-                    p.canSelect && // Can be selected
-                    !p.hasStatus(UnitStatus.Structure) && // Not a structure
-                    !p.dead
-                );
-            });
-
-            if (!pieces.length) {
-                console.warn(`${this._player.name} has no pieces to move`);
-                return;
-            }
-
-            for (const piece of pieces) {
-                if (this._board.state === BoardState.GameOver) {
-                    break;
-                }
-                if (piece.turnOver) {
-                    console.debug(`${piece.fullName} has already taken its turn`);
-                    continue;
-                }
-                console.debug(`Moving ${piece.fullName}`);
-                await this.moveUnit(piece);
-                piece.turnOver = true;
-            }
-        } finally {
-            this._board.events.emit(EngineEvent.AiActing);
-        }
     }
 }

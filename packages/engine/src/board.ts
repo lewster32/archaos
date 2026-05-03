@@ -3089,7 +3089,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
 
             if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
-                await this.currentPlayer.remote.moveAllUnits();
+                await this.openMovementSlotFor(this.currentPlayer.id);
                 continue;
             }
 

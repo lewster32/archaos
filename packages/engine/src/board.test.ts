@@ -1267,12 +1267,12 @@ describe("Board", () => {
     // ── nextPlayer – remote casting path ──────────────────────────────────
 
     describe("nextPlayer – remote casting", () => {
-        it("calls remote.moveAllUnits during the moving phase", async () => {
-            const moveAllUnits = vi.fn().mockResolvedValue(undefined);
+        it("opens a movement slot for the remote player during the moving phase", async () => {
             const remote = {
                 selectSpell: vi.fn().mockResolvedValue(false),
                 castSpell: vi.fn().mockResolvedValue(true),
-                moveAllUnits,
+                moveAllUnits: vi.fn().mockResolvedValue(undefined),
+                moveUnit: vi.fn().mockResolvedValue(false),
             };
             const board = makeBoard();
             // p1 local with no spells — provides the human turn that breaks
@@ -1283,15 +1283,20 @@ describe("Board", () => {
             // p2 is remote/AI with no spells
             board.addPlayer({ name: "P2", type: GameSetupPlayerType.Computer }, remote as any);
 
+            // Replace the slot opener with a spy. The legacy
+            // moveAllUnits() call has been replaced by
+            // openMovementSlotFor; the unit test asserts the new
+            // dispatch surface is invoked when the moving phase is
+            // entered for a remote player.
+            const openSpy = vi
+                .spyOn(board, "openMovementSlotFor")
+                .mockResolvedValue(undefined);
+
             // Drive the FSM into the moving phase manually
             await board.newTurn(); // idle→moving (no spells)
-            // Now index is at -1; nextPlayer → p1 (index 0, newTurn again
-            // but now in moving phase → wraps to spellbook... re-check)
-            // Use a shortcut: just check moveAllUnits gets called
-            // by invoking nextPlayer twice past p1
             await board.nextPlayer(); // → p1 (local, break)
             await board.nextPlayer(); // → p2 (remote, moving phase)
-            expect(moveAllUnits).toHaveBeenCalled();
+            expect(openSpy).toHaveBeenCalled();
         });
     });
 
