@@ -1489,15 +1489,13 @@ export class Board extends EngineBoard<Piece> {
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    if (await this.currentPlayer.remote.selectSpell()) {
-                        this._boardEvents.emit(
-                            BoardEvent.SpellSelected,
-                            this.currentPlayer,
-                            this.currentPlayer.selectedSpell,
-                        );
-                    } else {
-                        console.log("Remote player could not select spell, skipping...");
-                    }
+                    // Remote / AI spellbook picks are now driven by the
+                    // command pipeline (Board.handleCommand) and the
+                    // phase-changed event bus, not by direct method
+                    // calls. The legacy nextPlayer path skips through
+                    // the AI's spellbook turn here; the client UI
+                    // bridge in task 14 will replace this branch with
+                    // a phase-changed dispatch that drives the AI.
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
                     return new Promise<void>((resolve) => {
@@ -1556,16 +1554,13 @@ export class Board extends EngineBoard<Piece> {
                             spell.lineOfSight,
                         );
                         if (this.currentPlayer?.remote) {
-                            if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could not cast spell, skipping...");
-                            }
+                            // Remote / AI casts now flow through the
+                            // command pipeline; the legacy path skips
+                            // through the AI's casting turn here.
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
-                            if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could not cast spell, skipping...");
-                            }
                             continue;
                         }
                     }
