@@ -2070,6 +2070,13 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             pm.evaluate(new CastingDone());
         }
 
+        if (pm.isActive(pm.states.spreading)) {
+            await this.rules.doSpread(this);
+            await this.rules.doExpire(this);
+            pm.evaluate(new SpreadingDone());
+            pm.evaluate(new MovingReady());
+        }
+
         if (this._autoRunPhaseLoop && pm.isActive(pm.states.moving)) {
             await this._runMovementPhase();
             pm.evaluate(new MovingDone());

@@ -13,6 +13,8 @@ import type {
     PickSpellCommand,
 } from "../protocol/commands";
 import type { Spell } from "../spells/spell";
+import type { Player } from "../player";
+import type { Piece } from "../piece";
 
 /**
  * End-to-end integration test for the command intake pipeline.
@@ -385,4 +387,260 @@ describe("Command pipeline integration", () => {
             errSpy.mockRestore();
         }
     });
+});
+
+/**
+ * Build a minimal wizard piece for `player` at `(x, y)`. The piece has
+ * the `Wizard` status, non-zero combat / movement / manoeuvrability so
+ * it satisfies `Piece.canSelect`, and is registered as the player's
+ * castingPiece via the Wizard constructor side-effect.
+ */
+async function addWizardFor(
+    board: Board,
+    player: Player,
+    x: number,
+    y: number,
+): Promise<Piece> {
+    return await board.addWizard({
+        wizCode: "0000000000",
+        x,
+        y,
+        owner: player,
+        properties: { movement: 1, combat: 3, manoeuvrability: 3 },
+    });
+}
+
+describe("Command pipeline integration: full movement", () => {
+    it(
+        "runs a 2-human + 2-AI game from startGame through a complete " +
+            "movement turn cycle under autoRunPhaseLoop: true",
+        async () => {
+            // The AI may print `console.error` during enemy threat
+            // evaluation if a wizard lookup fails; silence it so the
+            // assertion noise stays focused on the protocol-level
+            // invariants.
+            const errSpy = vi
+                .spyOn(console, "error")
+                .mockImplementation(() => {});
+            try {
+                const sched = fakeScheduler();
+                const board = makeBoardForIntegration({
+                    players: [
+                        { id: 1, isRemote: false, hasAi: false }, // human
+                        { id: 2, isRemote: true, hasAi: true }, // AI
+                        { id: 3, isRemote: false, hasAi: false }, // human
+                        { id: 4, isRemote: true, hasAi: true }, // AI
+                    ],
+                    phaseTimeoutMs: 5000,
+                    setTimeout: sched.setTimeout,
+                    clearTimeout: sched.clearTimeout,
+                });
+
+                // Place wizards on a 13x13 board, well-separated so AIs
+                // do not engage on their first turn — the assertion
+                // surface is the command pipeline, not combat.
+                await addWizardFor(board, board.getPlayer(1)!, 1, 1);
+                await addWizardFor(board, board.getPlayer(2)!, 11, 1);
+                await addWizardFor(board, board.getPlayer(3)!, 1, 11);
+                await addWizardFor(board, board.getPlayer(4)!, 11, 11);
+
+                await board.startGame();
+
+                // Spellbook (barrier mode): humans submit picks; AIs
+                // auto-submit `end-spell-pick` via their phase-changed
+                // listener (no spells in their book).
+                await board.handleCommand(
+                    1,
+                    roundTrip(pickFor(board, 1, "h1-pick")),
+                );
+                await board.handleCommand(
+                    3,
+                    roundTrip(pickFor(board, 3, "h3-pick")),
+                );
+
+                await flushUntilPhase(board, BoardPhase.Casting);
+
+                // Casting: humans cancel rather than cast (avoids the
+                // mock spell's effects). AIs have no selected spell so
+                // they are skipped automatically by the casting phase
+                // loop.
+                await board.handleCommand(
+                    1,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h1-cancel",
+                        token: "",
+                        kind: "cancel-cast",
+                    } as CancelCastCommand),
+                );
+                await board.handleCommand(
+                    3,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h3-cancel",
+                        token: "",
+                        kind: "cancel-cast",
+                    } as CancelCastCommand),
+                );
+
+                // Wait for movement phase to open.
+                await flushUntilPhase(board, BoardPhase.Moving);
+
+                // Player 1 (human) drives their movement turn manually:
+                // select wizard, end piece turn, end movement phase.
+                const wiz1 = board.getPlayer(1)!.castingPiece!;
+                await board.handleCommand(
+                    1,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h1-sel",
+                        token: "",
+                        kind: "select-piece",
+                        pieceId: wiz1.id,
+                    }),
+                );
+                await board.handleCommand(
+                    1,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h1-end-piece",
+                        token: "",
+                        kind: "end-piece-turn",
+                        pieceId: wiz1.id,
+                    }),
+                );
+                await board.handleCommand(
+                    1,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h1-end-move",
+                        token: "",
+                        kind: "end-movement-phase",
+                    }),
+                );
+
+                // AI #2 reacts to its movement-slot phase-changed
+                // automatically. Yield to let the AI dispatch its
+                // chain of select-piece / move / end-piece-turn /
+                // end-movement-phase commands.
+                for (let i = 0; i < 50; i += 1) {
+                    if (board.phase !== BoardPhase.Moving) break;
+                    if ((board as any)._expectedCommand?.expectedPlayerId === 3)
+                        break;
+                    await Promise.resolve();
+                }
+
+                // Player 3 (human) drives their movement turn the same
+                // way as player 1.
+                const wiz3 = board.getPlayer(3)!.castingPiece!;
+                if ((board as any)._expectedCommand?.expectedPlayerId === 3) {
+                    await board.handleCommand(
+                        3,
+                        roundTrip({
+                            type: "command",
+                            commandId: "h3-sel",
+                            token: "",
+                            kind: "select-piece",
+                            pieceId: wiz3.id,
+                        }),
+                    );
+                    await board.handleCommand(
+                        3,
+                        roundTrip({
+                            type: "command",
+                            commandId: "h3-end-piece",
+                            token: "",
+                            kind: "end-piece-turn",
+                            pieceId: wiz3.id,
+                        }),
+                    );
+                    await board.handleCommand(
+                        3,
+                        roundTrip({
+                            type: "command",
+                            commandId: "h3-end-move",
+                            token: "",
+                            kind: "end-movement-phase",
+                        }),
+                    );
+                }
+
+                // Let AI #4 and the remainder of the phase loop finish.
+                await board.phaseFlow;
+
+                // ── Assertions ───────────────────────────────────────
+
+                // 1. Full event log is JSON-safe.
+                const json = JSON.stringify(board.eventLog.toJSON());
+                expect(() => JSON.parse(json)).not.toThrow();
+
+                // 2. Per-piece sequential traversal: within any single
+                //    broadcast event, consecutive `piece-moved` outcomes
+                //    for the same piece must chain (each move's `from`
+                //    equals the previous move's `to`).
+                const events = board.eventLog.range(1);
+                for (const event of events) {
+                    const moves = event.outcomes.filter(
+                        (o) => o.kind === "piece-moved",
+                    ) as Array<{
+                        kind: "piece-moved";
+                        pieceId: number;
+                        from: { x: number; y: number };
+                        to: { x: number; y: number };
+                    }>;
+                    const byPiece: Record<
+                        number,
+                        Array<{
+                            from: { x: number; y: number };
+                            to: { x: number; y: number };
+                        }>
+                    > = {};
+                    for (const m of moves) {
+                        const arr = byPiece[m.pieceId] ?? [];
+                        arr.push({ from: m.from, to: m.to });
+                        byPiece[m.pieceId] = arr;
+                    }
+                    for (const arr of Object.values(byPiece)) {
+                        for (let i = 1; i < arr.length; i += 1) {
+                            expect(arr[i].from).toEqual(arr[i - 1].to);
+                        }
+                    }
+                }
+
+                // 3. No AI rejections (invariant 13: client-server path
+                //    agreement). The AI players must never have a
+                //    command rejected — every command they emit must be
+                //    accepted on the happy path.
+                const aiRejections = board._rejectedCommandsForTests.filter(
+                    (r) => r.playerId === 2 || r.playerId === 4,
+                );
+                expect(aiRejections).toEqual([]);
+
+                // 4. Game progressed past movement: the phase loop
+                //    closed out and the FSM advanced (Spellbook for
+                //    next turn, or GameOver if a wizard fell).
+                expect([BoardPhase.Spellbook, BoardPhase.GameOver]).toContain(
+                    board.phase,
+                );
+
+                // 5. The movement phase actually opened at least one
+                //    per-player slot (sanity check that the assertions
+                //    above are not vacuously true). A `phase-changed`
+                //    broadcast with `phase: "movement"` and a non-null
+                //    `currentPlayerId` is emitted exactly when the
+                //    movement-phase slot loop calls `_emitPhaseChanged`.
+                const movingSlotOpens = events
+                    .flatMap((e) => e.outcomes)
+                    .filter(
+                        (o) =>
+                            o.kind === "phase-changed" &&
+                            o.phase === "movement" &&
+                            o.currentPlayerId !== undefined,
+                    );
+                expect(movingSlotOpens.length).toBeGreaterThan(0);
+            } finally {
+                errSpy.mockRestore();
+            }
+        },
+    );
 });
