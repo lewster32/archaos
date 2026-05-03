@@ -1,15 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { CommandMessage } from "./commands";
 import type { PrivateEventMessage } from "./events";
-
-/**
- * Round-trip helper used in handleCommand tests to prove zero reliance
- * on non-wire-safe fields. Exported for reuse by other test files in
- * the engine workspace.
- */
-export function roundTrip<T>(value: T): T {
-    return JSON.parse(JSON.stringify(value));
-}
+import { roundTrip } from "./wiresafety.testhelpers";
 
 /**
  * Wire-safety guard: every CommandMessage and PrivateEventMessage kind

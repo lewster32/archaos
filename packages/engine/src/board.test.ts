@@ -19,7 +19,7 @@ import type {
     EndSpellPickCommand,
     PickSpellCommand,
 } from "./protocol/commands";
-import { roundTrip } from "./protocol/wiresafety.test";
+import { roundTrip } from "./protocol/wiresafety.testhelpers";
 
 function makeRules(): Rules {
     return {

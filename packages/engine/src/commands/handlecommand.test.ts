@@ -10,7 +10,7 @@ import type { CommandMessage, PickSpellCommand } from "../protocol/commands";
 import { Logger } from "../logger";
 import { TestRNG } from "../rng";
 import { Rules } from "../rules";
-import { roundTrip } from "../protocol/wiresafety.test";
+import { roundTrip } from "../protocol/wiresafety.testhelpers";
 
 function makeRules(): Rules {
     return {
@@ -62,12 +62,11 @@ function openCastSlotFor(board: Board, playerId: number): void {
     (board as any)._currentCastingPlayerId = playerId;
 }
 
+const noopSetTimeout = (_cb: () => void, _ms: number): unknown => Symbol("noop");
+const noopClearTimeout = (_: unknown): void => {};
+
 function openBarrierFor(board: Board, playerIds: number[]): SpellbookBarrier {
-    const setTimeout = (cb: () => void, _ms: number): unknown => {
-        return Symbol("noop");
-    };
-    const clearTimeout = (_: unknown): void => {};
-    const barrier = new SpellbookBarrier(playerIds, 5000, setTimeout, clearTimeout);
+    const barrier = new SpellbookBarrier(playerIds, 5000, noopSetTimeout, noopClearTimeout);
     (board as any)._spellbookBarrier = barrier;
     return barrier;
 }

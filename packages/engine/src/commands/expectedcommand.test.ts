@@ -10,13 +10,6 @@ const pickCmd = (commandId: string, spellId = 1): PickSpellCommand => ({
     spellId,
 });
 
-const endPickCmd = (commandId: string): EndSpellPickCommand => ({
-    type: "command",
-    commandId,
-    token: "",
-    kind: "end-spell-pick",
-});
-
 const castCmd = (commandId: string): CastSpellCommand => ({
     type: "command",
     commandId,

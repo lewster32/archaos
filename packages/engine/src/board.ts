@@ -52,7 +52,9 @@ import type {
     PickSpellCommand,
     PlayerId,
     RejectionReason,
+    SpellId,
     SpellTarget,
+    SpellTypeId,
 } from "./protocol";
 import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
@@ -955,7 +957,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      */
     private _checkSpellbookSubmission(
         playerId: PlayerId,
-        cmd: PickSpellCommand | EndSpellPickCommand,
+        _cmd: PickSpellCommand | EndSpellPickCommand,
     ): RejectionReason | null {
         const barrier = this._spellbookBarrier;
         const slot = this._expectedCommand;

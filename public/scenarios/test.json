@@ -40,7 +40,9 @@
                 "manoeuvrability": 0,
                 "combat": 1
             },
-            "spells": []
+            "spells": [
+                "Wall", "Shadow Wood"
+            ]
         }
     ],
     "corpses": [],
