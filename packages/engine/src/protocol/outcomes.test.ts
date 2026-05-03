@@ -149,6 +149,21 @@ describe("outcomes — spells", () => {
         };
         expect(JSON.parse(JSON.stringify(o))).toEqual(o);
     });
+
+    test("player-ended-spell-pick carries optional timedOut", () => {
+        const explicit: PlayerEndedSpellPickOutcome = {
+            kind: "player-ended-spell-pick",
+            playerId: 1,
+        };
+        expect(explicit.timedOut).toBeUndefined();
+
+        const timedOut: PlayerEndedSpellPickOutcome = {
+            kind: "player-ended-spell-pick",
+            playerId: 2,
+            timedOut: true,
+        };
+        expect(timedOut.timedOut).toBe(true);
+    });
 });
 
 describe("outcomes — pieces", () => {

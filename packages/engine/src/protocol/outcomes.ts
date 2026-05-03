@@ -199,6 +199,12 @@ export interface PlayerEndedSpellPickOutcome {
     kind: "player-ended-spell-pick";
     /** The player whose spellbook pick has ended. */
     playerId: PlayerId;
+    /**
+     * True when the end-pick was synthesised by the server after the
+     * spellbook barrier timer elapsed, rather than explicitly sent by
+     * the player. Omitted (or false) for explicit skips.
+     */
+    timedOut?: boolean;
 }
 
 // ---------------------------------------------------------------------------

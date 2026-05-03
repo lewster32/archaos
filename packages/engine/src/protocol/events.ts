@@ -57,6 +57,13 @@ export interface SpellbookDeliveredPrivateEvent {
     kind: "spellbook-delivered";
     /** The recipient's starting spellbook. */
     spells: SpellbookEntry[];
+    /**
+     * Per-game spellbook barrier timeout in milliseconds. Present only
+     * when the game is running in barrier mode; omitted in serial-mode
+     * games. Clients may use this to display a countdown; the server
+     * remains authoritative for actual timeout enforcement.
+     */
+    timeoutMs?: number;
 }
 
 /**

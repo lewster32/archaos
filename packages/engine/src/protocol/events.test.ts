@@ -101,6 +101,29 @@ describe("PrivateEventMessage", () => {
         expect(reasons).toHaveLength(7);
     });
 
+    test("spellbook-delivered carries optional timeoutMs", () => {
+        const msg: SpellbookDeliveredPrivateEvent = {
+            type: "private-event",
+            sequenceRef: 1,
+            elapsedMs: 0,
+            recipient: 3,
+            kind: "spellbook-delivered",
+            spells: [{ spellTypeId: "magic-fire", id: 10 }],
+            timeoutMs: 5000,
+        };
+        expect(msg.timeoutMs).toBe(5000);
+
+        const noTimeout: SpellbookDeliveredPrivateEvent = {
+            type: "private-event",
+            sequenceRef: 1,
+            elapsedMs: 0,
+            recipient: 3,
+            kind: "spellbook-delivered",
+            spells: [],
+        };
+        expect(noTimeout.timeoutMs).toBeUndefined();
+    });
+
     test("PrivateEventMessage is a discriminated union on kind", () => {
         const msgs: PrivateEventMessage[] = [
             {
