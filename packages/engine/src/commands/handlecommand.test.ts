@@ -1311,6 +1311,46 @@ describe("cancel-piece-action handler", () => {
         // Cancel does not submit the slot.
         expect(slot.isOpen).toBe(true);
     });
+
+    it("flags the rider's turn over too when a moved piece is cancelled", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            status: [UnitStatus.Wizard],
+        });
+        const horse = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            status: [UnitStatus.MountAny],
+        });
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        await (board as any).recordEvent({}, () => {
+            wizard.setMount(horse);
+            horse.setRider(wizard);
+        });
+        // Simulate post-move state: the mount has moved this turn.
+        horse.moved = true;
+        (board as any)._selected = horse;
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "cp1",
+                token: "",
+                kind: "cancel-piece-action",
+                pieceId: horse.id,
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        expect(horse.turnOver).toBe(true);
+        expect(wizard.turnOver).toBe(true);
+        expect(wizard.moved).toBe(true);
+    });
 });
 
 describe("_handleMovePiece", () => {
@@ -2184,6 +2224,51 @@ describe("_handleAttackPiece", () => {
         // game-over emitted (only one survivor: P1).
         const gameOver = outcomes.find((o: any) => o.kind === "game-over");
         expect(gameOver).toEqual({ kind: "game-over", winnerId: p1.id });
+    });
+
+    it("calls Player.defeat on the killed wizard's owner so client side effects fire", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        // P1 needs a live wizard so the cascade leaves a survivor.
+        await addPieceFor(board, p1, {
+            x: 0,
+            y: 0,
+            status: [UnitStatus.Wizard],
+        });
+        const attacker = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            combat: 9,
+            movement: 3,
+        });
+        const enemyWizard = await addPieceFor(board, p2, {
+            x: 7,
+            y: 5,
+            status: [UnitStatus.Wizard],
+        });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        vi.spyOn(board, "roll").mockReturnValue(true);
+        const defeatSpy = vi.spyOn(p2, "defeat");
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: enemyWizard.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        expect(defeatSpy).toHaveBeenCalled();
+        expect(p2.defeated).toBe(true);
     });
 
     it("flying attacker on successful swoop does NOT replace onto target tile", async () => {

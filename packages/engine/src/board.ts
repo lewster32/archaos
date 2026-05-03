@@ -1531,7 +1531,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!wasWizard || !owner) {
             return;
         }
-        // Sweep the wizard's other surviving pieces.
+        // Sweep the wizard's other surviving pieces explicitly via
+        // `Piece.kill("spell")` so each emits a `piece-died` outcome
+        // with the cause we want.
         const owned: P[] = this.getPiecesByOwner(owner);
         for (const piece of owned) {
             if (piece === target || piece.dead) {
@@ -1539,6 +1541,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
             await piece.kill("spell");
         }
+        // Route through `Player.defeat` so the client override fires
+        // its audio/visual side effects (sound, fade-out, etc.) and
+        // `_defeated` is consistently set to true. `defeat` calls
+        // `destroyCreations`, which is a no-op here because the
+        // creation sweep above has already killed every non-wizard
+        // piece - `Piece.kill`/`destroy` are idempotent on dead
+        // pieces.
+        await owner.defeat();
         this.pushOutcome({
             kind: "player-defeated",
             playerId: owner.id,
@@ -1992,6 +2002,17 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             });
             if (action === "move") {
                 piece.setTurnFlags({ turnOver: true });
+                // Mirror the move/turnOver flags onto the rider so a
+                // mounted unit's turn ends with its mount. Matches the
+                // legacy Rules.processCancel fallback (rules.ts:653-656)
+                // that this handler will replace once the dual-path
+                // migration completes.
+                if (piece.currentRider) {
+                    piece.currentRider.setTurnFlags({
+                        moved: true,
+                        turnOver: true,
+                    });
+                }
             }
             this._selected = null;
         });
