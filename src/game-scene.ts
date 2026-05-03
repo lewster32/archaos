@@ -368,7 +368,7 @@ export class GameScene extends Scene {
                     this.board.removePiece(piece.id);
                     console.debug(`  Piece type ${corpseData.type} has NoCorpse status; removing piece after creation`);
                 } else {
-                    piece.kill(true);
+                    piece.kill("corpse-setup");
                     console.debug(`  Piece type ${corpseData.type} marked as dead to represent corpse`);
                 }
             }

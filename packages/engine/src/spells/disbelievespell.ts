@@ -28,7 +28,7 @@ export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
             this._board.events.emit(EngineEvent.EffectRequested, {
                 sound: "destroy",
             });
-            await target.kill();
+            await target.kill("disbelieve");
             this._board.logger.log(`Disbelieve succeeded on illusionary ${target.name}`);
         } else {
             this._board.logger.log(`Disbelieve failed on non-illusionary ${target.name}`, Colour.Magenta);

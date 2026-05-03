@@ -1846,8 +1846,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * @param to The target tile.
      * @param commandId Correlation id from the originating command.
      * @param actorId The player responsible for the move.
-     * @param path Optional full path for animated traversal; included
-     *     in the `piece-moved` outcome when supplied.
+     * @param _path Legacy parameter retained for direct call sites; the
+     *     full path is no longer carried in the `piece-moved` outcome.
+     *     Multi-tile traversals are emitted as a sequence of single-step
+     *     `piece-moved` outcomes by the upcoming move-piece command
+     *     handler. Removed entirely in Task 12.
      * @returns The appended broadcast event.
      */
     async movePiece(
@@ -1855,7 +1858,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         to: Point,
         commandId: CommandId,
         actorId: PlayerId,
-        path?: Point[],
+        _path?: Point[],
     ): Promise<BroadcastEventMessage> {
         const piece: P | null = this.getPiece(id);
         if (!piece) {
@@ -1863,7 +1866,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
         const rider: P | null = piece.currentRider as P | null;
         const event = await this.recordEvent({ commandId, actorId }, () => {
-            piece.setPosition(to, path === undefined ? undefined : { path });
+            piece.setPosition(to);
             piece.setTurnFlags({ moved: true });
             if (rider) {
                 // Orchestrator composition: rider follows the mount AND

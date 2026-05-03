@@ -1796,7 +1796,7 @@ describe("movePiece wiring", () => {
         expect(piece.moved).toBe(true);
     });
 
-    test("path parameter appears in the piece-moved outcome when supplied", async () => {
+    test("legacy path parameter is ignored - the piece-moved outcome carries no path field", async () => {
         const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
         const player = board.addPlayer({ name: "Alice", type: GameSetupPlayerType.Local });
         const piece = await board.addPiece(makePieceConfig(0, 0, player));
@@ -1809,11 +1809,12 @@ describe("movePiece wiring", () => {
 
         const event = await board.movePiece(piece.id, new Point(5, 5), "c_1", 1, path);
 
-        const outcome = event.outcomes[0] as {
-            kind: "piece-moved";
-            path?: { x: number; y: number }[];
-        };
-        expect(outcome.path).toEqual(path);
+        // The legacy {path} option was dropped from setPosition - the
+        // upcoming move-piece command handler emits per-step outcomes
+        // instead. Direct movePiece callers still pass the path argument
+        // (it is preserved with an underscore prefix) but it does not
+        // appear in the outcome.
+        expect(event.outcomes[0]).not.toHaveProperty("path");
     });
 });
 

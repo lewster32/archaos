@@ -767,41 +767,31 @@ describe("Piece", () => {
         });
     });
 
-    describe("currentRider getter and setter", () => {
+    describe("currentRider getter and setRider mutator", () => {
         it("currentRider is null by default", () => {
             expect(makePiece().currentRider).toBeNull();
         });
 
-        it("setting to null clears the rider", () => {
+        it("setRider(null) clears the rider", () => {
             const piece = makePiece({
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece();
             (piece as any)._currentRider = rider;
-            piece.currentRider = null;
+            piece.setRider(null);
             expect(piece.currentRider).toBeNull();
         });
 
-        it("logs an error and does not set rider when piece is not mountable", () => {
-            const piece = makePiece(); // no Mount status
-            const rider = makePiece();
-            const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-            piece.currentRider = rider;
-            expect(piece.currentRider).toBeNull();
-            expect(consoleSpy).toHaveBeenCalledWith("Cannot mount an unmountable unit");
-            consoleSpy.mockRestore();
-        });
-
-        it("sets the rider when the piece has Mount status", () => {
+        it("setRider stores the rider on a piece with Mount status", () => {
             const piece = makePiece({
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece();
-            piece.currentRider = rider;
+            piece.setRider(rider);
             expect(piece.currentRider).toBe(rider);
         });
 
-        it("sets the rider when the piece has MountAny status", () => {
+        it("setRider stores the rider on a piece with MountAny status", () => {
             const piece = makePiece({
                 properties: {
                     ...BASE_PROPERTIES,
@@ -809,7 +799,7 @@ describe("Piece", () => {
                 },
             });
             const rider = makePiece();
-            piece.currentRider = rider;
+            piece.setRider(rider);
             expect(piece.currentRider).toBe(rider);
         });
     });
@@ -1118,7 +1108,7 @@ describe("Piece", () => {
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece({ owner: makeMockPlayer("enemy") });
-            attacker.currentRider = rider;
+            attacker.setRider(rider);
             expect(attacker.canAttackPiece(rider)).toBe(false);
         });
 
@@ -1639,7 +1629,7 @@ describe("Piece", () => {
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece();
-            mount.currentRider = rider;
+            mount.setRider(rider);
             mount.moved = true;
             // rider.moved depends on stats so we check the internal flag
             expect((rider as any)._moved).toBe(true);
@@ -1650,10 +1640,10 @@ describe("Piece", () => {
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece();
-            mount.currentRider = rider;
+            mount.setRider(rider);
             // Set rider to moved first
             (rider as any)._moved = true;
-            mount.moved = true; // same value — should not trigger circular update
+            mount.moved = true; // same value - should not trigger circular update
             expect((rider as any)._moved).toBe(true);
         });
     });
@@ -1664,7 +1654,7 @@ describe("Piece", () => {
                 properties: { ...BASE_PROPERTIES, status: [UnitStatus.Mount] },
             });
             const rider = makePiece();
-            mount.currentRider = rider;
+            mount.setRider(rider);
             mount.attacked = true;
             expect((rider as any)._moved).toBe(true);
             expect((rider as any)._attacked).toBe(true);
@@ -1682,7 +1672,7 @@ describe("Piece", () => {
                     status: [UnitStatus.Wizard],
                 },
             });
-            mount.currentRider = rider;
+            mount.setRider(rider);
             (rider as any)._currentMount = mount;
             rider.rangedAttacked = true;
             expect((mount as any)._moved).toBe(true);

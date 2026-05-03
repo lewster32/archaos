@@ -18,7 +18,7 @@ import { Point } from "./point";
 // Board is imported only as a type to avoid a circular
 // dependency at runtime (Board → Piece → Board).
 import type { Board } from "./board";
-import type { PartialTurnFlags, TurnFlags } from "./protocol";
+import type { PartialTurnFlags, PieceDiedCause, TurnFlags } from "./protocol";
 
 export enum PieceState {
     Idle,
@@ -67,7 +67,7 @@ export class Piece extends Entity {
     protected _properties: UnitProperties;
     protected _direction: UnitDirection;
 
-    protected _dead: boolean;
+    private _dead: boolean;
     protected _raisedDead: boolean;
     protected _engulfed: boolean;
     protected _moved: boolean;
@@ -79,8 +79,8 @@ export class Piece extends Entity {
 
     protected _state: PieceState;
 
-    protected _currentMount: Piece | null = null;
-    protected _currentRider: Piece | null = null;
+    private _currentMount: Piece | null = null;
+    private _currentRider: Piece | null = null;
 
     public currentEngulfed: Piece | null = null;
 
@@ -423,21 +423,6 @@ export class Piece extends Entity {
     // ── Mount / rider ───────────────────────────────────
 
     /**
-     * Set the current rider of this piece.
-     */
-    set currentRider(rider: Piece | null) {
-        if (!rider) {
-            this._currentRider = null;
-            return;
-        }
-        if (!this.hasStatus(UnitStatus.Mount) && !this.hasStatus(UnitStatus.MountAny)) {
-            console.error("Cannot mount an unmountable unit");
-            return;
-        }
-        this._currentRider = rider;
-    }
-
-    /**
      * Get the current rider of this piece (if any).
      */
     get currentRider(): Piece | null {
@@ -445,18 +430,70 @@ export class Piece extends Entity {
     }
 
     /**
-     * Set the current mount of this piece.
-     * The client overrides this to add visual effects.
-     */
-    set currentMount(mount: Piece | null) {
-        this._currentMount = mount;
-    }
-
-    /**
      * Get the piece this piece is mounted on (if any).
      */
     get currentMount(): Piece | null {
         return this._currentMount;
+    }
+
+    /**
+     * Primitive mutator setting the current mount of this piece. Null
+     * clears it. Emits exactly one piece-mounted outcome when changing
+     * from null to a mount, exactly one piece-dismounted outcome when
+     * changing from a mount to null, and no outcome when the new value
+     * equals the current value.
+     *
+     * Pairing with the mount's setRider is the orchestrator's
+     * responsibility (see invariant 6 in the engine gameplay-event
+     * emission spec).
+     */
+    setMount(mount: Piece | null): void {
+        const previous: Piece | null = this._currentMount;
+        if (mount === previous) {
+            return;
+        }
+        this._currentMount = mount;
+        if (mount && !previous) {
+            this._board.pushOutcome({
+                kind: "piece-mounted",
+                mountId: mount.id,
+                riderId: this.id,
+            });
+        } else if (!mount && previous) {
+            this._board.pushOutcome({
+                kind: "piece-dismounted",
+                mountId: previous.id,
+                riderId: this.id,
+            });
+        }
+    }
+
+    /**
+     * Primitive mutator setting the current rider of this piece. Null
+     * clears it. No outcome is emitted - the symmetric piece-mounted
+     * or piece-dismounted outcome is emitted by the rider's setMount
+     * call. Callers MUST invoke setMount and setRider as a pair.
+     */
+    setRider(rider: Piece | null): void {
+        this._currentRider = rider;
+    }
+
+    /**
+     * Primitive mutator marking this piece as dead with the given cause.
+     * Emits exactly one piece-died outcome on the first call within a
+     * recordEvent context; subsequent calls with the same piece are
+     * no-ops (idempotent).
+     */
+    setDead(cause: PieceDiedCause): void {
+        if (this._dead) {
+            return;
+        }
+        this._dead = true;
+        this._board.pushOutcome({
+            kind: "piece-died",
+            pieceId: this.id,
+            cause,
+        });
     }
 
     // ── Turn state ──────────────────────────────────────
@@ -520,10 +557,13 @@ export class Piece extends Entity {
      * release, illusion/undead destruction. Leaves a
      * corpse unless the piece has NoCorpse/Undead status
      * or is an illusion.
+     *
+     * @param cause Why this piece is dying (see {@link PieceDiedCause}).
+     *     Defaults to `"combat"` for melee-style kills.
      */
-    async kill(_silent: boolean = false): Promise<void> {
+    async kill(cause: PieceDiedCause = "combat"): Promise<void> {
         if (this._dead) {
-            throw new Error("Cannot kill unit that is already dead");
+            return;
         }
         if (this.currentRider) {
             const rider = this.currentRider;
@@ -533,10 +573,10 @@ export class Piece extends Entity {
             const mountHadMoved = rider._moved;
             rider.dismount();
             if (mountHadMoved) {
-                // Mount had already moved — rider's turn is also over.
+                // Mount had already moved - rider's turn is also over.
                 rider.turnOver = true;
             } else if (!rider.turnOver) {
-                // Mount had not yet moved — rider gets a fresh turn on foot.
+                // Mount had not yet moved - rider gets a fresh turn on foot.
                 rider.reset();
             }
         }
@@ -544,7 +584,7 @@ export class Piece extends Entity {
             this.currentEngulfed.engulfed = false;
             this.currentEngulfed = null;
         }
-        this._dead = true;
+        this.setDead(cause);
         this.owner = null;
         if (this.illusion || this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
             await this.destroy();
@@ -557,7 +597,7 @@ export class Piece extends Entity {
      * Client overrides to also destroy sprites.
      */
     async destroy(): Promise<void> {
-        this._dead = true;
+        this.setDead("combat");
         if (this.currentRider) {
             this.currentRider.dismount();
         }
@@ -604,7 +644,7 @@ export class Piece extends Entity {
 
         if (rollSuccess) {
             this._board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
-            await piece.kill();
+            await piece.kill("combat");
             return true;
         }
         return false;
@@ -638,7 +678,7 @@ export class Piece extends Entity {
                 this.removeStatus(UnitStatus.ShadowForm);
             }
             this._board.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
-            await piece.kill();
+            await piece.kill("ranged");
             return true;
         }
         return false;
@@ -653,8 +693,8 @@ export class Piece extends Entity {
         }
         this.setTurnFlags({ moved: true, attacked: true });
         piece.setTurnFlags({ moved: true });
-        this.currentMount = piece;
-        piece.currentRider = this;
+        this.setMount(piece);
+        piece.setRider(this);
         await this.board.movePiece(this.id, piece.position, `sys-internal-${this.id}`, this.owner?.id ?? 0);
         this._board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
     }
@@ -663,14 +703,15 @@ export class Piece extends Entity {
      * Dismount from the current mount.
      */
     async dismount(): Promise<void> {
-        if (!this.currentMount) {
+        const previousMount: Piece | null = this._currentMount;
+        if (!previousMount) {
             throw new Error(`${this.name} is not mounted`);
         }
-        this.currentMount.currentRider = null;
+        previousMount.setRider(null);
         this.moved = true;
-        this.currentMount.turnOver = true;
-        this._board.logger.log(`${this.fullName} dismounted ${this.currentMount.fullName}`);
-        this.currentMount = null;
+        previousMount.turnOver = true;
+        this._board.logger.log(`${this.fullName} dismounted ${previousMount.fullName}`);
+        this.setMount(null);
     }
 
     /**
@@ -692,15 +733,19 @@ export class Piece extends Entity {
 
     /**
      * Primitive mutator for position. Updates the piece's tracked
-     * coordinates and — if a `Board.recordEvent` context is active —
-     * pushes a `piece-moved` outcome with the from/to positions and
-     * optional `path`.
+     * coordinates and - if a `Board.recordEvent` context is active -
+     * pushes a `piece-moved` outcome with the from/to positions.
+     *
+     * Multi-tile traversals are expressed as multiple setPosition
+     * calls inside the same `recordEvent` context, one per traversed
+     * tile, in canonical order (invariants 10 and 11 of the
+     * movement-phase command-wiring spec).
      *
      * Does not cascade to rider / mount. Cross-piece position
      * synchronisation is the orchestrator's responsibility (see
      * invariant 6 in the engine gameplay-event emission spec).
      */
-    setPosition(to: Point, options?: { path?: Point[] }): void {
+    setPosition(to: Point): void {
         const fromX: number = this.position.x;
         const fromY: number = this.position.y;
         this.position = new Point(to.x, to.y);
@@ -709,7 +754,6 @@ export class Piece extends Entity {
             pieceId: this.id,
             from: { x: fromX, y: fromY },
             to: { x: to.x, y: to.y },
-            ...(options?.path === undefined ? {} : { path: options.path.map((p) => ({ x: p.x, y: p.y })) }),
         });
     }
 
@@ -832,7 +876,7 @@ export class Piece extends Entity {
             if (spreadPieces.some((piece) => piece.hasStatus(UnitStatus.Wizard))) {
                 const killedPiece = spreadPieces.find((piece) => piece.hasStatus(UnitStatus.Wizard));
                 this._board.logger.log(`${killedPiece.fullName} was destroyed by ${this.fullName}!`, Colour.Red);
-                await killedPiece.kill();
+                await killedPiece.kill("spread");
                 result.killedPieceId = killedPiece.id;
             } else if (this.hasStatus(UnitStatus.Engulfs)) {
                 this._board.logger.log(`${this.fullName} has engulfed ${spreadPieces[0].fullName}`, Colour.Yellow);

@@ -9,7 +9,7 @@ import {
     Point,
     SimplePoint,
 } from "@archaos/engine";
-import type { PieceConfig, Player as EnginePlayer } from "@archaos/engine";
+import type { PieceConfig, PieceDiedCause, Player as EnginePlayer } from "@archaos/engine";
 import unitJsonData from "@assets/data/classicunits.json";
 import { Board } from "./board";
 import { EffectType } from "./effectemitter";
@@ -257,10 +257,16 @@ export class Piece extends EnginePiece {
     }
 
     /**
-     * Set the current mount. Handles visual fade in/out.
+     * Set the current mount. Handles visual fade in/out alongside
+     * the engine-level mount/dismount outcome.
      */
-    override set currentMount(mount: Piece | null) {
-        this._currentMount = mount;
+    override setMount(mount: EnginePiece | null): void {
+        const previous: EnginePiece | null = this.currentMount;
+        super.setMount(mount);
+
+        if (mount === previous) {
+            return;
+        }
 
         // When dismounting, make the piece visible again,
         // but if we still have shadow form, keep it semi-transparent
@@ -271,10 +277,6 @@ export class Piece extends EnginePiece {
             alpha: mount ? 0 : visibleAlpha,
             duration: Piece.DEFAULT_MOVE_DURATION / 2,
         });
-    }
-
-    override get currentMount(): Piece | null {
-        return this._currentMount as Piece | null;
     }
 
     // ── Sprite getters ──────────────────────────────────────────────────────
@@ -709,10 +711,15 @@ export class Piece extends EnginePiece {
 
     /**
      * Kill this piece.
+     *
+     * @param cause Why the piece is dying. The sentinel cause
+     *     `"corpse-setup"` is treated specially: the death sound is
+     *     suppressed (used by scenario loading to seed pre-existing
+     *     corpses without audible side effects).
      */
-    override async kill(silent: boolean = false): Promise<void> {
+    override async kill(cause: PieceDiedCause = "combat"): Promise<void> {
         if (this.dead) {
-            throw new Error("Cannot kill unit that is already dead");
+            return;
         }
         if (this.currentRider) {
             await this.currentRider.dismount();
@@ -724,7 +731,7 @@ export class Piece extends EnginePiece {
             this.currentEngulfed.engulfed = false;
             this.currentEngulfed = null;
         }
-        this._dead = true;
+        this.setDead(cause);
         this.owner = null;
         if (this.illusion) {
             await this.clientBoard.playEffect(EffectType.DisbelieveHit, this.sprite.getCenter());
@@ -733,7 +740,7 @@ export class Piece extends EnginePiece {
             await this.clientBoard.playEffect(EffectType.NoCorpseDeath, this.sprite.getCenter());
             await this.destroy();
         }
-        if (!silent) {
+        if (cause !== "corpse-setup") {
             this.clientBoard.sound.play("die");
         }
         if (!this._sprite) {
@@ -762,8 +769,8 @@ export class Piece extends EnginePiece {
         this.attacked = true;
         piece.moved = true;
 
-        this.currentMount = piece as Piece;
-        piece.currentRider = this;
+        this.setMount(piece as Piece);
+        piece.setRider(this);
         await this.clientBoard.movePiece(
             this.id,
             piece.position,
@@ -778,23 +785,24 @@ export class Piece extends EnginePiece {
      * Dismount this piece from its current mount.
      */
     override async dismount(): Promise<void> {
-        if (!this.currentMount) {
+        const previousMount: Piece | null = this.currentMount as Piece | null;
+        if (!previousMount) {
             throw new Error(`${this.name} is not mounted`);
         }
-        this.currentMount.currentRider = null;
+        previousMount.setRider(null);
 
         this.moved = true;
-        this.currentMount.turnOver = true;
-        this.clientBoard.logger.log(`${this.fullName} dismounted ${this.currentMount.fullName}`);
-        this.currentMount.createShaders(true);
-        this.currentMount = null;
+        previousMount.turnOver = true;
+        this.clientBoard.logger.log(`${this.fullName} dismounted ${previousMount.fullName}`);
+        previousMount.createShaders(true);
+        this.setMount(null);
     }
 
     /**
      * Destroy this piece, removing it from the board.
      */
     override async destroy() {
-        this._dead = true;
+        this.setDead("combat");
         if (this.currentRider) {
             await (this.currentRider as Piece).dismount();
         }
@@ -822,7 +830,7 @@ export class Piece extends EnginePiece {
             return;
         }
         this._sprite.anims.stop();
-        if (this._dead) {
+        if (this.dead) {
             this._sprite.setFrame(this._properties.id + `_${this.direction}_d`);
             return;
         }

@@ -643,7 +643,7 @@ export class Rules {
                         pieceId: piece.id,
                         sound: "destroy",
                     });
-                    await piece.kill();
+                    await piece.kill("expired");
                     board.logger.log(`${piece.name} has expired`, Colour.Magenta);
                 }
             } else if (piece.hasStatus(UnitStatus.ExpiresGivesSpell) && piece.currentRider && board.roll(4, 10)) {
@@ -655,7 +655,7 @@ export class Rules {
                     sound: "new-spell",
                 });
                 board.addSpell(piece.currentRider.owner, Spell.getRandomSpell(board.rng, true, board.spellFilter));
-                await piece.kill();
+                await piece.kill("expired");
                 await board.idleDelay();
             }
         }

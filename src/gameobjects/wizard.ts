@@ -1,4 +1,12 @@
-import { WizardConfig, BoardLayer, UnitDirection, UnitStatus, WizCode, Wizard as EngineWizard } from "@archaos/engine";
+import {
+    WizardConfig,
+    BoardLayer,
+    UnitDirection,
+    UnitStatus,
+    WizCode,
+    Wizard as EngineWizard,
+    Piece as EnginePiece,
+} from "@archaos/engine";
 import { wizcodes, effectOffsets } from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
@@ -215,9 +223,10 @@ export class Wizard extends Piece {
         // destroyCreations() killing the mount later
         // doesn't call dismount() on an already-dead
         // wizard.
-        if (this._currentMount) {
-            this._currentMount.currentRider = null;
-            this._currentMount = null;
+        const previousMount: EnginePiece | null = this.currentMount;
+        if (previousMount) {
+            previousMount.setRider(null);
+            this.setMount(null);
         }
         const ownedPieceCount: number = this.clientBoard.getPiecesByOwner(this.owner as any).length;
         await this.destroy();

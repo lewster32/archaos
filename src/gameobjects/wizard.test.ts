@@ -92,6 +92,7 @@ function makeMockBoard(tweenFactory: () => unknown = () => ({})) {
         checkWinCondition: vi.fn(),
         getPiecesByOwner: vi.fn().mockReturnValue([]),
         delay: vi.fn().mockResolvedValue(undefined),
+        pushOutcome: vi.fn(),
         rng: new TestRNG(),
     } as unknown as Board;
 }

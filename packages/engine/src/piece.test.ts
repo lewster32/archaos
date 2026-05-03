@@ -257,11 +257,14 @@ describe("Piece.kill", () => {
         expect(piece.owner).toBeNull();
     });
 
-    it("throws when called on a piece that is already dead", async () => {
+    it("is a no-op when called on a piece that is already dead", async () => {
         const board = makeMockBoard();
         const piece = makeCreature(board, 1, 0, 0);
         await piece.kill();
-        await expect(piece.kill()).rejects.toThrow("Cannot kill unit that is already dead");
+        // Second kill is now idempotent (setDead only emits/mutates on the
+        // first transition); calling again must not throw.
+        await expect(piece.kill()).resolves.toBeUndefined();
+        expect(piece.dead).toBe(true);
     });
 
     it("releases an engulfed piece on kill", async () => {
@@ -1012,20 +1015,6 @@ describe("Piece.rangedAttacked setter", () => {
     });
 });
 
-// ── Piece.currentRider setter – unmountable error path ────────────────────────
-
-describe("Piece.currentRider setter", () => {
-    it("logs an error and does not assign rider for non-mountable pieces", () => {
-        const board = makeMockBoard();
-        const nonMount = makeCreature(board, 1, 0, 0, OWNER_A);
-        const rider = makeCreature(board, 2, 0, 0, OWNER_A);
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-        nonMount.currentRider = rider;
-        expect(nonMount.currentRider).toBeNull();
-        consoleSpy.mockRestore();
-    });
-});
-
 // ── Piece.turnOver getter – all branches ─────────────────────────────────────
 
 describe("Piece.turnOver getter", () => {
@@ -1692,23 +1681,7 @@ describe("Piece.setPosition", () => {
         });
     });
 
-    test("path option is included in the outcome when provided", async () => {
-        const board = makeRealBoard();
-        const piece = makeRealPiece(board, 1, 2, 2);
-        const path = [
-            { x: 2, y: 2 },
-            { x: 3, y: 3 },
-            { x: 5, y: 5 },
-        ];
-
-        const event = await board.recordEvent({ commandId: "c_1", actorId: 1 }, () => {
-            piece.setPosition(new Point(5, 5), { path });
-        });
-
-        expect(event.outcomes[0]).toHaveProperty("path", path);
-    });
-
-    test("path is omitted from the outcome when not provided", async () => {
+    test("the emitted piece-moved outcome carries no path field", async () => {
         const board = makeRealBoard();
         const piece = makeRealPiece(board, 1, 2, 2);
 
@@ -1717,6 +1690,211 @@ describe("Piece.setPosition", () => {
         });
 
         expect(event.outcomes[0]).not.toHaveProperty("path");
+    });
+
+    test("multi-tile traversal emits one piece-moved outcome per step", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({ commandId: "c_1", actorId: 1 }, () => {
+            piece.setPosition(new Point(3, 3));
+            piece.setPosition(new Point(4, 4));
+            piece.setPosition(new Point(5, 5));
+        });
+
+        expect(event.outcomes).toHaveLength(3);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-moved",
+            pieceId: piece.id,
+            from: { x: 2, y: 2 },
+            to: { x: 3, y: 3 },
+        });
+        expect(event.outcomes[1]).toEqual({
+            kind: "piece-moved",
+            pieceId: piece.id,
+            from: { x: 3, y: 3 },
+            to: { x: 4, y: 4 },
+        });
+        expect(event.outcomes[2]).toEqual({
+            kind: "piece-moved",
+            pieceId: piece.id,
+            from: { x: 4, y: 4 },
+            to: { x: 5, y: 5 },
+        });
+    });
+});
+
+// ── Piece.setMount / Piece.setRider / Piece.setDead ───────────────────────────
+
+/**
+ * Build a Piece with the requested unit statuses on a real Board so
+ * setMount / setRider / setDead can interact with a real recordEvent
+ * context.
+ */
+function makeRealPieceWithStatus(
+    board: Board,
+    id: number,
+    x: number,
+    y: number,
+    status: UnitStatus[],
+): Piece {
+    return new Piece(board, id, {
+        type: UnitType.Creature,
+        x,
+        y,
+        properties: {
+            id: "creature",
+            name: "Creature",
+            movement: 3,
+            combat: 3,
+            rangedCombat: 0,
+            range: 0,
+            defence: 3,
+            manoeuvrability: 3,
+            magicResistance: 0,
+            attackType: "hit",
+            rangedType: "shot",
+            status,
+        },
+        owner: OWNER_A,
+    } as PieceConfig);
+}
+
+describe("Piece.setMount mutator", () => {
+    test("changing from null to a mount emits one piece-mounted outcome", async () => {
+        const board = makeRealBoard();
+        const rider = makeRealPiece(board, 1, 2, 2);
+        const mount = makeRealPieceWithStatus(board, 2, 3, 3, [UnitStatus.MountAny]);
+
+        const event = await board.recordEvent({}, () => {
+            rider.setMount(mount);
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-mounted",
+            mountId: mount.id,
+            riderId: rider.id,
+        });
+        expect(rider.currentMount).toBe(mount);
+    });
+
+    test("changing from a mount to null emits one piece-dismounted outcome", async () => {
+        const board = makeRealBoard();
+        const rider = makeRealPiece(board, 1, 2, 2);
+        const mount = makeRealPieceWithStatus(board, 2, 3, 3, [UnitStatus.MountAny]);
+        rider.setMount(mount);
+
+        const event = await board.recordEvent({}, () => {
+            rider.setMount(null);
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-dismounted",
+            mountId: mount.id,
+            riderId: rider.id,
+        });
+        expect(rider.currentMount).toBeNull();
+    });
+
+    test("setting the same mount value is a no-op (no outcome)", async () => {
+        const board = makeRealBoard();
+        const rider = makeRealPiece(board, 1, 2, 2);
+        const mount = makeRealPieceWithStatus(board, 2, 3, 3, [UnitStatus.MountAny]);
+        rider.setMount(mount);
+
+        const event = await board.recordEvent({}, () => {
+            rider.setMount(mount);
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+    });
+
+    test("setMount(null) when already null is a no-op", async () => {
+        const board = makeRealBoard();
+        const rider = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            rider.setMount(null);
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+    });
+});
+
+describe("Piece.setRider mutator", () => {
+    test("updates the field but emits no outcome", async () => {
+        const board = makeRealBoard();
+        const mount = makeRealPieceWithStatus(board, 1, 2, 2, [UnitStatus.MountAny]);
+        const rider = makeRealPiece(board, 2, 3, 3);
+
+        const event = await board.recordEvent({}, () => {
+            mount.setRider(rider);
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+        expect(mount.currentRider).toBe(rider);
+    });
+
+    test("setRider(null) clears the rider field with no outcome", async () => {
+        const board = makeRealBoard();
+        const mount = makeRealPieceWithStatus(board, 1, 2, 2, [UnitStatus.MountAny]);
+        const rider = makeRealPiece(board, 2, 3, 3);
+        mount.setRider(rider);
+
+        const event = await board.recordEvent({}, () => {
+            mount.setRider(null);
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+        expect(mount.currentRider).toBeNull();
+    });
+});
+
+describe("Piece.setDead mutator", () => {
+    test("setDead(cause) emits one piece-died outcome and sets dead", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            piece.setDead("combat");
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+        expect(event.outcomes[0]).toEqual({
+            kind: "piece-died",
+            pieceId: piece.id,
+            cause: "combat",
+        });
+        expect(piece.dead).toBe(true);
+    });
+
+    test("setDead is idempotent — second call in the same context emits nothing", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, () => {
+            piece.setDead("combat");
+            piece.setDead("combat");
+        });
+
+        expect(event.outcomes).toHaveLength(1);
+    });
+
+    test("setDead is idempotent across recordEvent boundaries", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        await board.recordEvent({}, () => {
+            piece.setDead("combat");
+        });
+        const event = await board.recordEvent({}, () => {
+            piece.setDead("spell");
+        });
+
+        expect(event.outcomes).toHaveLength(0);
+        expect(piece.dead).toBe(true);
     });
 });
 
