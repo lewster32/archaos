@@ -98,6 +98,15 @@ export interface BoardDeps {
      * Default null (serial mode regardless of remote players).
      */
     phaseTimeoutMs?: number | null;
+    /**
+     * Transitional flag. When true, `Board.startGame()` fires the new
+     * command-pipeline-driven phase loop in the background. Default
+     * false so the live game continues to use the legacy
+     * `nextPlayer()`-driven flow until the client is wired through to
+     * emit commands (see Task 14 of the command-intake-pipeline plan).
+     * Tests opt in via the integration test helper.
+     */
+    autoRunPhaseLoop?: boolean;
 }
 
 /**
@@ -273,6 +282,17 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     private readonly _phaseTimeoutMs: number | null;
 
     /**
+     * Transitional flag — see {@link BoardDeps.autoRunPhaseLoop}.
+     */
+    private readonly _autoRunPhaseLoop: boolean;
+
+    /**
+     * The currently-running phase loop promise, or null when no loop is
+     * active. Tests await this to flush pending phase work.
+     */
+    private _phaseFlow: Promise<void> | null = null;
+
+    /**
      * Milliseconds recorded when `startGame()` is called.
      * Zero until the game has started.
      */
@@ -294,6 +314,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             deps?.clearTimeout ??
             ((handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>));
         this._phaseTimeoutMs = deps?.phaseTimeoutMs ?? null;
+        this._autoRunPhaseLoop = deps?.autoRunPhaseLoop ?? false;
         this._logger = deps?.logger ?? Logger.getInstance();
         this._rules = deps?.rules ?? Rules.getInstance();
         this._alignment = new Alignment(classicBalance);
@@ -728,6 +749,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * sequence-1 `game-started` event built from the current board state,
      * and returns it.
      *
+     * When `BoardDeps.autoRunPhaseLoop` is true, also fires the
+     * command-pipeline-driven phase loop in the background (tests can
+     * await it via `Board.phaseFlow`). Default false leaves the legacy
+     * `nextPlayer()`-driven flow in charge — see Task 14 of the
+     * command-intake-pipeline plan.
+     *
      * Throws if called more than once or if no players have been added.
      *
      * @returns The sequence-1 broadcast event.
@@ -741,7 +768,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             throw new Error("Board.startGame() requires at least one player.");
         }
         this._gameStartMs = this._now();
-        return await this.recordEvent({}, () => {
+        const event = await this.recordEvent({}, () => {
             const snapshot = buildSnapshot(this, firstPlayer.id);
             this.pushOutcome({
                 kind: "game-started",
@@ -750,6 +777,21 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 initialPieces: snapshot.state.pieces,
             });
         });
+        if (this._autoRunPhaseLoop) {
+            this._phaseFlow = this._runGameFlow().catch((err) => {
+                console.error("Board phase flow error:", err);
+            });
+        }
+        return event;
+    }
+
+    /**
+     * The currently-running phase loop promise, or null when no loop is
+     * active. Tests await this to flush pending phase work after
+     * sending commands or firing the barrier timer.
+     */
+    get phaseFlow(): Promise<void> | null {
+        return this._phaseFlow;
     }
 
     /**
@@ -819,6 +861,28 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * for now tests assert against this in-memory buffer.
      */
     readonly _castOutcomesForTests: Array<unknown> = [];
+
+    /**
+     * Test-only buffer of accepted `pick-spell` outcomes recorded by
+     * the spellbook phase loop. Mirrors the broadcast emission via
+     * `recordEvent` so tests can assert on per-player picks without
+     * crawling the full event log.
+     */
+    readonly _pickedSpellOutcomesForTests: Array<{
+        playerId: PlayerId;
+        commandId: CommandId;
+    }> = [];
+
+    /**
+     * Test-only buffer of accepted `end-spell-pick` outcomes (explicit
+     * skips and barrier-timer-driven synthetic skips). Mirrors the
+     * broadcast emission via `recordEvent`.
+     */
+    readonly _endedSpellPickOutcomesForTests: Array<{
+        playerId: PlayerId;
+        commandId: CommandId;
+        timedOut: boolean;
+    }> = [];
 
     /**
      * Public entry point for every player command. Validates phase /
@@ -979,6 +1043,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         void this.recordEvent({ commandId, actorId: playerId }, () => {
             this.pushOutcome({ kind: "player-picked-spell", playerId });
         });
+        this._pickedSpellOutcomesForTests.push({ playerId, commandId });
     }
 
     /** Real recordEvent + pushOutcome wiring for an accepted skip. */
@@ -993,6 +1058,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 : { kind: "player-ended-spell-pick", playerId };
             this.pushOutcome(outcome);
         });
+        this._endedSpellPickOutcomesForTests.push({ playerId, commandId, timedOut });
     }
 
     /**
@@ -1131,6 +1197,103 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
         // 6. Hand the slot off so the casting phase loop can advance.
         slot.submit(playerId, cmd);
+    }
+
+    /* ── Phase loop ──────────────────────────────────────────────── */
+
+    /**
+     * Top-level command-pipeline phase loop. Drives the FSM forward
+     * from the initial idle state through the spellbook phase and into
+     * the casting setup. The casting phase loop is wired in Task 12 of
+     * the command-intake-pipeline plan.
+     */
+    private async _runGameFlow(): Promise<void> {
+        const pm = this._stateManager;
+
+        if (pm.isActive(pm.states.idle)) {
+            pm.evaluate(new StartGame());
+        }
+
+        if (pm.isActive(pm.states.spellbook)) {
+            const anySpellsAvailable = this.players.some(
+                (p) => !p.defeated && p.spells.length > 0,
+            );
+            if (!anySpellsAvailable) {
+                pm.evaluate(new SkipSpellbook());
+                pm.evaluate(new MovingReady());
+                return;
+            }
+            pm.evaluate(new SpellbookReady());
+            await this._runSpellbookPhase();
+
+            const anySpellSelected = this.players.some(
+                (p) => !p.defeated && p.selectedSpell,
+            );
+            if (anySpellSelected) {
+                pm.evaluate(new SpellsDone());
+                pm.evaluate(new CastingReady());
+            } else {
+                pm.evaluate(new NoSpellsCast());
+            }
+        }
+        // Casting phase loop is wired in Task 12.
+    }
+
+    /**
+     * Run the spellbook phase. Picks barrier mode when any player is
+     * remote AND `phaseTimeoutMs > 0`; otherwise runs serially in
+     * roster order, opening one ExpectedCommand slot per alive player.
+     *
+     * On barrier-driven timeout, synthesises end-spell-pick outcomes
+     * for any player who failed to submit, with `timedOut: true`.
+     */
+    private async _runSpellbookPhase(): Promise<void> {
+        const alive = this.players.filter((p) => !p.defeated);
+        if (alive.length === 0) {
+            return;
+        }
+
+        const timeout = this._phaseTimeoutMs;
+        const useBarrier =
+            timeout != null && timeout > 0 && this.players.some((p) => p.isRemote);
+
+        if (useBarrier) {
+            const barrier = new SpellbookBarrier(
+                alive.map((p) => p.id),
+                timeout,
+                this._setTimeout,
+                this._clearTimeout,
+            );
+            this._spellbookBarrier = barrier;
+            try {
+                await barrier.untilComplete();
+                for (const r of barrier.results()) {
+                    if (r.timedOut) {
+                        this._recordPlayerEndedSpellPick(
+                            r.playerId,
+                            r.command.commandId,
+                            true,
+                        );
+                    }
+                }
+            } finally {
+                this._spellbookBarrier = null;
+            }
+            return;
+        }
+
+        for (const player of alive) {
+            const slot = new ExpectedCommand(player.id, [
+                "pick-spell",
+                "end-spell-pick",
+            ]);
+            this._expectedCommand = slot;
+            try {
+                await slot.untilAccepted();
+            } finally {
+                this._expectedCommand = null;
+            }
+        }
     }
 
     /**

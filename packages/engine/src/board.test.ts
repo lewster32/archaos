@@ -15,6 +15,11 @@ import { UnitType } from "./enums/unittype";
 import { GameSetupPlayerType } from "./interfaces/ui";
 import type { PieceConfig } from "./configs/piececonfig";
 import type { Spell } from "./spells/spell";
+import type {
+    EndSpellPickCommand,
+    PickSpellCommand,
+} from "./protocol/commands";
+import { roundTrip } from "./protocol/wiresafety.test";
 
 function makeRules(): Rules {
     return {
@@ -1800,5 +1805,176 @@ describe("movePiece wiring", () => {
             path?: { x: number; y: number }[];
         };
         expect(outcome.path).toEqual(path);
+    });
+});
+
+/* ── Spellbook phase loop integration tests ─────────────────────── */
+
+interface FakeScheduler {
+    handles: Map<number, () => void>;
+    setTimeout: (cb: () => void, ms: number) => unknown;
+    clearTimeout: (handle: unknown) => void;
+    fire: (handle: number) => void;
+}
+
+function fakeScheduler(): FakeScheduler {
+    let nextHandle = 1;
+    const handles = new Map<number, () => void>();
+    return {
+        handles,
+        setTimeout: (cb) => {
+            const handle = nextHandle++;
+            handles.set(handle, cb);
+            return handle;
+        },
+        clearTimeout: (handle) => {
+            handles.delete(handle as number);
+        },
+        fire: (handle) => {
+            const cb = handles.get(handle);
+            if (cb) {
+                handles.delete(handle);
+                cb();
+            }
+        },
+    };
+}
+
+interface MakeTestBoardOpts {
+    players?: number;
+    playerOptions?: Array<{ isRemote?: boolean }>;
+    phaseTimeoutMs?: number | null;
+    setTimeout?: (cb: () => void, ms: number) => unknown;
+    clearTimeout?: (handle: unknown) => void;
+}
+
+function makeTestBoard(opts: MakeTestBoardOpts = {}): Board {
+    const { players = 2, playerOptions = [], phaseTimeoutMs = null } = opts;
+    const board = new Board(1, 13, 13, false, undefined, {
+        rng: new TestRNG(),
+        logger: { log: vi.fn() } as unknown as Logger,
+        rules: makeRules(),
+        autoRunPhaseLoop: true,
+        phaseTimeoutMs,
+        setTimeout: opts.setTimeout,
+        clearTimeout: opts.clearTimeout,
+    });
+    for (let i = 0; i < players; i++) {
+        const playerOpts = playerOptions[i] ?? {};
+        const player = board.addPlayer(
+            { name: `P${i + 1}`, type: GameSetupPlayerType.Local },
+            null,
+            playerOpts.isRemote,
+        );
+        // Give the player a single mock spell so the spellbook is
+        // non-empty and the phase loop runs.
+        player.addSpell(makeMockSpell({ id: 1000 + i + 1 }));
+    }
+    return board;
+}
+
+function pickFor(
+    board: Board,
+    playerId: number,
+    commandId = `pick-${playerId}`,
+): PickSpellCommand {
+    const player = board.getPlayer(playerId);
+    const spellId = player.spells[0].id;
+    return {
+        type: "command",
+        commandId,
+        token: "",
+        kind: "pick-spell",
+        spellId,
+    };
+}
+
+function skip(commandId = "skip"): EndSpellPickCommand {
+    return {
+        type: "command",
+        commandId,
+        token: "",
+        kind: "end-spell-pick",
+    };
+}
+
+describe("Board: serial-mode spellbook phase", () => {
+    it("opens slots for each alive player in turn order and advances", async () => {
+        const board = makeTestBoard({ players: 2 });
+        await board.startGame();
+
+        // Phase loop opens slot for player 1 first; submit a pick.
+        await board.handleCommand(1, roundTrip(pickFor(board, 1, "c1")));
+        // Slot advances to player 2; explicit skip.
+        await board.handleCommand(2, roundTrip(skip("c2")));
+        await board.phaseFlow;
+        expect(board.phase).toBe(BoardPhase.Casting);
+    });
+
+    it("rejects player 2 commands while player 1's slot is open with not-your-turn", async () => {
+        const board = makeTestBoard({ players: 2 });
+        await board.startGame();
+        await board.handleCommand(2, roundTrip(pickFor(board, 2, "c2")));
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 2,
+            commandId: "c2",
+            reason: "not-your-turn",
+        });
+    });
+});
+
+describe("Board: barrier-mode spellbook phase", () => {
+    it("uses barrier when any player is remote and timeout > 0", async () => {
+        const sched = fakeScheduler();
+        const board = makeTestBoard({
+            players: 2,
+            playerOptions: [{ isRemote: true }, { isRemote: false }],
+            phaseTimeoutMs: 5000,
+            setTimeout: sched.setTimeout,
+            clearTimeout: sched.clearTimeout,
+        });
+        await board.startGame();
+
+        // Barrier accepts in any order.
+        await board.handleCommand(2, roundTrip(skip("c2")));
+        await board.handleCommand(1, roundTrip(pickFor(board, 1, "c1")));
+        await board.phaseFlow;
+
+        expect(board.phase).toBe(BoardPhase.Casting);
+    });
+
+    it("falls back to serial when phaseTimeoutMs is null even with remote players", async () => {
+        const board = makeTestBoard({
+            players: 2,
+            playerOptions: [{ isRemote: true }, { isRemote: false }],
+            phaseTimeoutMs: null,
+        });
+        await board.startGame();
+        // Player 1 is current (serial mode); player 2's command is rejected.
+        await board.handleCommand(2, roundTrip(skip("c2")));
+        expect(
+            board._rejectedCommandsForTests.find((r) => r.reason === "not-your-turn"),
+        ).toBeTruthy();
+    });
+
+    it("auto-skips on timeout with timedOut: true", async () => {
+        const sched = fakeScheduler();
+        const board = makeTestBoard({
+            players: 2,
+            playerOptions: [{ isRemote: true }, { isRemote: true }],
+            phaseTimeoutMs: 5000,
+            setTimeout: sched.setTimeout,
+            clearTimeout: sched.clearTimeout,
+        });
+        await board.startGame();
+
+        // Fire the barrier timer.
+        const handle = [...sched.handles.keys()][0];
+        sched.fire(handle);
+
+        await board.phaseFlow;
+        const ended = board._endedSpellPickOutcomesForTests;
+        expect(ended.length).toBe(2);
+        expect(ended.every((o) => o.timedOut)).toBe(true);
     });
 });
