@@ -1468,6 +1468,69 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
+     * Open a single spellbook slot for the given player, emit a
+     * phase-changed outcome that the AI listener fires off, and resolve
+     * once the slot accepts a `pick-spell` or `end-spell-pick` command.
+     *
+     * Used by the legacy `nextPlayer()` flow to drive AI spellbook turns
+     * through the command pipeline without enabling the full
+     * `_runGameFlow` (which would race the legacy per-player loop).
+     */
+    async openSpellbookSlot(playerId: PlayerId): Promise<void> {
+        const slot = new ExpectedCommand(playerId, [
+            "pick-spell",
+            "end-spell-pick",
+        ]);
+        this._expectedCommand = slot;
+        this._emitPhaseChanged(BoardPhase.Spellbook, playerId);
+        try {
+            await slot.untilAccepted();
+        } finally {
+            this._expectedCommand = null;
+        }
+    }
+
+    /**
+     * Run the multi-cast slot loop for a single casting player. Opens a
+     * fresh `ExpectedCommand` slot accepting `cast-spell` or
+     * `cancel-cast` and re-opens new slots while the player's selected
+     * spell still has casts remaining. Same shape as `_runCastingPhase`
+     * but scoped to one player so the legacy `nextPlayer()` flow can
+     * drive AI casting turns through the command pipeline.
+     */
+    async runCastingForPlayer(playerId: PlayerId): Promise<void> {
+        const player = this.getPlayer(playerId);
+        if (!player?.selectedSpell) {
+            return;
+        }
+
+        this._spellRevealedSpellIds.delete(player.selectedSpell.id);
+        this._currentCastingPlayerId = playerId;
+
+        try {
+            while (
+                player.selectedSpell != null &&
+                player.selectedSpell.castTimes > 0
+            ) {
+                const slot = new ExpectedCommand(playerId, [
+                    "cast-spell",
+                    "cancel-cast",
+                ]);
+                this._expectedCommand = slot;
+                this._emitPhaseChanged(BoardPhase.Casting, playerId);
+                try {
+                    await slot.untilAccepted();
+                } finally {
+                    this._expectedCommand = null;
+                }
+            }
+        } finally {
+            this._currentCastingPlayerId = null;
+            this._spellRevealedSpellIds.clear();
+        }
+    }
+
+    /**
      * Wall-clock reading used for `elapsedMs` on events. Reads from
      * `BoardDeps.now`, defaulting to `Date.now`.
      */
@@ -2152,11 +2215,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    // Remote / AI spellbook picks are now driven by the
-                    // command pipeline (Board.handleCommand) and the
-                    // phase-changed event bus, not by direct method
-                    // calls. The legacy nextPlayer path skips through
-                    // the AI's spellbook turn here.
+                    // Drive the AI's spellbook turn through the command
+                    // pipeline by opening a single per-player slot and
+                    // emitting phase-changed; ComputerWizard's listener
+                    // dispatches a pick-spell or end-spell-pick command
+                    // that fills the slot.
+                    await this.openSpellbookSlot(this.currentPlayer.id);
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
                     // Return to allow the client override to
@@ -2196,13 +2260,19 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                             lineOfSight: spell.lineOfSight,
                         });
                         if (this.currentPlayer?.remote) {
-                            // Remote / AI casts now flow through the
-                            // command pipeline; the legacy path skips
-                            // through the AI's casting turn here.
+                            // Drive the AI's casting turn through the
+                            // command pipeline by running the multi-cast
+                            // slot loop; ComputerWizard's listener
+                            // dispatches one cast-spell or cancel-cast
+                            // command per slot opening.
+                            await this.runCastingForPlayer(this.currentPlayer.id);
+                            this.emitBoardUpdateEvent();
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
+                            await this.runCastingForPlayer(this.currentPlayer.id);
+                            this.emitBoardUpdateEvent();
                             continue;
                         }
                     }

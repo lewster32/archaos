@@ -782,7 +782,7 @@ describe("Board", () => {
             expect(board.state).toBe(BoardState.GameOver);
         });
 
-        it("auto-advances past a remote player in the spellbook phase without driving them directly", async () => {
+        it("opens a spellbook slot for a remote player and resolves once a command fills it", async () => {
             const remote = {
                 moveAllUnits: vi.fn().mockResolvedValue(undefined),
                 moveUnit: vi.fn().mockResolvedValue(false),
@@ -799,11 +799,22 @@ describe("Board", () => {
             p2.addSpell(makeMockSpell());
 
             // The legacy nextPlayer flow used to call `remote.selectSpell()`
-            // here. After the command-intake-pipeline migration the AI's
-            // pick is dispatched via Board.handleCommand from a phase-changed
-            // listener, so this code path is now a no-op skip. Verify it
-            // does not throw and the loop advances past the AI player.
-            await expect(board.nextPlayer()).resolves.toBeUndefined();
+            // directly. After the command-intake-pipeline migration the
+            // AI's pick is dispatched via Board.handleCommand from a
+            // phase-changed listener. The legacy path now opens an
+            // ExpectedCommand slot and awaits the command, so poll until
+            // the slot opens then dispatch an end-spell-pick to close it.
+            const next = board.nextPlayer();
+            while ((board as any)._expectedCommand == null) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+            await board.handleCommand(p2.id, {
+                type: "command",
+                commandId: "test-end-pick",
+                token: "",
+                kind: "end-spell-pick",
+            });
+            await expect(next).resolves.toBeUndefined();
         });
 
         it("returns early when a local player with spells reaches Spellbook phase (line 1306)", async () => {

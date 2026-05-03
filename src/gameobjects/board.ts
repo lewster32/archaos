@@ -1489,13 +1489,12 @@ export class Board extends EngineBoard<Piece> {
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    // Remote / AI spellbook picks are now driven by the
-                    // command pipeline (Board.handleCommand) and the
-                    // phase-changed event bus, not by direct method
-                    // calls. The legacy nextPlayer path skips through
-                    // the AI's spellbook turn here; the client UI
-                    // bridge in task 14 will replace this branch with
-                    // a phase-changed dispatch that drives the AI.
+                    // Drive the AI's spellbook turn through the command
+                    // pipeline by opening a single per-player slot and
+                    // emitting phase-changed; ComputerWizard's listener
+                    // dispatches a pick-spell or end-spell-pick command
+                    // that fills the slot.
+                    await this.openSpellbookSlot(this.currentPlayer.id);
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
                     return new Promise<void>((resolve) => {
@@ -1554,13 +1553,19 @@ export class Board extends EngineBoard<Piece> {
                             spell.lineOfSight,
                         );
                         if (this.currentPlayer?.remote) {
-                            // Remote / AI casts now flow through the
-                            // command pipeline; the legacy path skips
-                            // through the AI's casting turn here.
+                            // Drive the AI's casting turn through the
+                            // command pipeline by running the multi-cast
+                            // slot loop; ComputerWizard's listener
+                            // dispatches one cast-spell or cancel-cast
+                            // command per slot opening.
+                            await this.runCastingForPlayer(this.currentPlayer.id);
+                            this.emitBoardUpdateEvent();
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
+                            await this.runCastingForPlayer(this.currentPlayer.id);
+                            this.emitBoardUpdateEvent();
                             continue;
                         }
                     }
