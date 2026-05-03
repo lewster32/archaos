@@ -582,39 +582,11 @@ describe("Board", () => {
         });
     });
 
-    describe("movePiece", () => {
-        it("updates position and sets moved = true", async () => {
-            const board = makeBoard();
-            const player = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const piece = await board.addPiece(makePieceConfig(0, 0, player));
-            await board.movePiece(piece.id, new Point(5, 3), "test-cmd", 1);
-            expect(piece.position.x).toBe(5);
-            expect(piece.position.y).toBe(3);
-            expect(piece.moved).toBe(true);
-        });
-
-        it("emits PieceMoved", async () => {
-            const board = makeBoard();
-            const player = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const piece = await board.addPiece(makePieceConfig(0, 0, player));
-            const moved: any[] = [];
-            board.boardEvents.on(BoardEvent.PieceMoved, (p: any) => moved.push(p));
-            await board.movePiece(piece.id, new Point(2, 2), "test-cmd", 1);
-            expect(moved).toContain(piece);
-        });
-
-        it("throws for an unknown piece id", async () => {
-            await expect(makeBoard().movePiece(999, new Point(0, 0), "test-cmd", 1)).rejects.toThrow(
-                "Could not find piece with ID 999",
-            );
-        });
-    });
+    // ── movePiece ──────────────────────────────────────────────────────────
+    // The legacy public Board.movePiece entry point was removed in
+    // Task 12 of the movement-phase command-wiring spec; movement now
+    // flows through the move-piece command handler. Coverage of the
+    // new path lives in commands/handlecommand.test.ts.
 
     describe("newTurn", () => {
         it("emits NewTurn and transitions to Moving when no player has spells", async () => {
@@ -844,108 +816,11 @@ describe("Board", () => {
         });
     });
 
-    // ── attackPiece ────────────────────────────────────────────────────────
-
-    describe("attackPiece", () => {
-        it("throws when the attacking piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const defender = await board.addPiece(makePieceConfig(1, 0, board.players[0]));
-            await expect(board.attackPiece(999, defender.id)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("throws when the defending piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const attacker = await board.addPiece(makePieceConfig(0, 0, board.players[0]));
-            await expect(board.attackPiece(attacker.id, 999)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("emits PieceAttacked and returns attacker", async () => {
-            const board = makeBoard();
-            const p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const p2 = board.addPlayer({
-                name: "P2",
-                type: GameSetupPlayerType.Local,
-            });
-            const attacker = await board.addPiece(makePieceConfig(0, 0, p1));
-            const defender = await board.addPiece(makePieceConfig(1, 0, p2));
-            const attacked: any[] = [];
-            board.boardEvents.on(BoardEvent.PieceAttacked, (...args: any[]) => attacked.push(args));
-            const result = await board.attackPiece(attacker.id, defender.id);
-            expect(result).toBe(attacker);
-            expect(attacked).toHaveLength(1);
-        });
-    });
-
-    // ── rangedAttackPiece ─────────────────────────────────────────────────
-
-    describe("rangedAttackPiece", () => {
-        it("throws when the attacking piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const defender = await board.addPiece(makePieceConfig(1, 0, board.players[0]));
-            await expect(board.rangedAttackPiece(999, defender.id)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("throws when the defending piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const attacker = await board.addPiece(makePieceConfig(0, 0, board.players[0]));
-            await expect(board.rangedAttackPiece(attacker.id, 999)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("emits PieceRangedAttacked and returns attacker", async () => {
-            const board = makeBoard();
-            const p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const p2 = board.addPlayer({
-                name: "P2",
-                type: GameSetupPlayerType.Local,
-            });
-            const attacker = await board.addPiece(makePieceConfig(0, 0, p1));
-            const defender = await board.addPiece(makePieceConfig(1, 0, p2));
-            const attacked: any[] = [];
-            board.boardEvents.on(BoardEvent.PieceRangedAttacked, (...args: any[]) => attacked.push(args));
-            const result = await board.rangedAttackPiece(attacker.id, defender.id);
-            expect(result).toBe(attacker);
-            expect(attacked).toHaveLength(1);
-        });
-    });
-
-    // ── mountPiece / dismountPiece ─────────────────────────────────────────
-
-    describe("mountPiece / dismountPiece", () => {
-        it("mountPiece throws when the mounting piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const mount = await board.addPiece(makePieceConfig(1, 0, board.players[0], [UnitStatus.MountAny]));
-            await expect(board.mountPiece(999, mount.id)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("mountPiece throws when the mounted piece does not exist", async () => {
-            const board = makeBoard();
-            board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
-            const rider = await board.addPiece(makePieceConfig(0, 0, board.players[0], [UnitStatus.Wizard]));
-            await expect(board.mountPiece(rider.id, 999)).rejects.toThrow("Could not find piece with ID 999");
-        });
-
-        it("dismountPiece throws when the piece does not exist", async () => {
-            const board = makeBoard();
-            await expect(board.dismountPiece(999)).rejects.toThrow("Could not find piece with ID 999");
-        });
-    });
+    // ── attackPiece / rangedAttackPiece / mountPiece / dismountPiece ──
+    // The legacy public Board.{attack,rangedAttack,mount,dismount}Piece
+    // entry points were removed in Task 12 of the movement-phase
+    // command-wiring spec. The handler suite in
+    // commands/handlecommand.test.ts covers the new pipeline.
 
     // ── getAdjacentPiecesAtPosition ────────────────────────────────────────
 
@@ -1264,41 +1139,12 @@ describe("Board", () => {
         });
     });
 
-    // ── nextPlayer – remote casting path ──────────────────────────────────
-
-    describe("nextPlayer – remote casting", () => {
-        it("opens a movement slot for the remote player during the moving phase", async () => {
-            const remote = {
-                selectSpell: vi.fn().mockResolvedValue(false),
-                castSpell: vi.fn().mockResolvedValue(true),
-                moveAllUnits: vi.fn().mockResolvedValue(undefined),
-                moveUnit: vi.fn().mockResolvedValue(false),
-            };
-            const board = makeBoard();
-            // p1 local with no spells — provides the human turn that breaks
-            const _p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            // p2 is remote/AI with no spells
-            board.addPlayer({ name: "P2", type: GameSetupPlayerType.Computer }, remote as any);
-
-            // Replace the slot opener with a spy. The legacy
-            // moveAllUnits() call has been replaced by
-            // openMovementSlotFor; the unit test asserts the new
-            // dispatch surface is invoked when the moving phase is
-            // entered for a remote player.
-            const openSpy = vi
-                .spyOn(board, "openMovementSlotFor")
-                .mockResolvedValue(undefined);
-
-            // Drive the FSM into the moving phase manually
-            await board.newTurn(); // idle→moving (no spells)
-            await board.nextPlayer(); // → p1 (local, break)
-            await board.nextPlayer(); // → p2 (remote, moving phase)
-            expect(openSpy).toHaveBeenCalled();
-        });
-    });
+    // ── nextPlayer - remote movement path ────────────────────────────
+    // The legacy nextPlayer movement branch (calling
+    // openMovementSlotFor for remote players) was removed in Task 12;
+    // movement is now driven exclusively by `_runGameFlow` when
+    // `autoRunPhaseLoop` is enabled (the new default). The
+    // command-pipeline integration tests cover the full flow.
 
     // ── Simple getters and setters ────────────────────────────────────────
 
@@ -1376,58 +1222,12 @@ describe("Board", () => {
         });
     });
 
-    // ── mountPiece / dismountPiece success paths ──────────────────────────
+    // ── mountPiece / dismountPiece success paths ─────────────────────
+    // The legacy Board.mountPiece / Board.dismountPiece public entry
+    // points were removed in Task 12. Coverage of the new pipeline
+    // lives in commands/handlecommand.test.ts.
 
-    describe("mountPiece / dismountPiece – success paths", () => {
-        it("mountPiece mounts a wizard on a horse and returns the rider", async () => {
-            const board = makeBoard();
-            const p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
-            const horse = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
-            const result = await board.mountPiece(wizard.id, horse.id);
-            expect(result).toBe(wizard);
-            expect(wizard.currentMount).toBe(horse);
-            expect(horse.currentRider).toBe(wizard);
-        });
-
-        it("mountPiece auto-dismounts from a previous mount before remounting", async () => {
-            const board = makeBoard();
-            const p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
-            const horse1 = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
-            const horse2 = await board.addPiece(makePieceConfig(2, 0, p1, [UnitStatus.Mount]));
-            // Wire up the wizard as already mounted on horse1 without
-            // consuming the moved flag (canMountPiece requires !moved).
-            (wizard as any)._currentMount = horse1;
-            (horse1 as any)._currentRider = wizard;
-            await board.mountPiece(wizard.id, horse2.id);
-            expect(wizard.currentMount).toBe(horse2);
-            expect(horse1.currentRider).toBeNull();
-        });
-
-        it("dismountPiece returns the dismounted piece", async () => {
-            const board = makeBoard();
-            const p1 = board.addPlayer({
-                name: "P1",
-                type: GameSetupPlayerType.Local,
-            });
-            const wizard = await board.addPiece(makePieceConfig(0, 0, p1, [UnitStatus.Wizard]));
-            const horse = await board.addPiece(makePieceConfig(1, 0, p1, [UnitStatus.Mount]));
-            (wizard as any)._currentMount = horse;
-            (horse as any)._currentRider = wizard;
-            const result = await board.dismountPiece(wizard.id);
-            expect(result).toBe(wizard);
-            expect(wizard.currentMount).toBeNull();
-        });
-    });
-
-    // ── newTurn – additional paths ────────────────────────────────────────
+    // ── newTurn - additional paths ────────────────────────────────────────
 
     describe("newTurn – GameOver guard", () => {
         it("returns early without throwing when game is over", async () => {
@@ -1780,50 +1580,10 @@ describe("phase-changed wiring", () => {
     });
 });
 
-describe("movePiece wiring", () => {
-    test("emits one event with piece-moved + piece-turn-flag-changed outcomes", async () => {
-        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
-        const player = board.addPlayer({ name: "Alice", type: GameSetupPlayerType.Local });
-        const piece = await board.addPiece(makePieceConfig(0, 0, player));
-        await board.startGame();
-
-        const event = await board.movePiece(piece.id, new Point(5, 5), "c_42", 1);
-
-        expect(event.commandId).toBe("c_42");
-        expect(event.actorId).toBe(1);
-        expect(event.outcomes).toHaveLength(2);
-        expect(event.outcomes[0].kind).toBe("piece-moved");
-        expect(event.outcomes[1]).toEqual({
-            kind: "piece-turn-flag-changed",
-            pieceId: piece.id,
-            flags: { moved: true },
-        });
-        expect(piece.position.x).toBe(5);
-        expect(piece.position.y).toBe(5);
-        expect(piece.moved).toBe(true);
-    });
-
-    test("legacy path parameter is ignored - the piece-moved outcome carries no path field", async () => {
-        const board = new Board(1, 13, 13, false, undefined, { rng: new TestRNG() });
-        const player = board.addPlayer({ name: "Alice", type: GameSetupPlayerType.Local });
-        const piece = await board.addPiece(makePieceConfig(0, 0, player));
-        await board.startGame();
-        const path = [
-            { x: piece.position.x, y: piece.position.y },
-            { x: 4, y: 4 },
-            { x: 5, y: 5 },
-        ];
-
-        const event = await board.movePiece(piece.id, new Point(5, 5), "c_1", 1, path);
-
-        // The legacy {path} option was dropped from setPosition - the
-        // upcoming move-piece command handler emits per-step outcomes
-        // instead. Direct movePiece callers still pass the path argument
-        // (it is preserved with an underscore prefix) but it does not
-        // appear in the outcome.
-        expect(event.outcomes[0]).not.toHaveProperty("path");
-    });
-});
+// movePiece wiring: the legacy public Board.movePiece entry point was
+// removed in Task 12 of the movement-phase command-wiring spec. The
+// move-piece command handler is exercised in
+// commands/handlecommand.test.ts.
 
 /* ── Spellbook phase loop integration tests ─────────────────────── */
 

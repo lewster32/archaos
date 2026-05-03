@@ -934,6 +934,11 @@ export class ComputerWizard implements RemotePlayer {
         // Since select-piece does not close the slot, we then recurse
         // to dispatch the follow-up action for the now-selected piece.
         if (!this._board.selected) {
+            // Refresh enemy threat data at the start of the AI's
+            // movement turn so `_computeNextActionFor` reads fresh
+            // priorities. Previously this lived in the now-removed
+            // `moveAllUnits` no-op stub.
+            this.evaluateEnemyPlayerPriorities();
             const candidate: Piece | null = this._chooseNextPieceToSelect();
             if (!candidate) {
                 void this._board.handleCommand(this._player.id, this._buildEndMovementPhaseCommand());
@@ -1488,26 +1493,4 @@ export class ComputerWizard implements RemotePlayer {
         return best;
     }
 
-    /**
-     * Legacy entry point. Decision logic now flows through
-     * `_dispatchMovementCommand` on phase-changed events. The
-     * RemotePlayer interface still requires this method until a later
-     * task removes it.
-     */
-    async moveUnit(_piece: Piece): Promise<boolean> {
-        return false;
-    }
-
-    /**
-     * Legacy entry point. The slot loop in Board.openMovementSlotFor
-     * drives the AI movement-phase commands directly via the
-     * phase-changed event subscription. This method is retained as
-     * a no-op so the RemotePlayer interface still binds; we still
-     * call evaluateEnemyPlayerPriorities here so the threat data is
-     * fresh when _computeNextActionFor reads it on the first
-     * phase-changed fire.
-     */
-    async moveAllUnits(): Promise<void> {
-        this.evaluateEnemyPlayerPriorities();
-    }
 }

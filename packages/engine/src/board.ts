@@ -328,7 +328,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._clearTimeout =
             deps?.clearTimeout ?? ((handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>));
         this._phaseTimeoutMs = deps?.phaseTimeoutMs ?? null;
-        this._autoRunPhaseLoop = deps?.autoRunPhaseLoop ?? false;
+        this._autoRunPhaseLoop = deps?.autoRunPhaseLoop ?? true;
         this._logger = deps?.logger ?? Logger.getInstance();
         this._rules = deps?.rules ?? Rules.getInstance();
         this._alignment = new Alignment(classicBalance);
@@ -2555,25 +2555,49 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Select a piece by ID. Sets `_selected` and
-     * emits `BoardEvent.PieceSelected`.
+     * Internal piece-selection helper used by movement-phase command
+     * handlers and the legacy `Rules.processCancel` cancel path. Sets
+     * `_selected` and emits `BoardEvent.PieceSelected`. The public
+     * `selectPiece` wrapper below is kept until the legacy cancel path
+     * is migrated to the command pipeline.
      */
-    async selectPiece(id: number): Promise<void> {
+    private _selectPieceInternal(id: number): void {
         if (!id || this._state === BoardState.GameOver) {
             return;
         }
-        this._selected = this.getPiece(id);
-        if (!this._selected) {
+        const piece: P | null = this.getPiece(id);
+        if (!piece) {
             throw new Error(`No piece with ID ${id} found to select`);
         }
+        this._selected = piece;
         this._boardEvents.emit(BoardEvent.PieceSelected, this._selected);
     }
 
     /**
-     * Clear the current piece selection.
+     * Internal piece-deselection helper used by movement-phase command
+     * handlers and the legacy `Rules.processCancel` cancel path.
+     */
+    private _deselectPieceInternal(): void {
+        this._selected = null;
+    }
+
+    /**
+     * Legacy public wrapper around `_selectPieceInternal`. Retained for
+     * the cancel path in `Rules.processCancel` and the client UI flows
+     * (cursor / client piece) until those are ported to the command
+     * pipeline. New code must dispatch a `select-piece` command via
+     * `Board.handleCommand`.
+     */
+    async selectPiece(id: number): Promise<void> {
+        this._selectPieceInternal(id);
+    }
+
+    /**
+     * Legacy public wrapper around `_deselectPieceInternal`. See the
+     * note on `selectPiece`.
      */
     async deselectPiece(): Promise<void> {
-        this._selected = null;
+        this._deselectPieceInternal();
     }
 
     /**
@@ -2588,142 +2612,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const ownedPieces: P[] = this.getPiecesByOwner(player);
         for (const piece of ownedPieces) {
             if (piece.hasStatus(UnitStatus.Wizard)) {
-                await this.selectPiece(piece.id);
+                this._selectPieceInternal(piece.id);
                 return piece;
             }
         }
         return null;
-    }
-
-    /**
-     * Move a piece to a new position. Records a broadcast event
-     * carrying `piece-moved` and `piece-turn-flag-changed` outcomes
-     * for the piece (and its current rider, if any), then emits the
-     * rendering-side `BoardEvent.PieceMoved` event.
-     *
-     * @param id The id of the piece to move.
-     * @param to The target tile.
-     * @param commandId Correlation id from the originating command.
-     * @param actorId The player responsible for the move.
-     * @param _path Legacy parameter retained for direct call sites; the
-     *     full path is no longer carried in the `piece-moved` outcome.
-     *     Multi-tile traversals are emitted as a sequence of single-step
-     *     `piece-moved` outcomes by the upcoming move-piece command
-     *     handler. Removed entirely in Task 12.
-     * @returns The appended broadcast event.
-     */
-    async movePiece(
-        id: number,
-        to: Point,
-        commandId: CommandId,
-        actorId: PlayerId,
-        _path?: Point[],
-    ): Promise<BroadcastEventMessage> {
-        const piece: P | null = this.getPiece(id);
-        if (!piece) {
-            throw new Error(`Could not find piece with ID ${id}`);
-        }
-        const rider: P | null = piece.currentRider as P | null;
-        const event = await this.recordEvent({ commandId, actorId }, () => {
-            piece.setPosition(to);
-            piece.setTurnFlags({ moved: true });
-            if (rider) {
-                // Orchestrator composition: rider follows the mount AND
-                // inherits the moved flag.
-                rider.setPosition(to);
-                rider.setTurnFlags({ moved: true });
-            }
-        });
-        // Rendering-side event stays for the client.
-        this._boardEvents.emit(BoardEvent.PieceMoved, piece);
-        this.emitBoardUpdateEvent();
-        return event;
-    }
-
-    /**
-     * Resolve a melee attack between two pieces.
-     * Rolls combat, emits event, and kills the
-     * defender on success.
-     */
-    async attackPiece(attackingPieceId: number, defendingPieceId: number): Promise<P | null> {
-        const attackingPiece = this.getPiece(attackingPieceId);
-        const defendingPiece = this.getPiece(defendingPieceId);
-        if (!attackingPiece) {
-            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
-        }
-        if (!defendingPiece) {
-            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
-        }
-
-        this._busy = true;
-        const attackResult: boolean = await attackingPiece.attack(defendingPiece);
-        this._boardEvents.emit(BoardEvent.PieceAttacked, attackingPiece, defendingPiece, attackResult);
-        this._busy = false;
-        return attackingPiece;
-    }
-
-    /**
-     * Resolve a ranged attack between two pieces.
-     * Rolls ranged combat, emits event, and kills the
-     * defender on success.
-     */
-    async rangedAttackPiece(attackingPieceId: number, defendingPieceId: number): Promise<P | null> {
-        const attackingPiece = this.getPiece(attackingPieceId);
-        const defendingPiece = this.getPiece(defendingPieceId);
-        if (!attackingPiece) {
-            throw new Error(`Could not find piece with ID ${attackingPieceId}`);
-        }
-        if (!defendingPiece) {
-            throw new Error(`Could not find piece with ID ${defendingPieceId}`);
-        }
-
-        this._busy = true;
-        const attackResult: boolean = await attackingPiece.rangedAttack(defendingPiece);
-        this._boardEvents.emit(BoardEvent.PieceRangedAttacked, attackingPiece, defendingPiece, attackResult);
-        this._busy = false;
-        return attackingPiece;
-    }
-
-    /**
-     * Mount a piece upon another piece. If the
-     * mounting piece is already mounted, dismount
-     * first.
-     */
-    async mountPiece(mountingPieceId: number, mountedPieceId: number): Promise<P | null> {
-        const mountingPiece = this.getPiece(mountingPieceId);
-        const mountedPiece = this.getPiece(mountedPieceId);
-        if (!mountingPiece) {
-            throw new Error(`Could not find piece with ID ${mountingPieceId}`);
-        }
-        if (!mountedPiece) {
-            throw new Error(`Could not find piece with ID ${mountedPieceId}`);
-        }
-
-        // Dismount first if already mounted
-        if (mountingPiece.currentMount) {
-            mountingPiece.dismount();
-            mountingPiece.moved = false;
-        }
-
-        mountingPiece.mount(mountedPiece);
-
-        mountingPiece.position.setTo(mountedPiece.position.x, mountedPiece.position.y);
-
-        this.emitBoardUpdateEvent();
-        return mountingPiece;
-    }
-
-    /**
-     * Dismount a piece from its current mount.
-     */
-    async dismountPiece(dismountingPieceId: number): Promise<P | null> {
-        const piece = this.getPiece(dismountingPieceId);
-        if (!piece) {
-            throw new Error(`Could not find piece with ID ${dismountingPieceId}`);
-        }
-        piece.dismount();
-        this.emitBoardUpdateEvent();
-        return piece;
     }
 
     /* ── Game flow ───────────────────────────────── */
@@ -3088,12 +2981,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 }
             }
 
-            if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
-                await this.openMovementSlotFor(this.currentPlayer.id);
-                continue;
-            }
-
-            // Exit loop — player's turn is ready
+            // Exit loop - player's turn is ready
             break;
         }
     }

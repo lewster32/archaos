@@ -30,6 +30,11 @@ function makeBoard(overrides: Partial<BoardDeps> = {}): Board {
         rng: new TestRNG(),
         logger: { log: vi.fn() } as unknown as Logger,
         rules: makeRules(),
+        // Tests in this file drive the FSM and open command slots
+        // manually via `setupMovementSlot`. Disable the new
+        // command-pipeline phase loop (default `true` after Task 12)
+        // to avoid the auto-loop racing with the per-test slot setup.
+        autoRunPhaseLoop: false,
         ...overrides,
     });
 }

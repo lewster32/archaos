@@ -896,15 +896,24 @@ export class Board extends EngineBoard<Piece> {
         piece.position = new Point(fromX, fromY);
 
         // Record the broadcast event (piece-moved + piece-turn-flag-changed
-        // outcomes) and emit BoardEvent.PieceMoved via the engine. Pass the
-        // caller-supplied commandId / actorId straight through so the log
-        // carries the real command correlation.
-        const event: BroadcastEventMessage = await super.movePiece(
-            id,
-            new Point(position.x, position.y),
-            commandId,
-            actorId,
+        // outcomes) and emit BoardEvent.PieceMoved. Inlines the body of
+        // the legacy engine `Board.movePiece`, which was deleted in
+        // Task 12 of the movement-phase command-wiring spec.
+        const target: Point = new Point(position.x, position.y);
+        const rider: Piece | null = piece.currentRider as Piece | null;
+        const event: BroadcastEventMessage = await this.recordEvent(
+            { commandId, actorId },
+            () => {
+                piece.setPosition(target);
+                piece.setTurnFlags({ moved: true });
+                if (rider) {
+                    rider.setPosition(target);
+                    rider.setTurnFlags({ moved: true });
+                }
+            },
         );
+        this._boardEvents.emit(BoardEvent.PieceMoved, piece);
+        this.emitBoardUpdateEvent();
         this.cursor.enabled = true;
 
         if (!piece.currentMount && !piece.engaged) {
@@ -1575,11 +1584,6 @@ export class Board extends EngineBoard<Piece> {
                 if (!this.currentPlayer?.selectedSpell) {
                     continue;
                 }
-            }
-
-            if (this.phase === BoardPhase.Moving && this.currentPlayer?.remote) {
-                await this.currentPlayer.remote.moveAllUnits();
-                continue;
             }
 
             // Exit loop - player's turn is ready

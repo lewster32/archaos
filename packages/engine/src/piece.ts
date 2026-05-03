@@ -701,7 +701,11 @@ export class Piece extends Entity {
         piece.setTurnFlags({ moved: true });
         this.setMount(piece);
         piece.setRider(this);
-        await this.board.movePiece(this.id, piece.position, `sys-internal-${this.id}`, this.owner?.id ?? 0);
+        // Place the rider on the mount's tile. The legacy
+        // Board.movePiece path was removed in Task 12; setPosition is
+        // sufficient because the surrounding flow has already flipped
+        // the moved/attacked turn-flags above.
+        this.setPosition(new Point(piece.position.x, piece.position.y));
         this._board.logger.log(`${this.fullName} mounted ${piece.fullName}`);
     }
 
@@ -733,7 +737,9 @@ export class Piece extends Entity {
             this.currentRider.setPosition(new Point(point.x, point.y));
         }
         if (this.currentMount && !Point.equals(this.currentMount.position, this.position)) {
-            this._board.dismountPiece(this.id);
+            // Inline dismount; the legacy Board.dismountPiece public
+            // entry point was removed in Task 12.
+            await this.dismount();
         }
     }
 

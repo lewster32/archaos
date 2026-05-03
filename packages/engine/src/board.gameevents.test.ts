@@ -13,12 +13,39 @@ import type { PieceConfig } from "./configs/piececonfig";
 function makeBoard(clock?: () => number): Board {
     return new Board(1, 13, 13, false, undefined, {
         rng: new TestRNG(),
+        // Disable the new command-pipeline phase loop (default `true`
+        // after Task 12) so these tests can drive moves directly via
+        // `recordEvent` without racing the auto-loop.
+        autoRunPhaseLoop: false,
         ...(clock === undefined ? {} : { now: clock }),
     });
 }
 
 function addPlayer(board: Board, _id: number, name: string): Player {
     return board.addPlayer({ name, type: GameSetupPlayerType.Local });
+}
+
+/**
+ * Drive a single piece-moved + piece-turn-flag-changed broadcast event
+ * for the given piece. Replaces the legacy `Board.movePiece` direct
+ * mutator (removed in Task 12 of the movement-phase command-wiring
+ * spec).
+ */
+async function recordMove(
+    board: Board,
+    pieceId: number,
+    to: Point,
+    commandId: string,
+    actorId: number,
+): Promise<void> {
+    const piece = board.getPiece(pieceId);
+    if (!piece) {
+        throw new Error(`Could not find piece with ID ${pieceId}`);
+    }
+    await board.recordEvent({ commandId, actorId }, () => {
+        piece.setPosition(to);
+        piece.setTurnFlags({ moved: true });
+    });
 }
 
 function makePieceConfig(x: number, y: number, owner: Player, status: UnitStatus[] = []): PieceConfig {
@@ -50,7 +77,7 @@ describe("game-event integration: short scripted game", () => {
 
         await board.startGame();
         clock = 1250;
-        await board.movePiece(piece.id, new Point(5, 5), "c_1", 1);
+        await recordMove(board, piece.id, new Point(5, 5), "c_1", 1);
 
         const events = board.eventLog.range(1);
         expect(events.length).toBeGreaterThanOrEqual(2);
@@ -72,9 +99,9 @@ describe("game-event integration: short scripted game", () => {
         const piece = await board.addPiece(makePieceConfig(0, 0, player));
         await board.startGame();
 
-        await board.movePiece(piece.id, new Point(5, 5), "c_1", 1);
-        await board.movePiece(piece.id, new Point(6, 6), "c_2", 1);
-        await board.movePiece(piece.id, new Point(7, 7), "c_3", 1);
+        await recordMove(board, piece.id, new Point(5, 5), "c_1", 1);
+        await recordMove(board, piece.id, new Point(6, 6), "c_2", 1);
+        await recordMove(board, piece.id, new Point(7, 7), "c_3", 1);
 
         const snapshot = buildSnapshot(board, 1);
         const snapshotPiece = snapshot.state.pieces.find((p) => p.id === piece.id);
@@ -90,8 +117,8 @@ describe("event-log serialisation round-trip", () => {
         const player = addPlayer(board, 1, "Alice");
         const piece = await board.addPiece(makePieceConfig(0, 0, player));
         await board.startGame();
-        await board.movePiece(piece.id, new Point(5, 5), "c_1", 1);
-        await board.movePiece(piece.id, new Point(6, 6), "c_2", 1);
+        await recordMove(board, piece.id, new Point(5, 5), "c_1", 1);
+        await recordMove(board, piece.id, new Point(6, 6), "c_2", 1);
 
         const json = board.eventLog.toJSON();
         const restored = EventLog.fromJSON(json);
@@ -159,9 +186,9 @@ describe("invariants", () => {
         heads.push(board.eventLog.head());
         await board.startGame();
         heads.push(board.eventLog.head());
-        await board.movePiece(piece.id, new Point(5, 5), "c_1", 1);
+        await recordMove(board, piece.id, new Point(5, 5), "c_1", 1);
         heads.push(board.eventLog.head());
-        await board.movePiece(piece.id, new Point(6, 6), "c_2", 1);
+        await recordMove(board, piece.id, new Point(6, 6), "c_2", 1);
         heads.push(board.eventLog.head());
         // heads[] should be strictly monotonic: each entry >= previous,
         // and each entry after a move should be larger than the one before.

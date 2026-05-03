@@ -1185,7 +1185,7 @@ describe("Piece.mount", () => {
         await expect(attacker.mount(target)).rejects.toThrow("cannot mount");
     });
 
-    it("sets flags and calls board.movePiece on success", async () => {
+    it("sets flags and places the rider on the mount tile on success", async () => {
         const board = makeCombatBoard(false);
         const wizard = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Wizard]);
         const horse = makeCreature(board, 2, 1, 0, OWNER_A, [UnitStatus.Mount]);
@@ -1194,7 +1194,11 @@ describe("Piece.mount", () => {
         expect(horse.currentRider).toBe(wizard);
         expect((wizard as any)._moved).toBe(true);
         expect((wizard as any)._attacked).toBe(true);
-        expect(board.movePiece).toHaveBeenCalled();
+        // The legacy board.movePiece path was removed in Task 12;
+        // Piece.mount now uses setPosition directly. Verify the
+        // wizard ended up on the mount's tile.
+        expect(wizard.position.x).toBe(horse.position.x);
+        expect(wizard.position.y).toBe(horse.position.y);
     });
 });
 
@@ -1221,7 +1225,7 @@ describe("Piece.dismount", () => {
 // ── Piece.moveTo – dismount when mount left behind ────────────────────────────
 
 describe("Piece.moveTo with mount left behind", () => {
-    it("calls board.dismountPiece when mount position differs from new position", async () => {
+    it("dismounts the rider when mount position differs from new position", async () => {
         const board = makeCombatBoard(false);
         const mount = makeCreature(board, 1, 0, 0, OWNER_A, [UnitStatus.Mount]);
         const rider = makeCreature(board, 2, 0, 0, OWNER_A);
@@ -1231,7 +1235,11 @@ describe("Piece.moveTo with mount left behind", () => {
         (mount as any)._currentRider = rider;
         // mount is at (0,0), rider moves to (5,5)
         await rider.moveTo({ x: 5, y: 5 });
-        expect(board.dismountPiece).toHaveBeenCalledWith(rider.id);
+        // Task 12 inlined the dismount call (the legacy
+        // board.dismountPiece public entry was removed). Verify the
+        // mount/rider relationship was severed.
+        expect(rider.currentMount).toBeNull();
+        expect(mount.currentRider).toBeNull();
     });
 });
 

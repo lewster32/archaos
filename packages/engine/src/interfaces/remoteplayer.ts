@@ -1,18 +1,10 @@
-import { Piece } from "../piece";
-
+/**
+ * Marker interface kept for future networked-player work. After the
+ * movement-phase command-wiring spec, the AI no longer exposes any
+ * methods directly - all input flows through Board.handleCommand.
+ *
+ * Removed in a later cleanup task.
+ */
 export interface RemotePlayer {
-    /**
-     * Moves all units controlled by the player.
-     *
-     * @returns a promise that resolves when all units have been moved
-     */
-    moveAllUnits(): Promise<void>;
-
-    /**
-     * Moves a single unit controlled by the player.
-     *
-     * @param piece the piece to move
-     * @returns whether the piece was successfully moved
-     */
-    moveUnit(piece: Piece): Promise<boolean>;
+    // intentionally empty
 }

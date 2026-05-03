@@ -1,8 +1,13 @@
 import { Board } from "../board";
-import { Piece } from "../piece";
 import { Player } from "../player";
 import { RemotePlayer } from "./remoteplayer";
 
+/**
+ * Stub network-player controller. The legacy moveUnit / moveAllUnits
+ * entry points were removed in Task 12 of the movement-phase
+ * command-wiring spec, leaving this class as an empty marker until
+ * actual networking work begins.
+ */
 export class RemoteWizard implements RemotePlayer {
     /**
      * The player this represents.
@@ -23,26 +28,5 @@ export class RemoteWizard implements RemotePlayer {
     constructor(board: Board, player: Player) {
         this.board = board;
         this.player = player;
-    }
-
-    /**
-     * Moves all units controlled by the player.
-     *
-     * @returns a promise that resolves when all units have been moved
-     */
-    async moveAllUnits(): Promise<void> {
-        // Dummy implementation
-        return;
-    }
-
-    /**
-     * Moves a single unit controlled by the player.
-     *
-     * @param piece the piece to move
-     * @returns whether the piece was successfully moved
-     */
-    async moveUnit(_piece: Piece): Promise<boolean> {
-        // Dummy implementation
-        return false;
     }
 }
