@@ -1581,6 +1581,50 @@ describe("event-log clock infrastructure", () => {
     });
 });
 
+describe("BoardDeps scheduler injection", () => {
+    it("phaseTimeoutMs defaults to null when not provided", () => {
+        const board = makeBoard();
+        expect(board.phaseTimeoutMs).toBeNull();
+    });
+
+    it("phaseTimeoutMs reflects the injected value", () => {
+        const board = makeBoard({ phaseTimeoutMs: 7500 });
+        expect(board.phaseTimeoutMs).toBe(7500);
+    });
+
+    it("phaseTimeoutMs may be set to 0 (treated as 'disabled' by callers)", () => {
+        const board = makeBoard({ phaseTimeoutMs: 0 });
+        expect(board.phaseTimeoutMs).toBe(0);
+    });
+
+    it("uses the injected setTimeout/clearTimeout when provided", () => {
+        const setTimeout = vi.fn().mockReturnValue("handle-1");
+        const clearTimeout = vi.fn();
+        const board = makeBoard({ setTimeout, clearTimeout, phaseTimeoutMs: 5000 });
+        // Internal accessors via 'as any' for the test only.
+        const set = (board as any)._setTimeout as (cb: () => void, ms: number) => unknown;
+        const clear = (board as any)._clearTimeout as (handle: unknown) => void;
+
+        const handle = set(() => {}, 1000);
+        expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 1000);
+        expect(handle).toBe("handle-1");
+
+        clear(handle);
+        expect(clearTimeout).toHaveBeenCalledWith("handle-1");
+    });
+
+    it("falls back to global setTimeout/clearTimeout when not injected", () => {
+        const board = makeBoard();
+        const set = (board as any)._setTimeout as (cb: () => void, ms: number) => unknown;
+        const clear = (board as any)._clearTimeout as (handle: unknown) => void;
+        // Just prove the callable shape; we cannot easily assert the
+        // global was called without monkeypatching.
+        const handle = set(() => {}, 0);
+        expect(handle).toBeDefined();
+        clear(handle);
+    });
+});
+
 function addPlayer(board: Board, _id: number, name: string): void {
     board.addPlayer({ name, type: GameSetupPlayerType.Local });
 }

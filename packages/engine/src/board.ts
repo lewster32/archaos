@@ -64,6 +64,25 @@ export interface BoardDeps {
      * timing.
      */
     now?: () => number;
+    /**
+     * Injectable scheduler used by the spellbook barrier to enforce its
+     * per-game timeout. Whatever value this returns is the same value
+     * the matching `clearTimeout` will receive back. Defaults to the
+     * global `setTimeout`.
+     */
+    setTimeout?: (cb: () => void, ms: number) => unknown;
+    /**
+     * Cancels a previously-scheduled timer. Defaults to global
+     * `clearTimeout`.
+     */
+    clearTimeout?: (handle: unknown) => void;
+    /**
+     * Per-game spellbook barrier timeout in milliseconds. When greater
+     * than 0 AND any player is remote, the spellbook phase runs in
+     * barrier mode; otherwise the phase runs serially in turn order.
+     * Default null (serial mode regardless of remote players).
+     */
+    phaseTimeoutMs?: number | null;
 }
 
 /**
@@ -220,6 +239,25 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     private readonly _now: () => number;
 
     /**
+     * Injectable scheduler used by the spellbook barrier. Defaults to
+     * the global `setTimeout`.
+     */
+    private readonly _setTimeout: (cb: () => void, ms: number) => unknown;
+
+    /**
+     * Cancels a previously-scheduled timer. Defaults to global
+     * `clearTimeout`.
+     */
+    private readonly _clearTimeout: (handle: unknown) => void;
+
+    /**
+     * Per-game spellbook barrier timeout in milliseconds. Null or
+     * non-positive means barrier mode is disabled and the spellbook
+     * phase always runs serially.
+     */
+    private readonly _phaseTimeoutMs: number | null;
+
+    /**
      * Milliseconds recorded when `startGame()` is called.
      * Zero until the game has started.
      */
@@ -236,6 +274,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         super(id);
         this._rng = deps?.rng ?? new GameRNG(seed);
         this._now = deps?.now ?? Date.now;
+        this._setTimeout = deps?.setTimeout ?? ((cb, ms) => setTimeout(cb, ms));
+        this._clearTimeout =
+            deps?.clearTimeout ??
+            ((handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>));
+        this._phaseTimeoutMs = deps?.phaseTimeoutMs ?? null;
         this._logger = deps?.logger ?? Logger.getInstance();
         this._rules = deps?.rules ?? Rules.getInstance();
         this._alignment = new Alignment(classicBalance);
@@ -720,6 +763,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      */
     get gameStartMs(): number {
         return this._gameStartMs;
+    }
+
+    /**
+     * The configured spellbook barrier timeout in milliseconds, or null
+     * when barrier mode is disabled.
+     */
+    get phaseTimeoutMs(): number | null {
+        return this._phaseTimeoutMs;
     }
 
     get cursorPosition(): Point {
