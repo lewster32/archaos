@@ -33,11 +33,7 @@ describe("wire-safety: protocol kind exhaustiveness", () => {
         "reconnect",
     ] as const;
 
-    const PRIVATE_EVENT_KINDS = [
-        "spellbook-delivered",
-        "spell-gained",
-        "command-rejected",
-    ] as const;
+    const PRIVATE_EVENT_KINDS = ["spellbook-delivered", "spell-gained", "command-rejected"] as const;
 
     test("CommandMessage kind list compiles against the union", () => {
         // If a new kind is added to CommandMessage, this assignment
@@ -51,10 +47,12 @@ describe("wire-safety: protocol kind exhaustiveness", () => {
         kinds.forEach((k) => expect(typeof k).toBe("string"));
     });
 
-    test("RejectionReason union enumerates invalid-move", () => {
+    test("RejectionReason union enumerates all known reasons", () => {
         // Mirrors the union in events.ts verbatim. If a member is added,
         // removed, or reordered there, this list must follow so the test
-        // acts as an exhaustiveness anchor.
+        // acts as an exhaustiveness anchor. The toHaveLength assertion
+        // catches accidental drift (additions or removals) that a bare
+        // toContain check would miss.
         const reasons: RejectionReason[] = [
             "unauthorised",
             "not-your-turn",
@@ -65,6 +63,7 @@ describe("wire-safety: protocol kind exhaustiveness", () => {
             "invalid-move",
             "spell-pick-already-ended",
         ];
+        expect(reasons).toHaveLength(8);
         expect(reasons).toContain("invalid-move");
     });
 
