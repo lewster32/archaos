@@ -32,13 +32,19 @@ function createMockBoard(overrides: Record<string, any> = {}): Board {
     return {
         state: BoardState.Move,
         cursor: { position: new PMath.Vector2(4, 0) },
+        cursorPosition: new PMath.Vector2(4, 0),
         selected: null,
         currentPlayer: { id: 1 },
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
+        getAdjacentPoints: vi.fn().mockReturnValue([]),
+        handleCommand: vi.fn().mockResolvedValue(undefined),
         movePiece: vi.fn().mockResolvedValue(undefined),
         attackPiece: vi.fn().mockResolvedValue(null),
         rangedAttackPiece: vi.fn().mockResolvedValue(null),
         mountPiece: vi.fn().mockResolvedValue(undefined),
+        rangeGizmo: {
+            getPathTo: vi.fn().mockReturnValue(null),
+        },
         ...overrides,
     } as unknown as Board;
 }
@@ -94,15 +100,26 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(4, 0) },
+                    cursorPosition: new PMath.Vector2(4, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
                 // Should NOT have moved first (flying units attack from position)
-                expect(board.movePiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "move-piece" }),
+                );
             });
 
             it("flying unit cannot attack enemy outside movement range", async () => {
@@ -121,13 +138,17 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(10, 0) },
+                    cursorPosition: new PMath.Vector2(10, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.attackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "attack-piece" }),
+                );
             });
 
             it("ground unit walks to attack distant enemy within movement range", async () => {
@@ -146,19 +167,29 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(3, 0) },
+                    cursorPosition: new PMath.Vector2(3, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.position,
-                    expect.any(String),
-                    expect.any(Number),
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "move-piece",
+                        pieceId: attacker.id,
+                        to: { x: defender.position.x, y: defender.position.y },
+                    }),
                 );
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("adjacent attack succeeds without moving", async () => {
@@ -178,14 +209,25 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(1, 0) },
+                    cursorPosition: new PMath.Vector2(1, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).not.toHaveBeenCalled();
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "move-piece" }),
+                );
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("returns Invalid when canAttackPiece is false", async () => {
@@ -202,13 +244,17 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(1, 0) },
+                    cursorPosition: new PMath.Vector2(1, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.attackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "attack-piece" }),
+                );
             });
         });
 
@@ -227,13 +273,21 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(3, 0) },
+                    cursorPosition: new PMath.Vector2(3, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.RangedAttack);
-                expect(board.rangedAttackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "ranged-attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
@@ -250,13 +304,17 @@ describe("Rules", () => {
                 const board = createMockBoard({
                     selected: attacker,
                     cursor: { position: new PMath.Vector2(3, 0) },
+                    cursorPosition: new PMath.Vector2(3, 0),
                     getPiecesAtPosition: vi.fn().mockReturnValue([defender]),
                 });
 
                 const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.rangedAttackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "ranged-attack-piece" }),
+                );
             });
         });
     });

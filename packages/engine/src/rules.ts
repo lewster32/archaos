@@ -16,6 +16,16 @@ import type { Piece } from "./piece";
 import type { Player } from "./player";
 import { EffectType } from "./enums/effecttype";
 import type { SpreadResult, SpreadBatchPayload, SpreadIterationPayload } from "./actions";
+import type { Path, Node } from "./pathfinding";
+import type { Point } from "./point";
+import type {
+    AttackPieceCommand,
+    CancelPieceActionCommand,
+    MountPieceCommand,
+    MovePieceCommand,
+    RangedAttackPieceCommand,
+    SelectPieceCommand,
+} from "./protocol/commands";
 export type { SpellCastTarget } from "./spells/spell";
 
 /**
@@ -314,12 +324,12 @@ export class Rules {
 
                 if (currentAliveHoveredPiece?.currentRider?.canSelect) {
                     this.dispatchEvent(EventType.PieceInfo, currentAliveHoveredPiece.currentRider, board);
-                    await board.selectPiece(currentAliveHoveredPiece.id);
+                    await this._dispatchSelectPiece(board, currentAliveHoveredPiece);
                     board.emitUIEvent(EventType.DismountAvailable, true);
                     return ActionType.Move;
                 } else if (currentAliveHoveredPiece?.canSelect) {
                     this.dispatchEvent(EventType.PieceInfo, currentAliveHoveredPiece, board);
-                    await board.selectPiece(currentAliveHoveredPiece.id);
+                    await this._dispatchSelectPiece(board, currentAliveHoveredPiece);
                     return ActionType.Select;
                 } else {
                     return ActionType.Invalid;
@@ -332,12 +342,7 @@ export class Rules {
         }
         if (actionType === ActionType.Move) {
             if (!selectedPiece.moved && selectedPiece.inMovementRange(board.cursorPosition)) {
-                await board.movePiece(
-                    selectedPiece.id,
-                    board.cursorPosition,
-                    `rules-${selectedPiece.id}-${Date.now()}`,
-                    board.currentPlayer?.id ?? 0,
-                );
+                await this._dispatchMovePiece(board, selectedPiece, board.cursorPosition);
                 this.dispatchEvent(EventType.PieceInfo, null, board);
                 return ActionType.Move;
             } else {
@@ -362,18 +367,13 @@ export class Rules {
                         selectedPiece.inMovementRange(currentAliveHoveredPiece.position) &&
                         Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
-                        await board.movePiece(
-                            selectedPiece.id,
-                            currentAliveHoveredPiece.position,
-                            `rules-${selectedPiece.id}-${Date.now()}`,
-                            board.currentPlayer?.id ?? 0,
-                        );
+                        await this._dispatchMovePiece(board, selectedPiece, currentAliveHoveredPiece.position);
                         selectedPiece.moved = false;
                     }
                     if (selectedPiece.engaged) {
                         return ActionType.Invalid;
                     } else {
-                        await board.mountPiece(selectedPiece.id, currentAliveHoveredPiece.id);
+                        await this._dispatchMountPiece(board, selectedPiece, currentAliveHoveredPiece);
                         return ActionType.Mount;
                     }
                 } else {
@@ -390,18 +390,13 @@ export class Rules {
                         selectedPiece.inMovementRange(currentAliveHoveredPiece.position) &&
                         Board.distance(selectedPiece.position, currentAliveHoveredPiece.position) > 1.5
                     ) {
-                        await board.movePiece(
-                            selectedPiece.id,
-                            currentAliveHoveredPiece.position,
-                            `rules-${selectedPiece.id}-${Date.now()}`,
-                            board.currentPlayer?.id ?? 0,
-                        );
+                        await this._dispatchMovePiece(board, selectedPiece, currentAliveHoveredPiece.position);
                         selectedPiece.moved = false;
                     } else if (!selectedPiece.inAttackRange(currentAliveHoveredPiece.position)) {
                         return ActionType.Invalid;
                     }
                     selectedPiece.attacked = false;
-                    await board.attackPiece(selectedPiece.id, currentAliveHoveredPiece.id);
+                    await this._dispatchAttackPiece(board, selectedPiece, currentAliveHoveredPiece);
                     return ActionType.Attack;
                 } else {
                     return ActionType.Invalid;
@@ -409,7 +404,7 @@ export class Rules {
             }
             if (actionType === ActionType.RangedAttack) {
                 if (selectedPiece.canRangedAttackPiece(currentAliveHoveredPiece)) {
-                    await board.rangedAttackPiece(selectedPiece.id, currentAliveHoveredPiece.id);
+                    await this._dispatchRangedAttackPiece(board, selectedPiece, currentAliveHoveredPiece);
                     return ActionType.RangedAttack;
                 } else {
                     return ActionType.Invalid;
@@ -417,6 +412,166 @@ export class Rules {
             }
         }
         return ActionType.None;
+    }
+
+    /**
+     * Build a fresh commandId for command dispatches initiated by
+     * `Rules.processClick`. Mirrors the pattern used by the AI's
+     * `_nextCommandId` so command-correlation is consistent across
+     * dispatch surfaces.
+     *
+     * @param pieceId The piece the command targets.
+     */
+    private _nextCommandId(pieceId: number): string {
+        return `rules-${pieceId}-${Date.now()}`;
+    }
+
+    /**
+     * Dispatch a `select-piece` command for the given piece. The
+     * `select-piece` command does not close its movement-phase slot, so
+     * subsequent processClick branches (move/attack/etc.) can still
+     * dispatch into the same slot.
+     */
+    private async _dispatchSelectPiece(board: Board, piece: Piece): Promise<void> {
+        const cmd: SelectPieceCommand = {
+            type: "command",
+            commandId: this._nextCommandId(piece.id),
+            token: "",
+            kind: "select-piece",
+            pieceId: piece.id,
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Dispatch a `move-piece` command for the given piece. The path is
+     * derived from the rangegizmo's cached A* path; the piece's current
+     * position is filtered out so the command's `path` is the
+     * exclusive-of-origin tile sequence the protocol expects.
+     */
+    private async _dispatchMovePiece(board: Board, piece: Piece, to: Point): Promise<void> {
+        const path: Point[] = this._computePathTo(board, piece, to);
+        const cmd: MovePieceCommand = {
+            type: "command",
+            commandId: this._nextCommandId(piece.id),
+            token: "",
+            kind: "move-piece",
+            pieceId: piece.id,
+            to: { x: to.x, y: to.y },
+            path: path.map((p: Point) => ({ x: p.x, y: p.y })),
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Dispatch a `mount-piece` command. The path is empty when the
+     * wizard is already on the mount's tile; otherwise it is the
+     * rangegizmo's cached path to the mount's tile.
+     */
+    private async _dispatchMountPiece(board: Board, wizard: Piece, mount: Piece): Promise<void> {
+        const samePosition: boolean = wizard.position.x === mount.position.x && wizard.position.y === mount.position.y;
+        const path: Point[] = samePosition ? [] : this._computePathTo(board, wizard, mount.position);
+        const cmd: MountPieceCommand = {
+            type: "command",
+            commandId: this._nextCommandId(wizard.id),
+            token: "",
+            kind: "mount-piece",
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: path.map((p: Point) => ({ x: p.x, y: p.y })),
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Dispatch an `attack-piece` command. The path stops on a tile
+     * adjacent to the target; the handler resolves the attack from the
+     * terminal step.
+     */
+    private async _dispatchAttackPiece(board: Board, attacker: Piece, target: Piece): Promise<void> {
+        const path: Point[] = this._computeAttackPath(board, attacker, target);
+        const cmd: AttackPieceCommand = {
+            type: "command",
+            commandId: this._nextCommandId(attacker.id),
+            token: "",
+            kind: "attack-piece",
+            attackerId: attacker.id,
+            targetId: target.id,
+            path: path.map((p: Point) => ({ x: p.x, y: p.y })),
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Dispatch a `ranged-attack-piece` command. No path is required;
+     * the handler validates LOS and range.
+     */
+    private async _dispatchRangedAttackPiece(board: Board, attacker: Piece, target: Piece): Promise<void> {
+        const cmd: RangedAttackPieceCommand = {
+            type: "command",
+            commandId: this._nextCommandId(attacker.id),
+            token: "",
+            kind: "ranged-attack-piece",
+            attackerId: attacker.id,
+            targetId: target.id,
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Dispatch a `cancel-piece-action` command. Used by `processCancel`
+     * to abort a partial-move via the command pipeline.
+     */
+    private async _dispatchCancelPieceAction(board: Board, piece: Piece): Promise<void> {
+        const cmd: CancelPieceActionCommand = {
+            type: "command",
+            commandId: this._nextCommandId(piece.id),
+            token: "",
+            kind: "cancel-piece-action",
+            pieceId: piece.id,
+        };
+        await board.handleCommand(board.currentPlayer?.id ?? 0, cmd);
+    }
+
+    /**
+     * Compute a path from `piece`'s current position (exclusive) to
+     * `to` (inclusive). Reads from the rangegizmo's cached A* paths
+     * populated by the prior `rangeGizmo.generate(piece)` call. Returns
+     * an empty array if no path exists.
+     */
+    private _computePathTo(board: Board, piece: Piece, to: Point): Point[] {
+        const path: Path | null = board.rangeGizmo?.getPathTo(to) ?? null;
+        if (!path) return [];
+        const nodes: Node[] = path.nodes ?? [];
+        const result: Point[] = [];
+        for (const node of nodes) {
+            if (node.pos.x === piece.position.x && node.pos.y === piece.position.y) continue;
+            result.push(node.pos);
+        }
+        return result;
+    }
+
+    /**
+     * Compute a path that ends adjacent to (but not on) the target's
+     * tile. Walks all 8 adjacent tiles and picks the cheapest one.
+     * Returns an empty array if no adjacent tile is reachable - the
+     * handler then accepts the empty path for already-adjacent or
+     * flying attackers.
+     */
+    private _computeAttackPath(board: Board, attacker: Piece, target: Piece): Point[] {
+        const adj: Point[] = board.getAdjacentPoints?.(target.position, false) ?? [];
+        let best: Point[] = [];
+        let bestCost: number = Infinity;
+        for (const tile of adj) {
+            const path: Path | null = board.rangeGizmo?.getPathTo(tile) ?? null;
+            if (path && path.cost < bestCost) {
+                bestCost = path.cost;
+                best = (path.nodes ?? [])
+                    .filter((n: Node) => !(n.pos.x === attacker.position.x && n.pos.y === attacker.position.y))
+                    .map((n: Node) => n.pos);
+            }
+        }
+        return best;
     }
 
     /**
@@ -482,6 +637,17 @@ export class Rules {
 
             if (board.state === BoardState.Move) {
                 if (selectedPiece) {
+                    // Dispatch cancel-piece-action so the engine
+                    // pipeline applies the moved/turnOver flag
+                    // transitions on the piece (and its rider) via
+                    // _handleCancelPieceAction. The handler currently
+                    // sets turnOver: true for a piece that has moved;
+                    // the legacy fallback below mirrors that for
+                    // riders and the unmoved-cancel case so neither
+                    // path regresses while the dispatch is silently
+                    // rejected when no movement-phase slot is open
+                    // (legacy human flow until Task 12).
+                    await this._dispatchCancelPieceAction(board, selectedPiece);
                     selectedPiece.moved = true;
                     selectedPiece.turnOver = true;
                     if (selectedPiece.currentRider) {

@@ -42,6 +42,8 @@ function createMockBoard(overrides: Record<string, any> = {}): Board {
         selected: null,
         currentPlayer: { id: 1 },
         getPiecesAtPosition: vi.fn().mockReturnValue([]),
+        getAdjacentPoints: vi.fn().mockReturnValue([]),
+        handleCommand: vi.fn().mockResolvedValue(undefined),
         movePiece: vi.fn().mockResolvedValue(undefined),
         attackPiece: vi.fn().mockResolvedValue(null),
         rangedAttackPiece: vi.fn().mockResolvedValue(null),
@@ -49,6 +51,9 @@ function createMockBoard(overrides: Record<string, any> = {}): Board {
         selectPiece: vi.fn().mockResolvedValue(undefined),
         deselectPiece: vi.fn().mockResolvedValue(undefined),
         emitUIEvent: vi.fn(),
+        rangeGizmo: {
+            getPathTo: vi.fn().mockReturnValue(null),
+        },
         events: {
             emit: vi.fn(),
             emitAsync: vi.fn().mockResolvedValue(undefined),
@@ -114,9 +119,19 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
                 // Should NOT have moved first (flying units attack from position)
-                expect(board.movePiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "move-piece" }),
+                );
             });
 
             it("flying unit cannot attack enemy outside movement range", async () => {
@@ -141,7 +156,10 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.attackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "attack-piece" }),
+                );
             });
 
             it("ground unit walks to attack distant enemy within movement range", async () => {
@@ -166,13 +184,22 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).toHaveBeenCalledWith(
-                    attacker.id,
-                    defender.position,
-                    expect.any(String),
-                    expect.any(Number),
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "move-piece",
+                        pieceId: attacker.id,
+                        to: { x: defender.position.x, y: defender.position.y },
+                    }),
                 );
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("adjacent attack succeeds without moving", async () => {
@@ -198,8 +225,18 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Attack);
-                expect(board.movePiece).not.toHaveBeenCalled();
-                expect(board.attackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "move-piece" }),
+                );
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("returns Invalid when canAttackPiece is false", async () => {
@@ -222,7 +259,10 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.Attack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.attackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "attack-piece" }),
+                );
             });
         });
 
@@ -247,7 +287,14 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.RangedAttack);
-                expect(board.rangedAttackPiece).toHaveBeenCalledWith(attacker.id, defender.id);
+                expect(board.handleCommand).toHaveBeenCalledWith(
+                    1,
+                    expect.objectContaining({
+                        kind: "ranged-attack-piece",
+                        attackerId: attacker.id,
+                        targetId: defender.id,
+                    }),
+                );
             });
 
             it("ranged attack returns Invalid when canRangedAttackPiece is false", async () => {
@@ -270,7 +317,10 @@ describe("Rules", () => {
                 const result = await rules.processAction(board, ActionType.RangedAttack, InputType.Click);
 
                 expect(result).toBe(ActionType.Invalid);
-                expect(board.rangedAttackPiece).not.toHaveBeenCalled();
+                expect(board.handleCommand).not.toHaveBeenCalledWith(
+                    expect.anything(),
+                    expect.objectContaining({ kind: "ranged-attack-piece" }),
+                );
             });
         });
     });
@@ -705,7 +755,13 @@ describe("Rules.processAction – additional branches", () => {
         const rules = Rules.getInstance();
         const result = await rules.processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.Select);
-        expect(board.selectPiece).toHaveBeenCalledWith(10);
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "select-piece",
+                pieceId: 10,
+            }),
+        );
     });
 
     it("Click + Move moves the selected piece to cursor position", async () => {
@@ -722,7 +778,14 @@ describe("Rules.processAction – additional branches", () => {
         const rules = Rules.getInstance();
         const result = await rules.processAction(board, ActionType.Move, InputType.Click);
         expect(result).toBe(ActionType.Move);
-        expect(board.movePiece).toHaveBeenCalledWith(3, board.cursorPosition, expect.any(String), expect.any(Number));
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "move-piece",
+                pieceId: 3,
+                to: { x: board.cursorPosition.x, y: board.cursorPosition.y },
+            }),
+        );
     });
 
     it("Click + Move returns Invalid when piece cannot reach cursor", async () => {
@@ -1267,8 +1330,18 @@ describe("Rules.processAction – Mount action (Click)", () => {
         });
         const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Mount);
-        expect(board.mountPiece).toHaveBeenCalledWith(rider.id, mount.id);
-        expect(board.movePiece).not.toHaveBeenCalled();
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "mount-piece",
+                wizardId: rider.id,
+                mountId: mount.id,
+            }),
+        );
+        expect(board.handleCommand).not.toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ kind: "move-piece" }),
+        );
     });
 
     it("moves ground unit to mount target if distance > 1.5 then mounts", async () => {
@@ -1293,8 +1366,22 @@ describe("Rules.processAction – Mount action (Click)", () => {
         });
         const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Mount);
-        expect(board.movePiece).toHaveBeenCalledWith(rider.id, mount.position, expect.any(String), expect.any(Number));
-        expect(board.mountPiece).toHaveBeenCalledWith(rider.id, mount.id);
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "move-piece",
+                pieceId: rider.id,
+                to: { x: mount.position.x, y: mount.position.y },
+            }),
+        );
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "mount-piece",
+                wizardId: rider.id,
+                mountId: mount.id,
+            }),
+        );
         // moved flag must be restored to false after the pre-mount move
         expect(rider.moved).toBe(false);
     });
@@ -1319,7 +1406,10 @@ describe("Rules.processAction – Mount action (Click)", () => {
         });
         const result = await Rules.getInstance().processAction(board, ActionType.Mount, InputType.Click);
         expect(result).toBe(ActionType.Invalid);
-        expect(board.mountPiece).not.toHaveBeenCalled();
+        expect(board.handleCommand).not.toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ kind: "mount-piece" }),
+        );
     });
 
     it("returns Invalid when canMountPiece is false", async () => {
@@ -1361,7 +1451,13 @@ describe("Rules.processAction – Select and edge cases (Click)", () => {
         });
         const result = await Rules.getInstance().processAction(board, ActionType.Select, InputType.Click);
         expect(result).toBe(ActionType.Move);
-        expect(board.selectPiece).toHaveBeenCalledWith(mount.id);
+        expect(board.handleCommand).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                kind: "select-piece",
+                pieceId: mount.id,
+            }),
+        );
         expect(board.emitUIEvent).toHaveBeenCalledWith(EventType.DismountAvailable, true);
     });
 

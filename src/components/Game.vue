@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 // Components
-import { EventType } from "@archaos/engine";
+import { BoardPhase, EventType } from "@archaos/engine";
 import type {
     SpellbookData,
     Box,
@@ -147,9 +147,7 @@ const spellSelect = (spell: Spell | null) => {
                   token: "",
                   kind: "pick-spell",
                   spellId: spell.id,
-                  ...((spell as { illusion?: boolean }).illusion === true
-                      ? { illusion: true }
-                      : {}),
+                  ...((spell as { illusion?: boolean }).illusion === true ? { illusion: true } : {}),
               };
     dispatchCommand(cmd);
     // Transitional: keep the legacy spellbook callback path firing so
@@ -171,6 +169,21 @@ const cancel = () => {
 };
 
 const endTurn = () => {
+    // During the movement phase the End Turn button maps to an
+    // `end-movement-phase` command. The dispatch is silently
+    // rejected when no human movement-phase slot is open (legacy
+    // flow until Task 12 flips autoRunPhaseLoop), but the wiring
+    // is in place so the same UI path drives the command pipeline
+    // once the slot is opened for humans.
+    const engineBoard = getEngineBoard();
+    if (engineBoard?.phase === BoardPhase.Moving) {
+        dispatchCommand({
+            type: "command",
+            commandId: crypto.randomUUID(),
+            token: "",
+            kind: "end-movement-phase",
+        });
+    }
     eventEmitter.value?.emit(EventType.EndTurn);
     if (spellbookOpen.value) {
         eventEmitter.value?.emit(EventType.SpellbookClose);
