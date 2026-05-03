@@ -1228,14 +1228,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         });
 
         // 6. Slot lifecycle.
-        //    Multi-cast intermediate success (castTimes still > 0):
-        //    leave the slot open so the next cast-spell from the same
-        //    player can land in it.
-        //    Final cast (castTimes drained or first-cast failure):
-        //    submit so the phase loop can advance.
-        if (succeeded && spell.castTimes > 0) {
-            return;
-        }
+        //    Always submit — the casting phase loop opens a fresh slot
+        //    and re-emits phase-changed per iteration, which is what
+        //    triggers the AI's next dispatch. Leaving an intermediate
+        //    multi-cast slot open would hang the loop on
+        //    `await slot.untilAccepted()` and starve the AI of the
+        //    re-emit it needs to issue the next cast.
         slot.submit(playerId, cmd);
     }
 

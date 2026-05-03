@@ -436,7 +436,7 @@ describe("cast-spell handler", () => {
 });
 
 describe("cast-spell multi-cast", () => {
-    it("keeps the slot open between casts and decrements castsLeft", async () => {
+    it("submits the slot after each cast and decrements castsLeft", async () => {
         const board = makeTestBoardWithMultiCastSpell(1, 3);
         openCastSlotFor(board, 1);
 
@@ -445,8 +445,12 @@ describe("cast-spell multi-cast", () => {
             target: { point: { x: 5, y: 5 } },
         }));
 
-        // Slot must still be open so the next cast-spell can land in it.
-        expect((board as any)._expectedCommand?.isOpen).toBe(true);
+        // The handler always submits — the casting phase loop is what
+        // re-opens a fresh slot for the next cast and re-emits
+        // phase-changed so the AI dispatches again. Leaving the slot
+        // open here would starve the loop of its trigger and hang
+        // multi-cast forever.
+        expect((board as any)._expectedCommand?.isOpen).toBe(false);
         const succeeded = board._castOutcomesForTests.find(
             (o: any) => o.kind === "spell-cast-succeeded",
         ) as { castsLeft?: number } | undefined;
