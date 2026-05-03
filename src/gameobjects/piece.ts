@@ -735,10 +735,10 @@ export class Piece extends EnginePiece {
         this.owner = null;
         if (this.illusion) {
             await this.clientBoard.playEffect(EffectType.DisbelieveHit, this.sprite.getCenter());
-            await this.destroy();
+            await this.destroy(cause);
         } else if (this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
             await this.clientBoard.playEffect(EffectType.NoCorpseDeath, this.sprite.getCenter());
-            await this.destroy();
+            await this.destroy(cause);
         }
         if (cause !== "corpse-setup") {
             this.clientBoard.sound.play("die");
@@ -800,9 +800,15 @@ export class Piece extends EnginePiece {
 
     /**
      * Destroy this piece, removing it from the board.
+     *
+     * @param cause Why the piece is dying. Threaded through to
+     *     {@link setDead} so non-combat removals don't leak into
+     *     the broadcast log as `"combat"`. `setDead` is idempotent,
+     *     so when this is reached via `kill(cause)` the original
+     *     cause is preserved.
      */
-    override async destroy() {
-        this.setDead("combat");
+    override async destroy(cause: PieceDiedCause = "combat"): Promise<void> {
+        this.setDead(cause);
         if (this.currentRider) {
             await (this.currentRider as Piece).dismount();
         }

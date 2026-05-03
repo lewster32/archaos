@@ -7,6 +7,7 @@ import {
     Wizard as EngineWizard,
     Piece as EnginePiece,
 } from "@archaos/engine";
+import type { PieceDiedCause } from "@archaos/engine";
 import { wizcodes, effectOffsets } from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
@@ -213,8 +214,12 @@ export class Wizard extends Piece {
     /**
      * Oh dear, underestimated that King Cobra again,
      * didn't you. Time to kill the wizard off.
+     *
+     * @param cause Why the wizard is dying. Threaded to
+     *     {@link destroy} so the broadcast log records the
+     *     true cause instead of falling back to `"combat"`.
      */
-    async kill(): Promise<void> {
+    async kill(cause: PieceDiedCause = "combat"): Promise<void> {
         // WOBWOBWOBWOBWOBWOB
         this.clientBoard.sound.play("deadwizard1", false);
         await this.clientBoard.playEffect(EffectType.WizardDefeated, this.sprite.getCenter(), null, this);
@@ -229,7 +234,7 @@ export class Wizard extends Piece {
             this.setMount(null);
         }
         const ownedPieceCount: number = this.clientBoard.getPiecesByOwner(this.owner as any).length;
-        await this.destroy();
+        await this.destroy(cause);
         await this.owner?.defeat();
         if (ownedPieceCount < 1) {
             // PCHOWWW

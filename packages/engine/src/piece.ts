@@ -587,7 +587,7 @@ export class Piece extends Entity {
         this.setDead(cause);
         this.owner = null;
         if (this.illusion || this.hasStatus(UnitStatus.NoCorpse) || this.hasStatus(UnitStatus.Undead)) {
-            await this.destroy();
+            await this.destroy(cause);
         }
         this._board.boardEvents.emit(BoardEvent.PieceDied, this);
     }
@@ -595,9 +595,15 @@ export class Piece extends Entity {
     /**
      * Destroy this piece, removing it from the board.
      * Client overrides to also destroy sprites.
+     *
+     * @param cause Why this piece is dying (see {@link PieceDiedCause}).
+     *     Defaults to `"combat"`. `setDead` is idempotent, so when this
+     *     is reached via `kill(cause)` the original cause is preserved;
+     *     callers invoking `destroy` directly should pass the correct
+     *     cause to avoid leaking `"combat"` into the broadcast log.
      */
-    async destroy(): Promise<void> {
-        this.setDead("combat");
+    async destroy(cause: PieceDiedCause = "combat"): Promise<void> {
+        this.setDead(cause);
         if (this.currentRider) {
             this.currentRider.dismount();
         }
@@ -848,7 +854,7 @@ export class Piece extends Entity {
                     Colour.Green,
                 );
             }
-            await this.destroy();
+            await this.destroy("spread");
             return result;
         }
 
@@ -885,7 +891,7 @@ export class Piece extends Entity {
             } else {
                 for (const piece of spreadPieces) {
                     this._board.logger.log(`${piece.fullName} was destroyed by ${this.fullName}`, Colour.Red);
-                    await piece.destroy();
+                    await piece.destroy("spread");
                     result.destroyedPieceIds.push(piece.id);
                 }
             }

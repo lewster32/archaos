@@ -1898,6 +1898,125 @@ describe("Piece.setDead mutator", () => {
     });
 });
 
+// ── Cause threading through kill / destroy ───────────────────────────────────
+
+/**
+ * Build an illusion Piece on a real Board so kill() takes the
+ * destroy() branch and we can assert on the emitted piece-died cause.
+ */
+function makeRealIllusion(board: Board, id: number, x: number, y: number): Piece {
+    return new Piece(board, id, {
+        type: UnitType.Creature,
+        x,
+        y,
+        illusion: true,
+        properties: {
+            id: "creature",
+            name: "Illusion",
+            movement: 1,
+            combat: 1,
+            rangedCombat: 0,
+            range: 0,
+            defence: 1,
+            manoeuvrability: 1,
+            magicResistance: 0,
+            attackType: "hit",
+            rangedType: "shot",
+            status: [],
+        },
+        owner: OWNER_A,
+    } as PieceConfig);
+}
+
+describe("Piece cause threading", () => {
+    test("kill('disbelieve') on an illusion emits piece-died with cause 'disbelieve' via the destroy path", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealIllusion(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, async () => {
+            await piece.kill("disbelieve");
+        });
+
+        const diedOutcomes = event.outcomes.filter((o) => o.kind === "piece-died");
+        expect(diedOutcomes).toHaveLength(1);
+        expect(diedOutcomes[0]).toEqual({
+            kind: "piece-died",
+            pieceId: piece.id,
+            cause: "disbelieve",
+        });
+    });
+
+    test("destroy('spell') called directly emits piece-died with cause 'spell'", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, async () => {
+            await piece.destroy("spell");
+        });
+
+        const diedOutcomes = event.outcomes.filter((o) => o.kind === "piece-died");
+        expect(diedOutcomes).toHaveLength(1);
+        expect(diedOutcomes[0]).toEqual({
+            kind: "piece-died",
+            pieceId: piece.id,
+            cause: "spell",
+        });
+    });
+
+    test("destroy() with no argument defaults to cause 'combat'", async () => {
+        const board = makeRealBoard();
+        const piece = makeRealPiece(board, 1, 2, 2);
+
+        const event = await board.recordEvent({}, async () => {
+            await piece.destroy();
+        });
+
+        const diedOutcomes = event.outcomes.filter((o) => o.kind === "piece-died");
+        expect(diedOutcomes).toHaveLength(1);
+        expect(diedOutcomes[0]).toEqual({
+            kind: "piece-died",
+            pieceId: piece.id,
+            cause: "combat",
+        });
+    });
+
+    test("kill('expired') on an Undead piece emits piece-died with cause 'expired' via the destroy path", async () => {
+        const board = makeRealBoard();
+        const piece = new Piece(board, 1, {
+            type: UnitType.Creature,
+            x: 2,
+            y: 2,
+            properties: {
+                id: "creature",
+                name: "Creature",
+                movement: 1,
+                combat: 1,
+                rangedCombat: 0,
+                range: 0,
+                defence: 1,
+                manoeuvrability: 1,
+                magicResistance: 0,
+                attackType: "hit",
+                rangedType: "shot",
+                status: [UnitStatus.Undead],
+            },
+            owner: OWNER_A,
+        } as PieceConfig);
+
+        const event = await board.recordEvent({}, async () => {
+            await piece.kill("expired");
+        });
+
+        const diedOutcomes = event.outcomes.filter((o) => o.kind === "piece-died");
+        expect(diedOutcomes).toHaveLength(1);
+        expect(diedOutcomes[0]).toEqual({
+            kind: "piece-died",
+            pieceId: piece.id,
+            cause: "expired",
+        });
+    });
+});
+
 // ── Piece.setTurnFlags ────────────────────────────────────────────────────────
 
 describe("Piece.setTurnFlags mutator", () => {
