@@ -1457,11 +1457,86 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Stub handler for `move-piece`. Real movement orchestration lands
-     * in a subsequent task.
+     * Handle a `move-piece` command. Validates phase + slot ownership,
+     * that the moving piece is the currently selected one, that it has
+     * not already moved this turn, and that the submitted path is legal
+     * for the piece (`validatePath`).
+     *
+     * On accept, walks the submitted path step-by-step inside a single
+     * `recordEvent` broadcast. Each step calls `setPosition` on the
+     * piece (and on its rider, if any, for paired position sync).
+     * After every step, runs an engagement roll for each adjacent
+     * enemy that can engage; on success, both pieces flip their
+     * `engaged` turn-flag and the path is truncated mid-move
+     * (invariant 14). The piece's `moved` turn-flag is set at the end
+     * of traversal, mirrored on the rider where applicable.
+     *
+     * Submits the slot after a successful move so the movement-phase
+     * loop can advance to the next slot.
      */
     private async _handleMovePiece(playerId: PlayerId, cmd: MovePieceCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const slot = this._expectedCommand;
+        if (this.phase !== BoardPhase.Moving || !slot) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+        if (slot.expectedPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        const piece: P | null = this._selected;
+        if (!piece || piece.id !== cmd.pieceId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        if (piece.moved) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        const path: Point[] = cmd.path.map((p) => new Point(p.x, p.y));
+        if (!this.validatePath(piece, path)) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        const rider: P | null = piece.currentRider as P | null;
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            let engagementBroke: boolean = false;
+            for (const step of path) {
+                piece.setPosition(step);
+                if (rider) {
+                    rider.setPosition(step);
+                }
+                const enemies: P[] = this.getAdjacentPiecesAtPosition(
+                    step,
+                    (p) => !p.dead && p.owner !== piece.owner && p.canEngagePiece(piece),
+                );
+                for (const enemy of enemies) {
+                    // Engagement is a manoeuvrability contest, matching
+                    // the original Chaos rule and _handleSelectPiece's
+                    // engagement formula. Piece.canEngagePiece already
+                    // gates entry on both pieces having
+                    // manoeuvrability > 0.
+                    const succeeded: boolean = this.roll(
+                        enemy.stats.manoeuvrability ?? 0,
+                        piece.stats.manoeuvrability ?? 0,
+                    );
+                    if (succeeded) {
+                        piece.setTurnFlags({ engaged: true });
+                        enemy.setTurnFlags({ engaged: true });
+                        engagementBroke = true;
+                        break;
+                    }
+                }
+                if (engagementBroke) {
+                    break;
+                }
+            }
+            piece.setTurnFlags({ moved: true });
+            if (rider) {
+                rider.setTurnFlags({ moved: true });
+            }
+        });
+        slot.submit(playerId, cmd);
     }
 
     /**

@@ -1305,3 +1305,208 @@ describe("cancel-piece-action handler", () => {
         expect(slot.isOpen).toBe(true);
     });
 });
+
+describe("_handleMovePiece", () => {
+    it("rejects with not-your-turn when cmd.pieceId differs from board.selected", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const a = await addPieceFor(board, p1, { x: 5, y: 5 });
+        const b = await addPieceFor(board, p1, { x: 7, y: 7 });
+        (board as any)._selected = a;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: b.id,
+                to: { x: 7, y: 7 },
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "m1",
+            reason: "not-your-turn",
+        });
+    });
+
+    it("rejects with invalid-move when piece.moved is already true", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const piece = await addPieceFor(board, p1, { x: 5, y: 5 });
+        piece.moved = true;
+        (board as any)._selected = piece;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: piece.id,
+                to: { x: 6, y: 5 },
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "m1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("rejects with invalid-move when validatePath returns false (path exceeds budget)", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const piece = await addPieceFor(board, p1, { x: 5, y: 5, movement: 1 });
+        (board as any)._selected = piece;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        // Movement budget is 1 but path traverses 3 tiles.
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: piece.id,
+                to: { x: 8, y: 5 },
+                path: [
+                    { x: 6, y: 5 },
+                    { x: 7, y: 5 },
+                    { x: 8, y: 5 },
+                ],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "m1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("happy path: emits one piece-moved outcome per traversed tile in order", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const piece = await addPieceFor(board, p1, { x: 5, y: 5, movement: 5 });
+        (board as any)._selected = piece;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: piece.id,
+                to: { x: 8, y: 5 },
+                path: [
+                    { x: 6, y: 5 },
+                    { x: 7, y: 5 },
+                    { x: 8, y: 5 },
+                ],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const moves = (lastEvent?.outcomes ?? []).filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === piece.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        expect(moves).toHaveLength(3);
+        expect(moves[0].from).toEqual({ x: 5, y: 5 });
+        expect(moves[0].to).toEqual({ x: 6, y: 5 });
+        expect(moves[1].from).toEqual({ x: 6, y: 5 });
+        expect(moves[1].to).toEqual({ x: 7, y: 5 });
+        expect(moves[2].from).toEqual({ x: 7, y: 5 });
+        expect(moves[2].to).toEqual({ x: 8, y: 5 });
+        expect(piece.moved).toBe(true);
+        expect(slot.isOpen).toBe(false);
+    });
+
+    it("engagement-mid-path stops the move and flags both pieces engaged (invariant 14)", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const piece = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 5,
+            manoeuvrability: 4,
+        });
+        // Enemy adjacent to the middle step (7,5) but not the first
+        // (6,5). (8,6) is at dx=2,dy=1 from (6,5) so out of range,
+        // and dx=1,dy=1 from (7,5) so adjacent diagonally.
+        const enemy = await addPieceFor(board, p2, {
+            x: 8,
+            y: 6,
+            manoeuvrability: 5,
+        });
+        (board as any)._selected = piece;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+
+        // Force the engagement roll to always succeed.
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: piece.id,
+                to: { x: 8, y: 5 },
+                path: [
+                    { x: 6, y: 5 },
+                    { x: 7, y: 5 },
+                    { x: 8, y: 5 },
+                ],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const moves = (lastEvent?.outcomes ?? []).filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === piece.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        // Should have moved through (6,5) and (7,5) but not (8,5).
+        expect(moves).toHaveLength(2);
+        expect(moves[0].to).toEqual({ x: 6, y: 5 });
+        expect(moves[1].to).toEqual({ x: 7, y: 5 });
+        // No move to the truncated tile.
+        expect(moves.find((m) => m.to.x === 8 && m.to.y === 5)).toBeUndefined();
+
+        // Both pieces flagged engaged: true.
+        const flagOutcomes = (lastEvent?.outcomes ?? []).filter(
+            (o: any) => o.kind === "piece-turn-flag-changed",
+        ) as Array<{ pieceId: number; flags: { engaged?: boolean; moved?: boolean } }>;
+        const friendlyEngaged = flagOutcomes.find(
+            (o) => o.pieceId === piece.id && o.flags.engaged === true,
+        );
+        const enemyEngaged = flagOutcomes.find(
+            (o) => o.pieceId === enemy.id && o.flags.engaged === true,
+        );
+        expect(friendlyEngaged).toBeTruthy();
+        expect(enemyEngaged).toBeTruthy();
+        expect(slot.isOpen).toBe(false);
+    });
+});
