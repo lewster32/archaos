@@ -1436,7 +1436,15 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 (p) => !p.dead && p.owner !== piece.owner && p.canEngagePiece(piece),
             );
             for (const enemy of enemies) {
-                const succeeded: boolean = this.roll(enemy.stats.combat ?? 0, piece.stats.combat ?? 0);
+                // Engagement is a manoeuvrability contest, not a combat
+                // contest, in the original Chaos rules. Piece.canEngagePiece
+                // already gates entry on both pieces having
+                // manoeuvrability > 0; using the same stat for the roll
+                // matches the original game balance.
+                const succeeded: boolean = this.roll(
+                    enemy.stats.manoeuvrability ?? 0,
+                    piece.stats.manoeuvrability ?? 0,
+                );
                 if (succeeded) {
                     piece.setTurnFlags({ engaged: true });
                     enemy.setTurnFlags({ engaged: true });
@@ -1515,6 +1523,17 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
             return;
         }
+        // Compute the action discriminator from the piece's current
+        // turn-flag state. Today: a piece that has not moved is
+        // "select"; one that has moved (or attacked / mounted, both of
+        // which set moved: true via setTurnFlags) is "move". The
+        // protocol allows finer-grained values ("attack",
+        // "rangedAttack", "mount", "dismount") - the move / attack /
+        // ranged / mount / dismount handlers (Tasks 7-8) may extend
+        // this computation by reading other flags or a dedicated
+        // last-action field. For Task 5 the two-state derivation is
+        // sufficient because the upstream Rules.processCancel flow
+        // that this replaces also only differentiated select vs move.
         const action: "select" | "move" = piece.moved ? "move" : "select";
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
             this.pushOutcome({

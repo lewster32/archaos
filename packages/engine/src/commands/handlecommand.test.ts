@@ -963,6 +963,46 @@ describe("select-piece handler", () => {
         expect(friendlyOutcome?.flags.engaged).toBe(true);
         expect(enemyOutcome?.flags.engaged).toBe(true);
     });
+
+    it("uses manoeuvrability stats for the engagement roll, not combat", async () => {
+        const board = makeBoard();
+        const p1 = addLocalPlayer(board, "P1");
+        const p2 = addLocalPlayer(board, "P2");
+        const friendly = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            combat: 1,
+            manoeuvrability: 4,
+        });
+        await addPieceFor(board, p2, {
+            x: 6,
+            y: 5,
+            combat: 9,
+            manoeuvrability: 7,
+        });
+        const rollSpy = vi.spyOn(board, "roll").mockReturnValue(false);
+        await board.startGame();
+        setupMovementSlot(board, p1.id);
+
+        await board.handleCommand(
+            p1.id,
+            roundTrip({
+                type: "command",
+                commandId: "s1",
+                token: "",
+                kind: "select-piece",
+                pieceId: friendly.id,
+            }),
+        );
+
+        // First positional arg is enemy stat, second is selecting
+        // piece's stat. The engagement roll must use manoeuvrability
+        // (7 vs 4), not combat (9 vs 1).
+        expect(rollSpy).toHaveBeenCalled();
+        const firstCallArgs = rollSpy.mock.calls[0];
+        expect(firstCallArgs[0]).toBe(7);
+        expect(firstCallArgs[1]).toBe(4);
+    });
 });
 
 describe("end-piece-turn handler", () => {
