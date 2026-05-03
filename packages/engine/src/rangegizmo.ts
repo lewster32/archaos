@@ -2,6 +2,7 @@ import { Point } from "./point";
 import { RangeType } from "./enums/rangetype";
 import { UnitStatus } from "./enums/unitstatus";
 import { Node, Path, diagonalHeuristic, buildPath, isOpen, isClosed } from "./pathfinding";
+import { engageableEnemiesAt, isStepTraversable, movementBudget, stepCost } from "./pathrules";
 import type { Board } from "./board";
 import type { Piece } from "./piece";
 
@@ -60,37 +61,35 @@ export class RangeGizmo {
      * @returns The updated node
      */
     protected checkNodeTraversal(node: Node): Node {
-        const livePieces = this._board.getPiecesAtPosition(new Point(node.x, node.y), (piece: Piece) => !piece.dead);
+        const tile: Point = new Point(node.x, node.y);
+        const from: Point = this._piece.position;
 
-        if (!livePieces.length) {
+        // The moving piece's own current tile is always
+        // traversable.
+        if (from.x === node.x && from.y === node.y) {
             node.traversable = true;
             node.terminal = false;
             return node;
         }
 
-        // The rider of the moving piece occupies the same tile
-        // but moves with it — treat it as part of the moving
-        // piece for traversal purposes.
-        const rider = this._piece.currentRider;
-
-        // If the only pieces here are the moving piece (and
-        // possibly its rider), the tile is traversable.
-        const otherPieces = livePieces.filter((p) => p !== this._piece && p !== rider);
-        if (otherPieces.length === 0) {
+        // Empty / friendly-only tile: traversable, not terminal.
+        if (isStepTraversable(this._piece, from, tile, this._board, false)) {
             node.traversable = true;
             node.terminal = false;
             return node;
         }
 
-        // Evaluate each piece at this position.
-        for (const livePiece of otherPieces) {
-            if (this._piece.canMountPiece(livePiece) || this._piece.canAttackPiece(livePiece)) {
-                node.terminal = true;
-            } else {
-                node.traversable = false;
-            }
+        // Tile contains a mountable or attackable target:
+        // terminal, not traversable.
+        if (isStepTraversable(this._piece, from, tile, this._board, true)) {
+            node.terminal = true;
+            node.traversable = false;
+            return node;
         }
 
+        // Otherwise: not traversable.
+        node.traversable = false;
+        node.terminal = false;
         return node;
     }
 
@@ -132,9 +131,7 @@ export class RangeGizmo {
         // Apply warning flags: a node is a warning node if
         // there is an engageable enemy adjacent to it.
         potentiallyValidNodes.forEach((node: Node) => {
-            const enemies = this._board.getAdjacentPiecesAtPosition(node.pos, (piece: Piece) =>
-                piece.canEngagePiece(this._piece),
-            );
+            const enemies = engageableEnemiesAt(this._piece, node.pos, this._board);
             if (!enemies.length) {
                 return;
             }
@@ -161,7 +158,7 @@ export class RangeGizmo {
         for (const node of this._validNodes) {
             const path: Path = this.getPathTo(node.pos);
             node.path = path;
-            if (!path || path.cost > unit.stats.movement + 1) {
+            if (!path || path.cost > movementBudget(unit) + 0.5) {
                 node.traversable = false;
             }
         }
@@ -291,12 +288,11 @@ export class RangeGizmo {
 
         const openNodes: Node[] = [];
         const closedNodes: Node[] = [];
-        const travelCost: number = 1;
 
         let currentNode: Node = firstNode;
 
         currentNode.g = 0;
-        currentNode.h = diagonalHeuristic(currentNode, destinationNode, travelCost);
+        currentNode.h = diagonalHeuristic(currentNode, destinationNode);
         currentNode.f = currentNode.g + currentNode.h;
 
         while (currentNode !== destinationNode) {
@@ -310,8 +306,8 @@ export class RangeGizmo {
                     continue;
                 }
 
-                const g: number = currentNode.g + diagonalHeuristic(currentNode, testNode, travelCost);
-                const h: number = diagonalHeuristic(testNode, destinationNode, travelCost);
+                const g: number = currentNode.g + stepCost(currentNode.pos, testNode.pos);
+                const h: number = diagonalHeuristic(testNode, destinationNode);
                 const f: number = g + h;
 
                 if (isOpen(testNode, openNodes) || isClosed(testNode, closedNodes)) {
