@@ -44,6 +44,7 @@ export class Player<P extends Piece = Piece> extends Model {
     protected _forceCast: boolean | null = null;
 
     protected readonly _remote: RemotePlayer | null;
+    protected readonly _isRemote: boolean;
 
     /**
      * A list of default player colours to assign to
@@ -68,8 +69,20 @@ export class Player<P extends Piece = Piece> extends Model {
      * @param config The configuration for this player.
      * @param colour The colour of this player.
      * @param remote Optional remote player controller.
+     * @param isRemote Optional explicit override for the isRemote flag.
+     *                 When omitted, defaults to `remote != null` (i.e.,
+     *                 any player with an attached AI controller is
+     *                 considered remote). Future network players will
+     *                 pass `isRemote: true` with `remote: null`.
      */
-    constructor(board: Board<P>, id: number, config: PlayerConfig, colour: number, remote?: RemotePlayer | null) {
+    constructor(
+        board: Board<P>,
+        id: number,
+        config: PlayerConfig,
+        colour: number,
+        remote?: RemotePlayer | null,
+        isRemote?: boolean,
+    ) {
         super(id);
         if (!config) {
             throw new Error("Player must be given a config");
@@ -85,6 +98,7 @@ export class Player<P extends Piece = Piece> extends Model {
         this._forceHit = config.forceHit ?? null;
         this._forceCast = config.forceCast ?? null;
         this._remote = remote ?? null;
+        this._isRemote = isRemote ?? this._remote != null;
     }
 
     get colour(): number {
@@ -140,6 +154,18 @@ export class Player<P extends Piece = Piece> extends Model {
 
     get remote(): RemotePlayer | null {
         return this._remote;
+    }
+
+    /**
+     * True when this player is driven asynchronously via the command
+     * pipeline (an AI ComputerWizard or a future networked client).
+     * False for local-human players whose input comes from this client's
+     * UI. Drives barrier-mode selection in the spellbook phase: a game
+     * with any remote player runs the spellbook phase as a barrier when
+     * the per-game phaseTimeoutMs is set.
+     */
+    get isRemote(): boolean {
+        return this._isRemote;
     }
 
     /**

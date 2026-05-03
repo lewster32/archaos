@@ -145,6 +145,51 @@ describe("Player constructor", () => {
         expect(player.remote).toBeNull();
     });
 
+    it("isRemote defaults to false when no remote and no override", () => {
+        const board = makeBoard();
+        const player = board.addPlayer({
+            name: "P",
+            type: GameSetupPlayerType.Local,
+        });
+        expect(player.isRemote).toBe(false);
+    });
+
+    it("isRemote defaults to true when a remote is provided", () => {
+        const board = makeBoard();
+        const remote = {
+            moveAllUnits: vi.fn(),
+        } as any;
+        const player = board.addPlayer(
+            { name: "AI", type: GameSetupPlayerType.Computer },
+            remote,
+        );
+        expect(player.isRemote).toBe(true);
+    });
+
+    it("isRemote can be explicitly overridden to true with no remote", () => {
+        const board = makeBoard();
+        const player = board.addPlayer(
+            { name: "Net", type: GameSetupPlayerType.Local },
+            null,
+            true,
+        );
+        expect(player.isRemote).toBe(true);
+        expect(player.remote).toBeNull();
+    });
+
+    it("isRemote can be explicitly overridden to false even with a remote", () => {
+        const board = makeBoard();
+        const remote = {
+            moveAllUnits: vi.fn(),
+        } as any;
+        const player = board.addPlayer(
+            { name: "AI", type: GameSetupPlayerType.Computer },
+            remote,
+            false,
+        );
+        expect(player.isRemote).toBe(false);
+    });
+
     it("initialises forceHit from config", () => {
         const board = makeBoard();
         const player = board.addPlayer({

@@ -504,15 +504,22 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      *
      * @param config Player configuration.
      * @param remote Optional remote-player controller (AI or network).
+     * @param isRemote Optional override for the player's isRemote flag.
+     *                 When omitted, defaults to `remote != null`.
      * @returns The newly created player.
      */
-    addPlayer(config: PlayerConfig, remote?: RemotePlayer | null): Player<P> {
+    addPlayer(
+        config: PlayerConfig,
+        remote?: RemotePlayer | null,
+        isRemote?: boolean,
+    ): Player<P> {
         const player = new Player<P>(
             this,
             this._idCounter++,
             config,
             Player.PLAYER_COLOURS[this._players.size],
             remote,
+            isRemote,
         );
         this._players.set(player.id, player);
         return player;
