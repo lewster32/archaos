@@ -1556,19 +1556,190 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Stub handler for `mount-piece`. Real mount orchestration lands in
-     * a subsequent task.
+     * Handle a `mount-piece` command. Validates phase + slot ownership,
+     * that the mounting wizard is the currently selected piece, that the
+     * named mount exists and is mountable by the wizard
+     * (`canMountPiece`), and that the submitted path is legal and ends
+     * on the mount's tile (or, for an empty path, that the wizard is
+     * already on the mount's tile). Per the design call's Q3, "mount"
+     * means "move into the mount's tile" - so the path's terminal step
+     * IS the mount's position.
+     *
+     * On accept, walks the submitted path step-by-step inside a single
+     * `recordEvent` broadcast. After every non-terminal step, runs an
+     * engagement roll for each adjacent enemy that can engage; on
+     * success, both pieces flip their `engaged` turn-flag, the mount is
+     * forfeited, and the wizard's turn ends with `moved: true` only.
+     * On the terminal step, the wizard's position is set to the mount's
+     * tile, then `setMount` + `setRider` are paired (invariant 6), and
+     * the wizard is flagged `moved: true, attacked: true` (a wizard
+     * mounting consumes both phases) while the mount is flagged
+     * `moved: true`.
+     *
+     * Submits the slot after a successful mount so the movement-phase
+     * loop can advance to the next slot.
      */
     private async _handleMountPiece(playerId: PlayerId, cmd: MountPieceCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const slot = this._expectedCommand;
+        if (this.phase !== BoardPhase.Moving || !slot) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+        if (slot.expectedPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        const wizard: P | null = this._selected;
+        if (!wizard || wizard.id !== cmd.wizardId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        const mount: P | null = this.getPiece(cmd.mountId);
+        if (!mount || !wizard.canMountPiece(mount)) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
+        const path: Point[] = cmd.path.map((p) => new Point(p.x, p.y));
+        if (path.length > 0) {
+            if (!this.validatePath(wizard, path, { allowTerminalMount: true })) {
+                this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+                return;
+            }
+            const terminal: Point = path[path.length - 1];
+            if (terminal.x !== mount.position.x || terminal.y !== mount.position.y) {
+                this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+                return;
+            }
+        } else if (
+            wizard.position.x !== mount.position.x ||
+            wizard.position.y !== mount.position.y
+        ) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            let engagementBroke: boolean = false;
+            for (let i: number = 0; i < path.length; i++) {
+                const step: Point = path[i];
+                const isTerminal: boolean = i === path.length - 1;
+                wizard.setPosition(step);
+                if (!isTerminal) {
+                    const enemies: P[] = this.getAdjacentPiecesAtPosition(step, (p) => {
+                        return !p.dead && p.owner !== wizard.owner && p.canEngagePiece(wizard);
+                    });
+                    for (const enemy of enemies) {
+                        // Engagement is a manoeuvrability contest, matching
+                        // the original Chaos rule and the move/select
+                        // handlers' engagement formula.
+                        const succeeded: boolean = this.roll(
+                            enemy.stats.manoeuvrability ?? 0,
+                            wizard.stats.manoeuvrability ?? 0,
+                        );
+                        if (succeeded) {
+                            wizard.setTurnFlags({ engaged: true });
+                            enemy.setTurnFlags({ engaged: true });
+                            engagementBroke = true;
+                            break;
+                        }
+                    }
+                    if (engagementBroke) {
+                        break;
+                    }
+                }
+            }
+            if (engagementBroke) {
+                wizard.setTurnFlags({ moved: true });
+                return;
+            }
+            wizard.setMount(mount);
+            mount.setRider(wizard);
+            wizard.setTurnFlags({ moved: true, attacked: true });
+            mount.setTurnFlags({ moved: true });
+        });
+        slot.submit(playerId, cmd);
     }
 
     /**
-     * Stub handler for `dismount-piece`. Real dismount orchestration
-     * lands in a subsequent task.
+     * Handle a `dismount-piece` command. Validates phase + slot
+     * ownership, that the dismounting wizard is the currently selected
+     * piece, and that the wizard is currently mounted. The destination
+     * tile must be adjacent to the mount (1 tile in any direction;
+     * same-tile is rejected), in-bounds, and either empty or contain
+     * another friendly mountable piece (chain-dismount).
+     *
+     * On accept, emits inside a single `recordEvent` broadcast (in
+     * canonical order): a `piece-dismounted` outcome from the wizard's
+     * `setMount(null)`, a `piece-moved` outcome from the wizard's
+     * `setPosition` onto `cmd.to`, and - for chain-dismount - a
+     * follow-up `piece-mounted` from the wizard's `setMount(chainMount)`
+     * call. The previous mount is flagged `moved: true`, and the new
+     * chain mount (if any) is flagged `moved: true`. The wizard ends
+     * with `moved: true`.
+     *
+     * Submits the slot after a successful dismount.
      */
     private async _handleDismountPiece(playerId: PlayerId, cmd: DismountPieceCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const slot = this._expectedCommand;
+        if (this.phase !== BoardPhase.Moving || !slot) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return;
+        }
+        if (slot.expectedPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        const wizard: P | null = this._selected;
+        if (!wizard || wizard.id !== cmd.wizardId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return;
+        }
+        const mount: P | null = wizard.currentMount as P | null;
+        if (!mount) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
+        const dx: number = Math.abs(cmd.to.x - mount.position.x);
+        const dy: number = Math.abs(cmd.to.y - mount.position.y);
+        if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        if (
+            cmd.to.x < 0 ||
+            cmd.to.y < 0 ||
+            cmd.to.x >= this.width ||
+            cmd.to.y >= this.height
+        ) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        // Destination must be empty OR contain a friendly mountable.
+        const blockers: P[] = this.getPiecesAtPosition(
+            new Point(cmd.to.x, cmd.to.y),
+            (p) => !p.dead,
+        );
+        let chainMount: P | null = null;
+        for (const b of blockers) {
+            if (b.owner === wizard.owner && wizard.canMountPiece(b)) {
+                chainMount = b;
+                continue;
+            }
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+            return;
+        }
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            wizard.setMount(null);
+            mount.setRider(null);
+            mount.setTurnFlags({ moved: true });
+            wizard.setPosition(new Point(cmd.to.x, cmd.to.y));
+            if (chainMount) {
+                wizard.setMount(chainMount);
+                chainMount.setRider(wizard);
+                chainMount.setTurnFlags({ moved: true });
+            }
+            wizard.setTurnFlags({ moved: true });
+        });
+        slot.submit(playerId, cmd);
     }
 
     /**

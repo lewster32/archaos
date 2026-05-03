@@ -12,6 +12,7 @@ import { TestRNG } from "../rng";
 import { Rules } from "../rules";
 import { roundTrip } from "../protocol/wiresafety.testhelpers";
 import { UnitType } from "../enums/unittype";
+import { UnitStatus } from "../enums/unitstatus";
 import type { PieceConfig } from "../configs/piececonfig";
 import { MovingReady, SkipSpellbook, StartGame } from "../phasemachine";
 
@@ -729,6 +730,7 @@ async function addPieceFor(
         defence: number;
         manoeuvrability: number;
         movement: number;
+        status: UnitStatus[];
     }> = {},
 ): Promise<any> {
     return board.addPiece({
@@ -747,7 +749,7 @@ async function addPieceFor(
             magicResistance: 0,
             attackType: "hit",
             rangedType: "shot",
-            status: [],
+            status: overrides.status ?? [],
         },
         owner: player as any,
     } as PieceConfig);
@@ -1507,6 +1509,381 @@ describe("_handleMovePiece", () => {
         );
         expect(friendlyEngaged).toBeTruthy();
         expect(enemyEngaged).toBeTruthy();
+        expect(slot.isOpen).toBe(false);
+    });
+});
+
+describe("_handleMountPiece", () => {
+    it("rejects with invalid-target when mount does not exist", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        (board as any)._selected = wizard;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "mt1",
+                token: "",
+                kind: "mount-piece",
+                wizardId: wizard.id,
+                mountId: 9999,
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "mt1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("rejects with invalid-target when mount belongs to another player (and is not MountAny)", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const enemyMount = await addPieceFor(board, p2, {
+            x: 6,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "mt1",
+                token: "",
+                kind: "mount-piece",
+                wizardId: wizard.id,
+                mountId: enemyMount.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "mt1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("rejects with invalid-move when path's terminal step is not the mount's tile", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const mount = await addPieceFor(board, p1, {
+            x: 7,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        // Path ends at (6,5) but the mount sits at (7,5).
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "mt1",
+                token: "",
+                kind: "mount-piece",
+                wizardId: wizard.id,
+                mountId: mount.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "mt1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("happy path: 2-step path ending at mount.position emits piece-moved x2 and piece-mounted x1", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const mount = await addPieceFor(board, p1, {
+            x: 7,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "mt1",
+                token: "",
+                kind: "mount-piece",
+                wizardId: wizard.id,
+                mountId: mount.id,
+                path: [
+                    { x: 6, y: 5 },
+                    { x: 7, y: 5 },
+                ],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const moves = (lastEvent?.outcomes ?? []).filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === wizard.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        expect(moves).toHaveLength(2);
+        expect(moves[0].to).toEqual({ x: 6, y: 5 });
+        expect(moves[1].to).toEqual({ x: 7, y: 5 });
+        const mounts = (lastEvent?.outcomes ?? []).filter(
+            (o: any) => o.kind === "piece-mounted",
+        );
+        expect(mounts).toHaveLength(1);
+        expect(mounts[0]).toEqual({
+            kind: "piece-mounted",
+            mountId: mount.id,
+            riderId: wizard.id,
+        });
+        expect(wizard.currentMount).toBe(mount);
+        expect(mount.currentRider).toBe(wizard);
+        expect(slot.isOpen).toBe(false);
+    });
+});
+
+describe("_handleDismountPiece", () => {
+    it("rejects with invalid-target when wizard is not mounted", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        (board as any)._selected = wizard;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "dm1",
+                token: "",
+                kind: "dismount-piece",
+                wizardId: wizard.id,
+                to: { x: 6, y: 5 },
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "dm1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("rejects with invalid-move when destination is not adjacent to the mount", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const horse = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        // Wire the wizard onto the mount as part of an event so subsequent
+        // dismount happens from a "currently mounted" state.
+        await (board as any).recordEvent({}, () => {
+            wizard.setMount(horse);
+            horse.setRider(wizard);
+        });
+
+        // (8,5) is two tiles away from the mount at (5,5).
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "dm1",
+                token: "",
+                kind: "dismount-piece",
+                wizardId: wizard.id,
+                to: { x: 8, y: 5 },
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "dm1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("happy path: emits piece-dismounted then piece-moved; wizard.currentMount cleared", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const horse = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+        await (board as any).recordEvent({}, () => {
+            wizard.setMount(horse);
+            horse.setRider(wizard);
+        });
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "dm1",
+                token: "",
+                kind: "dismount-piece",
+                wizardId: wizard.id,
+                to: { x: 6, y: 5 },
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+        const dismounts = outcomes.filter((o: any) => o.kind === "piece-dismounted");
+        const moves = outcomes.filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === wizard.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        expect(dismounts).toHaveLength(1);
+        expect(dismounts[0]).toEqual({
+            kind: "piece-dismounted",
+            mountId: horse.id,
+            riderId: wizard.id,
+        });
+        expect(moves).toHaveLength(1);
+        expect(moves[0].to).toEqual({ x: 6, y: 5 });
+
+        // Canonical order: dismount before move.
+        const dismountIdx = outcomes.findIndex((o: any) => o.kind === "piece-dismounted");
+        const moveIdx = outcomes.findIndex(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === wizard.id,
+        );
+        expect(dismountIdx).toBeGreaterThanOrEqual(0);
+        expect(moveIdx).toBeGreaterThan(dismountIdx);
+
+        expect(wizard.currentMount).toBeNull();
+        expect(horse.currentRider).toBeNull();
+        expect(slot.isOpen).toBe(false);
+    });
+
+    it("chain-mount happy path: dismounting onto another friendly mountable emits dismount, move and a follow-up mount", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const wizard = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            movement: 3,
+            status: [UnitStatus.Wizard],
+        });
+        const horse = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        const otherMount = await addPieceFor(board, p1, {
+            x: 6,
+            y: 5,
+            status: [UnitStatus.Mount],
+        });
+        (board as any)._selected = wizard;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+        await (board as any).recordEvent({}, () => {
+            wizard.setMount(horse);
+            horse.setRider(wizard);
+        });
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "dm1",
+                token: "",
+                kind: "dismount-piece",
+                wizardId: wizard.id,
+                to: { x: 6, y: 5 },
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+
+        const dismountIdx = outcomes.findIndex(
+            (o: any) => o.kind === "piece-dismounted" && o.mountId === horse.id,
+        );
+        const moveIdx = outcomes.findIndex(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === wizard.id,
+        );
+        const mountIdx = outcomes.findIndex(
+            (o: any) => o.kind === "piece-mounted" && o.mountId === otherMount.id,
+        );
+        expect(dismountIdx).toBeGreaterThanOrEqual(0);
+        expect(moveIdx).toBeGreaterThan(dismountIdx);
+        expect(mountIdx).toBeGreaterThan(moveIdx);
+
+        expect(wizard.currentMount).toBe(otherMount);
+        expect(otherMount.currentRider).toBe(wizard);
+        expect(horse.currentRider).toBeNull();
         expect(slot.isOpen).toBe(false);
     });
 });
