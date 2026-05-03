@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { weightedRandomPick, TestRNG } from "@archaos/engine";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG } from "@archaos/engine";
+import type { BroadcastEventMessage } from "@archaos/engine";
+import { Board } from "./board";
 
 /**
  * A TestRNG variant that delegates frac() to Math.random() for statistical
@@ -193,5 +195,120 @@ describe("weightedRandomPick", () => {
             expect(weightedRandomPick(rng, ["only"], 2, true)).toBe("only");
             expect(weightedRandomPick(rng, ["only"], -2, true)).toBe("only");
         });
+    });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Dual-driver race regression test
+// ────────────────────────────────────────────────────────────────────────────
+//
+// When `autoRunPhaseLoop` is true, the engine's `_runGameFlow` drives the
+// FSM and per-player slot loops; the client subclass must NOT also reset the
+// FSM and run the legacy `nextPlayer()` flow concurrently. Both writers
+// would race for `_currentPlayer`, causing `Rules.processIntent` to return
+// `ActionType.Info` instead of `Select` when the human clicked their wizard
+// during what they perceived as their own turn.
+
+describe("client Board.startGame override", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal `Board` instance via `Object.create` to bypass the
+     * heavy Phaser-bound constructor. Only the fields touched by
+     * `Board.startGame()` need to be populated; the engine super
+     * `startGame()` is stubbed via the prototype so the broadcast event
+     * log machinery is not exercised. Per-instance setters override the
+     * prototype's `currentPlayer`/`state` setters (which would otherwise
+     * touch Phaser-bound state like `cursor.enabled`).
+     */
+    function makeFakeBoard(autoRunPhaseLoop: boolean): {
+        board: Board;
+        currentPlayerSetSpy: ReturnType<typeof vi.fn>;
+        stateSetSpy: ReturnType<typeof vi.fn>;
+        stateManagerReset: ReturnType<typeof vi.fn>;
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+        // Fields read by Board.startGame override.
+        (fake as any)._autoRunPhaseLoop = autoRunPhaseLoop;
+        (fake as any)._currentPlayerIndex = 0;
+        (fake as any)._currentPlayer = null;
+        (fake as any)._state = BoardState.Idle;
+
+        const stateManagerReset = vi.fn();
+        (fake as any)._stateManager = { reset: stateManagerReset };
+
+        // Replace the prototype's currentPlayer setter for this instance
+        // with a no-op spy so we don't touch cursor/UI state.
+        const currentPlayerSetSpy = vi.fn();
+        Object.defineProperty(fake, "currentPlayer", {
+            configurable: true,
+            get: () => (fake as any)._currentPlayer,
+            set: (v) => {
+                (fake as any)._currentPlayer = v;
+                currentPlayerSetSpy(v);
+            },
+        });
+
+        // Same for the state setter — the client override emits UI events
+        // and reads disabled-flags that the fake doesn't carry.
+        const stateSetSpy = vi.fn();
+        Object.defineProperty(fake, "state", {
+            configurable: true,
+            get: () => (fake as any)._state,
+            set: (v) => {
+                (fake as any)._state = v;
+                stateSetSpy(v);
+            },
+        });
+
+        return { board: fake, currentPlayerSetSpy, stateSetSpy, stateManagerReset };
+    }
+
+    it("does NOT call legacy nextPlayer() or reset the FSM when autoRunPhaseLoop is true", async () => {
+        const { board, stateManagerReset } = makeFakeBoard(true);
+
+        const fakeEvent = {
+            type: "event",
+            sequence: 1,
+            elapsedMs: 0,
+            outcomes: [],
+        } as BroadcastEventMessage;
+
+        const superStartGameSpy = vi.spyOn(EngineBoard.prototype, "startGame").mockResolvedValue(fakeEvent);
+        const nextPlayerSpy = vi.spyOn(Board.prototype, "nextPlayer").mockResolvedValue(undefined);
+
+        const event = await Board.prototype.startGame.call(board);
+
+        expect(superStartGameSpy).toHaveBeenCalledTimes(1);
+        expect(event).toBe(fakeEvent);
+        // The legacy driver must not run when the engine is auto-driving.
+        expect(nextPlayerSpy).not.toHaveBeenCalled();
+        // The FSM reset is part of the legacy driver and would yank the
+        // FSM out from under `_runGameFlow` mid-flight.
+        expect(stateManagerReset).not.toHaveBeenCalled();
+    });
+
+    it("calls legacy nextPlayer() and resets the FSM when autoRunPhaseLoop is false (legacy mode)", async () => {
+        const { board, stateManagerReset } = makeFakeBoard(false);
+
+        const fakeEvent = {
+            type: "event",
+            sequence: 1,
+            elapsedMs: 0,
+            outcomes: [],
+        } as BroadcastEventMessage;
+
+        vi.spyOn(EngineBoard.prototype, "startGame").mockResolvedValue(fakeEvent);
+        const nextPlayerSpy = vi.spyOn(Board.prototype, "nextPlayer").mockResolvedValue(undefined);
+
+        await Board.prototype.startGame.call(board);
+
+        expect(nextPlayerSpy).toHaveBeenCalledTimes(1);
+        expect(stateManagerReset).toHaveBeenCalledTimes(1);
+        // Legacy reset must blank the current-player tracking too.
+        expect((board as any)._currentPlayerIndex).toBe(-1);
+        expect((board as any)._currentPlayer).toBeNull();
     });
 });

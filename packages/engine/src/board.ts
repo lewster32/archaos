@@ -302,6 +302,16 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     private readonly _autoRunPhaseLoop: boolean;
 
     /**
+     * Whether this Board's `startGame()` will fire `_runGameFlow()` to
+     * drive the FSM and per-player slot loops. Exposed as protected so
+     * the client subclass can gate its legacy `nextPlayer()` driver on
+     * `!autoRunPhaseLoop` and avoid the dual-driver race.
+     */
+    protected get autoRunPhaseLoop(): boolean {
+        return this._autoRunPhaseLoop;
+    }
+
+    /**
      * The currently-running phase loop promise, or null when no loop is
      * active. Tests await this to flush pending phase work.
      */
@@ -2167,6 +2177,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             // Multi-cast loop: keep opening fresh slots until either
             // the spell is exhausted or the player cancels.
             while (player.selectedSpell != null && player.selectedSpell.castTimes > 0) {
+                console.debug(`[Board] Opening casting slot for player ${playerId}`);
                 const slot = new ExpectedCommand(playerId, ["cast-spell", "cancel-cast"]);
                 this._expectedCommand = slot;
                 this._emitPhaseChanged(BoardPhase.Casting, playerId);
@@ -2203,6 +2214,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const useBarrier = timeout != null && timeout > 0 && this.players.some((p) => p.isRemote);
 
         if (useBarrier) {
+            console.debug(
+                `[Board] Opening spellbook barrier for players ${alive
+                    .map((p) => p.id)
+                    .join(", ")}`,
+            );
             const barrier = new SpellbookBarrier(
                 alive.map((p) => p.id),
                 timeout,
@@ -2227,6 +2243,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
 
         for (const player of alive) {
+            console.debug(`[Board] Opening spellbook slot for player ${player.id}`);
             const slot = new ExpectedCommand(player.id, ["pick-spell", "end-spell-pick"]);
             this._expectedCommand = slot;
             this._emitPhaseChanged(BoardPhase.Spellbook, player.id);
@@ -2248,6 +2265,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * `_runGameFlow` (which would race the legacy per-player loop).
      */
     async openSpellbookSlot(playerId: PlayerId): Promise<void> {
+        console.debug(`[Board] Opening spellbook slot for player ${playerId}`);
         const slot = new ExpectedCommand(playerId, ["pick-spell", "end-spell-pick"]);
         this._expectedCommand = slot;
         this._emitPhaseChanged(BoardPhase.Spellbook, playerId);
@@ -2277,6 +2295,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
         try {
             while (player.selectedSpell != null && player.selectedSpell.castTimes > 0) {
+                console.debug(`[Board] Opening casting slot for player ${playerId}`);
                 const slot = new ExpectedCommand(playerId, ["cast-spell", "cancel-cast"]);
                 this._expectedCommand = slot;
                 this._emitPhaseChanged(BoardPhase.Casting, playerId);
@@ -2309,6 +2328,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 !this._movementPhaseEnded &&
                 this._hasSelectablePieces(playerId)
             ) {
+                console.debug(`[Board] Opening movement slot for player ${playerId}`);
                 const slot = new ExpectedCommand(playerId, [
                     "select-piece",
                     "move-piece",

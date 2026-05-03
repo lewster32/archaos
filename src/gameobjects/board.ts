@@ -161,6 +161,14 @@ export class Board extends EngineBoard<Piece> {
             if (!this.cursor.enabled || this.state === BoardState.GameOver) {
                 return;
             }
+            // When the engine is auto-driving the phase loop, the
+            // movement-phase end-turn UI dispatches an
+            // `end-movement-phase` command (see Game.vue::endTurn) and
+            // the engine's slot loop advances. Calling the legacy
+            // `nextPlayer()` here would race with the engine driver.
+            if (this.autoRunPhaseLoop) {
+                return;
+            }
             await this.nextPlayer();
         });
 
@@ -736,7 +744,12 @@ export class Board extends EngineBoard<Piece> {
 
         if (!this.selected) {
             console.warn("No piece selected to deselect");
-            this.nextPlayer();
+            // The engine slot loop owns turn advancement when auto-
+            // driving; calling the legacy `nextPlayer()` here would
+            // race with `_runMovementPhase`/`openMovementSlotFor`.
+            if (!this.autoRunPhaseLoop) {
+                this.nextPlayer();
+            }
             return;
         }
         if (this.phase === BoardPhase.Moving) {
@@ -768,7 +781,10 @@ export class Board extends EngineBoard<Piece> {
 
         return new Promise((resolve) => {
             setTimeout(async () => {
-                if (turnOver) {
+                // Engine-auto-driven flow advances slots itself; only
+                // the legacy `nextPlayer()` driver runs here when not
+                // auto-driven.
+                if (turnOver && !this.autoRunPhaseLoop) {
                     await this.nextPlayer();
                 }
                 resolve();
@@ -1431,16 +1447,29 @@ export class Board extends EngineBoard<Piece> {
      * sequence-1 `game-started` broadcast event, then performs the
      * client-side game-loop setup (reset FSM, advance to the first
      * player).
+     *
+     * When `autoRunPhaseLoop` is true, the engine's `_runGameFlow()`
+     * drives the FSM and per-player slot loops; the client must NOT
+     * also reset the FSM and run the legacy `nextPlayer()` flow
+     * concurrently — both writers would race for `_currentPlayer`,
+     * causing `Rules.processIntent` to return `ActionType.Info` instead
+     * of `Select` when the human clicked their wizard during what they
+     * perceived as their own turn.
      */
     async startGame(): Promise<BroadcastEventMessage> {
         const event: BroadcastEventMessage = await super.startGame();
 
-        this._currentPlayerIndex = -1;
-        this.currentPlayer = null;
-        this.state = BoardState.Idle;
-        this.stateManager.reset();
-
-        await this.nextPlayer();
+        if (!this.autoRunPhaseLoop) {
+            // Legacy driver: the engine's `_runGameFlow` does not run
+            // when `autoRunPhaseLoop` is false, so the client subclass
+            // takes over by resetting the FSM and stepping through
+            // `nextPlayer`.
+            this._currentPlayerIndex = -1;
+            this.currentPlayer = null;
+            this.state = BoardState.Idle;
+            this.stateManager.reset();
+            await this.nextPlayer();
+        }
 
         return event;
     }
