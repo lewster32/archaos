@@ -505,3 +505,116 @@ describe("cancel-cast handler", () => {
         );
     });
 });
+
+describe("movement-phase handler stubs (rejection only)", () => {
+    const cases: Array<{ kind: string; cmd: () => CommandMessage }> = [
+        {
+            kind: "select-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "s1",
+                token: "",
+                kind: "select-piece",
+                pieceId: 1,
+            }),
+        },
+        {
+            kind: "move-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "m1",
+                token: "",
+                kind: "move-piece",
+                pieceId: 1,
+                to: { x: 0, y: 0 },
+                path: [],
+            }),
+        },
+        {
+            kind: "attack-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: 1,
+                targetId: 2,
+                path: [],
+            }),
+        },
+        {
+            kind: "ranged-attack-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "r1",
+                token: "",
+                kind: "ranged-attack-piece",
+                attackerId: 1,
+                targetId: 2,
+            }),
+        },
+        {
+            kind: "mount-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "mt1",
+                token: "",
+                kind: "mount-piece",
+                wizardId: 1,
+                mountId: 2,
+                path: [],
+            }),
+        },
+        {
+            kind: "dismount-piece",
+            cmd: () => ({
+                type: "command",
+                commandId: "dm1",
+                token: "",
+                kind: "dismount-piece",
+                wizardId: 1,
+                to: { x: 0, y: 0 },
+            }),
+        },
+        {
+            kind: "cancel-piece-action",
+            cmd: () => ({
+                type: "command",
+                commandId: "cp1",
+                token: "",
+                kind: "cancel-piece-action",
+                pieceId: 1,
+            }),
+        },
+        {
+            kind: "end-piece-turn",
+            cmd: () => ({
+                type: "command",
+                commandId: "et1",
+                token: "",
+                kind: "end-piece-turn",
+                pieceId: 1,
+            }),
+        },
+        {
+            kind: "end-movement-phase",
+            cmd: () => ({
+                type: "command",
+                commandId: "em1",
+                token: "",
+                kind: "end-movement-phase",
+            }),
+        },
+    ];
+
+    for (const { kind, cmd } of cases) {
+        it(`routes ${kind} to its stub which rejects with wrong-phase`, async () => {
+            const board = makeTestBoard();
+            await board.handleCommand(1, roundTrip(cmd()));
+            const reject = board._rejectedCommandsForTests.find(
+                (r) => r.reason === "wrong-phase",
+            );
+            expect(reject).toBeTruthy();
+        });
+    }
+});

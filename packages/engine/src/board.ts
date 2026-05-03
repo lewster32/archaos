@@ -56,9 +56,26 @@ import type {
     SpellTarget,
     SpellTypeId,
 } from "./protocol";
+import type {
+    AttackPieceCommand,
+    CancelPieceActionCommand,
+    DismountPieceCommand,
+    EndMovementPhaseCommand,
+    EndPieceTurnCommand,
+    MountPieceCommand,
+    MovePieceCommand,
+    RangedAttackPieceCommand,
+    SelectPieceCommand,
+} from "./protocol/commands";
 import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
 import { SpellbookBarrier } from "./commands/spellbookbarrier";
+import {
+    flyingPathCost,
+    isStepTraversable,
+    movementBudget,
+    stepCost,
+} from "./pathrules";
 
 /**
  * Simple point type without all the baggage of
@@ -931,6 +948,24 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 return this._handleCastSpell(playerId, cmd);
             case "cancel-cast":
                 return this._handleCancelCast(playerId, cmd);
+            case "select-piece":
+                return this._handleSelectPiece(playerId, cmd);
+            case "move-piece":
+                return this._handleMovePiece(playerId, cmd);
+            case "attack-piece":
+                return this._handleAttackPiece(playerId, cmd);
+            case "ranged-attack-piece":
+                return this._handleRangedAttackPiece(playerId, cmd);
+            case "mount-piece":
+                return this._handleMountPiece(playerId, cmd);
+            case "dismount-piece":
+                return this._handleDismountPiece(playerId, cmd);
+            case "cancel-piece-action":
+                return this._handleCancelPieceAction(playerId, cmd);
+            case "end-piece-turn":
+                return this._handleEndPieceTurn(playerId, cmd);
+            case "end-movement-phase":
+                return this._handleEndMovementPhase(playerId, cmd);
             default:
                 this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
                 return;
@@ -1310,6 +1345,169 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     private _spellTypeIdOf(spell: Spell<P>): SpellTypeId {
         const properties = spell.properties as { id?: string } | undefined;
         return properties?.id ?? String(spell.id);
+    }
+
+    /**
+     * Stateless server-side path validation. Walks the submitted path
+     * step-by-step, accumulating cost, checking each step's
+     * traversability via `pathrules`. Returns true iff every step is
+     * legal and the cumulative cost fits the piece's movement budget.
+     *
+     * Does not perform engagement checks - those are orchestrated by
+     * the handler between successive setPosition calls.
+     *
+     * Referentially transparent given current piece positions; mutates
+     * nothing. (Invariant 12 of the movement-phase command-wiring spec.)
+     *
+     * @param piece The moving piece.
+     * @param path The ordered sequence of step destinations.
+     * @param opts Optional flags. `allowTerminalMount` relaxes the
+     *        terminal-step blocker check so a wizard may end on a
+     *        mountable's tile or an attacker may end on a target's tile.
+     * @returns True iff the path is fully legal for `piece`.
+     */
+    validatePath(
+        piece: P,
+        path: ReadonlyArray<Point>,
+        opts?: { allowTerminalMount?: boolean },
+    ): boolean {
+        if (path.length === 0) {
+            return true;
+        }
+        const isFlying: boolean = piece.hasStatus(UnitStatus.Flying);
+        const budget: number = movementBudget(piece);
+
+        let cumulative: number = 0;
+        let from: Point = piece.position;
+
+        for (let i: number = 0; i < path.length; i++) {
+            const to: Point = path[i];
+            const isTerminal: boolean = i === path.length - 1;
+            const dx: number = Math.abs(to.x - from.x);
+            const dy: number = Math.abs(to.y - from.y);
+            if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) {
+                return false;
+            }
+            if (to.x < 0 || to.y < 0 || to.x >= this.width || to.y >= this.height) {
+                return false;
+            }
+            const allowTerminalException: boolean =
+                isTerminal && (opts?.allowTerminalMount ?? false);
+            if (!isStepTraversable(piece, from, to, this, allowTerminalException)) {
+                return false;
+            }
+            if (!isFlying) {
+                cumulative += stepCost(from, to);
+                if (cumulative > budget) {
+                    return false;
+                }
+            }
+            from = to;
+        }
+
+        if (isFlying) {
+            return flyingPathCost(piece.position, path) <= budget;
+        }
+        return true;
+    }
+
+    /**
+     * Stub handler for `select-piece`. Real selection logic, including
+     * the engagement roll, lands in a subsequent task.
+     */
+    private async _handleSelectPiece(
+        playerId: PlayerId,
+        cmd: SelectPieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `move-piece`. Real movement orchestration lands
+     * in a subsequent task.
+     */
+    private async _handleMovePiece(
+        playerId: PlayerId,
+        cmd: MovePieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `attack-piece`. Real melee attack orchestration
+     * lands in a subsequent task.
+     */
+    private async _handleAttackPiece(
+        playerId: PlayerId,
+        cmd: AttackPieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `ranged-attack-piece`. Real ranged-attack
+     * orchestration lands in a subsequent task.
+     */
+    private async _handleRangedAttackPiece(
+        playerId: PlayerId,
+        cmd: RangedAttackPieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `mount-piece`. Real mount orchestration lands in
+     * a subsequent task.
+     */
+    private async _handleMountPiece(
+        playerId: PlayerId,
+        cmd: MountPieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `dismount-piece`. Real dismount orchestration
+     * lands in a subsequent task.
+     */
+    private async _handleDismountPiece(
+        playerId: PlayerId,
+        cmd: DismountPieceCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `cancel-piece-action`. Real cancel-action
+     * orchestration lands in a subsequent task.
+     */
+    private async _handleCancelPieceAction(
+        playerId: PlayerId,
+        cmd: CancelPieceActionCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `end-piece-turn`. Real end-piece-turn
+     * orchestration lands in a subsequent task.
+     */
+    private async _handleEndPieceTurn(
+        playerId: PlayerId,
+        cmd: EndPieceTurnCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+    }
+
+    /**
+     * Stub handler for `end-movement-phase`. Real end-movement-phase
+     * orchestration lands in a subsequent task.
+     */
+    private async _handleEndMovementPhase(
+        playerId: PlayerId,
+        cmd: EndMovementPhaseCommand,
+    ): Promise<void> {
+        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
     }
 
     /* ── Phase loop ──────────────────────────────────────────────── */

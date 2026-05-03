@@ -2,6 +2,7 @@ import { describe, it, test, expect, vi, afterEach } from "vitest";
 import { Board } from "./board";
 import type { BoardDeps } from "./board";
 import { Player } from "./player";
+import { Piece } from "./piece";
 import { Point } from "./point";
 import { TestRNG } from "./rng";
 import { Logger } from "./logger";
@@ -2174,5 +2175,177 @@ describe("Board: casting phase", () => {
         }));
         await board.phaseFlow;
         expect((board as any)._currentCastingPlayerId).not.toBe(1);
+    });
+});
+
+describe("Board.validatePath", () => {
+    /**
+     * Build a piece on `board` with the requested settings. Mount and
+     * flying behaviour are encoded as `UnitStatus` flags so the piece's
+     * `hasStatus` and `canMountPiece` methods behave correctly.
+     */
+    async function addUnit(
+        board: Board,
+        opts: {
+            x: number;
+            y: number;
+            owner: Player;
+            movement?: number;
+            mountable?: boolean;
+            flying?: boolean;
+        },
+    ): Promise<Piece> {
+        const status: UnitStatus[] = [];
+        if (opts.mountable) {
+            status.push(UnitStatus.MountAny);
+        }
+        if (opts.flying) {
+            status.push(UnitStatus.Flying);
+        }
+        return await board.addPiece({
+            type: UnitType.Creature,
+            x: opts.x,
+            y: opts.y,
+            properties: {
+                movement: opts.movement ?? 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status,
+            },
+            owner: opts.owner as any,
+        });
+    }
+
+    /**
+     * Build a wizard piece on `board`. Wizards may mount and gain other
+     * wizard-specific behaviour via `UnitStatus.Wizard`.
+     */
+    async function addWizard(
+        board: Board,
+        opts: {
+            x: number;
+            y: number;
+            owner: Player;
+            movement?: number;
+        },
+    ): Promise<Piece> {
+        return await board.addPiece({
+            type: UnitType.Creature,
+            x: opts.x,
+            y: opts.y,
+            properties: {
+                movement: opts.movement ?? 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: opts.owner as any,
+        });
+    }
+
+    function makeBoardForPathTests(): { board: Board; p1: Player; p2: Player } {
+        const board = makeBoard();
+        const p1 = board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        const p2 = board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
+        return { board, p1, p2 };
+    }
+
+    it("returns true for an empty path", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        expect(board.validatePath(piece, [])).toBe(true);
+    });
+
+    it("returns true for a single-step orthogonal path within budget", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        expect(board.validatePath(piece, [new Point(6, 5)])).toBe(true);
+    });
+
+    it("returns true for a multi-step mixed orthogonal+diagonal path within budget", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        // (5,5) -> (6,5) orthogonal (1.0) -> (7,6) diagonal (1.5) = 2.5 <= 3.5
+        expect(
+            board.validatePath(piece, [new Point(6, 5), new Point(7, 6)]),
+        ).toBe(true);
+    });
+
+    it("returns false for an off-board step", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 0, y: 0, owner: p1, movement: 3 });
+        expect(board.validatePath(piece, [new Point(-1, 0)])).toBe(false);
+    });
+
+    it("returns false for a non-8-connected step", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        expect(board.validatePath(piece, [new Point(7, 5)])).toBe(false);
+    });
+
+    it("returns false for a same-tile step", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        expect(board.validatePath(piece, [new Point(5, 5)])).toBe(false);
+    });
+
+    it("returns false when a non-terminal step is blocked by an enemy", async () => {
+        const { board, p1, p2 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        await addUnit(board, { x: 6, y: 5, owner: p2 });
+        // Step (6,5) is non-terminal: target is (7,5) past the enemy.
+        expect(
+            board.validatePath(piece, [new Point(6, 5), new Point(7, 5)]),
+        ).toBe(false);
+    });
+
+    it("returns true for a terminal step at a mountable when allowTerminalMount is true", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const wizard = await addWizard(board, { x: 5, y: 5, owner: p1, movement: 3 });
+        await addUnit(board, { x: 6, y: 5, owner: p1, mountable: true });
+        expect(
+            board.validatePath(
+                wizard,
+                [new Point(6, 5)],
+                { allowTerminalMount: true },
+            ),
+        ).toBe(true);
+    });
+
+    it("returns false when cumulative cost exceeds the movement budget", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, { x: 5, y: 5, owner: p1, movement: 1 });
+        // (5,5) -> (6,5) ortho (1.0) -> (7,6) diag (1.5) = 2.5 > 1.5 budget
+        expect(
+            board.validatePath(piece, [new Point(6, 5), new Point(7, 6)]),
+        ).toBe(false);
+    });
+
+    it("returns false for a flying piece with fly-distance exceeding the budget", async () => {
+        const { board, p1 } = makeBoardForPathTests();
+        const piece = await addUnit(board, {
+            x: 0,
+            y: 0,
+            owner: p1,
+            movement: 2,
+            flying: true,
+        });
+        // Terminal (3,0): fly distance 3 > 2.5 budget. Path itself is
+        // step-traversable, only the fly cost is the rejector.
+        expect(
+            board.validatePath(piece, [
+                new Point(1, 0),
+                new Point(2, 0),
+                new Point(3, 0),
+            ]),
+        ).toBe(false);
     });
 });
