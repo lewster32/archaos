@@ -1367,9 +1367,6 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         phase: BoardPhase,
         currentPlayerId?: PlayerId,
     ): void {
-        if (this._eventLog.head() < 1) {
-            return;
-        }
         const phaseKind: PhaseKind = toPhaseKind(phase);
         // turnNumber will be wired in a future spec; hardcoded for now.
         const turnNumber: number = 0;
@@ -1379,12 +1376,23 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             turnNumber,
             ...(currentPlayerId === undefined ? {} : { currentPlayerId }),
         };
-        // Broadcast log emission is fire-and-forget; phase transitions
-        // run synchronously from the FSM listener and from the phase
-        // loops, neither of which await the recorded event.
-        void this.recordEvent({}, () => {
-            this.pushOutcome(outcome);
-        });
+        // Broadcast log emission is gated on the game having officially
+        // started (sequence-1 game-started already recorded). Scenarios
+        // that resume mid-game bypass startGame, so head can stay at 0.
+        if (this._eventLog.head() >= 1) {
+            // Fire-and-forget; phase transitions run synchronously from
+            // the FSM listener and the phase loops, neither of which
+            // await the recorded event.
+            void this.recordEvent({}, () => {
+                this.pushOutcome(outcome);
+            });
+        }
+        // Always forward to the engine event bus so listeners (notably
+        // ComputerWizard._onPhaseChanged) react regardless of whether
+        // the broadcast log has been bootstrapped. Without this,
+        // scenario loads (which call resumeGame instead of startGame)
+        // would never trigger AI dispatch and openSpellbookSlot /
+        // runCastingForPlayer would hang on slot.untilAccepted.
         this._boardEvents.emit(EngineEvent.PhaseChanged, outcome);
     }
 
