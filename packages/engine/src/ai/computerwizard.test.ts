@@ -27,15 +27,37 @@ function makeAlignment(balance: number = 0, classicBalance: boolean = false): Al
 
 // ─── Shared stubs ────────────────────────────────────────────────────────────
 
+/**
+ * Build a minimal events bus that satisfies both the new
+ * `events.on(...)` subscription added in ComputerWizard's constructor
+ * and the legacy `events.emit(...)` calls scattered through the
+ * decision logic.
+ */
+function makeEventsStub() {
+    return {
+        emit: vi.fn(),
+        emitAsync: vi.fn().mockResolvedValue(undefined),
+        on: vi.fn(),
+        off: vi.fn(),
+    };
+}
+
+/**
+ * Build a minimal eventLog stub used by `_nextCommandId` to derive a
+ * deterministic-ish suffix for command ids.
+ */
+function makeEventLogStub() {
+    return { head: vi.fn().mockReturnValue(0) };
+}
+
 /** Minimal board mock — only `rollChance` is used by the simplest tested methods */
 function makeMockBoard(rollChanceResult: boolean = true) {
     return {
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         rng: new TestRNG(),
-        events: {
-            emit: vi.fn(),
-            emitAsync: vi.fn().mockResolvedValue(undefined),
-        },
+        events: makeEventsStub(),
+        eventLog: makeEventLogStub(),
+        handleCommand: vi.fn().mockResolvedValue(undefined),
     } as unknown as Board;
 }
 
@@ -59,10 +81,9 @@ function makeBoardStub(
         rollChance: vi.fn().mockReturnValue(rollChanceResult),
         getPiecesByOwner: opts.getPiecesByOwner ?? vi.fn().mockReturnValue([]),
         rng: new TestRNG(),
-        events: {
-            emit: vi.fn(),
-            emitAsync: vi.fn().mockResolvedValue(undefined),
-        },
+        events: makeEventsStub(),
+        eventLog: makeEventLogStub(),
+        handleCommand: vi.fn().mockResolvedValue(undefined),
     } as unknown as Board;
 }
 
@@ -158,6 +179,9 @@ describe("ComputerWizard", () => {
                     .fn()
                     .mockReturnValueOnce(true) // piece 1: remembered
                     .mockReturnValueOnce(false), // piece 2: forgotten
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
             const cw = new ComputerWizard(board, mockPlayer);
             cw.rememberNonIllusionPiece(1);
@@ -186,6 +210,9 @@ describe("ComputerWizard", () => {
                     .fn()
                     .mockReturnValueOnce(true) // rememberNonIllusionPiece succeeds
                     .mockReturnValueOnce(false), // forgetIllusionKnowledge fails → keep
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
             const cw = new ComputerWizard(board, mockPlayer, 0.5);
             cw.rememberNonIllusionPiece(10);
@@ -206,6 +233,9 @@ describe("ComputerWizard", () => {
                     .mockReturnValueOnce(true) // remember piece 2
                     .mockReturnValueOnce(true) // forget piece 1
                     .mockReturnValueOnce(false), // keep piece 2
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
             const cw = new ComputerWizard(board, mockPlayer, 0.5);
             cw.rememberNonIllusionPiece(1);
@@ -700,6 +730,7 @@ describe("ComputerWizard", () => {
             });
 
             const player = {
+                id: 1,
                 name: "TestAI",
                 defeated: false,
                 spells: [disbelieve, fallback],
@@ -725,10 +756,9 @@ describe("ComputerWizard", () => {
                 rollChance: rollChanceFn,
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: {
-                    emit: vi.fn(),
-                    emitAsync: vi.fn().mockResolvedValue(undefined),
-                },
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             injectDragonSpell(dragonChance, dragonBalance);
@@ -759,44 +789,44 @@ describe("ComputerWizard", () => {
             };
         }
 
-        it("prefers Disbelieve when a high-strength low-chance piece is on the board", async () => {
-            const { cw, player, disbelieve } = setup();
-            await cw.selectSpell();
-            expect(player.pickSpell).toHaveBeenCalledWith(disbelieve.id);
+        it("prefers Disbelieve when a high-strength low-chance piece is on the board", () => {
+            const { cw, disbelieve } = setup();
+            const cmd = (cw as any)._computePickSpellCommand();
+            expect(cmd).toEqual(expect.objectContaining({ kind: "pick-spell", spellId: disbelieve.id }));
         });
 
-        it("does not prefer Disbelieve for a known non-illusion piece", async () => {
-            const { cw, player, disbelieve } = setup({
+        it("does not prefer Disbelieve for a known non-illusion piece", () => {
+            const { cw, disbelieve } = setup({
                 knownNonIllusion: true,
             });
-            await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
+            const cmd = (cw as any)._computePickSpellCommand();
+            expect(cmd.spellId).not.toBe(disbelieve.id);
         });
 
-        it("never prefers Disbelieve at difficulty 0", async () => {
-            const { cw, player, disbelieve } = setup({ difficulty: 0 });
-            await cw.selectSpell();
+        it("never prefers Disbelieve at difficulty 0", () => {
+            const { cw, disbelieve } = setup({ difficulty: 0 });
+            const cmd = (cw as any)._computePickSpellCommand();
             // preference = suspicion/25 * 0 = 0, rollChance(0) → false
-            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
+            expect(cmd.spellId).not.toBe(disbelieve.id);
         });
 
-        it("falls through to normal selection when the suspicion roll fails", async () => {
-            const { cw, player, disbelieve } = setup({
+        it("falls through to normal selection when the suspicion roll fails", () => {
+            const { cw, disbelieve } = setup({
                 rollChanceReturn: false,
             });
-            await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
+            const cmd = (cw as any)._computePickSpellCommand();
+            expect(cmd.spellId).not.toBe(disbelieve.id);
             // Should have picked normally via the weighted-pick path
-            expect(player.pickSpell).toHaveBeenCalled();
+            expect(cmd.kind).toBe("pick-spell");
         });
 
-        it("does not prefer Disbelieve for raised-dead pieces", async () => {
-            const { cw, player, disbelieve } = setup({ raisedDead: true });
-            await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
+        it("does not prefer Disbelieve for raised-dead pieces", () => {
+            const { cw, disbelieve } = setup({ raisedDead: true });
+            const cmd = (cw as any)._computePickSpellCommand();
+            expect(cmd.spellId).not.toBe(disbelieve.id);
         });
 
-        it("threat boost increases the suspicion preference", async () => {
+        it("threat boost increases the suspicion preference", () => {
             // No threat: strength 15, chance 0.1, distance 3
             // suspicion = 15*0.9*(5/8) ≈ 8.44, pref ≈ 0.17
             const noThreat = setup({
@@ -805,7 +835,7 @@ describe("ComputerWizard", () => {
                 threatening: false,
                 rollChanceReturn: false,
             });
-            await noThreat.cw.selectSpell();
+            (noThreat.cw as any)._computePickSpellCommand();
             const noThreatArg = (noThreat.board.rollChance as any).mock.calls[0][0];
 
             // With threat: suspicion ≈ 8.44 * 2 ≈ 16.88
@@ -816,13 +846,13 @@ describe("ComputerWizard", () => {
                 threatening: true,
                 rollChanceReturn: false,
             });
-            await withThreat.cw.selectSpell();
+            (withThreat.cw as any)._computePickSpellCommand();
             const threatArg = (withThreat.board.rollChance as any).mock.calls[0][0];
 
             expect(threatArg).toBeGreaterThan(noThreatArg);
         });
 
-        it("universe balance reduces suspicion for aligned spells", async () => {
+        it("universe balance reduces suspicion for aligned spells", () => {
             // Chaotic dragon on neutral board: effective chance = 0.1
             const neutral = setup({
                 difficulty: 0.5,
@@ -831,7 +861,7 @@ describe("ComputerWizard", () => {
                 dragonBalance: -2,
                 rollChanceReturn: false,
             });
-            await neutral.cw.selectSpell();
+            (neutral.cw as any)._computePickSpellCommand();
             const neutralArg = (neutral.board.rollChance as any).mock.calls[0][0];
 
             // Same dragon on chaotic board: effective chance = 0.4
@@ -843,13 +873,13 @@ describe("ComputerWizard", () => {
                 dragonBalance: -2,
                 rollChanceReturn: false,
             });
-            await chaotic.cw.selectSpell();
+            (chaotic.cw as any)._computePickSpellCommand();
             const chaoticArg = (chaotic.board.rollChance as any).mock.calls[0][0];
 
             expect(chaoticArg).toBeLessThan(neutralArg);
         });
 
-        it("generates low preference for low-suspicion pieces", async () => {
+        it("generates low preference for low-suspicion pieces", () => {
             const { cw, board } = setup({
                 difficulty: 1,
                 dragonStrength: 10,
@@ -857,19 +887,19 @@ describe("ComputerWizard", () => {
                 dragonBalance: 0,
                 rollChanceReturn: false,
             });
-            await cw.selectSpell();
+            (cw as any)._computePickSpellCommand();
             // strength 10 * (1 - 0.9) = 1, dampened = 1*(5/8) ≈ 0.63
             // preference ≈ 0.63/25 ≈ 0.025
             const preference = (board.rollChance as any).mock.calls[0][0];
             expect(preference).toBeLessThan(0.1);
         });
 
-        it("skips suspicion when no pieces have matching spell data", async () => {
-            const { cw, player, disbelieve } = setup();
+        it("skips suspicion when no pieces have matching spell data", () => {
+            const { cw, disbelieve } = setup();
             // Remove the test spell so the lookup returns null
             delete (Spell.spells as any)[TEST_KEY];
-            await cw.selectSpell();
-            expect(player.pickSpell).not.toHaveBeenCalledWith(disbelieve.id);
+            const cmd = (cw as any)._computePickSpellCommand();
+            expect(cmd.spellId).not.toBe(disbelieve.id);
         });
     });
 
@@ -955,7 +985,7 @@ describe("ComputerWizard", () => {
             delete (Spell.spells as any)[TEST_KEY];
         });
 
-        it("sets preferredTargetId when suspicion fires", async () => {
+        it("sets preferredTargetId when suspicion fires", () => {
             const enemy = {
                 name: "Enemy",
                 defeated: false,
@@ -999,6 +1029,7 @@ describe("ComputerWizard", () => {
             });
 
             const player = {
+                id: 1,
                 name: "TestAI",
                 defeated: false,
                 spells: [disbelieve, fallback],
@@ -1017,10 +1048,9 @@ describe("ComputerWizard", () => {
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: {
-                    emit: vi.fn(),
-                    emitAsync: vi.fn().mockResolvedValue(undefined),
-                },
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             (Spell.spells as any)[TEST_KEY] = {
@@ -1035,13 +1065,13 @@ describe("ComputerWizard", () => {
             vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(() => {});
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(new Map([[disbelieve, [dragon]]]));
 
-            await cw.selectSpell();
+            const cmd = (cw as any)._computePickSpellCommand();
 
-            expect(player.pickSpell).toHaveBeenCalledWith(disbelieve.id);
+            expect(cmd).toEqual(expect.objectContaining({ kind: "pick-spell", spellId: disbelieve.id }));
             expect(cw.preferredTargetId).toBe(77);
         });
 
-        it("does not set preferredTargetId when suspicion does not fire", async () => {
+        it("does not set preferredTargetId when suspicion does not fire", () => {
             const enemy = {
                 name: "Enemy",
                 defeated: false,
@@ -1087,6 +1117,7 @@ describe("ComputerWizard", () => {
             });
 
             const player = {
+                id: 1,
                 name: "TestAI",
                 defeated: false,
                 spells: [disbelieve, fallback],
@@ -1114,10 +1145,9 @@ describe("ComputerWizard", () => {
                 rollChance: vi.fn().mockImplementation((c: number) => c > 0.5),
                 rng: new TestRNG(),
                 getPiecesByOwner: vi.fn().mockReturnValue([]),
-                events: {
-                    emit: vi.fn(),
-                    emitAsync: vi.fn().mockResolvedValue(undefined),
-                },
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, player, 1);
@@ -1125,7 +1155,7 @@ describe("ComputerWizard", () => {
             vi.spyOn(cw as any, "forgetIllusionKnowledge").mockImplementation(() => {});
             vi.spyOn(cw as any, "findSpellTargets").mockReturnValue(new Map([[disbelieve, [goblin]]]));
 
-            await cw.selectSpell();
+            (cw as any)._computePickSpellCommand();
 
             expect(cw.preferredTargetId).toBeNull();
 
@@ -1170,10 +1200,9 @@ describe("ComputerWizard", () => {
                 pieces: [goblin, dragon],
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                events: {
-                    emit: vi.fn(),
-                    emitAsync: vi.fn().mockResolvedValue(undefined),
-                },
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);
@@ -1220,10 +1249,9 @@ describe("ComputerWizard", () => {
                 pieces: [goblin],
                 rng: new TestRNG(),
                 rules: { doCastSpell },
-                events: {
-                    emit: vi.fn(),
-                    emitAsync: vi.fn().mockResolvedValue(undefined),
-                },
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
             } as unknown as Board;
 
             const cw = new ComputerWizard(board, mockPlayer, 1);

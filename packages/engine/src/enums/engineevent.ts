@@ -30,4 +30,12 @@ export enum EngineEvent {
 
     /** Batch of turmoil teleports for client replay. */
     TurmoilBatch = "engine:turmoil-batch",
+
+    /**
+     * A phase-changed broadcast outcome was emitted. Forwarded onto the
+     * engine event bus so in-process listeners (UI, AI controllers) can
+     * react without parsing the broadcast log. Payload is the matching
+     * `PhaseChangedOutcome`.
+     */
+    PhaseChanged = "engine:phase-changed",
 }

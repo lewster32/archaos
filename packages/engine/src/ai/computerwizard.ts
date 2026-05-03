@@ -1,4 +1,5 @@
 import { EngineEvent } from "../enums/engineevent";
+import { BoardPhase } from "../enums/boardphase";
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
 import { UnitStatus } from "../enums/unitstatus";
@@ -15,6 +16,15 @@ import { Board } from "../board";
 import type { Player } from "../player";
 import { Point } from "../point";
 import type { Alignment } from "../alignment";
+import type {
+    CancelCastCommand,
+    CastSpellCommand,
+    EndSpellPickCommand,
+    PhaseChangedOutcome,
+    PickSpellCommand,
+    SpellTarget as CommandSpellTarget,
+} from "../protocol";
+import { toPhaseKind } from "../snapshotbuilder";
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
  * receives a ComputerWizard instance that determines its actions each turn.
@@ -67,6 +77,14 @@ export class ComputerWizard implements RemotePlayer {
     private _preferredTargetId: number | null = null;
 
     /**
+     * True once a pick command has been emitted for the current
+     * spellbook phase. Reset whenever the spellbook phase is entered.
+     * Guards against double-submission when the FSM-driven phase-changed
+     * outcome and the per-slot phase-changed outcome both fire.
+     */
+    private _spellbookSubmitted: boolean = false;
+
+    /**
      * Creates a new ComputerWizard instance.
      *
      * @param board a reference to the game board
@@ -77,6 +95,56 @@ export class ComputerWizard implements RemotePlayer {
         this._player = player;
         this._difficulty = difficulty ?? 0.5;
         this._knownNonIllusionPieces = new Set<number>();
+        // Subscribe to phase-changed forwarded onto the engine event bus
+        // so the AI can dispatch its spellbook pick / cast commands at
+        // the right moment without being driven by a direct method call.
+        this._board.events.on(EngineEvent.PhaseChanged, (outcome: PhaseChangedOutcome) => {
+            this._onPhaseChanged(outcome);
+        });
+    }
+
+    /**
+     * Generate a fresh commandId for an AI-emitted command. Combines
+     * the player id, the next event-log sequence, and a short random
+     * suffix to keep the id unique within a single sequence.
+     */
+    private _nextCommandId(): string {
+        const seq: number = this._board.eventLog.head() + 1;
+        const suffix: string = Math.random().toString(36).slice(2, 10);
+        return `ai-${this._player.id}-${seq}-${suffix}`;
+    }
+
+    /**
+     * Phase-changed listener. Routes each phase-changed outcome to the
+     * appropriate command-computation hook and dispatches the result via
+     * `Board.handleCommand`.
+     */
+    private _onPhaseChanged(outcome: PhaseChangedOutcome): void {
+        // Reset the spellbook one-shot flag whenever we leave the
+        // spellbook phase. Each new spellbook entry is a fresh pick.
+        if (outcome.phase !== toPhaseKind(BoardPhase.Spellbook)) {
+            this._spellbookSubmitted = false;
+        }
+
+        if (outcome.phase === toPhaseKind(BoardPhase.Spellbook)) {
+            const myId: number = this._player.id;
+            const isMyTurn: boolean =
+                outcome.currentPlayerId === undefined ||
+                outcome.currentPlayerId === myId;
+            if (isMyTurn && !this._spellbookSubmitted) {
+                this._spellbookSubmitted = true;
+                const cmd: PickSpellCommand | EndSpellPickCommand = this._computePickSpellCommand();
+                void this._board.handleCommand(myId, cmd);
+            }
+        } else if (outcome.phase === toPhaseKind(BoardPhase.Casting)) {
+            // The casting phase loop re-emits phase-changed once per
+            // open slot (one per multi-cast iteration). Issue exactly
+            // one cast or cancel command per fire.
+            if (outcome.currentPlayerId === this._player.id) {
+                const cmd: CastSpellCommand | CancelCastCommand = this._computeCastSpellCommand();
+                void this._board.handleCommand(this._player.id, cmd);
+            }
+        }
     }
 
     /**
@@ -339,11 +407,13 @@ export class ComputerWizard implements RemotePlayer {
     }
 
     /**
-     * Selects a spell for the computer wizard to cast.
-     *
-     * @returns whether a spell was successfully selected
+     * Build the spellbook-pick command this AI wants to submit. Returns
+     * an `end-spell-pick` command when no spell can or should be chosen.
+     * The state mutations the legacy `selectSpell` performed
+     * (`player.pickSpell`, `spell.illusion = ...`) are now applied by
+     * `Board.handleCommand` from the command's payload.
      */
-    async selectSpell(): Promise<boolean> {
+    private _computePickSpellCommand(): PickSpellCommand | EndSpellPickCommand {
         this._board.events.emit(EngineEvent.AiThinking);
 
         // Re-evaluate enemy player priorities as this may impact our spell
@@ -360,7 +430,7 @@ export class ComputerWizard implements RemotePlayer {
                 this._board.events.emit(EngineEvent.EffectRequested, {
                     sound: "cancel",
                 });
-                return false;
+                return this._buildEndSpellPickCommand();
             }
 
             // Filter out any spells that have no valid targets
@@ -447,8 +517,7 @@ export class ComputerWizard implements RemotePlayer {
                                     `${this._player.name} suspects ${bestTarget.fullName} may be an illusion (suspicion: ${bestSuspicion.toFixed(1)}) and prefers Disbelieve`,
                                 );
                                 this._preferredTargetId = bestTarget.id;
-                                await this._player.pickSpell(disbelieveSpell.id);
-                                return true;
+                                return this._buildPickSpellCommand(disbelieveSpell.id);
                             }
                         }
                     }
@@ -473,28 +542,53 @@ export class ComputerWizard implements RemotePlayer {
                 this._board.events.emit(EngineEvent.EffectRequested, {
                     sound: "cancel",
                 });
-                return false;
+                return this._buildEndSpellPickCommand();
             }
 
             // The lower the spell's cast chance, the more likely we are to cast
-            // it as an illusion
+            // it as an illusion. The illusion bit travels on the command;
+            // `handleCommand` applies it to the spell.
+            let illusion: boolean | undefined;
             if (pickedSpell.allowIllusion) {
                 const roll: number = this._board.rng.realInRange(0.1, 1);
                 if (roll > pickedSpell.chance) {
-                    pickedSpell.illusion = true;
-                } else {
-                    pickedSpell.illusion = false;
+                    illusion = true;
                 }
             }
 
-            await this._player.pickSpell(pickedSpell.id);
-            return true;
+            return this._buildPickSpellCommand(pickedSpell.id, illusion);
         } catch (error) {
             console.error(`Error selecting spell for ${this._player.name}:`, error);
-            return false;
+            return this._buildEndSpellPickCommand();
         } finally {
             this._board.events.emit(EngineEvent.AiActing);
         }
+    }
+
+    /**
+     * Construct a `PickSpellCommand` for the given spell instance id.
+     */
+    private _buildPickSpellCommand(spellId: number, illusion?: boolean): PickSpellCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "pick-spell",
+            spellId,
+            ...(illusion === true ? { illusion: true } : {}),
+        };
+    }
+
+    /**
+     * Construct an `EndSpellPickCommand` for an explicit AI skip.
+     */
+    private _buildEndSpellPickCommand(): EndSpellPickCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "end-spell-pick",
+        };
     }
 
     /**
@@ -638,12 +732,166 @@ export class ComputerWizard implements RemotePlayer {
     }
 
     /**
-     * Casts the currently selected spell.
+     * Build the cast or cancel command for one casting iteration. The
+     * casting phase loop re-emits phase-changed for each multi-cast
+     * iteration, so this method returns a single command per call;
+     * subsequent calls (driven by the next phase-changed event) cover
+     * the rest of a multi-cast spell.
      *
-     * @returns whether the spell was successfully cast
+     * Returns a `CancelCastCommand` when no valid target can be found
+     * for the currently-selected spell — this releases the slot and
+     * forfeits any remaining casts.
      */
-    async castSpell(): Promise<boolean> {
-        return ComputerWizard.autoCastSpell(this._board, this._player);
+    private _computeCastSpellCommand(): CastSpellCommand | CancelCastCommand {
+        this._board.events.emit(EngineEvent.AiThinking);
+        try {
+            const spell: Spell | null = this._player.selectedSpell;
+            if (!spell) {
+                return this._buildCancelCastCommand();
+            }
+
+            // Capture and clear the preferred target set by
+            // `_computePickSpellCommand`. Only the first cast of a
+            // multi-cast spell uses the preferred target.
+            const preferredTargetId: number | null = this._preferredTargetId;
+            this._preferredTargetId = null;
+
+            const target: CommandSpellTarget | null = this._pickCastTarget(spell, preferredTargetId);
+            if (target == null) {
+                this._board.events.emit(EngineEvent.EffectRequested, { sound: "cancel" });
+                return this._buildCancelCastCommand();
+            }
+            return this._buildCastSpellCommand(target);
+        } catch (error) {
+            console.error(`Error casting spell for ${this._player.name}:`, error);
+            return this._buildCancelCastCommand();
+        } finally {
+            this._board.events.emit(EngineEvent.AiActing);
+        }
+    }
+
+    /**
+     * Pick a target for one cast of the given spell using the same
+     * heuristics as the legacy `autoCastSpell`. Returns null when no
+     * valid target is available.
+     */
+    private _pickCastTarget(spell: Spell, preferredTargetId: number | null): CommandSpellTarget | null {
+        if (spell.type === SpellType.Summon) {
+            return this._pickSummonTile(spell as SummonSpell);
+        }
+        if (spell.type === SpellType.Buff) {
+            return { self: true };
+        }
+        if (spell.type === SpellType.Attack) {
+            const attackSpell: AttackSpell = spell as AttackSpell;
+            const targets: Piece[] = (
+                ComputerWizard.findSpellTargets(this._board, [attackSpell]).get(attackSpell) || []
+            ).toSorted((a: Piece, b: Piece) => {
+                if (a.type === UnitType.Wizard && b.type !== UnitType.Wizard) return -1;
+                if (a.type !== UnitType.Wizard && b.type === UnitType.Wizard) return 1;
+                return b.strength - a.strength;
+            });
+            if (!targets.length) return null;
+            const target: Piece = this._board.rng.weightedPick(
+                ComputerWizard.withPreferredFirst(targets, preferredTargetId),
+            );
+            this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [target.id] });
+            return { pieceId: target.id };
+        }
+        if (spell.type === SpellType.Disbelieve) {
+            const potentialTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
+                return (
+                    p.owner !== this._player &&
+                    !p.dead &&
+                    p.canBeDisbelieved &&
+                    !this._knownNonIllusionPieces.has(p.id)
+                );
+            });
+            if (!potentialTargets.length) return null;
+            let target: Piece;
+            if (preferredTargetId == null) {
+                target = this._board.rng.pick(potentialTargets);
+            } else {
+                target = potentialTargets.find((p) => p.id === preferredTargetId) ?? this._board.rng.pick(potentialTargets);
+            }
+            this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [target.id] });
+            return { pieceId: target.id };
+        }
+        if (spell.type === SpellType.Misc) {
+            if (spell.properties.target === "self") {
+                return { self: true };
+            }
+            if ([SpellTarget.Piece, SpellTarget.Corpse].includes(spell.properties.target)) {
+                const potentialTargets: Piece[] = this._board.pieces.filter((p: Piece) => {
+                    return spell.getValidTarget(p, false);
+                });
+                if (!potentialTargets.length) return null;
+                const reordered: Piece[] = ComputerWizard.withPreferredFirst(potentialTargets, preferredTargetId);
+                const target: Piece =
+                    preferredTargetId == null
+                        ? this._board.rng.pick(potentialTargets)
+                        : this._board.rng.weightedPick(reordered);
+                this._board.events.emit(EngineEvent.FocusPieces, { pieceIds: [target.id] });
+                return { pieceId: target.id };
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Pick a tile for one summon-spell cast. Walks every board tile
+     * once, collects those the spell considers valid, and returns one
+     * via the board's RNG. The legacy `SummonSpell.autoCast` applied
+     * fancier heuristics (mount placement, spreading direction, wall
+     * pattern); a richer port is left for a follow-up — for now the
+     * AI picks any valid tile, weighted toward the wizard.
+     */
+    private _pickSummonTile(spell: SummonSpell): CommandSpellTarget | null {
+        const validTiles: Point[] = [];
+        for (let xx = 0; xx < this._board.width; xx++) {
+            for (let yy = 0; yy < this._board.height; yy++) {
+                const pt = new Point(xx, yy);
+                if (spell.getValidTarget(pt, false)) {
+                    validTiles.push(pt);
+                }
+            }
+        }
+        if (!validTiles.length) return null;
+
+        // Sort by distance to the wizard so weightedPick (which favours
+        // the head of the array) prefers tiles near the caster.
+        const wizardPos: Point | null = this._player.castingPiece?.position ?? null;
+        if (wizardPos) {
+            validTiles.sort((a, b) => Board.distance(a, wizardPos) - Board.distance(b, wizardPos));
+        }
+
+        const chosen: Point = this._board.rng.weightedPick(validTiles);
+        return { point: { x: chosen.x, y: chosen.y } };
+    }
+
+    /**
+     * Construct a `CastSpellCommand` for the given target.
+     */
+    private _buildCastSpellCommand(target: CommandSpellTarget): CastSpellCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "cast-spell",
+            target,
+        };
+    }
+
+    /**
+     * Construct a `CancelCastCommand`.
+     */
+    private _buildCancelCastCommand(): CancelCastCommand {
+        return {
+            type: "command",
+            commandId: this._nextCommandId(),
+            token: "",
+            kind: "cancel-cast",
+        };
     }
 
     /**

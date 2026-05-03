@@ -383,23 +383,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
             this._boardEvents.emit(BoardEvent.PhaseChange, newPhase);
             // Emit a spontaneous phase-changed broadcast event once the game
-            // has started (head >= 1). Pre-startGame transitions are silently
-            // skipped. We use void because phase transitions are
-            // fire-and-forget; we don't await inside this synchronous handler.
-            if (this._eventLog.head() >= 1) {
-                const phaseKind: PhaseKind = toPhaseKind(newPhase);
-                const currentPlayerId: PlayerId | null = this._currentPlayer?.id ?? null;
-                // turnNumber will be wired in a future spec; hardcoded for now.
-                const turnNumber: number = 0;
-                void this.recordEvent({}, () => {
-                    this.pushOutcome({
-                        kind: "phase-changed",
-                        phase: phaseKind,
-                        turnNumber,
-                        ...(currentPlayerId === null ? {} : { currentPlayerId }),
-                    });
-                });
-            }
+            // has started. Pre-startGame transitions are silently skipped
+            // by `_emitPhaseChanged`.
+            this._emitPhaseChanged(newPhase, this._currentPlayer?.id ?? undefined);
         }
 
         let newState: BoardState | null = null;
@@ -1337,6 +1323,40 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
+     * Emit a phase-changed broadcast outcome AND forward it onto the
+     * engine event bus as `EngineEvent.PhaseChanged`. Pre-startGame
+     * transitions (head < 1) are silently skipped.
+     *
+     * @param phase           the new phase
+     * @param currentPlayerId the player whose slot is now open, or
+     *                        undefined for simultaneous (barrier) phases
+     */
+    private _emitPhaseChanged(
+        phase: BoardPhase,
+        currentPlayerId?: PlayerId,
+    ): void {
+        if (this._eventLog.head() < 1) {
+            return;
+        }
+        const phaseKind: PhaseKind = toPhaseKind(phase);
+        // turnNumber will be wired in a future spec; hardcoded for now.
+        const turnNumber: number = 0;
+        const outcome = {
+            kind: "phase-changed" as const,
+            phase: phaseKind,
+            turnNumber,
+            ...(currentPlayerId === undefined ? {} : { currentPlayerId }),
+        };
+        // Broadcast log emission is fire-and-forget; phase transitions
+        // run synchronously from the FSM listener and from the phase
+        // loops, neither of which await the recorded event.
+        void this.recordEvent({}, () => {
+            this.pushOutcome(outcome);
+        });
+        this._boardEvents.emit(EngineEvent.PhaseChanged, outcome);
+    }
+
+    /**
      * Run the casting phase serially in turn order. For each player
      * with a selected spell, opens an ExpectedCommand slot accepting
      * `cast-spell` or `cancel-cast` and re-opens fresh slots while
@@ -1370,6 +1390,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                     "cancel-cast",
                 ]);
                 this._expectedCommand = slot;
+                this._emitPhaseChanged(BoardPhase.Casting, playerId);
                 try {
                     await slot.untilAccepted();
                 } finally {
@@ -1411,6 +1432,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 this._clearTimeout,
             );
             this._spellbookBarrier = barrier;
+            // Barrier mode runs all picks simultaneously, so phase-changed
+            // is emitted once with no current player.
+            this._emitPhaseChanged(BoardPhase.Spellbook);
             try {
                 await barrier.untilComplete();
                 for (const r of barrier.results()) {
@@ -1434,6 +1458,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 "end-spell-pick",
             ]);
             this._expectedCommand = slot;
+            this._emitPhaseChanged(BoardPhase.Spellbook, player.id);
             try {
                 await slot.untilAccepted();
             } finally {
@@ -2127,15 +2152,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
                 if (this.currentPlayer?.remote) {
-                    if (await this.currentPlayer.remote.selectSpell()) {
-                        this._boardEvents.emit(
-                            BoardEvent.SpellSelected,
-                            this.currentPlayer,
-                            this.currentPlayer.selectedSpell,
-                        );
-                    } else {
-                        console.log("Remote player could not select spell, skipping...");
-                    }
+                    // Remote / AI spellbook picks are now driven by the
+                    // command pipeline (Board.handleCommand) and the
+                    // phase-changed event bus, not by direct method
+                    // calls. The legacy nextPlayer path skips through
+                    // the AI's spellbook turn here.
                     continue;
                 } else if (this.currentPlayer?.spells?.length) {
                     // Return to allow the client override to
@@ -2175,16 +2196,13 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                             lineOfSight: spell.lineOfSight,
                         });
                         if (this.currentPlayer?.remote) {
-                            if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could not cast spell, skipping...");
-                            }
+                            // Remote / AI casts now flow through the
+                            // command pipeline; the legacy path skips
+                            // through the AI's casting turn here.
                             continue;
                         }
                     } else if (spell?.range === -1) {
                         if (this.currentPlayer?.remote) {
-                            if (!(await this.currentPlayer.remote.castSpell())) {
-                                console.log("Remote player could not cast spell, skipping...");
-                            }
                             continue;
                         }
                     }

@@ -21,6 +21,13 @@ const mockBoard = vi.mocked({
     boardEvents: {
         emit: vi.fn(),
     },
+    events: {
+        emit: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+    },
+    eventLog: { head: vi.fn().mockReturnValue(0) },
+    handleCommand: vi.fn().mockResolvedValue(undefined),
 } as unknown as Board);
 
 /**

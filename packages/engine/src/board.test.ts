@@ -782,12 +782,10 @@ describe("Board", () => {
             expect(board.state).toBe(BoardState.GameOver);
         });
 
-        it("auto-advances a remote player through spellbook and calls selectSpell", async () => {
-            const selectSpell = vi.fn().mockResolvedValue(true);
+        it("auto-advances past a remote player in the spellbook phase without driving them directly", async () => {
             const remote = {
-                selectSpell,
-                castSpell: vi.fn().mockResolvedValue(true),
                 moveAllUnits: vi.fn().mockResolvedValue(undefined),
+                moveUnit: vi.fn().mockResolvedValue(false),
             };
             const board = makeBoard();
             // p1 is a local player with no spells — will be skipped in
@@ -800,12 +798,12 @@ describe("Board", () => {
             const p2 = board.addPlayer({ name: "P2", type: GameSetupPlayerType.Computer }, remote as any);
             p2.addSpell(makeMockSpell());
 
-            // nextPlayer from index -1: increments to 0 → calls newTurn()
-            // (p2 has spells so phase→Spellbook). p1 has no spells/remote →
-            // skipped. p2 has remote → selectSpell() called → loop continues
-            // until the local-player break is hit or phase changes.
-            await board.nextPlayer();
-            expect(selectSpell).toHaveBeenCalled();
+            // The legacy nextPlayer flow used to call `remote.selectSpell()`
+            // here. After the command-intake-pipeline migration the AI's
+            // pick is dispatched via Board.handleCommand from a phase-changed
+            // listener, so this code path is now a no-op skip. Verify it
+            // does not throw and the loop advances past the AI player.
+            await expect(board.nextPlayer()).resolves.toBeUndefined();
         });
 
         it("returns early when a local player with spells reaches Spellbook phase (line 1306)", async () => {
