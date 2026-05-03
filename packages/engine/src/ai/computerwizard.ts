@@ -131,7 +131,16 @@ export class ComputerWizard implements RemotePlayer {
             const isMyTurn: boolean =
                 outcome.currentPlayerId === undefined ||
                 outcome.currentPlayerId === myId;
-            if (isMyTurn && !this._spellbookSubmitted) {
+            // Suppress dispatch when no slot is actually open for us.
+            // The FSM-fired phase-changed inside newTurn() emits with
+            // currentPlayerId=undefined before the per-player slot is
+            // opened, which would otherwise be mistaken for a barrier
+            // signal and land in a closed slot.
+            if (
+                isMyTurn &&
+                !this._spellbookSubmitted &&
+                this._board.canAcceptCommandFor(myId)
+            ) {
                 this._spellbookSubmitted = true;
                 const cmd: PickSpellCommand | EndSpellPickCommand = this._computePickSpellCommand();
                 void this._board.handleCommand(myId, cmd);
@@ -139,8 +148,12 @@ export class ComputerWizard implements RemotePlayer {
         } else if (outcome.phase === toPhaseKind(BoardPhase.Casting)) {
             // The casting phase loop re-emits phase-changed once per
             // open slot (one per multi-cast iteration). Issue exactly
-            // one cast or cancel command per fire.
-            if (outcome.currentPlayerId === this._player.id) {
+            // one cast or cancel command per fire — but only when the
+            // engine actually has a slot open for us.
+            if (
+                outcome.currentPlayerId === this._player.id &&
+                this._board.canAcceptCommandFor(this._player.id)
+            ) {
                 const cmd: CastSpellCommand | CancelCastCommand = this._computeCastSpellCommand();
                 void this._board.handleCommand(this._player.id, cmd);
             }

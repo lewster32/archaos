@@ -879,6 +879,31 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * @param playerId  The authenticated sender.
      * @param cmd       The command message; must already be wire-safe.
      */
+    /**
+     * True when the engine has an open intake for the given player —
+     * either an `ExpectedCommand` slot whose `expectedPlayerId` matches,
+     * or a spellbook barrier the player is still allowed to submit to.
+     *
+     * Used by `ComputerWizard` (and any other authoritative dispatcher)
+     * to suppress dispatching commands that would land before a slot is
+     * opened. Without this check the FSM-fired phase-changed event that
+     * fires inside `newTurn()` would be mistaken for a barrier-mode
+     * "your turn" signal — the AI would dispatch into a closed slot,
+     * get rejected, and latch its `_spellbookSubmitted` flag so the
+     * subsequent legitimate per-slot phase-changed event becomes a
+     * no-op.
+     */
+    canAcceptCommandFor(playerId: PlayerId): boolean {
+        if (this._spellbookBarrier?.canAccept(playerId)) {
+            return true;
+        }
+        const slot = this._expectedCommand;
+        if (slot?.isOpen && slot.expectedPlayerId === playerId) {
+            return true;
+        }
+        return false;
+    }
+
     async handleCommand(playerId: PlayerId, cmd: CommandMessage): Promise<void> {
         // Silent dedup: a re-delivered commandId is a no-op.
         if (this._processedCommandIds.has(cmd.commandId)) {
