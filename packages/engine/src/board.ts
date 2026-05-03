@@ -1393,6 +1393,161 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
+     * Shared movement-phase precondition validator. Checks that:
+     *  - The board is in the moving phase and a slot is open.
+     *  - The slot's expected player matches `playerId`.
+     *  - If `expectedPieceField` is provided, the selected piece's id
+     *    equals the value at `cmd[expectedPieceField]`.
+     *
+     * On failure emits the appropriate `command-rejected` and returns
+     * `null`. On success returns `{ slot, selected }`.
+     *
+     * Used by every movement-phase handler to share the validation
+     * preamble. The reason taxonomy:
+     *  - `wrong-phase` if not in Moving phase or no slot is open.
+     *  - `not-your-turn` if slot belongs to another player or the
+     *    pieceId in the command does not match the selected piece.
+     *
+     * Pass `expectedPieceField: null` for handlers that do not have a
+     * single piece-id field to match against the current selection
+     * (e.g. `select-piece`, where the command IS the selection, and
+     * `end-movement-phase`, where there is no piece reference).
+     */
+    private _validateMovementSlot<C extends CommandMessage>(
+        playerId: PlayerId,
+        cmd: C,
+        expectedPieceField: keyof C | null,
+    ): { slot: ExpectedCommand; selected: P | null } | null {
+        const slot = this._expectedCommand;
+        if (this.phase !== BoardPhase.Moving || !slot) {
+            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+            return null;
+        }
+        if (slot.expectedPlayerId !== playerId) {
+            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+            return null;
+        }
+        const selected: P | null = this._selected;
+        if (expectedPieceField !== null) {
+            const expectedId = cmd[expectedPieceField] as unknown as number;
+            if (!selected || selected.id !== expectedId) {
+                this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
+                return null;
+            }
+        }
+        return { slot, selected };
+    }
+
+    /**
+     * Walk `path` step-by-step, calling `setPosition(step)` on `piece`
+     * (and on `piece.currentRider` if `riderSync` is true). After each
+     * step, run an engagement roll (manoeuvrability vs manoeuvrability)
+     * against adjacent enemies. On a successful roll: emits paired
+     * `piece-turn-flag-changed{engaged: true}` outcomes for both
+     * pieces and stops the loop.
+     *
+     * Returns the engagement enemy if the loop broke, or `null` if the
+     * full path was traversed.
+     *
+     * When `skipEngagementOnTerminal` is true, the engagement roll is
+     * skipped on the final step (used by mount-piece, where the
+     * terminal step IS the mount tile and engagement on arrival is
+     * handled by the mount semantics, not the path-walk loop).
+     *
+     * Caller is responsible for any post-walk outcomes (terminal
+     * setMount/setRider, attack roll, replacement-on-kill, turn-flag
+     * updates) and for invoking this inside an active `recordEvent`
+     * context.
+     */
+    private _walkPathWithEngagement(
+        piece: P,
+        path: ReadonlyArray<Point>,
+        riderSync: boolean = true,
+        skipEngagementOnTerminal: boolean = false,
+    ): { engagedBy: P } | null {
+        const rider: P | null = riderSync ? (piece.currentRider as P | null) : null;
+        for (let i: number = 0; i < path.length; i++) {
+            const step: Point = path[i];
+            const isTerminal: boolean = i === path.length - 1;
+            piece.setPosition(step);
+            if (rider) {
+                rider.setPosition(step);
+            }
+            if (skipEngagementOnTerminal && isTerminal) {
+                continue;
+            }
+            const enemies: P[] = this.getAdjacentPiecesAtPosition(step, (p) => {
+                return !p.dead && p.owner !== piece.owner && p.canEngagePiece(piece);
+            });
+            for (const enemy of enemies) {
+                // Engagement is a manoeuvrability contest, matching the
+                // original Chaos rule. canEngagePiece already gates
+                // entry on both pieces having manoeuvrability > 0.
+                const succeeded: boolean = this.roll(
+                    enemy.stats.manoeuvrability ?? 0,
+                    piece.stats.manoeuvrability ?? 0,
+                );
+                if (succeeded) {
+                    piece.setTurnFlags({ engaged: true });
+                    enemy.setTurnFlags({ engaged: true });
+                    return { engagedBy: enemy as P };
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Cascade-kill `target` with the given `cause`. Idempotent on
+     * already-dead pieces (relies on `setDead`'s idempotency).
+     *
+     * If the target is a wizard and has an owner, sweeps the owner's
+     * other living non-wizard pieces with `setDead("spell")` and emits
+     * a `player-defeated` outcome. When only one (or zero) surviving
+     * players remain, also emits a `game-over` outcome carrying the
+     * survivor's id (or `"draw"` if no survivors).
+     *
+     * Caller must invoke this inside an active `recordEvent` context.
+     */
+    private _cascadeKill(target: P, cause: "combat" | "ranged" | "spell"): void {
+        if (target.dead) {
+            return;
+        }
+        const wasWizard: boolean = target.hasStatus(UnitStatus.Wizard);
+        const owner: Player<P> | null = target.owner as Player<P> | null;
+        target.setDead(cause);
+        if (!wasWizard || !owner) {
+            return;
+        }
+        // Sweep the wizard's other surviving pieces.
+        const owned: P[] = this.getPiecesByOwner(owner);
+        for (const piece of owned) {
+            if (piece === target || piece.dead) {
+                continue;
+            }
+            piece.setDead("spell");
+        }
+        this.pushOutcome({
+            kind: "player-defeated",
+            playerId: owner.id,
+        });
+        // Determine surviving players: those whose wizard is alive.
+        const survivors: Player<P>[] = this.players.filter((p) => {
+            const wiz = this.getPiecesByOwner(p).find(
+                (piece) => piece.hasStatus(UnitStatus.Wizard) && !piece.dead,
+            );
+            return wiz !== undefined;
+        });
+        if (survivors.length <= 1) {
+            const winnerId: PlayerId | "draw" = survivors.length === 1 ? survivors[0].id : "draw";
+            this.pushOutcome({
+                kind: "game-over",
+                winnerId,
+            });
+        }
+    }
+
+    /**
      * Handle a `select-piece` command. Validates phase + slot ownership
      * and the target piece (must exist, be alive, owned by the player,
      * and selectable). On accept, runs an engagement roll against each
@@ -1407,15 +1562,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * slot.
      */
     private async _handleSelectPiece(playerId: PlayerId, cmd: SelectPieceCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, null);
+        if (!validated) return;
         const piece: P | null = this.getPiece(cmd.pieceId);
         if (!piece || piece.dead) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -1475,20 +1623,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * loop can advance to the next slot.
      */
     private async _handleMovePiece(playerId: PlayerId, cmd: MovePieceCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
-        const piece: P | null = this._selected;
-        if (!piece || piece.id !== cmd.pieceId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, "pieceId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const piece: P = selected as P;
         if (piece.moved) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
             return;
@@ -1500,37 +1638,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
         const rider: P | null = piece.currentRider as P | null;
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
-            let engagementBroke: boolean = false;
-            for (const step of path) {
-                piece.setPosition(step);
-                if (rider) {
-                    rider.setPosition(step);
-                }
-                const enemies: P[] = this.getAdjacentPiecesAtPosition(
-                    step,
-                    (p) => !p.dead && p.owner !== piece.owner && p.canEngagePiece(piece),
-                );
-                for (const enemy of enemies) {
-                    // Engagement is a manoeuvrability contest, matching
-                    // the original Chaos rule and _handleSelectPiece's
-                    // engagement formula. Piece.canEngagePiece already
-                    // gates entry on both pieces having
-                    // manoeuvrability > 0.
-                    const succeeded: boolean = this.roll(
-                        enemy.stats.manoeuvrability ?? 0,
-                        piece.stats.manoeuvrability ?? 0,
-                    );
-                    if (succeeded) {
-                        piece.setTurnFlags({ engaged: true });
-                        enemy.setTurnFlags({ engaged: true });
-                        engagementBroke = true;
-                        break;
-                    }
-                }
-                if (engagementBroke) {
-                    break;
-                }
-            }
+            this._walkPathWithEngagement(piece, path);
             piece.setTurnFlags({ moved: true });
             if (rider) {
                 rider.setTurnFlags({ moved: true });
@@ -1540,19 +1648,157 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Stub handler for `attack-piece`. Real melee attack orchestration
-     * lands in a subsequent task.
+     * Handle an `attack-piece` command. Validates phase + slot
+     * ownership, that the attacker is the currently selected piece,
+     * that the target exists and is attackable, and that the path (if
+     * any) is legal and terminates adjacent to the target's tile.
+     *
+     * For `mov === 0` attackers (e.g. Shadow Wood), the path is empty
+     * and the attacker must already be adjacent. Flying attackers may
+     * also submit an empty path (swoop is handled by the path-walk
+     * loop's regular flying budget).
+     *
+     * On accept, walks the path inside a single `recordEvent`
+     * broadcast. If engagement fires mid-path AND the engagement tile
+     * is not adjacent to the target, the attack is forfeited and the
+     * piece is flagged `moved: true` only. Otherwise, the attack roll
+     * runs and emits `piece-attacked{succeeded}`. On success the
+     * target is cascade-killed (a wizard kill sweeps the wizard's
+     * surviving creations and emits `player-defeated` and possibly
+     * `game-over`). On a successful kill by a non-flying mov > 0
+     * attacker, the attacker steps onto the target's tile
+     * (replacement-on-kill, chess-style); flying attackers stay where
+     * the swoop took them.
+     *
+     * Submits the slot after a successful attack so the movement-phase
+     * loop can advance to the next slot.
      */
     private async _handleAttackPiece(playerId: PlayerId, cmd: AttackPieceCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const validated = this._validateMovementSlot(playerId, cmd, "attackerId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const attacker: P = selected as P;
+        const target: P | null = this.getPiece(cmd.targetId);
+        if (!target || !attacker.canAttackPiece(target)) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
+        const path: Point[] = cmd.path.map((p) => new Point(p.x, p.y));
+        const isFlying: boolean = attacker.hasStatus(UnitStatus.Flying);
+        if (path.length > 0) {
+            if (!this.validatePath(attacker, path)) {
+                this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+                return;
+            }
+            const terminal: Point = path[path.length - 1];
+            const dx: number = Math.abs(terminal.x - target.position.x);
+            const dy: number = Math.abs(terminal.y - target.position.y);
+            if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) {
+                this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+                return;
+            }
+        } else {
+            // Empty path: attacker must already be adjacent (or be
+            // flying, in which case canAttackPiece + adjacency on
+            // current position is still required - a flying piece
+            // that needs to swoop must submit a path).
+            const dx: number = Math.abs(attacker.position.x - target.position.x);
+            const dy: number = Math.abs(attacker.position.y - target.position.y);
+            if (dx > 1 || dy > 1 || (dx === 0 && dy === 0)) {
+                this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
+                return;
+            }
+        }
+        const attackerMov: number = attacker.stats.movement ?? 0;
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            // Walk the path; if engagement fires mid-path, the attack
+            // is forfeited unless the engagement tile is still
+            // adjacent to the target.
+            const engaged = this._walkPathWithEngagement(attacker, path);
+            if (engaged) {
+                const dx: number = Math.abs(attacker.position.x - target.position.x);
+                const dy: number = Math.abs(attacker.position.y - target.position.y);
+                const stillAdjacent: boolean = dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0);
+                if (!stillAdjacent) {
+                    attacker.setTurnFlags({ moved: true });
+                    return;
+                }
+            }
+            // Resolve the attack from the (possibly engagement-truncated) tile.
+            const succeeded: boolean = this.roll(
+                attacker.stats.combat ?? 0,
+                target.stats.defence ?? 0,
+                (attacker.owner ?? undefined) as Player<P> | undefined,
+            );
+            this.pushOutcome({
+                kind: "piece-attacked",
+                attackerId: attacker.id,
+                targetId: target.id,
+                succeeded,
+            });
+            if (succeeded) {
+                this._cascadeKill(target, "combat");
+                // Replacement-on-kill: non-flying attackers with
+                // mov > 0 step onto the target's tile.
+                if (!isFlying && attackerMov > 0) {
+                    attacker.setPosition(new Point(target.position.x, target.position.y));
+                }
+            }
+            attacker.setTurnFlags({ moved: true, attacked: true });
+            const rider: P | null = attacker.currentRider as P | null;
+            if (rider) {
+                rider.setTurnFlags({ moved: true, attacked: true });
+            }
+        });
+        slot.submit(playerId, cmd);
     }
 
     /**
-     * Stub handler for `ranged-attack-piece`. Real ranged-attack
-     * orchestration lands in a subsequent task.
+     * Handle a `ranged-attack-piece` command. Validates phase + slot
+     * ownership, that the attacker is the currently selected piece,
+     * and that the target is reachable via `canRangedAttackPiece`
+     * (which checks LOS, range, status, and turn-flag eligibility).
+     *
+     * On accept, runs the ranged-attack roll inside a single
+     * `recordEvent` broadcast. Emits
+     * `piece-ranged-attacked{succeeded}`; on success cascade-kills the
+     * target (wizard kill sweeps the wizard's surviving creations and
+     * emits `player-defeated` and possibly `game-over`). The attacker
+     * does NOT move - ranged attacks emit no piece-moved outcomes.
+     * The attacker is finally flagged
+     * `{moved: true, attacked: true, rangedAttacked: true}`.
+     *
+     * Submits the slot after a successful ranged attack so the
+     * movement-phase loop can advance to the next slot.
      */
     private async _handleRangedAttackPiece(playerId: PlayerId, cmd: RangedAttackPieceCommand): Promise<void> {
-        this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
+        const validated = this._validateMovementSlot(playerId, cmd, "attackerId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const attacker: P = selected as P;
+        const target: P | null = this.getPiece(cmd.targetId);
+        if (!target || !attacker.canRangedAttackPiece(target)) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
+        await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
+            const succeeded: boolean = this.roll(
+                attacker.stats.rangedCombat ?? 0,
+                target.stats.defence ?? 0,
+                (attacker.owner ?? undefined) as Player<P> | undefined,
+            );
+            this.pushOutcome({
+                kind: "piece-ranged-attacked",
+                attackerId: attacker.id,
+                targetId: target.id,
+                succeeded,
+            });
+            if (succeeded) {
+                this._cascadeKill(target, "ranged");
+            }
+            attacker.setTurnFlags({ moved: true, attacked: true, rangedAttacked: true });
+        });
+        slot.submit(playerId, cmd);
     }
 
     /**
@@ -1580,20 +1826,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * loop can advance to the next slot.
      */
     private async _handleMountPiece(playerId: PlayerId, cmd: MountPieceCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
-        const wizard: P | null = this._selected;
-        if (!wizard || wizard.id !== cmd.wizardId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, "wizardId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const wizard: P = selected as P;
         const mount: P | null = this.getPiece(cmd.mountId);
         if (!mount || !wizard.canMountPiece(mount)) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -1618,36 +1854,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             return;
         }
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
-            let engagementBroke: boolean = false;
-            for (let i: number = 0; i < path.length; i++) {
-                const step: Point = path[i];
-                const isTerminal: boolean = i === path.length - 1;
-                wizard.setPosition(step);
-                if (!isTerminal) {
-                    const enemies: P[] = this.getAdjacentPiecesAtPosition(step, (p) => {
-                        return !p.dead && p.owner !== wizard.owner && p.canEngagePiece(wizard);
-                    });
-                    for (const enemy of enemies) {
-                        // Engagement is a manoeuvrability contest, matching
-                        // the original Chaos rule and the move/select
-                        // handlers' engagement formula.
-                        const succeeded: boolean = this.roll(
-                            enemy.stats.manoeuvrability ?? 0,
-                            wizard.stats.manoeuvrability ?? 0,
-                        );
-                        if (succeeded) {
-                            wizard.setTurnFlags({ engaged: true });
-                            enemy.setTurnFlags({ engaged: true });
-                            engagementBroke = true;
-                            break;
-                        }
-                    }
-                    if (engagementBroke) {
-                        break;
-                    }
-                }
-            }
-            if (engagementBroke) {
+            // Wizard mounting has no rider sync (the wizard becomes
+            // the rider on arrival). Engagement on the terminal step
+            // is also skipped: arriving on the mount's tile is the
+            // mount action itself.
+            const engaged = this._walkPathWithEngagement(wizard, path, false, true);
+            if (engaged) {
                 wizard.setTurnFlags({ moved: true });
                 return;
             }
@@ -1679,20 +1891,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Submits the slot after a successful dismount.
      */
     private async _handleDismountPiece(playerId: PlayerId, cmd: DismountPieceCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
-        const wizard: P | null = this._selected;
-        if (!wizard || wizard.id !== cmd.wizardId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, "wizardId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const wizard: P = selected as P;
         const mount: P | null = wizard.currentMount as P | null;
         if (!mount) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -1755,20 +1957,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * piece in the same slot.
      */
     private async _handleCancelPieceAction(playerId: PlayerId, cmd: CancelPieceActionCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
-        const piece: P | null = this._selected;
-        if (!piece || piece.id !== cmd.pieceId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, "pieceId");
+        if (!validated) return;
+        const piece: P = validated.selected as P;
         // Compute the action discriminator from the piece's current
         // turn-flag state. Today: a piece that has not moved is
         // "select"; one that has moved (or attacked / mounted, both of
@@ -1802,20 +1993,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * advance to the next slot.
      */
     private async _handleEndPieceTurn(playerId: PlayerId, cmd: EndPieceTurnCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
-        const piece: P | null = this._selected;
-        if (!piece || piece.id !== cmd.pieceId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, "pieceId");
+        if (!validated) return;
+        const { slot, selected } = validated;
+        const piece: P = selected as P;
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
             piece.setTurnFlags({ turnOver: true });
             this._selected = null;
@@ -1830,15 +2011,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * the slot so the loop can advance.
      */
     private async _handleEndMovementPhase(playerId: PlayerId, cmd: EndMovementPhaseCommand): Promise<void> {
-        const slot = this._expectedCommand;
-        if (this.phase !== BoardPhase.Moving || !slot) {
-            this._emitCommandRejected(playerId, cmd.commandId, "wrong-phase");
-            return;
-        }
-        if (slot.expectedPlayerId !== playerId) {
-            this._emitCommandRejected(playerId, cmd.commandId, "not-your-turn");
-            return;
-        }
+        const validated = this._validateMovementSlot(playerId, cmd, null);
+        if (!validated) return;
+        const { slot } = validated;
         this._movementPhaseEnded = true;
         this._selected = null;
         slot.submit(playerId, cmd);

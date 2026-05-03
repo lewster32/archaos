@@ -1887,3 +1887,401 @@ describe("_handleDismountPiece", () => {
         expect(slot.isOpen).toBe(false);
     });
 });
+
+describe("_handleAttackPiece", () => {
+    it("rejects with invalid-target when attacker cannot attack the target (ally)", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const attacker = await addPieceFor(board, p1, { x: 5, y: 5, combat: 5 });
+        const ally = await addPieceFor(board, p1, { x: 6, y: 5 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: ally.id,
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "a1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("rejects with invalid-target when target does not exist", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const attacker = await addPieceFor(board, p1, { x: 5, y: 5, combat: 5 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: 9999,
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "a1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("rejects with invalid-move when path is empty and attacker is not adjacent and not flying", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const attacker = await addPieceFor(board, p1, { x: 5, y: 5, combat: 5 });
+        const target = await addPieceFor(board, p2, { x: 8, y: 5 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "a1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("rejects with invalid-move when path's terminal step is not adjacent to the target", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const attacker = await addPieceFor(board, p1, { x: 5, y: 5, combat: 5, movement: 3 });
+        const target = await addPieceFor(board, p2, { x: 8, y: 5 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        // Path ends at (6,5), but the target is at (8,5) - not adjacent.
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "a1",
+            reason: "invalid-move",
+        });
+    });
+
+    it("happy path: forced hit emits piece-attacked, piece-died and replacement piece-moved", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const attacker = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            combat: 5,
+            movement: 3,
+        });
+        const target = await addPieceFor(board, p2, { x: 7, y: 5 });
+        (board as any)._selected = attacker;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+        // Force every roll to succeed (attack hits).
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+
+        const attacked = outcomes.find((o: any) => o.kind === "piece-attacked");
+        expect(attacked).toEqual({
+            kind: "piece-attacked",
+            attackerId: attacker.id,
+            targetId: target.id,
+            succeeded: true,
+        });
+        const died = outcomes.find(
+            (o: any) => o.kind === "piece-died" && o.pieceId === target.id,
+        );
+        expect(died).toEqual({
+            kind: "piece-died",
+            pieceId: target.id,
+            cause: "combat",
+        });
+        // Replacement-on-kill: attacker steps onto the target's tile.
+        const moves = outcomes.filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === attacker.id,
+        ) as Array<{ from: { x: number; y: number }; to: { x: number; y: number } }>;
+        // Expect a move to (6,5) from path-walk and a final replacement move to (7,5).
+        const replacement = moves.find((m) => m.to.x === 7 && m.to.y === 5);
+        expect(replacement).toBeTruthy();
+        expect(slot.isOpen).toBe(false);
+    });
+
+    it("does NOT replace attacker on kill when attacker has movement 0 (e.g. Shadow Wood)", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const attacker = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            combat: 5,
+            movement: 0,
+        });
+        const target = await addPieceFor(board, p2, { x: 6, y: 5 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+                path: [],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+        const moves = outcomes.filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === attacker.id,
+        );
+        // mov === 0: no replacement.
+        expect(moves).toHaveLength(0);
+    });
+
+    it("wizard-kill cascade: forced hit on enemy wizard sweeps the wizard's other living pieces and emits player-defeated", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        // P1 needs a live wizard for game-over to crown P1 the winner.
+        await addPieceFor(board, p1, {
+            x: 0,
+            y: 0,
+            status: [UnitStatus.Wizard],
+        });
+        const attacker = await addPieceFor(board, p1, {
+            x: 5,
+            y: 5,
+            combat: 9,
+            movement: 3,
+        });
+        const enemyWizard = await addPieceFor(board, p2, {
+            x: 7,
+            y: 5,
+            status: [UnitStatus.Wizard],
+        });
+        const enemyCreature = await addPieceFor(board, p2, {
+            x: 1,
+            y: 1,
+        });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "a1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attacker.id,
+                targetId: enemyWizard.id,
+                path: [{ x: 6, y: 5 }],
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+        // Both pieces died.
+        const wizardDied = outcomes.find(
+            (o: any) => o.kind === "piece-died" && o.pieceId === enemyWizard.id,
+        );
+        const creatureDied = outcomes.find(
+            (o: any) => o.kind === "piece-died" && o.pieceId === enemyCreature.id,
+        );
+        expect(wizardDied).toEqual({
+            kind: "piece-died",
+            pieceId: enemyWizard.id,
+            cause: "combat",
+        });
+        expect(creatureDied).toEqual({
+            kind: "piece-died",
+            pieceId: enemyCreature.id,
+            cause: "spell",
+        });
+        // player-defeated emitted.
+        const defeated = outcomes.find(
+            (o: any) => o.kind === "player-defeated" && o.playerId === p2.id,
+        );
+        expect(defeated).toBeTruthy();
+        // game-over emitted (only one survivor: P1).
+        const gameOver = outcomes.find((o: any) => o.kind === "game-over");
+        expect(gameOver).toEqual({ kind: "game-over", winnerId: p1.id });
+    });
+});
+
+describe("_handleRangedAttackPiece", () => {
+    it("rejects with invalid-target when attacker cannot ranged-attack target", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        // Attacker has zero rangedCombat, so canRangedAttackPiece returns false.
+        const attacker = await addPieceFor(board, p1, { x: 5, y: 5 });
+        const target = await addPieceFor(board, p2, { x: 9, y: 9 });
+        (board as any)._selected = attacker;
+        setupMovementSlot(board, 1);
+        await board.startGame();
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "r1",
+                token: "",
+                kind: "ranged-attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "r1",
+            reason: "invalid-target",
+        });
+    });
+
+    it("happy path: forced hit emits piece-ranged-attacked and piece-died, no piece-moved", async () => {
+        const board = makeTestBoard();
+        const p1 = board.getPlayer(1);
+        const p2 = addLocalPlayer(board, "P2");
+        const attacker = await board.addPiece({
+            type: UnitType.Creature,
+            x: 5,
+            y: 5,
+            properties: {
+                id: "test",
+                name: "Test",
+                movement: 3,
+                combat: 3,
+                rangedCombat: 5,
+                range: 6,
+                defence: 3,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                attackType: "hit",
+                rangedType: "shot",
+                status: [],
+            },
+            owner: p1 as any,
+        } as PieceConfig);
+        const target = await addPieceFor(board, p2, { x: 8, y: 5 });
+        // ranged-attack precondition: attacker.moved must be true.
+        (attacker as any).moved = true;
+        (board as any)._selected = attacker;
+        const slot = setupMovementSlot(board, 1);
+        await board.startGame();
+        vi.spyOn(board, "roll").mockReturnValue(true);
+
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "r1",
+                token: "",
+                kind: "ranged-attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+            }),
+        );
+
+        expect(board._rejectedCommandsForTests).toEqual([]);
+        const seq = board.eventLog.head();
+        const lastEvent = board.eventLog.range(seq, seq)[0];
+        const outcomes = lastEvent?.outcomes ?? [];
+
+        const ranged = outcomes.find((o: any) => o.kind === "piece-ranged-attacked");
+        expect(ranged).toEqual({
+            kind: "piece-ranged-attacked",
+            attackerId: attacker.id,
+            targetId: target.id,
+            succeeded: true,
+        });
+        const died = outcomes.find(
+            (o: any) => o.kind === "piece-died" && o.pieceId === target.id,
+        );
+        expect(died).toEqual({
+            kind: "piece-died",
+            pieceId: target.id,
+            cause: "ranged",
+        });
+        // Ranged attacks emit no piece-moved outcomes for the attacker.
+        const moves = outcomes.filter(
+            (o: any) => o.kind === "piece-moved" && o.pieceId === attacker.id,
+        );
+        expect(moves).toHaveLength(0);
+        expect(slot.isOpen).toBe(false);
+    });
+});
