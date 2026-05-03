@@ -44,7 +44,10 @@ import type {
     SpellbookOpenEventData,
     GameSetupData,
     GameScenarioData,
+    CommandMessage,
+    Spell,
 } from "@archaos/engine";
+import { GameScene } from "../game-scene";
 import LoadingScreen from "./LoadingScreen.vue";
 import TutorialMessage from "./TutorialMessage.vue";
 import ConsentBanner from "./ConsentBanner.vue";
@@ -64,7 +67,6 @@ import { loadingProgress } from "../game/loading-state";
 import { ref, onMounted, onUnmounted, computed, nextTick } from "vue";
 import type { Ref } from "vue";
 import type { Game, Events } from "phaser";
-import type { Spell } from "@archaos/engine";
 import { getTutorial } from "../gameobjects/tutorials/tutorialregistry";
 import { Logger } from "../gameobjects/services/logger";
 import type { Log as LogEntry } from "../gameobjects/services/logger";
@@ -120,12 +122,49 @@ const onConsentDecline = () => {
     showConsentBanner.value = false;
 };
 
-const spellSelect = (spell: Spell) => {
+const getEngineBoard = () => {
+    const scene = gameInstance.value?.scene.getScene("GameScene") as GameScene | undefined;
+    return scene?.board ?? null;
+};
+
+const dispatchCommand = (cmd: CommandMessage): void => {
+    const engineBoard = getEngineBoard();
+    const playerId = engineBoard?.currentPlayer?.id;
+    if (engineBoard == null || playerId == null) {
+        return;
+    }
+    void engineBoard.handleCommand(playerId, cmd);
+};
+
+const spellSelect = (spell: Spell | null) => {
     closeUnitInfo();
+    const cmd: CommandMessage =
+        spell == null
+            ? { type: "command", commandId: crypto.randomUUID(), token: "", kind: "end-spell-pick" }
+            : {
+                  type: "command",
+                  commandId: crypto.randomUUID(),
+                  token: "",
+                  kind: "pick-spell",
+                  spellId: spell.id,
+                  ...(spell.illusion === true ? { illusion: true } : {}),
+              };
+    dispatchCommand(cmd);
+    // Transitional: keep the legacy spellbook callback path firing so
+    // the existing nextPlayer-driven flow continues to progress while
+    // autoRunPhaseLoop remains off in production. Once the new
+    // pipeline drives spellbook+casting end-to-end the callback fire
+    // can be removed.
     spellbook.value?.onSelect?.(spell);
 };
 
 const cancel = () => {
+    dispatchCommand({
+        type: "command",
+        commandId: crypto.randomUUID(),
+        token: "",
+        kind: "cancel-cast",
+    });
     eventEmitter.value?.emit(EventType.Cancel);
 };
 

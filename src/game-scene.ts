@@ -41,7 +41,12 @@ import { Scene } from "phaser";
 import { loadingProgress, debugLoading } from "./game/loading-state";
 
 export class GameScene extends Scene {
-    private board: Board;
+    /**
+     * Reference to the active Board. Public so the Vue UI can dispatch
+     * commands (pick-spell, cast-spell, cancel-cast) into the engine
+     * via Board.handleCommand.
+     */
+    public board: Board;
 
     /**
      * Pre-generated distribution of difficulties to favour middle values when
