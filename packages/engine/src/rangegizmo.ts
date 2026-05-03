@@ -158,6 +158,12 @@ export class RangeGizmo {
         for (const node of this._validNodes) {
             const path: Path = this.getPathTo(node.pos);
             node.path = path;
+            // movementBudget already includes the +0.5 terminal-step
+            // bump (Piece.stats.movement + 0.5). The extra + 0.5 here
+            // preserves the legacy "+ 1" budget that the rangegizmo's
+            // A* enumeration uses to mark a node as just-barely
+            // terminal-reachable - distinct from the per-tile bump and
+            // used only in the post-A* reachability prune.
             if (!path || path.cost > movementBudget(unit) + 0.5) {
                 node.traversable = false;
             }

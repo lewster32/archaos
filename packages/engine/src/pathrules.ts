@@ -84,11 +84,15 @@ export function movementBudget(piece: Piece): number {
  * tile may be occupied by a mountable (the moving piece can mount)
  * or attackable (the moving piece can attack) target.
  *
- * Performs an in-bounds check; does NOT enforce 8-connectedness
- * (callers are expected to validate that separately when needed).
+ * The `from` parameter is part of the contract for symmetry with
+ * future per-step validators (e.g. Board.validatePath) that may
+ * use it to enforce 8-connectedness or other from-relative rules.
+ * Today this function only inspects `to`; bounds and adjacency
+ * are the caller's responsibility.
  *
  * @param piece The moving piece.
- * @param _from The origin tile (unused, included for API parity).
+ * @param _from The origin tile - reserved for future per-step
+ *        validators; see notes above.
  * @param to The destination tile of the step.
  * @param board The board to query for blockers.
  * @param allowTerminalException Whether to permit the destination

@@ -134,12 +134,22 @@ describe("flyingPathCost", () => {
         expect(flyingPathCost(origin, detour)).toBe(flyingPathCost(origin, direct));
     });
 
+    it("only the terminal step's distance from origin matters", () => {
+        const origin = new Point(0, 0);
+        const target = new Point(3, 3);
+        // Direct path: 3 diagonals to (3, 3) = 3 * 1.5 = 4.5
+        expect(flyingPathCost(origin, [target])).toBe(4.5);
+        // Detour path: same terminal, but via (1, 0) and (2, 5) -
+        // intermediate steps must not contribute to the cost.
+        expect(flyingPathCost(origin, [new Point(1, 0), new Point(2, 5), target])).toBe(4.5);
+    });
+
     it("returns 3 for a 3-tile orthogonal flight", () => {
         const path: Point[] = [new Point(3, 0)];
         expect(flyingPathCost(new Point(0, 0), path)).toBe(3);
     });
 
-    it("returns 4 for a 3-diag + 1-orth fly distance (3 * 1.5 - oops, mixed)", () => {
+    it("returns 5.5 for a 3-diag + 1-orth fly distance", () => {
         // Origin (0,0) to terminal (3,4): max=4, min=3; cost =
         // (4-3) + 3*1.5 = 1 + 4.5 = 5.5.
         const path: Point[] = [new Point(3, 4)];
