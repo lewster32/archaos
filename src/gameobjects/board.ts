@@ -49,6 +49,7 @@ import type {
     RangedAttackPieceBatchPayload,
     MountPieceBatchPayload,
     DismountPieceBatchPayload,
+    SelectPieceVisualPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -373,6 +374,14 @@ export class Board extends EngineBoard<Piece> {
             (payload: DismountPieceBatchPayload) => {
                 this._animationQueue.enqueue(async () => {
                     await this._animateDismountPieceBatch(payload);
+                });
+            },
+        );
+        this.events.on(
+            EngineEvent.SelectPieceVisual,
+            (payload: SelectPieceVisualPayload) => {
+                this._animationQueue.enqueue(async () => {
+                    await this._animateSelectPieceVisual(payload);
                 });
             },
         );
@@ -1116,6 +1125,52 @@ export class Board extends EngineBoard<Piece> {
         await wizard.moveTo(payload.to);
         await this.rangeGizmo.reset();
         this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Animate the visual side of a `select-piece` command in response
+     * to EngineEvent.SelectPieceVisual. Mirrors the Moving branch of
+     * the legacy selectPiece method: sound, gizmo, FSM, UI buttons.
+     * Engine-side mutations (selected piece tracking, engagement flags)
+     * have already been applied by the engine before this fires.
+     */
+    private async _animateSelectPieceVisual(
+        payload: SelectPieceVisualPayload,
+    ): Promise<void> {
+        const piece = this.getPiece(payload.pieceId);
+        if (!piece) return;
+
+        // Mirror the engine's own _selected assignment on the client
+        // board so cursor logic sees the selected piece.
+        this._selected = piece;
+        this._boardEvents.emit(BoardEvent.PieceSelected, piece);
+
+        if (payload.engagedBy) {
+            const enemy = this.getPiece(payload.engagedBy.pieceId);
+            if (enemy) {
+                await piece.engage(enemy);
+            }
+            await this.rangeGizmo.reset();
+        } else if (!piece.moved) {
+            this.sound.play("select-piece");
+            await this.rangeGizmo.generate(piece);
+        }
+
+        // Drive the FSM into pieceMoving so cursor input switches to
+        // the movement branch.
+        const pm = this._stateManager;
+        if (pm.isActive(pm.states.pieceDismounting)) {
+            pm.evaluate(new CompleteDismount());
+        }
+        pm.evaluate(new SelectPiece());
+
+        // UI button availability.
+        if (this.currentPlayer && !this.currentPlayer.remote) {
+            this.emitUIEvent(EventType.CancelAvailable, true);
+        }
+        if (piece.currentMount) {
+            this.emitUIEvent(EventType.DismountAvailable, true);
+        }
     }
 
     /**

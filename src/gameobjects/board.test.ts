@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload, SelectPieceVisualPayload } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -1217,5 +1217,215 @@ describe("Visual reaction - DismountPieceBatch", () => {
         await board.animationQueue.idle();
 
         expect(resetSpy).not.toHaveBeenCalled();
+    });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Visual reaction - SelectPieceVisual
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - SelectPieceVisual", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the SelectPieceVisual subscriber and _animateSelectPieceVisual handler
+     * without instantiating Phaser. Only the fields touched by the handler
+     * are populated.
+     */
+    function makeFakeSelectBoard(): {
+        board: Board;
+        piece: {
+            id: number;
+            moved: boolean;
+            currentMount: { id: number } | null;
+            engage: ReturnType<typeof vi.fn>;
+        };
+        stateManagerEvaluate: ReturnType<typeof vi.fn>;
+        stateManagerIsActive: ReturnType<typeof vi.fn>;
+        emitUIEvent: ReturnType<typeof vi.fn>;
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        // Real EventEmitter so the subscription and emit round-trip works.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const piece = {
+            id: 42,
+            moved: false,
+            currentMount: null as { id: number } | null,
+            engage: vi.fn(() => Promise.resolve()),
+        };
+
+        (fake as any).getPiece = vi.fn((id: number) =>
+            id === piece.id ? piece : null
+        );
+
+        (fake as any)._sound = {
+            play: vi.fn(),
+            playAsync: vi.fn(() => Promise.resolve()),
+        };
+        (fake as any)._rangeGizmo = {
+            reset: vi.fn(() => Promise.resolve()),
+            generate: vi.fn(() => Promise.resolve()),
+        };
+
+        // State manager: not in pieceDismounting by default.
+        const stateManagerEvaluate = vi.fn();
+        const stateManagerIsActive = vi.fn(() => false);
+        (fake as any)._stateManager = {
+            evaluate: stateManagerEvaluate,
+            isActive: stateManagerIsActive,
+            states: { pieceDismounting: "pieceDismounting" },
+        };
+
+        const emitUIEvent = vi.fn();
+        (fake as any).emitUIEvent = emitUIEvent;
+
+        // Override the currentPlayer setter on this instance so the
+        // prototype's setter (which touches cursor.enabled) does not fire.
+        (fake as any)._currentPlayer = { remote: false };
+        Object.defineProperty(fake, "currentPlayer", {
+            configurable: true,
+            get: () => (fake as any)._currentPlayer,
+            set: (v) => { (fake as any)._currentPlayer = v; },
+        });
+
+        // Wire the subscriber the same way the constructor does.
+        emitter.on(
+            EngineEvent.SelectPieceVisual,
+            (payload: SelectPieceVisualPayload) => {
+                animationQueue.enqueue(async () => {
+                    await (fake as any)._animateSelectPieceVisual(payload);
+                });
+            },
+        );
+
+        return {
+            board: fake,
+            piece,
+            stateManagerEvaluate,
+            stateManagerIsActive,
+            emitUIEvent,
+        };
+    }
+
+    it("plays select-piece sound, generates the gizmo, and fires SelectPiece on the FSM", async () => {
+        const { board, piece, stateManagerEvaluate } = makeFakeSelectBoard();
+        const soundPlay = (board as any)._sound.play as ReturnType<typeof vi.fn>;
+        const generate = (board as any)._rangeGizmo
+            .generate as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: piece.id,
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        expect(soundPlay).toHaveBeenCalledWith("select-piece");
+        expect(generate).toHaveBeenCalledWith(piece);
+        // FSM SelectPiece should have been evaluated.
+        const calls = stateManagerEvaluate.mock.calls.map(
+            (c: any[]) => c[0]?.constructor?.name,
+        );
+        expect(calls).toContain("SelectPiece");
+    });
+
+    it("plays engaged sound and skips gizmo when payload includes engagedBy", async () => {
+        const { board, piece } = makeFakeSelectBoard();
+        const engageSpy = vi.spyOn(piece, "engage");
+        const generate = (board as any)._rangeGizmo
+            .generate as ReturnType<typeof vi.fn>;
+        const reset = (board as any)._rangeGizmo
+            .reset as ReturnType<typeof vi.fn>;
+
+        const enemy = { id: 7 };
+        const originalGetPiece = (board as any).getPiece as ReturnType<typeof vi.fn>;
+        (board as any).getPiece = vi.fn((id: number) => {
+            if (id === enemy.id) return enemy;
+            return originalGetPiece(id);
+        });
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: piece.id,
+            engagedBy: { pieceId: enemy.id },
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        expect(engageSpy).toHaveBeenCalledWith(enemy);
+        expect(generate).not.toHaveBeenCalled();
+        expect(reset).toHaveBeenCalledTimes(1);
+    });
+
+    it("emits CancelAvailable for a non-remote player after FSM", async () => {
+        const { board, piece, emitUIEvent } = makeFakeSelectBoard();
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: piece.id,
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        expect(emitUIEvent).toHaveBeenCalledWith(
+            expect.stringContaining("cancel"),
+            true,
+        );
+    });
+
+    it("emits DismountAvailable when piece has a current mount", async () => {
+        const { board, piece, emitUIEvent } = makeFakeSelectBoard();
+        piece.currentMount = { id: 99 };
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: piece.id,
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        expect(emitUIEvent).toHaveBeenCalledWith(
+            expect.stringContaining("dismount"),
+            true,
+        );
+    });
+
+    it("evaluates CompleteDismount before SelectPiece when in pieceDismounting state", async () => {
+        const { board, piece, stateManagerEvaluate, stateManagerIsActive } =
+            makeFakeSelectBoard();
+        // Simulate being in pieceDismounting.
+        stateManagerIsActive.mockReturnValue(true);
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: piece.id,
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        const names = stateManagerEvaluate.mock.calls.map(
+            (c: any[]) => c[0]?.constructor?.name,
+        );
+        expect(names[0]).toBe("CompleteDismount");
+        expect(names[1]).toBe("SelectPiece");
+    });
+
+    it("does nothing when piece is not found", async () => {
+        const { board } = makeFakeSelectBoard();
+        (board as any).getPiece = vi.fn(() => null);
+        const generate = (board as any)._rangeGizmo
+            .generate as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.SelectPieceVisual, {
+            pieceId: 999,
+        } as SelectPieceVisualPayload);
+
+        await board.animationQueue.idle();
+
+        expect(generate).not.toHaveBeenCalled();
     });
 });
