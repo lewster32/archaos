@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -941,6 +941,160 @@ describe("Visual reaction - RangedAttackPieceBatch", () => {
             targetKilled: false,
             cascadeKilledIds: [],
         } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).not.toHaveBeenCalled();
+    });
+});
+
+// Visual reaction - MountPieceBatch
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - MountPieceBatch", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the MountPieceBatch subscriber and _animateMountPieceBatch handler
+     * without instantiating Phaser. Only the fields touched by the handler
+     * are populated.
+     */
+    function makeFakeMountBoard(): {
+        board: Board;
+        wizard: {
+            id: number;
+            position: { x: number; y: number };
+            moveTo: ReturnType<typeof vi.fn>;
+        };
+        mount: {
+            id: number;
+            position: { x: number; y: number };
+        };
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        // Real EventEmitter so the subscription and emit round-trip works.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const wizard = {
+            id: 10,
+            position: { x: 0, y: 0 },
+            moveTo: vi.fn((_pt: { x: number; y: number }) => Promise.resolve()),
+        };
+
+        const mount = {
+            id: 20,
+            position: { x: 1, y: 0 },
+        };
+
+        (fake as any).getPiece = vi.fn((id: number) => {
+            if (id === wizard.id) return wizard;
+            if (id === mount.id) return mount;
+            return null;
+        });
+
+        (fake as any)._sound = {
+            play: vi.fn(),
+            playAsync: vi.fn(() => Promise.resolve()),
+        };
+        (fake as any)._rangeGizmo = { reset: vi.fn(() => Promise.resolve()) };
+        (fake as any).emitBoardUpdateEvent = vi.fn();
+
+        // Wire the subscriber the same way the constructor does.
+        emitter.on(EngineEvent.MountPieceBatch, (payload: MountPieceBatchPayload) => {
+            animationQueue.enqueue(async () => {
+                await (fake as any)._animateMountPieceBatch(payload);
+            });
+        });
+
+        return { board: fake, wizard, mount };
+    }
+
+    it("walks the approach path via wizard.moveTo", async () => {
+        const { board, wizard, mount } = makeFakeMountBoard();
+        const moveToSpy = vi.spyOn(wizard, "moveTo");
+
+        (board as any).events.emit(EngineEvent.MountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: [{ x: 1, y: 0 }],
+        } as MountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(moveToSpy).toHaveBeenCalledTimes(1);
+        expect(moveToSpy.mock.calls[0][0]).toEqual({ x: 1, y: 0 });
+    });
+
+    it("plays the step sound at the first approach step", async () => {
+        const { board, wizard, mount } = makeFakeMountBoard();
+        const soundPlay = (board as any)._sound.play as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: [{ x: 1, y: 0 }],
+        } as MountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(soundPlay).toHaveBeenCalledWith("step");
+    });
+
+    it("does not call moveTo when path is empty", async () => {
+        const { board, wizard, mount } = makeFakeMountBoard();
+
+        // Put the wizard already on the mount's tile.
+        wizard.position = { x: 1, y: 0 };
+        const moveToSpy = vi.spyOn(wizard, "moveTo");
+
+        (board as any).events.emit(EngineEvent.MountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: [],
+        } as MountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(moveToSpy).not.toHaveBeenCalled();
+    });
+
+    it("resets the rangeGizmo and emits board update after animation", async () => {
+        const { board, wizard, mount } = makeFakeMountBoard();
+        const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+        const updateSpy = (board as any).emitBoardUpdateEvent as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: [],
+        } as MountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does nothing when wizard is not found", async () => {
+        const { board, mount } = makeFakeMountBoard();
+        (board as any).getPiece = vi.fn((id: number) =>
+            id === mount.id ? mount : null
+        );
+        const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MountPieceBatch, {
+            wizardId: 999,
+            mountId: mount.id,
+            path: [],
+        } as MountPieceBatchPayload);
 
         await board.animationQueue.idle();
 

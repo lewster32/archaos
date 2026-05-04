@@ -47,6 +47,7 @@ import type {
     MovePieceBatchPayload,
     AttackPieceBatchPayload,
     RangedAttackPieceBatchPayload,
+    MountPieceBatchPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -361,6 +362,11 @@ export class Board extends EngineBoard<Piece> {
                 });
             },
         );
+        this.events.on(EngineEvent.MountPieceBatch, (payload: MountPieceBatchPayload) => {
+            this._animationQueue.enqueue(async () => {
+                await this._animateMountPieceBatch(payload);
+            });
+        });
         this.events.on(EventType.PieceInfo, (data: any) => {
             globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
         });
@@ -1058,6 +1064,29 @@ export class Board extends EngineBoard<Piece> {
             if (corpse) {
                 await (corpse as Piece).kill();
             }
+        }
+
+        await this.rangeGizmo.reset();
+        this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Animate a `mount-piece` command's approach + mount visual in
+     * response to EngineEvent.MountPieceBatch. The engine has already
+     * set the mount/rider linkage and turn flags; the client just
+     * walks the wizard onto the mount's tile.
+     */
+    private async _animateMountPieceBatch(payload: MountPieceBatchPayload): Promise<void> {
+        const wizard = this.getPiece(payload.wizardId);
+        const mount = this.getPiece(payload.mountId);
+        if (!wizard || !mount) return;
+
+        // Walk approach path, if any.
+        for (let i = 0; i < payload.path.length; i++) {
+            if (i === 0) {
+                this.sound.play("step");
+            }
+            await wizard.moveTo(payload.path[i]);
         }
 
         await this.rangeGizmo.reset();
