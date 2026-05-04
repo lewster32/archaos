@@ -523,8 +523,7 @@ export class Spell<P extends Piece = Piece> extends Model {
         this._castTimes = 0;
 
         const isSelfTarget =
-            !castPoint ||
-            (castPoint.x === castingPiece.position.x && castPoint.y === castingPiece.position.y);
+            !castPoint || (castPoint.x === castingPiece.position.x && castPoint.y === castingPiece.position.y);
 
         if (!isSelfTarget) {
             this._board.events.emit(EngineEvent.EffectRequested, {
@@ -540,7 +539,7 @@ export class Spell<P extends Piece = Piece> extends Model {
         this._board.events.emit(EngineEvent.EffectRequested, {
             sound: "die",
         });
-        
+
         if (isSelfTarget) {
             await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                 type: EffectType.SummonPiece,
@@ -550,18 +549,17 @@ export class Spell<P extends Piece = Piece> extends Model {
                 type: EffectType.WizardCastFail,
                 pieceId: castingPiece.id,
             });
-            return;
+        } else {
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: EffectType.WizardCastBeam,
+                startPieceId: castingPiece.id,
+                targetPosition: { x: castPoint.x, y: castPoint.y },
+            });
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: EffectType.WizardCastFail,
+                targetPosition: { x: castPoint.x, y: castPoint.y },
+            });
         }
-
-        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-            type: EffectType.WizardCastBeam,
-            startPieceId: castingPiece.id,
-            targetPosition: { x: castPoint.x, y: castPoint.y },
-        });
-        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-            type: EffectType.WizardCastFail,
-            targetPosition: { x: castPoint.x, y: castPoint.y },
-        });
     }
 
     /**

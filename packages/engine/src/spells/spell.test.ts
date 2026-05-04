@@ -1152,9 +1152,7 @@ describe("Spell.castFail", () => {
         });
 
         // WizardCastBeam must not be emitted on the self-target path.
-        const beamCall = emitAsync.mock.calls.find(
-            ([, payload]: any) => payload?.type === EffectType.WizardCastBeam,
-        );
+        const beamCall = emitAsync.mock.calls.find(([, payload]: any) => payload?.type === EffectType.WizardCastBeam);
         expect(beamCall).toBeUndefined();
     });
 
@@ -1172,9 +1170,7 @@ describe("Spell.castFail", () => {
             type: EffectType.SummonPiece,
             pieceId: 7,
         });
-        const beamCall = emitAsync.mock.calls.find(
-            ([, payload]: any) => payload?.type === EffectType.WizardCastBeam,
-        );
+        const beamCall = emitAsync.mock.calls.find(([, payload]: any) => payload?.type === EffectType.WizardCastBeam);
         expect(beamCall).toBeUndefined();
     });
 
@@ -1211,9 +1207,7 @@ describe("Spell.castFail", () => {
         });
 
         // SummonPiece must not be emitted on the target-targeted path.
-        const summonCall = emitAsync.mock.calls.find(
-            ([, payload]: any) => payload?.type === EffectType.SummonPiece,
-        );
+        const summonCall = emitAsync.mock.calls.find(([, payload]: any) => payload?.type === EffectType.SummonPiece);
         expect(summonCall).toBeUndefined();
     });
 });
