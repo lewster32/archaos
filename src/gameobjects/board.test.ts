@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload } from "@archaos/engine";
+import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -735,6 +735,212 @@ describe("Visual reaction - AttackPieceBatch", () => {
             targetKilled: false,
             cascadeKilledIds: [],
         } as AttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).not.toHaveBeenCalled();
+    });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Visual reaction - RangedAttackPieceBatch
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - RangedAttackPieceBatch", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the RangedAttackPieceBatch subscriber and
+     * _animateRangedAttackPieceBatch handler without instantiating Phaser.
+     * Only the fields touched by the handler are populated.
+     */
+    function makeFakeRangedBoard(): {
+        board: Board;
+        attacker: {
+            id: number;
+            position: { x: number; y: number };
+            properties: { projectileType: UnitRangedProjectileType };
+            updateDirection: ReturnType<typeof vi.fn>;
+            sprite: { getCenter: () => { x: number; y: number } };
+        };
+        target: {
+            id: number;
+            position: { x: number; y: number };
+            dead: boolean;
+            kill: ReturnType<typeof vi.fn>;
+            sprite: { getCenter: () => { x: number; y: number } };
+        };
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        // Real EventEmitter so the subscription and emit round-trip works.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const attacker = {
+            id: 10,
+            position: { x: 0, y: 0 },
+            properties: { projectileType: UnitRangedProjectileType.Arrow },
+            updateDirection: vi.fn(),
+            sprite: { getCenter: () => ({ x: 50, y: 50 }) },
+        };
+
+        const target = {
+            id: 20,
+            position: { x: 3, y: 0 },
+            dead: false,
+            kill: vi.fn(() => Promise.resolve()),
+            sprite: { getCenter: () => ({ x: 150, y: 50 }) },
+        };
+
+        (fake as any).getPiece = vi.fn((id: number) => {
+            if (id === attacker.id) return attacker;
+            if (id === target.id) return target;
+            return null;
+        });
+
+        (fake as any)._sound = {
+            play: vi.fn(),
+            playAsync: vi.fn(() => Promise.resolve()),
+        };
+        (fake as any)._rangeGizmo = { reset: vi.fn(() => Promise.resolve()) };
+        (fake as any).emitBoardUpdateEvent = vi.fn();
+        (fake as any).playEffect = vi.fn(() => Promise.resolve());
+        (fake as any).delay = vi.fn(() => Promise.resolve());
+
+        // Wire the subscriber the same way the constructor does.
+        emitter.on(
+            EngineEvent.RangedAttackPieceBatch,
+            (payload: RangedAttackPieceBatchPayload) => {
+                animationQueue.enqueue(async () => {
+                    await (fake as any)._animateRangedAttackPieceBatch(payload);
+                });
+            },
+        );
+
+        return { board: fake, attacker, target };
+    }
+
+    it("plays the beam and hit sounds and effects", async () => {
+        const { board, attacker, target } = makeFakeRangedBoard();
+        const soundPlay = (board as any)._sound.play as ReturnType<typeof vi.fn>;
+        const playEffect = (board as any).playEffect as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: true,
+            targetKilled: false,
+            cascadeKilledIds: [],
+        } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        // Beam sound then hit sound, each followed by a playEffect call.
+        expect(soundPlay).toHaveBeenCalledWith("arrow-fly");
+        expect(soundPlay).toHaveBeenCalledWith("arrow-hit");
+        expect(playEffect).toHaveBeenCalledTimes(2);
+    });
+
+    it("calls target.kill when targetKilled is true", async () => {
+        const { board, attacker, target } = makeFakeRangedBoard();
+        const killSpy = vi.spyOn(target, "kill");
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: true,
+            targetKilled: true,
+            cascadeKilledIds: [],
+        } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(killSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not call target.kill when targetKilled is false", async () => {
+        const { board, attacker, target } = makeFakeRangedBoard();
+        const killSpy = vi.spyOn(target, "kill");
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: false,
+            targetKilled: false,
+            cascadeKilledIds: [],
+        } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(killSpy).not.toHaveBeenCalled();
+    });
+
+    it("calls kill on each cascade-killed piece", async () => {
+        const { board, attacker, target } = makeFakeRangedBoard();
+
+        const cascadePiece = {
+            id: 99,
+            kill: vi.fn(() => Promise.resolve()),
+        };
+        const originalGetPiece = (board as any).getPiece as ReturnType<typeof vi.fn>;
+        (board as any).getPiece = vi.fn((id: number) => {
+            if (id === 99) return cascadePiece;
+            return originalGetPiece(id);
+        });
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: true,
+            targetKilled: true,
+            cascadeKilledIds: [99],
+        } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(cascadePiece.kill).toHaveBeenCalledTimes(1);
+    });
+
+    it("resets the rangeGizmo and emits board update after animation", async () => {
+        const { board, attacker, target } = makeFakeRangedBoard();
+        const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+        const updateSpy = (board as any).emitBoardUpdateEvent as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: false,
+            targetKilled: false,
+            cascadeKilledIds: [],
+        } as RangedAttackPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does nothing when attacker is not found", async () => {
+        const { board, target } = makeFakeRangedBoard();
+        (board as any).getPiece = vi.fn((id: number) =>
+            id === target.id ? target : null
+        );
+        const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.RangedAttackPieceBatch, {
+            attackerId: 999,
+            targetId: target.id,
+            hit: false,
+            targetKilled: false,
+            cascadeKilledIds: [],
+        } as RangedAttackPieceBatchPayload);
 
         await board.animationQueue.idle();
 

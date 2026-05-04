@@ -12,6 +12,7 @@ import {
     InputType,
     UnitStatus,
     UnitType,
+    UnitRangedProjectileType,
     Path,
     Point,
     Spell,
@@ -45,6 +46,7 @@ import type {
     TurmoilBatchPayload,
     MovePieceBatchPayload,
     AttackPieceBatchPayload,
+    RangedAttackPieceBatchPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -351,6 +353,14 @@ export class Board extends EngineBoard<Piece> {
                 await this._animateAttackPieceBatch(payload);
             });
         });
+        this.events.on(
+            EngineEvent.RangedAttackPieceBatch,
+            (payload: RangedAttackPieceBatchPayload) => {
+                this._animationQueue.enqueue(async () => {
+                    await this._animateRangedAttackPieceBatch(payload);
+                });
+            },
+        );
         this.events.on(EventType.PieceInfo, (data: any) => {
             globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
         });
@@ -936,6 +946,101 @@ export class Board extends EngineBoard<Piece> {
         this.sound.play("attack");
         await this.playEffect(
             EffectType.AttackHit,
+            (target as Piece).sprite.getCenter(),
+            null,
+            target as Piece,
+        );
+        await this.delay(Board.DEFAULT_DELAY);
+
+        // Kill the primary target if the attack succeeded.
+        if (payload.targetKilled) {
+            await (target as Piece).kill();
+        }
+
+        // Cascade kills (rider, mount, or other collateral).
+        for (const id of payload.cascadeKilledIds) {
+            const corpse = this.getPiece(id);
+            if (corpse) {
+                await (corpse as Piece).kill();
+            }
+        }
+
+        await this.rangeGizmo.reset();
+        this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Animate a `ranged-attack-piece` command's visual in response to
+     * EngineEvent.RangedAttackPieceBatch. No approach - ranged attacks
+     * resolve from the attacker's current tile. Plays the projectile beam
+     * and hit effects then handles the primary kill and any cascade kills.
+     * The engine has already resolved the attack roll; this handler drives
+     * the visual side only - it does not re-roll.
+     */
+    private async _animateRangedAttackPieceBatch(
+        payload: RangedAttackPieceBatchPayload,
+    ): Promise<void> {
+        const attacker = this.getPiece(payload.attackerId);
+        const target = this.getPiece(payload.targetId);
+        if (!attacker || !target) return;
+
+        // Face attacker towards target.
+        (attacker as Piece).updateDirection?.(attacker.position, target.position);
+
+        // Select beam and hit effect types and sounds based on projectile type.
+        let beamEffectType: EffectType;
+        let hitEffectType: EffectType;
+        let beamSound: string;
+        let hitSound: string;
+
+        const projectileType = (attacker as Piece).properties?.projectileType;
+        switch (projectileType) {
+            case UnitRangedProjectileType.Lightning:
+                beamEffectType = EffectType.LightningBeam;
+                hitEffectType = EffectType.LightningHit;
+                beamSound = "lightning-beam";
+                hitSound = "bolt-hit";
+                break;
+            case UnitRangedProjectileType.DragonFire:
+                beamEffectType = EffectType.DragonFireBeam;
+                hitEffectType = EffectType.DragonFireHit;
+                beamSound = "dragon-beam";
+                hitSound = "dragon-fire";
+                break;
+            case UnitRangedProjectileType.BlackDragonFire:
+                beamEffectType = EffectType.BlackDragonFireBeam;
+                hitEffectType = EffectType.BlackDragonFireHit;
+                beamSound = "dragon-beam";
+                hitSound = "dragon-fire";
+                break;
+            case UnitRangedProjectileType.MagicBolt:
+                beamEffectType = EffectType.MagicBoltBeam;
+                hitEffectType = EffectType.MagicBoltHit;
+                beamSound = "magic-bolt-beam";
+                hitSound = "bolt-hit";
+                break;
+            case UnitRangedProjectileType.Arrow:
+            default:
+                beamEffectType = EffectType.ArrowBeam;
+                hitEffectType = EffectType.ArrowHit;
+                beamSound = "arrow-fly";
+                hitSound = "arrow-hit";
+                break;
+        }
+
+        // Play the projectile beam effect from attacker to target.
+        this.sound.play(beamSound);
+        await this.playEffect(
+            beamEffectType,
+            (attacker as Piece).sprite.getCenter(),
+            (target as Piece).sprite.getCenter(),
+            target as Piece,
+        );
+
+        // Play the hit effect on the target.
+        this.sound.play(hitSound);
+        await this.playEffect(
+            hitEffectType,
             (target as Piece).sprite.getCenter(),
             null,
             target as Piece,
