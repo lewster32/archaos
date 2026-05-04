@@ -1156,18 +1156,6 @@ describe("Spell.castFail", () => {
         expect(beamCall).toBeUndefined();
     });
 
-    it("dwells on the failure by calling board.idleDelay after the visual sequence", async () => {
-        const board = makeMockBoard();
-        const piece = makeMockPiece({ id: 1 });
-        const owner = makeMockPlayer(piece);
-        const s = new Spell(board, 1, makeConfig());
-        s.owner = owner;
-
-        await s.castFail(owner, piece);
-
-        expect((board as any).idleDelay).toHaveBeenCalled();
-    });
-
     it("treats a castPoint equal to the caster's position as self-target", async () => {
         const board = makeMockBoard();
         const piece = makeMockPiece({ id: 7, x: 4, y: 4 });

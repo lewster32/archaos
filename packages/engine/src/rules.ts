@@ -224,6 +224,11 @@ export class Rules {
             await board.currentPlayer.discardSpell();
             if (casted.failed) {
                 board.logger.log(`${board.currentPlayer.name} failed to cast ${casted.name}`, Colour.Magenta);
+                // Dwell on the failure so the player has time to read the
+                // log line and register that the cast did not land. Engine
+                // board's idleDelay is a no-op; the client override delays
+                // for DEFAULT_DELAY (or short delay if cheat is active).
+                await board.idleDelay();
             }
             if (board.selected) {
                 board.selected.turnOver = true;
