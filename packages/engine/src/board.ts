@@ -72,7 +72,7 @@ import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
 import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
-import type { MovePieceBatchPayload } from "./actions";
+import type { AttackPieceBatchPayload, MovePieceBatchPayload } from "./actions";
 
 /**
  * Simple point type without all the baggage of
@@ -1764,11 +1764,18 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
         }
         const attackerMov: number = attacker.stats.movement ?? 0;
+        let walked: Point[] = [];
+        let engagedBy: P | null = null;
+        let attackHit: boolean = false;
+        let targetKilled: boolean = false;
+        const cascadeKilledIds: number[] = [];
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, async () => {
             // Walk the path; if engagement fires mid-path, the attack
             // is forfeited unless the engagement tile is still
             // adjacent to the target.
-            const { engagedBy } = this._walkPathWithEngagement(attacker, path);
+            const result = this._walkPathWithEngagement(attacker, path);
+            walked = result.walked;
+            engagedBy = result.engagedBy;
             if (engagedBy) {
                 const dx: number = Math.abs(attacker.position.x - target.position.x);
                 const dy: number = Math.abs(attacker.position.y - target.position.y);
@@ -1791,7 +1798,23 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 succeeded,
             });
             if (succeeded) {
+                attackHit = true;
+                // Snapshot alive pieces other than the target so we can
+                // detect cascade kills (rider, mount, wizard's creations)
+                // after _cascadeKill returns.
+                const aliveBeforeKill: number[] = this.pieces
+                    .filter((p) => p !== (target as unknown as P) && !p.dead)
+                    .map((p) => p.id);
                 await this._cascadeKill(target, "combat");
+                targetKilled = target.dead;
+                // Collect any pieces that were alive before the kill
+                // but are dead now (excluding the primary target).
+                for (const id of aliveBeforeKill) {
+                    const p = this.getPiece(id);
+                    if (p && p.dead) {
+                        cascadeKilledIds.push(id);
+                    }
+                }
                 // Replacement-on-kill: non-flying attackers with
                 // mov > 0 step onto the target's tile.
                 if (!isFlying && attackerMov > 0) {
@@ -1804,6 +1827,22 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 rider.setTurnFlags({ moved: true, attacked: true });
             }
         });
+
+        // _handleAttackPiece walks the approach with the default
+        // riderSync: true behaviour; payload reflects the approach path
+        // walked plus the attack outcome flags captured during the
+        // recordEvent callback above.
+        const payload: AttackPieceBatchPayload = {
+            attackerId: attacker.id,
+            targetId: target.id,
+            path: walked.map((p) => ({ x: p.x, y: p.y })),
+            ...(engagedBy ? { engagedBy: { pieceId: (engagedBy as P).id } } : {}),
+            hit: attackHit,
+            targetKilled,
+            cascadeKilledIds: [...cascadeKilledIds],
+        };
+        this._boardEvents.emit(EngineEvent.AttackPieceBatch, payload);
+
         slot.submit(playerId, cmd);
     }
 

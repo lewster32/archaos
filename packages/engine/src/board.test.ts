@@ -30,7 +30,7 @@ import {
     StartGame,
 } from "./phasemachine";
 import { EngineEvent } from "./enums/engineevent";
-import type { MovePieceBatchPayload } from "./actions";
+import type { AttackPieceBatchPayload, MovePieceBatchPayload } from "./actions";
 
 function makeRules(): Rules {
     return {
@@ -2238,6 +2238,94 @@ describe("Movement-phase visual events", () => {
         expect(events[0].path).toEqual([{ x: 0, y: 1 }, { x: 0, y: 2 }]);
         expect(events[0].riderSync).toBe(true);
         expect(events[0].engagedBy).toBeUndefined();
+    });
+
+    it("emits AttackPieceBatch with hit/kill outcome after a successful attack-piece", async () => {
+        const board = makeBoard();
+        const p1 = board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        const p2 = board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
+        const attackerWizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 0,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 9,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p1 as any,
+        });
+        const targetWizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 1,
+            y: 0,
+            properties: {
+                movement: 1,
+                combat: 1,
+                rangedCombat: 0,
+                range: 0,
+                defence: 1,
+                manoeuvrability: 1,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p2 as any,
+        });
+        // Force-hit cheat for determinism.
+        Board.CHEAT_FORCE_HIT = true;
+
+        try {
+            board.stateManager.evaluate(new StartGame());
+            board.stateManager.evaluate(new SpellbookReady());
+            board.stateManager.evaluate(new NoSpellsCast());
+            board.stateManager.evaluate(new SpreadingDone());
+            board.stateManager.evaluate(new MovingReady());
+
+            const playerId = attackerWizard.owner!.id;
+            const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+            const events: AttackPieceBatchPayload[] = [];
+            board.events.on(EngineEvent.AttackPieceBatch, (payload: AttackPieceBatchPayload) => {
+                events.push(payload);
+            });
+
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "sel-1",
+                token: "",
+                kind: "select-piece",
+                pieceId: attackerWizard.id,
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "atk-1",
+                token: "",
+                kind: "attack-piece",
+                attackerId: attackerWizard.id,
+                targetId: targetWizard.id,
+                path: [],
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "end-1",
+                token: "",
+                kind: "end-movement-phase",
+            });
+            await slotPromise;
+
+            expect(events).toHaveLength(1);
+            expect(events[0].attackerId).toBe(attackerWizard.id);
+            expect(events[0].targetId).toBe(targetWizard.id);
+            expect(events[0].hit).toBe(true);
+            expect(events[0].path).toEqual([]);
+        } finally {
+            Board.CHEAT_FORCE_HIT = null;
+        }
     });
 });
 
