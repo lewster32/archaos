@@ -1688,6 +1688,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!validated) return;
         const { slot, selected } = validated;
         const piece: P = selected as P;
+        if (piece.dead) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
         if (piece.moved) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
             return;
@@ -1755,6 +1759,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!validated) return;
         const { slot, selected } = validated;
         const attacker: P = selected as P;
+        if (attacker.dead) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
         const target: P | null = this.getPiece(cmd.targetId);
         if (!target || !attacker.canAttackPiece(target)) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -1894,6 +1902,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!validated) return;
         const { slot, selected } = validated;
         const attacker: P = selected as P;
+        if (attacker.dead) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
         const target: P | null = this.getPiece(cmd.targetId);
         if (!target || !attacker.canRangedAttackPiece(target)) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -1977,6 +1989,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!validated) return;
         const { slot, selected } = validated;
         const wizard: P = selected as P;
+        if (wizard.dead) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
         const mount: P | null = this.getPiece(cmd.mountId);
         if (!mount || !wizard.canMountPiece(mount)) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
@@ -2058,6 +2074,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         if (!validated) return;
         const { slot, selected } = validated;
         const wizard: P = selected as P;
+        if (wizard.dead) {
+            this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
+            return;
+        }
         const mount: P | null = wizard.currentMount as P | null;
         if (!mount) {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
