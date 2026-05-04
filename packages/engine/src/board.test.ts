@@ -32,6 +32,7 @@ import {
 import { EngineEvent } from "./enums/engineevent";
 import type {
     AttackPieceBatchPayload,
+    CancelPieceActionVisualPayload,
     DismountPieceBatchPayload,
     MountPieceBatchPayload,
     MovePieceBatchPayload,
@@ -2673,6 +2674,74 @@ describe("Movement-phase visual events", () => {
             expect(events).toHaveLength(1);
             expect(events[0].pieceId).toBe(wizard.id);
             expect(events[0].engagedBy).toBeUndefined();
+        } finally {}
+    });
+
+    it("emits CancelPieceActionVisual when a cancel-piece-action is accepted", async () => {
+        const board = makeBoard({ width: 5, height: 5 });
+        const player = board.addPlayer({
+            name: "P1",
+            type: GameSetupPlayerType.Local,
+        });
+        const wizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 2,
+            y: 2,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: player as any,
+        });
+
+        try {
+            board.stateManager.evaluate(new StartGame());
+            board.stateManager.evaluate(new SpellbookReady());
+            board.stateManager.evaluate(new NoSpellsCast());
+            board.stateManager.evaluate(new SpreadingDone());
+            board.stateManager.evaluate(new MovingReady());
+
+            const playerId = wizard.owner!.id;
+            const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+            const events: CancelPieceActionVisualPayload[] = [];
+            board.events.on(
+                EngineEvent.CancelPieceActionVisual,
+                (payload: CancelPieceActionVisualPayload) => {
+                    events.push(payload);
+                },
+            );
+
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "sel-1",
+                token: "",
+                kind: "select-piece",
+                pieceId: wizard.id,
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "cncl-1",
+                token: "",
+                kind: "cancel-piece-action",
+                pieceId: wizard.id,
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "end-1",
+                token: "",
+                kind: "end-movement-phase",
+            });
+            await slotPromise;
+
+            expect(events).toHaveLength(1);
+            expect(events[0].pieceId).toBe(wizard.id);
         } finally {}
     });
 });

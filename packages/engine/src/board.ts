@@ -74,6 +74,7 @@ import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
 import type {
     AttackPieceBatchPayload,
+    CancelPieceActionVisualPayload,
     DismountPieceBatchPayload,
     MountPieceBatchPayload,
     MovePieceBatchPayload,
@@ -2160,6 +2161,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
             this._selected = null;
         });
+        const payload: CancelPieceActionVisualPayload = { pieceId: piece.id };
+        this._boardEvents.emit(EngineEvent.CancelPieceActionVisual, payload);
     }
 
     /**
