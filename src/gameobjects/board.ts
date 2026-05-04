@@ -44,6 +44,7 @@ import type {
     SpreadBatchPayload,
     TurmoilBatchPayload,
     MovePieceBatchPayload,
+    AttackPieceBatchPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -343,6 +344,11 @@ export class Board extends EngineBoard<Piece> {
         this.events.on(EngineEvent.MovePieceBatch, (payload: MovePieceBatchPayload) => {
             this._animationQueue.enqueue(async () => {
                 await this._animateMovePieceBatch(payload);
+            });
+        });
+        this.events.on(EngineEvent.AttackPieceBatch, (payload: AttackPieceBatchPayload) => {
+            this._animationQueue.enqueue(async () => {
+                await this._animateAttackPieceBatch(payload);
             });
         });
         this.events.on(EventType.PieceInfo, (data: any) => {
@@ -894,6 +900,61 @@ export class Board extends EngineBoard<Piece> {
                 await this.sound.playAsync("engaged", { delay: Board.DEFAULT_DELAY });
             }
         }
+        await this.rangeGizmo.reset();
+        this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Animate an `attack-piece` command's approach + attack + cascade-death
+     * sequence in response to EngineEvent.AttackPieceBatch. The engine has
+     * already resolved the attack roll; this handler drives the visual
+     * side only - it does not re-roll.
+     */
+    private async _animateAttackPieceBatch(payload: AttackPieceBatchPayload): Promise<void> {
+        const attacker = this.getPiece(payload.attackerId);
+        const target = this.getPiece(payload.targetId);
+        if (!attacker || !target) return;
+
+        // Walk approach path (may be empty if attacker was already adjacent).
+        for (let i = 0; i < payload.path.length; i++) {
+            if (i === 0) {
+                this.sound.play("step");
+            }
+            await attacker.moveTo(payload.path[i]);
+        }
+
+        // Engagement sound if the approach broke on engagement.
+        if (payload.engagedBy) {
+            const enemy = this.getPiece(payload.engagedBy.pieceId);
+            if (enemy) {
+                await this.sound.playAsync("engaged", { delay: Board.DEFAULT_DELAY });
+            }
+        }
+
+        // Attack visual: face the target, play sound and hit effect.
+        (attacker as Piece).updateDirection?.(attacker.position, target.position);
+        this.sound.play("attack");
+        await this.playEffect(
+            EffectType.AttackHit,
+            (target as Piece).sprite.getCenter(),
+            null,
+            target as Piece,
+        );
+        await this.delay(Board.DEFAULT_DELAY);
+
+        // Kill the primary target if the attack succeeded.
+        if (payload.targetKilled) {
+            await (target as Piece).kill();
+        }
+
+        // Cascade kills (rider, mount, or other collateral).
+        for (const id of payload.cascadeKilledIds) {
+            const corpse = this.getPiece(id);
+            if (corpse) {
+                await (corpse as Piece).kill();
+            }
+        }
+
         await this.rangeGizmo.reset();
         this.emitBoardUpdateEvent();
     }
