@@ -59,4 +59,10 @@ export enum EngineEvent {
 
     /** Cancel-piece-action visual - payload describes a cancelled piece action. */
     CancelPieceActionVisual = "engine:cancel-piece-action-visual",
+
+    /**
+     * A command was rejected. Payload is a {@link CommandRejectedPayload}
+     * so subscribers can react without polling the test-only buffer.
+     */
+    CommandRejected = "engine:command-rejected",
 }

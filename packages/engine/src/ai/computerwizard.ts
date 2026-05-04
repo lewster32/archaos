@@ -31,6 +31,7 @@ import type {
     SelectPieceCommand,
     SpellTarget as CommandSpellTarget,
 } from "../protocol";
+import type { CommandRejectedPayload } from "../actions";
 import { toPhaseKind } from "../snapshotbuilder";
 /**
  * This contains AI logic for computer-controlled wizards. Each computer player
@@ -101,6 +102,14 @@ export class ComputerWizard implements RemotePlayer {
     private _dispatchAttempts: number = 0;
 
     /**
+     * Set of commandIds that the engine has rejected via
+     * EngineEvent.CommandRejected since this AI was constructed.
+     * Populated by the CommandRejected event listener; consumed by
+     * _dispatchMovementCommand after each awaited handleCommand call.
+     */
+    private readonly _rejectedCommandIds: Set<string> = new Set();
+
+    /**
      * Maximum number of _dispatchMovementCommand calls allowed within
      * a single player movement turn before the AI gives up and ends
      * the phase. Generous to allow multi-piece turns with retries.
@@ -133,6 +142,13 @@ export class ComputerWizard implements RemotePlayer {
         // the right moment without being driven by a direct method call.
         this._board.events.on(EngineEvent.PhaseChanged, (outcome: PhaseChangedOutcome) => {
             this._onPhaseChanged(outcome);
+        });
+        // Track command rejections by commandId so _dispatchMovementCommand
+        // can detect a silent rejection and fall back to slot-closing commands.
+        this._board.events.on(EngineEvent.CommandRejected, (payload: CommandRejectedPayload) => {
+            if (payload.playerId === this._player.id) {
+                this._rejectedCommandIds.add(payload.commandId);
+            }
         });
     }
 
@@ -995,7 +1011,18 @@ export class ComputerWizard implements RemotePlayer {
             this._board.events.emit(EngineEvent.FocusPieces, {
                 pieceIds: [candidate.id],
             });
-            await this._board.handleCommand(this._player.id, this._buildSelectPieceCommand(candidate));
+            const selectCmd: SelectPieceCommand = this._buildSelectPieceCommand(candidate);
+            await this._board.handleCommand(this._player.id, selectCmd);
+            // If the select-piece was rejected, the slot is still open
+            // but we cannot proceed. Force end-movement-phase.
+            if (this._rejectedCommandIds.has(selectCmd.commandId)) {
+                console.error(
+                    `[ComputerWizard] select-piece rejected for player ${this._player.id};` +
+                        ` forcing end-movement-phase`,
+                );
+                await this._board.handleCommand(this._player.id, this._buildEndMovementPhaseCommand());
+                return;
+            }
             // The slot stays open after select-piece. The rangegizmo
             // needs to be populated before path computation, since the
             // engine's _handleSelectPiece does not do this itself.
@@ -1010,7 +1037,27 @@ export class ComputerWizard implements RemotePlayer {
         }
         const piece: Piece = this._board.selected;
         const cmd = this._computeNextActionFor(piece);
-        void this._board.handleCommand(this._player.id, cmd);
+        await this._board.handleCommand(this._player.id, cmd);
+        if (this._rejectedCommandIds.has(cmd.commandId)) {
+            // The action command was rejected; the slot is still open.
+            // Fall back to end-piece-turn to close the slot so the
+            // movement-phase loop can advance to the next piece.
+            console.error(
+                `[ComputerWizard] Command ${cmd.kind} rejected for player ${this._player.id};` +
+                    ` falling back to end-piece-turn`,
+            );
+            const endTurnCmd: EndPieceTurnCommand = this._buildEndPieceTurnCommand(piece.id);
+            await this._board.handleCommand(this._player.id, endTurnCmd);
+            if (this._rejectedCommandIds.has(endTurnCmd.commandId)) {
+                // Even end-piece-turn was rejected. Force end-movement-phase
+                // as last resort.
+                console.error(
+                    `[ComputerWizard] end-piece-turn ALSO rejected for player ${this._player.id};` +
+                        ` forcing end-movement-phase`,
+                );
+                await this._board.handleCommand(this._player.id, this._buildEndMovementPhaseCommand());
+            }
+        }
     }
 
     /**
@@ -1477,12 +1524,21 @@ export class ComputerWizard implements RemotePlayer {
      * piece has nothing useful to do this slot.
      */
     private _fallbackEndPieceTurnFor(piece: Piece): EndPieceTurnCommand {
+        return this._buildEndPieceTurnCommand(piece.id);
+    }
+
+    /**
+     * Build an `EndPieceTurnCommand` for the given piece ID. Used both
+     * as the normal no-action fallback and as a rejection-recovery
+     * command when a prior action was silently rejected.
+     */
+    private _buildEndPieceTurnCommand(pieceId: number): EndPieceTurnCommand {
         return {
             type: "command",
             commandId: this._nextCommandId(),
             token: "",
             kind: "end-piece-turn",
-            pieceId: piece.id,
+            pieceId,
         };
     }
 

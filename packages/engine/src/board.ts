@@ -991,12 +991,18 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /**
-     * Record a `command-rejected` private event. For now this writes to
-     * a test-only buffer; concrete transport wiring lands in a later
-     * spec.
+     * Record a `command-rejected` private event. Writes to the test-only
+     * buffer and emits {@link EngineEvent.CommandRejected} on the engine
+     * event bus so in-process subscribers (e.g. ComputerWizard) can react
+     * without polling the buffer.
      */
     private _emitCommandRejected(playerId: PlayerId, commandId: CommandId, reason: RejectionReason): void {
         this._rejectedCommandsForTests.push({ playerId, commandId, reason });
+        this._boardEvents.emit(EngineEvent.CommandRejected, {
+            playerId,
+            commandId,
+            reason: String(reason),
+        });
     }
 
     /**

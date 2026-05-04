@@ -35,6 +35,7 @@ export type {
     DismountPieceBatchPayload,
     SelectPieceVisualPayload,
     CancelPieceActionVisualPayload,
+    CommandRejectedPayload,
 } from "./actions";
 export { UnitDirection } from "./enums/unitdirection";
 export { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";

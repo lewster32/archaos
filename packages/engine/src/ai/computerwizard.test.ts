@@ -1,5 +1,6 @@
 import { SpellType } from "../enums/spelltype";
 import { UnitType } from "../enums/unittype";
+import { EngineEvent } from "../enums/engineevent";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { ComputerWizard } from "./computerwizard";
 import type { Board } from "../board";
@@ -1350,6 +1351,226 @@ describe("ComputerWizard", () => {
             // Counter was reset to 0 then incremented once by the
             // single _dispatchMovementCommand call, so it should be 1.
             expect((cw as any)._dispatchAttempts).toBe(1);
+        });
+    });
+
+    // ─── CommandRejected subscription ────────────────────────────────────────
+
+    describe("CommandRejected event subscription", () => {
+        it("populates _rejectedCommandIds when the engine emits CommandRejected for this player", () => {
+            const player = {
+                id: 3,
+                name: "TestAI",
+            } as unknown as Player;
+
+            // Capture the listeners registered via events.on so we can
+            // fire them manually, simulating the board emitting the event.
+            const listeners: Map<string, ((payload: any) => void)[]> = new Map();
+            const events = {
+                emit: vi.fn(),
+                emitAsync: vi.fn().mockResolvedValue(undefined),
+                on: vi.fn().mockImplementation((event: string, cb: (p: any) => void) => {
+                    if (!listeners.has(event)) listeners.set(event, []);
+                    listeners.get(event).push(cb);
+                }),
+                off: vi.fn(),
+            };
+
+            const board = {
+                rollChance: vi.fn().mockReturnValue(true),
+                rng: new TestRNG(),
+                events,
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+            const rejectedIds: Set<string> = (cw as any)._rejectedCommandIds;
+
+            // Before any event: set is empty.
+            expect(rejectedIds.size).toBe(0);
+
+            // Simulate the board emitting CommandRejected for our player.
+            const cbs = listeners.get(EngineEvent.CommandRejected) ?? [];
+            expect(cbs.length).toBeGreaterThan(0);
+            cbs[0]({ playerId: 3, commandId: "ai-3-1-abc", reason: "invalid-target" });
+
+            expect(rejectedIds.has("ai-3-1-abc")).toBe(true);
+        });
+
+        it("ignores CommandRejected events for other players", () => {
+            const player = {
+                id: 3,
+                name: "TestAI",
+            } as unknown as Player;
+
+            const listeners: Map<string, ((payload: any) => void)[]> = new Map();
+            const events = {
+                emit: vi.fn(),
+                emitAsync: vi.fn().mockResolvedValue(undefined),
+                on: vi.fn().mockImplementation((event: string, cb: (p: any) => void) => {
+                    if (!listeners.has(event)) listeners.set(event, []);
+                    listeners.get(event).push(cb);
+                }),
+                off: vi.fn(),
+            };
+
+            const board = {
+                rollChance: vi.fn().mockReturnValue(true),
+                rng: new TestRNG(),
+                events,
+                eventLog: makeEventLogStub(),
+                handleCommand: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+            const rejectedIds: Set<string> = (cw as any)._rejectedCommandIds;
+
+            const cbs = listeners.get(EngineEvent.CommandRejected) ?? [];
+            // Event for a different player (id=99): should be ignored.
+            cbs[0]({ playerId: 99, commandId: "ai-99-1-xyz", reason: "not-your-turn" });
+
+            expect(rejectedIds.size).toBe(0);
+        });
+    });
+
+    // ─── Rejection fallback in _dispatchMovementCommand ──────────────────────
+
+    describe("_dispatchMovementCommand rejection fallback", () => {
+        it("falls back to end-piece-turn when an action command is rejected", async () => {
+            const player = {
+                id: 5,
+                name: "TestAI",
+            } as unknown as Player;
+
+            // Simulate a board with a selected piece whose action will be
+            // rejected. handleCommand resolves normally (no throw) but the
+            // rejection is signalled via _rejectedCommandIds.
+            const handleCommand = vi.fn().mockResolvedValue(undefined);
+
+            const selectedPiece = {
+                id: 10,
+                type: UnitType.Creature,
+                owner: { id: 5 },
+                dead: false,
+                position: new Point(0, 0),
+                engaged: false,
+                attacked: false,
+                moved: false,
+                canAttack: false,
+                canMove: false,
+                canRangedAttack: false,
+                rangedAttacked: false,
+                turnOver: false,
+                canSelect: true,
+                currentMount: null,
+                hasStatus: vi.fn().mockReturnValue(false),
+                canAttackPiece: vi.fn().mockReturnValue(false),
+                canAttackPossiblyUndeadPiece: vi.fn().mockReturnValue(false),
+                canRangedAttackPiece: vi.fn().mockReturnValue(false),
+                canMountPiece: vi.fn().mockReturnValue(false),
+                findThreatPieces: vi.fn().mockReturnValue(new Set()),
+                stats: { movement: 2, combat: 1, rangedCombat: 0 },
+            } as unknown as Piece;
+
+            const board = {
+                selected: selectedPiece,
+                players: [],
+                pieces: [],
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+                getAdjacentPiecesAtPosition: vi.fn().mockReturnValue([]),
+                rollChance: vi.fn().mockReturnValue(false),
+                canAcceptCommandFor: vi.fn().mockReturnValue(true),
+                handleCommand,
+                rng: new TestRNG(),
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+
+            // _computeNextActionFor will return an end-piece-turn command
+            // because the piece has no valid actions. Pre-seed the
+            // _rejectedCommandIds set so the fallback logic detects it as
+            // rejected. We intercept the first handleCommand call and
+            // insert the rejection BEFORE the second call fires.
+            let callCount = 0;
+            handleCommand.mockImplementation(async (_pid: number, cmd: any) => {
+                callCount++;
+                if (callCount === 1) {
+                    // Simulate the board rejecting the first command.
+                    (cw as any)._rejectedCommandIds.add(cmd.commandId);
+                }
+            });
+
+            await (cw as any)._dispatchMovementCommand();
+
+            // First call: the action command (end-piece-turn in this case).
+            // Second call: the fallback end-piece-turn (recovery).
+            // Since both have kind "end-piece-turn" but different commandIds,
+            // check that two calls happened and the second is also end-piece-turn.
+            expect(handleCommand).toHaveBeenCalledTimes(2);
+            const firstCmd = handleCommand.mock.calls[0][1];
+            const secondCmd = handleCommand.mock.calls[1][1];
+            expect(firstCmd.kind).toBe("end-piece-turn");
+            expect(secondCmd.kind).toBe("end-piece-turn");
+            // The second command must have a fresh commandId.
+            expect(secondCmd.commandId).not.toBe(firstCmd.commandId);
+        });
+
+        it("falls back to end-movement-phase when select-piece is rejected", async () => {
+            const player = {
+                id: 6,
+                name: "TestAI",
+            } as unknown as Player;
+
+            const handleCommand = vi.fn().mockResolvedValue(undefined);
+
+            const candidatePiece = {
+                id: 20,
+                type: UnitType.Creature,
+                owner: { id: 6 },
+                dead: false,
+                position: new Point(1, 1),
+                turnOver: false,
+                canSelect: true,
+                currentMount: null,
+                hasStatus: vi.fn().mockReturnValue(false),
+            } as unknown as Piece;
+
+            const board = {
+                // No piece selected yet.
+                selected: null,
+                players: [],
+                pieces: [candidatePiece],
+                getPiecesByOwner: vi.fn().mockReturnValue([candidatePiece]),
+                getAdjacentPiecesAtPosition: vi.fn().mockReturnValue([]),
+                rollChance: vi.fn().mockReturnValue(false),
+                canAcceptCommandFor: vi.fn().mockReturnValue(true),
+                handleCommand,
+                rng: new TestRNG(),
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+
+            // Simulate the board rejecting the select-piece command.
+            handleCommand.mockImplementation(async (_pid: number, cmd: any) => {
+                if (cmd.kind === "select-piece") {
+                    (cw as any)._rejectedCommandIds.add(cmd.commandId);
+                }
+            });
+
+            await (cw as any)._dispatchMovementCommand();
+
+            // First call: select-piece (rejected).
+            // Second call: end-movement-phase (fallback).
+            expect(handleCommand).toHaveBeenCalledTimes(2);
+            const firstCmd = handleCommand.mock.calls[0][1];
+            const secondCmd = handleCommand.mock.calls[1][1];
+            expect(firstCmd.kind).toBe("select-piece");
+            expect(secondCmd.kind).toBe("end-movement-phase");
         });
     });
 });

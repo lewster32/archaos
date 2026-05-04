@@ -173,3 +173,14 @@ export interface SelectPieceVisualPayload {
 export interface CancelPieceActionVisualPayload {
     pieceId: number;
 }
+
+/**
+ * Payload for {@link EngineEvent.CommandRejected}. Mirrors the arguments
+ * to `_emitCommandRejected` so subscribers can react to a command being
+ * rejected without polling the test-only buffer.
+ */
+export interface CommandRejectedPayload {
+    playerId: number;
+    commandId: string;
+    reason: string;
+}
