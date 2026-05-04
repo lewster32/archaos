@@ -38,4 +38,25 @@ export enum EngineEvent {
      * `PhaseChangedOutcome`.
      */
     PhaseChanged = "engine:phase-changed",
+
+    /** Move-piece batch - payload describes a single move-piece command's full traversal. */
+    MovePieceBatch = "engine:move-piece-batch",
+
+    /** Attack-piece batch - payload describes a melee attack and its result. */
+    AttackPieceBatch = "engine:attack-piece-batch",
+
+    /** Ranged-attack-piece batch - payload describes a ranged attack and its result. */
+    RangedAttackPieceBatch = "engine:ranged-attack-piece-batch",
+
+    /** Mount-piece batch - payload describes a wizard mounting a piece. */
+    MountPieceBatch = "engine:mount-piece-batch",
+
+    /** Dismount-piece batch - payload describes a wizard dismounting a piece. */
+    DismountPieceBatch = "engine:dismount-piece-batch",
+
+    /** Select-piece visual - payload describes the visual side of a select-piece command. */
+    SelectPieceVisual = "engine:select-piece-visual",
+
+    /** Cancel-piece-action visual - payload describes a cancelled piece action. */
+    CancelPieceActionVisual = "engine:cancel-piece-action-visual",
 }
