@@ -1695,7 +1695,6 @@ export class Board extends EngineBoard<Piece> {
                     units.forEach((piece: Piece) => {
                         const target: GameObjects.Sprite = piece.sprite;
                         target.setTint(piece.defaultTint).setTintMode(TintModes.MULTIPLY);
-                        piece.turnOver = false;
                         piece.highlighted = true;
                     });
                     resolve();
