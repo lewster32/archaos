@@ -1836,7 +1836,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             attackerId: attacker.id,
             targetId: target.id,
             path: walked.map((p) => ({ x: p.x, y: p.y })),
-            ...(engagedBy ? { engagedBy: { pieceId: (engagedBy as P).id } } : {}),
+            ...(engagedBy ? { engagedBy: { pieceId: engagedBy.id } } : {}),
             hit: attackHit,
             targetKilled,
             cascadeKilledIds: [...cascadeKilledIds],
