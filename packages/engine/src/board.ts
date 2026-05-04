@@ -2508,6 +2508,23 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     private async _runMovementPhase(): Promise<void> {
         for (const player of this.players.filter((p) => !p.defeated)) {
             this._currentPlayer = player;
+            // Reset per-turn action flags for every living piece owned by
+            // this player. Must run synchronously (inside recordEvent but
+            // before openMovementSlotFor) so the flags are cleared before
+            // the AI's first command dispatch fires in the slot loop.
+            await this.recordEvent({}, () => {
+                for (const piece of this.getPiecesByOwner(player)) {
+                    if (!piece.dead) {
+                        piece.setTurnFlags({
+                            moved: false,
+                            attacked: false,
+                            rangedAttacked: false,
+                            engaged: false,
+                            turnOver: false,
+                        });
+                    }
+                }
+            });
             await this.openMovementSlotFor(player.id);
             this._currentPlayer = null;
         }
