@@ -14,6 +14,7 @@ import type { SummonSpell } from "../spells/summonspell";
 import { Board } from "../board";
 import type { Player } from "../player";
 import { Point } from "../point";
+import { RangeGizmo } from "../rangegizmo";
 import type { Alignment } from "../alignment";
 import type {
     AttackPieceCommand,
@@ -91,6 +92,15 @@ export class ComputerWizard implements RemotePlayer {
     private _spellbookSubmitted: boolean = false;
 
     /**
+     * Private RangeGizmo instance used exclusively for AI path
+     * planning. Isolated from the shared board.rangeGizmo so that
+     * concurrent visual generate() calls (client animation tweens,
+     * previous-player stale chains) cannot corrupt the AI's cached
+     * paths mid-computation.
+     */
+    private readonly _pathGizmo: RangeGizmo;
+
+    /**
      * Creates a new ComputerWizard instance.
      *
      * @param board a reference to the game board
@@ -101,6 +111,7 @@ export class ComputerWizard implements RemotePlayer {
         this._player = player;
         this._difficulty = difficulty ?? 0.5;
         this._knownNonIllusionPieces = new Set<number>();
+        this._pathGizmo = new RangeGizmo(board);
         // Subscribe to phase-changed forwarded onto the engine event bus
         // so the AI can dispatch its spellbook pick / cast commands at
         // the right moment without being driven by a direct method call.
@@ -952,7 +963,7 @@ export class ComputerWizard implements RemotePlayer {
             // needs to be populated before path computation, since the
             // engine's _handleSelectPiece does not do this itself.
             if (this._board.selected) {
-                await this._board.rangeGizmo.generate(this._board.selected);
+                await this._pathGizmo.generate(this._board.selected);
             }
             // Recurse to dispatch the action for the selected piece.
             if (this._board.canAcceptCommandFor(this._player.id)) {
@@ -1130,7 +1141,7 @@ export class ComputerWizard implements RemotePlayer {
 
             // Sub-branch C.3: tactical move. Pick a destination tile
             // using the same priority order as the legacy moveUnit.
-            const reachableTiles: Point[] = Array.from(this._board.rangeGizmo.getAllValidPaths())
+            const reachableTiles: Point[] = Array.from(this._pathGizmo.getAllValidPaths())
                 .map((path: Path) => {
                     return path.nodes?.findLast((node) => node.traversable)?.pos;
                 })
@@ -1454,11 +1465,11 @@ export class ComputerWizard implements RemotePlayer {
     /**
      * Compute a path from the piece's current position (exclusive) to
      * the destination tile (inclusive). Reads from the rangegizmo's
-     * cached A* paths populated by the prior `rangeGizmo.generate(piece)`
+     * cached A* paths populated by the prior `_pathGizmo.generate(piece)`
      * call. Returns an empty array if no path exists.
      */
     private _computePathTo(piece: Piece, to: Point): Point[] {
-        const path: Path | null = this._board.rangeGizmo.getPathTo(to);
+        const path: Path | null = this._pathGizmo.getPathTo(to);
         if (!path) return [];
         const nodes = path.nodes ?? [];
         const result: Point[] = [];
@@ -1482,7 +1493,7 @@ export class ComputerWizard implements RemotePlayer {
         let best: Point[] = [];
         let bestCost: number = Infinity;
         for (const tile of adj) {
-            const path: Path | null = this._board.rangeGizmo.getPathTo(tile);
+            const path: Path | null = this._pathGizmo.getPathTo(tile);
             if (path && path.cost < bestCost) {
                 bestCost = path.cost;
                 best = (path.nodes ?? [])
