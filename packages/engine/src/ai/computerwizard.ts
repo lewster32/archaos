@@ -92,6 +92,22 @@ export class ComputerWizard implements RemotePlayer {
     private _spellbookSubmitted: boolean = false;
 
     /**
+     * Counts how many times _dispatchMovementCommand has been called
+     * within a single player movement turn. Reset each time the AI
+     * enters the moving phase for this player. If this exceeds
+     * DISPATCH_LOOP_LIMIT the AI forces end-movement-phase to escape
+     * a soft-lock caused by repeated command rejections.
+     */
+    private _dispatchAttempts: number = 0;
+
+    /**
+     * Maximum number of _dispatchMovementCommand calls allowed within
+     * a single player movement turn before the AI gives up and ends
+     * the phase. Generous to allow multi-piece turns with retries.
+     */
+    private static readonly DISPATCH_LOOP_LIMIT: number = 10;
+
+    /**
      * Private RangeGizmo instance used exclusively for AI path
      * planning. Isolated from the shared board.rangeGizmo so that
      * concurrent visual generate() calls (client animation tweens,
@@ -175,6 +191,10 @@ export class ComputerWizard implements RemotePlayer {
             // cancel-piece-action), `_dispatchMovementCommand` chains
             // the follow-up itself.
             if (outcome.currentPlayerId === this._player.id && this._board.canAcceptCommandFor(this._player.id)) {
+                // Each slot-closed re-fire is a new action: reset the
+                // dispatch counter so multi-piece turns don't exhaust
+                // the limit across different pieces' slots.
+                this._dispatchAttempts = 0;
                 void this._dispatchMovementCommand();
             }
         }
@@ -941,6 +961,23 @@ export class ComputerWizard implements RemotePlayer {
      * dispatches `end-movement-phase` to close the player's slot loop.
      */
     private async _dispatchMovementCommand(): Promise<void> {
+        // Safety net: if more than DISPATCH_LOOP_LIMIT calls occur
+        // within a single phase-changed event (i.e. without the slot
+        // submitting and re-firing), a rejected command has left the
+        // slot open and the AI is looping. Force end-movement-phase to
+        // break out. The underlying cause (stale path, invalid target,
+        // wrong-phase rejection) is logged separately by the engine.
+        this._dispatchAttempts++;
+        if (this._dispatchAttempts > ComputerWizard.DISPATCH_LOOP_LIMIT) {
+            console.error(
+                `[ComputerWizard] AI for player ${this._player.id} stuck in dispatch loop;` +
+                    ` forcing end-movement-phase to break out` +
+                    ` (${this._dispatchAttempts} attempts within one slot)`,
+            );
+            void this._board.handleCommand(this._player.id, this._buildEndMovementPhaseCommand());
+            return;
+        }
+
         // No piece selected yet: pick one and dispatch select-piece.
         // Since select-piece does not close the slot, we then recurse
         // to dispatch the follow-up action for the now-selected piece.

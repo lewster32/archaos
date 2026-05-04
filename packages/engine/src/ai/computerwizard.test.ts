@@ -1272,4 +1272,84 @@ describe("ComputerWizard", () => {
             expect(doCastSpell).toHaveBeenCalledWith(board, goblin);
         });
     });
+
+    describe("_dispatchMovementCommand dispatch-loop safety net", () => {
+        it("forces end-movement-phase when DISPATCH_LOOP_LIMIT is exceeded", async () => {
+            const player = {
+                id: 1,
+                name: "TestAI",
+            } as unknown as Player;
+
+            const handleCommand = vi.fn().mockResolvedValue(undefined);
+
+            const board = {
+                selected: null,
+                players: [],
+                pieces: [],
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+                rollChance: vi.fn().mockReturnValue(false),
+                rng: new TestRNG(),
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+                handleCommand,
+                canAcceptCommandFor: vi.fn().mockReturnValue(true),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+
+            // Pre-load the counter to the limit so the next call trips it.
+            (cw as any)._dispatchAttempts = 10;
+
+            await (cw as any)._dispatchMovementCommand();
+
+            // The safety net should have dispatched end-movement-phase.
+            expect(handleCommand).toHaveBeenCalledOnce();
+            const cmd = handleCommand.mock.calls[0][1];
+            expect(cmd.kind).toBe("end-movement-phase");
+        });
+
+        it("resets _dispatchAttempts to 0 when _onPhaseChanged fires for Moving with an open slot", async () => {
+            const player = {
+                id: 2,
+                name: "TestAI",
+            } as unknown as Player;
+
+            const handleCommand = vi.fn().mockResolvedValue(undefined);
+
+            // Board has no pieces so _dispatchMovementCommand will pick
+            // no candidate and immediately dispatch end-movement-phase
+            // (which is fine - we just want to check the counter resets).
+            const board = {
+                selected: null,
+                players: [],
+                pieces: [],
+                getPiecesByOwner: vi.fn().mockReturnValue([]),
+                rollChance: vi.fn().mockReturnValue(false),
+                canAcceptCommandFor: vi.fn().mockReturnValue(true),
+                handleCommand,
+                rng: new TestRNG(),
+                events: makeEventsStub(),
+                eventLog: makeEventLogStub(),
+            } as unknown as Board;
+
+            const cw = new ComputerWizard(board, player);
+            // Simulate leftover attempts from a previous dispatch chain.
+            (cw as any)._dispatchAttempts = 7;
+
+            // A fresh slot-open fire should reset the counter before
+            // dispatching the first command of the new piece's turn.
+            // toPhaseKind(BoardPhase.Moving) returns "movement".
+            (cw as any)._onPhaseChanged({
+                phase: "movement",
+                currentPlayerId: 2,
+            });
+
+            // Give the async void dispatch a tick to run.
+            await new Promise((r) => setTimeout(r, 0));
+
+            // Counter was reset to 0 then incremented once by the
+            // single _dispatchMovementCommand call, so it should be 1.
+            expect((cw as any)._dispatchAttempts).toBe(1);
+        });
+    });
 });
