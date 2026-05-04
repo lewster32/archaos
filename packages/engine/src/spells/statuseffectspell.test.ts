@@ -78,4 +78,35 @@ describe("StatusEffectSpell.doCast", () => {
         expect(result).toBe(true);
         expect(wizard.addStatus).not.toHaveBeenCalled();
     });
+
+    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+        const board = makeMockBoard();
+        const castingPiece = makeMockPiece();
+        const owner = makeMockPlayer(castingPiece);
+        const wizard = makeMockPiece({ type: UnitType.Wizard, owner });
+        const s = new StatusEffectSpell(board, 1, makeConfig({ target: SpellTarget.Self, id: "shadow-form" }));
+        s.owner = owner;
+        (s as any)._failed = true;
+
+        const result = await s.doCast(owner, castingPiece, undefined, [wizard]);
+
+        expect(result).toBeNull();
+
+        // WizardCasting should have fired before the failure branch.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("WizardCasting");
+
+        // WizardCastFail is emitted by castFail.
+        expect(types).toContain("WizardCastFail");
+
+        // Failure is logged.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+
+        // No status was applied.
+        expect(wizard.addStatus).not.toHaveBeenCalled();
+    });
 });

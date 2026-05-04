@@ -488,4 +488,56 @@ describe("AttackSpell.doCast", () => {
             sound: "lightning-beam",
         });
     });
+
+    it("plays full visuals then calls castFail and returns null when _failed is true", async () => {
+        const s = new AttackSpell(board, 1, makeAttackConfig({ projectile: UnitRangedProjectileType.MagicBolt }));
+        s.owner = owner;
+        (s as any)._failed = true;
+
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
+
+        expect(result).toBeNull();
+
+        // Beam and hit visuals fired before the cast-fail branch.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("MagicBoltBeam");
+        expect(types).toContain("MagicBoltHit");
+
+        // WizardCastFail emitted by castFail.
+        expect(types).toContain("WizardCastFail");
+
+        // Failure logged; target not killed.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+        expect(enemy.kill).not.toHaveBeenCalled();
+    });
+
+    it("logs 'resisted' and does not emit WizardCastFail when the damage roll fails", async () => {
+        (board as any).roll = vi.fn().mockReturnValue(false);
+        enemy.fullName = "Stone Golem";
+        const s = new AttackSpell(board, 1, makeAttackConfig({ name: "Magic Bolt" }));
+        s.owner = owner;
+
+        const result = await s.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
+
+        expect(result).toBe(true);
+
+        // Target survives.
+        expect(enemy.kill).not.toHaveBeenCalled();
+
+        // Resist log present.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("Stone Golem"),
+            expect.anything(),
+        );
+        expect((board as any).logger.log).toHaveBeenCalledWith(expect.stringContaining("resisted"), expect.anything());
+
+        // No WizardCastFail particle.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).not.toContain("WizardCastFail");
+    });
 });

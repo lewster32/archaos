@@ -66,4 +66,29 @@ describe("DisbelieveSpell.doCast", () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0), [nonIllusion]);
         expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Lion"), expect.anything());
     });
+
+    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+        (spell as any)._failed = true;
+        const target = makeMockPiece({ canBeDisbelieved: true, illusion: true });
+        const point = new Point(1, 2);
+
+        const result = await spell.doCast(owner, castingPiece, point, [target]);
+
+        expect(result).toBeNull();
+
+        // DisbelieveBeam should have fired before the branch.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("DisbelieveBeam");
+
+        // WizardCastFail is emitted by castFail.
+        expect(types).toContain("WizardCastFail");
+
+        // Failure is logged; kill was NOT called.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+        expect(target.kill).not.toHaveBeenCalled();
+    });
 });

@@ -66,4 +66,29 @@ describe("SubversionSpell.doCast", () => {
         await spell.doCast(owner, castingPiece, new Point(0, 0), [enemy]);
         expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Dragon"), expect.anything());
     });
+
+    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+        (spell as any)._failed = true;
+        const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false });
+        const point = new Point(2, 2);
+
+        const result = await spell.doCast(owner, castingPiece, point, [enemy]);
+
+        expect(result).toBeNull();
+
+        // SubversionBeam should have fired before the branch.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("SubversionBeam");
+
+        // WizardCastFail is emitted by castFail.
+        expect(types).toContain("WizardCastFail");
+
+        // Failure is logged; ownership unchanged.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+        expect(enemy.owner).toEqual({ id: 99 });
+    });
 });

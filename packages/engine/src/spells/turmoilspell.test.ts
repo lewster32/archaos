@@ -102,4 +102,39 @@ describe("TurmoilSpell.doCast", () => {
         const batchCall = (board.events.emit as any).mock.calls.find((c: any) => c[0] === EngineEvent.TurmoilBatch);
         expect(batchCall[1].moves).toHaveLength(0);
     });
+
+    it("short-circuits before the move loop and calls castFail when _failed is true", async () => {
+        const wizard = makeMockPiece({ type: UnitType.Wizard });
+        const owner = makeMockPlayer(wizard);
+        wizard.owner = owner;
+        const board = makeMockBoard();
+        (board as any).pieces = [wizard];
+        (board as any).getRandomEmptySpace = vi.fn().mockReturnValue(new Point(5, 5));
+        const config = Spell.getSpellProperties("Turmoil");
+        const spell = new TurmoilSpell(board, 1, config);
+        spell.owner = owner;
+        (spell as any)._failed = true;
+
+        const result = await spell.doCast(owner, wizard, new Point(0, 0), [wizard]);
+
+        expect(result).toBeNull();
+
+        // No pieces should have been moved.
+        expect(wizard.moveTo).not.toHaveBeenCalled();
+
+        // TurmoilBatch should NOT have been emitted.
+        const batchCall = (board.events.emit as any).mock.calls.find((c: any) => c[0] === EngineEvent.TurmoilBatch);
+        expect(batchCall).toBeUndefined();
+
+        // WizardCastFail should have been emitted by castFail.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("WizardCastFail");
+
+        // Failure is logged.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+    });
 });

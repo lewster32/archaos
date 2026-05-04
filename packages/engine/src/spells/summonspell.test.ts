@@ -1709,3 +1709,39 @@ describe("SummonSpell.selectDefaultTile (private)", () => {
         expect(result).toBe(nearA);
     });
 });
+
+// ─── cast-failure branch ──────────────────────────────────────────────────────
+
+describe("SummonSpell.doCast — cast failure", () => {
+    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+        const board = makeMockBoard();
+        const castingPiece = makeMockCastingPiece();
+        const owner = makeMockPlayer(castingPiece);
+
+        vi.spyOn(Piece, "getUnitConfig").mockReturnValue(makeUnitConfig());
+
+        const s = new SummonSpell(board, 1, makeSummonConfig());
+        s.owner = owner;
+        (s as any)._failed = true;
+
+        const point = new Point(3, 4);
+        const result = await s.doCast(owner, castingPiece as any, point);
+
+        expect(result).toBeNull();
+
+        // WizardCasting and WizardCastBeam should have fired before the branch.
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
+        expect(types).toContain("WizardCasting");
+        expect(types).toContain("WizardCastBeam");
+
+        // WizardCastFail is emitted by castFail.
+        expect(types).toContain("WizardCastFail");
+
+        // Failure is logged.
+        expect((board as any).logger.log).toHaveBeenCalledWith(
+            expect.stringContaining("failed to cast"),
+            expect.anything(),
+        );
+    });
+});
