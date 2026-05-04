@@ -28,6 +28,13 @@ export type {
     SpreadBatchPayload,
     TurmoilMoveResult,
     TurmoilBatchPayload,
+    MovePieceBatchPayload,
+    AttackPieceBatchPayload,
+    RangedAttackPieceBatchPayload,
+    MountPieceBatchPayload,
+    DismountPieceBatchPayload,
+    SelectPieceVisualPayload,
+    CancelPieceActionVisualPayload,
 } from "./actions";
 export { UnitDirection } from "./enums/unitdirection";
 export { UnitRangedProjectileType } from "./enums/unitrangedprojectiletype";
