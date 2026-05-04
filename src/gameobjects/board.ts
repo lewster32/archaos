@@ -888,6 +888,12 @@ export class Board extends EngineBoard<Piece> {
             }
             await piece.moveTo(step);
         }
+        if (payload.engagedBy) {
+            const enemy = this.getPiece(payload.engagedBy.pieceId);
+            if (enemy) {
+                await this.sound.playAsync("engaged", { delay: Board.DEFAULT_DELAY });
+            }
+        }
         await this.rangeGizmo.reset();
         this.emitBoardUpdateEvent();
     }

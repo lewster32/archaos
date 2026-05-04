@@ -441,4 +441,30 @@ describe("Visual reaction - MovePieceBatch", () => {
 
         expect(rangeReset).not.toHaveBeenCalled();
     });
+
+    it("plays the engaged sound when engagedBy is set on the payload", async () => {
+        const { board, piece } = makeFakeMovingBoard(false);
+        const playAsync = (board as any)._sound.playAsync as ReturnType<typeof vi.fn>;
+
+        const enemy = { id: 7 };
+        // Override getPiece so the moving piece resolves normally but
+        // the enemy lookup also resolves.
+        (board as any).getPiece = vi.fn((id: number) =>
+            id === piece.id ? piece : id === enemy.id ? enemy : null
+        );
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: piece.id,
+            path: [{ x: 1, y: 0 }],
+            riderSync: false,
+            engagedBy: { pieceId: enemy.id },
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(playAsync).toHaveBeenCalledWith(
+            "engaged",
+            expect.objectContaining({ delay: expect.any(Number) })
+        );
+    });
 });
