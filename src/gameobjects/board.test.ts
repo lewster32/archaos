@@ -411,6 +411,22 @@ describe("Visual reaction - MovePieceBatch", () => {
         expect(soundPlay).toHaveBeenCalledWith("fly");
     });
 
+    it("flying pieces tween directly to the terminal tile, not per-step", async () => {
+        const { board, piece } = makeFakeMovingBoard(true);
+        const moveToSpy = vi.spyOn(piece, "moveTo");
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: piece.id,
+            path: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(moveToSpy).toHaveBeenCalledTimes(1);
+        expect(moveToSpy.mock.calls[0][0]).toEqual({ x: 3, y: 0 });
+    });
+
     it("resets the rangeGizmo after animation", async () => {
         const { board } = makeFakeMovingBoard(false);
         const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;

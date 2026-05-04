@@ -939,12 +939,18 @@ export class Board extends EngineBoard<Piece> {
         const piece = this.getPiece(payload.pieceId);
         if (!piece) return;
         const isFlying = piece.hasStatus(UnitStatus.Flying);
-        for (let i = 0; i < payload.path.length; i++) {
-            const step = payload.path[i];
-            if (i === 0) {
-                this.sound.play(isFlying ? "fly" : "step");
+        if (isFlying && payload.path.length > 0) {
+            this.sound.play("fly");
+            const terminal = payload.path[payload.path.length - 1];
+            await piece.moveTo(terminal);
+        } else {
+            for (let i = 0; i < payload.path.length; i++) {
+                const step = payload.path[i];
+                if (i === 0) {
+                    this.sound.play("step");
+                }
+                await piece.moveTo(step);
             }
-            await piece.moveTo(step);
         }
         if (payload.engagedBy) {
             const enemy = this.getPiece(payload.engagedBy.pieceId);
