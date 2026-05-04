@@ -14,6 +14,9 @@ cast attempt:
   palette as `WizardCasting` / `WizardCastBeam`), then the fizzle. The
   cast-beam sound is *not* played for self-casts because no beam is drawn.
 
+The `die` sound is paired with the fizzle in both sequences - it accents
+the moment the magic collapses regardless of whether a beam was drawn.
+
 ## Motivation
 
 Currently a failed spell plays only `WizardCastFail` at the wizard's tile.
@@ -53,26 +56,27 @@ targeting.
 
 1. Emit `EngineEvent.EffectRequested` with `sound: "cast-beam"`.
 2. `await` `EffectRequested` with `type: WizardCasting, pieceId: caster.id`.
-3. `await` `EffectRequested` with `type: WizardCastBeam,
+3. Emit `EffectRequested` with `sound: "die"` (pairs with the fizzle
+   coming next).
+4. `await` `EffectRequested` with `type: WizardCastBeam,
    startPieceId: caster.id, targetPosition: { x, y }`.
-4. `await` `EffectRequested` with `type: WizardCastFail,
+5. `await` `EffectRequested` with `type: WizardCastFail,
    targetPosition: { x, y }` (no `pieceId` - plays at the tile, not the
    wizard).
 
 ### Failure sequence for a self-target spell (or no target supplied)
 
 1. `await` `EffectRequested` with `type: WizardCasting, pieceId: caster.id`.
-2. Emit `EffectRequested` with `sound: "die"` (the existing pairing for
-   `SummonPiece` - see `summonspell.ts:172`).
+2. Emit `EffectRequested` with `sound: "die"` (pairs with the burst that
+   follows; this is the same pairing `SummonSpell.doCast` uses for
+   `SummonPiece`, see `summonspell.ts:172`).
 3. `await` `EffectRequested` with `type: SummonPiece, pieceId: caster.id`
    (reuses the existing point-source sparkle burst).
 4. `await` `EffectRequested` with `type: WizardCastFail,
    pieceId: caster.id`.
 
 No `cast-beam` sound is emitted - the burst represents the magic gathering
-and impacting at the wizard's tile, with no travelling beam. The `die`
-sound is paired with the burst because that is how `SummonPiece` is
-already used elsewhere.
+and impacting at the wizard's tile, with no travelling beam.
 
 The decision between the two sequences is based on whether `castPoint` was
 supplied to `cast()` and whether it differs from the casting piece's
@@ -120,20 +124,11 @@ on success; this spec also uses it on the self-cast failure path.
            pieceId: castingPiece.id,
        });
 
-       if (!isSelfTarget) {
-           await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-               type: EffectType.WizardCastBeam,
-               startPieceId: castingPiece.id,
-               targetPosition: { x: castPoint.x, y: castPoint.y },
-           });
-           await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-               type: EffectType.WizardCastFail,
-               targetPosition: { x: castPoint.x, y: castPoint.y },
-           });
-       } else {
-           this._board.events.emit(EngineEvent.EffectRequested, {
-               sound: "die",
-           });
+       this._board.events.emit(EngineEvent.EffectRequested, {
+           sound: "die",
+       });
+
+       if (isSelfTarget) {
            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                type: EffectType.SummonPiece,
                pieceId: castingPiece.id,
@@ -142,7 +137,18 @@ on success; this spec also uses it on the self-cast failure path.
                type: EffectType.WizardCastFail,
                pieceId: castingPiece.id,
            });
+           return;
        }
+
+       await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+           type: EffectType.WizardCastBeam,
+           startPieceId: castingPiece.id,
+           targetPosition: { x: castPoint.x, y: castPoint.y },
+       });
+       await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+           type: EffectType.WizardCastFail,
+           targetPosition: { x: castPoint.x, y: castPoint.y },
+       });
    }
    ```
 

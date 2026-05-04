@@ -1192,8 +1192,8 @@ describe("Spell.castFail", () => {
 
         // cast-beam sound is emitted because a beam is being drawn.
         expect(emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cast-beam" });
-        // die sound is NOT emitted on the target-targeted path.
-        expect(emit).not.toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
+        // die sound is also emitted - it plays on both failure paths.
+        expect(emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
 
         // Sequence: WizardCasting -> WizardCastBeam -> WizardCastFail at target.
         expect(emitAsync).toHaveBeenNthCalledWith(1, EngineEvent.EffectRequested, {

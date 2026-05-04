@@ -537,10 +537,11 @@ export class Spell<P extends Piece = Piece> extends Model {
             pieceId: castingPiece.id,
         });
 
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "die",
+        });
+        
         if (isSelfTarget) {
-            this._board.events.emit(EngineEvent.EffectRequested, {
-                sound: "die",
-            });
             await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                 type: EffectType.SummonPiece,
                 pieceId: castingPiece.id,
