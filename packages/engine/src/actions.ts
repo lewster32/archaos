@@ -1,4 +1,5 @@
 import type { PieceConfig } from "./configs/piececonfig";
+import type { SimplePoint } from "./board";
 
 /**
  * Result of a single piece's spread action within
@@ -82,8 +83,11 @@ export interface TurmoilBatchPayload {
  */
 export interface MovePieceBatchPayload {
     pieceId: number;
-    /** Per-tile traversal exclusive of the start position; last entry is the final tile. */
-    path: { x: number; y: number }[];
+    /**
+     * Per-tile traversal exclusive of the start position; last entry is
+     * the final tile.
+     */
+    path: SimplePoint[];
     riderSync: boolean;
     /** Set when an engagement roll broke the traversal mid-path. */
     engagedBy?: { pieceId: number };
@@ -98,15 +102,21 @@ export interface MovePieceBatchPayload {
 export interface AttackPieceBatchPayload {
     attackerId: number;
     targetId: number;
-    /** Approach traversal up to a tile adjacent to the target; empty if no movement. */
-    path: { x: number; y: number }[];
+    /**
+     * Approach traversal up to a tile adjacent to the target; empty if
+     * no movement.
+     */
+    path: SimplePoint[];
     /** Set when engagement broke the approach mid-path. */
     engagedBy?: { pieceId: number };
     /** True when the attack roll succeeded. */
     hit: boolean;
     /** True when the attack killed (or cascade-killed) the primary target. */
     targetKilled: boolean;
-    /** Pieces destroyed by the attack other than the target (e.g. rider, mount cascade). */
+    /**
+     * Pieces destroyed by the attack other than the target
+     * (e.g. rider, mount cascade).
+     */
     cascadeKilledIds: number[];
 }
 
@@ -130,7 +140,7 @@ export interface MountPieceBatchPayload {
     wizardId: number;
     mountId: number;
     /** Approach traversal to the mount's tile; empty if already adjacent. */
-    path: { x: number; y: number }[];
+    path: SimplePoint[];
 }
 
 /**
@@ -141,7 +151,7 @@ export interface MountPieceBatchPayload {
 export interface DismountPieceBatchPayload {
     wizardId: number;
     mountId: number;
-    to: { x: number; y: number };
+    to: SimplePoint;
 }
 
 /**
