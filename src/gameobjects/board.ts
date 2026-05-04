@@ -48,6 +48,7 @@ import type {
     AttackPieceBatchPayload,
     RangedAttackPieceBatchPayload,
     MountPieceBatchPayload,
+    DismountPieceBatchPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -367,6 +368,14 @@ export class Board extends EngineBoard<Piece> {
                 await this._animateMountPieceBatch(payload);
             });
         });
+        this.events.on(
+            EngineEvent.DismountPieceBatch,
+            (payload: DismountPieceBatchPayload) => {
+                this._animationQueue.enqueue(async () => {
+                    await this._animateDismountPieceBatch(payload);
+                });
+            },
+        );
         this.events.on(EventType.PieceInfo, (data: any) => {
             globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
         });
@@ -1089,6 +1098,22 @@ export class Board extends EngineBoard<Piece> {
             await wizard.moveTo(payload.path[i]);
         }
 
+        await this.rangeGizmo.reset();
+        this.emitBoardUpdateEvent();
+    }
+
+    /**
+     * Animate a `dismount-piece` command's visual in response to
+     * EngineEvent.DismountPieceBatch. The engine has already cleared
+     * the mount/rider linkage; the client just animates the wizard
+     * moving to the dismount tile.
+     */
+    private async _animateDismountPieceBatch(
+        payload: DismountPieceBatchPayload,
+    ): Promise<void> {
+        const wizard = this.getPiece(payload.wizardId);
+        if (!wizard) return;
+        await wizard.moveTo(payload.to);
         await this.rangeGizmo.reset();
         this.emitBoardUpdateEvent();
     }

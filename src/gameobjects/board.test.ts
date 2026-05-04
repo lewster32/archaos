@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -1095,6 +1095,124 @@ describe("Visual reaction - MountPieceBatch", () => {
             mountId: mount.id,
             path: [],
         } as MountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).not.toHaveBeenCalled();
+    });
+});
+
+// Visual reaction - DismountPieceBatch
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - DismountPieceBatch", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the DismountPieceBatch subscriber and _animateDismountPieceBatch
+     * handler without instantiating Phaser.
+     */
+    function makeFakeDismountBoard(): {
+        board: Board;
+        wizard: {
+            id: number;
+            position: { x: number; y: number };
+            moveTo: ReturnType<typeof vi.fn>;
+        };
+        mount: {
+            id: number;
+            position: { x: number; y: number };
+        };
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const wizard = {
+            id: 10,
+            position: { x: 1, y: 0 },
+            moveTo: vi.fn((_pt: { x: number; y: number }) => Promise.resolve()),
+        };
+
+        const mount = {
+            id: 20,
+            position: { x: 1, y: 0 },
+        };
+
+        (fake as any).getPiece = vi.fn((id: number) => {
+            if (id === wizard.id) return wizard;
+            if (id === mount.id) return mount;
+            return null;
+        });
+
+        (fake as any)._sound = {
+            play: vi.fn(),
+            playAsync: vi.fn(() => Promise.resolve()),
+        };
+        (fake as any)._rangeGizmo = { reset: vi.fn(() => Promise.resolve()) };
+        (fake as any).emitBoardUpdateEvent = vi.fn();
+
+        emitter.on(
+            EngineEvent.DismountPieceBatch,
+            (payload: DismountPieceBatchPayload) => {
+                animationQueue.enqueue(async () => {
+                    await (fake as any)._animateDismountPieceBatch(payload);
+                });
+            },
+        );
+
+        return { board: fake, wizard, mount };
+    }
+
+    it("animates the wizard moving to the dismount tile", async () => {
+        const { board, wizard } = makeFakeDismountBoard();
+        const moveToSpy = vi.spyOn(wizard, "moveTo");
+
+        (board as any).events.emit(EngineEvent.DismountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: 20,
+            to: { x: 2, y: 0 },
+        } as DismountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(moveToSpy).toHaveBeenCalledTimes(1);
+        expect(moveToSpy.mock.calls[0][0]).toEqual({ x: 2, y: 0 });
+    });
+
+    it("resets the range gizmo after moving", async () => {
+        const { board, wizard } = makeFakeDismountBoard();
+        const resetSpy = (board as any)._rangeGizmo
+            .reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.DismountPieceBatch, {
+            wizardId: wizard.id,
+            mountId: 20,
+            to: { x: 2, y: 0 },
+        } as DismountPieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does nothing when wizard is not found", async () => {
+        const { board } = makeFakeDismountBoard();
+        const resetSpy = (board as any)._rangeGizmo
+            .reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.DismountPieceBatch, {
+            wizardId: 999,
+            mountId: 20,
+            to: { x: 2, y: 0 },
+        } as DismountPieceBatchPayload);
 
         await board.animationQueue.idle();
 
