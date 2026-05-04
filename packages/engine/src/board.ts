@@ -78,6 +78,7 @@ import type {
     MountPieceBatchPayload,
     MovePieceBatchPayload,
     RangedAttackPieceBatchPayload,
+    SelectPieceVisualPayload,
 } from "./actions";
 
 /**
@@ -1621,6 +1622,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
             return;
         }
+        let engagedByOnSelect: P | null = null;
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
             // Engagement rolls against adjacent enemies that can engage.
             const enemies: P[] = this.getAdjacentPiecesAtPosition(
@@ -1640,12 +1642,20 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 if (succeeded) {
                     piece.setTurnFlags({ engaged: true });
                     enemy.setTurnFlags({ engaged: true });
+                    if (engagedByOnSelect === null) {
+                        engagedByOnSelect = enemy as P;
+                    }
                 }
             }
             // _selected is transitional engine state; not in the
             // broadcast (invariant 16).
             this._selected = piece;
         });
+        const selectPayload: SelectPieceVisualPayload = {
+            pieceId: piece.id,
+            ...(engagedByOnSelect ? { engagedBy: { pieceId: (engagedByOnSelect as P).id } } : {}),
+        };
+        this._boardEvents.emit(EngineEvent.SelectPieceVisual, selectPayload);
     }
 
     /**
