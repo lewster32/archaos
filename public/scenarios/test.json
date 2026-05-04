@@ -10,7 +10,8 @@
             "id": 1,
             "name": "Player 1",
             "position": { "x": 0, "y": 2 },
-            "statuses": [],
+            "statuses": [
+            ],
             "pieces": [
                 {
                     "type": "Elf",
@@ -19,7 +20,7 @@
             ],
             "computerControlled": false,
             "spells": [
-                "*"
+                "Magic Wings", "Magic Sword", "Magic Armour"
             ],
             "wizardProperties": {
                 "movement": 9,
@@ -41,14 +42,13 @@
                 "combat": 1
             },
             "spells": [
-                "Wall", "Shadow Wood"
             ]
         }
     ],
     "corpses": [],
-    "phase": "moving",
+    "phase": "casting",
     "cheats": {
-        "forceHit": true,
+        "forceHit": false,
         "forceCast": true,
         "shortDelay": true
     },

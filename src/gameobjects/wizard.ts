@@ -1,4 +1,12 @@
-import { WizardConfig, BoardLayer, UnitDirection, UnitStatus, WizCode, Wizard as EngineWizard } from "@archaos/engine";
+import {
+    WizardConfig,
+    BoardLayer,
+    SimplePoint,
+    UnitDirection,
+    UnitStatus,
+    WizCode,
+    Wizard as EngineWizard,
+} from "@archaos/engine";
 import { wizcodes, effectOffsets } from "@assets/spritesheets/wizards.json";
 import { Board } from "./board";
 import { Player } from "./player";
@@ -168,6 +176,175 @@ export class Wizard extends Piece {
                 ease: PMath.Easing.Cubic.InOut,
                 onUpdate: () => {
                     this.updateDepth();
+                },
+                onCompleteScope: this,
+                onComplete: () => {
+                    this.updateDepth();
+                    resolve();
+                },
+            });
+        });
+    }
+
+    /**
+     * Visually swoop this wizard above the given target tile, carrying
+     * any active effect sprites (wings, shield, weapons) along with the
+     * wizard so they remain anchored during fly-attack animations. Does
+     * not update the logical position.
+     *
+     * @param targetPos The board tile to swoop above.
+     * @returns A promise that resolves when the swoop completes.
+     */
+    async flyApproach(targetPos: SimplePoint): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._sprite) {
+                resolve();
+                return;
+            }
+            const iso: PMath.Vector2 = this.clientBoard.getIsoPosition(targetPos);
+            const groundY: number = iso.y - this._offsetY;
+
+            const difference: number = Board.distance(
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
+            );
+
+            // Face the wizard towards the target.
+            this.updateDirection(this.position, targetPos);
+
+            // Arc: swoop upward during the first half then settle at hover
+            // height. Effects ride along so they bob with the wizard.
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite, ...this._effects.values()],
+                displayOriginY: `+${Math.min(120, difference * 2)}`,
+                duration: Piece.DEFAULT_MOVE_DURATION / 2,
+                yoyo: true,
+            });
+
+            if (this._shadow) {
+                this.clientBoard.scene.tweens.add({
+                    targets: [this._shadow],
+                    x: iso.x,
+                    y: groundY,
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            }
+
+            // Move each effect to its anchored offset above the target tile,
+            // matching the hover-height lift so the effect tracks the wizard.
+            this._effects.forEach((sprite, status) => {
+                this.clientBoard.scene.tweens.add({
+                    targets: [sprite],
+                    x:
+                        iso.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    y: iso.y + (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0) - Piece.HOVER_HEIGHT,
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            });
+
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                x: iso.x,
+                y: groundY - Piece.HOVER_HEIGHT,
+                duration: Piece.DEFAULT_MOVE_DURATION,
+                ease: PMath.Easing.Cubic.InOut,
+                onUpdateScope: this,
+                onUpdate: () => {
+                    const depth: number = this._sprite.y + Piece.HOVER_HEIGHT;
+                    this._sprite?.setDepth(depth);
+                    this._effects.forEach((sprite, status) => {
+                        sprite.setDepth(status === UnitStatus.MagicWings ? depth - 1 : depth + 1);
+                    });
+                },
+                onCompleteScope: this,
+                onComplete: () => {
+                    this._sprite?.setDepth(groundY);
+                    this._effects.forEach((sprite, status) => {
+                        sprite.setDepth(status === UnitStatus.MagicWings ? groundY - 1 : groundY + 1);
+                    });
+                    resolve();
+                },
+            });
+        });
+    }
+
+    /**
+     * Visually return this wizard back to the given origin tile after a
+     * failed fly-attack, carrying any active effect sprites with it. Does
+     * not update the logical position.
+     *
+     * @param originPos The board tile the wizard started from.
+     * @param targetPos The board tile of the failed attack target.
+     * @returns A promise that resolves when the return completes.
+     */
+    async flyReturn(originPos: SimplePoint, targetPos: SimplePoint): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this._sprite) {
+                resolve();
+                return;
+            }
+            const iso: PMath.Vector2 = this.clientBoard.getIsoPosition(originPos);
+            const groundY: number = iso.y - this._offsetY;
+
+            const difference: number = Board.distance(
+                new PMath.Vector2(this._sprite.x, this._sprite.y),
+                new PMath.Vector2(iso.x, groundY),
+            );
+
+            // Face the wizard back towards the origin.
+            this.updateDirection(targetPos, originPos);
+
+            // Arc: swoop upward during the first half then descend to ground.
+            // Effects ride along so they bob with the wizard.
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite, ...this._effects.values()],
+                displayOriginY: `+${Math.min(120, difference * 2)}`,
+                duration: Piece.DEFAULT_MOVE_DURATION / 2,
+                yoyo: true,
+            });
+
+            if (this._shadow) {
+                this.clientBoard.scene.tweens.add({
+                    targets: [this._shadow],
+                    x: iso.x,
+                    y: groundY,
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            }
+
+            // Move each effect back to its anchored offset above the origin
+            // tile.
+            this._effects.forEach((sprite, status) => {
+                this.clientBoard.scene.tweens.add({
+                    targets: [sprite],
+                    x:
+                        iso.x +
+                        (effectOffsets[status]?.x[this._wizCode.wiz] ?? 0) *
+                            (this._direction === UnitDirection.Left ? -1 : 1),
+                    y: iso.y + (effectOffsets[status]?.y[this._wizCode.wiz] ?? 0),
+                    duration: Piece.DEFAULT_MOVE_DURATION,
+                    ease: PMath.Easing.Cubic.InOut,
+                });
+            });
+
+            this.clientBoard.scene.tweens.add({
+                targets: [this._sprite],
+                x: iso.x,
+                y: groundY,
+                duration: Piece.DEFAULT_MOVE_DURATION,
+                ease: PMath.Easing.Cubic.InOut,
+                onUpdateScope: this,
+                onUpdate: () => {
+                    const depth: number = this._sprite.y + Piece.HOVER_HEIGHT;
+                    this._sprite?.setDepth(depth);
+                    this._effects.forEach((sprite, status) => {
+                        sprite.setDepth(status === UnitStatus.MagicWings ? depth - 1 : depth + 1);
+                    });
                 },
                 onCompleteScope: this,
                 onComplete: () => {

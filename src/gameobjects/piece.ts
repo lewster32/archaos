@@ -65,7 +65,7 @@ export class Piece extends EnginePiece {
     static readonly DEFAULT_HIGHLIGHT_STEPS: number = 5;
 
     /** Pixels above the target's isometric tile the attacker hovers. */
-    private static readonly HOVER_HEIGHT = 18;
+    protected static readonly HOVER_HEIGHT = 18;
 
     protected _shadowScale: number;
     protected _shadow?: GameObjects.Image;
