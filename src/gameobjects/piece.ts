@@ -598,21 +598,6 @@ export class Piece extends EnginePiece {
             if (rollSuccess) {
                 this.clientBoard.logger.log(`${this.fullName} defeated ${piece.fullName}`, Colour.Red);
                 await piece.kill();
-                if (
-                    this.clientBoard.getPiecesAtPosition(piece.position, (p: Piece) => {
-                        return !p.dead;
-                    }).length === 0 &&
-                    this.canMove
-                ) {
-                    await this.clientBoard.movePiece(
-                        this.id,
-                        piece.position,
-                        `client-attack-move-${this.id}-${Date.now()}`,
-                        this.owner?.id ?? 0,
-                        undefined,
-                        options?.silentMove,
-                    );
-                }
                 return true;
             }
         }
@@ -771,12 +756,6 @@ export class Piece extends EnginePiece {
 
         this.setMount(piece as Piece);
         piece.setRider(this);
-        await this.clientBoard.movePiece(
-            this.id,
-            piece.position,
-            `client-mount-${this.id}-${Date.now()}`,
-            this.owner?.id ?? 0,
-        );
         this.clientBoard.logger.log(`${this.fullName} mounted ${piece.fullName}`);
         (piece as unknown as Piece).createShaders(true, this.owner as any);
     }
