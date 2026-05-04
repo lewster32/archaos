@@ -1110,12 +1110,15 @@ describe("Spell.cast", () => {
 // ─── castFail ─────────────────────────────────────────────────────────────────
 
 describe("Spell.castFail", () => {
-    it("sets failed=true and castTimes=0", async () => {
+    it("consumes remaining castTimes so multi-cast spells stop after a failed attempt", async () => {
         const board = makeMockBoard();
         const piece = makeMockPiece();
         const owner = makeMockPlayer(piece);
         const s = new Spell(board, 1, makeConfig({ castTimes: 3 }));
         s.owner = owner;
+        // _failed is set by cast() before doCast invokes castFail; mirror
+        // that contract here.
+        (s as any)._failed = true;
         await s.castFail(owner, piece);
         expect(s.failed).toBe(true);
         expect(s.castTimes).toBe(0);

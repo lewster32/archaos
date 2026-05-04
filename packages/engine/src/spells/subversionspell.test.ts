@@ -69,7 +69,7 @@ describe("SubversionSpell.doCast", () => {
 
     it("plays visuals then calls castFail and returns null when _failed is true", async () => {
         (spell as any)._failed = true;
-        const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false });
+        const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false, name: "Hydra" });
         const point = new Point(2, 2);
 
         const result = await spell.doCast(owner, castingPiece, point, [enemy]);
@@ -84,9 +84,10 @@ describe("SubversionSpell.doCast", () => {
         // WizardCastFail is emitted by castFail.
         expect(types).toContain("WizardCastFail");
 
-        // Failure is logged; ownership unchanged.
+        // Cast-fail on Subversion is framed as the target resisting,
+        // matching the damage-fail framing.
         expect((board as any).logger.log).toHaveBeenCalledWith(
-            expect.stringContaining("failed to cast"),
+            expect.stringContaining("Hydra resisted"),
             expect.anything(),
         );
         expect(enemy.owner).toEqual({ id: 99 });

@@ -516,15 +516,19 @@ export class Spell<P extends Piece = Piece> extends Model {
      * visual sequence has played. The fizzle particles land at the target
      * tile (or the wizard's tile for self-cast spells).
      *
-     * Marks the spell as failed and consumes any remaining cast times.
+     * Consumes any remaining cast times so multi-cast spells stop after a
+     * single failed attempt. `_failed` is already set by `cast()` before
+     * `doCast` runs - subclasses only invoke this when `_failed` is true.
      *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
      * @param castPoint The target tile of the cast, if any. When absent or
      *     equal to the caster's tile, the fizzle plays on the wizard.
+     * @param target The targeted piece, if any. Forwarded to
+     *     `failureLogMessage` so subclasses can frame the failure in terms
+     *     of the target (e.g. attack-style spells log "X resisted Y").
      */
-    async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point): Promise<void> {
-        this._failed = true;
+    async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point, target?: P): Promise<void> {
         this._castTimes = 0;
 
         const isSelfTarget =
@@ -542,8 +546,21 @@ export class Spell<P extends Piece = Piece> extends Model {
             });
         }
 
-        this._board.logger.log(`${owner.name} failed to cast ${this.name}`, Colour.Magenta);
+        this._board.logger.log(this.failureLogMessage(owner, target), Colour.Magenta);
         await this._board.idleDelay();
+    }
+
+    /**
+     * The log message written when the cast roll fails. The default reads
+     * "<player> failed to cast <spell>". Subclasses can override to provide
+     * a different framing - for example, attack spells whose failure mode
+     * reads as the target resisting the spell.
+     *
+     * @param owner The player casting the spell
+     * @param target The targeted piece, if any
+     */
+    protected failureLogMessage(owner: Player<P>, _target?: P): string {
+        return `${owner.name} failed to cast ${this.name}`;
     }
 
     /**

@@ -490,6 +490,7 @@ describe("AttackSpell.doCast", () => {
     });
 
     it("plays full visuals then calls castFail and returns null when _failed is true", async () => {
+        enemy.fullName = "Stone Golem";
         const s = new AttackSpell(board, 1, makeAttackConfig({ projectile: UnitRangedProjectileType.MagicBolt }));
         s.owner = owner;
         (s as any)._failed = true;
@@ -504,12 +505,14 @@ describe("AttackSpell.doCast", () => {
         expect(types).toContain("MagicBoltBeam");
         expect(types).toContain("MagicBoltHit");
 
-        // WizardCastFail emitted by castFail.
+        // WizardCastFail emitted by castFail (the fizzle distinguishes
+        // cast-fail from damage-fail).
         expect(types).toContain("WizardCastFail");
 
-        // Failure logged; target not killed.
+        // Cast-fail on an attack spell is framed as a resist, naming the
+        // target rather than the standard "failed to cast" line.
         expect((board as any).logger.log).toHaveBeenCalledWith(
-            expect.stringContaining("failed to cast"),
+            expect.stringContaining("Stone Golem resisted"),
             expect.anything(),
         );
         expect(enemy.kill).not.toHaveBeenCalled();

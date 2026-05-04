@@ -23,6 +23,13 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         return this._properties.damage || 0;
     }
 
+    protected override failureLogMessage(owner: Player<P>, target?: P): string {
+        if (target) {
+            return `${target.fullName} resisted ${this.name}`;
+        }
+        return super.failureLogMessage(owner, target);
+    }
+
     async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
@@ -86,9 +93,12 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
             });
         }
 
-        // Cast-roll failure: full visuals played, now fizzle.
+        // Cast-roll failure: full visuals played, now fizzle. The
+        // fizzle particle still plays at the target (via castFail), but
+        // the log line frames the failure as a resist - the spell did
+        // manifest visually, the target just shrugged it off.
         if (this._failed) {
-            await this.castFail(owner, castingPiece, point);
+            await this.castFail(owner, castingPiece, point, target);
             return null;
         }
 
