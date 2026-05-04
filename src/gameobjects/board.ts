@@ -2153,7 +2153,15 @@ export class Board extends EngineBoard<Piece> {
                 continue;
             }
 
-            await this.selectPlayer(playerId);
+            // When autoRunPhaseLoop is true the bridge's
+            // _handleMovementPhaseChanged fires selectPlayer for the
+            // moving phase. Calling it again here produces a duplicate
+            // "X's turn to move" log ~1.5s after the bridge already ran
+            // setup. Spellbook/Casting phases still need selectPlayer
+            // here because the bridge does not handle those phases.
+            if (!this.autoRunPhaseLoop || this.phase !== BoardPhase.Moving) {
+                await this.selectPlayer(playerId);
+            }
 
             // Handle spellbook phase
             if (this.phase === BoardPhase.Spellbook) {
