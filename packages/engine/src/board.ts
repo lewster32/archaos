@@ -1811,7 +1811,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 // but are dead now (excluding the primary target).
                 for (const id of aliveBeforeKill) {
                     const p = this.getPiece(id);
-                    if (p && p.dead) {
+                    // Either dead-with-corpse OR fully destroyed (NoCorpse/Undead/illusion
+                    // pieces are removed from the map by `destroy()` inside `_cascadeKill`).
+                    if (p === null || p.dead) {
                         cascadeKilledIds.push(id);
                     }
                 }
