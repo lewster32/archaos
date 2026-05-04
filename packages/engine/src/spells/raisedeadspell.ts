@@ -31,6 +31,12 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             type: EffectType.RaiseDeadHit,
             pieceId: target.id,
         });
+
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
         await target.raiseDead(this.owner);
         this._board.logger.log(`${target.name} was reanimated and now belongs to ${owner.name}`, Colour.LightBlue);
 

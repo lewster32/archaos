@@ -24,6 +24,12 @@ export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
             pieceId: target.id,
             startPieceId: castingPiece.id,
         });
+
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
         if (target.illusion) {
             this._board.events.emit(EngineEvent.EffectRequested, {
                 sound: "destroy",

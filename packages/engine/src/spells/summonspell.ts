@@ -143,6 +143,11 @@ export class SummonSpell<P extends Piece = Piece> extends Spell<P> {
             },
         });
 
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
         const newPiece: P = await this._board.addPiece({
             type: UnitType.Creature,
             x: point.x,

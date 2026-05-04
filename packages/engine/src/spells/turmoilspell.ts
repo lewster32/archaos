@@ -19,6 +19,11 @@ export class TurmoilSpell<P extends Piece = Piece> extends Spell<P> {
             return false;
         }
 
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
         const moves: TurmoilMoveResult[] = [];
 
         for (const piece of this._board.pieces.filter((p: P) => !p.dead && !p.currentMount && !p.engulfed)) {

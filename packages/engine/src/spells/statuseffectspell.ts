@@ -37,6 +37,11 @@ export class StatusEffectSpell<P extends Piece = Piece> extends Spell<P> {
             pieceId: target.id,
         });
 
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
         if (this.properties.id in StatusEffectSpell.STATUS_MAP) {
             if (!target.addStatus(StatusEffectSpell.STATUS_MAP[this.properties.id])) {
                 this._board.logger.log(
