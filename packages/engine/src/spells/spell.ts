@@ -485,7 +485,7 @@ export class Spell<P extends Piece = Piece> extends Model {
         // spells - if a player succeeds then they get to cast all remaining
         // times.
         if (this._castTimes === this._totalCastTimes && !this.roll()) {
-            await this.castFail(owner, castingPiece);
+            await this.castFail(owner, castingPiece, castPoint);
             return null;
         }
         if (this._castTimes === this._totalCastTimes) {
@@ -516,9 +516,44 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param castingPiece The piece casting the spell
      * @returns The result of the failed spell cast
      */
-    async castFail(owner: Player<P>, castingPiece: P): Promise<void> {
+    async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point): Promise<void> {
         this._failed = true;
         this._castTimes = 0;
+
+        const isSelfTarget =
+            !castPoint ||
+            (castPoint.x === castingPiece.position.x && castPoint.y === castingPiece.position.y);
+
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.WizardCasting,
+            pieceId: castingPiece.id,
+        });
+
+        if (isSelfTarget) {
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: "die",
+            });
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: EffectType.SummonPiece,
+                pieceId: castingPiece.id,
+            });
+            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+                type: EffectType.WizardCastFail,
+                pieceId: castingPiece.id,
+            });
+            return;
+        }
+
+        // Target-targeted branch is filled in by the next task. For now
+        // fall back to the self-target visual so this task is committable
+        // on its own.
+        this._board.events.emit(EngineEvent.EffectRequested, {
+            sound: "die",
+        });
+        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+            type: EffectType.SummonPiece,
+            pieceId: castingPiece.id,
+        });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.WizardCastFail,
             pieceId: castingPiece.id,

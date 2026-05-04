@@ -1121,17 +1121,61 @@ describe("Spell.castFail", () => {
         expect(s.castTimes).toBe(0);
     });
 
-    it("emits EffectRequested with WizardCastFail", async () => {
+    it("emits the self-target failure sequence when no castPoint is supplied", async () => {
         const board = makeMockBoard();
-        const piece = makeMockPiece({ id: 42 });
+        const piece = makeMockPiece({ id: 42, x: 5, y: 5 });
         const owner = makeMockPlayer(piece);
         const s = new Spell(board, 1, makeConfig());
         s.owner = owner;
+
         await s.castFail(owner, piece);
-        expect((board as any).events.emitAsync).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+
+        const emit = (board as any).events.emit as ReturnType<typeof vi.fn>;
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+
+        // No cast-beam sound on the self-target path.
+        expect(emit).not.toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cast-beam" });
+
+        // Sequence: WizardCasting -> die sound -> SummonPiece -> WizardCastFail.
+        expect(emitAsync).toHaveBeenNthCalledWith(1, EngineEvent.EffectRequested, {
+            type: EffectType.WizardCasting,
+            pieceId: 42,
+        });
+        expect(emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
+        expect(emitAsync).toHaveBeenNthCalledWith(2, EngineEvent.EffectRequested, {
+            type: EffectType.SummonPiece,
+            pieceId: 42,
+        });
+        expect(emitAsync).toHaveBeenNthCalledWith(3, EngineEvent.EffectRequested, {
             type: EffectType.WizardCastFail,
             pieceId: 42,
         });
+
+        // WizardCastBeam must not be emitted on the self-target path.
+        const beamCall = emitAsync.mock.calls.find(
+            ([, payload]: any) => payload?.type === EffectType.WizardCastBeam,
+        );
+        expect(beamCall).toBeUndefined();
+    });
+
+    it("treats a castPoint equal to the caster's position as self-target", async () => {
+        const board = makeMockBoard();
+        const piece = makeMockPiece({ id: 7, x: 4, y: 4 });
+        const owner = makeMockPlayer(piece);
+        const s = new Spell(board, 1, makeConfig());
+        s.owner = owner;
+
+        await s.castFail(owner, piece, new Point(4, 4));
+
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+        expect(emitAsync).toHaveBeenCalledWith(EngineEvent.EffectRequested, {
+            type: EffectType.SummonPiece,
+            pieceId: 7,
+        });
+        const beamCall = emitAsync.mock.calls.find(
+            ([, payload]: any) => payload?.type === EffectType.WizardCastBeam,
+        );
+        expect(beamCall).toBeUndefined();
     });
 });
 
