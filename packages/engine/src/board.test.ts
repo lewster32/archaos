@@ -32,6 +32,7 @@ import {
 import { EngineEvent } from "./enums/engineevent";
 import type {
     AttackPieceBatchPayload,
+    DismountPieceBatchPayload,
     MountPieceBatchPayload,
     MovePieceBatchPayload,
     RangedAttackPieceBatchPayload,
@@ -2516,6 +2517,98 @@ describe("Movement-phase visual events", () => {
         expect(events[0].wizardId).toBe(wizard.id);
         expect(events[0].mountId).toBe(mount.id);
         expect(events[0].path).toEqual([{ x: 1, y: 0 }]);
+    });
+
+    it("emits DismountPieceBatch when a wizard dismounts", async () => {
+        const board = makeBoard({ width: 5, height: 5 });
+        const p1 = board.addPlayer({
+            name: "P1",
+            type: GameSetupPlayerType.Local,
+        });
+        // Mount at (1,0) — wizard rides it initially.
+        const mount = await board.addPiece({
+            type: UnitType.Creature,
+            x: 1,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.MountAny],
+            },
+            owner: p1 as any,
+        });
+        // Wizard at (1,0) as well — setMount will place wizard on mount.
+        const wizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 1,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p1 as any,
+        });
+
+        // Pre-mount: wizard starts the test already mounted on mount.
+        // setMount + setRider must be called as a pair (see piece.ts).
+        wizard.setMount(mount);
+        mount.setRider(wizard);
+
+        board.stateManager.evaluate(new StartGame());
+        board.stateManager.evaluate(new SpellbookReady());
+        board.stateManager.evaluate(new NoSpellsCast());
+        board.stateManager.evaluate(new SpreadingDone());
+        board.stateManager.evaluate(new MovingReady());
+
+        const playerId = wizard.owner!.id;
+        const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+        const events: DismountPieceBatchPayload[] = [];
+        board.events.on(
+            EngineEvent.DismountPieceBatch,
+            (payload: DismountPieceBatchPayload) => {
+                events.push(payload);
+            },
+        );
+
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "sel-1",
+            token: "",
+            kind: "select-piece",
+            pieceId: wizard.id,
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "dis-1",
+            token: "",
+            kind: "dismount-piece",
+            wizardId: wizard.id,
+            to: { x: 2, y: 0 },
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "end-1",
+            token: "",
+            kind: "end-movement-phase",
+        });
+        await slotPromise;
+
+        expect(events).toHaveLength(1);
+        expect(events[0].wizardId).toBe(wizard.id);
+        expect(events[0].mountId).toBe(mount.id);
+        expect(events[0].to).toEqual({ x: 2, y: 0 });
     });
 });
 

@@ -74,6 +74,7 @@ import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
 import type {
     AttackPieceBatchPayload,
+    DismountPieceBatchPayload,
     MountPieceBatchPayload,
     MovePieceBatchPayload,
     RangedAttackPieceBatchPayload,
@@ -2074,6 +2075,10 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
             return;
         }
+        // Capture the mount id before the recordEvent mutation clears
+        // wizard.currentMount via wizard.setMount(null).
+        const mountSnapshot: P = mount;
+        const toSnapshot: SimplePoint = { x: cmd.to.x, y: cmd.to.y };
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
             wizard.setMount(null);
             mount.setRider(null);
@@ -2086,6 +2091,12 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
             wizard.setTurnFlags({ moved: true });
         });
+        const payload: DismountPieceBatchPayload = {
+            wizardId: wizard.id,
+            mountId: mountSnapshot.id,
+            to: toSnapshot,
+        };
+        this._boardEvents.emit(EngineEvent.DismountPieceBatch, payload);
         slot.submit(playerId, cmd);
     }
 
