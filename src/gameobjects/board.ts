@@ -43,6 +43,7 @@ import type {
     SpellbookOpenEventData,
     SpreadBatchPayload,
     TurmoilBatchPayload,
+    MovePieceBatchPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -338,6 +339,11 @@ export class Board extends EngineBoard<Piece> {
                 await piece.updatePosition(500);
             }
             await this.idleDelay(Board.DEFAULT_DELAY);
+        });
+        this.events.on(EngineEvent.MovePieceBatch, (payload: MovePieceBatchPayload) => {
+            this._animationQueue.enqueue(async () => {
+                await this._animateMovePieceBatch(payload);
+            });
         });
         this.events.on(EventType.PieceInfo, (data: any) => {
             globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
@@ -863,6 +869,27 @@ export class Board extends EngineBoard<Piece> {
         includeCentre?: boolean,
     ): Piece[] {
         return super.getAdjacentPiecesAtPosition(new Point(point.x, point.y), filter, includeCentre) as Piece[];
+    }
+
+    /**
+     * Animate a `move-piece` command's traversal in response to
+     * EngineEvent.MovePieceBatch. Walks each step via `piece.moveTo`,
+     * playing the step or fly sound at the start. Resets the
+     * rangeGizmo afterwards.
+     */
+    private async _animateMovePieceBatch(payload: MovePieceBatchPayload): Promise<void> {
+        const piece = this.getPiece(payload.pieceId);
+        if (!piece) return;
+        const isFlying = piece.hasStatus(UnitStatus.Flying);
+        for (let i = 0; i < payload.path.length; i++) {
+            const step = payload.path[i];
+            if (i === 0) {
+                this.sound.play(isFlying ? "fly" : "step");
+            }
+            await piece.moveTo(step);
+        }
+        await this.rangeGizmo.reset();
+        this.emitBoardUpdateEvent();
     }
 
     /**

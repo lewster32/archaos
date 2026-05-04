@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG } from "@archaos/engine";
-import type { BroadcastEventMessage } from "@archaos/engine";
+import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload } from "@archaos/engine";
 import { Board } from "./board";
+import { AnimationQueue } from "./animationqueue";
 
 /**
  * A TestRNG variant that delegates frac() to Math.random() for statistical
@@ -310,5 +311,134 @@ describe("client Board.startGame override", () => {
         // Legacy reset must blank the current-player tracking too.
         expect((board as any)._currentPlayerIndex).toBe(-1);
         expect((board as any)._currentPlayer).toBeNull();
+    });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Visual reaction - MovePieceBatch
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - MovePieceBatch", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the MovePieceBatch subscriber and _animateMovePieceBatch handler
+     * without instantiating Phaser. Only the fields touched by the handler
+     * are populated.
+     */
+    function makeFakeMovingBoard(isFlying: boolean = false): {
+        board: Board;
+        piece: { id: number; hasStatus: ReturnType<typeof vi.fn>; moveTo: ReturnType<typeof vi.fn> };
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        // Real EventEmitter so the subscription and emit round-trip works.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const piece = {
+            id: 42,
+            hasStatus: vi.fn((_status: UnitStatus) => isFlying),
+            moveTo: vi.fn((_pt: { x: number; y: number }) => Promise.resolve()),
+        };
+
+        (fake as any).getPiece = vi.fn((_id: number) => piece);
+        // sound and rangeGizmo are getter-only; set the backing fields instead.
+        (fake as any)._sound = { play: vi.fn(), playAsync: vi.fn(() => Promise.resolve()) };
+        (fake as any)._rangeGizmo = { reset: vi.fn(() => Promise.resolve()) };
+        (fake as any).emitBoardUpdateEvent = vi.fn();
+
+        // Wire the subscriber the same way the constructor does.
+        emitter.on(EngineEvent.MovePieceBatch, (payload: MovePieceBatchPayload) => {
+            animationQueue.enqueue(async () => {
+                await (fake as any)._animateMovePieceBatch(payload);
+            });
+        });
+
+        return { board: fake, piece };
+    }
+
+    it("animates each step via piece.moveTo for a ground unit", async () => {
+        const { board, piece } = makeFakeMovingBoard(false);
+        const moveToSpy = vi.spyOn(piece, "moveTo");
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: piece.id,
+            path: [{ x: 0, y: 1 }, { x: 0, y: 2 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(moveToSpy).toHaveBeenCalledTimes(2);
+        expect(moveToSpy.mock.calls[0][0]).toEqual({ x: 0, y: 1 });
+        expect(moveToSpy.mock.calls[1][0]).toEqual({ x: 0, y: 2 });
+    });
+
+    it("plays the step sound at the first step for a ground unit", async () => {
+        const { board } = makeFakeMovingBoard(false);
+        const soundPlay = (board as any)._sound.play as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: 42,
+            path: [{ x: 1, y: 0 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(soundPlay).toHaveBeenCalledWith("step");
+    });
+
+    it("plays the fly sound at the first step for a flying unit", async () => {
+        const { board } = makeFakeMovingBoard(true);
+        const soundPlay = (board as any)._sound.play as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: 42,
+            path: [{ x: 1, y: 0 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(soundPlay).toHaveBeenCalledWith("fly");
+    });
+
+    it("resets the rangeGizmo after animation", async () => {
+        const { board } = makeFakeMovingBoard(false);
+        const resetSpy = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: 42,
+            path: [{ x: 1, y: 0 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(resetSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("does nothing when piece is not found", async () => {
+        const { board } = makeFakeMovingBoard(false);
+        (board as any).getPiece = vi.fn(() => null);
+        const rangeReset = (board as any)._rangeGizmo.reset as ReturnType<typeof vi.fn>;
+
+        (board as any).events.emit(EngineEvent.MovePieceBatch, {
+            pieceId: 99,
+            path: [{ x: 1, y: 0 }],
+            riderSync: false,
+        } as MovePieceBatchPayload);
+
+        await board.animationQueue.idle();
+
+        expect(rangeReset).not.toHaveBeenCalled();
     });
 });
