@@ -1687,11 +1687,14 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             }
         });
 
+        // _handleMovePiece always invokes _walkPathWithEngagement with the
+        // default riderSync: true; reflect that truthfully so the client
+        // knows it should sync any rider's animation in lockstep.
         const payload: MovePieceBatchPayload = {
             pieceId: piece.id,
             path: walked.map((p) => ({ x: p.x, y: p.y })),
             riderSync: true,
-            ...(engagedBy ? { engagedBy: { pieceId: (engagedBy as P).id } } : {}),
+            ...(engagedBy ? { engagedBy: { pieceId: engagedBy.id } } : {}),
         };
         this._boardEvents.emit(EngineEvent.MovePieceBatch, payload);
 
