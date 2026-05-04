@@ -560,6 +560,11 @@ export class Spell<P extends Piece = Piece> extends Model {
                 targetPosition: { x: castPoint.x, y: castPoint.y },
             });
         }
+
+        // Dwell on the failure so it has time to register before the next
+        // beat. Engine board's idleDelay is a no-op; the client override
+        // delays for DEFAULT_DELAY (or short delay if cheat is active).
+        await this._board.idleDelay();
     }
 
     /**
