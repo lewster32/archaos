@@ -74,14 +74,6 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
             });
         }
 
-        const rollSuccess: boolean = this._board.roll(
-            this._properties.damage,
-            target.stats.magicResistance,
-            this._owner,
-        );
-
-        let targetKilled: boolean = false;
-
         if (hitSound) {
             this._board.events.emit(EngineEvent.EffectRequested, {
                 sound: hitSound,
@@ -93,6 +85,21 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 pieceId: target.id,
             });
         }
+
+        // Cast-roll failure: full visuals played, now fizzle.
+        if (this._failed) {
+            await this.castFail(owner, castingPiece, point);
+            return null;
+        }
+
+        // Damage roll: full visuals played, target may shrug off.
+        const rollSuccess: boolean = this._board.roll(
+            this._properties.damage,
+            target.stats.magicResistance,
+            this._owner,
+        );
+
+        let targetKilled: boolean = false;
 
         if (rollSuccess) {
             if (this.properties.destroyWizardCreatures && target.hasStatus(UnitStatus.Wizard)) {
@@ -106,6 +113,8 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 await target.kill();
                 targetKilled = true;
             }
+        } else {
+            this._board.logger.log(`${target.fullName} resisted ${this.name}`, Colour.Magenta);
         }
 
         if (targetKilled) {
