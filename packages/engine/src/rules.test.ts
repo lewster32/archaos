@@ -1262,10 +1262,10 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
         expect(result).toBe(ActionType.Invalid);
     });
 
-    it("Cast click calls nextPlayer and returns Cancel when doCastSpell returns false", async () => {
+    it("Cast click dispatches a cast-spell command when target resolves to a piece", async () => {
         const spell = {
             name: "Fireball",
-            castTimes: 0, // spell runs out after cast → doCastSpell returns false
+            castTimes: 1,
             failed: false,
             lineOfSight: false,
             cast: vi.fn().mockResolvedValue(undefined),
@@ -1276,7 +1276,7 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
             position: new Point(0, 0),
             turnOver: false,
         });
-        const nextPlayer = vi.fn().mockResolvedValue(undefined);
+        const handleCommand = vi.fn().mockResolvedValue(undefined);
         const board = createMockBoard({
             state: BoardState.CastSpell,
             selected,
@@ -1285,20 +1285,20 @@ describe("Rules.processAction – Info sort and Cast success (Click)", () => {
                 name: "Alice",
                 remote: null,
                 selectedSpell: spell,
-                useSpell: vi.fn().mockResolvedValue(spell),
-                discardSpell: vi.fn().mockResolvedValue(spell),
             } as any,
             boardEvents: { emit: vi.fn() },
             logger: { log: vi.fn() },
             stateManager: { evaluate: vi.fn() },
-            deselectPlayer: vi.fn(),
-            idleDelay: vi.fn().mockResolvedValue(undefined),
-            nextPlayer,
+            handleCommand,
         } as any);
         const rules = Rules.getInstance();
         const result = await rules.processAction(board, ActionType.Cast, InputType.Click);
-        expect(result).toBe(ActionType.Cancel);
-        expect(nextPlayer).toHaveBeenCalled();
+        expect(result).toBe(ActionType.Cast);
+        expect(handleCommand).toHaveBeenCalledTimes(1);
+        const [pid, cmd] = handleCommand.mock.calls[0];
+        expect(pid).toBe(1);
+        expect(cmd.kind).toBe("cast-spell");
+        expect(cmd.target).toEqual({ pieceId: 7 });
     });
 });
 

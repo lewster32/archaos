@@ -21,11 +21,13 @@ import type { Point } from "./point";
 import type {
     AttackPieceCommand,
     CancelPieceActionCommand,
+    CastSpellCommand,
     MountPieceCommand,
     MovePieceCommand,
     RangedAttackPieceCommand,
     SelectPieceCommand,
 } from "./protocol/commands";
+import type { SpellTarget } from "./protocol/outcomes";
 export type { SpellCastTarget } from "./spells/spell";
 
 /**
@@ -309,11 +311,15 @@ export class Rules {
                 if (currentTarget == null) {
                     return ActionType.Invalid;
                 }
-                if (await this.doCastSpell(board, currentTarget)) {
-                    return ActionType.Cast;
-                } else {
-                    await board.nextPlayer();
-                }
+                // Dispatch a cast-spell command instead of calling
+                // doCastSpell directly. Under autoRunPhaseLoop=true the
+                // engine awaits a cast-spell command on its open casting
+                // slot; calling doCastSpell would perform the cast but
+                // never submit the slot, hanging the entire phase loop.
+                // _handleCastSpell performs the cast pipeline itself
+                // (Spell.cast + outcomes + slot.submit).
+                await this._dispatchCastSpell(board, currentTarget);
+                return ActionType.Cast;
             }
             return ActionType.Cancel;
         }
@@ -424,6 +430,45 @@ export class Rules {
      */
     private _nextCommandId(pieceId: number): string {
         return `rules-${pieceId}-${Date.now()}`;
+    }
+
+    /**
+     * Dispatch a `cast-spell` command translated from the engine-side
+     * `SpellCastTarget` (Point or Piece) into the protocol-side
+     * `SpellTarget` envelope (`{point}` / `{pieceId}` / `{self: true}`).
+     * Used by the human casting click path so it goes through the
+     * command pipeline; the matching `_handleCastSpell` performs the
+     * actual cast and submits the engine's casting slot.
+     */
+    private async _dispatchCastSpell(board: Board, target: SpellCastTarget): Promise<void> {
+        const playerId: number = board.currentPlayer?.id ?? 0;
+        const cmd: CastSpellCommand = {
+            type: "command",
+            commandId: this._nextCommandId(playerId),
+            token: "",
+            kind: "cast-spell",
+            target: this._translateCastTarget(target),
+        };
+        await board.handleCommand(playerId, cmd);
+    }
+
+    /**
+     * Translate the engine-side cast target (Point or Piece) into the
+     * protocol-side `SpellTarget` envelope used by `cast-spell` commands.
+     * Pieces always serialise as `{pieceId}` regardless of whether the
+     * piece happens to be the caster's own wizard; the engine resolver
+     * (`_resolveCastTarget`) treats `{pieceId}` and `{self: true}` as
+     * equivalent when they refer to the same piece.
+     */
+    private _translateCastTarget(target: SpellCastTarget): SpellTarget {
+        // Pieces have a numeric `id`; Points do not. Duck-type rather
+        // than `instanceof Piece` so test stubs that use plain Piece-like
+        // objects also work.
+        if (target != null && typeof (target as { id?: unknown }).id === "number") {
+            return { pieceId: (target as Piece).id };
+        }
+        const point = target as Point;
+        return { point: { x: point.x, y: point.y } };
     }
 
     /**
