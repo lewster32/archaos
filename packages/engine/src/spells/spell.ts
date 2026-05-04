@@ -481,19 +481,20 @@ export class Spell<P extends Piece = Piece> extends Model {
             castPoint = Point.clone(target.position);
         }
 
-        // We only want to check for failure on the first cast of multi-cast
-        // spells - if a player succeeds then they get to cast all remaining
-        // times.
-        if (this._castTimes === this._totalCastTimes && !this.roll()) {
-            await this.castFail(owner, castingPiece, castPoint);
-            return null;
-        }
+        // We only want to roll on the first cast of multi-cast spells -
+        // the outcome is sealed up-front so doCast can play the full
+        // visual sequence without a hitch at the moment of impact.
         if (this._castTimes === this._totalCastTimes) {
-            this._board.alignment.shift(this.balance);
+            if (this.roll()) {
+                this._board.alignment.shift(this.balance);
+            } else {
+                this._failed = true;
+            }
         }
         this._castTimes--;
 
-        return await this.doCast(owner, castingPiece, castPoint, [castPiece]);
+        const result = await this.doCast(owner, castingPiece, castPoint, [castPiece]);
+        return this._failed ? null : result;
     }
 
     /**
@@ -510,13 +511,17 @@ export class Spell<P extends Piece = Piece> extends Model {
     }
 
     /**
-     * Oh noes, the spell casting has failed.
+     * Play the cast-failure fizzle and log the failure. Subclass doCasts
+     * call this from their failure branch after their full success-style
+     * visual sequence has played. The fizzle particles land at the target
+     * tile (or the wizard's tile for self-cast spells).
+     *
+     * Marks the spell as failed and consumes any remaining cast times.
      *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
-     * @param castPoint The target tile of the cast, if any. When absent or equal
-     *     to the caster's tile, the self-target failure sequence plays. Otherwise
-     *     the target-targeted sequence plays with the fizzle at the target tile.
+     * @param castPoint The target tile of the cast, if any. When absent or
+     *     equal to the caster's tile, the fizzle plays on the wizard.
      */
     async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point): Promise<void> {
         this._failed = true;
@@ -525,41 +530,20 @@ export class Spell<P extends Piece = Piece> extends Model {
         const isSelfTarget =
             !castPoint || (castPoint.x === castingPiece.position.x && castPoint.y === castingPiece.position.y);
 
-        if (!isSelfTarget) {
-            this._board.events.emit(EngineEvent.EffectRequested, {
-                sound: "cast-beam",
-            });
-        }
-
-        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-            type: EffectType.WizardCasting,
-            pieceId: castingPiece.id,
-        });
-
-        this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "die",
-        });
-
         if (isSelfTarget) {
-            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-                type: EffectType.SummonPiece,
-                pieceId: castingPiece.id,
-            });
             await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                 type: EffectType.WizardCastFail,
                 pieceId: castingPiece.id,
             });
         } else {
             await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-                type: EffectType.WizardCastBeam,
-                startPieceId: castingPiece.id,
-                targetPosition: { x: castPoint.x, y: castPoint.y },
-            });
-            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                 type: EffectType.WizardCastFail,
                 targetPosition: { x: castPoint.x, y: castPoint.y },
             });
         }
+
+        this._board.logger.log(`${owner.name} failed to cast ${this.name}`, Colour.Magenta);
+        await this._board.idleDelay();
     }
 
     /**
