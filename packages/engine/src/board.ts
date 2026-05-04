@@ -1653,7 +1653,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         });
         const selectPayload: SelectPieceVisualPayload = {
             pieceId: piece.id,
-            ...(engagedByOnSelect ? { engagedBy: { pieceId: (engagedByOnSelect as P).id } } : {}),
+            ...(engagedByOnSelect ? { engagedBy: { pieceId: engagedByOnSelect.id } } : {}),
         };
         this._boardEvents.emit(EngineEvent.SelectPieceVisual, selectPayload);
     }
