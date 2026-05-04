@@ -46,6 +46,7 @@ import type {
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
+import { AnimationQueue } from "./animationqueue";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
 import { Piece } from "./piece";
@@ -98,6 +99,11 @@ export class Board extends EngineBoard<Piece> {
      * The different visual layers of the board.
      */
     private readonly _layers: Map<BoardLayer, GameObjects.Layer>;
+
+    /**
+     * The animation queue for this board.
+     */
+    private readonly _animationQueue: AnimationQueue = new AnimationQueue();
 
     /**
      * The cursor for this board.
@@ -445,6 +451,19 @@ export class Board extends EngineBoard<Piece> {
 
     override get state(): BoardState {
         return super.state;
+    }
+
+    /**
+     * The per-board animation queue that serialises visual reactions to
+     * engine `*Batch` events. Tests can poll `idle()` to wait for the
+     * queue to drain.
+     */
+    get animationQueue(): AnimationQueue {
+        return this._animationQueue;
+    }
+
+    override get busy(): boolean {
+        return this._busy || this._animationQueue.isProcessing;
     }
 
     get cursor(): Cursor {
