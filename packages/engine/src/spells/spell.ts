@@ -514,7 +514,9 @@ export class Spell<P extends Piece = Piece> extends Model {
      *
      * @param owner The player casting the spell
      * @param castingPiece The piece casting the spell
-     * @returns The result of the failed spell cast
+     * @param castPoint The target tile of the cast, if any. When absent or equal
+     *     to the caster's tile, the self-target failure sequence plays. Otherwise
+     *     the target-targeted sequence plays with the fizzle at the target tile.
      */
     async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point): Promise<void> {
         this._failed = true;
@@ -523,6 +525,12 @@ export class Spell<P extends Piece = Piece> extends Model {
         const isSelfTarget =
             !castPoint ||
             (castPoint.x === castingPiece.position.x && castPoint.y === castingPiece.position.y);
+
+        if (!isSelfTarget) {
+            this._board.events.emit(EngineEvent.EffectRequested, {
+                sound: "cast-beam",
+            });
+        }
 
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.WizardCasting,
@@ -544,19 +552,14 @@ export class Spell<P extends Piece = Piece> extends Model {
             return;
         }
 
-        // Target-targeted branch is filled in by the next task. For now
-        // fall back to the self-target visual so this task is committable
-        // on its own.
-        this._board.events.emit(EngineEvent.EffectRequested, {
-            sound: "die",
-        });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
-            type: EffectType.SummonPiece,
-            pieceId: castingPiece.id,
+            type: EffectType.WizardCastBeam,
+            startPieceId: castingPiece.id,
+            targetPosition: { x: castPoint.x, y: castPoint.y },
         });
         await this._board.events.emitAsync(EngineEvent.EffectRequested, {
             type: EffectType.WizardCastFail,
-            pieceId: castingPiece.id,
+            targetPosition: { x: castPoint.x, y: castPoint.y },
         });
     }
 

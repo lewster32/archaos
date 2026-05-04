@@ -1177,6 +1177,45 @@ describe("Spell.castFail", () => {
         );
         expect(beamCall).toBeUndefined();
     });
+
+    it("emits the target-targeted failure sequence when castPoint differs from the caster's position", async () => {
+        const board = makeMockBoard();
+        const caster = makeMockPiece({ id: 11, x: 2, y: 3 });
+        const owner = makeMockPlayer(caster);
+        const s = new Spell(board, 1, makeConfig());
+        s.owner = owner;
+
+        await s.castFail(owner, caster, new Point(8, 9));
+
+        const emit = (board as any).events.emit as ReturnType<typeof vi.fn>;
+        const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
+
+        // cast-beam sound is emitted because a beam is being drawn.
+        expect(emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "cast-beam" });
+        // die sound is NOT emitted on the target-targeted path.
+        expect(emit).not.toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
+
+        // Sequence: WizardCasting -> WizardCastBeam -> WizardCastFail at target.
+        expect(emitAsync).toHaveBeenNthCalledWith(1, EngineEvent.EffectRequested, {
+            type: EffectType.WizardCasting,
+            pieceId: 11,
+        });
+        expect(emitAsync).toHaveBeenNthCalledWith(2, EngineEvent.EffectRequested, {
+            type: EffectType.WizardCastBeam,
+            startPieceId: 11,
+            targetPosition: { x: 8, y: 9 },
+        });
+        expect(emitAsync).toHaveBeenNthCalledWith(3, EngineEvent.EffectRequested, {
+            type: EffectType.WizardCastFail,
+            targetPosition: { x: 8, y: 9 },
+        });
+
+        // SummonPiece must not be emitted on the target-targeted path.
+        const summonCall = emitAsync.mock.calls.find(
+            ([, payload]: any) => payload?.type === EffectType.SummonPiece,
+        );
+        expect(summonCall).toBeUndefined();
+    });
 });
 
 // ─── showRange ────────────────────────────────────────────────────────────────
