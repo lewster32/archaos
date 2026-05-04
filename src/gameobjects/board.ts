@@ -44,6 +44,7 @@ import type {
     SpreadBatchPayload,
     TurmoilBatchPayload,
     RemotePlayer,
+    PhaseChangedOutcome,
 } from "@archaos/engine";
 import { Cursor } from "./cursor";
 import { createEffect, EffectType } from "./effectemitter";
@@ -334,6 +335,27 @@ export class Board extends EngineBoard<Piece> {
         });
         this.events.on(EventType.PieceInfo, (data: any) => {
             globalThis.dispatchEvent(new CustomEvent(EventType.PieceInfo, { detail: data }));
+        });
+
+        // Phase-changed driver for the auto-run flow. The engine's
+        // `_runSpellbookPhase` opens slots per-player but does not set
+        // `_currentPlayer` or emit any UI event — both of which were
+        // previously the responsibility of the legacy `nextPlayer()`
+        // loop. When `autoRunPhaseLoop` is true the legacy loop is
+        // skipped, so without this bridge the human spellbook never
+        // appears (soft-lock at startup) and `dispatchCommand` has no
+        // currentPlayer to attach the pick-spell command to.
+        this.events.on(EngineEvent.PhaseChanged, (outcome: PhaseChangedOutcome) => {
+            if (!this.autoRunPhaseLoop) {
+                return;
+            }
+            // Always run the spellbook handler so its cleanup branch
+            // (close any open spellbook UI when the phase moves on) fires
+            // even when the new phase is not Spellbook.
+            this._handleSpellbookPhaseChanged(outcome);
+            if (this.phase === BoardPhase.Casting) {
+                void this._handleCastingPhaseChanged(outcome);
+            }
         });
 
         // 30% chance of weather on a fresh board. Scenarios can override
@@ -1440,6 +1462,186 @@ export class Board extends EngineBoard<Piece> {
         super.deselectPlayer();
         this.rangeGizmo.reset();
         this.emitUIEvent(EventType.EndTurnAvailable, false);
+    }
+
+    /**
+     * Tracks the player whose spellbook UI was last shown via the
+     * auto-run phase-changed bridge, so we can emit a matching close
+     * event when the slot moves to a different player or phase.
+     */
+    private _autoRunSpellbookPlayerId: number | null = null;
+
+    /**
+     * Bridge between the engine's `_runSpellbookPhase` and the legacy
+     * Spellbook UI event. Called from the `EngineEvent.PhaseChanged`
+     * listener while `autoRunPhaseLoop` is true. Mirrors the emit
+     * previously located in `nextPlayer()` so `Spellbook.vue` keeps
+     * working unchanged.
+     */
+    private _handleSpellbookPhaseChanged(outcome: PhaseChangedOutcome): void {
+        const isSpellbookPhase = this.phase === BoardPhase.Spellbook;
+        const playerId = outcome.currentPlayerId;
+
+        // Close the previously-open spellbook if the slot has moved to
+        // a different player or out of the spellbook phase entirely.
+        if (
+            this._autoRunSpellbookPlayerId != null &&
+            (!isSpellbookPhase || playerId !== this._autoRunSpellbookPlayerId)
+        ) {
+            this.emitUIEvent(EventType.SpellbookClose, true);
+            this._autoRunSpellbookPlayerId = null;
+        }
+
+        if (!isSpellbookPhase || playerId == null) {
+            return;
+        }
+
+        const player = this.getPlayer(playerId);
+        if (!player || player.defeated) {
+            return;
+        }
+
+        // Set `currentPlayer` so `dispatchCommand` in Game.vue can
+        // attach the pick-spell / end-spell-pick command to the right
+        // player. Engine `_runSpellbookPhase` does not do this itself.
+        // Fire-and-forget — the visual side-effects (highlighting,
+        // sound) are non-blocking for the spellbook UI emit below.
+        void this.selectPlayer(playerId);
+
+        if (player.remote || !player.spells?.length) {
+            // AI or empty spellbook: ComputerWizard's PhaseChanged
+            // listener will dispatch a command directly. No UI emit
+            // needed.
+            return;
+        }
+
+        // Replicate the legacy SpellbookOpen emit shape. The callback
+        // is retained as a no-op for compatibility with code paths
+        // that might still reference `spellbook.value.onSelect` —
+        // the actual command dispatch now flows through
+        // Game.vue::spellSelect -> dispatchCommand.
+        this.emitUIEvent(EventType.SpellbookOpen, <SpellbookOpenEventData>{
+            data: {
+                caster: player.name,
+                spells: player.spells,
+                soloMode: this.players.filter((p) => !p.defeated && !p.remote).length === 1,
+                preventSkip: this.tutorial?.config.disableCancelSpell ?? false,
+            },
+            callback: async () => {
+                // No-op. Pick dispatch flows through dispatchCommand.
+            },
+        });
+        this._autoRunSpellbookPlayerId = playerId;
+    }
+
+    /**
+     * Tracks the player whose casting UI was last set up via the
+     * auto-run phase-changed bridge, so we only re-run the per-player
+     * setup (selectPlayer, selectWizard, range gizmo) once per caster
+     * rather than on every multi-cast slot iteration.
+     */
+    private _autoRunCastingPlayerId: number | null = null;
+
+    /**
+     * Bridge between the engine's `_runCastingPhase` and the legacy
+     * client casting UI hooks. Called from the `EngineEvent.PhaseChanged`
+     * listener while `autoRunPhaseLoop` is true. Mirrors the casting
+     * branch of `nextPlayer()` so humans see their wizard selected, the
+     * range gizmo drawn and the FSM in `castTargeting` (BoardState.CastSpell)
+     * before the engine awaits a `cast-spell` / `cancel-cast` command.
+     *
+     * For self-targeted spells (autoPlace, range 0) we additionally
+     * dispatch a `cast-spell` command so the open slot completes without
+     * a click. Legacy code used `doAutoCastSpell` / `doCastSpell`
+     * directly, which bypasses the slot and would hang the engine
+     * under autoRunPhaseLoop.
+     */
+    private async _handleCastingPhaseChanged(outcome: PhaseChangedOutcome): Promise<void> {
+        const isCastingPhase = this.phase === BoardPhase.Casting;
+        const playerId = outcome.currentPlayerId;
+
+        // Reset per-player tracking when the slot moves on.
+        if (
+            this._autoRunCastingPlayerId != null &&
+            (!isCastingPhase || playerId !== this._autoRunCastingPlayerId)
+        ) {
+            this._autoRunCastingPlayerId = null;
+        }
+
+        if (!isCastingPhase || playerId == null) {
+            return;
+        }
+
+        const player = this.getPlayer(playerId);
+        if (!player || player.defeated || !player.selectedSpell) {
+            return;
+        }
+
+        // AI players are driven by ComputerWizard's PhaseChanged
+        // listener; nothing to do here for them.
+        if (player.remote) {
+            return;
+        }
+
+        const spell: Spell = player.selectedSpell;
+
+        // First slot for this caster: run the per-player UI setup.
+        if (this._autoRunCastingPlayerId !== playerId) {
+            this._autoRunCastingPlayerId = playerId;
+
+            // Set `currentPlayer` so cursor input + dispatchCommand
+            // attach to the right player. selectPlayer also runs the
+            // new-turn highlight tween, which we only want once per
+            // caster (not per multi-cast iteration).
+            await this.selectPlayer(playerId);
+
+            // Select the wizard so cursor cast logic and the range
+            // gizmo have a piece to anchor on.
+            await this.selectWizard(player);
+        }
+
+        if (!this.selected) {
+            return;
+        }
+
+        // Drive the FSM into castTargeting (BoardState.CastSpell) so
+        // the cursor switches to its cast cursor.
+        this.stateManager.evaluate(new SpellTargeting());
+
+        // Self-targeted spells: dispatch a cast-spell command so the
+        // engine slot completes. Legacy used `doCastSpell` directly
+        // which would leave the slot open under autoRunPhaseLoop.
+        // autoPlace spells (Magic Wood) need an AI-style tile pick to
+        // form a valid target — left as a follow-up; for now they fall
+        // through to the range-gizmo path so the human can click a tile.
+        if (spell.range === 0) {
+            // Defer one microtask so any synchronous setup completes
+            // before the command lands.
+            queueMicrotask(() => {
+                void this.handleCommand(playerId, {
+                    type: "command",
+                    commandId: `auto-cast-${playerId}-${Date.now()}`,
+                    token: "",
+                    kind: "cast-spell",
+                    target: { self: true },
+                });
+            });
+            return;
+        }
+
+        // Targeted spells (range > 0): show the range gizmo and wait
+        // for the human's click. The cursor's existing cast logic
+        // dispatches the cast through `Rules.doCastSpell`; under
+        // autoRunPhaseLoop the engine slot remains open until that
+        // path is migrated to dispatch `cast-spell` commands.
+        if (spell.range > 0) {
+            await this.rangeGizmo.showSimpleRange(
+                this.selected.position,
+                spell.range,
+                CursorType.RangeCast,
+                spell.lineOfSight,
+            );
+        }
     }
 
     /**
