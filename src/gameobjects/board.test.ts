@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload, SelectPieceVisualPayload, CancelPieceActionVisualPayload } from "@archaos/engine";
+import { Board as EngineBoard, BoardState, BoardPhase, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload, SelectPieceVisualPayload, CancelPieceActionVisualPayload, PhaseChangedOutcome } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -1526,5 +1526,137 @@ describe("Visual reaction - CancelPieceActionVisual", () => {
             expect.stringContaining("cancel"),
             false,
         );
+    });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Movement-phase bridge (_handleMovementPhaseChanged)
+// ────────────────────────────────────────────────────────────────────────────
+//
+// Verifies the EngineEvent.PhaseChanged bridge handler for BoardPhase.Moving:
+// - Clears _selected and resets the rangeGizmo on the first Moving slot
+//   for a player, then calls selectPlayer.
+// - Is a no-op for subsequent slots for the same player (tracking via
+//   _autoRunMovementPlayerId prevents duplicate per-turn setup).
+
+describe("Movement-phase bridge", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board with enough state to exercise
+     * `_handleMovementPhaseChanged` without instantiating Phaser.
+     * Returns the fake board plus spies on rangeGizmo.reset and
+     * selectPlayer.
+     */
+    function makeFakeMovementBridgeBoard(playerId: number = 1): {
+        board: Board;
+        rangeGizmoReset: ReturnType<typeof vi.fn>;
+        selectPlayer: ReturnType<typeof vi.fn>;
+        outcome: PhaseChangedOutcome;
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        // _boardEvents backs the `events` getter on engine Board.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        // Stub the `phase` getter to return Moving by default.
+        let _phase: BoardPhase = BoardPhase.Moving;
+        Object.defineProperty(fake, "phase", {
+            configurable: true,
+            get: () => _phase,
+            set: (v: BoardPhase) => { _phase = v; },
+        });
+
+        // A non-defeated player with the given id.
+        const player = { id: playerId, defeated: false };
+        (fake as any).getPlayer = vi.fn((id: number) =>
+            id === playerId ? player : null
+        );
+
+        // rangeGizmo.reset spy.
+        const rangeGizmoReset = vi.fn(() => Promise.resolve());
+        (fake as any)._rangeGizmo = { reset: rangeGizmoReset };
+
+        // Stub _selected so clearing it is observable.
+        (fake as any)._selected = { id: 999 };
+
+        // Stub _autoRunCastingPlayerId (read during cleanup).
+        (fake as any)._autoRunCastingPlayerId = playerId;
+
+        // Stub _autoRunMovementPlayerId (starts as null).
+        (fake as any)._autoRunMovementPlayerId = null;
+
+        // selectPlayer spy.
+        const selectPlayerSpy = vi.fn(() => Promise.resolve());
+        (fake as any).selectPlayer = selectPlayerSpy;
+
+        const outcome: PhaseChangedOutcome = {
+            kind: "phase-changed",
+            phase: "moving",
+            turnNumber: 1,
+            currentPlayerId: playerId,
+        };
+
+        return {
+            board: fake,
+            rangeGizmoReset,
+            selectPlayer: selectPlayerSpy,
+            outcome,
+        };
+    }
+
+    it("clears _selected, resets rangeGizmo and calls selectPlayer on first Moving slot", async () => {
+        const { board, rangeGizmoReset, selectPlayer, outcome } =
+            makeFakeMovementBridgeBoard(1);
+
+        // Pre-condition: _selected is set, cast-phase tracking is live.
+        expect((board as any)._selected).not.toBeNull();
+        expect((board as any)._autoRunMovementPlayerId).toBeNull();
+
+        await (board as any)._handleMovementPhaseChanged(outcome);
+
+        // _selected must be cleared before selectPlayer runs.
+        expect((board as any)._selected).toBeNull();
+
+        // rangeGizmo.reset must be called exactly once.
+        expect(rangeGizmoReset).toHaveBeenCalledTimes(1);
+
+        // _autoRunCastingPlayerId must be cleared.
+        expect((board as any)._autoRunCastingPlayerId).toBeNull();
+
+        // selectPlayer must be called with the player id.
+        expect(selectPlayer).toHaveBeenCalledTimes(1);
+        expect(selectPlayer).toHaveBeenCalledWith(1);
+
+        // Tracking updated so repeat calls are no-ops.
+        expect((board as any)._autoRunMovementPlayerId).toBe(1);
+    });
+
+    it("does NOT re-run setup on subsequent Moving slots for the same player", async () => {
+        const { board, rangeGizmoReset, selectPlayer, outcome } =
+            makeFakeMovementBridgeBoard(1);
+
+        // First call: setup runs.
+        await (board as any)._handleMovementPhaseChanged(outcome);
+        expect(rangeGizmoReset).toHaveBeenCalledTimes(1);
+        expect(selectPlayer).toHaveBeenCalledTimes(1);
+
+        // Simulate a subsequent slot (same player, still Moving phase).
+        // Reset _selected to something to confirm it is NOT cleared again.
+        (board as any)._selected = { id: 77 };
+
+        await (board as any)._handleMovementPhaseChanged(outcome);
+
+        // rangeGizmo.reset must NOT have been called a second time.
+        expect(rangeGizmoReset).toHaveBeenCalledTimes(1);
+
+        // selectPlayer must NOT have been called a second time.
+        expect(selectPlayer).toHaveBeenCalledTimes(1);
+
+        // _selected must be untouched (no second clear).
+        expect((board as any)._selected).not.toBeNull();
     });
 });

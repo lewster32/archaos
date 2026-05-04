@@ -417,6 +417,9 @@ export class Board extends EngineBoard<Piece> {
             if (this.phase === BoardPhase.Casting) {
                 void this._handleCastingPhaseChanged(outcome);
             }
+            if (this.phase === BoardPhase.Moving) {
+                void this._handleMovementPhaseChanged(outcome);
+            }
         });
 
         // 30% chance of weather on a fresh board. Scenarios can override
@@ -1895,6 +1898,13 @@ export class Board extends EngineBoard<Piece> {
     private _autoRunCastingPlayerId: number | null = null;
 
     /**
+     * Tracks the player whose movement-phase UI was last set up via the
+     * auto-run phase-changed bridge, so the per-turn setup runs once per
+     * player rather than on every per-piece slot iteration.
+     */
+    private _autoRunMovementPlayerId: number | null = null;
+
+    /**
      * Bridge between the engine's `_runCastingPhase` and the legacy
      * client casting UI hooks. Called from the `EngineEvent.PhaseChanged`
      * listener while `autoRunPhaseLoop` is true. Mirrors the casting
@@ -1994,6 +2004,61 @@ export class Board extends EngineBoard<Piece> {
                 spell.lineOfSight,
             );
         }
+    }
+
+    /**
+     * Bridge between the engine's `_runMovementPhase` and the legacy
+     * client per-turn UI hooks. Called from the `EngineEvent.PhaseChanged`
+     * listener while `autoRunPhaseLoop` is true. Performs the per-turn
+     * setup that the legacy `nextPlayer()` did (selectPlayer, sound, log,
+     * highlight tween) and clears any leftover casting-phase state
+     * (selected wizard, cast-range gizmo).
+     *
+     * For the FIRST movement slot of a player's turn, runs the full
+     * setup. Subsequent slot openings for the same player (per-piece
+     * action loop) are no-ops here - the SelectPiece visual handles those.
+     */
+    private async _handleMovementPhaseChanged(outcome: PhaseChangedOutcome): Promise<void> {
+        const isMovingPhase = this.phase === BoardPhase.Moving;
+        const playerId = outcome.currentPlayerId;
+
+        // Reset per-player tracking when the slot moves to a new player
+        // or out of the moving phase entirely.
+        if (
+            this._autoRunMovementPlayerId != null &&
+            (!isMovingPhase || playerId !== this._autoRunMovementPlayerId)
+        ) {
+            this._autoRunMovementPlayerId = null;
+        }
+
+        if (!isMovingPhase || playerId == null) {
+            return;
+        }
+
+        const player = this.getPlayer(playerId);
+        if (!player || player.defeated) {
+            return;
+        }
+
+        // Subsequent slots for the same player (after each piece action):
+        // no per-turn setup needed.
+        if (this._autoRunMovementPlayerId === playerId) {
+            return;
+        }
+
+        this._autoRunMovementPlayerId = playerId;
+
+        // Clear any leftover casting-phase selection + cast-range gizmo
+        // before the per-turn setup runs. The casting bridge does not
+        // clean these up because it gates on `phase === Casting`.
+        this._selected = null;
+        await this.rangeGizmo.reset();
+        this._autoRunCastingPlayerId = null;
+
+        // Per-turn UI setup. selectPlayer sets currentPlayer, plays the
+        // new-turn sound, logs "X's turn to move", and runs the highlight
+        // tween that resets every owned piece's turnOver flag.
+        await this.selectPlayer(playerId);
     }
 
     /**
