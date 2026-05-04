@@ -30,7 +30,7 @@ import {
     StartGame,
 } from "./phasemachine";
 import { EngineEvent } from "./enums/engineevent";
-import type { AttackPieceBatchPayload, MovePieceBatchPayload } from "./actions";
+import type { AttackPieceBatchPayload, MovePieceBatchPayload, RangedAttackPieceBatchPayload } from "./actions";
 
 function makeRules(): Rules {
     return {
@@ -2323,6 +2323,98 @@ describe("Movement-phase visual events", () => {
             expect(events[0].targetId).toBe(targetWizard.id);
             expect(events[0].hit).toBe(true);
             expect(events[0].path).toEqual([]);
+        } finally {
+            Board.CHEAT_FORCE_HIT = null;
+        }
+    });
+
+    it("emits RangedAttackPieceBatch after a successful ranged-attack-piece", async () => {
+        // Use a piece with movement: 0 so the `moved` flag is auto-true
+        // (required by canRangedAttackPiece). Give it rangedCombat > 0 and
+        // range: 3 so the target 2 tiles away is in range.
+        const board = makeBoard();
+        const p1 = board.addPlayer({ name: "P1", type: GameSetupPlayerType.Local });
+        const p2 = board.addPlayer({ name: "P2", type: GameSetupPlayerType.Local });
+        const attacker = await board.addPiece({
+            type: UnitType.Creature,
+            x: 0,
+            y: 0,
+            properties: {
+                movement: 0,
+                combat: 0,
+                rangedCombat: 6,
+                range: 3,
+                defence: 3,
+                manoeuvrability: 0,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p1 as any,
+        });
+        const target = await board.addPiece({
+            type: UnitType.Creature,
+            x: 2,
+            y: 0,
+            properties: {
+                movement: 1,
+                combat: 1,
+                rangedCombat: 0,
+                range: 0,
+                defence: 1,
+                manoeuvrability: 1,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p2 as any,
+        });
+
+        Board.CHEAT_FORCE_HIT = true;
+
+        try {
+            board.stateManager.evaluate(new StartGame());
+            board.stateManager.evaluate(new SpellbookReady());
+            board.stateManager.evaluate(new NoSpellsCast());
+            board.stateManager.evaluate(new SpreadingDone());
+            board.stateManager.evaluate(new MovingReady());
+
+            const playerId = attacker.owner!.id;
+            const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+            const events: RangedAttackPieceBatchPayload[] = [];
+            board.events.on(
+                EngineEvent.RangedAttackPieceBatch,
+                (payload: RangedAttackPieceBatchPayload) => {
+                    events.push(payload);
+                },
+            );
+
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "sel-1",
+                token: "",
+                kind: "select-piece",
+                pieceId: attacker.id,
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "rng-1",
+                token: "",
+                kind: "ranged-attack-piece",
+                attackerId: attacker.id,
+                targetId: target.id,
+            });
+            await board.handleCommand(playerId, {
+                type: "command",
+                commandId: "end-1",
+                token: "",
+                kind: "end-movement-phase",
+            });
+            await slotPromise;
+
+            expect(events).toHaveLength(1);
+            expect(events[0].attackerId).toBe(attacker.id);
+            expect(events[0].targetId).toBe(target.id);
+            expect(events[0].hit).toBe(true);
         } finally {
             Board.CHEAT_FORCE_HIT = null;
         }

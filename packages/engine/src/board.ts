@@ -72,7 +72,11 @@ import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
 import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
-import type { AttackPieceBatchPayload, MovePieceBatchPayload } from "./actions";
+import type {
+    AttackPieceBatchPayload,
+    MovePieceBatchPayload,
+    RangedAttackPieceBatchPayload,
+} from "./actions";
 
 /**
  * Simple point type without all the baggage of
@@ -1876,6 +1880,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-target");
             return;
         }
+        let attackHit: boolean = false;
+        let targetKilled: boolean = false;
+        const cascadeKilledIds: number[] = [];
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, async () => {
             const succeeded: boolean = this.roll(
                 attacker.stats.rangedCombat ?? 0,
@@ -1889,10 +1896,36 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 succeeded,
             });
             if (succeeded) {
+                attackHit = true;
+                // Snapshot alive pieces other than the target so we can
+                // detect cascade kills after _cascadeKill returns.
+                const aliveBeforeKill: number[] = this.pieces
+                    .filter((p) => !p.dead && p !== (target as unknown as P))
+                    .map((p) => p.id);
                 await this._cascadeKill(target, "ranged");
+                targetKilled = target.dead;
+                // Collect any pieces that were alive before the kill but
+                // are dead or destroyed now (null = removed by destroy()
+                // for NoCorpse/Undead/illusion pieces).
+                for (const id of aliveBeforeKill) {
+                    const p = this.getPiece(id);
+                    if (p === null || p.dead) {
+                        cascadeKilledIds.push(id);
+                    }
+                }
             }
             attacker.setTurnFlags({ moved: true, attacked: true, rangedAttacked: true });
         });
+
+        const payload: RangedAttackPieceBatchPayload = {
+            attackerId: attacker.id,
+            targetId: target.id,
+            hit: attackHit,
+            targetKilled,
+            cascadeKilledIds: [...cascadeKilledIds],
+        };
+        this._boardEvents.emit(EngineEvent.RangedAttackPieceBatch, payload);
+
         slot.submit(playerId, cmd);
     }
 
