@@ -3,20 +3,26 @@
 ## Summary
 
 When a spell fails its cast roll, the visual feedback should mirror a real
-cast attempt: the wizard performs the casting flourish, a beam travels to the
-target tile, and only then does the fizzle effect play (at the target tile,
-not at the wizard's tile). This applies to self-cast spells too - they get
-the casting flourish and sound, followed immediately by the fizzle at the
-wizard's tile.
+cast attempt:
+
+- For target-targeted spells: the wizard performs the casting flourish, the
+  cast-beam sound plays, a beam travels to the target tile, and then the
+  fizzle effect plays at the target tile (not at the wizard's tile).
+- For self-cast spells: the wizard performs the casting flourish, then a
+  short burst plays at the wizard's tile (the existing `SummonPiece`
+  effect, which is a point-source sparkle visual using the same purple
+  palette as `WizardCasting` / `WizardCastBeam`), then the fizzle. The
+  cast-beam sound is *not* played for self-casts because no beam is drawn.
 
 ## Motivation
 
 Currently a failed spell plays only `WizardCastFail` at the wizard's tile.
 This reads as "nothing happened" - the player doesn't see where they were
 aiming, and there is no visual or audible cue that the cast was even
-attempted. The desired behaviour shows the full intent of the cast (sound,
-flourish, beam) and then the fizzle at the destination, giving the failure
-weight and reinforcing the targeting.
+attempted. The desired behaviour shows the cast was attempted (flourish,
+plus a beam to the target tile when there is one), and then plays the
+fizzle at the destination, giving the failure weight and reinforcing the
+targeting.
 
 ## Current behaviour
 
@@ -55,16 +61,29 @@ weight and reinforcing the targeting.
 
 ### Failure sequence for a self-target spell (or no target supplied)
 
-1. Emit `EngineEvent.EffectRequested` with `sound: "cast-beam"`.
-2. `await` `EffectRequested` with `type: WizardCasting, pieceId: caster.id`.
-3. `await` `EffectRequested` with `type: WizardCastFail,
+1. `await` `EffectRequested` with `type: WizardCasting, pieceId: caster.id`.
+2. Emit `EffectRequested` with `sound: "die"` (the existing pairing for
+   `SummonPiece` - see `summonspell.ts:172`).
+3. `await` `EffectRequested` with `type: SummonPiece, pieceId: caster.id`
+   (reuses the existing point-source sparkle burst).
+4. `await` `EffectRequested` with `type: WizardCastFail,
    pieceId: caster.id`.
+
+No `cast-beam` sound is emitted - the burst represents the magic gathering
+and impacting at the wizard's tile, with no travelling beam. The `die`
+sound is paired with the burst because that is how `SummonPiece` is
+already used elsewhere.
 
 The decision between the two sequences is based on whether `castPoint` was
 supplied to `cast()` and whether it differs from the casting piece's
 position.
 
 ### Code changes
+
+No new effect entry or enum value is needed - `SummonPiece` already exists
+in both `EffectType` (`packages/engine/src/enums/effecttype.ts`) and
+`assets/data/effects.json`. It is currently emitted only by `SummonSpell`
+on success; this spec also uses it on the self-cast failure path.
 
 `packages/engine/src/spells/spell.ts`
 
@@ -91,9 +110,11 @@ position.
            (castPoint.x === castingPiece.position.x &&
                castPoint.y === castingPiece.position.y);
 
-       this._board.events.emit(EngineEvent.EffectRequested, {
-           sound: "cast-beam",
-       });
+       if (!isSelfTarget) {
+           this._board.events.emit(EngineEvent.EffectRequested, {
+               sound: "cast-beam",
+           });
+       }
        await this._board.events.emitAsync(EngineEvent.EffectRequested, {
            type: EffectType.WizardCasting,
            pieceId: castingPiece.id,
@@ -110,6 +131,13 @@ position.
                targetPosition: { x: castPoint.x, y: castPoint.y },
            });
        } else {
+           this._board.events.emit(EngineEvent.EffectRequested, {
+               sound: "die",
+           });
+           await this._board.events.emitAsync(EngineEvent.EffectRequested, {
+               type: EffectType.SummonPiece,
+               pieceId: castingPiece.id,
+           });
            await this._board.events.emitAsync(EngineEvent.EffectRequested, {
                type: EffectType.WizardCastFail,
                pieceId: castingPiece.id,
@@ -118,8 +146,8 @@ position.
    }
    ```
 
-No changes are needed to `rules.ts`, `board.ts`, individual spell classes,
-the `EffectRequested` payload, or `effects.json`.
+No changes are needed to `rules.ts`, `board.ts`, `effecttype.ts`,
+`effects.json`, individual spell classes, or the `EffectRequested` payload.
 
 ### Multi-target spells
 
@@ -129,7 +157,7 @@ first cast attempt of the multi-cast (the existing
 ensures this). The `castPoint` passed through is the originally-clicked
 target tile, so the fizzle plays there.
 
-### Why `WizardCastBeam` for all failure paths
+### Why generic `WizardCastBeam` (not spell-specific beams) on failure
 
 A failed Magic Bolt won't play `MagicBoltBeam` - it plays the generic
 `WizardCastBeam`. A failure means the spell never manifested, so the
@@ -143,22 +171,32 @@ spell type's visual identity.
 
 - The existing test "emits EffectRequested with WizardCastFail" (line 1124)
   needs updating. Replace the single-effect assertion with the new
-  expected sequence for the case under test (likely target-targeted, since
-  the test currently uses `castFail` directly).
+  expected sequence for the case under test.
 - Add a new test for the self-target fallback path: call `castFail` with
   no `castPoint` (or with `castPoint` equal to the caster's position) and
-  assert the sequence is `cast-beam` sound, `WizardCasting`,
-  `WizardCastFail` (with `pieceId`, not `targetPosition`).
+  assert that:
+  - No `cast-beam` sound is emitted.
+  - `WizardCasting` is emitted with `pieceId`.
+  - `die` sound is emitted.
+  - `SummonPiece` is emitted with `pieceId`.
+  - `WizardCastFail` is emitted with `pieceId` (not `targetPosition`).
+  - `WizardCastBeam` is *not* emitted.
 - Add a new test for the target-targeted path: call `castFail` with a
-  distinct `castPoint` and assert the four-step sequence
-  (`cast-beam` sound, `WizardCasting`, `WizardCastBeam`, `WizardCastFail`
-  with `targetPosition`).
+  distinct `castPoint` and assert the sequence:
+  - `cast-beam` sound is emitted.
+  - `WizardCasting` is emitted with `pieceId`.
+  - `WizardCastBeam` is emitted with `startPieceId` + `targetPosition`.
+  - `WizardCastFail` is emitted with `targetPosition`.
+  - `SummonPiece` is *not* emitted.
 
 `packages/engine/src/spells/summonspell.test.ts`
 
 - The existing summon-success tests assert `WizardCasting` and
   `WizardCastBeam` are emitted from `doCast`. These remain unaffected -
   failures route through `castFail` and never enter `doCast`.
+
+No new tests are required for `effectemitter.test.ts` because no new
+effect type is being added.
 
 Run with:
 ```
@@ -172,4 +210,6 @@ npx vitest run --project=engine packages/engine/src/spells/spell.test.ts
   `WizardCastBeam` (currently inconsistent across spell classes - some
   emit them, some only emit a sound). This spec only changes the failure
   path.
+- Adjusting `SummonPiece`'s appearance or sound pairing in its existing
+  use site (`SummonSpell.doCast`).
 - Changes to the failure log message wording or colour.
