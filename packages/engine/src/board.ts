@@ -74,6 +74,7 @@ import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
 import type {
     AttackPieceBatchPayload,
+    MountPieceBatchPayload,
     MovePieceBatchPayload,
     RangedAttackPieceBatchPayload,
 } from "./actions";
@@ -1981,12 +1982,16 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             this._emitCommandRejected(playerId, cmd.commandId, "invalid-move");
             return;
         }
+        let walked: Point[] = [];
+        let engagedBy: P | null = null;
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
             // Wizard mounting has no rider sync (the wizard becomes
             // the rider on arrival). Engagement on the terminal step
             // is also skipped: arriving on the mount's tile is the
             // mount action itself.
-            const { engagedBy } = this._walkPathWithEngagement(wizard, path, false, true);
+            const result = this._walkPathWithEngagement(wizard, path, false, true);
+            walked = result.walked;
+            engagedBy = result.engagedBy;
             if (engagedBy) {
                 wizard.setTurnFlags({ moved: true });
                 return;
@@ -1996,6 +2001,18 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             wizard.setTurnFlags({ moved: true, attacked: true });
             mount.setTurnFlags({ moved: true });
         });
+
+        // Payload carries the approach path so the client can animate
+        // the wizard moving onto the mount before the mount visual fires.
+        // engagedBy is not included: mount semantics handle terminal-step
+        // engagement separately via skipEngagementOnTerminal=true.
+        const payload: MountPieceBatchPayload = {
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: walked.map((p) => ({ x: p.x, y: p.y })),
+        };
+        this._boardEvents.emit(EngineEvent.MountPieceBatch, payload);
+
         slot.submit(playerId, cmd);
     }
 

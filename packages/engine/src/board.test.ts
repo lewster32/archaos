@@ -30,7 +30,12 @@ import {
     StartGame,
 } from "./phasemachine";
 import { EngineEvent } from "./enums/engineevent";
-import type { AttackPieceBatchPayload, MovePieceBatchPayload, RangedAttackPieceBatchPayload } from "./actions";
+import type {
+    AttackPieceBatchPayload,
+    MountPieceBatchPayload,
+    MovePieceBatchPayload,
+    RangedAttackPieceBatchPayload,
+} from "./actions";
 
 function makeRules(): Rules {
     return {
@@ -2418,6 +2423,99 @@ describe("Movement-phase visual events", () => {
         } finally {
             Board.CHEAT_FORCE_HIT = null;
         }
+    });
+
+    it("emits MountPieceBatch when a wizard mounts an adjacent piece", async () => {
+        const board = makeBoard();
+        const p1 = board.addPlayer({
+            name: "P1",
+            type: GameSetupPlayerType.Local,
+        });
+        // Wizard at (0,0) — needs UnitStatus.Wizard to call canMountPiece.
+        const wizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 0,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: p1 as any,
+        });
+        // Mount at (1,0) — needs UnitStatus.MountAny (mountable by any
+        // wizard on any side; MountAny satisfies canMountPiece regardless
+        // of owner which is simpler than UnitStatus.Mount same-owner).
+        const mount = await board.addPiece({
+            type: UnitType.Creature,
+            x: 1,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.MountAny],
+            },
+            owner: p1 as any,
+        });
+
+        board.stateManager.evaluate(new StartGame());
+        board.stateManager.evaluate(new SpellbookReady());
+        board.stateManager.evaluate(new NoSpellsCast());
+        board.stateManager.evaluate(new SpreadingDone());
+        board.stateManager.evaluate(new MovingReady());
+
+        const playerId = wizard.owner!.id;
+        const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+        const events: MountPieceBatchPayload[] = [];
+        board.events.on(
+            EngineEvent.MountPieceBatch,
+            (payload: MountPieceBatchPayload) => {
+                events.push(payload);
+            },
+        );
+
+        // Select the wizard then send a one-step path to mount the
+        // adjacent piece. The mount tile is (1,0) so the path contains
+        // exactly that step.
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "sel-1",
+            token: "",
+            kind: "select-piece",
+            pieceId: wizard.id,
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "mnt-1",
+            token: "",
+            kind: "mount-piece",
+            wizardId: wizard.id,
+            mountId: mount.id,
+            path: [{ x: 1, y: 0 }],
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "end-1",
+            token: "",
+            kind: "end-movement-phase",
+        });
+        await slotPromise;
+
+        expect(events).toHaveLength(1);
+        expect(events[0].wizardId).toBe(wizard.id);
+        expect(events[0].mountId).toBe(mount.id);
+        expect(events[0].path).toEqual([{ x: 1, y: 0 }]);
     });
 });
 
