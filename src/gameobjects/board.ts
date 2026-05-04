@@ -50,6 +50,7 @@ import type {
     MountPieceBatchPayload,
     DismountPieceBatchPayload,
     SelectPieceVisualPayload,
+    CancelPieceActionVisualPayload,
     RemotePlayer,
     PhaseChangedOutcome,
 } from "@archaos/engine";
@@ -382,6 +383,14 @@ export class Board extends EngineBoard<Piece> {
             (payload: SelectPieceVisualPayload) => {
                 this._animationQueue.enqueue(async () => {
                     await this._animateSelectPieceVisual(payload);
+                });
+            },
+        );
+        this.events.on(
+            EngineEvent.CancelPieceActionVisual,
+            (payload: CancelPieceActionVisualPayload) => {
+                this._animationQueue.enqueue(async () => {
+                    await this._animateCancelPieceActionVisual(payload);
                 });
             },
         );
@@ -1171,6 +1180,22 @@ export class Board extends EngineBoard<Piece> {
         if (piece.currentMount) {
             this.emitUIEvent(EventType.DismountAvailable, true);
         }
+    }
+
+    /**
+     * Animate the visual side of a `cancel-piece-action` command in
+     * response to EngineEvent.CancelPieceActionVisual. Clears the
+     * client's selected piece, fires PieceDeselected on the FSM,
+     * resets the rangeGizmo, and hides the action UI buttons.
+     */
+    private async _animateCancelPieceActionVisual(
+        _payload: CancelPieceActionVisualPayload,
+    ): Promise<void> {
+        this._selected = null;
+        this.stateManager.evaluate(new PieceDeselected());
+        await this.rangeGizmo.reset();
+        this.emitUIEvent(EventType.DismountAvailable, false);
+        this.emitUIEvent(EventType.CancelAvailable, false);
     }
 
     /**

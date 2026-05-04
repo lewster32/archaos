@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Board as EngineBoard, BoardState, weightedRandomPick, TestRNG, EngineEvent, EventEmitter, UnitStatus, UnitRangedProjectileType } from "@archaos/engine";
-import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload, SelectPieceVisualPayload } from "@archaos/engine";
+import type { BroadcastEventMessage, MovePieceBatchPayload, AttackPieceBatchPayload, RangedAttackPieceBatchPayload, MountPieceBatchPayload, DismountPieceBatchPayload, SelectPieceVisualPayload, CancelPieceActionVisualPayload } from "@archaos/engine";
 import { Board } from "./board";
 import { AnimationQueue } from "./animationqueue";
 
@@ -1427,5 +1427,104 @@ describe("Visual reaction - SelectPieceVisual", () => {
         await board.animationQueue.idle();
 
         expect(generate).not.toHaveBeenCalled();
+    });
+});
+
+// Visual reaction - CancelPieceActionVisual
+// ────────────────────────────────────────────────────────────────────────────
+
+describe("Visual reaction - CancelPieceActionVisual", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /**
+     * Build a minimal fake client Board that has enough state to exercise
+     * the CancelPieceActionVisual subscriber and handler without
+     * instantiating Phaser. Only the fields touched by the handler are
+     * populated.
+     */
+    function makeFakeCancelBoard(): {
+        board: Board;
+        piece: { id: number };
+        stateManagerEvaluate: ReturnType<typeof vi.fn>;
+        rangeGizmoReset: ReturnType<typeof vi.fn>;
+        emitUIEvent: ReturnType<typeof vi.fn>;
+    } {
+        const fake = Object.create(Board.prototype) as Board;
+
+        const animationQueue = new AnimationQueue();
+        (fake as any)._animationQueue = animationQueue;
+
+        // Real EventEmitter so the subscription and emit round-trip works.
+        const emitter = new EventEmitter();
+        (fake as any)._boardEvents = emitter;
+
+        const piece = { id: 55 };
+        (fake as any)._selected = piece;
+
+        const rangeGizmoReset = vi.fn(() => Promise.resolve());
+        (fake as any)._rangeGizmo = {
+            reset: rangeGizmoReset,
+            generate: vi.fn(() => Promise.resolve()),
+        };
+
+        const stateManagerEvaluate = vi.fn();
+        (fake as any)._stateManager = {
+            evaluate: stateManagerEvaluate,
+            states: {},
+        };
+
+        const emitUIEvent = vi.fn();
+        (fake as any).emitUIEvent = emitUIEvent;
+
+        // Wire the subscriber the same way the constructor does.
+        emitter.on(
+            EngineEvent.CancelPieceActionVisual,
+            (payload: CancelPieceActionVisualPayload) => {
+                animationQueue.enqueue(async () => {
+                    await (fake as any)._animateCancelPieceActionVisual(
+                        payload,
+                    );
+                });
+            },
+        );
+
+        return { board: fake, piece, stateManagerEvaluate, rangeGizmoReset, emitUIEvent };
+    }
+
+    it("clears _selected, resets the rangeGizmo, fires PieceDeselected, and hides UI buttons", async () => {
+        const { board, piece, stateManagerEvaluate, rangeGizmoReset, emitUIEvent } =
+            makeFakeCancelBoard();
+
+        expect((board as any)._selected).toBe(piece);
+
+        (board as any).events.emit(EngineEvent.CancelPieceActionVisual, {
+            pieceId: piece.id,
+        } as CancelPieceActionVisualPayload);
+
+        await board.animationQueue.idle();
+
+        // _selected cleared
+        expect((board as any)._selected).toBeNull();
+
+        // rangeGizmo.reset called
+        expect(rangeGizmoReset).toHaveBeenCalledTimes(1);
+
+        // PieceDeselected fired on the FSM
+        const names = stateManagerEvaluate.mock.calls.map(
+            (c: any[]) => c[0]?.constructor?.name,
+        );
+        expect(names).toContain("PieceDeselected");
+
+        // UI buttons hidden
+        expect(emitUIEvent).toHaveBeenCalledWith(
+            expect.stringContaining("dismount"),
+            false,
+        );
+        expect(emitUIEvent).toHaveBeenCalledWith(
+            expect.stringContaining("cancel"),
+            false,
+        );
     });
 });
