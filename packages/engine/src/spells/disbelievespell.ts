@@ -11,11 +11,20 @@ import { Point } from "../point";
  * if so. Unlike other spells, Disbelieve always succeeds and is never consumed.
  */
 export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, _point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.canBeDisbelieved);
         if (!target) {
             return false;
         }
+
+        // Mode A failure: cast-roll failed. Suppress the DisbelieveBeam
+        // and fizzle on the wizard. (Disbelieve has chance=1 in
+        // practice, so this branch is defensive.)
+        if (this._failed) {
+            await this.castFail(owner, castingPiece);
+            return null;
+        }
+
         this._board.events.emit(EngineEvent.EffectRequested, {
             sound: "cast-beam",
         });
@@ -24,11 +33,6 @@ export class DisbelieveSpell<P extends Piece = Piece> extends Spell<P> {
             pieceId: target.id,
             startPieceId: castingPiece.id,
         });
-
-        if (this._failed) {
-            await this.castFail(owner, castingPiece, point);
-            return null;
-        }
 
         if (target.illusion) {
             this._board.events.emit(EngineEvent.EffectRequested, {

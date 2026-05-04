@@ -47,7 +47,7 @@ describe("RaiseDeadSpell.doCast", () => {
         expect((board as any).events.emit).toHaveBeenCalledWith(EngineEvent.EffectRequested, { sound: "die" });
     });
 
-    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+    it("suppresses RaiseDead visuals and fizzles on the wizard when _failed is true", async () => {
         (spell as any)._failed = true;
         const corpse = makeMockPiece({ dead: true, name: "Ghost" });
         const point = new Point(2, 3);
@@ -56,16 +56,14 @@ describe("RaiseDeadSpell.doCast", () => {
 
         expect(result).toBeNull();
 
-        // RaiseDeadBeam and RaiseDeadHit should have fired before the branch.
+        // No RaiseDead visuals on the cast-fail (mode A) path.
         const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
         const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
-        expect(types).toContain("RaiseDeadBeam");
-        expect(types).toContain("RaiseDeadHit");
+        expect(types).not.toContain("RaiseDeadBeam");
+        expect(types).not.toContain("RaiseDeadHit");
+        expect(types).toEqual(["WizardCastFail"]);
 
-        // WizardCastFail is emitted by castFail.
-        expect(types).toContain("WizardCastFail");
-
-        // Failure is logged, raiseDead was NOT called.
+        // Standard failure log, raiseDead was NOT called.
         expect((board as any).logger.log).toHaveBeenCalledWith(
             expect.stringContaining("failed to cast"),
             expect.anything(),

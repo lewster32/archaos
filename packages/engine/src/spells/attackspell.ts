@@ -23,13 +23,6 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         return this._properties.damage || 0;
     }
 
-    protected override failureLogMessage(owner: Player<P>, target?: P): string {
-        if (target) {
-            return `${target.fullName} resisted ${this.name}`;
-        }
-        return super.failureLogMessage(owner, target);
-    }
-
     async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
         if (!targets?.length) {
             throw new Error("No targets for attack spell");
@@ -39,6 +32,16 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
         if (!target) {
             throw new Error("No valid target for attack spell");
         }
+
+        // Mode A failure: cast-roll failed. Suppress all spell visuals
+        // and fizzle on the wizard. The damage / resist roll below is a
+        // distinct mode B that runs only when the cast actually
+        // manifested.
+        if (this._failed) {
+            await this.castFail(owner, castingPiece);
+            return null;
+        }
+
         let beamEffect: EffectType = null;
         let hitEffect: EffectType = null;
         let beamSound: string = null;
@@ -91,15 +94,6 @@ export class AttackSpell<P extends Piece = Piece> extends Spell<P> {
                 type: hitEffect,
                 pieceId: target.id,
             });
-        }
-
-        // Cast-roll failure: full visuals played, now fizzle. The
-        // fizzle particle still plays at the target (via castFail), but
-        // the log line frames the failure as a resist - the spell did
-        // manifest visually, the target just shrugged it off.
-        if (this._failed) {
-            await this.castFail(owner, castingPiece, point, target);
-            return null;
         }
 
         // Damage roll: full visuals played, target may shrug off.

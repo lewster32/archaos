@@ -67,7 +67,7 @@ describe("SubversionSpell.doCast", () => {
         expect(board.logger.log as any).toHaveBeenCalledWith(expect.stringContaining("Dragon"), expect.anything());
     });
 
-    it("plays visuals then calls castFail and returns null when _failed is true", async () => {
+    it("suppresses SubversionBeam and fizzles on the wizard when _failed is true", async () => {
         (spell as any)._failed = true;
         const enemy = makeMockPiece({ owner: { id: 99 }, illusion: false, name: "Hydra" });
         const point = new Point(2, 2);
@@ -76,18 +76,16 @@ describe("SubversionSpell.doCast", () => {
 
         expect(result).toBeNull();
 
-        // SubversionBeam should have fired before the branch.
+        // No SubversionBeam on the cast-fail (mode A) path.
         const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
         const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
-        expect(types).toContain("SubversionBeam");
+        expect(types).not.toContain("SubversionBeam");
+        expect(types).toEqual(["WizardCastFail"]);
 
-        // WizardCastFail is emitted by castFail.
-        expect(types).toContain("WizardCastFail");
-
-        // Cast-fail on Subversion is framed as the target resisting,
-        // matching the damage-fail framing.
+        // Standard "failed to cast" log, not a resist - the resist log
+        // is reserved for the damage-roll failure (mode B).
         expect((board as any).logger.log).toHaveBeenCalledWith(
-            expect.stringContaining("Hydra resisted"),
+            expect.stringContaining("failed to cast"),
             expect.anything(),
         );
         expect(enemy.owner).toEqual({ id: 99 });

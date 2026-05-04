@@ -489,7 +489,7 @@ describe("AttackSpell.doCast", () => {
         });
     });
 
-    it("plays full visuals then calls castFail and returns null when _failed is true", async () => {
+    it("suppresses spell visuals and fizzles on the wizard when _failed is true", async () => {
         enemy.fullName = "Stone Golem";
         const s = new AttackSpell(board, 1, makeAttackConfig({ projectile: UnitRangedProjectileType.MagicBolt }));
         s.owner = owner;
@@ -499,20 +499,19 @@ describe("AttackSpell.doCast", () => {
 
         expect(result).toBeNull();
 
-        // Beam and hit visuals fired before the cast-fail branch.
+        // No spell-specific visuals on the cast-fail (mode A) path.
         const emitAsync = (board as any).events.emitAsync as ReturnType<typeof vi.fn>;
         const types = emitAsync.mock.calls.map(([, p]: any) => p?.type).filter(Boolean);
-        expect(types).toContain("MagicBoltBeam");
-        expect(types).toContain("MagicBoltHit");
+        expect(types).not.toContain("MagicBoltBeam");
+        expect(types).not.toContain("MagicBoltHit");
 
-        // WizardCastFail emitted by castFail (the fizzle distinguishes
-        // cast-fail from damage-fail).
-        expect(types).toContain("WizardCastFail");
+        // Only the WizardCastFail fizzle on the wizard.
+        expect(types).toEqual(["WizardCastFail"]);
 
-        // Cast-fail on an attack spell is framed as a resist, naming the
-        // target rather than the standard "failed to cast" line.
+        // Standard "failed to cast" log, not the resist framing - the
+        // resist log is reserved for damage-roll failures (mode B).
         expect((board as any).logger.log).toHaveBeenCalledWith(
-            expect.stringContaining("Stone Golem resisted"),
+            expect.stringContaining("failed to cast"),
             expect.anything(),
         );
         expect(enemy.kill).not.toHaveBeenCalled();

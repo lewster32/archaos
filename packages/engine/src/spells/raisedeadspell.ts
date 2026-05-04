@@ -11,11 +11,19 @@ import { Point } from "../point";
  * casting wizard.
  */
 export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
-    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, _point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.dead);
         if (!target) {
             return false;
         }
+
+        // Mode A failure: cast-roll failed. Suppress the RaiseDead
+        // visuals and fizzle on the wizard.
+        if (this._failed) {
+            await this.castFail(owner, castingPiece);
+            return null;
+        }
+
         this._board.events.emit(EngineEvent.EffectRequested, {
             sound: "cast-beam",
         });
@@ -31,11 +39,6 @@ export class RaiseDeadSpell<P extends Piece = Piece> extends Spell<P> {
             type: EffectType.RaiseDeadHit,
             pieceId: target.id,
         });
-
-        if (this._failed) {
-            await this.castFail(owner, castingPiece, point);
-            return null;
-        }
 
         await target.raiseDead(this.owner);
         this._board.logger.log(`${target.name} was reanimated and now belongs to ${owner.name}`, Colour.LightBlue);

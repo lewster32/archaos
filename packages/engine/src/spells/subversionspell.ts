@@ -12,17 +12,18 @@ import { Point } from "../point";
  * magic resistance.
  */
 export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
-    protected override failureLogMessage(owner: Player<P>, target?: P): string {
-        if (target) {
-            return `${target.name} resisted ${this.name}`;
-        }
-        return super.failureLogMessage(owner, target);
-    }
-
-    async doCast(owner: Player<P>, castingPiece: P, point?: Point, targets?: P[]): Promise<P | boolean | null> {
+    async doCast(owner: Player<P>, castingPiece: P, _point?: Point, targets?: P[]): Promise<P | boolean | null> {
         const target: P = targets.find((p: P) => p.owner !== this.owner);
         if (!target) {
             return false;
+        }
+
+        // Mode A failure: cast-roll failed. Suppress the SubversionBeam
+        // and fizzle on the wizard. The resist roll below is mode B,
+        // distinct from a cast-roll failure.
+        if (this._failed) {
+            await this.castFail(owner, castingPiece);
+            return null;
         }
 
         this._board.events.emit(EngineEvent.EffectRequested, {
@@ -33,11 +34,6 @@ export class SubversionSpell<P extends Piece = Piece> extends Spell<P> {
             pieceId: target.id,
             startPieceId: castingPiece.id,
         });
-
-        if (this._failed) {
-            await this.castFail(owner, castingPiece, point, target);
-            return null;
-        }
 
         const rollSuccess: boolean = this._board.roll(10, target.stats.magicResistance, this._owner);
 
