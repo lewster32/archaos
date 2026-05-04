@@ -2303,8 +2303,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
         for (const playerId of casters) {
             const player = this.getPlayer(playerId);
-            if (!player?.selectedSpell) {
-                // The player may have been defeated mid-phase.
+            if (!player?.selectedSpell || player.defeated) {
+                // The player may have been defeated mid-phase, either by a
+                // prior caster's attack spell (player.defeated) or had
+                // their selectedSpell cleared by a cascade death
+                // (selectedSpell null).
                 continue;
             }
 
