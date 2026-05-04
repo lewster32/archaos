@@ -417,6 +417,12 @@ export class Board extends EngineBoard<Piece> {
             if (this.phase === BoardPhase.Casting) {
                 void this._handleCastingPhaseChanged(outcome);
             }
+            // Note: cast-phase visual cleanup (selected wizard, cast
+            // range gizmo) lives in _handleMovementPhaseChanged; the
+            // Spreading phase between Casting and Moving returns
+            // BoardState.Idle, causing processIntent to return
+            // ActionType.None, so no cursor input is accepted during
+            // the stale-state window.
             if (this.phase === BoardPhase.Moving) {
                 void this._handleMovementPhaseChanged(outcome);
             }
