@@ -498,11 +498,11 @@ describe("SummonSpell.doCast", () => {
         expect(result).toBe(newPiece);
     });
 
-    it("sets turnOver to true on the summoned piece", async () => {
+    it("does not set turnOver on the summoned piece (summons can act on cast turn)", async () => {
         const newPiece: any = { turnOver: false, name: "Lion" };
         (board as any).addPiece = vi.fn().mockResolvedValue(newPiece);
         await spell.doCast(owner, castingPiece, new Point(2, 3));
-        expect(newPiece.turnOver).toBe(true);
+        expect(newPiece.turnOver).toBe(false);
     });
 
     it("calls board.addPiece with position, unitId, and owner", async () => {
