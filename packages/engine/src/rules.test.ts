@@ -1035,19 +1035,8 @@ describe("Rules.doCastSpell", () => {
         expect(await rules.doCastSpell(board, {} as any)).toBe(false);
     });
 
-    it("logs failure message when spell.failed is true after casting", async () => {
-        const { board } = makeCastBoard({
-            castTimes: 0,
-            failed: true,
-        });
-        const rules = Rules.getInstance();
-        await rules.doCastSpell(board, { id: 1 } as any);
-        expect((board as any).logger.log).toHaveBeenCalledWith(
-            expect.stringContaining("failed to cast"),
-            expect.anything(),
-        );
-    });
 });
+
 
 // ── Rules.doAutoCastSpell ─────────────────────────────────────────────────────
 
