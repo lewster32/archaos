@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { Board } from "../board";
 import { ComputerWizard } from "../ai/computerwizard";
 import { BoardPhase } from "../enums/boardphase";
+import { EngineEvent } from "../enums/engineevent";
 import { GameSetupPlayerType } from "../interfaces/ui";
 import { Logger } from "../logger";
 import { TestRNG } from "../rng";
@@ -12,6 +13,7 @@ import type {
     CastSpellCommand,
     PickSpellCommand,
 } from "../protocol/commands";
+import type { MovePieceBatchPayload, SelectPieceVisualPayload } from "../actions";
 import type { Spell } from "../spells/spell";
 import type { Player } from "../player";
 import type { Piece } from "../piece";
@@ -167,6 +169,13 @@ function castFor(
 async function flushUntilPhase(board: Board, phase: BoardPhase): Promise<void> {
     for (let i = 0; i < 200; i += 1) {
         if (board.phase === phase) return;
+        await Promise.resolve();
+    }
+}
+
+async function flushUntil(predicate: () => boolean): Promise<void> {
+    for (let i = 0; i < 200; i += 1) {
+        if (predicate()) return;
         await Promise.resolve();
     }
 }
@@ -486,8 +495,23 @@ describe("Command pipeline integration: full movement", () => {
                 // Wait for movement phase to open.
                 await flushUntilPhase(board, BoardPhase.Moving);
 
+                // Subscribe to visual events so we can assert they fire
+                // once per accepted movement-phase command.
+                const movePieceEvents: MovePieceBatchPayload[] = [];
+                const selectPieceEvents: SelectPieceVisualPayload[] = [];
+                board.events.on(
+                    EngineEvent.MovePieceBatch,
+                    (p: MovePieceBatchPayload) => { movePieceEvents.push(p); },
+                );
+                board.events.on(
+                    EngineEvent.SelectPieceVisual,
+                    (p: SelectPieceVisualPayload) => { selectPieceEvents.push(p); },
+                );
+
                 // Player 1 (human) drives their movement turn manually:
-                // select wizard, end piece turn, end movement phase.
+                // select wizard, move one tile, end piece turn, end movement
+                // phase. Wizard 1 is placed at (1,1); moving to (1,0) is
+                // one orthogonal step within movement budget.
                 const wiz1 = board.getPlayer(1)!.castingPiece!;
                 await board.handleCommand(
                     1,
@@ -497,6 +521,18 @@ describe("Command pipeline integration: full movement", () => {
                         token: "",
                         kind: "select-piece",
                         pieceId: wiz1.id,
+                    }),
+                );
+                await board.handleCommand(
+                    1,
+                    roundTrip({
+                        type: "command",
+                        commandId: "h1-mv",
+                        token: "",
+                        kind: "move-piece",
+                        pieceId: wiz1.id,
+                        to: { x: 1, y: 0 },
+                        path: [{ x: 1, y: 0 }],
                     }),
                 );
                 await board.handleCommand(
@@ -638,6 +674,19 @@ describe("Command pipeline integration: full movement", () => {
                             o.currentPlayerId !== undefined,
                     );
                 expect(movingSlotOpens.length).toBeGreaterThan(0);
+
+                // 6. SelectPieceVisual fired at least once per human who
+                //    selected a piece (player 1 and player 3 each sent a
+                //    select-piece command; AIs also emit one via
+                //    ComputerWizard).
+                expect(selectPieceEvents.length).toBeGreaterThanOrEqual(2);
+
+                // 7. Player 1 produced exactly one MovePieceBatch event
+                //    from the explicit move-piece command. Player 3
+                //    selected but did not move, so they produce none.
+                expect(
+                    movePieceEvents.filter((e) => e.pieceId === wiz1.id),
+                ).toHaveLength(1);
             } finally {
                 errSpy.mockRestore();
             }
