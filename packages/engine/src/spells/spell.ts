@@ -512,9 +512,15 @@ export class Spell<P extends Piece = Piece> extends Model {
 
     /**
      * Play the cast-failure fizzle and log the failure. Subclass doCasts
-     * call this from their failure branch after their full success-style
-     * visual sequence has played. The fizzle particles land at the target
-     * tile (or the wizard's tile for self-cast spells).
+     * invoke this from their failure branch:
+     *
+     * - Piece-target spells (attacks, subversion, etc.) call it at the
+     *   START of doCast with no `castPoint`, so the spell's specific
+     *   visuals are suppressed and the fizzle lands on the wizard.
+     * - Self-cast spells and summons call it at the END of doCast with
+     *   `castPoint` set, so the spell's full visual sequence plays and
+     *   then the fizzle lands at the target tile (or the wizard tile for
+     *   self-cast).
      *
      * Consumes any remaining cast times so multi-cast spells stop after a
      * single failed attempt. `_failed` is already set by `cast()` before
@@ -524,11 +530,8 @@ export class Spell<P extends Piece = Piece> extends Model {
      * @param castingPiece The piece casting the spell
      * @param castPoint The target tile of the cast, if any. When absent or
      *     equal to the caster's tile, the fizzle plays on the wizard.
-     * @param target The targeted piece, if any. Forwarded to
-     *     `failureLogMessage` so subclasses can frame the failure in terms
-     *     of the target (e.g. attack-style spells log "X resisted Y").
      */
-    async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point, target?: P): Promise<void> {
+    async castFail(owner: Player<P>, castingPiece: P, castPoint?: Point): Promise<void> {
         this._castTimes = 0;
 
         const isSelfTarget =
@@ -546,21 +549,8 @@ export class Spell<P extends Piece = Piece> extends Model {
             });
         }
 
-        this._board.logger.log(this.failureLogMessage(owner, target), Colour.Magenta);
+        this._board.logger.log(`${owner.name} failed to cast ${this.name}`, Colour.Magenta);
         await this._board.idleDelay();
-    }
-
-    /**
-     * The log message written when the cast roll fails. The default reads
-     * "<player> failed to cast <spell>". Subclasses can override to provide
-     * a different framing - for example, attack spells whose failure mode
-     * reads as the target resisting the spell.
-     *
-     * @param owner The player casting the spell
-     * @param target The targeted piece, if any
-     */
-    protected failureLogMessage(owner: Player<P>, _target?: P): string {
-        return `${owner.name} failed to cast ${this.name}`;
     }
 
     /**
