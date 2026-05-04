@@ -72,6 +72,7 @@ import { buildSnapshot, toPhaseKind } from "./snapshotbuilder";
 import { ExpectedCommand } from "./commands/expectedcommand";
 import { SpellbookBarrier } from "./commands/spellbookbarrier";
 import { flyingPathCost, isStepTraversable, movementBudget, stepCost } from "./pathrules";
+import type { MovePieceBatchPayload } from "./actions";
 
 /**
  * Simple point type without all the baggage of
@@ -1457,8 +1458,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * `piece-turn-flag-changed{engaged: true}` outcomes for both
      * pieces and stops the loop.
      *
-     * Returns the engagement enemy if the loop broke, or `null` if the
-     * full path was traversed.
+     * Returns `{ walked, engagedBy }` where `walked` is the per-tile
+     * prefix that was actually traversed (every step up to and
+     * including the one where engagement fired, or the full path if
+     * no engagement occurred) and `engagedBy` is the engaging enemy
+     * or `null` if the full path was traversed.
      *
      * When `skipEngagementOnTerminal` is true, the engagement roll is
      * skipped on the final step (used by mount-piece, where the
@@ -1475,8 +1479,9 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         path: ReadonlyArray<Point>,
         riderSync: boolean = true,
         skipEngagementOnTerminal: boolean = false,
-    ): { engagedBy: P } | null {
+    ): { walked: Point[]; engagedBy: P | null } {
         const rider: P | null = riderSync ? (piece.currentRider as P | null) : null;
+        const walked: Point[] = [];
         for (let i: number = 0; i < path.length; i++) {
             const step: Point = path[i];
             const isTerminal: boolean = i === path.length - 1;
@@ -1484,6 +1489,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             if (rider) {
                 rider.setPosition(step);
             }
+            walked.push(step);
             if (skipEngagementOnTerminal && isTerminal) {
                 continue;
             }
@@ -1501,11 +1507,11 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 if (succeeded) {
                     piece.setTurnFlags({ engaged: true });
                     enemy.setTurnFlags({ engaged: true });
-                    return { engagedBy: enemy as P };
+                    return { walked, engagedBy: enemy as P };
                 }
             }
         }
-        return null;
+        return { walked, engagedBy: null };
     }
 
     /**
@@ -1669,13 +1675,26 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             return;
         }
         const rider: P | null = piece.currentRider as P | null;
+        let walked: Point[] = [];
+        let engagedBy: P | null = null;
         await this.recordEvent({ commandId: cmd.commandId, actorId: playerId }, () => {
-            this._walkPathWithEngagement(piece, path);
+            const result = this._walkPathWithEngagement(piece, path);
+            walked = result.walked;
+            engagedBy = result.engagedBy;
             piece.setTurnFlags({ moved: true });
             if (rider) {
                 rider.setTurnFlags({ moved: true });
             }
         });
+
+        const payload: MovePieceBatchPayload = {
+            pieceId: piece.id,
+            path: walked.map((p) => ({ x: p.x, y: p.y })),
+            riderSync: true,
+            ...(engagedBy ? { engagedBy: { pieceId: (engagedBy as P).id } } : {}),
+        };
+        this._boardEvents.emit(EngineEvent.MovePieceBatch, payload);
+
         slot.submit(playerId, cmd);
     }
 
@@ -1746,8 +1765,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             // Walk the path; if engagement fires mid-path, the attack
             // is forfeited unless the engagement tile is still
             // adjacent to the target.
-            const engaged = this._walkPathWithEngagement(attacker, path);
-            if (engaged) {
+            const { engagedBy } = this._walkPathWithEngagement(attacker, path);
+            if (engagedBy) {
                 const dx: number = Math.abs(attacker.position.x - target.position.x);
                 const dy: number = Math.abs(attacker.position.y - target.position.y);
                 const stillAdjacent: boolean = dx <= 1 && dy <= 1 && !(dx === 0 && dy === 0);
@@ -1890,8 +1909,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             // the rider on arrival). Engagement on the terminal step
             // is also skipped: arriving on the mount's tile is the
             // mount action itself.
-            const engaged = this._walkPathWithEngagement(wizard, path, false, true);
-            if (engaged) {
+            const { engagedBy } = this._walkPathWithEngagement(wizard, path, false, true);
+            if (engagedBy) {
                 wizard.setTurnFlags({ moved: true });
                 return;
             }

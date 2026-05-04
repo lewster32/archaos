@@ -21,7 +21,16 @@ import type {
     PickSpellCommand,
 } from "./protocol/commands";
 import { roundTrip } from "./protocol/wiresafety.testhelpers";
-import { MovingReady, SkipSpellbook, StartGame } from "./phasemachine";
+import {
+    MovingReady,
+    NoSpellsCast,
+    SkipSpellbook,
+    SpellbookReady,
+    SpreadingDone,
+    StartGame,
+} from "./phasemachine";
+import { EngineEvent } from "./enums/engineevent";
+import type { MovePieceBatchPayload } from "./actions";
 
 function makeRules(): Rules {
     return {
@@ -2158,6 +2167,79 @@ async function addMovementPiece(
         owner: owner as any,
     });
 }
+
+describe("Movement-phase visual events", () => {
+    it("emits MovePieceBatch with the per-tile path after a successful move-piece", async () => {
+        const board = makeBoard();
+        const player = board.addPlayer({
+            name: "P1",
+            type: GameSetupPlayerType.Local,
+        });
+        const wizard = await board.addPiece({
+            type: UnitType.Creature,
+            x: 0,
+            y: 0,
+            properties: {
+                movement: 3,
+                combat: 3,
+                rangedCombat: 0,
+                range: 0,
+                defence: 4,
+                manoeuvrability: 3,
+                magicResistance: 0,
+                status: [UnitStatus.Wizard],
+            },
+            owner: player as any,
+        });
+        // Force the FSM into the moving slot for the wizard's player.
+        // StartGame moves idle -> spellbookSetup via playing->spellbook.
+        board.stateManager.evaluate(new StartGame());
+        board.stateManager.evaluate(new SpellbookReady());
+        board.stateManager.evaluate(new NoSpellsCast());
+        board.stateManager.evaluate(new SpreadingDone());
+        board.stateManager.evaluate(new MovingReady());
+
+        // Open a movement slot for the wizard's player.
+        const playerId = wizard.owner!.id;
+        const slotPromise = (board as any).openMovementSlotFor(playerId);
+
+        const events: MovePieceBatchPayload[] = [];
+        board.events.on(EngineEvent.MovePieceBatch, (payload: MovePieceBatchPayload) => {
+            events.push(payload);
+        });
+
+        // Select then move along a 2-step path.
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "sel-1",
+            token: "",
+            kind: "select-piece",
+            pieceId: wizard.id,
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "mv-1",
+            token: "",
+            kind: "move-piece",
+            pieceId: wizard.id,
+            to: { x: 0, y: 2 },
+            path: [{ x: 0, y: 1 }, { x: 0, y: 2 }],
+        });
+        await board.handleCommand(playerId, {
+            type: "command",
+            commandId: "end-1",
+            token: "",
+            kind: "end-movement-phase",
+        });
+        await slotPromise;
+
+        expect(events).toHaveLength(1);
+        expect(events[0].pieceId).toBe(wizard.id);
+        expect(events[0].path).toEqual([{ x: 0, y: 1 }, { x: 0, y: 2 }]);
+        expect(events[0].riderSync).toBe(true);
+        expect(events[0].engagedBy).toBeUndefined();
+    });
+});
 
 describe("Board.openMovementSlotFor", () => {
     it("opens a slot accepting all movement-phase commands and resolves on close", async () => {
