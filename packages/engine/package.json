@@ -13,7 +13,7 @@
         "@steelbreeze/state": "^8.3.1"
     },
     "devDependencies": {
-        "typescript": "^5.9",
+        "typescript": "^6.0.3",
         "vitest": "^4.1.0",
         "@vitest/coverage-v8": "^4.1.0"
     }

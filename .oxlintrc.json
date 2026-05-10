@@ -8,6 +8,7 @@
     },
     "rules": {
         "no-await-in-loop": "off",
+        "no-underscore-dangle": "off",
         "import/no-unassigned-import": "off",
         "vitest/require-mock-type-parameters": "off"
     },
