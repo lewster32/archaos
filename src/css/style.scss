@@ -89,6 +89,8 @@ body {
     --bg-transition-time: 0.15s;
     background: url("@assets/images/bg.png") 60% 40%;
     background-color: hsl(from var(--bg-colour, #555) h calc(s * 0.5) 30);
+    background-attachment: fixed;
+    background-position: 50% 50%;
     color: var(--fg-colour, #eee);
     margin: 0;
     padding: 0;

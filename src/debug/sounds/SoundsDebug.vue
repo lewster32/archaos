@@ -2,7 +2,7 @@
     <div class="sounds-debug">
         <section class="callout sounds-debug__panel">
             <header class="sounds-debug__header">
-                <a href="debug.html" class="button button--small">&larr; Debug menu</a>
+                <a href="debug.html" class="button"><i class="icon icon--left"></i> Debug menu</a>
                 <h1>Sounds</h1>
             </header>
             <table class="sounds-debug__table">

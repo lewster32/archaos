@@ -190,6 +190,7 @@ input[type="range"] {
     display: inline-block;
     background-size: contain;
     background-repeat: no-repeat;
+    vertical-align: center;
     &--settings {
         background-image: url("@assets/images/ui/icon-settings.png");
     }

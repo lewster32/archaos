@@ -1,19 +1,27 @@
 <template>
     <div class="enhanced-units">
         <aside class="unit-list callout">
-            <a href="debug.html" class="button button--small unit-list__back">&larr; Debug menu</a>
-            <h1>Enhanced Units</h1>
-            <ul>
-                <li v-for="spell in sortedSpells" :key="spell.id">
-                    <button
-                        type="button"
-                        :aria-selected="spell.id === selectedId"
-                        @click="selectedId = spell.id"
-                    >
-                        {{ spell.name }}
-                    </button>
-                </li>
-            </ul>
+            <a href="debug.html" class="button unit-list__back">
+                <i class="icon icon--left"></i>
+                Debug menu
+            </a>
+            <h1>Units</h1>
+            <div class="unit-list__scroll">
+                <template v-for="group in spellGroups" :key="group.label">
+                    <h2 class="unit-list__group">{{ group.label }}</h2>
+                    <ul>
+                        <li v-for="spell in group.spells" :key="spell.id">
+                            <button
+                                type="button"
+                                :aria-selected="spell.id === selectedId"
+                                @click="selectedId = spell.id"
+                            >
+                                {{ spell.name }}
+                            </button>
+                        </li>
+                    </ul>
+                </template>
+            </div>
         </aside>
 
         <main class="unit-detail">
@@ -114,6 +122,10 @@
 import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
 import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
 import SpellInfo from "../../components/game/SpellInfo.vue";
+import classicSpellsData from "../../../assets/data/classicspells.json";
+import classicUnitsData from "../../../assets/data/classicunits.json";
+import classicAtlasMeta from "../../../assets/spritesheets/classicunits.json";
+import classicAtlasUrl from "../../../assets/spritesheets/classicunits.png";
 
 interface Frame {
     filename: string;
@@ -126,6 +138,10 @@ interface Texture {
     image: string;
     size: { w: number; h: number };
     frames: Frame[];
+    // Resolved URL of the atlas PNG. Enhanced units leave this unset and we
+    // derive it from `image`; classic units share a single Vite-imported PNG
+    // and we set this at adapter time.
+    imageUrl?: string;
 }
 
 interface Unit {
@@ -151,7 +167,13 @@ interface Spell {
     description?: string;
     group?: string;
     types?: string[];
+    spellFrame?: number;
     unit: Unit;
+}
+
+interface SpellGroup {
+    label: string;
+    spells: Spell[];
 }
 
 interface FrameRow {
@@ -176,11 +198,79 @@ const enhanced = import.meta.glob(
     { eager: true }
 ) as Record<string, { spell: Spell }>;
 
-const spells: Spell[] = Object.values(enhanced).map((m) => m.spell);
+const enhancedSpells: Spell[] = Object.values(enhanced).map((m) => {
+    const spell = m.spell;
+    // Tag with group "enhanced" so the sidebar can split groups even though
+    // some enhanced JSONs may omit the field.
+    if (!spell.group) spell.group = "enhanced";
+    // Annotate textures with their resolved URL so drawFrame can stay agnostic
+    // about where the atlas lives.
+    if (spell.unit?.textures) {
+        for (const tex of spell.unit.textures) {
+            if (!tex.imageUrl) tex.imageUrl = `/images/units/enhanced/${tex.image}`;
+        }
+    }
+    return spell;
+});
 
-const sortedSpells = computed(() =>
-    [...spells].sort((a, b) => a.name.localeCompare(b.name))
-);
+// Classic data lives split across three files: spells (by id, with chance/
+// balance/unitId), units (by id, with stats/status/animation), and a shared
+// atlas (one PNG with every unit's frames). Adapt them into the same Spell
+// shape we use for enhanced so the rest of the panel stays uniform.
+function loadClassicSpells(): Spell[] {
+    const out: Spell[] = [];
+    const spellsRaw = classicSpellsData as Record<string, Record<string, unknown>>;
+    const unitsRaw = classicUnitsData as Record<string, Record<string, unknown>>;
+    const allFrames = classicAtlasMeta.textures[0].frames as Frame[];
+    const atlasSize = classicAtlasMeta.textures[0].size;
+
+    for (const [id, spell] of Object.entries(spellsRaw)) {
+        const unitId = spell.unitId as string | undefined;
+        if (!unitId) continue;
+        const unitConfig = unitsRaw[unitId];
+        if (!unitConfig) continue;
+
+        const unitFrames = allFrames.filter((f) => {
+            const m = FRAME_RE.exec(f.filename);
+            return m !== null && m[1] === unitId;
+        });
+        if (unitFrames.length === 0) continue;
+
+        out.push({
+            id,
+            name: spell.name as string,
+            chance: spell.chance as number,
+            balance: spell.balance as number,
+            description: spell.description as string | undefined,
+            group: "classic",
+            types: spell.types as string[] | undefined,
+            spellFrame: spell.spellFrame as number | undefined,
+            unit: {
+                ...(unitConfig as unknown as Unit),
+                id: unitId,
+                textures: [{
+                    image: "classicunits.png",
+                    imageUrl: classicAtlasUrl,
+                    size: atlasSize,
+                    frames: unitFrames,
+                }],
+            },
+        });
+    }
+    return out;
+}
+
+const spells: Spell[] = [...enhancedSpells, ...loadClassicSpells()];
+
+const spellGroups = computed<SpellGroup[]>(() => {
+    const enhancedGroup = spells.filter((s) => s.group === "enhanced");
+    const classicGroup = spells.filter((s) => s.group === "classic");
+    const sortByName = (a: Spell, b: Spell) => a.name.localeCompare(b.name);
+    return [
+        { label: "Enhanced", spells: [...enhancedGroup].sort(sortByName) },
+        { label: "Classic", spells: [...classicGroup].sort(sortByName) },
+    ].filter((g) => g.spells.length > 0);
+});
 
 const selectedId = ref<string | null>(null);
 
@@ -201,7 +291,7 @@ const spellForIcon = computed<EngineSpell | null>(() => {
         name: s.name,
         spellId: s.id,
         unitId: s.unit.id,
-        spellFrame: 0,
+        spellFrame: s.spellFrame ?? 0,
         chance: s.chance,
         balance: s.balance,
         description: s.description,
@@ -325,8 +415,8 @@ function animDirectionsFor(texture: Texture, unit: Unit): AnimDirection[] {
     return dirs;
 }
 
-function imageUrl(textureImage: string): string {
-    return `/images/units/enhanced/${textureImage}`;
+function imageUrl(texture: Texture): string {
+    return texture.imageUrl ?? `/images/units/enhanced/${texture.image}`;
 }
 
 function canvasKey(textureImage: string, suffix: string): string {
@@ -398,7 +488,7 @@ function drawFrame(canvas: HTMLCanvasElement, img: HTMLImageElement, frame: Fram
 function drawAllStatic(): void {
     if (!selected.value?.unit.textures) return;
     for (const texture of selected.value.unit.textures) {
-        const img = loadImage(imageUrl(texture.image));
+        const img = loadImage(imageUrl(texture));
         for (const frame of texture.frames) {
             const canvas = canvases.get(canvasKey(texture.image, frame.filename));
             if (canvas) drawFrame(canvas, img, frame);
@@ -423,7 +513,7 @@ function drawAnimFrame(): void {
     const animFrames = unit.animFrames!;
     const frameIndex = animFrames[animTick % animFrames.length];
     for (const texture of unit.textures) {
-        const img = loadImage(imageUrl(texture.image));
+        const img = loadImage(imageUrl(texture));
         for (const dir of animDirectionsFor(texture, unit)) {
             const frame = dir.frames[frameIndex % dir.frames.length];
             const canvas = animCanvases.get(canvasKey(texture.image, `anim_${dir.dir}`));
@@ -464,7 +554,9 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    min-height: 100vh;
+    // Constrain to viewport so each pane can manage its own scroll instead
+    // of the whole page scrolling as one column.
+    height: 100vh;
     color: var(--fg-colour);
     text-shadow: var(--text-shadow);
 }
@@ -472,18 +564,43 @@ onBeforeUnmount(() => {
 .unit-list {
     flex: 0 0 14rem;
     padding: 1rem 0;
+    // Sidebar is a flex column: back button + heading stay pinned, the
+    // group list inside .unit-list__scroll takes the remaining height
+    // and scrolls independently.
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 
     &__back {
+        flex: 0 0 auto;
         display: block;
         margin: 0 1rem 0.75rem;
         text-decoration: none;
     }
 
     h1 {
+        flex: 0 0 auto;
         margin: 0 0 0.75rem;
         padding: 0.25rem 1rem;
         font-size: 1.5rem;
         color: var(--color-yellow);
+    }
+
+    &__scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    &__group {
+        margin: 0.75rem 0 0.25rem;
+        padding: 0.15rem 1rem;
+        font-size: 0.85rem;
+        font-weight: normal;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--color-cyan);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     ul {
@@ -525,7 +642,11 @@ onBeforeUnmount(() => {
 .unit-detail {
     flex: 1 1 auto;
     padding: 1.25rem 1.5rem;
+    overflow-y: auto;
     overflow-x: hidden;
+    // Required for the flex item to honour `overflow-y` rather than
+    // expanding to fit content.
+    min-height: 0;
 
     > h1 {
         margin: 0 0 1rem;
@@ -634,7 +755,7 @@ onBeforeUnmount(() => {
     }
 
     canvas {
-        background: var(--color-black);
+        background: var(--color-dark-grey);
         border: 2px solid #111;
     }
 
