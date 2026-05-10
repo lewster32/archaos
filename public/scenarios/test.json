@@ -13,14 +13,10 @@
             "statuses": [
             ],
             "pieces": [
-                {
-                    "type": "Elf",
-                    "position": { "x": 1, "y": 2 }
-                }
             ],
             "computerControlled": false,
             "spells": [
-                "Magic Wings", "Magic Sword", "Magic Armour"
+                "Magic Wings", "Orc", "Magic Bolt", "Disbelieve", "Justice", "Raise Dead"
             ],
             "wizardProperties": {
                 "movement": 9,
@@ -35,7 +31,13 @@
             "computerControlled": true,
             "difficulty": 0.5,
             "statuses": [],
-            "pieces": [],
+            "pieces": [
+                {
+                    "type": "Orc",
+                    "position": { "x": 3, "y": 2 },
+                    "statuses": []
+                }
+            ],
             "wizardProperties": {
                 "movement": 0,
                 "manoeuvrability": 0,
@@ -45,12 +47,17 @@
             ]
         }
     ],
-    "corpses": [],
+    "corpses": [
+        {
+            "type": "Orc",
+            "position": { "x": 2, "y": 2 }
+        }
+    ],
     "phase": "casting",
     "cheats": {
         "forceHit": false,
-        "forceCast": true,
-        "shortDelay": true
+        "forceCast": null,
+        "shortDelay": false
     },
     "weather": {
         "type": "rain",

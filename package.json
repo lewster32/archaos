@@ -33,8 +33,8 @@
         "@vitest/browser-playwright": "^4.1.0",
         "@vitest/coverage-v8": "^4.1.0",
         "@vue/test-utils": "^2.4.6",
-        "jsdom": "^28.1.0",
-        "oxfmt": "^0.41.0",
+        "jsdom": "^29.1.1",
+        "oxfmt": "^0.47.0",
         "oxlint": "^1.56.0",
         "phaser3spectorjs": "^0.0.8",
         "playwright": "^1.58.2",
@@ -49,7 +49,7 @@
         "@archaos/engine": "*",
         "@steelbreeze/state": "^8.3.1",
         "@tauri-apps/api": "^2.10.1",
-        "phaser": "^4.0.0",
+        "phaser": "^4.1.0",
         "vue": "^3.5.30"
     }
 }
