@@ -80,6 +80,24 @@
                                 </figure>
                             </div>
                         </div>
+
+                        <div v-if="hasAnimation(selected.unit)">
+                            <p>Animated:</p>
+                            <div class="sprite-row">
+                                <figure
+                                    v-for="dir in animDirectionsFor(texture, selected.unit)"
+                                    :key="dir.dir"
+                                >
+                                    <canvas
+                                        :ref="(el) => registerAnimCanvas(canvasKey(texture.image, `anim_${dir.dir}`), el as HTMLCanvasElement | null)"
+                                        :width="dir.frameSize.w * SCALE"
+                                        :height="dir.frameSize.h * SCALE"
+                                        style="image-rendering: pixelated"
+                                    ></canvas>
+                                    <figcaption>{{ dir.dir }}</figcaption>
+                                </figure>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </template>
@@ -88,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
 
 interface Frame {
     filename: string;
@@ -125,6 +143,12 @@ interface Spell {
 interface FrameRow {
     label: string;
     frames: Frame[];
+}
+
+interface AnimDirection {
+    dir: "left" | "right";
+    frames: Frame[];
+    frameSize: { w: number; h: number };
 }
 
 const SCALE = 4;
@@ -234,12 +258,40 @@ function groupedFramesFor(texture: Texture): FrameRow[] {
     ];
 }
 
+function hasAnimation(unit: Unit): boolean {
+    return Array.isArray(unit.animFrames)
+        && unit.animFrames.length > 0
+        && typeof unit.animSpeed === "number"
+        && unit.animSpeed > 0;
+}
+
+function animDirectionsFor(texture: Texture, unit: Unit): AnimDirection[] {
+    if (!hasAnimation(unit)) return [];
+    const dirs: AnimDirection[] = [];
+    for (const dir of ["left", "right"] as const) {
+        const dirChar = dir === "left" ? "l" : "r";
+        const frames = texture.frames
+            .filter((f) => {
+                const m = FRAME_RE.exec(f.filename);
+                return m !== null && m[2] === dirChar && m[3] !== "d";
+            })
+            .sort((a, b) => frameSortKey(a) - frameSortKey(b));
+        if (frames.length === 0) continue;
+        dirs.push({
+            dir,
+            frames,
+            frameSize: { w: frames[0].frame.w, h: frames[0].frame.h },
+        });
+    }
+    return dirs;
+}
+
 function imageUrl(textureImage: string): string {
     return `/images/units/enhanced/${textureImage}`;
 }
 
-function canvasKey(textureImage: string, filename: string): string {
-    return `${textureImage}::${filename}`;
+function canvasKey(textureImage: string, suffix: string): string {
+    return `${textureImage}::${suffix}`;
 }
 
 const imageCache = new Map<string, HTMLImageElement>();
@@ -254,6 +306,7 @@ function loadImage(url: string): HTMLImageElement {
 }
 
 const canvases = new Map<string, HTMLCanvasElement>();
+const animCanvases = new Map<string, HTMLCanvasElement>();
 
 function registerCanvas(key: string, el: HTMLCanvasElement | null): void {
     if (el) {
@@ -261,6 +314,14 @@ function registerCanvas(key: string, el: HTMLCanvasElement | null): void {
         void nextTick(() => drawAllStatic());
     } else {
         canvases.delete(key);
+    }
+}
+
+function registerAnimCanvas(key: string, el: HTMLCanvasElement | null): void {
+    if (el) {
+        animCanvases.set(key, el);
+    } else {
+        animCanvases.delete(key);
     }
 }
 
@@ -295,7 +356,51 @@ function drawAllStatic(): void {
     }
 }
 
+let animTimer: ReturnType<typeof setInterval> | null = null;
+let animTick = 0;
+
+function stopAnim(): void {
+    if (animTimer !== null) {
+        clearInterval(animTimer);
+        animTimer = null;
+    }
+    animTick = 0;
+}
+
+function drawAnimFrame(): void {
+    const unit = selected.value?.unit;
+    if (!unit || !unit.textures || !hasAnimation(unit)) return;
+    const animFrames = unit.animFrames!;
+    const frameIndex = animFrames[animTick % animFrames.length];
+    for (const texture of unit.textures) {
+        const img = loadImage(imageUrl(texture.image));
+        for (const dir of animDirectionsFor(texture, unit)) {
+            const frame = dir.frames[frameIndex % dir.frames.length];
+            const canvas = animCanvases.get(canvasKey(texture.image, `anim_${dir.dir}`));
+            if (canvas) drawFrame(canvas, img, frame);
+        }
+    }
+}
+
+function startAnim(): void {
+    stopAnim();
+    const unit = selected.value?.unit;
+    if (!unit || !hasAnimation(unit)) return;
+    void nextTick(() => drawAnimFrame());
+    animTimer = setInterval(() => {
+        animTick++;
+        drawAnimFrame();
+    }, 1000 / unit.animSpeed!);
+}
+
 watch(selected, () => {
-    void nextTick(() => drawAllStatic());
+    void nextTick(() => {
+        drawAllStatic();
+        startAnim();
+    });
 }, { immediate: true });
+
+onBeforeUnmount(() => {
+    stopAnim();
+});
 </script>
