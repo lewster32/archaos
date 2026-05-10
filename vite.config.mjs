@@ -17,7 +17,12 @@ export default defineConfig({
         },
     },
     build: {
-        assetsInlineLimit: 0,
+        // Inline small UI images (button skins, callouts, icons) as data URIs
+        // in the CSS bundle so hover states are paint-ready and don't pop in
+        // when first applied. Game assets loaded by Phaser stay as separate
+        // files so the loader can report progress and benefit from
+        // fingerprinted cache-busting.
+        assetsInlineLimit: (filePath) => /[\\/]images[\\/]ui[\\/]/.test(filePath),
         chunkSizeWarningLimit: 1500,
         rolldownOptions: {
             input: {
