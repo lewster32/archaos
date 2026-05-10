@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
+import { computed, ref, watch, nextTick, onBeforeUnmount, onMounted } from "vue";
 import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
 import SpellInfo from "../../components/game/SpellInfo.vue";
 import classicSpellsData from "../../../assets/data/classicspells.json";
@@ -277,6 +277,28 @@ const selectedId = ref<string | null>(null);
 const selected = computed<Spell | null>(
     () => spells.find((s) => s.id === selectedId.value) ?? null
 );
+
+// Persist the selection in the `units` query param so reloads land back on
+// the same unit. The DebugApp router uses `params.has("units")` for routing,
+// which still returns true when the param has a value, so the panel stays
+// active either way. `?units` (no value) means no specific unit selected.
+onMounted(() => {
+    const params = new URLSearchParams(globalThis.location.search);
+    const id = params.get("units");
+    if (id && spells.some((s) => s.id === id)) {
+        selectedId.value = id;
+    }
+});
+
+watch(selectedId, (id) => {
+    const url = new URL(globalThis.location.href);
+    if (id) {
+        url.searchParams.set("units", id);
+    } else {
+        url.searchParams.set("units", "");
+    }
+    globalThis.history.replaceState(null, "", url);
+});
 
 // Duck-typed engine Spell for SpellInfo / SpellImage. We synthesise just the
 // fields those components read rather than going through SpellFactory (which
