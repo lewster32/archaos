@@ -21,16 +21,16 @@
 //   Game.css                                             57153 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     3806 B  (lazy CSS bundle)
 //   main.css                                             52775 B  (lazy CSS bundle)
-//   chaossounds.js                                       10284 B  (lazy JS bundle)
-//   debug.js                                              1339 B  (lazy JS bundle)
-//   Game.js                                             334901 B  (lazy JS bundle)
+//   debug.js                                              7056 B  (lazy JS bundle)
+//   Game.js                                             328747 B  (lazy JS bundle)
 //   LoadingScreen.js                                      8977 B  (lazy JS bundle)
-//   main.js                                               2530 B  (lazy JS bundle)
+//   main.js                                               2531 B  (lazy JS bundle)
 //   modulepreload-polyfill.js                              698 B  (lazy JS bundle)
 //   phaser.js                                          1352563 B  (lazy JS bundle)
-//   runtime-dom.esm-bundler.js                           69931 B  (lazy JS bundle)
+//   runtime-dom.esm-bundler.js                           69939 B  (lazy JS bundle)
+//   white-dragon.js                                      16521 B  (lazy JS bundle)
 //   window.js                                            15065 B  (lazy JS bundle)
-//   TOTAL                                              2349483 B
+//   TOTAL                                              2355292 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 2349483;
+export const TOTAL_GAME_ASSET_BYTES = 2355292;

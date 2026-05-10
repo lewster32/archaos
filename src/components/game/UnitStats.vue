@@ -258,6 +258,8 @@ const clampedNum = (num: number | undefined) => {
         background-image: var(--stat-num, none), var(--stat-icon, none), url("@assets/images/ui/stat-bg.png");
         background-size: 36px;
         user-select: none;
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
         &[title] {
             position: relative;
             &::after {

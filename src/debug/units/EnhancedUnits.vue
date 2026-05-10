@@ -1,6 +1,7 @@
 <template>
     <div class="enhanced-units">
-        <aside class="unit-list">
+        <aside class="unit-list callout">
+            <a href="debug.html" class="button button--small unit-list__back">&larr; Debug menu</a>
             <h1>Enhanced Units</h1>
             <ul>
                 <li v-for="spell in sortedSpells" :key="spell.id">
@@ -9,7 +10,7 @@
                         :aria-selected="spell.id === selectedId"
                         @click="selectedId = spell.id"
                     >
-                        {{ spell.name }}<span v-if="spell.id === selectedId"> [sel]</span>
+                        {{ spell.name }}
                     </button>
                 </li>
             </ul>
@@ -20,7 +21,11 @@
             <template v-else>
                 <h1>{{ selected.name }}</h1>
 
-                <section>
+                <div v-if="spellForIcon" class="spell-info-inline">
+                    <SpellInfo :spell="spellForIcon" :key="selected.id" />
+                </div>
+
+                <section class="callout">
                     <h2>Properties</h2>
                     <dl>
                         <template v-for="(v, k) in propertiesEntries" :key="k">
@@ -30,7 +35,7 @@
                     </dl>
                 </section>
 
-                <section>
+                <section class="callout">
                     <h2>Stats</h2>
                     <dl>
                         <template v-for="(v, k) in statsEntries" :key="k">
@@ -40,7 +45,7 @@
                     </dl>
                 </section>
 
-                <section>
+                <section class="callout">
                     <h2>Status</h2>
                     <ul v-if="selected.unit.status && selected.unit.status.length">
                         <li v-for="s in selected.unit.status" :key="s">{{ s }}</li>
@@ -48,7 +53,7 @@
                     <p v-else>(none)</p>
                 </section>
 
-                <section>
+                <section class="callout">
                     <h2>Animation</h2>
                     <dl>
                         <template v-for="(v, k) in animationEntries" :key="k">
@@ -58,7 +63,7 @@
                     </dl>
                 </section>
 
-                <section v-if="selected.unit.textures && selected.unit.textures.length">
+                <section v-if="selected.unit.textures && selected.unit.textures.length" class="callout">
                     <h2>Sprites</h2>
                     <div v-for="texture in selected.unit.textures" :key="texture.image">
                         <p>Texture: {{ texture.image }} ({{ texture.size.w }}x{{ texture.size.h }})</p>
@@ -72,8 +77,8 @@
                                 >
                                     <canvas
                                         :ref="(el) => registerCanvas(canvasKey(texture.image, frame.filename), el as HTMLCanvasElement | null)"
-                                        :width="frame.frame.w * SCALE"
-                                        :height="frame.frame.h * SCALE"
+                                        :width="FRAME_SIZE * SCALE"
+                                        :height="FRAME_SIZE * SCALE"
                                         style="image-rendering: pixelated"
                                     ></canvas>
                                     <figcaption>{{ frame.filename }}</figcaption>
@@ -90,8 +95,8 @@
                                 >
                                     <canvas
                                         :ref="(el) => registerAnimCanvas(canvasKey(texture.image, `anim_${dir.dir}`), el as HTMLCanvasElement | null)"
-                                        :width="dir.frameSize.w * SCALE"
-                                        :height="dir.frameSize.h * SCALE"
+                                        :width="FRAME_SIZE * SCALE"
+                                        :height="FRAME_SIZE * SCALE"
                                         style="image-rendering: pixelated"
                                     ></canvas>
                                     <figcaption>{{ dir.dir }}</figcaption>
@@ -107,10 +112,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
+import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
+import SpellInfo from "../../components/game/SpellInfo.vue";
 
 interface Frame {
     filename: string;
     frame: { x: number; y: number; w: number; h: number };
+    spriteSourceSize?: { x: number; y: number; w: number; h: number };
+    sourceSize?: { w: number; h: number };
 }
 
 interface Texture {
@@ -137,6 +146,11 @@ interface Unit {
 interface Spell {
     id: string;
     name: string;
+    chance: number;
+    balance: number;
+    description?: string;
+    group?: string;
+    types?: string[];
     unit: Unit;
 }
 
@@ -148,10 +162,13 @@ interface FrameRow {
 interface AnimDirection {
     dir: "left" | "right";
     frames: Frame[];
-    frameSize: { w: number; h: number };
 }
 
 const SCALE = 4;
+// Enhanced unit atlases are authored at a fixed 18x18 cell. Locking the
+// canvas to this size prevents per-frame layout reflows when an animation
+// cycles through frames whose intrinsic dimensions differ.
+const FRAME_SIZE = 18;
 const FRAME_RE = /^(.+?)_([lr])_(\d+|d)$/;
 
 const enhanced = import.meta.glob(
@@ -170,6 +187,32 @@ const selectedId = ref<string | null>(null);
 const selected = computed<Spell | null>(
     () => spells.find((s) => s.id === selectedId.value) ?? null
 );
+
+// Duck-typed engine Spell for SpellInfo / SpellImage. We synthesise just the
+// fields those components read rather than going through SpellFactory (which
+// would need a Board for alignment-adjusted chance, the Piece registry for
+// unitProperties, etc.). Setting `chance` and `properties.chance` to the same
+// value yields a delta of 0 so the alignment-delta hint stays hidden.
+const spellForIcon = computed<EngineSpell | null>(() => {
+    const s = selected.value;
+    if (!s) return null;
+    return {
+        type: SpellType.Summon,
+        name: s.name,
+        spellId: s.id,
+        unitId: s.unit.id,
+        spellFrame: 0,
+        chance: s.chance,
+        balance: s.balance,
+        description: s.description,
+        properties: {
+            chance: s.chance,
+            types: s.types ?? [],
+            group: s.group ?? "enhanced",
+        },
+        unitProperties: s.unit,
+    } as unknown as EngineSpell;
+});
 
 const PROPERTY_KEYS: ReadonlyArray<keyof Unit> = [
     "id",
@@ -277,11 +320,7 @@ function animDirectionsFor(texture: Texture, unit: Unit): AnimDirection[] {
             })
             .sort((a, b) => frameSortKey(a) - frameSortKey(b));
         if (frames.length === 0) continue;
-        dirs.push({
-            dir,
-            frames,
-            frameSize: { w: frames[0].frame.w, h: frames[0].frame.h },
-        });
+        dirs.push({ dir, frames });
     }
     return dirs;
 }
@@ -328,20 +367,31 @@ function registerAnimCanvas(key: string, el: HTMLCanvasElement | null): void {
 function drawFrame(canvas: HTMLCanvasElement, img: HTMLImageElement, frame: Frame): void {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const w = frame.frame.w;
-    const h = frame.frame.h;
-    canvas.width = w * SCALE;
-    canvas.height = h * SCALE;
     ctx.imageSmoothingEnabled = false;
     if (!img.complete) {
         img.addEventListener("load", () => drawFrame(canvas, img, frame), { once: true });
         return;
     }
+    const w = frame.frame.w;
+    const h = frame.frame.h;
+    // Honour the trim offset from `spriteSourceSize` so trimmed frames
+    // (e.g. the obelisk's flat corpse) land at the right position within
+    // the 18x18 cell instead of being centred. Fall back to centring for
+    // any frame that doesn't carry trim metadata.
+    let dx: number;
+    let dy: number;
+    if (frame.spriteSourceSize) {
+        dx = frame.spriteSourceSize.x * SCALE;
+        dy = frame.spriteSourceSize.y * SCALE;
+    } else {
+        dx = Math.floor((FRAME_SIZE - w) / 2) * SCALE;
+        dy = Math.floor((FRAME_SIZE - h) / 2) * SCALE;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(
         img,
         frame.frame.x, frame.frame.y, w, h,
-        0, 0, w * SCALE, h * SCALE
+        dx, dy, w * SCALE, h * SCALE
     );
 }
 
@@ -387,10 +437,14 @@ function startAnim(): void {
     const unit = selected.value?.unit;
     if (!unit || !hasAnimation(unit)) return;
     void nextTick(() => drawAnimFrame());
+    // Phaser drives these animations at `frameRate = 9 - animSpeed` fps
+    // (see game-scene.ts:153). animSpeed in JSON is effectively a delay
+    // multiplier, so a higher value plays *slower*. Mirror that here.
+    const fps = Math.max(1, 9 - unit.animSpeed!);
     animTimer = setInterval(() => {
         animTick++;
         drawAnimFrame();
-    }, 1000 / unit.animSpeed!);
+    }, 1000 / fps);
 }
 
 watch(selected, () => {
@@ -404,3 +458,191 @@ onBeforeUnmount(() => {
     stopAnim();
 });
 </script>
+
+<style lang="scss" scoped>
+.enhanced-units {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 100vh;
+    color: var(--fg-colour);
+    text-shadow: var(--text-shadow);
+}
+
+.unit-list {
+    flex: 0 0 14rem;
+    padding: 1rem 0;
+
+    &__back {
+        display: block;
+        margin: 0 1rem 0.75rem;
+        text-decoration: none;
+    }
+
+    h1 {
+        margin: 0 0 0.75rem;
+        padding: 0.25rem 1rem;
+        font-size: 1.5rem;
+        color: var(--color-yellow);
+    }
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    li + li {
+        margin-top: 0.125rem;
+    }
+
+    li {
+        display: flex;
+    }
+
+    button {
+        all: unset;
+        flex: 1 1 auto;
+        display: block;
+        padding: .75em 1em;
+        cursor: pointer;
+        color: var(--fg-colour);
+        text-shadow: var(--text-shadow);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--color-cyan);
+        }
+
+        &[aria-selected="true"] {
+            background: var(--color-yellow);
+            color: var(--color-black);
+            text-shadow: none;
+        }
+    }
+}
+
+.unit-detail {
+    flex: 1 1 auto;
+    padding: 1.25rem 1.5rem;
+    overflow-x: hidden;
+
+    > h1 {
+        margin: 0 0 1rem;
+        font-size: 2rem;
+        color: var(--color-cyan);
+    }
+
+    > p {
+        color: var(--color-grey);
+    }
+
+    section {
+        // .callout supplies the outer chrome (border-image, background,
+        // padding, shadow). Just space sections vertically here.
+        margin: 0 0 1.25rem;
+
+        h2 {
+            margin: 0 0 0.5rem;
+            font-size: 1.15rem;
+            color: var(--color-yellow);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.25rem;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            column-gap: 1rem;
+            row-gap: 0.25rem;
+            margin: 0;
+        }
+
+        dt {
+            color: var(--color-grey);
+            font-weight: normal;
+        }
+
+        dd {
+            margin: 0;
+            color: var(--color-white);
+        }
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+
+            li {
+                padding: 0.15em 0.5em;
+                background: var(--color-dark-grey);
+                border: 2px solid #111;
+                border-radius: 3px;
+                font-family: monospace;
+                font-size: 0.9em;
+            }
+        }
+    }
+}
+
+.spell-info-inline {
+    display: block;
+    margin: 0 0 1.25rem;
+
+    // SpellInfo is built as a `position: fixed` floating callout in the
+    // game UI. Reset that so the panel sits inline at the top of the
+    // detail pane instead.
+    :deep(.spellinfo) {
+        position: static;
+        right: auto;
+        top: auto;
+        max-width: none;
+        z-index: auto;
+    }
+
+    // Hide affordances that only make sense inside the live spellbook flow.
+    :deep(.spellinfo__close),
+    :deep(.callout__buttons) {
+        display: none;
+    }
+}
+
+.unit-detail section > div > p,
+.unit-detail section > div > div > p {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 0.95rem;
+    color: var(--color-cyan);
+    letter-spacing: 0.5px;
+}
+
+.sprite-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-end;
+    margin: 0.25rem 0 0.75rem;
+
+    figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    canvas {
+        background: var(--color-black);
+        border: 2px solid #111;
+    }
+
+    figcaption {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--color-grey);
+        text-shadow: none;
+    }
+}
+</style>
