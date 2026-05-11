@@ -1,12 +1,12 @@
 <template>
     <SoundsDebug v-if="panel === 'sounds'" />
-    <EnhancedUnits v-else-if="panel === 'units'" />
+    <UnitsEditor v-else-if="panel === 'units'" />
     <div v-else class="debug-index">
         <section class="callout debug-index__panel">
             <h1>Archaos Debug Tools</h1>
             <ul class="debug-index__tools">
                 <li><a href="?sounds" class="button">Sounds</a></li>
-                <li><a href="?units" class="button">Enhanced Units</a></li>
+                <li><a href="?units" class="button">Units Editor</a></li>
             </ul>
         </section>
     </div>
@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import SoundsDebug from "./sounds/SoundsDebug.vue";
-import EnhancedUnits from "./units/EnhancedUnits.vue";
+import UnitsEditor from "./units/UnitsEditor.vue";
 
 const params = new URLSearchParams(globalThis.location.search);
 let panel: "sounds" | "units" | "" = "";
