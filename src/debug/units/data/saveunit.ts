@@ -1,4 +1,4 @@
-import type { EditableSpell, EditableUnit, Texture } from "./types";
+import type { EditableSpell, EditableUnit, Frame, Texture } from "./types";
 
 /**
  * Output shape that mirrors the enhanced JSON files shipped today, e.g.
@@ -92,8 +92,10 @@ function serialiseUnit(unit: EditableUnit, spellName: string): SerialisedUnit {
 function serialiseTexture(texture: Texture): SerialisedTexture {
     // Re-build the texture without `imageUrl`. `JSON.parse(JSON.stringify(...))`
     // would also work but is heavier; this keeps frame metadata typed.
-    const { imageUrl: _unused, ...rest } = texture;
-    return { ...rest, frames: rest.frames.map((f) => ({ ...f })) };
+    const { imageUrl: _unused, frames, ...rest } = texture;
+    const clonedFrames: Frame[] = [];
+    for (const f of frames) clonedFrames.push({ ...f });
+    return { ...rest, frames: clonedFrames };
 }
 
 /**

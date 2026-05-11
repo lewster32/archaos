@@ -114,7 +114,7 @@ function animDirectionsFor(
                 const m = FRAME_RE.exec(f.filename);
                 return m !== null && m[2] === dirChar && m[3] !== "d";
             })
-            .sort((a, b) => frameSortKey(a) - frameSortKey(b));
+            .toSorted((a, b) => frameSortKey(a) - frameSortKey(b));
         if (frames.length === 0) continue;
         dirs.push({ dir, frames });
     }
