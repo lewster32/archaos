@@ -150,11 +150,10 @@ function redraw(): void {
 }
 
 watch(
-    () => [props.modelValue.slice(), props.unit.textures],
+    () => [props.modelValue, props.unit.textures.length],
     () => {
         void nextTick(redraw);
-    },
-    { deep: true }
+    }
 );
 
 onBeforeUnmount(() => {
