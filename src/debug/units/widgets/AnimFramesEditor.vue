@@ -20,26 +20,29 @@
                         {{ i }}
                     </option>
                 </select>
-                <button type="button" @click="moveUp(slot)" :disabled="slot === 0">
-                    Up
+                <button class="button button--small" type="button" @click="moveUp(slot)" :disabled="slot === 0">
+                    &uarr;
                 </button>
                 <button
+                    class="button button--small"
                     type="button"
                     @click="moveDown(slot)"
                     :disabled="slot === modelValue.length - 1"
                 >
-                    Down
+                    &darr;
                 </button>
-                <button type="button" @click="remove(slot)">Remove</button>
+                <button class="button button--small button--red" type="button" @click="remove(slot)">
+                    &times;
+                </button>
             </li>
         </ol>
         <button
             v-if="availableIndices.length"
             type="button"
             @click="addSlot"
-            class="anim-frames-editor__add"
+            class="button button--small anim-frames-editor__add"
         >
-            + Add frame
+            <i class="icon icon--add"></i> Add frame
         </button>
     </div>
 </template>
@@ -227,8 +230,7 @@ function addSlot(): void {
         border: 2px solid #111;
     }
 
-    select,
-    button {
+    select {
         font-family: inherit;
         font-size: 0.85rem;
         padding: 0.2rem 0.4rem;

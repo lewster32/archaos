@@ -2,7 +2,7 @@
 <template>
     <div class="status-multi-select">
         <ul class="status-multi-select__chips" v-if="modelValue.length">
-            <li v-for="value in modelValue" :key="value">
+            <li v-for="value in modelValue" :key="value" class="button button--yellow button--small">
                 <span>{{ value }}</span>
                 <button type="button" @click="remove(value)" aria-label="Remove status">
                     &times;
@@ -76,22 +76,15 @@ function remove(value: string): void {
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            padding: 0.15em 0.4em;
-            background: var(--color-dark-grey);
-            border: 2px solid #111;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 0.85em;
         }
 
         button {
             all: unset;
             cursor: pointer;
-            color: var(--color-grey);
+            color: var(--color-white);
             line-height: 1;
-
             &:hover {
-                color: var(--color-yellow);
+                color: var(--color-red);
             }
         }
     }

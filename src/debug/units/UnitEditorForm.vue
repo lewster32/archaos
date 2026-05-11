@@ -20,15 +20,17 @@
                 <NumberInput
                     label="Chance"
                     :model-value="spell.chance"
-                    :min="0"
+                    :min="0.1"
                     :max="1"
-                    :step="0.01"
+                    :step="0.1"
                     @update:model-value="set('chance', $event)"
                 />
                 <NumberInput
                     label="Balance"
                     :model-value="spell.balance"
                     :step="1"
+                    :min="-4"
+                    :max="4"
                     @update:model-value="set('balance', $event)"
                 />
             </div>

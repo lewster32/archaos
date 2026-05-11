@@ -31,8 +31,8 @@
                 <header class="units-editor__header">
                     <h1>{{ selected.name || "(unnamed)" }}</h1>
                     <div class="units-editor__actions">
-                        <button type="button" :disabled="!canSave" @click="onSave">Save</button>
-                        <button type="button" :disabled="!selected._dirty" @click="onReset">Reset</button>
+                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save</button>
+                        <button class="button button--red" type="button" :disabled="!selected._dirty" @click="onReset">Reset</button>
                     </div>
                 </header>
 
@@ -391,22 +391,6 @@ function findOriginal(originalId: string): EditableSpell | undefined {
     &__actions {
         display: flex;
         gap: 0.5rem;
-
-        button {
-            font-family: inherit;
-            font-size: 0.95rem;
-            padding: 0.4rem 0.9rem;
-            background: var(--color-dark-grey);
-            color: var(--color-white);
-            border: 2px solid #111;
-            border-radius: 3px;
-            cursor: pointer;
-
-            &:disabled {
-                opacity: 0.4;
-                cursor: not-allowed;
-            }
-        }
     }
 
     &__split {

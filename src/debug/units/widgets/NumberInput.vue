@@ -65,13 +65,14 @@ function onInput(event: Event): void {
 
     input {
         font-family: inherit;
-        font-size: 0.95rem;
+        font-size: 1.5rem;
         padding: 0.25rem 0.4rem;
         background: var(--color-dark-grey);
         color: var(--color-white);
         border: 2px solid #111;
         border-radius: 3px;
         width: 5rem;
+        height: 2.5rem;
     }
 }
 </style>
