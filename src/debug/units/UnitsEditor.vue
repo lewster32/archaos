@@ -31,20 +31,8 @@
                 <header class="units-editor__header">
                     <h1>{{ selected.name || "(unnamed)" }}</h1>
                     <div class="units-editor__actions">
-                        <button
-                            type="button"
-                            :disabled="!canSave"
-                            @click="onSave"
-                        >
-                            Save
-                        </button>
-                        <button
-                            type="button"
-                            :disabled="!selected._dirty"
-                            @click="onReset"
-                        >
-                            Reset
-                        </button>
+                        <button type="button" :disabled="!canSave" @click="onSave">Save</button>
+                        <button type="button" :disabled="!selected._dirty" @click="onReset">Reset</button>
                     </div>
                 </header>
 
@@ -54,16 +42,12 @@
                             <SpellInfo :spell="spellForIcon" :key="selected._originalId" />
                         </div>
                         <SpritePreview :unit="selected.unit" />
-                        <section class="callout">
-                            <h2>Live stats</h2>
-                            <UnitStats :unit="liveUnitConfig" />
-                        </section>
                     </div>
                     <div class="units-editor__form">
                         <UnitEditorForm
                             :spell="selected"
                             :other-spells="otherSpells"
-                            :key="selected._originalId"
+                            :key="`${selected._originalId}:${resetCount}`"
                         />
                     </div>
                 </div>
@@ -74,13 +58,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import {
-    SpellType,
-    type Spell as EngineSpell,
-    type UnitConfig,
-} from "@archaos/engine";
+import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
 import SpellInfo from "../../components/game/SpellInfo.vue";
-import UnitStats from "../../components/game/UnitStats.vue";
 import SpritePreview from "./SpritePreview.vue";
 import UnitEditorForm from "./UnitEditorForm.vue";
 import { adaptClassic } from "./data/classicadapter";
@@ -94,6 +73,10 @@ import classicAtlasUrl from "../../../assets/spritesheets/classicunits.png";
 interface SpellGroup {
     label: string;
     spells: EditableSpell[];
+}
+
+function sortByName(a: EditableSpell, b: EditableSpell): number {
+    return a.name.localeCompare(b.name);
 }
 
 interface SourceUnit {
@@ -131,10 +114,10 @@ interface SourceSpell {
     unit: SourceUnit;
 }
 
-const enhancedJsonModules = import.meta.glob(
-    "../../../assets/data/enhanced/*.json",
-    { eager: true }
-) as Record<string, { spell: SourceSpell }>;
+const enhancedJsonModules = import.meta.glob("../../../assets/data/enhanced/*.json", { eager: true }) as Record<
+    string,
+    { spell: SourceSpell }
+>;
 
 /**
  * Deep clone an arbitrary JSON-shaped value. Used to avoid mutating
@@ -173,6 +156,9 @@ function adaptEnhanced(raw: SourceSpell): EditableSpell {
             animFrames: unit.animFrames ? [...unit.animFrames] : undefined,
             animSpeed: unit.animSpeed,
             shadowScale: unit.shadowScale,
+            // Shallow-clone each texture so the editor never mutates the
+            // imported JSON. The spread is intentional copy-on-write.
+            // oxlint-disable-next-line no-map-spread
             textures: (unit.textures ?? []).map((tex) => ({
                 ...tex,
                 imageUrl: tex.imageUrl ?? `/images/units/enhanced/${tex.image}`,
@@ -185,15 +171,13 @@ function adaptEnhanced(raw: SourceSpell): EditableSpell {
 }
 
 function loadAll(): EditableSpell[] {
-    const enhanced: EditableSpell[] = Object.values(enhancedJsonModules).map(
-        (m) => adaptEnhanced(m.spell)
-    );
+    const enhanced: EditableSpell[] = Object.values(enhancedJsonModules).map((m) => adaptEnhanced(m.spell));
     const classic = adaptClassic(
         classicSpellsData as never,
         classicUnitsData as never,
         classicAtlasMeta.textures[0].frames as Frame[],
         classicAtlasMeta.textures[0].size,
-        classicAtlasUrl
+        classicAtlasUrl,
     );
     return [...enhanced, ...classic];
 }
@@ -211,23 +195,20 @@ function repopulate(): void {
 repopulate();
 
 const allSpells = computed<EditableSpell[]>(() =>
-    sortedOriginalIds.value
-        .map((id) => spells.get(id))
-        .filter((s): s is EditableSpell => s !== undefined)
+    sortedOriginalIds.value.map((id) => spells.get(id)).filter((s): s is EditableSpell => s !== undefined),
 );
 
 const spellGroups = computed<SpellGroup[]>(() => {
     const enhanced = allSpells.value.filter((s) => s._origin === "enhanced");
     const classic = allSpells.value.filter((s) => s._origin === "classic");
-    const sortByName = (a: EditableSpell, b: EditableSpell) =>
-        a.name.localeCompare(b.name);
     return [
-        { label: "Enhanced", spells: [...enhanced].sort(sortByName) },
-        { label: "Classic", spells: [...classic].sort(sortByName) },
+        { label: "Enhanced", spells: enhanced.toSorted(sortByName) },
+        { label: "Classic", spells: classic.toSorted(sortByName) },
     ].filter((g) => g.spells.length > 0);
 });
 
 const selectedId = ref<string | null>(null);
+const resetCount = ref(0);
 
 const selected = computed<EditableSpell | null>(() => {
     const id = selectedId.value;
@@ -236,9 +217,7 @@ const selected = computed<EditableSpell | null>(() => {
 });
 
 const otherSpells = computed<EditableSpell[]>(() =>
-    selected.value
-        ? allSpells.value.filter((s) => s !== selected.value)
-        : allSpells.value
+    selected.value ? allSpells.value.filter((s) => s !== selected.value) : allSpells.value,
 );
 
 const canSave = computed(() => {
@@ -280,22 +259,6 @@ const spellForIcon = computed<EngineSpell | null>(() => {
     } as unknown as EngineSpell;
 });
 
-/**
- * Adapt the editable unit into the `UnitConfig` shape `UnitStats.vue`
- * consumes. The component only reads `properties`, `status`,
- * `wizard` and `dead`, so we synthesise just those fields.
- */
-const liveUnitConfig = computed<UnitConfig | null>(() => {
-    const s = selected.value;
-    if (!s) return null;
-    return {
-        properties: s.unit.properties,
-        status: s.unit.status,
-        wizard: false,
-        dead: false,
-    } as unknown as UnitConfig;
-});
-
 function onSave(): void {
     const s = selected.value;
     if (!s || !canSave.value) return;
@@ -310,6 +273,7 @@ function onReset(): void {
     const original = findOriginal(s._originalId);
     if (!original) return;
     spells.set(s._originalId, original);
+    resetCount.value++;
 }
 
 function findOriginal(originalId: string): EditableSpell | undefined {
