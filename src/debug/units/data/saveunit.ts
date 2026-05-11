@@ -108,7 +108,14 @@ export function downloadJson(filename: string, json: string): void {
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    try {
+        a.click();
+    } finally {
+        a.remove();
+        // Defer the revoke - some older browsers (Safari, legacy WebView2)
+        // race the download stream against an immediate revoke and silently
+        // fail. setTimeout(0) gives the browser one tick to start the
+        // download before we drop the URL.
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
 }
