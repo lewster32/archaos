@@ -73,8 +73,11 @@ const panY = ref(0);
 
 const pxWidth = computed(() => FRAME_SIZE * zoom.value);
 const pxHeight = computed(() => FRAME_SIZE * zoom.value);
+// `left: 50%; top: 50%` anchors the top-left corner at the host
+// centre; the leading -50%/-50% pulls the canvas back so its centre
+// lands on the host centre, then pan offsets push it from there.
 const transformCss = computed(
-    () => `translate(${panX.value}px, ${panY.value}px)`,
+    () => `translate(-50%, -50%) translate(${panX.value}px, ${panY.value}px)`,
 );
 
 const TRANSPARENT: Rgba = [0, 0, 0, 0] as const;
@@ -243,13 +246,13 @@ watch(
 );
 
 onMounted(() => {
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
+    globalThis.addEventListener("keydown", onKeyDown);
+    globalThis.addEventListener("keyup", onKeyUp);
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("keyup", onKeyUp);
+    globalThis.removeEventListener("keydown", onKeyDown);
+    globalThis.removeEventListener("keyup", onKeyUp);
 });
 </script>
 

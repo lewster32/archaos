@@ -8,6 +8,8 @@ import {
     type FrameSlot,
 } from "./types";
 
+const FRAME_SIZE = 18;
+
 /**
  * Parses an atlas frame filename `<id>_<l|r>_<index|d>` into a
  * (direction, slot, index) triple. Returns `null` when the filename
@@ -60,22 +62,46 @@ export async function loadFrameBuffers(
     img.src = url;
     await img.decode();
 
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Could not obtain 2D context for atlas decode");
-    ctx.drawImage(img as unknown as CanvasImageSource, 0, 0);
+    const atlas = document.createElement("canvas");
+    atlas.width = img.naturalWidth;
+    atlas.height = img.naturalHeight;
+    const atlasCtx = atlas.getContext("2d");
+    if (!atlasCtx) {
+        throw new Error("Could not obtain 2D context for atlas decode");
+    }
+    atlasCtx.drawImage(img as unknown as CanvasImageSource, 0, 0);
+
+    // Buffers are canonical 18x18 ImageData regardless of whether the
+    // source frame was trimmed. Compose each frame onto a scratch 18x18
+    // canvas, placing the (possibly trimmed) atlas region at the
+    // spriteSourceSize offset so the editor always sees the full sprite
+    // rather than a crop.
+    const compose = document.createElement("canvas");
+    compose.width = FRAME_SIZE;
+    compose.height = FRAME_SIZE;
+    const composeCtx = compose.getContext("2d");
+    if (!composeCtx) {
+        throw new Error("Could not obtain 2D context for frame compose");
+    }
 
     for (const frame of texture.frames) {
         const parsed = parseFrameFilename(frame.filename);
         if (!parsed) continue;
-        const data = ctx.getImageData(
+        const dx = frame.spriteSourceSize?.x ?? 0;
+        const dy = frame.spriteSourceSize?.y ?? 0;
+        composeCtx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+        composeCtx.drawImage(
+            atlas,
             frame.frame.x,
             frame.frame.y,
             frame.frame.w,
             frame.frame.h,
+            dx,
+            dy,
+            frame.frame.w,
+            frame.frame.h,
         );
+        const data = composeCtx.getImageData(0, 0, FRAME_SIZE, FRAME_SIZE);
         buffers.set(
             frameBufferKey(parsed.direction, parsed.slot, parsed.index),
             {

@@ -24,6 +24,7 @@ function makeStubCanvasContext(): {
 } {
     const lastSlices: Array<{ x: number; y: number; w: number; h: number }> = [];
     const ctx = {
+        clearRect: vi.fn(),
         drawImage: vi.fn(),
         getImageData: vi.fn((x: number, y: number, w: number, h: number) => {
             lastSlices.push({ x, y, w, h });
@@ -141,20 +142,67 @@ describe("loadFrameBuffers", () => {
         );
     });
 
-    it("slices the canvas using each frame's x/y/w/h", async () => {
+    it("draws each frame's atlas region onto the compose canvas using its source x/y/w/h", async () => {
+        const spell = makeSpell();
+        await loadFrameBuffers(spell);
+        // First drawImage is the atlas blit (img -> atlas canvas). The
+        // subsequent calls compose each frame onto the 18x18 buffer.
+        const calls = (
+            stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }
+        ).drawImage.mock.calls;
+        const composeCalls = calls.slice(1);
+        // dwarf_l_0: atlas region (0, 0, 18, 18), no trim -> dest (0, 0).
+        expect(composeCalls[0].slice(1)).toEqual([0, 0, 18, 18, 0, 0, 18, 18]);
+        // dwarf_r_0: atlas region (18, 0, 18, 18), no trim -> dest (0, 0).
+        expect(composeCalls[1].slice(1)).toEqual([
+            18, 0, 18, 18, 0, 0, 18, 18,
+        ]);
+        // dwarf_l_d: atlas region (0, 18, 18, 18), no trim -> dest (0, 0).
+        expect(composeCalls[2].slice(1)).toEqual([
+            0, 18, 18, 18, 0, 0, 18, 18,
+        ]);
+    });
+
+    it("produces canonical 18x18 buffers regardless of source frame size", async () => {
         const spell = makeSpell();
         const buffers = await loadFrameBuffers(spell);
-        const lBuf = buffers.get(frameBufferKey("l", "anim", 0));
-        expect(lBuf.data.data[0]).toBe(0);
-        expect(lBuf.data.data[1]).toBe(0);
-        expect(lBuf.data.data[2]).toBe(18);
-        expect(lBuf.data.data[3]).toBe(18);
-        const rBuf = buffers.get(frameBufferKey("r", "anim", 0));
-        expect(rBuf.data.data[0]).toBe(18);
-        expect(rBuf.data.data[1]).toBe(0);
-        const dBuf = buffers.get(frameBufferKey("l", "death", 0));
-        expect(dBuf.data.data[0]).toBe(0);
-        expect(dBuf.data.data[1]).toBe(18);
+        for (const buf of buffers.values()) {
+            expect(buf.data.width).toBe(18);
+            expect(buf.data.height).toBe(18);
+        }
+    });
+
+    it("places trimmed frames at the spriteSourceSize offset", async () => {
+        const spell = makeSpell({}, [
+            {
+                image: "obelisk.png",
+                size: { w: 36, h: 18 },
+                frames: [
+                    {
+                        filename: "obelisk_l_0",
+                        // Trimmed atlas region 12x17 located at (1, 1)
+                        // in the atlas; canonical sprite is 18x18 with
+                        // the trimmed body sitting at (3, 1).
+                        frame: { x: 1, y: 1, w: 12, h: 17 },
+                        sourceSize: { w: 18, h: 18 },
+                        spriteSourceSize: { x: 3, y: 1, w: 12, h: 17 },
+                        trimmed: true,
+                        rotated: false,
+                    },
+                ],
+            },
+        ]);
+        const buffers = await loadFrameBuffers(spell);
+        const buf = buffers.get(frameBufferKey("l", "anim", 0));
+        expect(buf.data.width).toBe(18);
+        expect(buf.data.height).toBe(18);
+        const calls = (
+            stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }
+        ).drawImage.mock.calls;
+        // Skip the initial atlas blit; assert the compose drawImage
+        // copied (1, 1, 12, 17) from the atlas to (3, 1, 12, 17) on
+        // the compose canvas.
+        expect(calls[1].slice(1)).toEqual([1, 1, 12, 17, 3, 1, 12, 17]);
     });
 
     it("initialises each buffer's undo and redo stacks empty", async () => {
