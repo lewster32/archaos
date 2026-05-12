@@ -56,9 +56,7 @@
                     class="paint-canvas__crosshair paint-canvas__crosshair--h"
                     :style="{
                         top:
-                            ((hoverY ?? 0) * 100) / FRAME_SIZE +
-                            50 / FRAME_SIZE +
-                            '%',
+                            ((hoverFloatY ?? 0) * 100) / FRAME_SIZE + '%',
                     }"
                 ></div>
                 <div
@@ -66,9 +64,7 @@
                     class="paint-canvas__crosshair paint-canvas__crosshair--v"
                     :style="{
                         left:
-                            ((hoverX ?? 0) * 100) / FRAME_SIZE +
-                            50 / FRAME_SIZE +
-                            '%',
+                            ((hoverFloatX ?? 0) * 100) / FRAME_SIZE + '%',
                     }"
                 ></div>
                 <div
@@ -149,11 +145,18 @@ let panOriginY = 0;
 const panning = ref(false);
 const spaceHeld = ref(false);
 
-// Current hover position in sprite coordinates (0..17). null when the
-// cursor is outside the painting canvas. Drives the 1-pixel outline
-// guide so the user can see which pixel their next stroke will touch.
+// Current hover position in sprite coordinates (0..17 as integers).
+// null when the cursor is outside the painting canvas. Drives the
+// 1-pixel cell outline so the user can see which pixel their next
+// stroke will touch.
 const hoverX = ref<number | null>(null);
 const hoverY = ref<number | null>(null);
+
+// Sub-cell hover position in sprite coordinates (0..18 as floats).
+// Used by the alignment crosshair so the lines track the pointer
+// continuously rather than snapping to cell centres.
+const hoverFloatX = ref<number | null>(null);
+const hoverFloatY = ref<number | null>(null);
 
 const cursorStyle = computed(() => {
     if (panning.value) return "grabbing";
@@ -274,14 +277,29 @@ function onPointerMove(e: PointerEvent): void {
 
     // Hover tracking runs on every move regardless of stroke state so
     // the outline follows the cursor even outside a paint gesture.
-    const p = clientToSprite(e.clientX, e.clientY);
-    if (p) {
-        hoverX.value = p.x;
-        hoverY.value = p.y;
-    } else {
-        hoverX.value = null;
-        hoverY.value = null;
+    // Capture both the integer cell (for the outline) and the
+    // sub-cell float position (for the crosshair).
+    const canvas = canvasEl.value;
+    if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const fx = (e.clientX - rect.left) / zoom.value;
+        const fy = (e.clientY - rect.top) / zoom.value;
+        if (fx >= 0 && fy >= 0 && fx < FRAME_SIZE && fy < FRAME_SIZE) {
+            hoverFloatX.value = fx;
+            hoverFloatY.value = fy;
+            hoverX.value = Math.floor(fx);
+            hoverY.value = Math.floor(fy);
+        } else {
+            hoverFloatX.value = null;
+            hoverFloatY.value = null;
+            hoverX.value = null;
+            hoverY.value = null;
+        }
     }
+    const p =
+        hoverX.value !== null && hoverY.value !== null
+            ? { x: hoverX.value, y: hoverY.value }
+            : null;
 
     if (!preStrokeSnapshot || !props.activeBuffer) return;
     if (props.tool !== "pencil" && props.tool !== "eraser") return;
@@ -307,6 +325,8 @@ function onPointerMove(e: PointerEvent): void {
 function onPointerLeave(): void {
     hoverX.value = null;
     hoverY.value = null;
+    hoverFloatX.value = null;
+    hoverFloatY.value = null;
 }
 
 function onPointerUp(e: PointerEvent): void {
