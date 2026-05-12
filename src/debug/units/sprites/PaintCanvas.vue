@@ -13,12 +13,6 @@
                     type="button"
                     class="button button--small"
                     :disabled="locked"
-                    @click="setZoom(1)"
-                >1:1</button>
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked"
                     @click="zoomBy(-1)"
                 >-</button>
                 <span class="paint-canvas__zoomlabel">{{ zoom }}x</span>
@@ -112,14 +106,6 @@ let panning = false;
 let panOriginX = 0;
 let panOriginY = 0;
 let spaceHeld = false;
-
-function setZoom(z: number): void {
-    const nearest = ZOOM_STEPS.reduce((best, candidate) =>
-        Math.abs(candidate - z) < Math.abs(best - z) ? candidate : best,
-    );
-    zoom.value = nearest;
-    void redraw();
-}
 
 function zoomBy(delta: number): void {
     const i = ZOOM_STEPS.indexOf(
