@@ -1,16 +1,24 @@
 <template>
     <div class="sprite-editor">
-        <FrameStrip
-            :buffers="buffers"
-            :anim-frames="animFrames"
-            :active-frame="activeFrame"
-            :frame-version="frameVersion"
-            :locked="locked"
-            @select-frame="$emit('selectFrame', $event)"
-            @append-anim-frame="$emit('appendAnimFrame')"
-            @add-death-frame="$emit('addDeathFrame', $event)"
-            @clear-death-frame="$emit('clearDeathFrame', $event)"
-        />
+        <div class="sprite-editor__column">
+            <FrameStrip
+                :buffers="buffers"
+                :anim-frames="animFrames"
+                :active-frame="activeFrame"
+                :frame-version="frameVersion"
+                :locked="locked"
+                @select-frame="$emit('selectFrame', $event)"
+                @append-anim-frame="$emit('appendAnimFrame')"
+                @add-death-frame="$emit('addDeathFrame', $event)"
+                @clear-death-frame="$emit('clearDeathFrame', $event)"
+            />
+            <AnimatedPreview
+                :buffers="buffers"
+                :anim-frames="animFrames"
+                :anim-speed="animSpeed"
+                :frame-version="frameVersion"
+            />
+        </div>
         <section class="sprite-editor__canvas">
             <PaintCanvas
                 :active-buffer="activeBufferRef"
@@ -44,6 +52,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import AnimatedPreview from "./AnimatedPreview.vue";
 import FrameStrip from "./FrameStrip.vue";
 import PaintCanvas from "./PaintCanvas.vue";
 import ToolPanel from "./ToolPanel.vue";
@@ -59,6 +68,7 @@ import {
 const props = defineProps<{
     buffers: FrameBuffers;
     animFrames: number[];
+    animSpeed: number | undefined;
     activeFrame: FrameKey;
     frameVersion: number;
     locked: boolean;
@@ -99,6 +109,12 @@ const activeBufferRef = computed<FrameBuffer | null>(() => {
     grid-template-columns: minmax(200px, 1fr) 3fr minmax(220px, 1fr);
     gap: 12px;
     min-height: 600px;
+}
+.sprite-editor__column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
 }
 .sprite-editor__canvas,
 .sprite-editor__tools {

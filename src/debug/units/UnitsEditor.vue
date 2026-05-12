@@ -76,6 +76,7 @@
                         v-else-if="currentBuffers"
                         :buffers="currentBuffers"
                         :anim-frames="selected.unit.animFrames ?? []"
+                        :anim-speed="selected.unit.animSpeed"
                         :active-frame="activeFrame"
                         :frame-version="frameVersion"
                         :locked="isPainting"
