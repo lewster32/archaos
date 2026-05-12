@@ -305,6 +305,15 @@ const currentBuffers = computed<FrameBuffers | null>(() => {
     return spellFrameBuffers.get(selected.value._originalId) ?? null;
 });
 
+// Reset the active frame whenever the selected spell changes so the
+// painting canvas does not land on a frame index that the new spell
+// does not have (e.g. switching from a 4-frame unit at index 2 to a
+// 2-frame unit). Direction and slot reset too for a consistent
+// starting point per unit.
+watch(selectedId, () => {
+    activeFrame.value = { direction: "l", slot: "anim", index: 0 };
+});
+
 const bufferLoadError = ref<string | null>(null);
 const bufferLoading = ref(false);
 
