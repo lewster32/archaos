@@ -319,11 +319,19 @@ const currentBuffers = computed<FrameBuffers | null>(() => {
 // that unit's buffers change in a way that adds or removes a colour.
 // The global-colours pane reads from the union of these sets so it
 // never re-scans pixels on every stroke or pane switch.
-const colourSetsByUnit = ref(new Map<string, Set<number>>());
+//
+// reactive(Map) — Vue 3 proxies Map operations (set / delete / values
+// / iteration) and tracks them as reactive reads / writes, so the
+// downstream globalColours computed invalidates whenever the cache
+// changes. A version counter rides alongside as a belt-and-braces
+// trigger because Map identity stays stable across edits.
+const colourSetsByUnit = reactive(new Map<string, Set<number>>());
+const colourSetVersion = ref(0);
 
 const globalColours = computed<Rgba[]>(() => {
+    void colourSetVersion.value;
     const merged = new Set<number>();
-    for (const cs of colourSetsByUnit.value.values()) {
+    for (const cs of colourSetsByUnit.values()) {
         for (const c of cs) merged.add(c);
     }
     const out: Rgba[] = [];
@@ -338,12 +346,10 @@ function refreshColoursForUnit(originalId: string): void {
     const buffers = spellFrameBuffers.get(originalId);
     if (!buffers) return;
     const next = scanColoursFromBuffers(buffers);
-    const prev = colourSetsByUnit.value.get(originalId);
+    const prev = colourSetsByUnit.get(originalId);
     if (prev && setsEqual(prev, next)) return;
-    // Wrap mutation in a fresh Map so Vue's reactivity sees a change.
-    const map = new Map(colourSetsByUnit.value);
-    map.set(originalId, next);
-    colourSetsByUnit.value = map;
+    colourSetsByUnit.set(originalId, next);
+    colourSetVersion.value++;
 }
 
 // Reset the active frame whenever the selected spell changes so the
@@ -711,10 +717,8 @@ function onReset(): void {
     // into fresh canonical buffers; eagerLoadAllColours kicks off
     // the re-fetch.
     spellFrameBuffers.delete(id);
-    if (colourSetsByUnit.value.has(id)) {
-        const next = new Map(colourSetsByUnit.value);
-        next.delete(id);
-        colourSetsByUnit.value = next;
+    if (colourSetsByUnit.delete(id)) {
+        colourSetVersion.value++;
     }
     // Clear any active stroke / per-frame undo history for the reset
     // unit; activeFrame returns to L:anim:0 like a fresh selection.
