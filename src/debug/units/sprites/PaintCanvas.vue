@@ -53,6 +53,26 @@
                 <div class="paint-canvas__ground"></div>
                 <div
                     v-if="showHoverOutline"
+                    class="paint-canvas__crosshair paint-canvas__crosshair--h"
+                    :style="{
+                        top:
+                            ((hoverY ?? 0) * 100) / FRAME_SIZE +
+                            50 / FRAME_SIZE +
+                            '%',
+                    }"
+                ></div>
+                <div
+                    v-if="showHoverOutline"
+                    class="paint-canvas__crosshair paint-canvas__crosshair--v"
+                    :style="{
+                        left:
+                            ((hoverX ?? 0) * 100) / FRAME_SIZE +
+                            50 / FRAME_SIZE +
+                            '%',
+                    }"
+                ></div>
+                <div
+                    v-if="showHoverOutline"
                     class="paint-canvas__hover"
                     :style="{
                         top: ((hoverY ?? 0) * 100) / FRAME_SIZE + '%',
@@ -138,6 +158,20 @@ const hoverY = ref<number | null>(null);
 const cursorStyle = computed(() => {
     if (panning.value) return "grabbing";
     if (spaceHeld.value) return "grab";
+    // Hide the native cursor once we have a hover position - the
+    // crosshair lines and hover outline carry the alignment cue, so
+    // the OS arrow / crosshair would just be visual noise on top.
+    // Fall back to crosshair when the cursor sits outside the
+    // 18x18 sprite area (e.g. on the checkerboard margin) so the
+    // user does not "lose" the pointer.
+    if (
+        props.activeBuffer !== null &&
+        !props.locked &&
+        hoverX.value !== null &&
+        hoverY.value !== null
+    ) {
+        return "none";
+    }
     return "crosshair";
 });
 
@@ -435,6 +469,24 @@ onBeforeUnmount(() => {
         box-shadow:
             inset 0 0 0 1px rgba(255, 255, 255, 0.95),
             0 0 0 1px rgba(0, 0, 0, 0.85);
+    }
+
+    &__crosshair {
+        position: absolute;
+        background: rgba(245, 197, 74, 0.25);
+        pointer-events: none;
+
+        &--h {
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        &--v {
+            top: 0;
+            bottom: 0;
+            width: 1px;
+        }
     }
 }
 </style>
