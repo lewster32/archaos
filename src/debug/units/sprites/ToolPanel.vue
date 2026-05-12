@@ -18,15 +18,11 @@
 
         <section class="callout tool-panel__group">
             <h2>Colour</h2>
-            <label class="tool-panel__field">
-                <span>RGB</span>
-                <input
-                    type="color"
-                    :value="rgbHex"
-                    :disabled="locked"
-                    @input="onColourInput"
-                />
-            </label>
+            <ColourPicker
+                :model-value="colour"
+                :disabled="locked"
+                @update:model-value="emit('colourChange', $event)"
+            />
             <SwatchStrip
                 :buffer-sets="[buffers]"
                 :frame-version="frameVersion"
@@ -99,11 +95,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import ColourPicker from "./ColourPicker.vue";
 import SwatchStrip from "./SwatchStrip.vue";
 import type { Direction, FrameBuffers, Rgba } from "../data/types";
 
-const props = defineProps<{
+defineProps<{
     tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
     buffers: FrameBuffers;
@@ -128,25 +124,6 @@ const toolList = [
     { id: "eraser" as const, short: "erase", label: "Eraser" },
     { id: "eyedropper" as const, short: "pick", label: "Picker" },
 ];
-
-function toHexByte(n: number): string {
-    return n.toString(16).padStart(2, "0");
-}
-
-const rgbHex = computed(
-    () =>
-        `#${toHexByte(props.colour[0])}${toHexByte(props.colour[1])}${toHexByte(props.colour[2])}`,
-);
-
-// Sprites are solid colour or fully transparent - the eraser handles
-// the transparent case, so the paint colour is always fully opaque.
-function onColourInput(e: Event): void {
-    const v = (e.target as HTMLInputElement).value;
-    const r = parseInt(v.slice(1, 3), 16);
-    const g = parseInt(v.slice(3, 5), 16);
-    const b = parseInt(v.slice(5, 7), 16);
-    emit("colourChange", [r, g, b, 255] as Rgba);
-}
 </script>
 
 <style lang="scss" scoped>
