@@ -74,6 +74,8 @@
                         :locked="isPainting"
                         :tool="tool"
                         :colour="colour"
+                        :can-undo="canUndo"
+                        :can-redo="canRedo"
                         @select-frame="activeFrame = $event"
                         @append-anim-frame="onAppendAnimFrame"
                         @add-death-frame="onAddDeathFrame"
@@ -81,6 +83,11 @@
                         @stroke-started="onStrokeStarted"
                         @stroke-committed="onStrokeCommitted"
                         @eyedrop="onEyedrop"
+                        @tool-change="onToolChange"
+                        @colour-change="onColourChange"
+                        @mirror="onMirror"
+                        @undo="onUndo"
+                        @redo="onRedo"
                     />
                     <p v-else>Sprite editor buffer loader lands in Task 10.</p>
                 </section>
@@ -98,13 +105,14 @@ import UnitEditorForm from "./UnitEditorForm.vue";
 import SpriteEditor from "./sprites/SpriteEditor.vue";
 import { adaptClassic } from "./data/classicadapter";
 import { buildEnhancedJson, downloadJson } from "./data/saveunit";
-import type {
-    EditableSpell,
-    FrameBuffers,
-    FrameKey,
-    Frame,
-    Rgba,
-    Texture,
+import {
+    frameBufferKey,
+    type EditableSpell,
+    type FrameBuffers,
+    type FrameKey,
+    type Frame,
+    type Rgba,
+    type Texture,
 } from "./data/types";
 import classicSpellsData from "../../../assets/data/classicspells.json";
 import classicUnitsData from "../../../assets/data/classicunits.json";
@@ -280,6 +288,27 @@ const currentBuffers = computed<FrameBuffers | null>(() => {
     return spellFrameBuffers.get(selected.value._originalId) ?? null;
 });
 
+const previousDrawingTool = ref<"pencil" | "fill" | "eraser">("pencil");
+
+const canUndo = computed(() => {
+    if (!currentBuffers.value) return false;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    return (currentBuffers.value.get(k)?.undoStack.length ?? 0) > 0;
+});
+const canRedo = computed(() => {
+    if (!currentBuffers.value) return false;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    return (currentBuffers.value.get(k)?.redoStack.length ?? 0) > 0;
+});
+
 function onAppendAnimFrame(): void {
     // Wired up in Task 10.
 }
@@ -300,8 +329,32 @@ function onStrokeCommitted(_snapshot: ImageData): void {
     frameVersion.value++;
 }
 
+function onToolChange(
+    t: "pencil" | "fill" | "eraser" | "eyedropper",
+): void {
+    if (t !== "eyedropper") previousDrawingTool.value = t;
+    tool.value = t;
+}
+
+function onColourChange(rgba: Rgba): void {
+    colour.value = rgba;
+}
+
+function onMirror(_payload: { from: "l" | "r"; to: "l" | "r" }): void {
+    // Wired up in Task 10.
+}
+
+function onUndo(): void {
+    // Wired up in Task 10.
+}
+
+function onRedo(): void {
+    // Wired up in Task 10.
+}
+
 function onEyedrop(rgba: Rgba): void {
     colour.value = rgba;
+    if (tool.value === "eyedropper") tool.value = previousDrawingTool.value;
 }
 
 const canSave = computed(() => {

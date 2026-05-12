@@ -24,7 +24,20 @@
             />
         </section>
         <section class="sprite-editor__tools">
-            <p>Tool panel comes in Task 9.</p>
+            <ToolPanel
+                :tool="tool"
+                :colour="colour"
+                :buffers="buffers"
+                :frame-version="frameVersion"
+                :can-undo="canUndo"
+                :can-redo="canRedo"
+                :locked="locked"
+                @tool-change="$emit('toolChange', $event)"
+                @colour-change="$emit('colourChange', $event)"
+                @mirror="$emit('mirror', $event)"
+                @undo="$emit('undo')"
+                @redo="$emit('redo')"
+            />
         </section>
     </div>
 </template>
@@ -33,6 +46,7 @@
 import { computed } from "vue";
 import FrameStrip from "./FrameStrip.vue";
 import PaintCanvas from "./PaintCanvas.vue";
+import ToolPanel from "./ToolPanel.vue";
 import {
     frameBufferKey,
     type Direction,
@@ -50,6 +64,8 @@ const props = defineProps<{
     locked: boolean;
     tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
+    canUndo: boolean;
+    canRedo: boolean;
 }>();
 
 defineEmits<{
@@ -60,6 +76,11 @@ defineEmits<{
     (e: "strokeStarted"): void;
     (e: "strokeCommitted", undoSnapshot: ImageData): void;
     (e: "eyedrop", rgba: Rgba): void;
+    (e: "toolChange", tool: "pencil" | "fill" | "eraser" | "eyedropper"): void;
+    (e: "colourChange", rgba: Rgba): void;
+    (e: "mirror", payload: { from: Direction; to: Direction }): void;
+    (e: "undo"): void;
+    (e: "redo"): void;
 }>();
 
 const activeBufferRef = computed<FrameBuffer | null>(() => {
