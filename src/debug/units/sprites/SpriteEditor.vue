@@ -12,7 +12,16 @@
             @clear-death-frame="$emit('clearDeathFrame', $event)"
         />
         <section class="sprite-editor__canvas">
-            <p>Paint canvas comes in Task 8.</p>
+            <PaintCanvas
+                :active-buffer="activeBufferRef"
+                :tool="tool"
+                :colour="colour"
+                :frame-version="frameVersion"
+                :locked="locked"
+                @stroke-started="$emit('strokeStarted')"
+                @stroke-committed="$emit('strokeCommitted', $event)"
+                @eyedrop="$emit('eyedrop', $event)"
+            />
         </section>
         <section class="sprite-editor__tools">
             <p>Tool panel comes in Task 9.</p>
@@ -21,15 +30,26 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import FrameStrip from "./FrameStrip.vue";
-import type { Direction, FrameBuffers, FrameKey } from "../data/types";
+import PaintCanvas from "./PaintCanvas.vue";
+import {
+    frameBufferKey,
+    type Direction,
+    type FrameBuffer,
+    type FrameBuffers,
+    type FrameKey,
+    type Rgba,
+} from "../data/types";
 
-defineProps<{
+const props = defineProps<{
     buffers: FrameBuffers;
     animFrames: number[];
     activeFrame: FrameKey;
     frameVersion: number;
     locked: boolean;
+    tool: "pencil" | "fill" | "eraser" | "eyedropper";
+    colour: Rgba;
 }>();
 
 defineEmits<{
@@ -37,7 +57,19 @@ defineEmits<{
     (e: "appendAnimFrame"): void;
     (e: "addDeathFrame", direction: Direction): void;
     (e: "clearDeathFrame", direction: Direction): void;
+    (e: "strokeStarted"): void;
+    (e: "strokeCommitted", undoSnapshot: ImageData): void;
+    (e: "eyedrop", rgba: Rgba): void;
 }>();
+
+const activeBufferRef = computed<FrameBuffer | null>(() => {
+    const k = frameBufferKey(
+        props.activeFrame.direction,
+        props.activeFrame.slot,
+        props.activeFrame.index,
+    );
+    return props.buffers.get(k) ?? null;
+});
 </script>
 
 <style scoped>

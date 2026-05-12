@@ -1,0 +1,298 @@
+<template>
+    <section class="paint-canvas">
+        <header class="paint-canvas__zoombar">
+            <button type="button" :disabled="locked" @click="fitView">Fit</button>
+            <button type="button" :disabled="locked" @click="setZoom(16)">1:1</button>
+            <button type="button" :disabled="locked" @click="zoomBy(-1)">-</button>
+            <span class="paint-canvas__zoomlabel">{{ zoom }}x</span>
+            <button type="button" :disabled="locked" @click="zoomBy(1)">+</button>
+        </header>
+        <div ref="hostEl" class="paint-canvas__host">
+            <canvas
+                ref="canvasEl"
+                class="paint-canvas__canvas"
+                :style="{
+                    width: pxWidth + 'px',
+                    height: pxHeight + 'px',
+                    transform: transformCss,
+                }"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointercancel="onPointerUp"
+                @wheel.prevent="onWheel"
+            ></canvas>
+        </div>
+    </section>
+</template>
+
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+    bresenhamLine,
+    cloneImageData,
+    drawPixel,
+    floodFill,
+    readPixel,
+} from "../data/paintops";
+import type { FrameBuffer, Rgba } from "../data/types";
+
+const props = defineProps<{
+    activeBuffer: FrameBuffer | null;
+    tool: "pencil" | "fill" | "eraser" | "eyedropper";
+    colour: Rgba;
+    frameVersion: number;
+    locked: boolean;
+}>();
+
+const emit = defineEmits<{
+    (e: "strokeStarted"): void;
+    (e: "strokeCommitted", undoSnapshot: ImageData): void;
+    (e: "eyedrop", rgba: Rgba): void;
+}>();
+
+const FRAME_SIZE = 18;
+const ZOOM_STEPS = [1, 2, 4, 8, 16, 32] as const;
+
+const canvasEl = ref<HTMLCanvasElement | null>(null);
+const hostEl = ref<HTMLDivElement | null>(null);
+const zoom = ref<number>(16);
+const panX = ref(0);
+const panY = ref(0);
+
+const pxWidth = computed(() => FRAME_SIZE * zoom.value);
+const pxHeight = computed(() => FRAME_SIZE * zoom.value);
+const transformCss = computed(
+    () => `translate(${panX.value}px, ${panY.value}px)`,
+);
+
+const TRANSPARENT: Rgba = [0, 0, 0, 0] as const;
+
+let preStrokeSnapshot: ImageData | null = null;
+let lastX = -1;
+let lastY = -1;
+let panning = false;
+let panOriginX = 0;
+let panOriginY = 0;
+let spaceHeld = false;
+
+function setZoom(z: number): void {
+    const nearest = ZOOM_STEPS.reduce((best, candidate) =>
+        Math.abs(candidate - z) < Math.abs(best - z) ? candidate : best,
+    );
+    zoom.value = nearest;
+    void redraw();
+}
+
+function zoomBy(delta: number): void {
+    const i = ZOOM_STEPS.indexOf(
+        zoom.value as (typeof ZOOM_STEPS)[number],
+    );
+    const idx = Math.max(0, Math.min(ZOOM_STEPS.length - 1, i + delta));
+    zoom.value = ZOOM_STEPS[idx];
+    void redraw();
+}
+
+function fitView(): void {
+    const host = hostEl.value;
+    if (!host) return;
+    const w = host.clientWidth;
+    const h = host.clientHeight;
+    const want = Math.max(1, Math.min(w, h) / FRAME_SIZE);
+    setZoom(want);
+    panX.value = 0;
+    panY.value = 0;
+}
+
+function clientToSprite(
+    clientX: number,
+    clientY: number,
+): { x: number; y: number } | null {
+    const canvas = canvasEl.value;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    const sx = Math.floor(localX / zoom.value);
+    const sy = Math.floor(localY / zoom.value);
+    if (sx < 0 || sy < 0 || sx >= FRAME_SIZE || sy >= FRAME_SIZE) return null;
+    return { x: sx, y: sy };
+}
+
+function onPointerDown(e: PointerEvent): void {
+    if (!props.activeBuffer || props.locked) return;
+    if (e.button === 1 || (spaceHeld && e.button === 0)) {
+        panning = true;
+        panOriginX = e.clientX - panX.value;
+        panOriginY = e.clientY - panY.value;
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        return;
+    }
+    if (e.button !== 0) return;
+
+    const p = clientToSprite(e.clientX, e.clientY);
+    if (!p) return;
+
+    if (props.tool === "eyedropper") {
+        const rgba = readPixel(props.activeBuffer.data, p.x, p.y);
+        emit("eyedrop", rgba);
+        return;
+    }
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    preStrokeSnapshot = cloneImageData(props.activeBuffer.data);
+    emit("strokeStarted");
+
+    if (props.tool === "fill") {
+        floodFill(props.activeBuffer.data, p.x, p.y, props.colour);
+        void redraw();
+        return;
+    }
+
+    const rgba = props.tool === "eraser" ? TRANSPARENT : props.colour;
+    drawPixel(props.activeBuffer.data, p.x, p.y, rgba);
+    lastX = p.x;
+    lastY = p.y;
+    void redraw();
+}
+
+function onPointerMove(e: PointerEvent): void {
+    if (panning) {
+        panX.value = e.clientX - panOriginX;
+        panY.value = e.clientY - panOriginY;
+        return;
+    }
+    if (!preStrokeSnapshot || !props.activeBuffer) return;
+    if (props.tool !== "pencil" && props.tool !== "eraser") return;
+    const p = clientToSprite(e.clientX, e.clientY);
+    if (!p) return;
+    const rgba = props.tool === "eraser" ? TRANSPARENT : props.colour;
+    if (lastX >= 0 && lastY >= 0) {
+        bresenhamLine(
+            props.activeBuffer.data,
+            lastX,
+            lastY,
+            p.x,
+            p.y,
+            rgba,
+        );
+    } else {
+        drawPixel(props.activeBuffer.data, p.x, p.y, rgba);
+    }
+    lastX = p.x;
+    lastY = p.y;
+    void redraw();
+}
+
+function onPointerUp(e: PointerEvent): void {
+    if (panning) {
+        panning = false;
+        return;
+    }
+    if (!preStrokeSnapshot) return;
+    emit("strokeCommitted", preStrokeSnapshot);
+    preStrokeSnapshot = null;
+    lastX = -1;
+    lastY = -1;
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+}
+
+function onWheel(e: WheelEvent): void {
+    if (props.locked) return;
+    const dir = e.deltaY > 0 ? -1 : 1;
+    zoomBy(dir);
+}
+
+function onKeyDown(e: KeyboardEvent): void {
+    if (e.code === "Space") spaceHeld = true;
+}
+function onKeyUp(e: KeyboardEvent): void {
+    if (e.code === "Space") spaceHeld = false;
+}
+
+async function redraw(): Promise<void> {
+    await nextTick();
+    const canvas = canvasEl.value;
+    if (!canvas) return;
+    canvas.width = FRAME_SIZE;
+    canvas.height = FRAME_SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (props.activeBuffer) ctx.putImageData(props.activeBuffer.data, 0, 0);
+}
+
+watch(
+    () => [props.frameVersion, props.activeBuffer],
+    () => {
+        void redraw();
+    },
+    { immediate: true },
+);
+
+onMounted(() => {
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("keyup", onKeyUp);
+});
+</script>
+
+<style scoped>
+.paint-canvas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.paint-canvas__zoombar {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.paint-canvas__zoomlabel {
+    padding: 0 4px;
+    min-width: 40px;
+    text-align: center;
+}
+.paint-canvas__host {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 360px;
+    border: 1px solid currentColor;
+    background-color: #2a2a2a;
+    background-image: linear-gradient(
+            45deg,
+            #333 25%,
+            transparent 25%,
+            transparent 75%,
+            #333 75%,
+            #333
+        ),
+        linear-gradient(
+            45deg,
+            #333 25%,
+            transparent 25%,
+            transparent 75%,
+            #333 75%,
+            #333
+        );
+    background-size: 16px 16px;
+    background-position:
+        0 0,
+        8px 8px;
+}
+.paint-canvas__canvas {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: top left;
+    touch-action: none;
+    cursor: crosshair;
+    image-rendering: pixelated;
+}
+</style>

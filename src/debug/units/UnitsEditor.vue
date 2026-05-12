@@ -72,10 +72,15 @@
                         :active-frame="activeFrame"
                         :frame-version="frameVersion"
                         :locked="isPainting"
+                        :tool="tool"
+                        :colour="colour"
                         @select-frame="activeFrame = $event"
                         @append-anim-frame="onAppendAnimFrame"
                         @add-death-frame="onAddDeathFrame"
                         @clear-death-frame="onClearDeathFrame"
+                        @stroke-started="onStrokeStarted"
+                        @stroke-committed="onStrokeCommitted"
+                        @eyedrop="onEyedrop"
                     />
                     <p v-else>Sprite editor buffer loader lands in Task 10.</p>
                 </section>
@@ -98,6 +103,7 @@ import type {
     FrameBuffers,
     FrameKey,
     Frame,
+    Rgba,
     Texture,
 } from "./data/types";
 import classicSpellsData from "../../../assets/data/classicspells.json";
@@ -253,6 +259,8 @@ const activeFrame = ref<FrameKey>({
     slot: "anim",
     index: 0,
 });
+const tool = ref<"pencil" | "fill" | "eraser" | "eyedropper">("pencil");
+const colour = ref<Rgba>([0, 0, 0, 255]);
 
 const selectedId = ref<string | null>(null);
 const resetCount = ref(0);
@@ -280,6 +288,20 @@ function onAddDeathFrame(_dir: "l" | "r"): void {
 }
 function onClearDeathFrame(_dir: "l" | "r"): void {
     // Wired up in Task 10.
+}
+
+function onStrokeStarted(): void {
+    isPainting.value = true;
+}
+
+function onStrokeCommitted(_snapshot: ImageData): void {
+    isPainting.value = false;
+    // Push onto active frame's undo stack in Task 10.
+    frameVersion.value++;
+}
+
+function onEyedrop(rgba: Rgba): void {
+    colour.value = rgba;
 }
 
 const canSave = computed(() => {
