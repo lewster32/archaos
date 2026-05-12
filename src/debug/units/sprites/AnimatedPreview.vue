@@ -9,7 +9,7 @@
                     :height="size"
                     class="animated-preview__canvas"
                 ></canvas>
-                <figcaption>L</figcaption>
+                <figcaption>Left</figcaption>
             </figure>
             <figure>
                 <canvas
@@ -18,7 +18,7 @@
                     :height="size"
                     class="animated-preview__canvas"
                 ></canvas>
-                <figcaption>R</figcaption>
+                <figcaption>Right</figcaption>
             </figure>
         </div>
         <p v-else class="animated-preview__empty">

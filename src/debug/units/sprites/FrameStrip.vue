@@ -7,7 +7,7 @@
             class="frame-strip__direction"
             :class="{ active: activeFrame.direction === dir }"
         >
-            <h3 class="frame-strip__label">{{ dir.toUpperCase() }}</h3>
+            <h3 class="frame-strip__label">{{ dir.toLowerCase() === 'l' ? 'Left' : 'Right' }}</h3>
             <div class="frame-strip__row">
                 <div
                     v-for="idx in animIndicesFor(dir)"
@@ -87,7 +87,7 @@
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('addDeathFrame', dir)"
-                >+ death</button>
+                >+ corpse</button>
             </div>
         </section>
     </section>

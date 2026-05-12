@@ -426,7 +426,7 @@ onBeforeUnmount(() => {
         flex: 1;
         position: relative;
         overflow: hidden;
-        min-height: 360px;
+        min-height: 660px;
         background-color: #2a2a2a;
         background-image:
             linear-gradient(
