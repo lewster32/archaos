@@ -27,18 +27,6 @@
                     @input="onColourInput"
                 />
             </label>
-            <label class="tool-panel__field tool-panel__alpha">
-                <span>Alpha</span>
-                <input
-                    type="range"
-                    min="0"
-                    max="255"
-                    :value="colour[3]"
-                    :disabled="locked"
-                    @input="onAlphaInput"
-                />
-                <span class="tool-panel__alpha-value">{{ colour[3] }}</span>
-            </label>
             <SwatchStrip
                 :buffers="buffers"
                 :frame-version="frameVersion"
@@ -137,20 +125,14 @@ const rgbHex = computed(
         `#${toHexByte(props.colour[0])}${toHexByte(props.colour[1])}${toHexByte(props.colour[2])}`,
 );
 
+// Sprites are solid colour or fully transparent - the eraser handles
+// the transparent case, so the paint colour is always fully opaque.
 function onColourInput(e: Event): void {
     const v = (e.target as HTMLInputElement).value;
     const r = parseInt(v.slice(1, 3), 16);
     const g = parseInt(v.slice(3, 5), 16);
     const b = parseInt(v.slice(5, 7), 16);
-    emit("colourChange", [r, g, b, props.colour[3]] as Rgba);
-}
-
-function onAlphaInput(e: Event): void {
-    const v = parseInt((e.target as HTMLInputElement).value, 10);
-    emit(
-        "colourChange",
-        [props.colour[0], props.colour[1], props.colour[2], v] as Rgba,
-    );
+    emit("colourChange", [r, g, b, 255] as Rgba);
 }
 </script>
 
@@ -200,22 +182,6 @@ function onAlphaInput(e: Event): void {
             color: var(--color-cyan);
             letter-spacing: 0.5px;
         }
-    }
-
-    &__alpha {
-        flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
-
-        input[type="range"] {
-            flex: 1 1 auto;
-        }
-    }
-
-    &__alpha-value {
-        min-width: 2.5rem;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
     }
 
     &__banner {

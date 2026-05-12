@@ -504,7 +504,11 @@ function onKeyDown(e: KeyboardEvent): void {
 }
 
 function onEyedrop(rgba: Rgba): void {
-    colour.value = rgba;
+    // Sprites have no semi-transparent pixels: solid colour or full
+    // transparency only. Eyedrop always sets the paint to fully opaque
+    // RGB so picking from a transparent pixel does not give an invisible
+    // paint colour - the user uses the eraser tool to write transparency.
+    colour.value = [rgba[0], rgba[1], rgba[2], 255];
     if (tool.value === "eyedropper") tool.value = previousDrawingTool.value;
 }
 
@@ -713,7 +717,6 @@ function findOriginal(originalId: string): EditableSpell | undefined {
     }
 
     &__sprites {
-        padding: 1rem;
         color: var(--fg-colour);
     }
 
