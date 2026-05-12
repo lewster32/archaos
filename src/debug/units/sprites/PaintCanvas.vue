@@ -22,6 +22,17 @@
                 @pointercancel="onPointerUp"
                 @wheel.prevent="onWheel"
             ></canvas>
+            <div
+                class="paint-canvas__guides"
+                :style="{
+                    width: pxWidth + 'px',
+                    height: pxHeight + 'px',
+                    transform: transformCss,
+                }"
+                aria-hidden="true"
+            >
+                <div class="paint-canvas__ground"></div>
+            </div>
         </div>
     </section>
 </template>
@@ -294,5 +305,23 @@ onBeforeUnmount(() => {
     touch-action: none;
     cursor: crosshair;
     image-rendering: pixelated;
+}
+.paint-canvas__guides {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: top left;
+    pointer-events: none;
+    outline: 1px solid rgba(245, 197, 74, 0.6);
+}
+.paint-canvas__ground {
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* Row 16 from the top = 2 sprite-pixels above the bottom edge, the
+       corpse-alignment baseline. */
+    top: calc(16 / 18 * 100%);
+    height: 1px;
+    background: rgba(245, 197, 74, 0.6);
 }
 </style>
