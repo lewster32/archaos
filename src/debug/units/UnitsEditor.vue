@@ -65,7 +65,19 @@
                     </div>
                 </div>
                 <section v-else-if="activeTab === 'sprites'" class="units-editor__sprites">
-                    <p>Sprite editor coming in Task 7.</p>
+                    <SpriteEditor
+                        v-if="currentBuffers"
+                        :buffers="currentBuffers"
+                        :anim-frames="selected.unit.animFrames ?? []"
+                        :active-frame="activeFrame"
+                        :frame-version="frameVersion"
+                        :locked="isPainting"
+                        @select-frame="activeFrame = $event"
+                        @append-anim-frame="onAppendAnimFrame"
+                        @add-death-frame="onAddDeathFrame"
+                        @clear-death-frame="onClearDeathFrame"
+                    />
+                    <p v-else>Sprite editor buffer loader lands in Task 10.</p>
                 </section>
             </template>
         </main>
@@ -78,9 +90,16 @@ import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
 import SpellInfo from "../../components/game/SpellInfo.vue";
 import SpritePreview from "./SpritePreview.vue";
 import UnitEditorForm from "./UnitEditorForm.vue";
+import SpriteEditor from "./sprites/SpriteEditor.vue";
 import { adaptClassic } from "./data/classicadapter";
 import { buildEnhancedJson, downloadJson } from "./data/saveunit";
-import type { EditableSpell, Frame, Texture } from "./data/types";
+import type {
+    EditableSpell,
+    FrameBuffers,
+    FrameKey,
+    Frame,
+    Texture,
+} from "./data/types";
 import classicSpellsData from "../../../assets/data/classicspells.json";
 import classicUnitsData from "../../../assets/data/classicunits.json";
 import classicAtlasMeta from "../../../assets/spritesheets/classicunits.json";
@@ -226,6 +245,15 @@ const spellGroups = computed<SpellGroup[]>(() => {
 type EditorTab = "stats" | "sprites";
 const activeTab = ref<EditorTab>("stats");
 
+const spellFrameBuffers = new Map<string, FrameBuffers>();
+const frameVersion = ref(0);
+const isPainting = ref(false);
+const activeFrame = ref<FrameKey>({
+    direction: "l",
+    slot: "anim",
+    index: 0,
+});
+
 const selectedId = ref<string | null>(null);
 const resetCount = ref(0);
 
@@ -238,6 +266,21 @@ const selected = computed<EditableSpell | null>(() => {
 const otherSpells = computed<EditableSpell[]>(() =>
     selected.value ? allSpells.value.filter((s) => s !== selected.value) : allSpells.value,
 );
+
+const currentBuffers = computed<FrameBuffers | null>(() => {
+    if (!selected.value) return null;
+    return spellFrameBuffers.get(selected.value._originalId) ?? null;
+});
+
+function onAppendAnimFrame(): void {
+    // Wired up in Task 10.
+}
+function onAddDeathFrame(_dir: "l" | "r"): void {
+    // Wired up in Task 10.
+}
+function onClearDeathFrame(_dir: "l" | "r"): void {
+    // Wired up in Task 10.
+}
 
 const canSave = computed(() => {
     const s = selected.value;
