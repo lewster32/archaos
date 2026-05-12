@@ -71,7 +71,7 @@
             </div>
         </div>
         <label class="colour-picker__field colour-picker__hex">
-            <span class="c-yellow">#</span>
+            <span class="c-yellow" style="font-size:2rem">#</span>
             <input
                 type="text"
                 maxlength="6"
@@ -367,19 +367,19 @@ function onHexCommit(): void {
 .colour-picker {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.75rem;
 
     &__main {
         display: flex;
         align-items: stretch;
-        gap: 0.4rem;
+        gap: 0.75rem;
     }
 
     &__sv {
         position: relative;
         flex: 1 1 auto;
         min-width: 0;
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 4 / 3;
         cursor: crosshair;
         background:
             linear-gradient(to top, #000, transparent),
@@ -408,8 +408,8 @@ function onHexCommit(): void {
 
     &__hue {
         position: relative;
-        flex: 0 0 14px;
-        width: 14px;
+        flex: 0 0 1.5rem;
+        width: 1.5rem;
         cursor: ns-resize;
         background: linear-gradient(
             to bottom,
@@ -444,10 +444,10 @@ function onHexCommit(): void {
     &__rgb {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         gap: 0.25rem;
         flex: 0 0 auto;
         min-width: 0;
+        width: 6rem;
     }
 
     &__field {
@@ -473,6 +473,7 @@ function onHexCommit(): void {
 
     &__hex {
         margin-top: 0.1rem;
+        font-size: 2rem;
 
         input {
             text-transform: lowercase;
