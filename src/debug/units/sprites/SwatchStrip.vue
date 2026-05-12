@@ -18,14 +18,15 @@ import { computed } from "vue";
 import type { FrameBuffers, Rgba } from "../data/types";
 
 const props = defineProps<{
-    buffers: FrameBuffers;
+    bufferSets: FrameBuffers[];
     frameVersion: number;
     locked: boolean;
+    maxSwatches?: number;
 }>();
 
 defineEmits<{ (e: "pick", rgba: Rgba): void }>();
 
-const MAX_SWATCHES = 32;
+const DEFAULT_MAX_SWATCHES = 32;
 const GRAYSCALE_SATURATION_THRESHOLD = 0.08;
 
 function rgbToHsl(
@@ -65,14 +66,16 @@ const swatches = computed<Rgba[]>(() => {
     // to keep unpainted pixels out of the palette.
     const seen = new Set<number>();
     const out: Rgba[] = [];
-    for (const buf of props.buffers.values()) {
-        const arr = buf.data.data;
-        for (let i = 0; i < arr.length; i += 4) {
-            if (arr[i + 3] === 0) continue;
-            const key = (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
-            if (seen.has(key)) continue;
-            seen.add(key);
-            out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);
+    for (const buffers of props.bufferSets) {
+        for (const buf of buffers.values()) {
+            const arr = buf.data.data;
+            for (let i = 0; i < arr.length; i += 4) {
+                if (arr[i + 3] === 0) continue;
+                const key = (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
+                if (seen.has(key)) continue;
+                seen.add(key);
+                out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);
+            }
         }
     }
     out.sort((a, b) => {
@@ -82,7 +85,7 @@ const swatches = computed<Rgba[]>(() => {
         if (al !== bl) return al - bl;
         return asat - bsat;
     });
-    return out.slice(0, MAX_SWATCHES);
+    return out.slice(0, props.maxSwatches ?? DEFAULT_MAX_SWATCHES);
 });
 
 function rgbaCss(c: Rgba): string {

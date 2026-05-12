@@ -75,6 +75,7 @@
                     <SpriteEditor
                         v-else-if="currentBuffers"
                         :buffers="currentBuffers"
+                        :all-buffer-sets="allBufferSets"
                         :anim-frames="selected.unit.animFrames ?? []"
                         :anim-speed="selected.unit.animSpeed"
                         :active-frame="activeFrame"
@@ -304,6 +305,15 @@ const currentBuffers = computed<FrameBuffers | null>(() => {
     // load resolves (which bumps the version once the map is set).
     void frameVersion.value;
     return spellFrameBuffers.get(selected.value._originalId) ?? null;
+});
+
+// Every loaded spell's frame buffers, used by the global-colours
+// swatch strip in the tool panel. Reads frameVersion so the array
+// rebuilds whenever a new spell's atlas finishes lazy-loading or any
+// stroke paints a fresh colour.
+const allBufferSets = computed<FrameBuffers[]>(() => {
+    void frameVersion.value;
+    return [...spellFrameBuffers.values()];
 });
 
 // Reset the active frame whenever the selected spell changes so the

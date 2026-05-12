@@ -28,9 +28,20 @@
                 />
             </label>
             <SwatchStrip
-                :buffers="buffers"
+                :buffer-sets="[buffers]"
                 :frame-version="frameVersion"
                 :locked="locked"
+                @pick="emit('colourChange', $event)"
+            />
+        </section>
+
+        <section class="callout tool-panel__group">
+            <h2>Global colours</h2>
+            <SwatchStrip
+                :buffer-sets="allBufferSets"
+                :frame-version="frameVersion"
+                :locked="locked"
+                :max-swatches="96"
                 @pick="emit('colourChange', $event)"
             />
         </section>
@@ -95,6 +106,7 @@ const props = defineProps<{
     tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
     buffers: FrameBuffers;
+    allBufferSets: FrameBuffers[];
     frameVersion: number;
     canUndo: boolean;
     canRedo: boolean;
