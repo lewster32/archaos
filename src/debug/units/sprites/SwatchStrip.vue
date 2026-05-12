@@ -26,28 +26,67 @@ const props = defineProps<{
 defineEmits<{ (e: "pick", rgba: Rgba): void }>();
 
 const MAX_SWATCHES = 32;
+const GRAYSCALE_SATURATION_THRESHOLD = 0.08;
+
+function rgbToHsl(
+    r: number,
+    g: number,
+    b: number,
+): { h: number; s: number; l: number } {
+    const rN = r / 255;
+    const gN = g / 255;
+    const bN = b / 255;
+    const max = Math.max(rN, gN, bN);
+    const min = Math.min(rN, gN, bN);
+    const l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l };
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h: number;
+    if (max === rN) h = ((gN - bN) / d + (gN < bN ? 6 : 0)) / 6;
+    else if (max === gN) h = ((bN - rN) / d + 2) / 6;
+    else h = ((rN - gN) / d + 4) / 6;
+    return { h, s, l };
+}
+
+// Grayscale (low saturation) sorts before chromatic colours; both
+// sort ascending by lightness within their group, with saturation
+// breaking ties on equal hue+lightness.
+function swatchSortKey(c: Rgba): [number, number, number] {
+    const { h, s, l } = rgbToHsl(c[0], c[1], c[2]);
+    if (s < GRAYSCALE_SATURATION_THRESHOLD) return [-1, l, 0];
+    return [h, l, s];
+}
 
 const swatches = computed<Rgba[]>(() => {
     void props.frameVersion;
-    const seen = new Set<string>();
+    // Alpha is always 255 in this codebase (eraser handles transparent
+    // pixels), so dedup by RGB only and rely on the alpha-0 skip below
+    // to keep unpainted pixels out of the palette.
+    const seen = new Set<number>();
     const out: Rgba[] = [];
     for (const buf of props.buffers.values()) {
         const arr = buf.data.data;
         for (let i = 0; i < arr.length; i += 4) {
-            const a = arr[i + 3];
-            if (a === 0) continue;
-            const key = `${arr[i]},${arr[i + 1]},${arr[i + 2]},${a}`;
+            if (arr[i + 3] === 0) continue;
+            const key = (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
             if (seen.has(key)) continue;
             seen.add(key);
-            out.push([arr[i], arr[i + 1], arr[i + 2], a] as Rgba);
-            if (out.length >= MAX_SWATCHES) return out;
+            out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);
         }
     }
-    return out;
+    out.sort((a, b) => {
+        const [ah, al, asat] = swatchSortKey(a);
+        const [bh, bl, bsat] = swatchSortKey(b);
+        if (ah !== bh) return ah - bh;
+        if (al !== bl) return al - bl;
+        return asat - bsat;
+    });
+    return out.slice(0, MAX_SWATCHES);
 });
 
 function rgbaCss(c: Rgba): string {
-    return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${c[3] / 255})`;
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
 </script>
 
