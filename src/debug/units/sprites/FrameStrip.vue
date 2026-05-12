@@ -55,22 +55,32 @@
                 >+ first frame</button>
             </div>
             <div class="frame-strip__row">
-                <button
-                    v-if="hasDeath(dir)"
-                    type="button"
-                    class="button button--small frame-strip__thumb"
-                    :class="{ 'button--yellow': isActive(dir, 'death', 0) }"
-                    :disabled="locked"
-                    @click="select(dir, 'death', 0)"
-                >
-                    <canvas
-                        :ref="(el) => registerThumb(dir, 'death', 0, el as HTMLCanvasElement | null)"
-                        :width="THUMB"
-                        :height="THUMB"
-                        class="frame-strip__canvas"
-                    ></canvas>
-                    <span class="frame-strip__caption">d</span>
-                </button>
+                <div v-if="hasDeath(dir)" class="frame-strip__cell">
+                    <button
+                        type="button"
+                        class="button button--small frame-strip__thumb"
+                        :class="{ 'button--yellow': isActive(dir, 'death', 0) }"
+                        :disabled="locked"
+                        @click="select(dir, 'death', 0)"
+                    >
+                        <canvas
+                            :ref="(el) => registerThumb(dir, 'death', 0, el as HTMLCanvasElement | null)"
+                            :width="THUMB"
+                            :height="THUMB"
+                            class="frame-strip__canvas"
+                        ></canvas>
+                        <span class="frame-strip__caption">d</span>
+                    </button>
+                    <div class="frame-strip__actions">
+                        <button
+                            type="button"
+                            class="button button--small button--red frame-strip__action"
+                            :disabled="locked"
+                            title="Delete the death frame"
+                            @click="emit('clearDeathFrame', dir)"
+                        >x</button>
+                    </div>
+                </div>
                 <button
                     v-else
                     type="button"
@@ -78,13 +88,6 @@
                     :disabled="locked"
                     @click="emit('addDeathFrame', dir)"
                 >+ death</button>
-                <button
-                    v-if="hasDeath(dir)"
-                    type="button"
-                    class="button button--small button--red"
-                    :disabled="locked"
-                    @click="emit('clearDeathFrame', dir)"
-                >x</button>
             </div>
         </section>
     </section>
