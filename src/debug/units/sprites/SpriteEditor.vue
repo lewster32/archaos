@@ -19,34 +19,30 @@
                 :frame-version="frameVersion"
             />
         </div>
-        <section class="sprite-editor__canvas">
-            <PaintCanvas
-                :active-buffer="activeBufferRef"
-                :tool="tool"
-                :colour="colour"
-                :frame-version="frameVersion"
-                :locked="locked"
-                @stroke-started="$emit('strokeStarted')"
-                @stroke-committed="$emit('strokeCommitted', $event)"
-                @eyedrop="$emit('eyedrop', $event)"
-            />
-        </section>
-        <section class="sprite-editor__tools">
-            <ToolPanel
-                :tool="tool"
-                :colour="colour"
-                :buffers="buffers"
-                :frame-version="frameVersion"
-                :can-undo="canUndo"
-                :can-redo="canRedo"
-                :locked="locked"
-                @tool-change="$emit('toolChange', $event)"
-                @colour-change="$emit('colourChange', $event)"
-                @mirror="$emit('mirror', $event)"
-                @undo="$emit('undo')"
-                @redo="$emit('redo')"
-            />
-        </section>
+        <PaintCanvas
+            :active-buffer="activeBufferRef"
+            :tool="tool"
+            :colour="colour"
+            :frame-version="frameVersion"
+            :locked="locked"
+            @stroke-started="$emit('strokeStarted')"
+            @stroke-committed="$emit('strokeCommitted', $event)"
+            @eyedrop="$emit('eyedrop', $event)"
+        />
+        <ToolPanel
+            :tool="tool"
+            :colour="colour"
+            :buffers="buffers"
+            :frame-version="frameVersion"
+            :can-undo="canUndo"
+            :can-redo="canRedo"
+            :locked="locked"
+            @tool-change="$emit('toolChange', $event)"
+            @colour-change="$emit('colourChange', $event)"
+            @mirror="$emit('mirror', $event)"
+            @undo="$emit('undo')"
+            @redo="$emit('redo')"
+        />
     </div>
 </template>
 
@@ -103,22 +99,19 @@ const activeBufferRef = computed<FrameBuffer | null>(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .sprite-editor {
     display: grid;
-    grid-template-columns: minmax(200px, 1fr) 3fr minmax(220px, 1fr);
-    gap: 12px;
+    grid-template-columns: minmax(220px, 1fr) minmax(0, 3fr) minmax(240px, 1fr);
+    gap: 1rem;
     min-height: 600px;
-}
-.sprite-editor__column {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-height: 0;
-}
-.sprite-editor__canvas,
-.sprite-editor__tools {
-    border: 1px dashed currentColor;
-    padding: 8px;
+    align-items: start;
+
+    &__column {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 0;
+    }
 }
 </style>

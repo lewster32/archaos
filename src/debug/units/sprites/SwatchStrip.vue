@@ -51,18 +51,32 @@ function rgbaCss(c: Rgba): string {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .swatch-strip {
     display: flex;
     flex-wrap: wrap;
-    gap: 2px;
-    padding: 2px;
-}
-.swatch-strip__chip {
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    border: 1px solid currentColor;
-    cursor: pointer;
+    gap: 3px;
+    padding: 2px 0;
+
+    &__chip {
+        all: unset;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: 2px solid #111;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: transform 80ms ease;
+
+        &:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 1px var(--color-yellow);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    }
 }
 </style>

@@ -1,11 +1,34 @@
 <template>
-    <section class="paint-canvas">
-        <header class="paint-canvas__zoombar">
-            <button type="button" :disabled="locked" @click="fitView">Fit</button>
-            <button type="button" :disabled="locked" @click="setZoom(16)">1:1</button>
-            <button type="button" :disabled="locked" @click="zoomBy(-1)">-</button>
-            <span class="paint-canvas__zoomlabel">{{ zoom }}x</span>
-            <button type="button" :disabled="locked" @click="zoomBy(1)">+</button>
+    <section class="callout paint-canvas">
+        <header class="paint-canvas__header">
+            <h2>Canvas</h2>
+            <div class="paint-canvas__zoombar">
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked"
+                    @click="fitView"
+                >Fit</button>
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked"
+                    @click="setZoom(16)"
+                >1:1</button>
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked"
+                    @click="zoomBy(-1)"
+                >-</button>
+                <span class="paint-canvas__zoomlabel">{{ zoom }}x</span>
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked"
+                    @click="zoomBy(1)"
+                >+</button>
+            </div>
         </header>
         <div ref="hostEl" class="paint-canvas__host">
             <canvas
@@ -256,75 +279,99 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .paint-canvas {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-.paint-canvas__zoombar {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-.paint-canvas__zoomlabel {
-    padding: 0 4px;
-    min-width: 40px;
-    text-align: center;
-}
-.paint-canvas__host {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    min-height: 360px;
-    border: 1px solid currentColor;
-    background-color: #2a2a2a;
-    background-image: linear-gradient(
-            45deg,
-            #333 25%,
-            transparent 25%,
-            transparent 75%,
-            #333 75%,
-            #333
-        ),
-        linear-gradient(
-            45deg,
-            #333 25%,
-            transparent 25%,
-            transparent 75%,
-            #333 75%,
-            #333
-        );
-    background-size: 16px 16px;
-    background-position:
-        0 0,
-        8px 8px;
-}
-.paint-canvas__canvas {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform-origin: top left;
-    touch-action: none;
-    cursor: crosshair;
-    image-rendering: pixelated;
-}
-.paint-canvas__guides {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform-origin: top left;
-    pointer-events: none;
-    outline: 1px solid rgba(245, 197, 74, 0.6);
-}
-.paint-canvas__ground {
-    position: absolute;
-    left: 0;
-    right: 0;
-    /* Row 16 from the top = 2 sprite-pixels above the bottom edge, the
-       corpse-alignment baseline. */
-    top: calc(16 / 18 * 100%);
-    height: 1px;
-    background: rgba(245, 197, 74, 0.6);
+    gap: 0.5rem;
+
+    h2 {
+        margin: 0;
+        font-size: 1.15rem;
+        color: var(--color-yellow);
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+    }
+
+    &__zoombar {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    &__zoomlabel {
+        padding: 0 0.5rem;
+        min-width: 3rem;
+        text-align: center;
+        color: var(--color-cyan);
+        letter-spacing: 0.5px;
+    }
+
+    &__host {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        min-height: 360px;
+        background-color: #2a2a2a;
+        background-image:
+            linear-gradient(
+                45deg,
+                #333 25%,
+                transparent 25%,
+                transparent 75%,
+                #333 75%,
+                #333
+            ),
+            linear-gradient(
+                45deg,
+                #333 25%,
+                transparent 25%,
+                transparent 75%,
+                #333 75%,
+                #333
+            );
+        background-size: 16px 16px;
+        background-position:
+            0 0,
+            8px 8px;
+        border: 2px solid #111;
+    }
+
+    &__canvas {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform-origin: top left;
+        touch-action: none;
+        cursor: crosshair;
+        image-rendering: pixelated;
+    }
+
+    &__guides {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform-origin: top left;
+        pointer-events: none;
+        outline: 1px solid rgba(245, 197, 74, 0.6);
+    }
+
+    &__ground {
+        position: absolute;
+        left: 0;
+        right: 0;
+        /* Row 16 from the top = 2 sprite-pixels above the bottom edge,
+           the corpse-alignment baseline. */
+        top: calc(16 / 18 * 100%);
+        height: 1px;
+        background: rgba(245, 197, 74, 0.6);
+    }
 }
 </style>

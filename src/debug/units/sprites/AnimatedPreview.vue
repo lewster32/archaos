@@ -1,25 +1,30 @@
 <template>
-    <div v-if="hasAnimation" class="animated-preview">
-        <figure>
-            <canvas
-                ref="lCanvas"
-                :width="size"
-                :height="size"
-            ></canvas>
-            <figcaption>L</figcaption>
-        </figure>
-        <figure>
-            <canvas
-                ref="rCanvas"
-                :width="size"
-                :height="size"
-            ></canvas>
-            <figcaption>R</figcaption>
-        </figure>
-    </div>
-    <p v-else class="animated-preview__empty">
-        No animation frames configured.
-    </p>
+    <section class="callout animated-preview">
+        <h2>Animation</h2>
+        <div v-if="hasAnimation" class="animated-preview__row">
+            <figure>
+                <canvas
+                    ref="lCanvas"
+                    :width="size"
+                    :height="size"
+                    class="animated-preview__canvas"
+                ></canvas>
+                <figcaption>L</figcaption>
+            </figure>
+            <figure>
+                <canvas
+                    ref="rCanvas"
+                    :width="size"
+                    :height="size"
+                    class="animated-preview__canvas"
+                ></canvas>
+                <figcaption>R</figcaption>
+            </figure>
+        </div>
+        <p v-else class="animated-preview__empty">
+            No animation frames configured.
+        </p>
+    </section>
 </template>
 
 <script setup lang="ts">
@@ -115,31 +120,45 @@ watch(
 onBeforeUnmount(stopAnim);
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .animated-preview {
-    display: flex;
-    gap: 8px;
-    padding: 4px 0;
-}
-.animated-preview figure {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    align-items: center;
-}
-.animated-preview canvas {
-    image-rendering: pixelated;
-    background: #2a2a2a;
-    border: 1px solid currentColor;
-}
-.animated-preview figcaption {
-    font-size: 10px;
-    opacity: 0.7;
-}
-.animated-preview__empty {
-    font-size: 11px;
-    opacity: 0.7;
-    margin: 0;
+    h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+        color: var(--color-yellow);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+    }
+
+    &__row {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    &__canvas {
+        image-rendering: pixelated;
+        background: var(--color-dark-grey, #111);
+        border: 2px solid #111;
+    }
+
+    figcaption {
+        font-size: 0.75rem;
+        color: var(--color-cyan);
+        letter-spacing: 0.5px;
+    }
+
+    &__empty {
+        margin: 0;
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
 }
 </style>

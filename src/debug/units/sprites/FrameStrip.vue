@@ -1,19 +1,20 @@
 <template>
-    <aside class="frame-strip">
+    <section class="callout frame-strip">
+        <h2>Frames</h2>
         <section
             v-for="dir in directions"
             :key="dir"
             class="frame-strip__direction"
             :class="{ active: activeFrame.direction === dir }"
         >
-            <h3>{{ dir.toUpperCase() }}</h3>
+            <h3 class="frame-strip__label">{{ dir.toUpperCase() }}</h3>
             <div class="frame-strip__row">
                 <button
                     v-for="idx in animIndicesFor(dir)"
                     :key="`${dir}-${idx}`"
                     type="button"
-                    class="frame-strip__thumb"
-                    :class="{ active: isActive(dir, 'anim', idx) }"
+                    class="button button--small frame-strip__thumb"
+                    :class="{ 'button--yellow': isActive(dir, 'anim', idx) }"
                     :disabled="locked"
                     @click="select(dir, 'anim', idx)"
                 >
@@ -21,13 +22,13 @@
                         :ref="(el) => registerThumb(dir, 'anim', idx, el as HTMLCanvasElement | null)"
                         :width="THUMB"
                         :height="THUMB"
-                        style="image-rendering: pixelated"
+                        class="frame-strip__canvas"
                     ></canvas>
-                    <figcaption>{{ idx }}</figcaption>
+                    <span class="frame-strip__caption">{{ idx }}</span>
                 </button>
                 <button
                     type="button"
-                    class="frame-strip__add"
+                    class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('appendAnimFrame')"
                 >+ frame</button>
@@ -36,8 +37,8 @@
                 <button
                     v-if="hasDeath(dir)"
                     type="button"
-                    class="frame-strip__thumb frame-strip__death"
-                    :class="{ active: isActive(dir, 'death', 0) }"
+                    class="button button--small frame-strip__thumb"
+                    :class="{ 'button--yellow': isActive(dir, 'death', 0) }"
                     :disabled="locked"
                     @click="select(dir, 'death', 0)"
                 >
@@ -45,27 +46,27 @@
                         :ref="(el) => registerThumb(dir, 'death', 0, el as HTMLCanvasElement | null)"
                         :width="THUMB"
                         :height="THUMB"
-                        style="image-rendering: pixelated"
+                        class="frame-strip__canvas"
                     ></canvas>
-                    <figcaption>d</figcaption>
+                    <span class="frame-strip__caption">d</span>
                 </button>
                 <button
                     v-else
                     type="button"
-                    class="frame-strip__add"
+                    class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('addDeathFrame', dir)"
                 >+ death</button>
                 <button
                     v-if="hasDeath(dir)"
                     type="button"
-                    class="frame-strip__clear"
+                    class="button button--small button--red"
                     :disabled="locked"
                     @click="emit('clearDeathFrame', dir)"
                 >clear d</button>
             </div>
         </section>
-    </aside>
+    </section>
 </template>
 
 <script setup lang="ts">
@@ -176,46 +177,62 @@ watch(
 onBeforeUnmount(() => thumbs.clear());
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .frame-strip {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 8px;
-    min-width: 200px;
-}
-.frame-strip__direction {
-    border: 1px solid currentColor;
-    padding: 6px;
-}
-.frame-strip__direction.active {
-    border-color: #f5c54a;
-}
-.frame-strip__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-}
-.frame-strip__thumb {
-    padding: 2px;
-    background: transparent;
-    border: 1px solid currentColor;
-    cursor: pointer;
-}
-.frame-strip__thumb.active {
-    border-color: #f5c54a;
-    box-shadow: 0 0 0 1px #f5c54a inset;
-}
-.frame-strip__thumb figcaption {
-    font-size: 10px;
-    text-align: center;
-}
-.frame-strip__add,
-.frame-strip__clear {
-    padding: 4px 8px;
-    background: transparent;
-    border: 1px dashed currentColor;
-    cursor: pointer;
+    gap: 0.75rem;
+
+    h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+        color: var(--color-yellow);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+    }
+
+    &__direction {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    &__label {
+        margin: 0;
+        font-size: 0.85rem;
+        font-weight: normal;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--color-cyan);
+    }
+
+    &__direction.active &__label {
+        color: var(--color-yellow);
+    }
+
+    &__row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+    }
+
+    &__thumb {
+        padding: 4px;
+        line-height: 0;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__canvas {
+        image-rendering: pixelated;
+        background: var(--color-dark-grey, #111);
+        display: block;
+    }
+
+    &__caption {
+        font-size: 0.75rem;
+        line-height: 1;
+    }
 }
 </style>

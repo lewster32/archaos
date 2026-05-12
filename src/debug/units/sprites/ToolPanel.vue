@@ -1,27 +1,33 @@
 <template>
-    <aside class="tool-panel">
-        <section class="tool-panel__group">
-            <h4>Tools</h4>
+    <div class="tool-panel">
+        <section class="callout tool-panel__group">
+            <h2>Tools</h2>
             <div class="tool-panel__tools">
                 <button
                     v-for="t in toolList"
                     :key="t.id"
                     type="button"
-                    :class="{ active: tool === t.id }"
+                    class="button button--small"
+                    :class="{ 'button--yellow': tool === t.id }"
                     :disabled="locked"
+                    :title="t.label"
                     @click="emit('toolChange', t.id)"
-                >{{ t.label }}</button>
+                >{{ t.short }}</button>
             </div>
         </section>
-        <section class="tool-panel__group">
-            <h4>Colour</h4>
-            <input
-                type="color"
-                :value="rgbHex"
-                :disabled="locked"
-                @input="onColourInput"
-            />
-            <label class="tool-panel__alpha">
+
+        <section class="callout tool-panel__group">
+            <h2>Colour</h2>
+            <label class="tool-panel__field">
+                <span>RGB</span>
+                <input
+                    type="color"
+                    :value="rgbHex"
+                    :disabled="locked"
+                    @input="onColourInput"
+                />
+            </label>
+            <label class="tool-panel__field tool-panel__alpha">
                 <span>Alpha</span>
                 <input
                     type="range"
@@ -31,7 +37,7 @@
                     :disabled="locked"
                     @input="onAlphaInput"
                 />
-                <span>{{ colour[3] }}</span>
+                <span class="tool-panel__alpha-value">{{ colour[3] }}</span>
             </label>
             <SwatchStrip
                 :buffers="buffers"
@@ -40,44 +46,56 @@
                 @pick="emit('colourChange', $event)"
             />
         </section>
-        <section class="tool-panel__group">
-            <h4>Mirror</h4>
-            <button
-                type="button"
-                :disabled="locked"
-                @click="emit('mirror', { from: 'l', to: 'r' })"
-            >Copy L -&gt; R</button>
-            <button
-                type="button"
-                :disabled="locked"
-                @click="emit('mirror', { from: 'r', to: 'l' })"
-            >Copy R -&gt; L</button>
+
+        <section class="callout tool-panel__group">
+            <h2>Mirror</h2>
+            <div class="tool-panel__row">
+                <button
+                    type="button"
+                    class="button button--small button--cyan"
+                    :disabled="locked"
+                    @click="emit('mirror', { from: 'l', to: 'r' })"
+                >L -&gt; R</button>
+                <button
+                    type="button"
+                    class="button button--small button--cyan"
+                    :disabled="locked"
+                    @click="emit('mirror', { from: 'r', to: 'l' })"
+                >R -&gt; L</button>
+            </div>
         </section>
-        <section class="tool-panel__group">
-            <h4>History</h4>
-            <button
-                type="button"
-                :disabled="locked || !canUndo"
-                @click="emit('undo')"
-            >Undo</button>
-            <button
-                type="button"
-                :disabled="locked || !canRedo"
-                @click="emit('redo')"
-            >Redo</button>
+
+        <section class="callout tool-panel__group">
+            <h2>History</h2>
+            <div class="tool-panel__row">
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked || !canUndo"
+                    @click="emit('undo')"
+                >Undo</button>
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked || !canRedo"
+                    @click="emit('redo')"
+                >Redo</button>
+            </div>
         </section>
-        <section class="tool-panel__group">
-            <h4>Save</h4>
+
+        <section class="callout tool-panel__group">
+            <h2>Save</h2>
             <button
                 type="button"
+                class="button button--green"
                 disabled
                 title="Save format coming in Phase 2B (.summon archive)."
-            >Save sprite atlas (Phase 2B)</button>
+            >Save sprite atlas</button>
             <p class="tool-panel__banner">
-                Edits are session-only until Phase 2B ships the .summon format.
+                Phase 2B. Edits are session-only until the .summon format ships.
             </p>
         </section>
-    </aside>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -104,10 +122,10 @@ const emit = defineEmits<{
 }>();
 
 const toolList = [
-    { id: "pencil" as const, label: "P" },
-    { id: "fill" as const, label: "F" },
-    { id: "eraser" as const, label: "E" },
-    { id: "eyedropper" as const, label: "Eye" },
+    { id: "pencil" as const, short: "P", label: "Pencil" },
+    { id: "fill" as const, short: "F", label: "Fill" },
+    { id: "eraser" as const, short: "E", label: "Eraser" },
+    { id: "eyedropper" as const, short: "Eye", label: "Eyedropper" },
 ];
 
 function toHexByte(n: number): string {
@@ -136,35 +154,81 @@ function onAlphaInput(e: Event): void {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .tool-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 8px;
-    min-width: 220px;
-}
-.tool-panel__group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.tool-panel__tools {
-    display: flex;
-    gap: 4px;
-}
-.tool-panel__tools button.active {
-    background: rgba(255, 255, 255, 0.1);
-    font-weight: bold;
-}
-.tool-panel__alpha {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 4px;
-    align-items: center;
-}
-.tool-panel__banner {
-    font-size: 11px;
-    opacity: 0.7;
+    gap: 0.75rem;
+
+    &__group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        h2 {
+            margin: 0 0 0.25rem;
+            font-size: 1.15rem;
+            color: var(--color-yellow);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.25rem;
+        }
+    }
+
+    &__tools {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    &__row {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+
+        > * {
+            flex: 1 1 auto;
+        }
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        > span {
+            font-size: 0.85rem;
+            color: var(--color-cyan);
+            letter-spacing: 0.5px;
+        }
+    }
+
+    &__alpha {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+
+        input[type="range"] {
+            flex: 1 1 auto;
+        }
+    }
+
+    &__alpha-value {
+        min-width: 2.5rem;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__banner {
+        margin: 0;
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    input[type="color"] {
+        width: 100%;
+        height: 2rem;
+        padding: 2px;
+        cursor: pointer;
+    }
 }
 </style>
