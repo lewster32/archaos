@@ -21,6 +21,7 @@
         </div>
         <PaintCanvas
             :active-buffer="activeBufferRef"
+            :active-frame="activeFrame"
             :tool="tool"
             :colour="colour"
             :frame-version="frameVersion"

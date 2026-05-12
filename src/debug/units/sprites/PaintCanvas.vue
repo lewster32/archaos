@@ -1,7 +1,7 @@
 <template>
     <section class="callout paint-canvas">
         <header class="paint-canvas__header">
-            <h2>Canvas</h2>
+            <h2>Canvas - {{ frameLabel }}</h2>
             <div class="paint-canvas__zoombar">
                 <button
                     type="button"
@@ -63,10 +63,11 @@ import {
     floodFill,
     readPixel,
 } from "../data/paintops";
-import type { FrameBuffer, Rgba } from "../data/types";
+import type { FrameBuffer, FrameKey, Rgba } from "../data/types";
 
 const props = defineProps<{
     activeBuffer: FrameBuffer | null;
+    activeFrame: FrameKey;
     tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
     frameVersion: number;
@@ -90,6 +91,12 @@ const panY = ref(0);
 
 const pxWidth = computed(() => FRAME_SIZE * zoom.value);
 const pxHeight = computed(() => FRAME_SIZE * zoom.value);
+
+const frameLabel = computed(() => {
+    const side = props.activeFrame.direction === "l" ? "Left" : "Right";
+    if (props.activeFrame.slot === "death") return `${side} Dead`;
+    return `${side} ${props.activeFrame.index}`;
+});
 // `left: 50%; top: 50%` anchors the top-left corner at the host
 // centre; the leading -50%/-50% pulls the canvas back so its centre
 // lands on the host centre, then pan offsets push it from there.
