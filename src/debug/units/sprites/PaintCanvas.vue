@@ -13,7 +13,7 @@
                     type="button"
                     class="button button--small"
                     :disabled="locked"
-                    @click="setZoom(16)"
+                    @click="setZoom(1)"
                 >1:1</button>
                 <button
                     type="button"
@@ -135,10 +135,18 @@ function fitView(): void {
     if (!host) return;
     const w = host.clientWidth;
     const h = host.clientHeight;
-    const want = Math.max(1, Math.min(w, h) / FRAME_SIZE);
-    setZoom(want);
+    const want = Math.min(w, h) / FRAME_SIZE;
+    // Snap DOWN to the largest discrete step that fits without
+    // overflowing the host - rounding to nearest would land on the
+    // same step as 1:1 for some pane sizes.
+    let best: number = ZOOM_STEPS[0];
+    for (const candidate of ZOOM_STEPS) {
+        if (candidate <= want && candidate > best) best = candidate;
+    }
+    zoom.value = best;
     panX.value = 0;
     panY.value = 0;
+    void redraw();
 }
 
 function clientToSprite(
