@@ -38,7 +38,8 @@
         <section class="callout tool-panel__group">
             <h2>Global colours</h2>
             <SwatchStrip
-                :buffer-sets="allBufferSets"
+                :buffer-sets="[]"
+                :colours="globalColours"
                 :frame-version="frameVersion"
                 :locked="locked"
                 :max-swatches="96"
@@ -106,7 +107,7 @@ const props = defineProps<{
     tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
     buffers: FrameBuffers;
-    allBufferSets: FrameBuffers[];
+    globalColours: Rgba[];
     frameVersion: number;
     canUndo: boolean;
     canRedo: boolean;

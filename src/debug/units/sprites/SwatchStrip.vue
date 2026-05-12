@@ -18,7 +18,18 @@ import { computed } from "vue";
 import type { FrameBuffers, Rgba } from "../data/types";
 
 const props = defineProps<{
+    /**
+     * Per-unit buffer sets the strip should scan for distinct colours.
+     * Ignored when `colours` is provided; pass an empty array for the
+     * colours-driven mode.
+     */
     bufferSets: FrameBuffers[];
+    /**
+     * Pre-collected colour list. When supplied, the strip skips the
+     * buffer scan and just sorts + caps this list. Used by the
+     * global-colours pane which maintains its own per-unit cache.
+     */
+    colours?: Rgba[];
     frameVersion: number;
     locked: boolean;
     maxSwatches?: number;
@@ -62,22 +73,33 @@ function swatchSortKey(c: Rgba): [number, number, number] {
 const swatches = computed<Rgba[]>(() => {
     void props.frameVersion;
     // Alpha is always 255 in this codebase (eraser handles transparent
-    // pixels), so dedup by RGB only and rely on the alpha-0 skip below
-    // to keep unpainted pixels out of the palette.
+    // pixels), so dedup by RGB only.
     const seen = new Set<number>();
     const out: Rgba[] = [];
-    for (const buffers of props.bufferSets) {
-        for (const buf of buffers.values()) {
-            const arr = buf.data.data;
-            for (let i = 0; i < arr.length; i += 4) {
-                if (arr[i + 3] === 0) continue;
-                const key = (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
-                if (seen.has(key)) continue;
-                seen.add(key);
-                out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);
+
+    if (props.colours) {
+        for (const c of props.colours) {
+            const key = (c[0] << 16) | (c[1] << 8) | c[2];
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push([c[0], c[1], c[2], 255] as Rgba);
+        }
+    } else {
+        for (const buffers of props.bufferSets) {
+            for (const buf of buffers.values()) {
+                const arr = buf.data.data;
+                for (let i = 0; i < arr.length; i += 4) {
+                    if (arr[i + 3] === 0) continue;
+                    const key =
+                        (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);
+                }
             }
         }
     }
+
     out.sort((a, b) => {
         const [ah, al, asat] = swatchSortKey(a);
         const [bh, bl, bsat] = swatchSortKey(b);

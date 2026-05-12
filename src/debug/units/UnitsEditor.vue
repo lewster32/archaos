@@ -75,7 +75,7 @@
                     <SpriteEditor
                         v-else-if="currentBuffers"
                         :buffers="currentBuffers"
-                        :all-buffer-sets="allBufferSets"
+                        :global-colours="globalColours"
                         :anim-frames="selected.unit.animFrames ?? []"
                         :anim-speed="selected.unit.animSpeed"
                         :active-frame="activeFrame"
@@ -120,6 +120,7 @@ import {
 } from "./data/framebuffers";
 import { loadFrameBuffers } from "./data/loadframes";
 import { cloneImageData } from "./data/paintops";
+import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildEnhancedJson, downloadJson } from "./data/saveunit";
 import {
     frameBufferKey,
@@ -307,14 +308,38 @@ const currentBuffers = computed<FrameBuffers | null>(() => {
     return spellFrameBuffers.get(selected.value._originalId) ?? null;
 });
 
-// Every loaded spell's frame buffers, used by the global-colours
-// swatch strip in the tool panel. Reads frameVersion so the array
-// rebuilds whenever a new spell's atlas finishes lazy-loading or any
-// stroke paints a fresh colour.
-const allBufferSets = computed<FrameBuffers[]>(() => {
-    void frameVersion.value;
-    return [...spellFrameBuffers.values()];
+// Per-unit colour set cache. Each entry is the set of distinct opaque
+// RGB values (packed as 24-bit integers) used by that unit's buffers.
+// Populated once per unit at eager-load time and refreshed only when
+// that unit's buffers change in a way that adds or removes a colour.
+// The global-colours pane reads from the union of these sets so it
+// never re-scans pixels on every stroke or pane switch.
+const colourSetsByUnit = ref(new Map<string, Set<number>>());
+
+const globalColours = computed<Rgba[]>(() => {
+    const merged = new Set<number>();
+    for (const cs of colourSetsByUnit.value.values()) {
+        for (const c of cs) merged.add(c);
+    }
+    const out: Rgba[] = [];
+    for (const packed of merged) {
+        const [r, g, b] = unpackRgb(packed);
+        out.push([r, g, b, 255] as Rgba);
+    }
+    return out;
 });
+
+function refreshColoursForUnit(originalId: string): void {
+    const buffers = spellFrameBuffers.get(originalId);
+    if (!buffers) return;
+    const next = scanColoursFromBuffers(buffers);
+    const prev = colourSetsByUnit.value.get(originalId);
+    if (prev && setsEqual(prev, next)) return;
+    // Wrap mutation in a fresh Map so Vue's reactivity sees a change.
+    const map = new Map(colourSetsByUnit.value);
+    map.set(originalId, next);
+    colourSetsByUnit.value = map;
+}
 
 // Reset the active frame whenever the selected spell changes so the
 // painting canvas does not land on a frame index that the new spell
@@ -339,6 +364,7 @@ async function ensureBuffersLoaded(): Promise<void> {
     try {
         const map = await loadFrameBuffers(s);
         spellFrameBuffers.set(id, map);
+        refreshColoursForUnit(id);
         frameVersion.value++;
     } catch (err) {
         bufferLoadError.value =
@@ -346,6 +372,31 @@ async function ensureBuffersLoaded(): Promise<void> {
     } finally {
         bufferLoading.value = false;
     }
+}
+
+// Eager-load every loaded spell's atlas on panel mount so the
+// global-colours pane is complete from the start. Each load is
+// independent; one decode failure does not block the rest. The lazy
+// path stays as the source of error reporting for the currently
+// selected unit.
+async function eagerLoadAllColours(): Promise<void> {
+    const all = [...spells.values()];
+    await Promise.allSettled(
+        all.map(async (s) => {
+            const id = s._originalId;
+            if (spellFrameBuffers.has(id)) return;
+            if (!s.unit.textures || s.unit.textures.length === 0) return;
+            try {
+                const map = await loadFrameBuffers(s);
+                spellFrameBuffers.set(id, map);
+                refreshColoursForUnit(id);
+                frameVersion.value++;
+            } catch {
+                // Skip silently; the lazy path surfaces errors when
+                // the user opens the Sprites tab for this unit.
+            }
+        }),
+    );
 }
 
 watch(
@@ -399,6 +450,7 @@ function onAppendAnimFrame(): void {
     if (!s || !currentBuffers.value) return;
     appendAnimFrameOp(currentBuffers.value, s.unit);
     s._dirty = true;
+    refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
 
@@ -407,6 +459,7 @@ function onAddDeathFrame(dir: "l" | "r"): void {
     if (!s || !currentBuffers.value) return;
     addDeathFrameOp(currentBuffers.value, s.unit, dir);
     s._dirty = true;
+    refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
 
@@ -415,6 +468,7 @@ function onClearDeathFrame(dir: "l" | "r"): void {
     if (!s || !currentBuffers.value) return;
     clearDeathFrameOp(currentBuffers.value, s.unit, dir);
     s._dirty = true;
+    refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
 
@@ -436,7 +490,10 @@ function onStrokeCommitted(snapshot: ImageData): void {
     buf.undoStack.push(snapshot);
     if (buf.undoStack.length > 50) buf.undoStack.shift();
     buf.redoStack.length = 0;
-    if (selected.value) selected.value._dirty = true;
+    if (selected.value) {
+        selected.value._dirty = true;
+        refreshColoursForUnit(selected.value._originalId);
+    }
     frameVersion.value++;
 }
 
@@ -461,6 +518,7 @@ function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
         payload.to,
     );
     s._dirty = true;
+    refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
 
@@ -478,6 +536,7 @@ function onUndo(): void {
     if (!prev) return;
     buf.redoStack.push(cloneImageData(buf.data));
     buf.data = prev;
+    if (selected.value) refreshColoursForUnit(selected.value._originalId);
     frameVersion.value++;
 }
 
@@ -495,6 +554,7 @@ function onRedo(): void {
     if (!next) return;
     buf.undoStack.push(cloneImageData(buf.data));
     buf.data = next;
+    if (selected.value) refreshColoursForUnit(selected.value._originalId);
     frameVersion.value++;
 }
 
@@ -533,6 +593,7 @@ onMounted(() => {
     const id = params.get("units");
     if (id && spells.has(id)) selectedId.value = id;
     globalThis.addEventListener("keydown", onKeyDown);
+    void eagerLoadAllColours();
 });
 
 onBeforeUnmount(() => {

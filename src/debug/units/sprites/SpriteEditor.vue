@@ -33,7 +33,7 @@
             :tool="tool"
             :colour="colour"
             :buffers="buffers"
-            :all-buffer-sets="allBufferSets"
+            :global-colours="globalColours"
             :frame-version="frameVersion"
             :can-undo="canUndo"
             :can-redo="canRedo"
@@ -64,7 +64,7 @@ import {
 
 const props = defineProps<{
     buffers: FrameBuffers;
-    allBufferSets: FrameBuffers[];
+    globalColours: Rgba[];
     animFrames: number[];
     animSpeed: number | undefined;
     activeFrame: FrameKey;
