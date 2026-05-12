@@ -3,6 +3,7 @@ import {
     addDeathFrame,
     appendAnimFrame,
     clearDeathFrame,
+    duplicateAnimFrame,
     mirrorDirection,
     removeAnimFrame,
 } from "./framebuffers";
@@ -108,11 +109,10 @@ describe("appendAnimFrame", () => {
 });
 
 describe("removeAnimFrame", () => {
-    it("removes both L and R buffers and metadata entries when index is unreferenced", () => {
+    it("removes both L and R buffers and metadata entries at the trailing index", () => {
         const unit = makeUnit([0]);
         const buffers = makeBuffers();
         appendAnimFrame(buffers, unit);
-        unit.animFrames = [0];
         removeAnimFrame(buffers, unit, 1);
         expect(buffers.has(frameBufferKey("l", "anim", 1))).toBe(false);
         expect(buffers.has(frameBufferKey("r", "anim", 1))).toBe(false);
@@ -121,10 +121,105 @@ describe("removeAnimFrame", () => {
         expect(names).not.toContain("dwarf_r_1");
     });
 
-    it("throws when animFrames still references the index", () => {
+    it("renumbers higher buffers down by one to keep indices contiguous", () => {
+        const unit = makeUnit();
+        const buffers = makeBuffers();
+        appendAnimFrame(buffers, unit); // index 1
+        appendAnimFrame(buffers, unit); // index 2
+        // Tag the index-2 buffer's first pixel so we can prove the
+        // post-renumber buffer at index 1 is the one that used to be 2.
+        const beforeIdx2 = buffers.get(frameBufferKey("l", "anim", 2));
+        beforeIdx2.data.data[0] = 99;
+
+        removeAnimFrame(buffers, unit, 1);
+
+        expect(buffers.has(frameBufferKey("l", "anim", 2))).toBe(false);
+        expect(buffers.has(frameBufferKey("r", "anim", 2))).toBe(false);
+        const survived = buffers.get(frameBufferKey("l", "anim", 1));
+        expect(survived).toBe(beforeIdx2);
+        expect(survived.data.data[0]).toBe(99);
+
+        const names = unit.textures[0].frames.map((f) => f.filename);
+        expect(names).toContain("dwarf_l_1");
+        expect(names).toContain("dwarf_r_1");
+        expect(names).not.toContain("dwarf_l_2");
+        expect(names).not.toContain("dwarf_r_2");
+    });
+
+    it("drops references to the removed index from animFrames and shifts higher refs down", () => {
+        const unit = makeUnit();
+        const buffers = makeBuffers();
+        appendAnimFrame(buffers, unit); // index 1 buffers
+        appendAnimFrame(buffers, unit); // index 2 buffers
+        // Now override animFrames to the sequence we want to test.
+        unit.animFrames = [0, 1, 2, 1];
+
+        removeAnimFrame(buffers, unit, 1);
+
+        expect(unit.animFrames).toEqual([0, 1]);
+    });
+
+    it("clears animFrames to undefined when the removed index was the only entry", () => {
         const unit = makeUnit([0]);
         const buffers = makeBuffers();
-        expect(() => removeAnimFrame(buffers, unit, 0)).toThrow(/referenced/);
+        removeAnimFrame(buffers, unit, 0);
+        expect(unit.animFrames).toBeUndefined();
+    });
+
+    it("is a no-op when the index does not exist", () => {
+        const unit = makeUnit([0]);
+        const buffers = makeBuffers();
+        expect(() => removeAnimFrame(buffers, unit, 7)).not.toThrow();
+        expect(buffers.size).toBe(2);
+        expect(unit.animFrames).toEqual([0]);
+    });
+});
+
+describe("duplicateAnimFrame", () => {
+    it("appends a new pair at the next available index with cloned pixel data", () => {
+        const unit = makeUnit();
+        const buffers = makeBuffers();
+        const lSrc = buffers.get(frameBufferKey("l", "anim", 0));
+        const rSrc = buffers.get(frameBufferKey("r", "anim", 0));
+        lSrc.data.data[0] = 11;
+        rSrc.data.data[0] = 22;
+
+        const newIndex = duplicateAnimFrame(buffers, unit, 0);
+        expect(newIndex).toBe(1);
+
+        const lCopy = buffers.get(frameBufferKey("l", "anim", 1));
+        const rCopy = buffers.get(frameBufferKey("r", "anim", 1));
+        expect(lCopy.data.data[0]).toBe(11);
+        expect(rCopy.data.data[0]).toBe(22);
+
+        // Cloned buffers are independent.
+        lCopy.data.data[0] = 77;
+        expect(lSrc.data.data[0]).toBe(11);
+    });
+
+    it("extends animFrames with the new index", () => {
+        const unit = makeUnit([0]);
+        const buffers = makeBuffers();
+        duplicateAnimFrame(buffers, unit, 0);
+        expect(unit.animFrames).toEqual([0, 1]);
+    });
+
+    it("appends matching textures[0].frames metadata for both directions", () => {
+        const unit = makeUnit();
+        const buffers = makeBuffers();
+        duplicateAnimFrame(buffers, unit, 0);
+        const names = unit.textures[0].frames.map((f) => f.filename);
+        expect(names).toContain("dwarf_l_1");
+        expect(names).toContain("dwarf_r_1");
+    });
+
+    it("returns -1 and makes no changes when the source pair is missing", () => {
+        const unit = makeUnit();
+        const buffers = makeBuffers();
+        const sizeBefore = buffers.size;
+        const result = duplicateAnimFrame(buffers, unit, 99);
+        expect(result).toBe(-1);
+        expect(buffers.size).toBe(sizeBefore);
     });
 });
 

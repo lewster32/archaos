@@ -9,29 +9,50 @@
         >
             <h3 class="frame-strip__label">{{ dir.toUpperCase() }}</h3>
             <div class="frame-strip__row">
-                <button
+                <div
                     v-for="idx in animIndicesFor(dir)"
                     :key="`${dir}-${idx}`"
-                    type="button"
-                    class="button button--small frame-strip__thumb"
-                    :class="{ 'button--yellow': isActive(dir, 'anim', idx) }"
-                    :disabled="locked"
-                    @click="select(dir, 'anim', idx)"
+                    class="frame-strip__cell"
                 >
-                    <canvas
-                        :ref="(el) => registerThumb(dir, 'anim', idx, el as HTMLCanvasElement | null)"
-                        :width="THUMB"
-                        :height="THUMB"
-                        class="frame-strip__canvas"
-                    ></canvas>
-                    <span class="frame-strip__caption">{{ idx }}</span>
-                </button>
+                    <button
+                        type="button"
+                        class="button button--small frame-strip__thumb"
+                        :class="{ 'button--yellow': isActive(dir, 'anim', idx) }"
+                        :disabled="locked"
+                        @click="select(dir, 'anim', idx)"
+                    >
+                        <canvas
+                            :ref="(el) => registerThumb(dir, 'anim', idx, el as HTMLCanvasElement | null)"
+                            :width="THUMB"
+                            :height="THUMB"
+                            class="frame-strip__canvas"
+                        ></canvas>
+                        <span class="frame-strip__caption">{{ idx }}</span>
+                    </button>
+                    <div class="frame-strip__actions">
+                        <button
+                            type="button"
+                            class="button button--small button--cyan frame-strip__action"
+                            :disabled="locked"
+                            title="Duplicate this frame pair"
+                            @click="emit('duplicateAnimFrame', idx)"
+                        >+</button>
+                        <button
+                            type="button"
+                            class="button button--small button--red frame-strip__action"
+                            :disabled="locked"
+                            title="Delete this frame pair"
+                            @click="emit('removeAnimFrame', idx)"
+                        >x</button>
+                    </div>
+                </div>
                 <button
+                    v-if="animIndicesFor(dir).length === 0"
                     type="button"
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('appendAnimFrame')"
-                >+ frame</button>
+                >+ first frame</button>
             </div>
             <div class="frame-strip__row">
                 <button
@@ -90,6 +111,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: "selectFrame", key: FrameKey): void;
     (e: "appendAnimFrame"): void;
+    (e: "duplicateAnimFrame", sourceIndex: number): void;
+    (e: "removeAnimFrame", index: number): void;
     (e: "addDeathFrame", direction: Direction): void;
     (e: "clearDeathFrame", direction: Direction): void;
 }>();
@@ -213,8 +236,15 @@ onBeforeUnmount(() => thumbs.clear());
     &__row {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem;
-        align-items: center;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    &__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        align-items: stretch;
     }
 
     &__thumb {
@@ -222,6 +252,20 @@ onBeforeUnmount(() => thumbs.clear());
         line-height: 0;
         flex-direction: column;
         gap: 2px;
+    }
+
+    &__actions {
+        display: flex;
+        gap: 0.15rem;
+        justify-content: stretch;
+    }
+
+    &__action {
+        flex: 1 1 0;
+        padding: 0 0.3em;
+        font-size: 0.85rem;
+        line-height: 1.1;
+        min-width: 0;
     }
 
     &__canvas {

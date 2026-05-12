@@ -74,6 +74,7 @@
                     </p>
                     <SpriteEditor
                         v-else-if="currentBuffers"
+                        :spell="selected"
                         :buffers="currentBuffers"
                         :global-colours="globalColours"
                         :anim-frames="selected.unit.animFrames ?? []"
@@ -87,6 +88,8 @@
                         :can-redo="canRedo"
                         @select-frame="activeFrame = $event"
                         @append-anim-frame="onAppendAnimFrame"
+                        @duplicate-anim-frame="onDuplicateAnimFrame"
+                        @remove-anim-frame="onRemoveAnimFrame"
                         @add-death-frame="onAddDeathFrame"
                         @clear-death-frame="onClearDeathFrame"
                         @stroke-started="onStrokeStarted"
@@ -116,7 +119,9 @@ import {
     addDeathFrame as addDeathFrameOp,
     appendAnimFrame as appendAnimFrameOp,
     clearDeathFrame as clearDeathFrameOp,
+    duplicateAnimFrame as duplicateAnimFrameOp,
     mirrorDirection,
+    removeAnimFrame as removeAnimFrameOp,
 } from "./data/framebuffers";
 import { loadFrameBuffers } from "./data/loadframes";
 import { cloneImageData } from "./data/paintops";
@@ -451,6 +456,51 @@ function onAppendAnimFrame(): void {
     appendAnimFrameOp(currentBuffers.value, s.unit);
     s._dirty = true;
     refreshColoursForUnit(s._originalId);
+    frameVersion.value++;
+}
+
+function onDuplicateAnimFrame(sourceIndex: number): void {
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    const newIndex = duplicateAnimFrameOp(
+        currentBuffers.value,
+        s.unit,
+        sourceIndex,
+    );
+    if (newIndex < 0) return;
+    s._dirty = true;
+    refreshColoursForUnit(s._originalId);
+    activeFrame.value = { direction: "l", slot: "anim", index: newIndex };
+    frameVersion.value++;
+}
+
+function onRemoveAnimFrame(index: number): void {
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    removeAnimFrameOp(currentBuffers.value, s.unit, index);
+    s._dirty = true;
+    refreshColoursForUnit(s._originalId);
+    // Recompute a safe active frame: same direction, anim slot,
+    // clamped to whatever anim indices remain (renumber may have
+    // shifted things, so the previous index might be invalid now).
+    const remaining: number[] = [];
+    for (const key of currentBuffers.value.keys()) {
+        const m = key.match(/^l:anim:(\d+)$/);
+        if (m) remaining.push(parseInt(m[1], 10));
+    }
+    remaining.sort((a, b) => a - b);
+    if (remaining.length === 0) {
+        activeFrame.value = { direction: "l", slot: "anim", index: 0 };
+    } else {
+        const fallback = remaining.includes(activeFrame.value.index)
+            ? activeFrame.value.index
+            : remaining[Math.min(remaining.length - 1, index)];
+        activeFrame.value = {
+            direction: activeFrame.value.direction,
+            slot: "anim",
+            index: fallback,
+        };
+    }
     frameVersion.value++;
 }
 

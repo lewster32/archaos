@@ -73,22 +73,35 @@ export function appendAnimFrame(
 
 /**
  * Drops both L and R anim buffers and their metadata entries for the
- * given index. Throws if `unit.animFrames` still references the index,
- * because removing a referenced frame would silently shift the walk
- * cycle.
+ * given index, renumbering every higher index down by 1 so frame
+ * indices stay contiguous. `unit.animFrames` is updated in lockstep:
+ * all references to the removed index are stripped, and references
+ * to higher indices are shifted down by 1 to track the renumber.
+ *
+ * No-op if the index is not present in the buffer map.
  */
 export function removeAnimFrame(
     buffers: FrameBuffers,
     unit: EditableUnit,
     index: number,
 ): void {
-    if ((unit.animFrames ?? []).includes(index)) {
-        throw new Error(
-            `Cannot remove animation frame ${index}: still referenced by animFrames. Edit the walk sequence first.`,
-        );
+    const lKey = frameBufferKey("l", "anim", index);
+    const rKey = frameBufferKey("r", "anim", index);
+    if (!buffers.has(lKey) && !buffers.has(rKey)) return;
+
+    // Gather every higher index that needs to shift down.
+    const higherIndices = new Set<number>();
+    for (const key of buffers.keys()) {
+        const m = key.match(/^[lr]:anim:(\d+)$/);
+        if (!m) continue;
+        const idx = parseInt(m[1], 10);
+        if (idx > index) higherIndices.add(idx);
     }
-    buffers.delete(frameBufferKey("l", "anim", index));
-    buffers.delete(frameBufferKey("r", "anim", index));
+    const sorted = [...higherIndices].toSorted((a, b) => a - b);
+
+    // Delete the target buffers and metadata.
+    buffers.delete(lKey);
+    buffers.delete(rKey);
     const tex = unit.textures[0];
     if (tex) {
         tex.frames = tex.frames.filter(
@@ -97,6 +110,80 @@ export function removeAnimFrame(
                 f.filename !== `${unit.id}_r_${index}`,
         );
     }
+
+    // Shift higher buffers + metadata down by 1.
+    for (const oldIdx of sorted) {
+        const newIdx = oldIdx - 1;
+        for (const direction of ["l", "r"] as const) {
+            const oldKey = frameBufferKey(direction, "anim", oldIdx);
+            const buf = buffers.get(oldKey);
+            if (!buf) continue;
+            buffers.delete(oldKey);
+            buffers.set(frameBufferKey(direction, "anim", newIdx), buf);
+            if (tex) {
+                const oldName = `${unit.id}_${direction}_${oldIdx}`;
+                const newName = `${unit.id}_${direction}_${newIdx}`;
+                for (const f of tex.frames) {
+                    if (f.filename === oldName) f.filename = newName;
+                }
+            }
+        }
+    }
+
+    // Update animFrames: drop the deleted index, shift higher down.
+    if (unit.animFrames) {
+        const next = unit.animFrames
+            .filter((i) => i !== index)
+            .map((i) => (i > index ? i - 1 : i));
+        unit.animFrames = next.length > 0 ? next : undefined;
+    }
+}
+
+/**
+ * Duplicates an existing animation-frame pair. The new pair is
+ * appended at the next available index (one past the current max) and
+ * filled with horizontally-mirror-free clones of the source L and R
+ * buffers. `animFrames` gains the new index at the end so the
+ * duplicated frame plays in the cycle by default; matching placeholder
+ * metadata is appended to `textures[0].frames[]`.
+ *
+ * Returns the new index, or -1 if either source buffer is missing.
+ */
+export function duplicateAnimFrame(
+    buffers: FrameBuffers,
+    unit: EditableUnit,
+    sourceIndex: number,
+): number {
+    const lSrc = buffers.get(frameBufferKey("l", "anim", sourceIndex));
+    const rSrc = buffers.get(frameBufferKey("r", "anim", sourceIndex));
+    if (!lSrc || !rSrc) return -1;
+
+    let nextIndex = 0;
+    for (const key of buffers.keys()) {
+        const m = key.match(/^[lr]:anim:(\d+)$/);
+        if (!m) continue;
+        const idx = parseInt(m[1], 10);
+        if (idx + 1 > nextIndex) nextIndex = idx + 1;
+    }
+
+    buffers.set(frameBufferKey("l", "anim", nextIndex), {
+        data: cloneImageData(lSrc.data),
+        undoStack: [],
+        redoStack: [],
+    });
+    buffers.set(frameBufferKey("r", "anim", nextIndex), {
+        data: cloneImageData(rSrc.data),
+        undoStack: [],
+        redoStack: [],
+    });
+
+    unit.animFrames = [...(unit.animFrames ?? []), nextIndex];
+    const tex = unit.textures[0];
+    if (tex) {
+        tex.frames.push(makePlaceholderFrameMeta(unit.id, "l", nextIndex));
+        tex.frames.push(makePlaceholderFrameMeta(unit.id, "r", nextIndex));
+    }
+    return nextIndex;
 }
 
 /**

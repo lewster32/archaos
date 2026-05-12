@@ -9,6 +9,8 @@
                 :locked="locked"
                 @select-frame="$emit('selectFrame', $event)"
                 @append-anim-frame="$emit('appendAnimFrame')"
+                @duplicate-anim-frame="$emit('duplicateAnimFrame', $event)"
+                @remove-anim-frame="$emit('removeAnimFrame', $event)"
                 @add-death-frame="$emit('addDeathFrame', $event)"
                 @clear-death-frame="$emit('clearDeathFrame', $event)"
             />
@@ -18,6 +20,7 @@
                 :anim-speed="animSpeed"
                 :frame-version="frameVersion"
             />
+            <AnimationEditor :spell="spell" />
         </div>
         <PaintCanvas
             :active-buffer="activeBufferRef"
@@ -51,12 +54,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import AnimatedPreview from "./AnimatedPreview.vue";
+import AnimationEditor from "./AnimationEditor.vue";
 import FrameStrip from "./FrameStrip.vue";
 import PaintCanvas from "./PaintCanvas.vue";
 import ToolPanel from "./ToolPanel.vue";
 import {
     frameBufferKey,
     type Direction,
+    type EditableSpell,
     type FrameBuffer,
     type FrameBuffers,
     type FrameKey,
@@ -64,6 +69,7 @@ import {
 } from "../data/types";
 
 const props = defineProps<{
+    spell: EditableSpell;
     buffers: FrameBuffers;
     globalColours: Rgba[];
     animFrames: number[];
@@ -80,6 +86,8 @@ const props = defineProps<{
 defineEmits<{
     (e: "selectFrame", key: FrameKey): void;
     (e: "appendAnimFrame"): void;
+    (e: "duplicateAnimFrame", sourceIndex: number): void;
+    (e: "removeAnimFrame", index: number): void;
     (e: "addDeathFrame", direction: Direction): void;
     (e: "clearDeathFrame", direction: Direction): void;
     (e: "strokeStarted"): void;

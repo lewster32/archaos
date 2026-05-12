@@ -106,31 +106,6 @@
             />
         </section>
 
-        <section class="callout">
-            <h2>Animation</h2>
-            <AnimFramesEditor
-                :model-value="spell.unit.animFrames ?? []"
-                :unit="spell.unit"
-                @update:model-value="setAnimFrames"
-            />
-            <div class="unit-editor-form__row">
-                <NumberInput
-                    label="animSpeed"
-                    :model-value="spell.unit.animSpeed"
-                    :min="1"
-                    :max="9"
-                    :step="1"
-                    @update:model-value="setAnimSpeed"
-                />
-                <NumberInput
-                    label="shadowScale"
-                    :model-value="spell.unit.shadowScale"
-                    :min="0"
-                    :step="0.1"
-                    @update:model-value="setShadowScale"
-                />
-            </div>
-        </section>
     </form>
 </template>
 
@@ -139,9 +114,8 @@ import { computed, watch } from "vue";
 import { UnitRangedProjectileType } from "@archaos/engine";
 import NumberInput from "./widgets/NumberInput.vue";
 import StatusMultiSelect from "./widgets/StatusMultiSelect.vue";
-import AnimFramesEditor from "./widgets/AnimFramesEditor.vue";
 import { slugify } from "./data/slugify";
-import type { EditableSpell, EditableUnit } from "./data/types";
+import type { EditableSpell } from "./data/types";
 
 const STAT_KEYS = ["mov", "com", "rcm", "rng", "def", "mnv", "res"] as const;
 type StatKey = (typeof STAT_KEYS)[number];
@@ -192,21 +166,6 @@ function setStat(key: StatKey, value: number | undefined): void {
 
 function setStatus(next: string[]): void {
     props.spell.unit.status = next;
-    markDirty();
-}
-
-function setAnimFrames(next: number[]): void {
-    props.spell.unit.animFrames = next.length ? next : undefined;
-    markDirty();
-}
-
-function setAnimSpeed(value: number | undefined): void {
-    props.spell.unit.animSpeed = value;
-    markDirty();
-}
-
-function setShadowScale(value: number | undefined): void {
-    props.spell.unit.shadowScale = value;
     markDirty();
 }
 </script>
