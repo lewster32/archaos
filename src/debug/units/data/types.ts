@@ -80,3 +80,63 @@ export interface EditableSpell {
     _originalId: string;
     _dirty: boolean;
 }
+
+/**
+ * Direction a unit's sprite faces. Atlas filenames follow the
+ * `<unitId>_<direction>_<index|d>` convention.
+ */
+export type Direction = "l" | "r";
+
+/**
+ * Sprite frame role within a direction: animation frames are indexed
+ * (0, 1, 2, ...) and play in the walk cycle; death is a single
+ * special-purpose frame.
+ */
+export type FrameSlot = "anim" | "death";
+
+/**
+ * Identifies a single sprite frame within a unit's atlas.
+ */
+export interface FrameKey {
+    direction: Direction;
+    slot: FrameSlot;
+    /** Animation frame index. Ignored when `slot === "death"`. */
+    index: number;
+}
+
+/**
+ * One pixel-paintable sprite frame plus its per-frame undo / redo
+ * history. `data` is mutated in place by the painting tools.
+ */
+export interface FrameBuffer {
+    /** 18x18 RGBA buffer. Source of truth for this frame's pixels. */
+    data: ImageData;
+    /** Pre-stroke snapshots, most-recent last. Bounded to 50 entries. */
+    undoStack: ImageData[];
+    /** Snapshots popped from undo, repopulated on redo. */
+    redoStack: ImageData[];
+}
+
+/**
+ * Map of every loaded frame buffer for a single spell, keyed by
+ * `${direction}:${slot}:${index}`. Death-slot index is always 0.
+ */
+export type FrameBuffers = Map<string, FrameBuffer>;
+
+/**
+ * 8-bit-per-channel RGBA tuple used by the painting tool primitives.
+ */
+export type Rgba = readonly [r: number, g: number, b: number, a: number];
+
+/**
+ * Builds the canonical key string used in `FrameBuffers` map lookups.
+ */
+export function frameBufferKey(
+    direction: Direction,
+    slot: FrameSlot,
+    index: number
+): string {
+    return slot === "death"
+        ? `${direction}:death:0`
+        : `${direction}:anim:${index}`;
+}
