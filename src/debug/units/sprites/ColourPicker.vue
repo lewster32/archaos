@@ -1,75 +1,77 @@
 <template>
     <div class="colour-picker">
-        <div
-            ref="svEl"
-            class="colour-picker__sv"
-            :class="{ 'colour-picker__sv--disabled': disabled }"
-            :style="{ '--hue-bg': hueBg }"
-            @pointerdown="onSvDown"
-            @pointermove="onSvMove"
-            @pointerup="onSvUp"
-            @pointercancel="onSvUp"
-        >
+        <div class="colour-picker__main">
             <div
-                class="colour-picker__sv-marker"
-                :style="{
-                    left: internalS * 100 + '%',
-                    top: (1 - internalV) * 100 + '%',
-                    background: rgbHex,
-                }"
-            ></div>
-        </div>
-        <div
-            ref="hueEl"
-            class="colour-picker__hue"
-            :class="{ 'colour-picker__hue--disabled': disabled }"
-            @pointerdown="onHueDown"
-            @pointermove="onHueMove"
-            @pointerup="onHueUp"
-            @pointercancel="onHueUp"
-        >
+                ref="svEl"
+                class="colour-picker__sv"
+                :class="{ 'colour-picker__sv--disabled': disabled }"
+                :style="{ '--hue-bg': hueBg }"
+                @pointerdown="onSvDown"
+                @pointermove="onSvMove"
+                @pointerup="onSvUp"
+                @pointercancel="onSvUp"
+            >
+                <div
+                    class="colour-picker__sv-marker"
+                    :style="{
+                        left: internalS * 100 + '%',
+                        top: (1 - internalV) * 100 + '%',
+                        background: rgbHex,
+                    }"
+                ></div>
+            </div>
             <div
-                class="colour-picker__hue-marker"
-                :style="{ left: (internalH / 360) * 100 + '%' }"
-            ></div>
-        </div>
-        <div class="colour-picker__row">
-            <label class="colour-picker__field">
-                <span>R</span>
-                <input
-                    type="number"
-                    min="0"
-                    max="255"
-                    :value="modelValue[0]"
-                    :disabled="disabled"
-                    @input="(e) => onRgbInput(0, e)"
-                />
-            </label>
-            <label class="colour-picker__field">
-                <span>G</span>
-                <input
-                    type="number"
-                    min="0"
-                    max="255"
-                    :value="modelValue[1]"
-                    :disabled="disabled"
-                    @input="(e) => onRgbInput(1, e)"
-                />
-            </label>
-            <label class="colour-picker__field">
-                <span>B</span>
-                <input
-                    type="number"
-                    min="0"
-                    max="255"
-                    :value="modelValue[2]"
-                    :disabled="disabled"
-                    @input="(e) => onRgbInput(2, e)"
-                />
-            </label>
+                ref="hueEl"
+                class="colour-picker__hue"
+                :class="{ 'colour-picker__hue--disabled': disabled }"
+                @pointerdown="onHueDown"
+                @pointermove="onHueMove"
+                @pointerup="onHueUp"
+                @pointercancel="onHueUp"
+            >
+                <div
+                    class="colour-picker__hue-marker"
+                    :style="{ top: (internalH / 360) * 100 + '%' }"
+                ></div>
+            </div>
+            <div class="colour-picker__rgb">
+                <label class="colour-picker__field">
+                    <span class="c-red">R</span>
+                    <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        :value="modelValue[0]"
+                        :disabled="disabled"
+                        @input="(e) => onRgbInput(0, e)"
+                    />
+                </label>
+                <label class="colour-picker__field">
+                    <span class="c-green">G</span>
+                    <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        :value="modelValue[1]"
+                        :disabled="disabled"
+                        @input="(e) => onRgbInput(1, e)"
+                    />
+                </label>
+                <label class="colour-picker__field">
+                    <span class="c-blue">B</span>
+                    <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        :value="modelValue[2]"
+                        :disabled="disabled"
+                        @input="(e) => onRgbInput(2, e)"
+                    />
+                </label>
+            </div>
         </div>
         <label class="colour-picker__field colour-picker__hex">
-            <span>#</span>
+            <span class="c-yellow">#</span>
             <input
                 type="text"
                 maxlength="6"
@@ -309,8 +311,8 @@ function updateHue(e: PointerEvent): void {
     const el = hueEl.value;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
-    const h = rect.width > 0 ? (x / rect.width) * 360 : 0;
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    const h = rect.height > 0 ? (y / rect.height) * 360 : 0;
     commit(h, internalS.value, internalV.value);
 }
 
@@ -367,10 +369,17 @@ function onHexCommit(): void {
     flex-direction: column;
     gap: 0.4rem;
 
+    &__main {
+        display: flex;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+
     &__sv {
         position: relative;
-        width: 100%;
-        aspect-ratio: 4 / 3;
+        flex: 1 1 auto;
+        min-width: 0;
+        aspect-ratio: 1 / 1;
         cursor: crosshair;
         background:
             linear-gradient(to top, #000, transparent),
@@ -399,11 +408,11 @@ function onHexCommit(): void {
 
     &__hue {
         position: relative;
-        width: 100%;
-        height: 14px;
-        cursor: ew-resize;
+        flex: 0 0 14px;
+        width: 14px;
+        cursor: ns-resize;
         background: linear-gradient(
-            to right,
+            to bottom,
             hsl(0, 100%, 50%) 0%,
             hsl(60, 100%, 50%) 16.66%,
             hsl(120, 100%, 50%) 33.33%,
@@ -423,37 +432,40 @@ function onHexCommit(): void {
 
     &__hue-marker {
         position: absolute;
-        top: -2px;
-        bottom: -2px;
-        width: 4px;
+        left: -2px;
+        right: -2px;
+        height: 4px;
         background: rgba(255, 255, 255, 0.95);
         box-shadow: 0 0 0 1px #000;
-        transform: translateX(-50%);
+        transform: translateY(-50%);
         pointer-events: none;
     }
 
-    &__row {
+    &__rgb {
         display: flex;
-        gap: 0.3rem;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.25rem;
+        flex: 0 0 auto;
+        min-width: 0;
     }
 
     &__field {
         display: flex;
         align-items: center;
         gap: 0.25rem;
-        flex: 1 1 0;
         min-width: 0;
 
         > span {
             font-size: 0.85rem;
-            color: var(--color-cyan);
             letter-spacing: 0.5px;
         }
 
         input {
             flex: 1 1 0;
             min-width: 0;
-            text-align: right;
+            width: 4em;
+            text-align: left;
             font-variant-numeric: tabular-nums;
             padding: 0.15em 0.25em;
         }
@@ -464,7 +476,6 @@ function onHexCommit(): void {
 
         input {
             text-transform: lowercase;
-            font-family: monospace;
             letter-spacing: 0.1em;
             text-align: left;
             padding-left: 0.4em;
