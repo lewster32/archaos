@@ -14,25 +14,27 @@
                 @add-death-frame="$emit('addDeathFrame', $event)"
                 @clear-death-frame="$emit('clearDeathFrame', $event)"
             />
+            <AnimationEditor :spell="spell" />
+        </div>
+        <div class="sprite-editor__column">
+            <PaintCanvas
+                :active-buffer="activeBufferRef"
+                :active-frame="activeFrame"
+                :tool="tool"
+                :colour="colour"
+                :frame-version="frameVersion"
+                :locked="locked"
+                @stroke-started="$emit('strokeStarted')"
+                @stroke-committed="$emit('strokeCommitted', $event)"
+                @eyedrop="$emit('eyedrop', $event)"
+            />
             <AnimatedPreview
                 :buffers="buffers"
                 :anim-frames="animFrames"
                 :anim-speed="animSpeed"
                 :frame-version="frameVersion"
             />
-            <AnimationEditor :spell="spell" />
         </div>
-        <PaintCanvas
-            :active-buffer="activeBufferRef"
-            :active-frame="activeFrame"
-            :tool="tool"
-            :colour="colour"
-            :frame-version="frameVersion"
-            :locked="locked"
-            @stroke-started="$emit('strokeStarted')"
-            @stroke-committed="$emit('strokeCommitted', $event)"
-            @eyedrop="$emit('eyedrop', $event)"
-        />
         <ToolPanel
             :tool="tool"
             :colour="colour"
