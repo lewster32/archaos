@@ -63,7 +63,14 @@ interface AnimDirection {
 
 const props = defineProps<{
     unit: EditableUnit | null;
+    frameSource?: (
+        filename: string,
+    ) => HTMLCanvasElement | ImageData | null;
 }>();
+
+const tempCanvas = document.createElement("canvas");
+tempCanvas.width = FRAME_SIZE;
+tempCanvas.height = FRAME_SIZE;
 
 function frameSortKey(frame: Frame): number {
     const match = FRAME_RE.exec(frame.filename);
@@ -168,6 +175,35 @@ function drawFrame(
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
+
+    const override = props.frameSource
+        ? props.frameSource(frame.filename)
+        : null;
+    if (override) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (override instanceof ImageData) {
+            const tctx = tempCanvas.getContext("2d");
+            if (!tctx) return;
+            tctx.putImageData(override, 0, 0);
+            ctx.drawImage(
+                tempCanvas,
+                0,
+                0,
+                FRAME_SIZE * SCALE,
+                FRAME_SIZE * SCALE,
+            );
+        } else {
+            ctx.drawImage(
+                override,
+                0,
+                0,
+                FRAME_SIZE * SCALE,
+                FRAME_SIZE * SCALE,
+            );
+        }
+        return;
+    }
+
     if (!img.complete) {
         img.addEventListener("load", () => drawFrame(canvas, img, frame), {
             once: true,
@@ -244,7 +280,12 @@ function startAnim(): void {
 }
 
 watch(
-    () => [props.unit?.id, props.unit?.animFrames, props.unit?.animSpeed],
+    () => [
+        props.unit?.id,
+        props.unit?.animFrames,
+        props.unit?.animSpeed,
+        props.frameSource,
+    ],
     () => {
         void nextTick(() => {
             drawAllStatic();
