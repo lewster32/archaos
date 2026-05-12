@@ -506,6 +506,13 @@ function onToolChange(
 
 function onColourChange(rgba: Rgba): void {
     colour.value = rgba;
+    // Picking a colour while the eraser is active almost always means
+    // the user wants to paint with it - auto-switch to pencil so they
+    // do not need a second click on the tool button.
+    if (tool.value === "eraser") {
+        tool.value = "pencil";
+        previousDrawingTool.value = "pencil";
+    }
 }
 
 function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
