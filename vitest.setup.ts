@@ -29,3 +29,30 @@ globalThis.requestAnimationFrame = vi.fn((cb) => {
 
 // Mock cancelAnimationFrame
 globalThis.cancelAnimationFrame = vi.fn();
+
+// jsdom omits ImageData (which is part of the Canvas spec). Provide a
+// minimal polyfill so unit tests that operate on pixel buffers - e.g.
+// the sprite-editor data-layer tests - can construct ImageData
+// directly. Mirrors the two browser constructor signatures.
+if (typeof (globalThis as { ImageData?: unknown }).ImageData === "undefined") {
+    class ImageDataPolyfill {
+        readonly width: number;
+        readonly height: number;
+        readonly data: Uint8ClampedArray;
+        constructor(width: number, height: number);
+        constructor(data: Uint8ClampedArray, width: number, height?: number);
+        constructor(a: number | Uint8ClampedArray, b: number, c?: number) {
+            if (a instanceof Uint8ClampedArray) {
+                this.data = a;
+                this.width = b;
+                this.height = c ?? a.length / (b * 4);
+            } else {
+                this.width = a;
+                this.height = b;
+                this.data = new Uint8ClampedArray(a * b * 4);
+            }
+        }
+    }
+    (globalThis as unknown as { ImageData: typeof ImageDataPolyfill }).ImageData =
+        ImageDataPolyfill;
+}
