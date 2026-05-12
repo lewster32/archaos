@@ -431,7 +431,13 @@ const frameSource = computed(() => {
 
 const previousDrawingTool = ref<"pencil" | "fill" | "eraser">("pencil");
 
+// Touch frameVersion directly. currentBuffers depends on frameVersion
+// too, but it returns the same Map reference after a stroke commit and
+// Vue 3 stops propagating unchanged computed values to downstream
+// computeds - so without this dependency the buttons would stay stale
+// even after undoStack/redoStack mutated.
 const canUndo = computed(() => {
+    void frameVersion.value;
     if (!currentBuffers.value) return false;
     const k = frameBufferKey(
         activeFrame.value.direction,
@@ -441,6 +447,7 @@ const canUndo = computed(() => {
     return (currentBuffers.value.get(k)?.undoStack.length ?? 0) > 0;
 });
 const canRedo = computed(() => {
+    void frameVersion.value;
     if (!currentBuffers.value) return false;
     const k = frameBufferKey(
         activeFrame.value.direction,
@@ -697,8 +704,24 @@ function onReset(): void {
     if (!s) return;
     const original = findOriginal(s._originalId);
     if (!original) return;
-    spells.set(s._originalId, original);
+    const id = s._originalId;
+    spells.set(id, original);
+    // Drop the painted buffers and the cached colour set for this
+    // unit so the next Sprites-tab read re-decodes the source PNG
+    // into fresh canonical buffers; eagerLoadAllColours kicks off
+    // the re-fetch.
+    spellFrameBuffers.delete(id);
+    if (colourSetsByUnit.value.has(id)) {
+        const next = new Map(colourSetsByUnit.value);
+        next.delete(id);
+        colourSetsByUnit.value = next;
+    }
+    // Clear any active stroke / per-frame undo history for the reset
+    // unit; activeFrame returns to L:anim:0 like a fresh selection.
+    activeFrame.value = { direction: "l", slot: "anim", index: 0 };
     resetCount.value++;
+    frameVersion.value++;
+    void ensureBuffersLoaded();
 }
 
 function findOriginal(originalId: string): EditableSpell | undefined {
