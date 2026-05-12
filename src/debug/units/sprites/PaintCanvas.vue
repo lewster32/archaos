@@ -36,7 +36,7 @@
                 }"
                 @pointerdown="onPointerDown"
                 @pointermove="onPointerMove"
-                @pointerup="onPointerUp"
+                @pointerup="onPointerUp"    
                 @pointercancel="onPointerUp"
                 @pointerleave="onPointerLeave"
                 @wheel.prevent="onWheel"

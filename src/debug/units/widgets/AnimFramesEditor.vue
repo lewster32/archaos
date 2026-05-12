@@ -21,7 +21,7 @@
                     </option>
                 </select>
                 <button class="button button--small" type="button" @click="moveUp(slot)" :disabled="slot === 0">
-                    &uarr;
+                    <i class="icon icon--up"></i>
                 </button>
                 <button
                     class="button button--small"
@@ -29,7 +29,7 @@
                     @click="moveDown(slot)"
                     :disabled="slot === modelValue.length - 1"
                 >
-                    &darr;
+                    <i class="icon icon--down"></i>
                 </button>
                 <button class="button button--small button--red" type="button" @click="remove(slot)">
                     &times;
@@ -40,7 +40,7 @@
             v-if="availableIndices.length"
             type="button"
             @click="addSlot"
-            class="button button--small anim-frames-editor__add"
+            class="button button--cyan button--small anim-frames-editor__add"
         >
             <i class="icon icon--add"></i> Add frame
         </button>

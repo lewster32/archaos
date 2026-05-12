@@ -207,6 +207,16 @@ input[type="range"] {
         width: 12px;
         height: 20px;
     }
+    &--up {
+        background-image: url("@assets/images/ui/icon-up.png");
+        width: 20px;
+        height: 12px;
+    }
+    &--down {
+        background-image: url("@assets/images/ui/icon-down.png");
+        width: 20px;
+        height: 12px;
+    }
     &--add {
         background-image: url("@assets/images/ui/icon-add.png");
         width: 20px;
@@ -221,5 +231,25 @@ input[type="range"] {
         background-image: url("@assets/images/ui/icon-eye.png");
         width: 22px;
         height: 18px;
+    }
+    &--edit {
+        background-image: url("@assets/images/ui/icon-edit.png");
+        width: 22px;
+        height: 22px;
+    }
+    &--erase {
+        background-image: url("@assets/images/ui/icon-erase.png");
+        width: 22px;
+        height: 22px;
+    }
+    &--pick {
+        background-image: url("@assets/images/ui/icon-pick.png");
+        width: 22px;
+        height: 22px;
+    }
+    &--fill {
+        background-image: url("@assets/images/ui/icon-fill.png");
+        width: 22px;
+        height: 22px;
     }
 }

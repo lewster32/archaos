@@ -19,7 +19,8 @@
                 label="shadowScale"
                 :model-value="spell.unit.shadowScale"
                 :min="0"
-                :step="0.1"
+                :max="4"
+                :step="1"
                 @update:model-value="setShadowScale"
             />
         </div>

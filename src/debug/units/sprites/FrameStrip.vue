@@ -84,7 +84,7 @@
                     class="button button--small button--red"
                     :disabled="locked"
                     @click="emit('clearDeathFrame', dir)"
-                >clear d</button>
+                >x</button>
             </div>
         </section>
     </section>

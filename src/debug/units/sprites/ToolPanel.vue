@@ -12,7 +12,7 @@
                     :disabled="locked"
                     :title="t.label"
                     @click="emit('toolChange', t.id)"
-                >{{ t.short }}</button>
+                ><i class="icon" :class="`icon--${t.short}`"></i></button>
             </div>
         </section>
 
@@ -123,10 +123,10 @@ const emit = defineEmits<{
 }>();
 
 const toolList = [
-    { id: "pencil" as const, short: "P", label: "Pencil" },
-    { id: "fill" as const, short: "F", label: "Fill" },
-    { id: "eraser" as const, short: "E", label: "Eraser" },
-    { id: "eyedropper" as const, short: "Eye", label: "Eyedropper" },
+    { id: "pencil" as const, short: "edit", label: "Pencil" },
+    { id: "fill" as const, short: "fill", label: "Fill" },
+    { id: "eraser" as const, short: "erase", label: "Eraser" },
+    { id: "eyedropper" as const, short: "pick", label: "Picker" },
 ];
 
 function toHexByte(n: number): string {
