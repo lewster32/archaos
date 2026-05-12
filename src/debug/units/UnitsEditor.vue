@@ -31,12 +31,25 @@
                 <header class="units-editor__header">
                     <h1>{{ selected.name || "(unnamed)" }}</h1>
                     <div class="units-editor__actions">
-                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save</button>
+                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save JSON</button>
                         <button class="button button--red" type="button" :disabled="!selected._dirty" @click="onReset">Reset</button>
                     </div>
                 </header>
 
-                <div class="units-editor__split">
+                <nav class="units-editor__tabs">
+                    <button
+                        type="button"
+                        :class="{ active: activeTab === 'stats' }"
+                        @click="activeTab = 'stats'"
+                    >Stats</button>
+                    <button
+                        type="button"
+                        :class="{ active: activeTab === 'sprites' }"
+                        @click="activeTab = 'sprites'"
+                    >Sprites</button>
+                </nav>
+
+                <div v-if="activeTab === 'stats'" class="units-editor__split">
                     <div class="units-editor__preview">
                         <div v-if="spellForIcon" class="units-editor__spell-info">
                             <SpellInfo :spell="spellForIcon" :key="selected._originalId" />
@@ -51,6 +64,9 @@
                         />
                     </div>
                 </div>
+                <section v-else-if="activeTab === 'sprites'" class="units-editor__sprites">
+                    <p>Sprite editor coming in Task 7.</p>
+                </section>
             </template>
         </main>
     </div>
@@ -206,6 +222,9 @@ const spellGroups = computed<SpellGroup[]>(() => {
         { label: "Classic", spells: classic.toSorted(sortByName) },
     ].filter((g) => g.spells.length > 0);
 });
+
+type EditorTab = "stats" | "sprites";
+const activeTab = ref<EditorTab>("stats");
 
 const selectedId = ref<string | null>(null);
 const resetCount = ref(0);
@@ -391,6 +410,37 @@ function findOriginal(originalId: string): EditableSpell | undefined {
     &__actions {
         display: flex;
         gap: 0.5rem;
+    }
+
+    &__tabs {
+        display: flex;
+        gap: 0.25rem;
+        margin: 0 0 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        button {
+            all: unset;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            color: var(--fg-colour);
+            text-shadow: var(--text-shadow);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+
+            &:hover {
+                color: var(--color-cyan);
+            }
+
+            &.active {
+                color: var(--color-yellow);
+                border-bottom-color: var(--color-yellow);
+            }
+        }
+    }
+
+    &__sprites {
+        padding: 1rem;
+        color: var(--fg-colour);
     }
 
     &__split {
