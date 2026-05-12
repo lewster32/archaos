@@ -32,11 +32,13 @@
                     width: pxWidth + 'px',
                     height: pxHeight + 'px',
                     transform: transformCss,
+                    cursor: cursorStyle,
                 }"
                 @pointerdown="onPointerDown"
                 @pointermove="onPointerMove"
                 @pointerup="onPointerUp"
                 @pointercancel="onPointerUp"
+                @pointerleave="onPointerLeave"
                 @wheel.prevent="onWheel"
             ></canvas>
             <div
@@ -49,6 +51,16 @@
                 aria-hidden="true"
             >
                 <div class="paint-canvas__ground"></div>
+                <div
+                    v-if="showHoverOutline"
+                    class="paint-canvas__hover"
+                    :style="{
+                        top: ((hoverY ?? 0) * 100) / FRAME_SIZE + '%',
+                        left: ((hoverX ?? 0) * 100) / FRAME_SIZE + '%',
+                        width: 100 / FRAME_SIZE + '%',
+                        height: 100 / FRAME_SIZE + '%',
+                    }"
+                ></div>
             </div>
         </div>
     </section>
@@ -109,10 +121,35 @@ const TRANSPARENT: Rgba = [0, 0, 0, 0] as const;
 let preStrokeSnapshot: ImageData | null = null;
 let lastX = -1;
 let lastY = -1;
-let panning = false;
 let panOriginX = 0;
 let panOriginY = 0;
-let spaceHeld = false;
+
+// Reactive so the template can swap the canvas cursor between
+// crosshair / grab / grabbing as the user holds space or drags to pan.
+const panning = ref(false);
+const spaceHeld = ref(false);
+
+// Current hover position in sprite coordinates (0..17). null when the
+// cursor is outside the painting canvas. Drives the 1-pixel outline
+// guide so the user can see which pixel their next stroke will touch.
+const hoverX = ref<number | null>(null);
+const hoverY = ref<number | null>(null);
+
+const cursorStyle = computed(() => {
+    if (panning.value) return "grabbing";
+    if (spaceHeld.value) return "grab";
+    return "crosshair";
+});
+
+const showHoverOutline = computed(
+    () =>
+        hoverX.value !== null &&
+        hoverY.value !== null &&
+        !panning.value &&
+        !spaceHeld.value &&
+        props.activeBuffer !== null &&
+        !props.locked,
+);
 
 function zoomBy(delta: number): void {
     const i = ZOOM_STEPS.indexOf(
@@ -159,8 +196,8 @@ function clientToSprite(
 
 function onPointerDown(e: PointerEvent): void {
     if (!props.activeBuffer || props.locked) return;
-    if (e.button === 1 || (spaceHeld && e.button === 0)) {
-        panning = true;
+    if (e.button === 1 || (spaceHeld.value && e.button === 0)) {
+        panning.value = true;
         panOriginX = e.clientX - panX.value;
         panOriginY = e.clientY - panY.value;
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -195,14 +232,25 @@ function onPointerDown(e: PointerEvent): void {
 }
 
 function onPointerMove(e: PointerEvent): void {
-    if (panning) {
+    if (panning.value) {
         panX.value = e.clientX - panOriginX;
         panY.value = e.clientY - panOriginY;
         return;
     }
+
+    // Hover tracking runs on every move regardless of stroke state so
+    // the outline follows the cursor even outside a paint gesture.
+    const p = clientToSprite(e.clientX, e.clientY);
+    if (p) {
+        hoverX.value = p.x;
+        hoverY.value = p.y;
+    } else {
+        hoverX.value = null;
+        hoverY.value = null;
+    }
+
     if (!preStrokeSnapshot || !props.activeBuffer) return;
     if (props.tool !== "pencil" && props.tool !== "eraser") return;
-    const p = clientToSprite(e.clientX, e.clientY);
     if (!p) return;
     const rgba = props.tool === "eraser" ? TRANSPARENT : props.colour;
     if (lastX >= 0 && lastY >= 0) {
@@ -222,9 +270,14 @@ function onPointerMove(e: PointerEvent): void {
     void redraw();
 }
 
+function onPointerLeave(): void {
+    hoverX.value = null;
+    hoverY.value = null;
+}
+
 function onPointerUp(e: PointerEvent): void {
-    if (panning) {
-        panning = false;
+    if (panning.value) {
+        panning.value = false;
         return;
     }
     if (!preStrokeSnapshot) return;
@@ -242,10 +295,10 @@ function onWheel(e: WheelEvent): void {
 }
 
 function onKeyDown(e: KeyboardEvent): void {
-    if (e.code === "Space") spaceHeld = true;
+    if (e.code === "Space") spaceHeld.value = true;
 }
 function onKeyUp(e: KeyboardEvent): void {
-    if (e.code === "Space") spaceHeld = false;
+    if (e.code === "Space") spaceHeld.value = false;
 }
 
 async function redraw(): Promise<void> {
@@ -351,7 +404,6 @@ onBeforeUnmount(() => {
         top: 50%;
         transform-origin: top left;
         touch-action: none;
-        cursor: crosshair;
         image-rendering: pixelated;
     }
 
@@ -373,6 +425,16 @@ onBeforeUnmount(() => {
         top: calc(16 / 18 * 100%);
         height: 1px;
         background: rgba(245, 197, 74, 0.6);
+    }
+
+    &__hover {
+        position: absolute;
+        /* Twin box-shadows give a 1px white-over-black ring that is
+           legible on any sprite background without changing the cell's
+           outer size. */
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.95),
+            0 0 0 1px rgba(0, 0, 0, 0.85);
     }
 }
 </style>
