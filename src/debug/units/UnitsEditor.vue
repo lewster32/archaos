@@ -54,7 +54,7 @@
                         <div v-if="spellForIcon" class="units-editor__spell-info">
                             <SpellInfo :spell="spellForIcon" :key="selected._originalId" />
                         </div>
-                        <SpritePreview :unit="selected.unit" />
+                        <SpritePreview :unit="selected.unit" :frame-source="frameSource" />
                     </div>
                     <div class="units-editor__form">
                         <UnitEditorForm
@@ -65,8 +65,15 @@
                     </div>
                 </div>
                 <section v-else-if="activeTab === 'sprites'" class="units-editor__sprites">
+                    <p v-if="bufferLoading">Loading atlas...</p>
+                    <p v-else-if="bufferLoadError" class="units-editor__sprites-error">
+                        Could not load source atlas - sprite editing unavailable. {{ bufferLoadError }}
+                    </p>
+                    <p v-else-if="!selected.unit.textures || selected.unit.textures.length === 0">
+                        (no atlas available)
+                    </p>
                     <SpriteEditor
-                        v-if="currentBuffers"
+                        v-else-if="currentBuffers"
                         :buffers="currentBuffers"
                         :anim-frames="selected.unit.animFrames ?? []"
                         :active-frame="activeFrame"
@@ -89,7 +96,6 @@
                         @undo="onUndo"
                         @redo="onRedo"
                     />
-                    <p v-else>Sprite editor buffer loader lands in Task 10.</p>
                 </section>
             </template>
         </main>
@@ -97,13 +103,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { SpellType, type Spell as EngineSpell } from "@archaos/engine";
 import SpellInfo from "../../components/game/SpellInfo.vue";
 import SpritePreview from "./SpritePreview.vue";
 import UnitEditorForm from "./UnitEditorForm.vue";
 import SpriteEditor from "./sprites/SpriteEditor.vue";
 import { adaptClassic } from "./data/classicadapter";
+import {
+    addDeathFrame as addDeathFrameOp,
+    appendAnimFrame as appendAnimFrameOp,
+    clearDeathFrame as clearDeathFrameOp,
+    mirrorDirection,
+} from "./data/framebuffers";
+import { loadFrameBuffers } from "./data/loadframes";
+import { cloneImageData } from "./data/paintops";
 import { buildEnhancedJson, downloadJson } from "./data/saveunit";
 import {
     frameBufferKey,
@@ -285,7 +299,58 @@ const otherSpells = computed<EditableSpell[]>(() =>
 
 const currentBuffers = computed<FrameBuffers | null>(() => {
     if (!selected.value) return null;
+    // Reference frameVersion so the computed re-fires after the lazy
+    // load resolves (which bumps the version once the map is set).
+    void frameVersion.value;
     return spellFrameBuffers.get(selected.value._originalId) ?? null;
+});
+
+const bufferLoadError = ref<string | null>(null);
+const bufferLoading = ref(false);
+
+async function ensureBuffersLoaded(): Promise<void> {
+    const s = selected.value;
+    if (!s) return;
+    const id = s._originalId;
+    if (spellFrameBuffers.has(id)) return;
+    if (!s.unit.textures || s.unit.textures.length === 0) return;
+    bufferLoadError.value = null;
+    bufferLoading.value = true;
+    try {
+        const map = await loadFrameBuffers(s);
+        spellFrameBuffers.set(id, map);
+        frameVersion.value++;
+    } catch (err) {
+        bufferLoadError.value =
+            err instanceof Error ? err.message : String(err);
+    } finally {
+        bufferLoading.value = false;
+    }
+}
+
+watch(
+    () => [activeTab.value, selected.value?._originalId],
+    () => {
+        if (activeTab.value === "sprites") void ensureBuffersLoaded();
+    },
+    { immediate: true },
+);
+
+const frameSource = computed(() => {
+    void frameVersion.value;
+    const map = currentBuffers.value;
+    if (!map) return undefined;
+    return (filename: string): ImageData | null => {
+        const m = filename.match(/_([lr])_(\d+|d)$/);
+        if (!m) return null;
+        const dir = m[1] as "l" | "r";
+        const idx = m[2];
+        const key =
+            idx === "d"
+                ? frameBufferKey(dir, "death", 0)
+                : frameBufferKey(dir, "anim", parseInt(idx, 10));
+        return map.get(key)?.data ?? null;
+    };
 });
 
 const previousDrawingTool = ref<"pencil" | "fill" | "eraser">("pencil");
@@ -310,22 +375,48 @@ const canRedo = computed(() => {
 });
 
 function onAppendAnimFrame(): void {
-    // Wired up in Task 10.
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    appendAnimFrameOp(currentBuffers.value, s.unit);
+    s._dirty = true;
+    frameVersion.value++;
 }
-function onAddDeathFrame(_dir: "l" | "r"): void {
-    // Wired up in Task 10.
+
+function onAddDeathFrame(dir: "l" | "r"): void {
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    addDeathFrameOp(currentBuffers.value, s.unit, dir);
+    s._dirty = true;
+    frameVersion.value++;
 }
-function onClearDeathFrame(_dir: "l" | "r"): void {
-    // Wired up in Task 10.
+
+function onClearDeathFrame(dir: "l" | "r"): void {
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    clearDeathFrameOp(currentBuffers.value, s.unit, dir);
+    s._dirty = true;
+    frameVersion.value++;
 }
 
 function onStrokeStarted(): void {
     isPainting.value = true;
 }
 
-function onStrokeCommitted(_snapshot: ImageData): void {
+function onStrokeCommitted(snapshot: ImageData): void {
     isPainting.value = false;
-    // Push onto active frame's undo stack in Task 10.
+    const map = currentBuffers.value;
+    if (!map) return;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    const buf = map.get(k);
+    if (!buf) return;
+    buf.undoStack.push(snapshot);
+    if (buf.undoStack.length > 50) buf.undoStack.shift();
+    buf.redoStack.length = 0;
+    if (selected.value) selected.value._dirty = true;
     frameVersion.value++;
 }
 
@@ -340,16 +431,66 @@ function onColourChange(rgba: Rgba): void {
     colour.value = rgba;
 }
 
-function onMirror(_payload: { from: "l" | "r"; to: "l" | "r" }): void {
-    // Wired up in Task 10.
+function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
+    const s = selected.value;
+    if (!s || !currentBuffers.value) return;
+    mirrorDirection(
+        currentBuffers.value,
+        s.unit,
+        payload.from,
+        payload.to,
+    );
+    s._dirty = true;
+    frameVersion.value++;
 }
 
 function onUndo(): void {
-    // Wired up in Task 10.
+    const map = currentBuffers.value;
+    if (!map) return;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    const buf = map.get(k);
+    if (!buf || buf.undoStack.length === 0) return;
+    const prev = buf.undoStack.pop();
+    if (!prev) return;
+    buf.redoStack.push(cloneImageData(buf.data));
+    buf.data = prev;
+    frameVersion.value++;
 }
 
 function onRedo(): void {
-    // Wired up in Task 10.
+    const map = currentBuffers.value;
+    if (!map) return;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    const buf = map.get(k);
+    if (!buf || buf.redoStack.length === 0) return;
+    const next = buf.redoStack.pop();
+    if (!next) return;
+    buf.undoStack.push(cloneImageData(buf.data));
+    buf.data = next;
+    frameVersion.value++;
+}
+
+function onKeyDown(e: KeyboardEvent): void {
+    if (isPainting.value) return;
+    if (activeTab.value !== "sprites") return;
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (e.code === "KeyZ" && !e.shiftKey) {
+        e.preventDefault();
+        onUndo();
+        return;
+    }
+    if ((e.code === "KeyZ" && e.shiftKey) || e.code === "KeyY") {
+        e.preventDefault();
+        onRedo();
+    }
 }
 
 function onEyedrop(rgba: Rgba): void {
@@ -367,6 +508,11 @@ onMounted(() => {
     const params = new URLSearchParams(globalThis.location.search);
     const id = params.get("units");
     if (id && spells.has(id)) selectedId.value = id;
+    globalThis.addEventListener("keydown", onKeyDown);
+});
+
+onBeforeUnmount(() => {
+    globalThis.removeEventListener("keydown", onKeyDown);
 });
 
 watch(selectedId, (id) => {
@@ -559,6 +705,11 @@ function findOriginal(originalId: string): EditableSpell | undefined {
     &__sprites {
         padding: 1rem;
         color: var(--fg-colour);
+    }
+
+    &__sprites-error {
+        color: var(--color-red, #d04848);
+        margin: 0 0 0.5rem;
     }
 
     &__split {
