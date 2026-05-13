@@ -21,6 +21,15 @@ const mockCanvasContext = {
 // Mock HTMLCanvasElement.getContext
 HTMLCanvasElement.prototype.getContext = vi.fn(() => mockCanvasContext) as any;
 
+// jsdom does not implement toBlob without the `canvas` native dep.
+// Stub it to return a minimal PNG-shaped blob so atlas packing tests
+// can exercise the encode path without pulling in node-canvas.
+HTMLCanvasElement.prototype.toBlob = function (callback: BlobCallback): void {
+    const pngSignature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const blob = new Blob([pngSignature], { type: "image/png" });
+    setTimeout(() => callback(blob), 0);
+} as any;
+
 // Mock requestAnimationFrame
 globalThis.requestAnimationFrame = vi.fn((cb) => {
     setTimeout(cb, 0);

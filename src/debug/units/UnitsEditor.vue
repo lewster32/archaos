@@ -18,7 +18,7 @@
                                 :aria-selected="spell._originalId === selectedId"
                                 @click="selectedId = spell._originalId"
                             >
-                                {{ spell.name }}<span v-if="spell._dirty"> *</span>
+                                {{ spell.name }}<span v-if="spell._dirty || (spell._originalId === selectedId && spritesDirty)"> *</span>
                             </button>
                         </li>
                     </ul>
@@ -32,9 +32,12 @@
                 <header class="units-editor__header">
                     <h1>{{ selected.name || "(unnamed)" }}</h1>
                     <div class="units-editor__actions">
-                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save JSON</button>
-                        <button class="button button--red" type="button" :disabled="!selected._dirty" @click="onReset">Reset</button>
+                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save .amod</button>
+                        <button class="button button--red" type="button" :disabled="!anyDirty" @click="onReset">Reset</button>
                     </div>
+                    <p v-if="lastSavedAt" class="units-editor__toast">
+                        Saved {{ selected.id }}.amod at {{ lastSavedAt }}. Drop the file into assets/amods/ to apply.
+                    </p>
                 </header>
 
                 <nav class="units-editor__tabs">
@@ -127,8 +130,9 @@ import {
 import { loadFrameBuffers } from "./data/loadframes";
 import { cloneImageData } from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
-import { buildEnhancedJson, downloadJson } from "./data/saveunit";
-import { decodeAmod, type ModManifest } from "../../data/amodformat";
+import { buildManifest, downloadAmod } from "./data/saveunit";
+import { decodeAmod, packAmod, type ModManifest } from "../../data/amodformat";
+import { autoMirrorMissingDeath, packBuffersToAtlas } from "./data/savesprites";
 import {
     frameBufferKey,
     type EditableSpell,
@@ -331,6 +335,7 @@ function refreshColoursForUnit(originalId: string): void {
 // starting point per unit.
 watch(selectedId, () => {
     activeFrame.value = { direction: "l", slot: "anim", index: 0 };
+    spritesDirty.value = false;
 });
 
 const bufferLoadError = ref<string | null>(null);
@@ -440,6 +445,7 @@ function onAppendAnimFrame(): void {
     if (!s || !currentBuffers.value) return;
     appendAnimFrameOp(currentBuffers.value, s.unit);
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
@@ -454,6 +460,7 @@ function onDuplicateAnimFrame(sourceIndex: number): void {
     );
     if (newIndex < 0) return;
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     activeFrame.value = { direction: "l", slot: "anim", index: newIndex };
     frameVersion.value++;
@@ -464,6 +471,7 @@ function onRemoveAnimFrame(index: number): void {
     if (!s || !currentBuffers.value) return;
     removeAnimFrameOp(currentBuffers.value, s.unit, index);
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     // Recompute a safe active frame: same direction, anim slot,
     // clamped to whatever anim indices remain (renumber may have
@@ -494,6 +502,7 @@ function onAddDeathFrame(dir: "l" | "r"): void {
     if (!s || !currentBuffers.value) return;
     addDeathFrameOp(currentBuffers.value, s.unit, dir);
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
@@ -503,6 +512,7 @@ function onClearDeathFrame(dir: "l" | "r"): void {
     if (!s || !currentBuffers.value) return;
     clearDeathFrameOp(currentBuffers.value, s.unit, dir);
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
@@ -527,6 +537,7 @@ function onStrokeCommitted(snapshot: ImageData): void {
     buf.redoStack.length = 0;
     if (selected.value) {
         selected.value._dirty = true;
+        spritesDirty.value = true;
         refreshColoursForUnit(selected.value._originalId);
     }
     frameVersion.value++;
@@ -560,6 +571,7 @@ function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
         payload.to,
     );
     s._dirty = true;
+    spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
     frameVersion.value++;
 }
@@ -624,22 +636,38 @@ function onEyedrop(rgba: Rgba): void {
     if (tool.value === "eyedropper") tool.value = previousDrawingTool.value;
 }
 
+const spritesDirty = ref(false);
+const lastSavedAt = ref<string | null>(null);
+
+const anyDirty = computed(() => {
+    const s = selected.value;
+    return Boolean(s && (s._dirty || spritesDirty.value));
+});
+
 const canSave = computed(() => {
     const s = selected.value;
     if (!s) return false;
-    return s._dirty && s.id !== "" && s.name.trim() !== "";
+    return anyDirty.value && s.id !== "" && s.name.trim() !== "";
 });
+
+const beforeUnloadHandler = (e: BeforeUnloadEvent): void => {
+    if (anyDirty.value) {
+        e.preventDefault();
+    }
+};
 
 onMounted(() => {
     const params = new URLSearchParams(globalThis.location.search);
     const id = params.get("units");
     if (id && spells.has(id)) selectedId.value = id;
     globalThis.addEventListener("keydown", onKeyDown);
+    globalThis.addEventListener("beforeunload", beforeUnloadHandler);
     void eagerLoadAllColours();
 });
 
 onBeforeUnmount(() => {
     globalThis.removeEventListener("keydown", onKeyDown);
+    globalThis.removeEventListener("beforeunload", beforeUnloadHandler);
 });
 
 watch(selectedId, (id) => {
@@ -669,12 +697,24 @@ const spellForIcon = computed<EngineSpell | null>(() => {
     } as unknown as EngineSpell;
 });
 
-function onSave(): void {
+async function onSave(): Promise<void> {
     const s = selected.value;
     if (!s || !canSave.value) return;
-    const json = buildEnhancedJson(s);
-    downloadJson(`${s.id}.json`, json);
+    const manifest = buildManifest(s);
+    const buffers = spellFrameBuffers.get(s._originalId);
+    if (!buffers) {
+        console.error("Cannot save: sprite buffers not loaded yet.");
+        return;
+    }
+    // Auto-mirror missing L/R death pairing (Phase 2B invariant).
+    autoMirrorMissingDeath(buffers, s.unit);
+    const { atlasPngBytes, framesMetadata } = await packBuffersToAtlas(buffers, s.unit);
+    manifest.units[0].textures = [{ frames: framesMetadata }];
+    const amodBytes = packAmod(manifest, atlasPngBytes);
+    downloadAmod(`${s.id}.amod`, amodBytes);
     s._dirty = false;
+    spritesDirty.value = false;
+    lastSavedAt.value = new Date().toLocaleTimeString();
 }
 
 async function onReset(): Promise<void> {
@@ -697,6 +737,7 @@ async function onReset(): Promise<void> {
     activeFrame.value = { direction: "l", slot: "anim", index: 0 };
     resetCount.value++;
     frameVersion.value++;
+    spritesDirty.value = false;
     void ensureBuffersLoaded();
 }
 
@@ -815,6 +856,15 @@ async function findOriginal(originalId: string): Promise<EditableSpell | undefin
     &__actions {
         display: flex;
         gap: 0.5rem;
+    }
+
+    &__toast {
+        margin: 0.5rem 0 0;
+        padding: 0.5rem 0.75rem;
+        color: var(--color-cyan);
+        background: rgba(0, 255, 255, 0.06);
+        border-left: 3px solid var(--color-cyan);
+        font-size: 0.9rem;
     }
 
     &__tabs {
