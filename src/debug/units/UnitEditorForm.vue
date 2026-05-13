@@ -39,6 +39,25 @@
                 <span>Description</span>
                 <textarea v-model="spell.description" @input="markDirty"></textarea>
             </label>
+
+            <fieldset class="unit-editor-form__types">
+                <legend>Border types (icon)</legend>
+                <p class="unit-editor-form__hint">
+                    Up to three slots colour the spell-icon border. Leave trailing slots empty for a 1- or 2-colour border.
+                </p>
+                <div class="unit-editor-form__row">
+                    <label v-for="slot in [0, 1, 2]" :key="slot">
+                        <span>Slot {{ slot + 1 }}</span>
+                        <select
+                            :value="typeAt(slot)"
+                            @change="setTypeAt(slot, ($event.target as HTMLSelectElement).value)"
+                        >
+                            <option value="">(none)</option>
+                            <option v-for="t in TYPE_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                    </label>
+                </div>
+            </fieldset>
         </section>
 
         <section class="callout">
@@ -120,6 +139,24 @@ import type { EditableSpell } from "./data/types";
 const STAT_KEYS = ["mov", "com", "rcm", "rng", "def", "mnv", "res"] as const;
 type StatKey = (typeof STAT_KEYS)[number];
 
+// Keys matching the --spell-<name> CSS custom properties in SpellImage.vue
+// that drive the icon border gradient.
+const TYPE_OPTIONS = [
+    "attack",
+    "balance",
+    "buff",
+    "flying",
+    "ground",
+    "mount",
+    "persists",
+    "ranged",
+    "special",
+    "spreads",
+    "static",
+    "turmoil",
+    "undead",
+] as const;
+
 const props = defineProps<{
     spell: EditableSpell;
     otherSpells: EditableSpell[];
@@ -166,6 +203,30 @@ function setStat(key: StatKey, value: number | undefined): void {
 
 function setStatus(next: string[]): void {
     props.spell.unit.status = next;
+    markDirty();
+}
+
+function typeAt(slot: number): string {
+    return props.spell.types?.[slot] ?? "";
+}
+
+function setTypeAt(slot: number, value: string): void {
+    const current = [...(props.spell.types ?? [])];
+    if (value === "") {
+        // Clear this slot and any trailing slots so the array stays
+        // dense (a gap at slot 1 with slot 2 filled would mis-render
+        // the 3-colour border).
+        current.length = slot;
+    } else {
+        while (current.length < slot) current.push("");
+        current[slot] = value;
+    }
+    // Drop empty trailing entries so length matches the visible
+    // border-colour count.
+    while (current.length > 0 && current[current.length - 1] === "") {
+        current.pop();
+    }
+    props.spell.types = current;
     markDirty();
 }
 </script>
