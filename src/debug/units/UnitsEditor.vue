@@ -132,6 +132,7 @@ import { cloneImageData } from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildManifest, downloadAmod } from "./data/saveunit";
 import { decodeAmod, packAmod, type ModManifest } from "../../data/amodformat";
+import { populateEnhancedAtlasInfo } from "../../data/amodloader";
 import { autoMirrorMissingDeath, packBuffersToAtlas } from "./data/savesprites";
 import {
     frameBufferKey,
@@ -218,6 +219,7 @@ async function loadAll(): Promise<EditableSpell[]> {
             const { manifest, pngBytes } = decodeAmod(new Uint8Array(buf));
             const atlasBlob = new Blob([pngBytes as BlobPart], { type: "image/png" });
             const atlasUrl = URL.createObjectURL(atlasBlob);
+            populateEnhancedAtlasInfo(manifest, atlasUrl);
             enhanced.push(...manifestToEditableSpells(manifest, atlasUrl));
         } catch (err) {
             console.error(`Failed to decode .amod at ${url}:`, err);

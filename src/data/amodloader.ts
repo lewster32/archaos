@@ -20,6 +20,27 @@ export interface UnitAtlasInfo {
 export const enhancedAtlasInfo = reactive(new Map<string, UnitAtlasInfo>());
 
 /**
+ * Populate `enhancedAtlasInfo` for every unit in a manifest. Shared
+ * between the game-side loader (Phaser) and the editor route (which
+ * decodes amods independently and would otherwise leave the map empty,
+ * causing SpellImage's icon canvas to fall through to a deleted
+ * legacy path).
+ */
+export function populateEnhancedAtlasInfo(
+    manifest: ModManifest,
+    blobUrl: string,
+): void {
+    for (const unit of manifest.units) {
+        const tex = unit.textures[0];
+        if (!tex) continue;
+        const frames = new Map<string, SerialisedFrame["frame"]>(
+            tex.frames.map((f) => [f.filename, f.frame]),
+        );
+        enhancedAtlasInfo.set(unit.id, { imageUrl: blobUrl, frames });
+    }
+}
+
+/**
  * Merge every unit's textures[].frames[] in a manifest into a single
  * Phaser atlas JSON object. Frame filenames are unit-prefixed by
  * convention, so cross-unit collisions are impossible.
@@ -61,17 +82,7 @@ export function decodeAndRegisterAmod(
     const unitsById = new Map<string, ModManifest["units"][0]>();
     for (const u of manifest.units) unitsById.set(u.id, u);
 
-    // Populate the shared atlas-info lookup so non-Phaser consumers
-    // (e.g. spellbook icons) can resolve frame rects + PNG blob URL
-    // by unit id without re-reading the legacy JSON glob.
-    for (const unit of manifest.units) {
-        const tex = unit.textures[0];
-        if (!tex) continue;
-        const frames = new Map<string, SerialisedFrame["frame"]>(
-            tex.frames.map((f) => [f.filename, f.frame]),
-        );
-        enhancedAtlasInfo.set(unit.id, { imageUrl: blobUrl, frames });
-    }
+    populateEnhancedAtlasInfo(manifest, blobUrl);
 
     for (const spell of manifest.spells) {
         const unit = spell.unitId ? unitsById.get(spell.unitId) : undefined;
