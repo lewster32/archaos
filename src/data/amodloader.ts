@@ -38,7 +38,7 @@ export function decodeAndRegisterAmod(
     registries: AmodRegistries,
 ): void {
     const { manifest, pngBytes } = decodeAmod(bytes);
-    const blob = new Blob([pngBytes], { type: "image/png" });
+    const blob = new Blob([pngBytes as BlobPart], { type: "image/png" });
     const blobUrl = URL.createObjectURL(blob);
     const atlasJson = reconstructAtlasJson(manifest);
     scene.load.atlas(manifest.id, blobUrl, atlasJson);

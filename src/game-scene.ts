@@ -33,6 +33,7 @@ import { Board } from "./gameobjects/board";
 import { Player } from "./gameobjects/player";
 import { Spell } from "@archaos/engine";
 import { Piece } from "./gameobjects/piece";
+import { loadAmodsIntoScene } from "./data/amodloader";
 import { Wizard } from "./gameobjects/wizard";
 import { Tutorial } from "./gameobjects/tutorials/tutorial";
 import { WeatherType } from "./gameobjects/boardeffects/weather";
@@ -61,7 +62,7 @@ export class GameScene extends Scene {
         });
     }
 
-    preload(): void {
+    async preload(): Promise<void> {
         this.load.on("progress", (value: number) => {
             if (!debugLoading) {
                 loadingProgress.value = value;
@@ -104,38 +105,8 @@ export class GameScene extends Scene {
         // Weather
         this.load.atlas("rain", rain, rainJson);
 
-        // Load any enhanced content (additional spells/units)
-        this.loadEnhancedData();
-    }
-
-    async loadEnhancedData(): Promise<void> {
-        // Scan the assets/data/enhanced folder and load all JSON files to find
-        // any additional spells and their associated units and textures
-        const enhancedSpells: Record<string, any> = import.meta.glob("../assets/data/enhanced/*.json", { eager: true });
-        for (let [path, spellData] of Object.entries(enhancedSpells)) {
-            const textures: any[] = spellData.spell?.unit?.textures || [];
-            console.debug(`Loading enhanced spell ${spellData.spell.name}: ${path}`);
-
-            if (textures.length) {
-                // Load any additional textures for this unit
-                const textureKey: string = spellData.spell.unit.id;
-                for (let texture of textures) {
-                    const texturePath: string = import.meta.resolve(`../images/units/enhanced/${texture.image}`);
-                    console.debug(`  Loading texture for unit ${textureKey}: ${texturePath}`);
-                    this.load.atlas(textureKey, texturePath, texture);
-                }
-            }
-
-            // Register the spell
-            Spell.spells[spellData.spell.id] = spellData.spell;
-
-            // Register the unit (if any)
-            if (spellData.spell.unit) {
-                Spell.spells[spellData.spell.id].unitId = spellData.spell.unit.id;
-                Piece.units[spellData.spell.unit.id] = spellData.spell.unit;
-                Piece.units[spellData.spell.unit.id].group = spellData.spell.group;
-            }
-        }
+        // Load any .amod packaged mods (additional spells/units).
+        await loadAmodsIntoScene(this, { spells: Spell.spells, units: Piece.units });
     }
 
     create(): void {
@@ -144,9 +115,9 @@ export class GameScene extends Scene {
                 this.anims.create({
                     key: `${key}_${direction}`,
                     frames: ((unit as any).animFrames || []).map((frame: any) => {
-                        const group: string = unit.group ? unit.id : "classicunits";
+                        const atlasKey: string = (unit as { atlasKey?: string }).atlasKey ?? "classicunits";
                         return {
-                            key: group,
+                            key: atlasKey,
                             frame: `${key}_${direction}_${frame}`,
                         };
                     }),
