@@ -24,7 +24,12 @@
                 >+</button>
             </div>
         </header>
-        <div ref="hostEl" class="paint-canvas__host">
+        <div
+            ref="hostEl"
+            class="paint-canvas__host"
+            @wheel.prevent="onWheel"
+        >
+            <slot name="overlay" />
             <canvas
                 ref="canvasEl"
                 class="paint-canvas__canvas"
@@ -39,7 +44,6 @@
                 @pointerup="onPointerUp"    
                 @pointercancel="onPointerUp"
                 @pointerleave="onPointerLeave"
-                @wheel.prevent="onWheel"
             ></canvas>
             <div
                 class="paint-canvas__guides"
@@ -70,6 +74,12 @@
                 <div
                     v-if="showHoverOutline"
                     class="paint-canvas__hover"
+                    :class="{
+                        'paint-canvas__hover--erase':
+                            effectiveTool === 'eraser',
+                        'paint-canvas__hover--pick':
+                            effectiveTool === 'eyedropper',
+                    }"
                     :style="{
                         top: ((hoverY ?? 0) * 100) / FRAME_SIZE + '%',
                         left: ((hoverX ?? 0) * 100) / FRAME_SIZE + '%',
@@ -109,7 +119,7 @@ const emit = defineEmits<{
 }>();
 
 const FRAME_SIZE = 18;
-const ZOOM_STEPS = [1, 2, 4, 8, 16, 32] as const;
+const ZOOM_STEPS = [1, 2, 4, 8, 16, 32, 64] as const;
 
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 const hostEl = ref<HTMLDivElement | null>(null);
@@ -144,6 +154,18 @@ let panOriginY = 0;
 // crosshair / grab / grabbing as the user holds space or drags to pan.
 const panning = ref(false);
 const spaceHeld = ref(false);
+const shiftHeld = ref(false);
+const ctrlHeld = ref(false);
+
+// Holding ctrl temporarily activates the eyedropper. Holding shift
+// swaps pencil <-> eraser. Ctrl wins when both are held.
+const effectiveTool = computed<typeof props.tool>(() => {
+    if (ctrlHeld.value) return "eyedropper";
+    if (!shiftHeld.value) return props.tool;
+    if (props.tool === "pencil") return "eraser";
+    if (props.tool === "eraser") return "pencil";
+    return props.tool;
+});
 
 // Current hover position in sprite coordinates (0..17 as integers).
 // null when the cursor is outside the painting canvas. Drives the
@@ -245,7 +267,7 @@ function onPointerDown(e: PointerEvent): void {
     const p = clientToSprite(e.clientX, e.clientY);
     if (!p) return;
 
-    if (props.tool === "eyedropper") {
+    if (effectiveTool.value === "eyedropper") {
         const rgba = readPixel(props.activeBuffer.data, p.x, p.y);
         emit("eyedrop", rgba);
         return;
@@ -255,13 +277,13 @@ function onPointerDown(e: PointerEvent): void {
     preStrokeSnapshot = cloneImageData(props.activeBuffer.data);
     emit("strokeStarted");
 
-    if (props.tool === "fill") {
+    if (effectiveTool.value === "fill") {
         floodFill(props.activeBuffer.data, p.x, p.y, props.colour);
         void redraw();
         return;
     }
 
-    const rgba = props.tool === "eraser" ? TRANSPARENT : props.colour;
+    const rgba = effectiveTool.value === "eraser" ? TRANSPARENT : props.colour;
     drawPixel(props.activeBuffer.data, p.x, p.y, rgba);
     lastX = p.x;
     lastY = p.y;
@@ -302,9 +324,10 @@ function onPointerMove(e: PointerEvent): void {
             : null;
 
     if (!preStrokeSnapshot || !props.activeBuffer) return;
-    if (props.tool !== "pencil" && props.tool !== "eraser") return;
+    if (effectiveTool.value !== "pencil" && effectiveTool.value !== "eraser")
+        return;
     if (!p) return;
-    const rgba = props.tool === "eraser" ? TRANSPARENT : props.colour;
+    const rgba = effectiveTool.value === "eraser" ? TRANSPARENT : props.colour;
     if (lastX >= 0 && lastY >= 0) {
         bresenhamLine(
             props.activeBuffer.data,
@@ -350,9 +373,13 @@ function onWheel(e: WheelEvent): void {
 
 function onKeyDown(e: KeyboardEvent): void {
     if (e.code === "Space") spaceHeld.value = true;
+    if (e.key === "Shift") shiftHeld.value = true;
+    if (e.key === "Control" || e.key === "Meta") ctrlHeld.value = true;
 }
 function onKeyUp(e: KeyboardEvent): void {
     if (e.code === "Space") spaceHeld.value = false;
+    if (e.key === "Shift") shiftHeld.value = false;
+    if (e.key === "Control" || e.key === "Meta") ctrlHeld.value = false;
 }
 
 async function redraw(): Promise<void> {
@@ -379,6 +406,7 @@ watch(
 onMounted(() => {
     globalThis.addEventListener("keydown", onKeyDown);
     globalThis.addEventListener("keyup", onKeyUp);
+    void nextTick(() => fitView());
 });
 
 onBeforeUnmount(() => {
@@ -489,6 +517,18 @@ onBeforeUnmount(() => {
         box-shadow:
             inset 0 0 0 1px rgba(255, 255, 255, 0.95),
             0 0 0 1px rgba(0, 0, 0, 0.85);
+
+        &--erase {
+            box-shadow:
+                inset 0 0 0 1px rgba(255, 80, 80, 0.95),
+                0 0 0 1px rgba(0, 0, 0, 0.85);
+        }
+
+        &--pick {
+            box-shadow:
+                inset 0 0 0 1px rgba(245, 197, 74, 0.95),
+                0 0 0 1px rgba(0, 0, 0, 0.85);
+        }
     }
 
     &__crosshair {

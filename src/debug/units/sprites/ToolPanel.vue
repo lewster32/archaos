@@ -1,22 +1,6 @@
 <template>
     <div class="tool-panel">
         <section class="callout tool-panel__group">
-            <h2>Tools</h2>
-            <div class="tool-panel__tools">
-                <button
-                    v-for="t in toolList"
-                    :key="t.id"
-                    type="button"
-                    class="button button--small"
-                    :class="{ 'button--yellow': tool === t.id }"
-                    :disabled="locked"
-                    :title="t.label"
-                    @click="emit('toolChange', t.id)"
-                ><i class="icon" :class="`icon--${t.short}`"></i></button>
-            </div>
-        </section>
-
-        <section class="callout tool-panel__group">
             <h2>Colour</h2>
             <ColourPicker
                 :model-value="colour"
@@ -88,7 +72,6 @@ import SwatchStrip from "./SwatchStrip.vue";
 import type { Direction, FrameBuffers, Rgba } from "../data/types";
 
 defineProps<{
-    tool: "pencil" | "fill" | "eraser" | "eyedropper";
     colour: Rgba;
     buffers: FrameBuffers;
     globalColours: Rgba[];
@@ -99,19 +82,11 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-    (e: "toolChange", tool: "pencil" | "fill" | "eraser" | "eyedropper"): void;
     (e: "colourChange", rgba: Rgba): void;
     (e: "mirror", payload: { from: Direction; to: Direction }): void;
     (e: "undo"): void;
     (e: "redo"): void;
 }>();
-
-const toolList = [
-    { id: "pencil" as const, short: "edit", label: "Pencil" },
-    { id: "fill" as const, short: "fill", label: "Fill" },
-    { id: "eraser" as const, short: "erase", label: "Eraser" },
-    { id: "eyedropper" as const, short: "pick", label: "Picker" },
-];
 </script>
 
 <style lang="scss" scoped>

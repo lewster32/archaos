@@ -1,6 +1,5 @@
 <template>
-    <section class="callout animated-preview">
-        <h2>Animation</h2>
+    <div class="animated-preview">
         <div v-if="hasAnimation" class="animated-preview__row">
             <figure>
                 <canvas
@@ -24,7 +23,7 @@
         <p v-else class="animated-preview__empty">
             No animation frames configured.
         </p>
-    </section>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -122,14 +121,6 @@ onBeforeUnmount(stopAnim);
 
 <style lang="scss" scoped>
 .animated-preview {
-    h2 {
-        margin: 0 0 0.5rem;
-        font-size: 1.15rem;
-        color: var(--color-yellow);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 0.25rem;
-    }
-
     &__row {
         display: flex;
         gap: 0.5rem;

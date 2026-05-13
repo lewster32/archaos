@@ -18,19 +18,21 @@
 //   unit-glow.png                                          115 B  (Phaser preload)
 //   wizards.png                                           1370 B  (Phaser preload)
 //   chaossounds.ogg                                     147151 B  (audio (preferred format))
-//   Game.css                                             57153 B  (lazy CSS bundle)
+//   classicunits.css                                     32364 B  (lazy CSS bundle)
+//   debug.css                                            16450 B  (lazy CSS bundle)
+//   Game.css                                             24849 B  (lazy CSS bundle)
 //   LoadingScreen.css                                     3806 B  (lazy CSS bundle)
-//   main.css                                             52775 B  (lazy CSS bundle)
-//   debug.js                                              7056 B  (lazy JS bundle)
-//   Game.js                                             328747 B  (lazy JS bundle)
-//   LoadingScreen.js                                      8977 B  (lazy JS bundle)
-//   main.js                                               2531 B  (lazy JS bundle)
-//   modulepreload-polyfill.js                              698 B  (lazy JS bundle)
+//   style.css                                            61408 B  (lazy CSS bundle)
+//   classicunits.js                                     201463 B  (lazy JS bundle)
+//   debug.js                                             57107 B  (lazy JS bundle)
+//   Game.js                                             141042 B  (lazy JS bundle)
+//   LoadingScreen.js                                      8910 B  (lazy JS bundle)
+//   main.js                                               2541 B  (lazy JS bundle)
 //   phaser.js                                          1352563 B  (lazy JS bundle)
-//   runtime-dom.esm-bundler.js                           69939 B  (lazy JS bundle)
-//   white-dragon.js                                      16521 B  (lazy JS bundle)
+//   style.js                                               698 B  (lazy JS bundle)
 //   window.js                                            15065 B  (lazy JS bundle)
-//   TOTAL                                              2355292 B
+//   _plugin-vue_export-helper.js                         70854 B  (lazy JS bundle)
+//   TOTAL                                              2428581 B
 
 /** Total uncompressed bytes fetched by the browser after the loading screen appears. */
-export const TOTAL_GAME_ASSET_BYTES = 2355292;
+export const TOTAL_GAME_ASSET_BYTES = 2428581;

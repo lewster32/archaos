@@ -118,6 +118,36 @@ export function mirrorHorizontal(data: ImageData): ImageData {
 }
 
 /**
+ * Returns a copy of `data` shifted by (dx, dy) pixels. Pixels that
+ * fall outside the buffer after the shift are dropped; vacated pixels
+ * are fully transparent. Source is not modified.
+ */
+export function shiftImageData(
+    data: ImageData,
+    dx: number,
+    dy: number,
+): ImageData {
+    const w = data.width;
+    const h = data.height;
+    const out = new ImageData(w, h);
+    for (let y = 0; y < h; y++) {
+        const sy = y - dy;
+        if (sy < 0 || sy >= h) continue;
+        for (let x = 0; x < w; x++) {
+            const sx = x - dx;
+            if (sx < 0 || sx >= w) continue;
+            const src = (sy * w + sx) * 4;
+            const dst = (y * w + x) * 4;
+            out.data[dst] = data.data[src];
+            out.data[dst + 1] = data.data[src + 1];
+            out.data[dst + 2] = data.data[src + 2];
+            out.data[dst + 3] = data.data[src + 3];
+        }
+    }
+    return out;
+}
+
+/**
  * Produces an independent copy. Mutations on the returned buffer do
  * not affect the original (and vice versa).
  */

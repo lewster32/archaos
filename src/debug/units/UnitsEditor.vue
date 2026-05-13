@@ -102,6 +102,7 @@
                         @tool-change="onToolChange"
                         @colour-change="onColourChange"
                         @mirror="onMirror"
+                        @nudge="onNudge"
                         @undo="onUndo"
                         @redo="onRedo"
                     />
@@ -128,7 +129,7 @@ import {
     removeAnimFrame as removeAnimFrameOp,
 } from "./data/framebuffers";
 import { loadFrameBuffers } from "./data/loadframes";
-import { cloneImageData } from "./data/paintops";
+import { cloneImageData, shiftImageData } from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildManifest, downloadAmod } from "./data/saveunit";
 import { decodeAmod, packAmod, type ModManifest } from "../../data/amodformat";
@@ -568,6 +569,29 @@ function onColourChange(rgba: Rgba): void {
     }
 }
 
+function onNudge(payload: { dx: number; dy: number }): void {
+    const map = currentBuffers.value;
+    if (!map) return;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    const buf = map.get(k);
+    if (!buf) return;
+    const snapshot = cloneImageData(buf.data);
+    buf.data = shiftImageData(buf.data, payload.dx, payload.dy);
+    buf.undoStack.push(snapshot);
+    if (buf.undoStack.length > 50) buf.undoStack.shift();
+    buf.redoStack.length = 0;
+    if (selected.value) {
+        selected.value._dirty = true;
+        spritesDirty.value = true;
+        refreshColoursForUnit(selected.value._originalId);
+    }
+    frameVersion.value++;
+}
+
 function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
     const s = selected.value;
     if (!s || !currentBuffers.value) return;
@@ -622,15 +646,43 @@ function onRedo(): void {
 function onKeyDown(e: KeyboardEvent): void {
     if (isPainting.value) return;
     if (activeTab.value !== "sprites") return;
-    if (!(e.ctrlKey || e.metaKey)) return;
-    if (e.code === "KeyZ" && !e.shiftKey) {
-        e.preventDefault();
-        onUndo();
+    if (e.ctrlKey || e.metaKey) {
+        if (e.code === "KeyZ" && !e.shiftKey) {
+            e.preventDefault();
+            onUndo();
+            return;
+        }
+        if ((e.code === "KeyZ" && e.shiftKey) || e.code === "KeyY") {
+            e.preventDefault();
+            onRedo();
+        }
         return;
     }
-    if ((e.code === "KeyZ" && e.shiftKey) || e.code === "KeyY") {
+    if (e.altKey) return;
+    // Skip when the user is typing into a form field elsewhere on the
+    // page - the sprite-editor shortcuts are global keydowns.
+    const target = e.target as HTMLElement | null;
+    const tag = target?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable)
+        return;
+    if (e.code === "KeyI" && !e.shiftKey) {
         e.preventDefault();
-        onRedo();
+        onToolChange("eyedropper");
+        return;
+    }
+    if (e.code === "KeyF" && !e.shiftKey) {
+        e.preventDefault();
+        onToolChange("fill");
+        return;
+    }
+    if (e.code === "KeyP" && !e.shiftKey) {
+        e.preventDefault();
+        onToolChange("pencil");
+        return;
+    }
+    if (e.code === "KeyE" && !e.shiftKey) {
+        e.preventDefault();
+        onToolChange("eraser");
     }
 }
 
@@ -640,7 +692,9 @@ function onEyedrop(rgba: Rgba): void {
     // RGB so picking from a transparent pixel does not give an invisible
     // paint colour - the user uses the eraser tool to write transparency.
     colour.value = [rgba[0], rgba[1], rgba[2], 255];
-    if (tool.value === "eyedropper") tool.value = previousDrawingTool.value;
+    if (tool.value !== "eyedropper") return;
+    const prev = previousDrawingTool.value;
+    if (prev === "pencil" || prev === "fill") tool.value = prev;
 }
 
 const spritesDirty = ref(false);
