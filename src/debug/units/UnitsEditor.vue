@@ -241,6 +241,11 @@ async function repopulate(): Promise<void> {
 const loadingMods = ref(true);
 void repopulate().finally(() => {
     loadingMods.value = false;
+    // Kick off colour preloading only after the .amod decode pass
+    // settles - otherwise `spells` is still empty at mount time and
+    // globalColours is missing every enhanced unit until the user
+    // visits each one.
+    void eagerLoadAllColours();
 });
 
 const allSpells = computed<EditableSpell[]>(() =>
@@ -664,7 +669,6 @@ onMounted(() => {
     if (id && spells.has(id)) selectedId.value = id;
     globalThis.addEventListener("keydown", onKeyDown);
     globalThis.addEventListener("beforeunload", beforeUnloadHandler);
-    void eagerLoadAllColours();
 });
 
 onBeforeUnmount(() => {
