@@ -79,18 +79,6 @@
             </div>
         </section>
 
-        <section class="callout tool-panel__group">
-            <h2>Save</h2>
-            <button
-                type="button"
-                class="button button--green"
-                disabled
-                title="Save format coming in Phase 2B (.summon archive)."
-            >Save sprite atlas</button>
-            <p class="tool-panel__banner">
-                Phase 2B. Edits are session-only until the .summon format ships.
-            </p>
-        </section>
     </div>
 </template>
 
@@ -172,12 +160,6 @@ const toolList = [
             color: var(--color-cyan);
             letter-spacing: 0.5px;
         }
-    }
-
-    &__banner {
-        margin: 0;
-        font-size: 0.75rem;
-        opacity: 0.7;
     }
 
     input[type="color"] {
