@@ -29,17 +29,15 @@ function parseFrameFilename(
 /**
  * Resolves the source PNG URL for an editable spell's first texture.
  * - Classic spells reuse the shared atlas import.
- * - Enhanced spells live under `public/images/units/enhanced/` and are
- *   served at `${BASE_URL}images/units/enhanced/<image>`.
+ * - Enhanced spells always carry a blob URL on `texture.imageUrl`,
+ *   set by the .amod loader (or the editor's classic adapter).
  */
 function resolveTextureUrl(spell: EditableSpell): string {
     const texture = spell.unit.textures[0];
     if (!texture) return "";
     if (texture.imageUrl) return texture.imageUrl;
     if (spell._origin === "classic") return classicAtlasUrl;
-    const base = import.meta.env.BASE_URL ?? "/";
-    const sep = base.endsWith("/") ? "" : "/";
-    return `${base}${sep}images/units/enhanced/${texture.image}`;
+    return "";
 }
 
 /**

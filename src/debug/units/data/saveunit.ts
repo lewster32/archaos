@@ -5,9 +5,9 @@ import type {
 } from "../../../data/amodformat";
 
 /**
- * Output shape that mirrors the enhanced JSON files shipped today, e.g.
- * `assets/data/enhanced/dwarf.json`. Editor-only fields and any
- * `undefined` optional fields are dropped from the serialised form.
+ * Intermediate output shape used by `buildManifest` to assemble the
+ * `.amod` `ModManifest`. Editor-only fields and any `undefined`
+ * optional fields are dropped during serialisation.
  */
 interface SerialisedSpell {
     id: string;
@@ -37,24 +37,6 @@ interface SerialisedUnit {
 }
 
 type SerialisedTexture = Omit<Texture, "imageUrl">;
-
-/**
- * Build the enhanced-format JSON string for the given editable spell.
- *
- * - Drops editor-only fields (`_origin`, `_originalId`, `_dirty`,
- *   `texture.imageUrl`).
- * - Always sets `group` to `"enhanced"`.
- * - Falls back to `spell.name` when `unit.name` is empty so the output
- *   is valid against the schema (which requires `unit.name`).
- * - Pretty-printed with 4-space indentation to match the existing
- *   `assets/data/enhanced/*.json` files.
- */
-export function buildEnhancedJson(spell: EditableSpell): string {
-    const out = {
-        spell: serialiseSpell(spell),
-    };
-    return JSON.stringify(out, null, 4);
-}
 
 function serialiseSpell(spell: EditableSpell): SerialisedSpell {
     const out: SerialisedSpell = {
@@ -174,26 +156,3 @@ export function downloadAmod(filename: string, bytes: Uint8Array): void {
     }
 }
 
-/**
- * Trigger a browser download of the given enhanced JSON. The anchor
- * uses an object URL that's revoked immediately after the synthetic
- * click so we don't leak Blob storage.
- */
-export function downloadJson(filename: string, json: string): void {
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    try {
-        a.click();
-    } finally {
-        a.remove();
-        // Defer the revoke - some older browsers (Safari, legacy WebView2)
-        // race the download stream against an immediate revoke and silently
-        // fail. setTimeout(0) gives the browser one tick to start the
-        // download before we drop the URL.
-        setTimeout(() => URL.revokeObjectURL(url), 0);
-    }
-}

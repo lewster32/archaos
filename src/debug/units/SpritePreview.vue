@@ -129,7 +129,7 @@ function animDirectionsFor(
 }
 
 function imageUrl(texture: Texture): string {
-    return texture.imageUrl ?? `/images/units/enhanced/${texture.image}`;
+    return texture.imageUrl ?? "";
 }
 
 function canvasKey(textureImage: string, suffix: string): string {

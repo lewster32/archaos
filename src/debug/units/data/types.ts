@@ -58,7 +58,7 @@ export interface EditableUnit {
  * Editable spell data, kept reactive while the form is open.
  *
  * Fields prefixed with `_` are editor-only and never serialised:
- * - `_origin` tracks whether this came from `assets/data/enhanced/` or
+ * - `_origin` tracks whether this came from an `.amod` archive or
  *   from the classic JSON pair; the saved file shape is identical
  *   either way.
  * - `_originalId` is the load-time id (classic key or enhanced spell.id)

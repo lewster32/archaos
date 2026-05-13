@@ -114,7 +114,8 @@ function registerCanvas(slot: number, el: HTMLCanvasElement | null): void {
 function redraw(): void {
     const texture = props.unit.textures[0];
     if (!texture) return;
-    const url = texture.imageUrl ?? `/images/units/enhanced/${texture.image}`;
+    const url = texture.imageUrl ?? "";
+    if (!url) return;
     const img = loadImage(url);
     const draw = (): void => {
         for (const [slot, canvas] of canvases) {

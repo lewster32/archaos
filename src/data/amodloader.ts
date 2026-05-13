@@ -1,9 +1,22 @@
-import { decodeAmod, type ModManifest } from "./amodformat";
+import { decodeAmod, type ModManifest, type SerialisedFrame } from "./amodformat";
 
 /** Phaser-compatible atlas JSON reconstructed from a manifest. */
 export interface ReconstructedAtlas {
     frames: ModManifest["units"][0]["textures"][0]["frames"];
 }
+
+/** Frame rect lookup for a single unit's atlas. */
+export interface UnitAtlasInfo {
+    imageUrl: string;
+    frames: Map<string, SerialisedFrame["frame"]>;
+}
+
+/**
+ * Module-level lookup keyed by unitId. Populated whenever an amod is
+ * registered. Consumed by Vue components that need to draw individual
+ * frames outside the Phaser scene (e.g. the spellbook icon canvas).
+ */
+export const enhancedAtlasInfo = new Map<string, UnitAtlasInfo>();
 
 /**
  * Merge every unit's textures[].frames[] in a manifest into a single
@@ -46,6 +59,18 @@ export function decodeAndRegisterAmod(
     // Build a unit-by-id map for cross-reference during spell binding.
     const unitsById = new Map<string, ModManifest["units"][0]>();
     for (const u of manifest.units) unitsById.set(u.id, u);
+
+    // Populate the shared atlas-info lookup so non-Phaser consumers
+    // (e.g. spellbook icons) can resolve frame rects + PNG blob URL
+    // by unit id without re-reading the legacy JSON glob.
+    for (const unit of manifest.units) {
+        const tex = unit.textures[0];
+        if (!tex) continue;
+        const frames = new Map<string, SerialisedFrame["frame"]>(
+            tex.frames.map((f) => [f.filename, f.frame]),
+        );
+        enhancedAtlasInfo.set(unit.id, { imageUrl: blobUrl, frames });
+    }
 
     for (const spell of manifest.spells) {
         const unit = spell.unitId ? unitsById.get(spell.unitId) : undefined;

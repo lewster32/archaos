@@ -13,6 +13,7 @@
 import { SpellType, UnitStatus, UnitConfig } from "@archaos/engine";
 import classicunitsAtlas from "@assets/spritesheets/classicunits.png";
 import classicunitsData from "@assets/spritesheets/classicunits.json";
+import { enhancedAtlasInfo as _enhancedFrames } from "../../data/amodloader";
 
 type FrameRect = { x: number; y: number; w: number; h: number };
 
@@ -20,23 +21,10 @@ const _classicFrames = new Map<string, FrameRect>(
     classicunitsData.textures[0].frames.map((f) => [f.filename, f.frame as FrameRect]),
 );
 
-// Enhanced spells carry their atlas frame data inline in the spell JSON.
-// Build a map from unit ID → { imageUrl, frames } using the same glob as
-// game-scene.ts so both share the same eagerly-loaded module instances.
-type EnhancedAtlasInfo = { imageUrl: string; frames: Map<string, FrameRect> };
-const _enhancedFrames = new Map<string, EnhancedAtlasInfo>();
-
-const _enhancedFiles: Record<string, any> = import.meta.glob("@assets/data/enhanced/*.json", { eager: true });
-
-for (const data of Object.values(_enhancedFiles)) {
-    const unit = data.spell?.unit;
-    if (!unit?.textures?.length) continue;
-    const texture = unit.textures[0];
-    _enhancedFrames.set(unit.id, {
-        imageUrl: `${import.meta.env.BASE_URL}images/units/enhanced/${texture.image}`,
-        frames: new Map<string, FrameRect>(texture.frames.map((f: any) => [f.filename, f.frame as FrameRect])),
-    });
-}
+// Enhanced spells now carry their atlas data via the .amod loader's
+// shared `enhancedAtlasInfo` map (populated at game-scene boot). The
+// import above is a live reference so frame lookups stay in sync with
+// any subsequently registered mods.
 
 // Generic per-URL image loader with a shared promise cache so each atlas PNG
 // is fetched at most once regardless of how many SpellImage instances exist.
