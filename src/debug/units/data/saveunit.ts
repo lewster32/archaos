@@ -1,4 +1,8 @@
 import type { EditableSpell, EditableUnit, Frame, Texture } from "./types";
+import type {
+    ModManifest,
+    SerialisedUnit as ManifestUnit,
+} from "../../../data/amodformat";
 
 /**
  * Output shape that mirrors the enhanced JSON files shipped today, e.g.
@@ -96,6 +100,78 @@ function serialiseTexture(texture: Texture): SerialisedTexture {
     const clonedFrames: Frame[] = [];
     for (const f of frames) clonedFrames.push({ ...f });
     return { ...rest, frames: clonedFrames };
+}
+
+/**
+ * Build a Phase 2B manifest from an EditableSpell. Strips editor-only
+ * fields; lifts `unit` into the manifest's `units[]` and replaces it
+ * with `spell.unitId`.
+ */
+export function buildManifest(spell: EditableSpell): ModManifest {
+    const serialisedSpell = serialiseSpell(spell);
+    const embeddedUnit = serialisedSpell.unit;
+    const unit: ManifestUnit = {
+        id: embeddedUnit.id,
+        name: embeddedUnit.name ?? spell.name,
+        properties: { ...embeddedUnit.properties },
+        status: [...embeddedUnit.status],
+        textures: embeddedUnit.textures.map((t) => ({ frames: t.frames })),
+    };
+    if (embeddedUnit.indefiniteArticle !== undefined) {
+        unit.indefiniteArticle = embeddedUnit.indefiniteArticle;
+    }
+    if (embeddedUnit.attackType !== undefined) {
+        unit.attackType = embeddedUnit.attackType;
+    }
+    if (embeddedUnit.rangedType !== undefined) {
+        unit.rangedType = embeddedUnit.rangedType;
+    }
+    if (embeddedUnit.projectileType !== undefined) {
+        unit.projectileType = embeddedUnit.projectileType;
+    }
+    if (embeddedUnit.animFrames !== undefined) {
+        unit.animFrames = [...embeddedUnit.animFrames];
+    }
+    if (embeddedUnit.animSpeed !== undefined) {
+        unit.animSpeed = embeddedUnit.animSpeed;
+    }
+    if (embeddedUnit.shadowScale !== undefined) {
+        unit.shadowScale = embeddedUnit.shadowScale;
+    }
+
+    return {
+        id: unit.id,
+        name: spell.name,
+        modVersion: "1.0.0",
+        spells: [{
+            id: serialisedSpell.id,
+            name: serialisedSpell.name,
+            chance: serialisedSpell.chance,
+            balance: serialisedSpell.balance,
+            group: "enhanced",
+            description: serialisedSpell.description,
+            types: serialisedSpell.types,
+            spellFrame: serialisedSpell.spellFrame,
+            unitId: unit.id,
+        }],
+        units: [unit],
+    };
+}
+
+/** Trigger a browser download of an .amod byte string. */
+export function downloadAmod(filename: string, bytes: Uint8Array): void {
+    const blob = new Blob([bytes as BlobPart], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    try {
+        a.click();
+    } finally {
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
 }
 
 /**

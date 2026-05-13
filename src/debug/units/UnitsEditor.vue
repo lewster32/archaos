@@ -8,6 +8,7 @@
             </a>
             <h1>Units</h1>
             <div class="units-editor__scroll">
+                <p v-if="loadingMods">Loading mods...</p>
                 <template v-for="group in spellGroups" :key="group.label">
                     <h2 class="units-editor__group">{{ group.label }}</h2>
                     <ul>
@@ -127,6 +128,7 @@ import { loadFrameBuffers } from "./data/loadframes";
 import { cloneImageData } from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildEnhancedJson, downloadJson } from "./data/saveunit";
+import { decodeAmod, type ModManifest } from "../../data/amodformat";
 import {
     frameBufferKey,
     type EditableSpell,
@@ -134,7 +136,6 @@ import {
     type FrameKey,
     type Frame,
     type Rgba,
-    type Texture,
 } from "./data/types";
 import classicSpellsData from "../../../assets/data/classicspells.json";
 import classicUnitsData from "../../../assets/data/classicunits.json";
@@ -150,99 +151,54 @@ function sortByName(a: EditableSpell, b: EditableSpell): number {
     return a.name.localeCompare(b.name);
 }
 
-interface SourceUnit {
-    id?: string;
-    name?: string;
-    indefiniteArticle?: "a" | "an";
-    attackType?: string;
-    rangedType?: string;
-    projectileType?: string;
-    properties: {
-        mov: number;
-        com: number;
-        rcm: number;
-        rng: number;
-        def: number;
-        mnv: number;
-        res: number;
-    };
-    status?: string[];
-    animFrames?: number[];
-    animSpeed?: number;
-    shadowScale?: number;
-    textures: Texture[];
+const amodUrlModules = import.meta.glob("../../../assets/amods/*.amod", {
+    eager: true,
+    query: "?url",
+    import: "default",
+}) as Record<string, string>;
+
+function manifestToEditableSpells(manifest: ModManifest, atlasBlobUrl: string): EditableSpell[] {
+    const out: EditableSpell[] = [];
+    for (const spell of manifest.spells) {
+        const unit = manifest.units.find((u) => u.id === spell.unitId);
+        if (!unit) continue;
+        out.push({
+            id: spell.id,
+            name: spell.name,
+            chance: spell.chance,
+            balance: spell.balance,
+            description: spell.description,
+            group: "enhanced",
+            types: spell.types,
+            spellFrame: spell.spellFrame,
+            unit: {
+                id: unit.id,
+                name: unit.name,
+                indefiniteArticle: unit.indefiniteArticle,
+                attackType: unit.attackType,
+                rangedType: unit.rangedType,
+                projectileType: unit.projectileType,
+                properties: { ...unit.properties },
+                status: [...unit.status],
+                animFrames: unit.animFrames ? [...unit.animFrames] : undefined,
+                animSpeed: unit.animSpeed,
+                shadowScale: unit.shadowScale,
+                textures: unit.textures.map((t) => ({
+                    image: `${manifest.id}.png`,
+                    size: { w: 0, h: 0 },
+                    frames: t.frames.map((f) => ({ ...f })),
+                    imageUrl: atlasBlobUrl,
+                })),
+            },
+            _origin: "enhanced",
+            _originalId: spell.id,
+            _dirty: false,
+        });
+    }
+    return out;
 }
 
-interface SourceSpell {
-    id: string;
-    name: string;
-    chance: number;
-    balance: number;
-    description?: string;
-    group?: string;
-    types?: string[];
-    spellFrame?: number;
-    unit: SourceUnit;
-}
-
-const enhancedJsonModules = import.meta.glob("../../../assets/data/enhanced/*.json", { eager: true }) as Record<
-    string,
-    { spell: SourceSpell }
->;
-
-/**
- * Deep clone an arbitrary JSON-shaped value. Used to avoid mutating
- * the static JSON imports shared with the rest of the app.
- */
-function deepClone<T>(value: T): T {
-    return JSON.parse(JSON.stringify(value)) as T;
-}
-
-/**
- * Wrap a source enhanced spell into the editor's EditableSpell shape.
- * Sets `_origin` and `_originalId` so the panel can track the entry
- * across renames.
- */
-function adaptEnhanced(raw: SourceSpell): EditableSpell {
-    const cloned = deepClone(raw);
-    const unit = cloned.unit;
-    return {
-        id: cloned.id,
-        name: cloned.name,
-        chance: cloned.chance,
-        balance: cloned.balance,
-        description: cloned.description,
-        group: "enhanced",
-        types: cloned.types,
-        spellFrame: cloned.spellFrame,
-        unit: {
-            id: unit.id ?? cloned.id,
-            name: unit.name ?? cloned.name,
-            indefiniteArticle: unit.indefiniteArticle,
-            attackType: unit.attackType,
-            rangedType: unit.rangedType,
-            projectileType: unit.projectileType,
-            properties: { ...unit.properties },
-            status: unit.status ? [...unit.status] : [],
-            animFrames: unit.animFrames ? [...unit.animFrames] : undefined,
-            animSpeed: unit.animSpeed,
-            shadowScale: unit.shadowScale,
-            // Shallow-clone each texture so the editor never mutates the
-            // imported JSON. The spread is intentional copy-on-write.
-            // oxlint-disable-next-line no-map-spread
-            textures: (unit.textures ?? []).map((tex) => ({
-                ...tex,
-                imageUrl: tex.imageUrl ?? `/images/units/enhanced/${tex.image}`,
-            })),
-        },
-        _origin: "enhanced",
-        _originalId: cloned.id,
-        _dirty: false,
-    };
-}
-
-function loadAll(): EditableSpell[] {
-    const enhanced: EditableSpell[] = Object.values(enhancedJsonModules).map((m) => adaptEnhanced(m.spell));
+async function loadAll(): Promise<EditableSpell[]> {
     const classic = adaptClassic(
         classicSpellsData as never,
         classicUnitsData as never,
@@ -250,20 +206,36 @@ function loadAll(): EditableSpell[] {
         classicAtlasMeta.textures[0].size,
         classicAtlasUrl,
     );
+    const enhanced: EditableSpell[] = [];
+    for (const url of Object.values(amodUrlModules)) {
+        try {
+            const response = await fetch(url);
+            const buf = await response.arrayBuffer();
+            const { manifest, pngBytes } = decodeAmod(new Uint8Array(buf));
+            const atlasBlob = new Blob([pngBytes as BlobPart], { type: "image/png" });
+            const atlasUrl = URL.createObjectURL(atlasBlob);
+            enhanced.push(...manifestToEditableSpells(manifest, atlasUrl));
+        } catch (err) {
+            console.error(`Failed to decode .amod at ${url}:`, err);
+        }
+    }
     return [...enhanced, ...classic];
 }
 
 const spells = reactive(new Map<string, EditableSpell>());
 const sortedOriginalIds = ref<string[]>([]);
 
-function repopulate(): void {
+async function repopulate(): Promise<void> {
     spells.clear();
-    const all = loadAll();
+    const all = await loadAll();
     for (const s of all) spells.set(s._originalId, s);
     sortedOriginalIds.value = all.map((s) => s._originalId);
 }
 
-repopulate();
+const loadingMods = ref(true);
+void repopulate().finally(() => {
+    loadingMods.value = false;
+});
 
 const allSpells = computed<EditableSpell[]>(() =>
     sortedOriginalIds.value.map((id) => spells.get(id)).filter((s): s is EditableSpell => s !== undefined),
@@ -705,10 +677,10 @@ function onSave(): void {
     s._dirty = false;
 }
 
-function onReset(): void {
+async function onReset(): Promise<void> {
     const s = selected.value;
     if (!s) return;
-    const original = findOriginal(s._originalId);
+    const original = await findOriginal(s._originalId);
     if (!original) return;
     const id = s._originalId;
     spells.set(id, original);
@@ -728,8 +700,8 @@ function onReset(): void {
     void ensureBuffersLoaded();
 }
 
-function findOriginal(originalId: string): EditableSpell | undefined {
-    const all = loadAll();
+async function findOriginal(originalId: string): Promise<EditableSpell | undefined> {
+    const all = await loadAll();
     return all.find((s) => s._originalId === originalId);
 }
 </script>
