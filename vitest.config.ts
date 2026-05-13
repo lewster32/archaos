@@ -26,7 +26,7 @@ export default defineConfig({
                     name: "unit",
                     environment: "jsdom",
                     css: false,
-                    include: ["src/**/*.test.ts"],
+                    include: ["src/**/*.test.ts", "scripts/**/*.test.mjs"],
                     exclude: ["src/components/**/*.test.ts"],
                     setupFiles: ["./vitest.setup.ts"],
                     deps: {
