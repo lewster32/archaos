@@ -110,8 +110,7 @@ function _getTrimBounds(img: HTMLImageElement, frame: FrameRect, frameName: stri
 </script>
 <script setup lang="ts">
 import { Spell } from "@archaos/engine";
-import { onMounted, computed, ref, watch } from "vue";
-import type { Ref } from "vue";
+import { computed, ref, watch } from "vue";
 const props = defineProps<{
     spell: Spell | null;
 }>();
@@ -142,9 +141,19 @@ interface SpellIconData {
     bottom?: string;
 }
 
-const spellIconData: Ref<SpellIconData> = ref({
-    number: 1,
-    top: "ground",
+const spellIconData = computed<SpellIconData>(() => {
+    if (!props.spell) return { number: 1, top: "ground" };
+    const types: string[] = props.spell.properties.types || [];
+    switch (types.length) {
+        case 0:
+            return { number: 1, top: determineMainSpellColour(props.spell) };
+        case 1:
+            return { number: 1, top: types[0] };
+        case 2:
+            return { number: 2, top: types[0], bottom: types[1] };
+        default:
+            return { number: 3, top: types[0], middle: types[1], bottom: types[2] };
+    }
 });
 
 /**
@@ -277,41 +286,6 @@ const determineMainSpellColour: (spell: Spell) => string = (spell: Spell) => {
     return "unknown";
 };
 
-onMounted(() => {
-    if (!props.spell) {
-        return;
-    }
-    const types: string[] = props.spell.properties.types || [];
-    switch (types.length) {
-        case 0:
-            spellIconData.value = {
-                number: 1,
-                top: determineMainSpellColour(props.spell),
-            };
-            break;
-        case 1:
-            spellIconData.value = {
-                number: 1,
-                top: types[0],
-            };
-            break;
-        case 2:
-            spellIconData.value = {
-                number: 2,
-                top: types[0],
-                bottom: types[1],
-            };
-            break;
-        default:
-            spellIconData.value = {
-                number: 3,
-                top: types[0],
-                middle: types[1],
-                bottom: types[2],
-            };
-            break;
-    }
-});
 
 /**
  * Gets the image URL for a spell. Used when no atlas frame is available
