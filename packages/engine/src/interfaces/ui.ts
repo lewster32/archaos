@@ -267,4 +267,10 @@ export interface UnitConfig {
     textures?: any[];
     group?: string;
     id?: string;
+    /**
+     * Phaser atlas texture key for this unit's sprites. Set by the .amod
+     * loader to the mod's manifest.id; undefined for classic units (which
+     * use the shared "classicunits" atlas).
+     */
+    atlasKey?: string;
 }
