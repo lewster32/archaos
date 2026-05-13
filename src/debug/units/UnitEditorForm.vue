@@ -174,11 +174,18 @@ const idCollision = computed(() => {
 /**
  * Keep the spell + unit ids in lockstep with `spell.name` via slugify.
  * Watcher fires on every name edit so the id label updates as you type.
+ * When the unit name was tracking the spell name (matches the old value
+ * or is blank), keep it in lockstep too so editing a single field does
+ * not silently desync the display name shown in-game.
  */
 watch(
     () => props.spell.name,
-    (name) => {
+    (name, oldName) => {
         const id = slugify(name);
+        const unitName = props.spell.unit.name;
+        if (unitName === oldName || unitName === undefined || unitName === "") {
+            props.spell.unit.name = name;
+        }
         props.spell.id = id;
         props.spell.unit.id = id;
         props.spell._dirty = true;
