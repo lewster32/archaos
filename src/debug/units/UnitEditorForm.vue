@@ -182,8 +182,11 @@ watch(
     () => props.spell.name,
     (name, oldName) => {
         const id = slugify(name);
-        const unitName = props.spell.unit.name;
-        if (unitName === oldName || unitName === undefined || unitName === "") {
+        // Sync only when the unit name was tracking the spell name
+        // exactly. A blank override means "use the spell name at
+        // runtime" - leaving it blank already keeps the two in
+        // lockstep, so don't materialise an explicit override.
+        if (props.spell.unit.name === oldName) {
             props.spell.unit.name = name;
         }
         props.spell.id = id;
