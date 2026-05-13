@@ -171,3 +171,80 @@ export function packAmod(
     out.set(pngBytes, HEADER_SIZE + jsonBytes.length);
     return out;
 }
+
+export interface DecodedAmod {
+    manifest: ModManifest;
+    pngBytes: Uint8Array;
+}
+
+/**
+ * Decode a .amod byte string into its manifest and atlas PNG bytes.
+ * Throws AmodFormatError on any structural or content-level failure.
+ * PNG decode itself is the caller's responsibility - this function
+ * returns the raw bytes from the body.
+ */
+export function decodeAmod(bytes: Uint8Array): DecodedAmod {
+    if (bytes.length < HEADER_SIZE) {
+        throw new AmodFormatError(
+            `Truncated: file is ${bytes.length} bytes, header alone is ${HEADER_SIZE}`,
+        );
+    }
+    for (let i = 0; i < 4; i++) {
+        if (bytes[i] !== MAGIC[i]) {
+            const hex = Array.from(bytes.slice(0, 4))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join(" ");
+            throw new AmodFormatError(
+                `Bad magic: expected ${MAGIC_STR}, got ${hex}`,
+            );
+        }
+    }
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const version = dv.getUint16(4, true);
+    if (version !== AMOD_VERSION) {
+        throw new AmodFormatError(
+            `Unsupported .amod version ${version} (this build understands up to ${AMOD_VERSION})`,
+        );
+    }
+    const flags = dv.getUint16(6, true);
+    if ((flags & FLAG_GZIP_JSON) !== 0) {
+        throw new AmodFormatError(
+            "gzip JSON payload is reserved but not supported in v1",
+        );
+    }
+    if ((flags & RESERVED_FLAGS_MASK) !== 0) {
+        throw new AmodFormatError(
+            `Reserved flag bits set: flags=0x${flags.toString(16).padStart(4, "0")}`,
+        );
+    }
+    const jsonLen = dv.getUint32(8, true);
+    const pngLen = dv.getUint32(12, true);
+    const expectedTotal = HEADER_SIZE + jsonLen + pngLen;
+    if (bytes.length !== expectedTotal) {
+        throw new AmodFormatError(
+            `Truncated: header declares ${expectedTotal} bytes total, file is ${bytes.length}`,
+        );
+    }
+    const jsonEnd = HEADER_SIZE + jsonLen;
+    const rawJson = bytes.slice(HEADER_SIZE, jsonEnd);
+    const jsonText = new TextDecoder().decode(rawJson);
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(jsonText);
+    } catch (err) {
+        throw new AmodFormatError("Invalid JSON payload", err);
+    }
+    if (
+        !parsed
+        || typeof parsed !== "object"
+        || !("manifest" in parsed)
+    ) {
+        throw new AmodFormatError(
+            'JSON payload missing top-level "manifest" key',
+        );
+    }
+    const manifest = (parsed as { manifest: ModManifest }).manifest;
+    validateManifest(manifest);
+    const pngBytes = bytes.slice(jsonEnd, jsonEnd + pngLen);
+    return { manifest, pngBytes };
+}
