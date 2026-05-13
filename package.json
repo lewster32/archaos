@@ -38,6 +38,7 @@
         "oxlint": "^1.56.0",
         "phaser3spectorjs": "^0.0.8",
         "playwright": "^1.58.2",
+        "pngjs": "^7.0.0",
         "sass": "^1.98.0",
         "typescript": "^6.0.3",
         "vite": "^8.0.0",
