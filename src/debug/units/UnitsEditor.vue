@@ -681,11 +681,16 @@ watch(selectedId, (id) => {
 const spellForIcon = computed<EngineSpell | null>(() => {
     const s = selected.value;
     if (!s) return null;
+    // Use _originalId for the icon lookup: spell.id / unit.id are
+    // slugified live from spell.name as the user types, but the
+    // shared atlas-info map and frame filenames are keyed by the
+    // on-disk id. Tying the icon to _originalId keeps the saved
+    // sprite visible through renames.
     return {
         type: SpellType.Summon,
         name: s.name,
-        spellId: s.id,
-        unitId: s.unit.id,
+        spellId: s._originalId,
+        unitId: s._originalId,
         spellFrame: s.spellFrame ?? 0,
         chance: s.chance,
         balance: s.balance,
