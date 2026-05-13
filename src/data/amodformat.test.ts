@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AmodFormatError } from "./amodformat";
 import { validateManifest, type ModManifest } from "./amodformat";
+import { packAmod } from "./amodformat";
 
 const minimalManifest: ModManifest = {
     id: "test-mod",
@@ -59,5 +60,63 @@ describe("validateManifest", () => {
             spells: [{ ...minimalManifest.spells[0], unitId: "ghost" }],
         };
         expect(() => validateManifest(m)).toThrow(/ghost.*units\[\]/);
+    });
+});
+
+function makePng(): Uint8Array {
+    // Minimum-valid PNG: 8-byte signature + IHDR + IDAT + IEND.
+    // For the tests we only care about byte-identity of the payload,
+    // not that PNG decoders accept it. A 16-byte stub is fine.
+    return new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+}
+
+describe("packAmod", () => {
+    it("writes the AMOD magic at offset 0", () => {
+        const bytes = packAmod(minimalManifest, makePng());
+        expect(bytes[0]).toBe(0x41); // A
+        expect(bytes[1]).toBe(0x4d); // M
+        expect(bytes[2]).toBe(0x4f); // O
+        expect(bytes[3]).toBe(0x44); // D
+    });
+
+    it("writes version=1 as little-endian u16 at offset 4", () => {
+        const bytes = packAmod(minimalManifest, makePng());
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        expect(dv.getUint16(4, true)).toBe(1);
+    });
+
+    it("writes flags=0 by default", () => {
+        const bytes = packAmod(minimalManifest, makePng());
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        expect(dv.getUint16(6, true)).toBe(0);
+    });
+
+    it("writes jsonLen and pngLen consistent with the body", () => {
+        const png = makePng();
+        const bytes = packAmod(minimalManifest, png);
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const jsonLen = dv.getUint32(8, true);
+        const pngLen = dv.getUint32(12, true);
+        expect(pngLen).toBe(png.length);
+        expect(bytes.length).toBe(16 + jsonLen + pngLen);
+    });
+
+    it("appends the PNG bytes verbatim after the JSON", () => {
+        const png = makePng();
+        const bytes = packAmod(minimalManifest, png);
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const jsonLen = dv.getUint32(8, true);
+        const tail = bytes.slice(16 + jsonLen);
+        expect(Array.from(tail)).toEqual(Array.from(png));
+    });
+
+    it("throws AmodFormatError when manifest is invalid", () => {
+        expect(() => packAmod({ ...minimalManifest, id: "" }, makePng()))
+            .toThrow(AmodFormatError);
+    });
+
+    it("throws AmodFormatError when gzipJson:true is requested in v1", () => {
+        expect(() => packAmod(minimalManifest, makePng(), { gzipJson: true }))
+            .toThrow(/gzip.*not.*supported/i);
     });
 });

@@ -113,3 +113,61 @@ export function validateManifest(manifest: ModManifest): void {
         }
     }
 }
+
+/** "AMOD" as raw bytes. */
+const MAGIC = new Uint8Array([0x41, 0x4d, 0x4f, 0x44]);
+const MAGIC_STR = "AMOD";
+
+/** Currently supported format version. */
+export const AMOD_VERSION = 1;
+
+/** Fixed-position header size, in bytes. */
+const HEADER_SIZE = 16;
+
+/** Flag bit 0: JSON payload is gzipped. v1 reserves but does not
+ *  implement; v2+ enables. */
+const FLAG_GZIP_JSON = 1 << 0;
+
+/** Mask of reserved flag bits that must be zero in v1. */
+const RESERVED_FLAGS_MASK = ~FLAG_GZIP_JSON & 0xffff;
+
+export interface PackOptions {
+    /** Reserved for future use. v1 throws if true. */
+    gzipJson?: boolean;
+}
+
+/**
+ * Pack a manifest + atlas PNG into a single .amod byte string.
+ *
+ * Header is little-endian:
+ *   magic (4)  | version u16 | flags u16 | jsonLen u32 | pngLen u32
+ *
+ * The JSON payload is the manifest wrapped: `{ "manifest": {...} }`,
+ * UTF-8 encoded, 4-space indented for human inspection.
+ */
+export function packAmod(
+    manifest: ModManifest,
+    pngBytes: Uint8Array,
+    options: PackOptions = {},
+): Uint8Array {
+    validateManifest(manifest);
+    if (options.gzipJson) {
+        throw new AmodFormatError(
+            "gzipJson is reserved but not supported in v1",
+        );
+    }
+    const flags = 0;
+    const jsonString = JSON.stringify({ manifest }, null, 4);
+    const jsonBytes = new TextEncoder().encode(jsonString);
+
+    const out = new Uint8Array(HEADER_SIZE + jsonBytes.length + pngBytes.length);
+    out.set(MAGIC, 0);
+    const dv = new DataView(out.buffer);
+    dv.setUint16(4, AMOD_VERSION, true);
+    dv.setUint16(6, flags, true);
+    dv.setUint32(8, jsonBytes.length, true);
+    dv.setUint32(12, pngBytes.length, true);
+    out.set(jsonBytes, HEADER_SIZE);
+    out.set(pngBytes, HEADER_SIZE + jsonBytes.length);
+    return out;
+}
