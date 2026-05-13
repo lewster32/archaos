@@ -1,3 +1,4 @@
+import { reactive } from "vue";
 import { decodeAmod, type ModManifest, type SerialisedFrame } from "./amodformat";
 
 /** Phaser-compatible atlas JSON reconstructed from a manifest. */
@@ -16,7 +17,7 @@ export interface UnitAtlasInfo {
  * registered. Consumed by Vue components that need to draw individual
  * frames outside the Phaser scene (e.g. the spellbook icon canvas).
  */
-export const enhancedAtlasInfo = new Map<string, UnitAtlasInfo>();
+export const enhancedAtlasInfo = reactive(new Map<string, UnitAtlasInfo>());
 
 /**
  * Merge every unit's textures[].frames[] in a manifest into a single
