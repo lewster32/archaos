@@ -4,6 +4,8 @@
         <AnimFramesEditor
             :model-value="spell.unit.animFrames ?? []"
             :unit="spell.unit"
+            :buffers="buffers"
+            :frame-version="frameVersion"
             @update:model-value="setAnimFrames"
         />
         <div class="animation-editor__row">
@@ -30,10 +32,12 @@
 <script setup lang="ts">
 import AnimFramesEditor from "../widgets/AnimFramesEditor.vue";
 import NumberInput from "../widgets/NumberInput.vue";
-import type { EditableSpell } from "../data/types";
+import type { EditableSpell, FrameBuffers } from "../data/types";
 
 const props = defineProps<{
     spell: EditableSpell;
+    buffers: FrameBuffers;
+    frameVersion: number;
 }>();
 
 function markDirty(): void {

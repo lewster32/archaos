@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, watch } from "vue";
-import type { EditableUnit, Frame } from "../data/types";
+import { frameBufferKey, type EditableUnit, type Frame, type FrameBuffers } from "../data/types";
 
 const FRAME_RE = /^(.+?)_l_(\d+|d)$/;
 const FRAME_SIZE = 18;
@@ -58,6 +58,8 @@ const SCALE = 2;
 const props = defineProps<{
     modelValue: number[];
     unit: EditableUnit;
+    buffers?: FrameBuffers;
+    frameVersion?: number;
 }>();
 
 const emit = defineEmits<{
@@ -101,6 +103,9 @@ function loadImage(url: string): HTMLImageElement {
 }
 
 const canvases = new Map<number, HTMLCanvasElement>();
+const tempCanvas = document.createElement("canvas");
+tempCanvas.width = FRAME_SIZE;
+tempCanvas.height = FRAME_SIZE;
 
 function registerCanvas(slot: number, el: HTMLCanvasElement | null): void {
     if (el) {
@@ -115,8 +120,7 @@ function redraw(): void {
     const texture = props.unit.textures[0];
     if (!texture) return;
     const url = texture.imageUrl ?? "";
-    if (!url) return;
-    const img = loadImage(url);
+    const img = url ? loadImage(url) : null;
     const draw = (): void => {
         for (const [slot, canvas] of canvases) {
             const frameIndex = props.modelValue[slot];
@@ -126,6 +130,25 @@ function redraw(): void {
             ctx.imageSmoothingEnabled = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (!entry) continue;
+            // Prefer live painted pixels from the buffers map when
+            // available so the sequence preview reflects in-progress
+            // edits rather than the frozen source atlas.
+            const buf = props.buffers?.get(`l:anim:${frameIndex}`);
+            if (buf) {
+                const tctx = tempCanvas.getContext("2d");
+                if (!tctx) continue;
+                tctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
+                tctx.putImageData(buf.data, 0, 0);
+                ctx.drawImage(
+                    tempCanvas,
+                    0,
+                    0,
+                    FRAME_SIZE * SCALE,
+                    FRAME_SIZE * SCALE,
+                );
+                continue;
+            }
+            if (!img) continue;
             const f = entry.frame.frame;
             const dx = entry.frame.spriteSourceSize
                 ? entry.frame.spriteSourceSize.x * SCALE
@@ -146,7 +169,7 @@ function redraw(): void {
             );
         }
     };
-    if (img.complete) {
+    if (!img || img.complete) {
         draw();
     } else {
         img.addEventListener("load", draw, { once: true });
@@ -154,7 +177,7 @@ function redraw(): void {
 }
 
 watch(
-    () => [props.modelValue, props.unit.textures.length],
+    () => [props.modelValue, props.unit.textures.length, props.frameVersion],
     () => {
         void nextTick(redraw);
     }

@@ -14,7 +14,11 @@
                 @add-death-frame="$emit('addDeathFrame', $event)"
                 @clear-death-frame="$emit('clearDeathFrame', $event)"
             />
-            <AnimationEditor :spell="spell" />
+            <AnimationEditor
+                :spell="spell"
+                :buffers="buffers"
+                :frame-version="frameVersion"
+            />
         </div>
         <div class="sprite-editor__column">
             <PaintCanvas
