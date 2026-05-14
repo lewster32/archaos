@@ -156,3 +156,42 @@ export function cloneImageData(data: ImageData): ImageData {
     copy.data.set(data.data);
     return copy;
 }
+
+/**
+ * Returns a copy of `data` with a 1-pixel solid-black opaque outline
+ * dilated around every opaque pixel (8-way neighbourhood). Outline
+ * pixels are written only into fully transparent cells; existing
+ * non-transparent pixels are preserved. Mirrors the importer's
+ * outline pass so the editor can re-apply it after touch-ups.
+ */
+export function addBlackOutline(data: ImageData): ImageData {
+    const w = data.width;
+    const h = data.height;
+    const out = cloneImageData(data);
+    const src = data.data;
+    const dst = out.data;
+    const isOpaque = (x: number, y: number): boolean => {
+        if (x < 0 || y < 0 || x >= w || y >= h) return false;
+        return src[(y * w + x) * 4 + 3] !== 0;
+    };
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            if (src[idx + 3] !== 0) continue;
+            let touch = false;
+            for (let dy = -1; dy <= 1 && !touch; dy++) {
+                for (let dx = -1; dx <= 1 && !touch; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    if (isOpaque(x + dx, y + dy)) touch = true;
+                }
+            }
+            if (touch) {
+                dst[idx] = 0;
+                dst[idx + 1] = 0;
+                dst[idx + 2] = 0;
+                dst[idx + 3] = 255;
+            }
+        }
+    }
+    return out;
+}

@@ -103,6 +103,7 @@
                         @colour-change="onColourChange"
                         @mirror="onMirror"
                         @nudge="onNudge"
+                        @outline="onOutline"
                         @undo="onUndo"
                         @redo="onRedo"
                     />
@@ -129,7 +130,11 @@ import {
     removeAnimFrame as removeAnimFrameOp,
 } from "./data/framebuffers";
 import { loadFrameBuffers } from "./data/loadframes";
-import { cloneImageData, shiftImageData } from "./data/paintops";
+import {
+    addBlackOutline,
+    cloneImageData,
+    shiftImageData,
+} from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildManifest, downloadAmod } from "./data/saveunit";
 import { decodeAmod, packAmod, type ModManifest } from "../../data/amodformat";
@@ -581,6 +586,29 @@ function onNudge(payload: { dx: number; dy: number }): void {
     if (!buf) return;
     const snapshot = cloneImageData(buf.data);
     buf.data = shiftImageData(buf.data, payload.dx, payload.dy);
+    buf.undoStack.push(snapshot);
+    if (buf.undoStack.length > 50) buf.undoStack.shift();
+    buf.redoStack.length = 0;
+    if (selected.value) {
+        selected.value._dirty = true;
+        spritesDirty.value = true;
+        refreshColoursForUnit(selected.value._originalId);
+    }
+    frameVersion.value++;
+}
+
+function onOutline(): void {
+    const map = currentBuffers.value;
+    if (!map) return;
+    const k = frameBufferKey(
+        activeFrame.value.direction,
+        activeFrame.value.slot,
+        activeFrame.value.index,
+    );
+    const buf = map.get(k);
+    if (!buf) return;
+    const snapshot = cloneImageData(buf.data);
+    buf.data = addBlackOutline(buf.data);
     buf.undoStack.push(snapshot);
     if (buf.undoStack.length > 50) buf.undoStack.shift();
     buf.redoStack.length = 0;

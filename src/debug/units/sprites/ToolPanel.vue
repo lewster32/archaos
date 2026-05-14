@@ -7,6 +7,14 @@
                 :disabled="locked"
                 @update:model-value="emit('colourChange', $event)"
             />
+            <button
+                type="button"
+                class="tool-panel__transparent"
+                :class="{ 'tool-panel__transparent--active': colour[3] === 0 }"
+                :disabled="locked"
+                title="Transparent - pick then use Fill to clear a region"
+                @click="emit('colourChange', [0, 0, 0, 0])"
+            >Transparent</button>
             <SwatchStrip
                 :buffer-sets="[buffers]"
                 :frame-version="frameVersion"
@@ -42,6 +50,19 @@
                     :disabled="locked"
                     @click="emit('mirror', { from: 'r', to: 'l' })"
                 >R -&gt; L</button>
+            </div>
+        </section>
+
+        <section class="callout tool-panel__group">
+            <h2>Outline</h2>
+            <div class="tool-panel__row">
+                <button
+                    type="button"
+                    class="button button--small"
+                    :disabled="locked"
+                    title="Add a 1-pixel black outline around opaque pixels in the active frame"
+                    @click="emit('outline')"
+                >Add black outline</button>
             </div>
         </section>
 
@@ -84,6 +105,7 @@ defineProps<{
 const emit = defineEmits<{
     (e: "colourChange", rgba: Rgba): void;
     (e: "mirror", payload: { from: Direction; to: Direction }): void;
+    (e: "outline"): void;
     (e: "undo"): void;
     (e: "redo"): void;
 }>();
@@ -142,6 +164,56 @@ const emit = defineEmits<{
         height: 2rem;
         padding: 2px;
         cursor: pointer;
+    }
+
+    &__transparent {
+        all: unset;
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        color: #fff;
+        text-shadow:
+            -1px -1px 0 #000,
+            1px -1px 0 #000,
+            -1px 1px 0 #000,
+            1px 1px 0 #000;
+        border: 2px solid #111;
+        background-color: #2a2a2a;
+        background-image:
+            linear-gradient(
+                45deg,
+                #555 25%,
+                transparent 25%,
+                transparent 75%,
+                #555 75%,
+                #555
+            ),
+            linear-gradient(
+                45deg,
+                #555 25%,
+                transparent 25%,
+                transparent 75%,
+                #555 75%,
+                #555
+            );
+        background-size: 12px 12px;
+        background-position: 0 0, 6px 6px;
+
+        &:hover:not(:disabled) {
+            box-shadow: 0 0 0 1px var(--color-yellow);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        &--active {
+            box-shadow: 0 0 0 2px var(--color-yellow);
+        }
     }
 }
 </style>

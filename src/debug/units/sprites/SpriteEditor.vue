@@ -95,6 +95,7 @@
             :locked="locked"
             @colour-change="$emit('colourChange', $event)"
             @mirror="$emit('mirror', $event)"
+            @outline="$emit('outline')"
             @undo="$emit('undo')"
             @redo="$emit('redo')"
         />
@@ -147,6 +148,7 @@ defineEmits<{
     (e: "colourChange", rgba: Rgba): void;
     (e: "mirror", payload: { from: Direction; to: Direction }): void;
     (e: "nudge", payload: { dx: number; dy: number }): void;
+    (e: "outline"): void;
     (e: "undo"): void;
     (e: "redo"): void;
 }>();
