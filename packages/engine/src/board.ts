@@ -313,8 +313,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._now = deps?.now ?? Date.now;
         this._setTimeout = deps?.setTimeout ?? ((cb, ms) => setTimeout(cb, ms));
         this._clearTimeout =
-            deps?.clearTimeout ??
-            ((handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>));
+            deps?.clearTimeout ?? ((handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>));
         this._phaseTimeoutMs = deps?.phaseTimeoutMs ?? null;
         this._autoRunPhaseLoop = deps?.autoRunPhaseLoop ?? false;
         this._logger = deps?.logger ?? Logger.getInstance();
@@ -575,11 +574,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      *                 When omitted, defaults to `remote != null`.
      * @returns The newly created player.
      */
-    addPlayer(
-        config: PlayerConfig,
-        remote?: RemotePlayer | null,
-        isRemote?: boolean,
-    ): Player<P> {
+    addPlayer(config: PlayerConfig, remote?: RemotePlayer | null, isRemote?: boolean): Player<P> {
         const player = new Player<P>(
             this,
             this._idCounter++,
@@ -942,11 +937,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * a test-only buffer; concrete transport wiring lands in a later
      * spec.
      */
-    private _emitCommandRejected(
-        playerId: PlayerId,
-        commandId: CommandId,
-        reason: RejectionReason,
-    ): void {
+    private _emitCommandRejected(playerId: PlayerId, commandId: CommandId, reason: RejectionReason): void {
         this._rejectedCommandsForTests.push({ playerId, commandId, reason });
     }
 
@@ -1069,11 +1060,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
     }
 
     /** Real recordEvent + pushOutcome wiring for an accepted skip. */
-    private _recordPlayerEndedSpellPick(
-        playerId: PlayerId,
-        commandId: CommandId,
-        timedOut: boolean,
-    ): void {
+    private _recordPlayerEndedSpellPick(playerId: PlayerId, commandId: CommandId, timedOut: boolean): void {
         void this.recordEvent({ commandId, actorId: playerId }, () => {
             const outcome: Outcome = timedOut
                 ? { kind: "player-ended-spell-pick", playerId, timedOut: true }
@@ -1089,10 +1076,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * Returns null when the referenced piece does not exist or the
      * envelope is malformed.
      */
-    private _resolveCastTarget(
-        player: Player<P>,
-        target: SpellTarget,
-    ): Point | P | null {
+    private _resolveCastTarget(player: Player<P>, target: SpellTarget): Point | P | null {
         if ("self" in target && target.self) {
             return player.castingPiece;
         }
@@ -1175,8 +1159,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         const result = await spell.cast(player, player.castingPiece, resolved);
         const succeeded = result !== null && spell.failed === false;
         const castsLeft: number = spell.castTimes;
-        const totalCastTimes: number =
-            (spell as unknown as { totalCastTimes?: number }).totalCastTimes ?? 1;
+        const totalCastTimes: number = (spell as unknown as { totalCastTimes?: number }).totalCastTimes ?? 1;
         const isMultiCast = totalCastTimes > 1;
         const isFinal = !succeeded || castsLeft <= 0;
         const persist = spell.persist === true;
@@ -1328,9 +1311,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
 
         if (pm.isActive(pm.states.spellbook)) {
-            const anySpellsAvailable = this.players.some(
-                (p) => !p.defeated && p.spells.length > 0,
-            );
+            const anySpellsAvailable = this.players.some((p) => !p.defeated && p.spells.length > 0);
             if (!anySpellsAvailable) {
                 pm.evaluate(new SkipSpellbook());
                 pm.evaluate(new MovingReady());
@@ -1339,9 +1320,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
             pm.evaluate(new SpellbookReady());
             await this._runSpellbookPhase();
 
-            const anySpellSelected = this.players.some(
-                (p) => !p.defeated && p.selectedSpell,
-            );
+            const anySpellSelected = this.players.some((p) => !p.defeated && p.selectedSpell);
             if (anySpellSelected) {
                 pm.evaluate(new SpellsDone());
                 pm.evaluate(new CastingReady());
@@ -1365,10 +1344,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * @param currentPlayerId the player whose slot is now open, or
      *                        undefined for simultaneous (barrier) phases
      */
-    private _emitPhaseChanged(
-        phase: BoardPhase,
-        currentPlayerId?: PlayerId,
-    ): void {
+    private _emitPhaseChanged(phase: BoardPhase, currentPlayerId?: PlayerId): void {
         const phaseKind: PhaseKind = toPhaseKind(phase);
         // turnNumber will be wired in a future spec; hardcoded for now.
         const turnNumber: number = 0;
@@ -1407,9 +1383,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * player cancels, or the player is defeated mid-phase.
      */
     private async _runCastingPhase(): Promise<void> {
-        const casters = this.players
-            .filter((p) => !p.defeated && p.selectedSpell != null)
-            .map((p) => p.id);
+        const casters = this.players.filter((p) => !p.defeated && p.selectedSpell != null).map((p) => p.id);
 
         for (const playerId of casters) {
             const player = this.getPlayer(playerId);
@@ -1423,14 +1397,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
 
             // Multi-cast loop: keep opening fresh slots until either
             // the spell is exhausted or the player cancels.
-            while (
-                player.selectedSpell != null &&
-                player.selectedSpell.castTimes > 0
-            ) {
-                const slot = new ExpectedCommand(playerId, [
-                    "cast-spell",
-                    "cancel-cast",
-                ]);
+            while (player.selectedSpell != null && player.selectedSpell.castTimes > 0) {
+                const slot = new ExpectedCommand(playerId, ["cast-spell", "cancel-cast"]);
                 this._expectedCommand = slot;
                 this._emitPhaseChanged(BoardPhase.Casting, playerId);
                 try {
@@ -1463,8 +1431,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
 
         const timeout = this._phaseTimeoutMs;
-        const useBarrier =
-            timeout != null && timeout > 0 && this.players.some((p) => p.isRemote);
+        const useBarrier = timeout != null && timeout > 0 && this.players.some((p) => p.isRemote);
 
         if (useBarrier) {
             const barrier = new SpellbookBarrier(
@@ -1481,11 +1448,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
                 await barrier.untilComplete();
                 for (const r of barrier.results()) {
                     if (r.timedOut) {
-                        this._recordPlayerEndedSpellPick(
-                            r.playerId,
-                            r.command.commandId,
-                            true,
-                        );
+                        this._recordPlayerEndedSpellPick(r.playerId, r.command.commandId, true);
                     }
                 }
             } finally {
@@ -1495,10 +1458,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         }
 
         for (const player of alive) {
-            const slot = new ExpectedCommand(player.id, [
-                "pick-spell",
-                "end-spell-pick",
-            ]);
+            const slot = new ExpectedCommand(player.id, ["pick-spell", "end-spell-pick"]);
             this._expectedCommand = slot;
             this._emitPhaseChanged(BoardPhase.Spellbook, player.id);
             try {
@@ -1519,10 +1479,7 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
      * `_runGameFlow` (which would race the legacy per-player loop).
      */
     async openSpellbookSlot(playerId: PlayerId): Promise<void> {
-        const slot = new ExpectedCommand(playerId, [
-            "pick-spell",
-            "end-spell-pick",
-        ]);
+        const slot = new ExpectedCommand(playerId, ["pick-spell", "end-spell-pick"]);
         this._expectedCommand = slot;
         this._emitPhaseChanged(BoardPhase.Spellbook, playerId);
         try {
@@ -1550,14 +1507,8 @@ export class Board<P extends Piece = Piece> extends Model implements Box {
         this._currentCastingPlayerId = playerId;
 
         try {
-            while (
-                player.selectedSpell != null &&
-                player.selectedSpell.castTimes > 0
-            ) {
-                const slot = new ExpectedCommand(playerId, [
-                    "cast-spell",
-                    "cancel-cast",
-                ]);
+            while (player.selectedSpell != null && player.selectedSpell.castTimes > 0) {
+                const slot = new ExpectedCommand(playerId, ["cast-spell", "cancel-cast"]);
                 this._expectedCommand = slot;
                 this._emitPhaseChanged(BoardPhase.Casting, playerId);
                 try {

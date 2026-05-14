@@ -15,11 +15,7 @@ import type { PlayerId } from "../protocol/primitives";
  *   submitted or was timed out); the engine should reject with
  *   `wrong-phase`.
  */
-export type BarrierResult =
-    | "accepted"
-    | "not-in-barrier"
-    | "already-submitted"
-    | "closed";
+export type BarrierResult = "accepted" | "not-in-barrier" | "already-submitted" | "closed";
 
 /** Final per-player record produced by the barrier on close. */
 export interface BarrierEntry {

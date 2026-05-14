@@ -7,9 +7,7 @@ function makeManifest(): ModManifest {
         id: "testmod",
         name: "Test",
         modVersion: "1.0.0",
-        spells: [
-            { id: "testspell", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "testunit" },
-        ],
+        spells: [{ id: "testspell", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "testunit" }],
         units: [
             {
                 id: "testunit",

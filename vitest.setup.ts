@@ -62,6 +62,5 @@ if (typeof (globalThis as { ImageData?: unknown }).ImageData === "undefined") {
             }
         }
     }
-    (globalThis as unknown as { ImageData: typeof ImageDataPolyfill }).ImageData =
-        ImageDataPolyfill;
+    (globalThis as unknown as { ImageData: typeof ImageDataPolyfill }).ImageData = ImageDataPolyfill;
 }

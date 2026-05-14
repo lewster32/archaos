@@ -48,17 +48,11 @@ function addLocalPlayer(board: Board, name: string): Player {
 }
 
 function openSerialSlotFor(board: Board, playerId: number): void {
-    (board as any)._expectedCommand = new ExpectedCommand(
-        playerId,
-        ["pick-spell", "end-spell-pick"],
-    );
+    (board as any)._expectedCommand = new ExpectedCommand(playerId, ["pick-spell", "end-spell-pick"]);
 }
 
 function openCastSlotFor(board: Board, playerId: number): void {
-    (board as any)._expectedCommand = new ExpectedCommand(
-        playerId,
-        ["cast-spell", "cancel-cast"],
-    );
+    (board as any)._expectedCommand = new ExpectedCommand(playerId, ["cast-spell", "cancel-cast"]);
     (board as any)._currentCastingPlayerId = playerId;
 }
 
@@ -206,16 +200,34 @@ describe("Board.handleCommand: dispatcher + dedup", () => {
 
     it("dispatches end-spell-pick, cast-spell, cancel-cast through the right routes (stub-rejection)", async () => {
         const board = makeBoard();
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "e-1", token: "", kind: "end-spell-pick",
-        }));
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c-1", token: "", kind: "cast-spell",
-            target: { self: true },
-        }));
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "x-1", token: "", kind: "cancel-cast",
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "e-1",
+                token: "",
+                kind: "end-spell-pick",
+            }),
+        );
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c-1",
+                token: "",
+                kind: "cast-spell",
+                target: { self: true },
+            }),
+        );
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "x-1",
+                token: "",
+                kind: "cancel-cast",
+            }),
+        );
 
         const reasons = board._rejectedCommandsForTests.map((r) => r.commandId);
         expect(reasons).toContain("e-1");
@@ -234,10 +246,14 @@ describe("Board.handleCommand: dispatcher + dedup", () => {
 
         // Both boards must have processed the command (no silent skip).
         expect(a._rejectedCommandsForTests).toContainEqual({
-            playerId: 1, commandId: "shared-id", reason: "wrong-phase",
+            playerId: 1,
+            commandId: "shared-id",
+            reason: "wrong-phase",
         });
         expect(b._rejectedCommandsForTests).toContainEqual({
-            playerId: 1, commandId: "shared-id", reason: "wrong-phase",
+            playerId: 1,
+            commandId: "shared-id",
+            reason: "wrong-phase",
         });
     });
 });
@@ -248,7 +264,9 @@ describe("pick-spell handler", () => {
         addLocalPlayer(board, "P1");
         await board.handleCommand(1, roundTrip(pick("c1", 99)));
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: 1, commandId: "c1", reason: "wrong-phase",
+            playerId: 1,
+            commandId: "c1",
+            reason: "wrong-phase",
         });
     });
 
@@ -262,7 +280,9 @@ describe("pick-spell handler", () => {
 
         await board.handleCommand(p2.id, roundTrip(pick("c2", 20)));
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: p2.id, commandId: "c2", reason: "not-your-turn",
+            playerId: p2.id,
+            commandId: "c2",
+            reason: "not-your-turn",
         });
     });
 
@@ -278,7 +298,9 @@ describe("pick-spell handler", () => {
         await board.handleCommand(p1.id, roundTrip(pick("c2", 10)));
 
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: p1.id, commandId: "c2", reason: "spell-pick-already-ended",
+            playerId: p1.id,
+            commandId: "c2",
+            reason: "spell-pick-already-ended",
         });
     });
 
@@ -290,7 +312,9 @@ describe("pick-spell handler", () => {
 
         await board.handleCommand(p1.id, roundTrip(pick("c1", 999_999)));
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: p1.id, commandId: "c1", reason: "spell-not-in-book",
+            playerId: p1.id,
+            commandId: "c1",
+            reason: "spell-not-in-book",
         });
     });
 
@@ -331,9 +355,15 @@ describe("end-spell-pick handler", () => {
         p2.addSpell(makeMockSpell({ id: 20 }));
         openBarrierFor(board, [p1.id, p2.id]);
 
-        await board.handleCommand(p1.id, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
-        }));
+        await board.handleCommand(
+            p1.id,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "end-spell-pick",
+            }),
+        );
 
         expect(p1.selectedSpell).toBeNull();
     });
@@ -341,11 +371,19 @@ describe("end-spell-pick handler", () => {
     it("rejects with wrong-phase when no slot/barrier is open", async () => {
         const board = makeBoard();
         addLocalPlayer(board, "P1");
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "end-spell-pick",
+            }),
+        );
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: 1, commandId: "c1", reason: "wrong-phase",
+            playerId: 1,
+            commandId: "c1",
+            reason: "wrong-phase",
         });
     });
 
@@ -355,11 +393,19 @@ describe("end-spell-pick handler", () => {
         addLocalPlayer(board, "P2");
         openSerialSlotFor(board, p1.id);
 
-        await board.handleCommand(2, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "end-spell-pick",
-        }));
+        await board.handleCommand(
+            2,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "end-spell-pick",
+            }),
+        );
         expect(board._rejectedCommandsForTests).toContainEqual({
-            playerId: 2, commandId: "c1", reason: "not-your-turn",
+            playerId: 2,
+            commandId: "c1",
+            reason: "not-your-turn",
         });
     });
 });
@@ -367,13 +413,17 @@ describe("end-spell-pick handler", () => {
 describe("cast-spell handler", () => {
     it("rejects with wrong-phase when no casting slot is open", async () => {
         const board = makeTestBoard();
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { self: true },
-        }));
-        expect(board._rejectedCommandsForTests).toContainEqual(
-            { playerId: 1, commandId: "c1", reason: "wrong-phase" },
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { self: true },
+            }),
         );
+        expect(board._rejectedCommandsForTests).toContainEqual({ playerId: 1, commandId: "c1", reason: "wrong-phase" });
     });
 
     it("rejects with not-your-turn when the slot is for another player", async () => {
@@ -381,49 +431,75 @@ describe("cast-spell handler", () => {
         addLocalPlayer(board, "P2");
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(2, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { self: true },
-        }));
-        expect(board._rejectedCommandsForTests).toContainEqual(
-            { playerId: 2, commandId: "c1", reason: "not-your-turn" },
+        await board.handleCommand(
+            2,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { self: true },
+            }),
         );
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 2,
+            commandId: "c1",
+            reason: "not-your-turn",
+        });
     });
 
     it("rejects with wrong-phase when player has no selected spell", async () => {
         const board = makeTestBoard();
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { self: true },
-        }));
-        expect(board._rejectedCommandsForTests).toContainEqual(
-            { playerId: 1, commandId: "c1", reason: "wrong-phase" },
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { self: true },
+            }),
         );
+        expect(board._rejectedCommandsForTests).toContainEqual({ playerId: 1, commandId: "c1", reason: "wrong-phase" });
     });
 
     it("rejects with invalid-target when target is out of range", async () => {
         const board = makeTestBoardWithRangedSpell(1, 3);
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { point: { x: 99, y: 99 } },
-        }));
-        expect(board._rejectedCommandsForTests).toContainEqual(
-            { playerId: 1, commandId: "c1", reason: "invalid-target" },
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 99, y: 99 } },
+            }),
         );
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 1,
+            commandId: "c1",
+            reason: "invalid-target",
+        });
     });
 
     it("happy path: emits spell-revealed + spell-cast-attempted via cast pipeline", async () => {
         const board = makeTestBoardWithSummonSpell(1);
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
 
         expect(board._castOutcomesForTests).toEqual(
             expect.arrayContaining([
@@ -439,10 +515,16 @@ describe("cast-spell multi-cast", () => {
         const board = makeTestBoardWithMultiCastSpell(1, 3);
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
 
         // The handler always submits — the casting phase loop is what
         // re-opens a fresh slot for the next cast and re-emits
@@ -450,9 +532,9 @@ describe("cast-spell multi-cast", () => {
         // open here would starve the loop of its trigger and hang
         // multi-cast forever.
         expect((board as any)._expectedCommand?.isOpen).toBe(false);
-        const succeeded = board._castOutcomesForTests.find(
-            (o: any) => o.kind === "spell-cast-succeeded",
-        ) as { castsLeft?: number } | undefined;
+        const succeeded = board._castOutcomesForTests.find((o: any) => o.kind === "spell-cast-succeeded") as
+            | { castsLeft?: number }
+            | undefined;
         expect(succeeded?.castsLeft).toBe(2);
     });
 
@@ -460,10 +542,16 @@ describe("cast-spell multi-cast", () => {
         const board = makeTestBoardWithMultiCastSpell(1, 1);
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
 
         expect((board as any)._expectedCommand?.isOpen).toBe(false);
     });
@@ -476,9 +564,15 @@ describe("cancel-cast handler", () => {
         const player = board.getPlayer(1);
         const spellId = player.selectedSpell.id;
 
-        await board.handleCommand(1, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cancel-cast",
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cancel-cast",
+            }),
+        );
 
         expect(board._castOutcomesForTests).toEqual(
             expect.arrayContaining([
@@ -496,12 +590,20 @@ describe("cancel-cast handler", () => {
         addLocalPlayer(board, "P2");
         openCastSlotFor(board, 1);
 
-        await board.handleCommand(2, roundTrip({
-            type: "command", commandId: "c1", token: "", kind: "cancel-cast",
-        }));
-
-        expect(board._rejectedCommandsForTests).toContainEqual(
-            { playerId: 2, commandId: "c1", reason: "not-your-turn" },
+        await board.handleCommand(
+            2,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cancel-cast",
+            }),
         );
+
+        expect(board._rejectedCommandsForTests).toContainEqual({
+            playerId: 2,
+            commandId: "c1",
+            reason: "not-your-turn",
+        });
     });
 });

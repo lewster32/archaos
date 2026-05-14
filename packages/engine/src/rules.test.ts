@@ -1034,9 +1034,7 @@ describe("Rules.doCastSpell", () => {
         const rules = Rules.getInstance();
         expect(await rules.doCastSpell(board, {} as any)).toBe(false);
     });
-
 });
-
 
 // ── Rules.doAutoCastSpell ─────────────────────────────────────────────────────
 

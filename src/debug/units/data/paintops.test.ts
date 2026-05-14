@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    bresenhamLine,
-    cloneImageData,
-    drawPixel,
-    floodFill,
-    mirrorHorizontal,
-    readPixel,
-} from "./paintops";
+import { bresenhamLine, cloneImageData, drawPixel, floodFill, mirrorHorizontal, readPixel } from "./paintops";
 import type { Rgba } from "./types";
 
 const RED: Rgba = [255, 0, 0, 255];

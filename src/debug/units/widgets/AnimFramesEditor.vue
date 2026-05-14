@@ -1,9 +1,7 @@
 <!-- src/debug/units/widgets/AnimFramesEditor.vue -->
 <template>
     <div class="anim-frames-editor">
-        <p v-if="availableIndices.length === 0" class="anim-frames-editor__empty">
-            (no frames available)
-        </p>
+        <p v-if="availableIndices.length === 0" class="anim-frames-editor__empty">(no frames available)</p>
         <ol v-else class="anim-frames-editor__rows">
             <li v-for="(frameIndex, slot) in modelValue" :key="slot">
                 <canvas
@@ -12,10 +10,7 @@
                     :height="FRAME_SIZE * SCALE"
                     style="image-rendering: pixelated"
                 ></canvas>
-                <select
-                    :value="frameIndex"
-                    @change="onChangeIndex(slot, $event)"
-                >
+                <select :value="frameIndex" @change="onChangeIndex(slot, $event)">
                     <option v-for="i in availableIndices" :key="i" :value="i">
                         {{ i }}
                     </option>
@@ -31,9 +26,7 @@
                 >
                     <i class="icon icon--down"></i>
                 </button>
-                <button class="button button--small button--red" type="button" @click="remove(slot)">
-                    &times;
-                </button>
+                <button class="button button--small button--red" type="button" @click="remove(slot)">&times;</button>
             </li>
         </ol>
         <button
@@ -87,9 +80,7 @@ const indexedFrames = computed<{ index: number; frame: Frame }[]>(() => {
     return out;
 });
 
-const availableIndices = computed(() =>
-    indexedFrames.value.map((f) => f.index)
-);
+const availableIndices = computed(() => indexedFrames.value.map((f) => f.index));
 
 const imageCache = new Map<string, HTMLImageElement>();
 
@@ -139,13 +130,7 @@ function redraw(): void {
                 if (!tctx) continue;
                 tctx.clearRect(0, 0, FRAME_SIZE, FRAME_SIZE);
                 tctx.putImageData(buf.data, 0, 0);
-                ctx.drawImage(
-                    tempCanvas,
-                    0,
-                    0,
-                    FRAME_SIZE * SCALE,
-                    FRAME_SIZE * SCALE,
-                );
+                ctx.drawImage(tempCanvas, 0, 0, FRAME_SIZE * SCALE, FRAME_SIZE * SCALE);
                 continue;
             }
             if (!img) continue;
@@ -156,17 +141,7 @@ function redraw(): void {
             const dy = entry.frame.spriteSourceSize
                 ? entry.frame.spriteSourceSize.y * SCALE
                 : Math.floor((FRAME_SIZE - f.h) / 2) * SCALE;
-            ctx.drawImage(
-                img,
-                f.x,
-                f.y,
-                f.w,
-                f.h,
-                dx,
-                dy,
-                f.w * SCALE,
-                f.h * SCALE
-            );
+            ctx.drawImage(img, f.x, f.y, f.w, f.h, dx, dy, f.w * SCALE, f.h * SCALE);
         }
     };
     if (!img || img.complete) {
@@ -180,7 +155,7 @@ watch(
     () => [props.modelValue, props.unit.textures.length, props.frameVersion],
     () => {
         void nextTick(redraw);
-    }
+    },
 );
 
 onBeforeUnmount(() => {
@@ -221,9 +196,7 @@ function remove(slot: number): void {
 
 function addSlot(): void {
     const defaultIndex =
-        props.modelValue.length > 0
-            ? props.modelValue[props.modelValue.length - 1]
-            : availableIndices.value[0] ?? 0;
+        props.modelValue.length > 0 ? props.modelValue[props.modelValue.length - 1] : (availableIndices.value[0] ?? 0);
     emit("update:modelValue", [...props.modelValue, defaultIndex]);
 }
 </script>

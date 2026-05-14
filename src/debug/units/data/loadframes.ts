@@ -15,9 +15,7 @@ const FRAME_SIZE = 18;
  * (direction, slot, index) triple. Returns `null` when the filename
  * does not match the convention.
  */
-function parseFrameFilename(
-    filename: string,
-): { direction: Direction; slot: FrameSlot; index: number } | null {
+function parseFrameFilename(filename: string): { direction: Direction; slot: FrameSlot; index: number } | null {
     const m = filename.match(/_([lr])_(\d+|d)$/);
     if (!m) return null;
     const direction = m[1] as Direction;
@@ -48,9 +46,7 @@ function resolveTextureUrl(spell: EditableSpell): string {
  * Resolves to a fresh `FrameBuffers` map; rejects if the PNG fails to
  * load or decode.
  */
-export async function loadFrameBuffers(
-    spell: EditableSpell,
-): Promise<FrameBuffers> {
+export async function loadFrameBuffers(spell: EditableSpell): Promise<FrameBuffers> {
     const buffers: FrameBuffers = new Map<string, FrameBuffer>();
     const texture = spell.unit.textures[0];
     if (!texture || texture.frames.length === 0) return buffers;
@@ -100,14 +96,11 @@ export async function loadFrameBuffers(
             frame.frame.h,
         );
         const data = composeCtx.getImageData(0, 0, FRAME_SIZE, FRAME_SIZE);
-        buffers.set(
-            frameBufferKey(parsed.direction, parsed.slot, parsed.index),
-            {
-                data,
-                undoStack: [],
-                redoStack: [],
-            },
-        );
+        buffers.set(frameBufferKey(parsed.direction, parsed.slot, parsed.index), {
+            data,
+            undoStack: [],
+            redoStack: [],
+        });
     }
 
     return buffers;

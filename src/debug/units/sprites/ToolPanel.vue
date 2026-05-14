@@ -2,11 +2,7 @@
     <div class="tool-panel">
         <section class="callout tool-panel__group">
             <h2>Colour</h2>
-            <ColourPicker
-                :model-value="colour"
-                :disabled="locked"
-                @update:model-value="emit('colourChange', $event)"
-            />
+            <ColourPicker :model-value="colour" :disabled="locked" @update:model-value="emit('colourChange', $event)" />
             <button
                 type="button"
                 class="tool-panel__transparent"
@@ -14,7 +10,9 @@
                 :disabled="locked"
                 title="Transparent - pick then use Fill to clear a region"
                 @click="emit('colourChange', [0, 0, 0, 0])"
-            >Transparent</button>
+            >
+                Transparent
+            </button>
             <SwatchStrip
                 :buffer-sets="[buffers]"
                 :frame-version="frameVersion"
@@ -43,13 +41,17 @@
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('mirror', { from: 'l', to: 'r' })"
-                >L -&gt; R</button>
+                >
+                    L -&gt; R
+                </button>
                 <button
                     type="button"
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('mirror', { from: 'r', to: 'l' })"
-                >R -&gt; L</button>
+                >
+                    R -&gt; L
+                </button>
             </div>
         </section>
 
@@ -62,28 +64,23 @@
                     :disabled="locked"
                     title="Add a 1-pixel black outline around opaque pixels in the active frame"
                     @click="emit('outline')"
-                >Add black outline</button>
+                >
+                    Add black outline
+                </button>
             </div>
         </section>
 
         <section class="callout tool-panel__group">
             <h2>History</h2>
             <div class="tool-panel__row">
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked || !canUndo"
-                    @click="emit('undo')"
-                >Undo</button>
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked || !canRedo"
-                    @click="emit('redo')"
-                >Redo</button>
+                <button type="button" class="button button--small" :disabled="locked || !canUndo" @click="emit('undo')">
+                    Undo
+                </button>
+                <button type="button" class="button button--small" :disabled="locked || !canRedo" @click="emit('redo')">
+                    Redo
+                </button>
             </div>
         </section>
-
     </div>
 </template>
 
@@ -183,24 +180,12 @@ const emit = defineEmits<{
         border: 2px solid #111;
         background-color: #2a2a2a;
         background-image:
-            linear-gradient(
-                45deg,
-                #555 25%,
-                transparent 25%,
-                transparent 75%,
-                #555 75%,
-                #555
-            ),
-            linear-gradient(
-                45deg,
-                #555 25%,
-                transparent 25%,
-                transparent 75%,
-                #555 75%,
-                #555
-            );
+            linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%, #555),
+            linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%, #555);
         background-size: 12px 12px;
-        background-position: 0 0, 6px 6px;
+        background-position:
+            0 0,
+            6px 6px;
 
         &:hover:not(:disabled) {
             box-shadow: 0 0 0 1px var(--color-yellow);

@@ -165,18 +165,16 @@ describe("SpellbookBarrier", () => {
 
     it("throws when constructed with an empty roster", () => {
         const sched = makeFakeScheduler();
-        expect(
-            () => new SpellbookBarrier([], 5000, sched.setTimeout, sched.clearTimeout),
-        ).toThrow(/at least one player/i);
+        expect(() => new SpellbookBarrier([], 5000, sched.setTimeout, sched.clearTimeout)).toThrow(
+            /at least one player/i,
+        );
     });
 
     it("throws when timeoutMs is zero or negative", () => {
         const sched = makeFakeScheduler();
-        expect(
-            () => new SpellbookBarrier([1], 0, sched.setTimeout, sched.clearTimeout),
-        ).toThrow(/positive timeoutMs/i);
-        expect(
-            () => new SpellbookBarrier([1], -1, sched.setTimeout, sched.clearTimeout),
-        ).toThrow(/positive timeoutMs/i);
+        expect(() => new SpellbookBarrier([1], 0, sched.setTimeout, sched.clearTimeout)).toThrow(/positive timeoutMs/i);
+        expect(() => new SpellbookBarrier([1], -1, sched.setTimeout, sched.clearTimeout)).toThrow(
+            /positive timeoutMs/i,
+        );
     });
 });

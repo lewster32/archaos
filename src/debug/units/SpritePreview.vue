@@ -1,8 +1,5 @@
 <template>
-    <section
-        v-if="unit && unit.textures && unit.textures.length"
-        class="sprite-preview callout"
-    >
+    <section v-if="unit && unit.textures && unit.textures.length" class="sprite-preview callout">
         <h2>Sprites</h2>
         <div v-for="texture in unit.textures" :key="texture.image">
             <p>Texture: {{ texture.image }} ({{ texture.size.w }}x{{ texture.size.h }})</p>
@@ -12,7 +9,13 @@
                 <div class="sprite-preview__row">
                     <figure v-for="frame in row.frames" :key="frame.filename">
                         <canvas
-                            :ref="(el) => registerCanvas(canvasKey(texture.image, frame.filename), el as HTMLCanvasElement | null)"
+                            :ref="
+                                (el) =>
+                                    registerCanvas(
+                                        canvasKey(texture.image, frame.filename),
+                                        el as HTMLCanvasElement | null,
+                                    )
+                            "
                             :width="FRAME_SIZE * SCALE"
                             :height="FRAME_SIZE * SCALE"
                             style="image-rendering: pixelated"
@@ -25,12 +28,15 @@
             <div v-if="hasAnimation(unit)">
                 <p>Animated:</p>
                 <div class="sprite-preview__row">
-                    <figure
-                        v-for="dir in animDirectionsFor(texture, unit)"
-                        :key="dir.dir"
-                    >
+                    <figure v-for="dir in animDirectionsFor(texture, unit)" :key="dir.dir">
                         <canvas
-                            :ref="(el) => registerAnimCanvas(canvasKey(texture.image, `anim_${dir.dir}`), el as HTMLCanvasElement | null)"
+                            :ref="
+                                (el) =>
+                                    registerAnimCanvas(
+                                        canvasKey(texture.image, `anim_${dir.dir}`),
+                                        el as HTMLCanvasElement | null,
+                                    )
+                            "
                             :width="FRAME_SIZE * SCALE"
                             :height="FRAME_SIZE * SCALE"
                             style="image-rendering: pixelated"
@@ -63,9 +69,7 @@ interface AnimDirection {
 
 const props = defineProps<{
     unit: EditableUnit | null;
-    frameSource?: (
-        filename: string,
-    ) => HTMLCanvasElement | ImageData | null;
+    frameSource?: (filename: string) => HTMLCanvasElement | ImageData | null;
 }>();
 
 const tempCanvas = document.createElement("canvas");
@@ -101,17 +105,14 @@ function groupedFramesFor(texture: Texture): FrameRow[] {
 
 function hasAnimation(unit: EditableUnit): boolean {
     return (
-        Array.isArray(unit.animFrames)
-        && unit.animFrames.length > 0
-        && typeof unit.animSpeed === "number"
-        && unit.animSpeed > 0
+        Array.isArray(unit.animFrames) &&
+        unit.animFrames.length > 0 &&
+        typeof unit.animSpeed === "number" &&
+        unit.animSpeed > 0
     );
 }
 
-function animDirectionsFor(
-    texture: Texture,
-    unit: EditableUnit
-): AnimDirection[] {
+function animDirectionsFor(texture: Texture, unit: EditableUnit): AnimDirection[] {
     if (!hasAnimation(unit)) return [];
     const dirs: AnimDirection[] = [];
     for (const dir of ["left", "right"] as const) {
@@ -167,39 +168,21 @@ function registerAnimCanvas(key: string, el: HTMLCanvasElement | null): void {
     }
 }
 
-function drawFrame(
-    canvas: HTMLCanvasElement,
-    img: HTMLImageElement,
-    frame: Frame
-): void {
+function drawFrame(canvas: HTMLCanvasElement, img: HTMLImageElement, frame: Frame): void {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
 
-    const override = props.frameSource
-        ? props.frameSource(frame.filename)
-        : null;
+    const override = props.frameSource ? props.frameSource(frame.filename) : null;
     if (override) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (override instanceof ImageData) {
             const tctx = tempCanvas.getContext("2d");
             if (!tctx) return;
             tctx.putImageData(override, 0, 0);
-            ctx.drawImage(
-                tempCanvas,
-                0,
-                0,
-                FRAME_SIZE * SCALE,
-                FRAME_SIZE * SCALE,
-            );
+            ctx.drawImage(tempCanvas, 0, 0, FRAME_SIZE * SCALE, FRAME_SIZE * SCALE);
         } else {
-            ctx.drawImage(
-                override,
-                0,
-                0,
-                FRAME_SIZE * SCALE,
-                FRAME_SIZE * SCALE,
-            );
+            ctx.drawImage(override, 0, 0, FRAME_SIZE * SCALE, FRAME_SIZE * SCALE);
         }
         return;
     }
@@ -256,9 +239,7 @@ function drawAnimFrame(): void {
         const img = loadImage(imageUrl(texture));
         for (const dir of animDirectionsFor(texture, unit)) {
             const frame = dir.frames[frameIndex % dir.frames.length];
-            const canvas = animCanvases.get(
-                canvasKey(texture.image, `anim_${dir.dir}`)
-            );
+            const canvas = animCanvases.get(canvasKey(texture.image, `anim_${dir.dir}`));
             if (canvas) drawFrame(canvas, img, frame);
         }
     }
@@ -280,19 +261,14 @@ function startAnim(): void {
 }
 
 watch(
-    () => [
-        props.unit?.id,
-        props.unit?.animFrames,
-        props.unit?.animSpeed,
-        props.frameSource,
-    ],
+    () => [props.unit?.id, props.unit?.animFrames, props.unit?.animSpeed, props.frameSource],
     () => {
         void nextTick(() => {
             drawAllStatic();
             startAnim();
         });
     },
-    { immediate: true, deep: true }
+    { immediate: true, deep: true },
 );
 
 onBeforeUnmount(stopAnim);

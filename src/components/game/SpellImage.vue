@@ -286,7 +286,6 @@ const determineMainSpellColour: (spell: Spell) => string = (spell: Spell) => {
     return "unknown";
 };
 
-
 /**
  * Gets the image URL for a spell. Used when no atlas frame is available
  * (attack spells, buff spells, and any summon spell without a registered unit).

@@ -26,11 +26,7 @@ function main() {
     mkdirSync(outDir, { recursive: true });
     const jsonPath = resolve(outDir, `${manifest.id}.manifest.json`);
     const pngPath = resolve(outDir, `${manifest.id}.png`);
-    writeFileSync(
-        jsonPath,
-        JSON.stringify({ manifest }, null, 4) + "\n",
-        "utf8",
-    );
+    writeFileSync(jsonPath, JSON.stringify({ manifest }, null, 4) + "\n", "utf8");
     writeFileSync(pngPath, pngBytes);
     console.log(`Wrote ${jsonPath}`);
     console.log(`Wrote ${pngPath}`);

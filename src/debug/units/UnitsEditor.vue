@@ -18,7 +18,10 @@
                                 :aria-selected="spell._originalId === selectedId"
                                 @click="selectedId = spell._originalId"
                             >
-                                {{ spell.name }}<span v-if="spell._dirty || (spell._originalId === selectedId && spritesDirty)"> *</span>
+                                {{ spell.name
+                                }}<span v-if="spell._dirty || (spell._originalId === selectedId && spritesDirty)">
+                                    *</span
+                                >
                             </button>
                         </li>
                     </ul>
@@ -32,8 +35,12 @@
                 <header class="units-editor__header">
                     <h1>{{ selected.name || "(unnamed)" }}</h1>
                     <div class="units-editor__actions">
-                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">Save .amod</button>
-                        <button class="button button--red" type="button" :disabled="!anyDirty" @click="onReset">Reset</button>
+                        <button class="button button--green" type="button" :disabled="!canSave" @click="onSave">
+                            Save .amod
+                        </button>
+                        <button class="button button--red" type="button" :disabled="!anyDirty" @click="onReset">
+                            Reset
+                        </button>
                     </div>
                     <p v-if="lastSavedAt" class="units-editor__toast">
                         Saved {{ selected.id }}.amod at {{ lastSavedAt }}. Drop the file into assets/amods/ to apply.
@@ -41,16 +48,12 @@
                 </header>
 
                 <nav class="units-editor__tabs">
-                    <button
-                        type="button"
-                        :class="{ active: activeTab === 'stats' }"
-                        @click="activeTab = 'stats'"
-                    >Stats</button>
-                    <button
-                        type="button"
-                        :class="{ active: activeTab === 'sprites' }"
-                        @click="activeTab = 'sprites'"
-                    >Sprites</button>
+                    <button type="button" :class="{ active: activeTab === 'stats' }" @click="activeTab = 'stats'">
+                        Stats
+                    </button>
+                    <button type="button" :class="{ active: activeTab === 'sprites' }" @click="activeTab = 'sprites'">
+                        Sprites
+                    </button>
                 </nav>
 
                 <div v-if="activeTab === 'stats'" class="units-editor__split">
@@ -130,11 +133,7 @@ import {
     removeAnimFrame as removeAnimFrameOp,
 } from "./data/framebuffers";
 import { loadFrameBuffers } from "./data/loadframes";
-import {
-    addBlackOutline,
-    cloneImageData,
-    shiftImageData,
-} from "./data/paintops";
+import { addBlackOutline, cloneImageData, shiftImageData } from "./data/paintops";
 import { scanColoursFromBuffers, setsEqual, unpackRgb } from "./data/coloursets";
 import { buildManifest, downloadAmod } from "./data/saveunit";
 import { decodeAmod, packAmod, type ModManifest } from "../../data/amodformat";
@@ -368,8 +367,7 @@ async function ensureBuffersLoaded(): Promise<void> {
         refreshColoursForUnit(id);
         frameVersion.value++;
     } catch (err) {
-        bufferLoadError.value =
-            err instanceof Error ? err.message : String(err);
+        bufferLoadError.value = err instanceof Error ? err.message : String(err);
     } finally {
         bufferLoading.value = false;
     }
@@ -417,10 +415,7 @@ const frameSource = computed(() => {
         if (!m) return null;
         const dir = m[1] as "l" | "r";
         const idx = m[2];
-        const key =
-            idx === "d"
-                ? frameBufferKey(dir, "death", 0)
-                : frameBufferKey(dir, "anim", parseInt(idx, 10));
+        const key = idx === "d" ? frameBufferKey(dir, "death", 0) : frameBufferKey(dir, "anim", parseInt(idx, 10));
         return map.get(key)?.data ?? null;
     };
 });
@@ -435,21 +430,13 @@ const previousDrawingTool = ref<"pencil" | "fill" | "eraser">("pencil");
 const canUndo = computed(() => {
     void frameVersion.value;
     if (!currentBuffers.value) return false;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     return (currentBuffers.value.get(k)?.undoStack.length ?? 0) > 0;
 });
 const canRedo = computed(() => {
     void frameVersion.value;
     if (!currentBuffers.value) return false;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     return (currentBuffers.value.get(k)?.redoStack.length ?? 0) > 0;
 });
 
@@ -466,11 +453,7 @@ function onAppendAnimFrame(): void {
 function onDuplicateAnimFrame(sourceIndex: number): void {
     const s = selected.value;
     if (!s || !currentBuffers.value) return;
-    const newIndex = duplicateAnimFrameOp(
-        currentBuffers.value,
-        s.unit,
-        sourceIndex,
-    );
+    const newIndex = duplicateAnimFrameOp(currentBuffers.value, s.unit, sourceIndex);
     if (newIndex < 0) return;
     s._dirty = true;
     spritesDirty.value = true;
@@ -538,11 +521,7 @@ function onStrokeCommitted(snapshot: ImageData): void {
     isPainting.value = false;
     const map = currentBuffers.value;
     if (!map) return;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     const buf = map.get(k);
     if (!buf) return;
     buf.undoStack.push(snapshot);
@@ -556,9 +535,7 @@ function onStrokeCommitted(snapshot: ImageData): void {
     frameVersion.value++;
 }
 
-function onToolChange(
-    t: "pencil" | "fill" | "eraser" | "eyedropper",
-): void {
+function onToolChange(t: "pencil" | "fill" | "eraser" | "eyedropper"): void {
     if (t !== "eyedropper") previousDrawingTool.value = t;
     tool.value = t;
 }
@@ -577,11 +554,7 @@ function onColourChange(rgba: Rgba): void {
 function onNudge(payload: { dx: number; dy: number }): void {
     const map = currentBuffers.value;
     if (!map) return;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     const buf = map.get(k);
     if (!buf) return;
     const snapshot = cloneImageData(buf.data);
@@ -600,11 +573,7 @@ function onNudge(payload: { dx: number; dy: number }): void {
 function onOutline(): void {
     const map = currentBuffers.value;
     if (!map) return;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     const buf = map.get(k);
     if (!buf) return;
     const snapshot = cloneImageData(buf.data);
@@ -623,12 +592,7 @@ function onOutline(): void {
 function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
     const s = selected.value;
     if (!s || !currentBuffers.value) return;
-    mirrorDirection(
-        currentBuffers.value,
-        s.unit,
-        payload.from,
-        payload.to,
-    );
+    mirrorDirection(currentBuffers.value, s.unit, payload.from, payload.to);
     s._dirty = true;
     spritesDirty.value = true;
     refreshColoursForUnit(s._originalId);
@@ -638,11 +602,7 @@ function onMirror(payload: { from: "l" | "r"; to: "l" | "r" }): void {
 function onUndo(): void {
     const map = currentBuffers.value;
     if (!map) return;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     const buf = map.get(k);
     if (!buf || buf.undoStack.length === 0) return;
     const prev = buf.undoStack.pop();
@@ -656,11 +616,7 @@ function onUndo(): void {
 function onRedo(): void {
     const map = currentBuffers.value;
     if (!map) return;
-    const k = frameBufferKey(
-        activeFrame.value.direction,
-        activeFrame.value.slot,
-        activeFrame.value.index,
-    );
+    const k = frameBufferKey(activeFrame.value.direction, activeFrame.value.slot, activeFrame.value.index);
     const buf = map.get(k);
     if (!buf || buf.redoStack.length === 0) return;
     const next = buf.redoStack.pop();
@@ -691,8 +647,7 @@ function onKeyDown(e: KeyboardEvent): void {
     // page - the sprite-editor shortcuts are global keydowns.
     const target = e.target as HTMLElement | null;
     const tag = target?.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable)
-        return;
+    if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
     if (e.code === "KeyI" && !e.shiftKey) {
         e.preventDefault();
         onToolChange("eyedropper");

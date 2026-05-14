@@ -2,14 +2,7 @@
 <template>
     <label class="number-input">
         <span v-if="label" class="number-input__label">{{ label }}</span>
-        <input
-            type="number"
-            :min="min"
-            :max="max"
-            :step="step"
-            :value="modelValue ?? ''"
-            @input="onInput($event)"
-        />
+        <input type="number" :min="min" :max="max" :step="step" :value="modelValue ?? ''" @input="onInput($event)" />
     </label>
 </template>
 
@@ -22,7 +15,7 @@ const props = withDefaults(
         max?: number;
         step?: number;
     }>(),
-    { step: 1 }
+    { step: 1 },
 );
 
 const emit = defineEmits<{

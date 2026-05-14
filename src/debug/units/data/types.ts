@@ -131,12 +131,6 @@ export type Rgba = readonly [r: number, g: number, b: number, a: number];
 /**
  * Builds the canonical key string used in `FrameBuffers` map lookups.
  */
-export function frameBufferKey(
-    direction: Direction,
-    slot: FrameSlot,
-    index: number
-): string {
-    return slot === "death"
-        ? `${direction}:death:0`
-        : `${direction}:anim:${index}`;
+export function frameBufferKey(direction: Direction, slot: FrameSlot, index: number): string {
+    return slot === "death" ? `${direction}:death:0` : `${direction}:anim:${index}`;
 }

@@ -40,11 +40,7 @@ defineEmits<{ (e: "pick", rgba: Rgba): void }>();
 const DEFAULT_MAX_SWATCHES = 32;
 const GRAYSCALE_SATURATION_THRESHOLD = 0.08;
 
-function rgbToHsl(
-    r: number,
-    g: number,
-    b: number,
-): { h: number; s: number; l: number } {
+function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
     const rN = r / 255;
     const gN = g / 255;
     const bN = b / 255;
@@ -90,8 +86,7 @@ const swatches = computed<Rgba[]>(() => {
                 const arr = buf.data.data;
                 for (let i = 0; i < arr.length; i += 4) {
                     if (arr[i + 3] === 0) continue;
-                    const key =
-                        (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
+                    const key = (arr[i] << 16) | (arr[i + 1] << 8) | arr[i + 2];
                     if (seen.has(key)) continue;
                     seen.add(key);
                     out.push([arr[i], arr[i + 1], arr[i + 2], 255] as Rgba);

@@ -7,11 +7,7 @@ import { Logger } from "../logger";
 import { TestRNG } from "../rng";
 import { Rules } from "../rules";
 import { roundTrip } from "../protocol/wiresafety.testhelpers";
-import type {
-    CancelCastCommand,
-    CastSpellCommand,
-    PickSpellCommand,
-} from "../protocol/commands";
+import type { CancelCastCommand, CastSpellCommand, PickSpellCommand } from "../protocol/commands";
 import type { Spell } from "../spells/spell";
 
 /**
@@ -72,10 +68,12 @@ function makeMockSpell(overrides: Record<string, any> = {}): Spell {
         getValidTarget: vi.fn().mockImplementation((t: unknown) => t),
         ...overrides,
     };
-    spell.cast = overrides.cast ?? vi.fn().mockImplementation(async () => {
-        spell.castTimes -= 1;
-        return true;
-    });
+    spell.cast =
+        overrides.cast ??
+        vi.fn().mockImplementation(async () => {
+            spell.castTimes -= 1;
+            return true;
+        });
     return spell as Spell;
 }
 
@@ -111,21 +109,13 @@ function makeBoardForIntegration(opts: IntegrationBoardOpts): Board {
         clearTimeout: opts.clearTimeout,
     });
     for (const p of opts.players) {
-        const player = board.addPlayer(
-            { name: `P${p.id}`, type: GameSetupPlayerType.Local },
-            null,
-            p.isRemote,
-        );
+        const player = board.addPlayer({ name: `P${p.id}`, type: GameSetupPlayerType.Local }, null, p.isRemote);
         if (p.hasAi) {
             // The constructor subscribes the AI to phase-changed; that
             // is the integration surface under test. Held in a marker
             // field so the construction is not a free-standing
             // statement (oxlint no-new).
-            (player as any)._aiForTest = new ComputerWizard(
-                board,
-                player as any,
-                0.5,
-            );
+            (player as any)._aiForTest = new ComputerWizard(board, player as any, 0.5);
         } else {
             player.addSpell(makeMockSpell({ id: 1000 + p.id }));
         }
@@ -133,11 +123,7 @@ function makeBoardForIntegration(opts: IntegrationBoardOpts): Board {
     return board;
 }
 
-function pickFor(
-    board: Board,
-    playerId: number,
-    commandId: string,
-): PickSpellCommand {
+function pickFor(board: Board, playerId: number, commandId: string): PickSpellCommand {
     const player = board.getPlayer(playerId);
     return {
         type: "command",
@@ -148,11 +134,7 @@ function pickFor(
     };
 }
 
-function castFor(
-    playerId: number,
-    commandId: string,
-    point: { x: number; y: number },
-): CastSpellCommand {
+function castFor(playerId: number, commandId: string, point: { x: number; y: number }): CastSpellCommand {
     return {
         type: "command",
         commandId,
@@ -203,17 +185,11 @@ describe("Command pipeline integration", () => {
             await flushUntilPhase(board, BoardPhase.Casting);
             expect((board as any)._currentCastingPlayerId).toBe(1);
 
-            await board.handleCommand(
-                1,
-                roundTrip(castFor(1, "h1c", { x: 5, y: 5 })),
-            );
+            await board.handleCommand(1, roundTrip(castFor(1, "h1c", { x: 5, y: 5 })));
             // Slot advances past AI #2 (no selected spell) to player 3.
             expect((board as any)._currentCastingPlayerId).toBe(3);
 
-            await board.handleCommand(
-                3,
-                roundTrip(castFor(3, "h3c", { x: 6, y: 6 })),
-            );
+            await board.handleCommand(3, roundTrip(castFor(3, "h3c", { x: 6, y: 6 })));
 
             await board.phaseFlow;
 
@@ -224,21 +200,13 @@ describe("Command pipeline integration", () => {
             // outcome on the broadcast event log.
             const events = board.eventLog.range(1);
             const allOutcomes = events.flatMap((e) => e.outcomes);
-            const attempts = allOutcomes.filter(
-                (o) => o.kind === "spell-cast-attempted",
-            );
-            expect(
-                attempts
-                    .map((o) => (o as { playerId: number }).playerId)
-                    .toSorted((a, b) => a - b),
-            ).toEqual([1, 3]);
+            const attempts = allOutcomes.filter((o) => o.kind === "spell-cast-attempted");
+            expect(attempts.map((o) => (o as { playerId: number }).playerId).toSorted((a, b) => a - b)).toEqual([1, 3]);
 
             // Both AIs registered an end-spell-pick via the command
             // pipeline (no rejection paths, no manual prodding).
             const ended = board._endedSpellPickOutcomesForTests;
-            expect(
-                ended.map((e) => e.playerId).toSorted((a, b) => a - b),
-            ).toEqual([2, 4]);
+            expect(ended.map((e) => e.playerId).toSorted((a, b) => a - b)).toEqual([2, 4]);
 
             // Every command in this scenario was accepted on the
             // happy path.
@@ -247,9 +215,7 @@ describe("Command pipeline integration", () => {
             // Event log is JSON-safe (round-trip serialisable).
             const json = JSON.stringify(board.eventLog.toJSON());
             expect(() => JSON.parse(json)).not.toThrow();
-            expect(JSON.parse(json).events.length).toBeGreaterThanOrEqual(
-                events.length,
-            );
+            expect(JSON.parse(json).events.length).toBeGreaterThanOrEqual(events.length);
         } finally {
             errSpy.mockRestore();
         }
@@ -273,10 +239,7 @@ describe("Command pipeline integration", () => {
             await board.handleCommand(1, roundTrip(pickFor(board, 1, "h1")));
 
             await flushUntilPhase(board, BoardPhase.Casting);
-            await board.handleCommand(
-                1,
-                roundTrip(castFor(1, "h1c", { x: 5, y: 5 })),
-            );
+            await board.handleCommand(1, roundTrip(castFor(1, "h1c", { x: 5, y: 5 })));
 
             await board.phaseFlow;
 
@@ -315,14 +278,8 @@ describe("Command pipeline integration", () => {
                             mirror.endedPlayers.add(outcome.playerId);
                             break;
                         case "spell-cast-attempted": {
-                            const prev =
-                                mirror.castAttemptsByPlayer.get(
-                                    outcome.playerId,
-                                ) ?? 0;
-                            mirror.castAttemptsByPlayer.set(
-                                outcome.playerId,
-                                prev + 1,
-                            );
+                            const prev = mirror.castAttemptsByPlayer.get(outcome.playerId) ?? 0;
+                            mirror.castAttemptsByPlayer.set(outcome.playerId, prev + 1);
                             break;
                         }
                     }

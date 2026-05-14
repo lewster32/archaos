@@ -26,9 +26,7 @@ function main() {
     const finalOut = outPath ?? `${manifest.id}.amod`;
     writeFileSync(finalOut, bytes);
     const jsonLen = bytes.length - 16 - png.length;
-    console.log(
-        `Wrote ${finalOut} (${bytes.length} bytes; jsonLen=${jsonLen}, pngLen=${png.length})`,
-    );
+    console.log(`Wrote ${finalOut} (${bytes.length} bytes; jsonLen=${jsonLen}, pngLen=${png.length})`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -20,10 +20,7 @@ const castCmd = (commandId: string): CastSpellCommand => ({
 
 describe("ExpectedCommand", () => {
     it("accepts a matching command from the expected player", async () => {
-        const slot = new ExpectedCommand<PickSpellCommand | EndSpellPickCommand>(
-            1,
-            ["pick-spell", "end-spell-pick"],
-        );
+        const slot = new ExpectedCommand<PickSpellCommand | EndSpellPickCommand>(1, ["pick-spell", "end-spell-pick"]);
         const promise = slot.untilAccepted();
 
         const result = slot.submit(1, pickCmd("c1", 5));

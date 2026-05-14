@@ -29,10 +29,7 @@
                 @pointerup="onHueUp"
                 @pointercancel="onHueUp"
             >
-                <div
-                    class="colour-picker__hue-marker"
-                    :style="{ top: (internalH / 360) * 100 + '%' }"
-                ></div>
+                <div class="colour-picker__hue-marker" :style="{ top: (internalH / 360) * 100 + '%' }"></div>
             </div>
             <div class="colour-picker__rgb">
                 <label class="colour-picker__field">
@@ -71,7 +68,7 @@
             </div>
         </div>
         <label class="colour-picker__field colour-picker__hex">
-            <span class="c-yellow" style="font-size:2rem">#</span>
+            <span class="c-yellow" style="font-size: 2rem">#</span>
             <input
                 type="text"
                 maxlength="6"
@@ -121,11 +118,7 @@ let lastEmitted: Rgba | null = null;
 const hueBg = computed(() => `hsl(${internalH.value}, 100%, 50%)`);
 
 const rgbHex = computed(() => {
-    return rgbToCssHex(
-        props.modelValue[0],
-        props.modelValue[1],
-        props.modelValue[2],
-    );
+    return rgbToCssHex(props.modelValue[0], props.modelValue[1], props.modelValue[2]);
 });
 
 function rgbToCssHex(r: number, g: number, b: number): string {
@@ -137,11 +130,7 @@ function clamp255(n: number): number {
     return Math.max(0, Math.min(255, Math.round(n)));
 }
 
-function rgbToHsv(
-    r: number,
-    g: number,
-    b: number,
-): { h: number; s: number; v: number } {
+function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
     const rN = r / 255;
     const gN = g / 255;
     const bN = b / 255;
@@ -161,11 +150,7 @@ function rgbToHsv(
     return { h, s, v };
 }
 
-function hsvToRgb(
-    h: number,
-    s: number,
-    v: number,
-): { r: number; g: number; b: number } {
+function hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
     const c = v * s;
     const hh = (((h % 360) + 360) % 360) / 60;
     const x = c * (1 - Math.abs((hh % 2) - 1));
@@ -334,10 +319,7 @@ function onRgbInput(channel: 0 | 1 | 2, e: Event): void {
 function onHexInput(e: Event): void {
     // Keep the draft in sync with user typing without committing.
     // Strip leading # if pasted, lowercase for stability.
-    hexDraft.value = (e.target as HTMLInputElement).value
-        .replace(/^#/, "")
-        .toLowerCase()
-        .slice(0, 6);
+    hexDraft.value = (e.target as HTMLInputElement).value.replace(/^#/, "").toLowerCase().slice(0, 6);
 }
 
 function onHexBlur(): void {
@@ -348,11 +330,7 @@ function onHexCommit(): void {
     const m = /^([0-9a-f]{6})$/i.exec(hexDraft.value);
     if (!m) {
         // Revert to the current model value's hex.
-        hexDraft.value = rgbToCssHex(
-            props.modelValue[0],
-            props.modelValue[1],
-            props.modelValue[2],
-        ).slice(1);
+        hexDraft.value = rgbToCssHex(props.modelValue[0], props.modelValue[1], props.modelValue[2]).slice(1);
         return;
     }
     const hex = m[1];
@@ -382,8 +360,7 @@ function onHexCommit(): void {
         aspect-ratio: 4 / 3;
         cursor: crosshair;
         background:
-            linear-gradient(to top, #000, transparent),
-            linear-gradient(to right, #fff, transparent),
+            linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent),
             var(--hue-bg, #f00);
         border: 2px solid #111;
         touch-action: none;

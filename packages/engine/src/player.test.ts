@@ -159,20 +159,13 @@ describe("Player constructor", () => {
         const remote = {
             moveAllUnits: vi.fn(),
         } as any;
-        const player = board.addPlayer(
-            { name: "AI", type: GameSetupPlayerType.Computer },
-            remote,
-        );
+        const player = board.addPlayer({ name: "AI", type: GameSetupPlayerType.Computer }, remote);
         expect(player.isRemote).toBe(true);
     });
 
     it("isRemote can be explicitly overridden to true with no remote", () => {
         const board = makeBoard();
-        const player = board.addPlayer(
-            { name: "Net", type: GameSetupPlayerType.Local },
-            null,
-            true,
-        );
+        const player = board.addPlayer({ name: "Net", type: GameSetupPlayerType.Local }, null, true);
         expect(player.isRemote).toBe(true);
         expect(player.remote).toBeNull();
     });
@@ -182,11 +175,7 @@ describe("Player constructor", () => {
         const remote = {
             moveAllUnits: vi.fn(),
         } as any;
-        const player = board.addPlayer(
-            { name: "AI", type: GameSetupPlayerType.Computer },
-            remote,
-            false,
-        );
+        const player = board.addPlayer({ name: "AI", type: GameSetupPlayerType.Computer }, remote, false);
         expect(player.isRemote).toBe(false);
     });
 

@@ -33,11 +33,7 @@ describe("wire-safety: protocol kind exhaustiveness", () => {
         "reconnect",
     ] as const;
 
-    const PRIVATE_EVENT_KINDS = [
-        "spellbook-delivered",
-        "spell-gained",
-        "command-rejected",
-    ] as const;
+    const PRIVATE_EVENT_KINDS = ["spellbook-delivered", "spell-gained", "command-rejected"] as const;
 
     test("CommandMessage kind list compiles against the union", () => {
         // If a new kind is added to CommandMessage, this assignment

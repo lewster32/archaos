@@ -1,11 +1,5 @@
 import { cloneImageData, mirrorHorizontal } from "./paintops";
-import {
-    frameBufferKey,
-    type Direction,
-    type EditableUnit,
-    type FrameBuffer,
-    type FrameBuffers,
-} from "./types";
+import { frameBufferKey, type Direction, type EditableUnit, type FrameBuffer, type FrameBuffers } from "./types";
 
 const FRAME_SIZE = 18;
 const UNDO_LIMIT = 50;
@@ -18,11 +12,7 @@ function makeEmptyBuffer(): FrameBuffer {
     };
 }
 
-function makePlaceholderFrameMeta(
-    unitId: string,
-    direction: Direction,
-    idxOrDeath: number | "d",
-) {
+function makePlaceholderFrameMeta(unitId: string, direction: Direction, idxOrDeath: number | "d") {
     const tail = idxOrDeath === "d" ? "d" : String(idxOrDeath);
     return {
         filename: `${unitId}_${direction}_${tail}`,
@@ -42,22 +32,15 @@ function makePlaceholderFrameMeta(
  * pixel reads through the buffer map, and Phase 2B's save flow
  * recomputes `frame.x/y` during atlas packing.
  */
-export function appendAnimFrame(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-): number {
+export function appendAnimFrame(buffers: FrameBuffers, unit: EditableUnit): number {
     const animFrames = unit.animFrames ?? [];
     const existingIndices: number[] = [];
     for (const key of buffers.keys()) {
         const m = key.match(/^[lr]:anim:(\d+)$/);
         if (m) existingIndices.push(parseInt(m[1], 10));
     }
-    const fromBuffers = existingIndices.length
-        ? Math.max(...existingIndices) + 1
-        : 0;
-    const fromAnim = animFrames.length
-        ? Math.max(...animFrames, animFrames.length - 1) + 1
-        : 0;
+    const fromBuffers = existingIndices.length ? Math.max(...existingIndices) + 1 : 0;
+    const fromAnim = animFrames.length ? Math.max(...animFrames, animFrames.length - 1) + 1 : 0;
     const nextIndex = Math.max(fromBuffers, fromAnim);
 
     buffers.set(frameBufferKey("l", "anim", nextIndex), makeEmptyBuffer());
@@ -80,11 +63,7 @@ export function appendAnimFrame(
  *
  * No-op if the index is not present in the buffer map.
  */
-export function removeAnimFrame(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-    index: number,
-): void {
+export function removeAnimFrame(buffers: FrameBuffers, unit: EditableUnit, index: number): void {
     const lKey = frameBufferKey("l", "anim", index);
     const rKey = frameBufferKey("r", "anim", index);
     if (!buffers.has(lKey) && !buffers.has(rKey)) return;
@@ -105,9 +84,7 @@ export function removeAnimFrame(
     const tex = unit.textures[0];
     if (tex) {
         tex.frames = tex.frames.filter(
-            (f) =>
-                f.filename !== `${unit.id}_l_${index}` &&
-                f.filename !== `${unit.id}_r_${index}`,
+            (f) => f.filename !== `${unit.id}_l_${index}` && f.filename !== `${unit.id}_r_${index}`,
         );
     }
 
@@ -132,9 +109,7 @@ export function removeAnimFrame(
 
     // Update animFrames: drop the deleted index, shift higher down.
     if (unit.animFrames) {
-        const next = unit.animFrames
-            .filter((i) => i !== index)
-            .map((i) => (i > index ? i - 1 : i));
+        const next = unit.animFrames.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i));
         unit.animFrames = next.length > 0 ? next : undefined;
     }
 }
@@ -149,11 +124,7 @@ export function removeAnimFrame(
  *
  * Returns the new index, or -1 if either source buffer is missing.
  */
-export function duplicateAnimFrame(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-    sourceIndex: number,
-): number {
+export function duplicateAnimFrame(buffers: FrameBuffers, unit: EditableUnit, sourceIndex: number): number {
     const lSrc = buffers.get(frameBufferKey("l", "anim", sourceIndex));
     const rSrc = buffers.get(frameBufferKey("r", "anim", sourceIndex));
     if (!lSrc || !rSrc) return -1;
@@ -190,19 +161,12 @@ export function duplicateAnimFrame(
  * Creates an empty death buffer + metadata entry for one direction.
  * No-op if the direction already has a death frame.
  */
-export function addDeathFrame(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-    direction: Direction,
-): void {
+export function addDeathFrame(buffers: FrameBuffers, unit: EditableUnit, direction: Direction): void {
     const key = frameBufferKey(direction, "death", 0);
     if (buffers.has(key)) return;
     buffers.set(key, makeEmptyBuffer());
     const tex = unit.textures[0];
-    if (
-        tex &&
-        !tex.frames.some((f) => f.filename === `${unit.id}_${direction}_d`)
-    ) {
+    if (tex && !tex.frames.some((f) => f.filename === `${unit.id}_${direction}_d`)) {
         tex.frames.push(makePlaceholderFrameMeta(unit.id, direction, "d"));
     }
 }
@@ -211,17 +175,11 @@ export function addDeathFrame(
  * Drops the death buffer and metadata entry for one direction. No-op
  * if the direction has no death frame.
  */
-export function clearDeathFrame(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-    direction: Direction,
-): void {
+export function clearDeathFrame(buffers: FrameBuffers, unit: EditableUnit, direction: Direction): void {
     buffers.delete(frameBufferKey(direction, "death", 0));
     const tex = unit.textures[0];
     if (tex) {
-        tex.frames = tex.frames.filter(
-            (f) => f.filename !== `${unit.id}_${direction}_d`,
-        );
+        tex.frames = tex.frames.filter((f) => f.filename !== `${unit.id}_${direction}_d`);
     }
 }
 
@@ -239,12 +197,7 @@ function pushUndo(buf: FrameBuffer): void {
  * pushes its pre-mirror contents onto the destination's `undoStack`
  * so the user can step back through individual frames.
  */
-export function mirrorDirection(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-    from: Direction,
-    to: Direction,
-): void {
+export function mirrorDirection(buffers: FrameBuffers, unit: EditableUnit, from: Direction, to: Direction): void {
     const animIndices = new Set<number>();
     for (const key of buffers.keys()) {
         const m = key.match(/^([lr]):anim:(\d+)$/);
@@ -259,15 +212,8 @@ export function mirrorDirection(
             dst = makeEmptyBuffer();
             buffers.set(dstKey, dst);
             const tex = unit.textures[0];
-            if (
-                tex &&
-                !tex.frames.some(
-                    (f) => f.filename === `${unit.id}_${to}_${idx}`,
-                )
-            ) {
-                tex.frames.push(
-                    makePlaceholderFrameMeta(unit.id, to, idx),
-                );
+            if (tex && !tex.frames.some((f) => f.filename === `${unit.id}_${to}_${idx}`)) {
+                tex.frames.push(makePlaceholderFrameMeta(unit.id, to, idx));
             }
         }
         pushUndo(dst);

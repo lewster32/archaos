@@ -39,13 +39,15 @@ describe("editor .amod round-trip", () => {
             name: "U",
             modVersion: "1.0.0",
             spells: [{ id: "u", name: "U", chance: 1, balance: 0, group: "enhanced", unitId: "u" }],
-            units: [{
-                id: "u",
-                name: "U",
-                properties: { mov: 1, com: 1, rcm: 0, rng: 0, def: 1, mnv: 1, res: 1 },
-                status: [],
-                textures: [{ frames: framesMetadata }],
-            }],
+            units: [
+                {
+                    id: "u",
+                    name: "U",
+                    properties: { mov: 1, com: 1, rcm: 0, rng: 0, def: 1, mnv: 1, res: 1 },
+                    status: [],
+                    textures: [{ frames: framesMetadata }],
+                },
+            ],
         };
 
         const amodBytes = packAmod(manifest, atlasPngBytes);

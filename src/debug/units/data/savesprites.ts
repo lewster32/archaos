@@ -1,10 +1,5 @@
 import { mirrorHorizontal } from "./paintops";
-import {
-    frameBufferKey,
-    type EditableUnit,
-    type Frame,
-    type FrameBuffers,
-} from "./types";
+import { frameBufferKey, type EditableUnit, type Frame, type FrameBuffers } from "./types";
 
 const FRAME_SIZE = 18;
 
@@ -13,10 +8,7 @@ const FRAME_SIZE = 18;
  * or neither. If exactly one is present, materialise the missing side
  * as a horizontal mirror of the present side. Idempotent.
  */
-export function autoMirrorMissingDeath(
-    buffers: FrameBuffers,
-    _unit: EditableUnit,
-): void {
+export function autoMirrorMissingDeath(buffers: FrameBuffers, _unit: EditableUnit): void {
     const lKey = frameBufferKey("l", "death", 0);
     const rKey = frameBufferKey("r", "death", 0);
     const lHas = buffers.has(lKey);
@@ -58,10 +50,7 @@ interface Cell {
  *   Row 1 = R_anim sorted ascending, then R_death (if any).
  * Atlas width = max(L_count, R_count) cells * 18; height = 36.
  */
-export async function packBuffersToAtlas(
-    buffers: FrameBuffers,
-    unit: EditableUnit,
-): Promise<PackedAtlas> {
+export async function packBuffersToAtlas(buffers: FrameBuffers, unit: EditableUnit): Promise<PackedAtlas> {
     const lAnim: number[] = [];
     const rAnim: number[] = [];
     for (const key of buffers.keys()) {
@@ -121,9 +110,7 @@ export async function packBuffersToAtlas(
         });
     }
 
-    const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-    );
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("Failed to encode atlas PNG");
     const buffer = new Uint8Array(await blob.arrayBuffer());
     return { atlasPngBytes: buffer, framesMetadata };

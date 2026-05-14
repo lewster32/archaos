@@ -3,32 +3,13 @@
         <header class="paint-canvas__header">
             <h2>Canvas - {{ frameLabel }}</h2>
             <div class="paint-canvas__zoombar">
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked"
-                    @click="fitView"
-                >Fit</button>
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked"
-                    @click="zoomBy(-1)"
-                >-</button>
+                <button type="button" class="button button--small" :disabled="locked" @click="fitView">Fit</button>
+                <button type="button" class="button button--small" :disabled="locked" @click="zoomBy(-1)">-</button>
                 <span class="paint-canvas__zoomlabel">{{ zoom }}x</span>
-                <button
-                    type="button"
-                    class="button button--small"
-                    :disabled="locked"
-                    @click="zoomBy(1)"
-                >+</button>
+                <button type="button" class="button button--small" :disabled="locked" @click="zoomBy(1)">+</button>
             </div>
         </header>
-        <div
-            ref="hostEl"
-            class="paint-canvas__host"
-            @wheel.prevent="onWheel"
-        >
+        <div ref="hostEl" class="paint-canvas__host" @wheel.prevent="onWheel">
             <slot name="overlay" />
             <canvas
                 ref="canvasEl"
@@ -41,7 +22,7 @@
                 }"
                 @pointerdown="onPointerDown"
                 @pointermove="onPointerMove"
-                @pointerup="onPointerUp"    
+                @pointerup="onPointerUp"
                 @pointercancel="onPointerUp"
                 @pointerleave="onPointerLeave"
             ></canvas>
@@ -59,26 +40,22 @@
                     v-if="showHoverOutline"
                     class="paint-canvas__crosshair paint-canvas__crosshair--h"
                     :style="{
-                        top:
-                            ((hoverFloatY ?? 0) * 100) / FRAME_SIZE + '%',
+                        top: ((hoverFloatY ?? 0) * 100) / FRAME_SIZE + '%',
                     }"
                 ></div>
                 <div
                     v-if="showHoverOutline"
                     class="paint-canvas__crosshair paint-canvas__crosshair--v"
                     :style="{
-                        left:
-                            ((hoverFloatX ?? 0) * 100) / FRAME_SIZE + '%',
+                        left: ((hoverFloatX ?? 0) * 100) / FRAME_SIZE + '%',
                     }"
                 ></div>
                 <div
                     v-if="showHoverOutline"
                     class="paint-canvas__hover"
                     :class="{
-                        'paint-canvas__hover--erase':
-                            effectiveTool === 'eraser',
-                        'paint-canvas__hover--pick':
-                            effectiveTool === 'eyedropper',
+                        'paint-canvas__hover--erase': effectiveTool === 'eraser',
+                        'paint-canvas__hover--pick': effectiveTool === 'eyedropper',
                     }"
                     :style="{
                         top: ((hoverY ?? 0) * 100) / FRAME_SIZE + '%',
@@ -94,13 +71,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import {
-    bresenhamLine,
-    cloneImageData,
-    drawPixel,
-    floodFill,
-    readPixel,
-} from "../data/paintops";
+import { bresenhamLine, cloneImageData, drawPixel, floodFill, readPixel } from "../data/paintops";
 import type { FrameBuffer, FrameKey, Rgba } from "../data/types";
 
 const props = defineProps<{
@@ -138,9 +109,7 @@ const frameLabel = computed(() => {
 // `left: 50%; top: 50%` anchors the top-left corner at the host
 // centre; the leading -50%/-50% pulls the canvas back so its centre
 // lands on the host centre, then pan offsets push it from there.
-const transformCss = computed(
-    () => `translate(-50%, -50%) translate(${panX.value}px, ${panY.value}px)`,
-);
+const transformCss = computed(() => `translate(-50%, -50%) translate(${panX.value}px, ${panY.value}px)`);
 
 const TRANSPARENT: Rgba = [0, 0, 0, 0] as const;
 
@@ -189,12 +158,7 @@ const cursorStyle = computed(() => {
     // Fall back to crosshair when the cursor sits outside the
     // 18x18 sprite area (e.g. on the checkerboard margin) so the
     // user does not "lose" the pointer.
-    if (
-        props.activeBuffer !== null &&
-        !props.locked &&
-        hoverX.value !== null &&
-        hoverY.value !== null
-    ) {
+    if (props.activeBuffer !== null && !props.locked && hoverX.value !== null && hoverY.value !== null) {
         return "none";
     }
     return "crosshair";
@@ -211,9 +175,7 @@ const showHoverOutline = computed(
 );
 
 function zoomBy(delta: number): void {
-    const i = ZOOM_STEPS.indexOf(
-        zoom.value as (typeof ZOOM_STEPS)[number],
-    );
+    const i = ZOOM_STEPS.indexOf(zoom.value as (typeof ZOOM_STEPS)[number]);
     const idx = Math.max(0, Math.min(ZOOM_STEPS.length - 1, i + delta));
     zoom.value = ZOOM_STEPS[idx];
     void redraw();
@@ -238,10 +200,7 @@ function fitView(): void {
     void redraw();
 }
 
-function clientToSprite(
-    clientX: number,
-    clientY: number,
-): { x: number; y: number } | null {
+function clientToSprite(clientX: number, clientY: number): { x: number; y: number } | null {
     const canvas = canvasEl.value;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -318,25 +277,14 @@ function onPointerMove(e: PointerEvent): void {
             hoverY.value = null;
         }
     }
-    const p =
-        hoverX.value !== null && hoverY.value !== null
-            ? { x: hoverX.value, y: hoverY.value }
-            : null;
+    const p = hoverX.value !== null && hoverY.value !== null ? { x: hoverX.value, y: hoverY.value } : null;
 
     if (!preStrokeSnapshot || !props.activeBuffer) return;
-    if (effectiveTool.value !== "pencil" && effectiveTool.value !== "eraser")
-        return;
+    if (effectiveTool.value !== "pencil" && effectiveTool.value !== "eraser") return;
     if (!p) return;
     const rgba = effectiveTool.value === "eraser" ? TRANSPARENT : props.colour;
     if (lastX >= 0 && lastY >= 0) {
-        bresenhamLine(
-            props.activeBuffer.data,
-            lastX,
-            lastY,
-            p.x,
-            p.y,
-            rgba,
-        );
+        bresenhamLine(props.activeBuffer.data, lastX, lastY, p.x, p.y, rgba);
     } else {
         drawPixel(props.activeBuffer.data, p.x, p.y, rgba);
     }
@@ -457,22 +405,8 @@ onBeforeUnmount(() => {
         min-height: 660px;
         background-color: #2a2a2a;
         background-image:
-            linear-gradient(
-                45deg,
-                #333 25%,
-                transparent 25%,
-                transparent 75%,
-                #333 75%,
-                #333
-            ),
-            linear-gradient(
-                45deg,
-                #333 25%,
-                transparent 25%,
-                transparent 75%,
-                #333 75%,
-                #333
-            );
+            linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333),
+            linear-gradient(45deg, #333 25%, transparent 25%, transparent 75%, #333 75%, #333);
         background-size: 16px 16px;
         background-position:
             0 0,

@@ -14,11 +14,7 @@
                 @add-death-frame="$emit('addDeathFrame', $event)"
                 @clear-death-frame="$emit('clearDeathFrame', $event)"
             />
-            <AnimationEditor
-                :spell="spell"
-                :buffers="buffers"
-                :frame-version="frameVersion"
-            />
+            <AnimationEditor :spell="spell" :buffers="buffers" :frame-version="frameVersion" />
         </div>
         <div class="sprite-editor__column">
             <PaintCanvas
@@ -43,7 +39,9 @@
                             :disabled="locked"
                             :title="t.label"
                             @click="$emit('toolChange', t.id)"
-                        ><i class="icon" :class="`icon--${t.short}`"></i></button>
+                        >
+                            <i class="icon" :class="`icon--${t.short}`"></i>
+                        </button>
                     </div>
                     <AnimatedPreview
                         class="sprite-editor__floating-anim"
@@ -59,28 +57,36 @@
                             :disabled="locked"
                             title="Nudge up"
                             @click="$emit('nudge', { dx: 0, dy: -1 })"
-                        ><i class="icon icon--up"></i></button>
+                        >
+                            <i class="icon icon--up"></i>
+                        </button>
                         <button
                             type="button"
                             class="button button--small sprite-editor__floating-nudge-btn sprite-editor__floating-nudge-btn--left"
                             :disabled="locked"
                             title="Nudge left"
                             @click="$emit('nudge', { dx: -1, dy: 0 })"
-                        ><i class="icon icon--left"></i></button>
+                        >
+                            <i class="icon icon--left"></i>
+                        </button>
                         <button
                             type="button"
                             class="button button--small sprite-editor__floating-nudge-btn sprite-editor__floating-nudge-btn--right"
                             :disabled="locked"
                             title="Nudge right"
                             @click="$emit('nudge', { dx: 1, dy: 0 })"
-                        ><i class="icon icon--right"></i></button>
+                        >
+                            <i class="icon icon--right"></i>
+                        </button>
                         <button
                             type="button"
                             class="button button--small sprite-editor__floating-nudge-btn sprite-editor__floating-nudge-btn--down"
                             :disabled="locked"
                             title="Nudge down"
                             @click="$emit('nudge', { dx: 0, dy: 1 })"
-                        ><i class="icon icon--down"></i></button>
+                        >
+                            <i class="icon icon--down"></i>
+                        </button>
                     </div>
                 </template>
             </PaintCanvas>
@@ -173,11 +179,7 @@ const toolList = [
 ];
 
 const activeBufferRef = computed<FrameBuffer | null>(() => {
-    const k = frameBufferKey(
-        props.activeFrame.direction,
-        props.activeFrame.slot,
-        props.activeFrame.index,
-    );
+    const k = frameBufferKey(props.activeFrame.direction, props.activeFrame.slot, props.activeFrame.index);
     return props.buffers.get(k) ?? null;
 });
 </script>
@@ -226,10 +228,22 @@ const activeBufferRef = computed<FrameBuffer | null>(() => {
     }
 
     &__floating-nudge-btn {
-        &--up { grid-column: 2; grid-row: 1; }
-        &--left { grid-column: 1; grid-row: 2; }
-        &--right { grid-column: 3; grid-row: 2; }
-        &--down { grid-column: 2; grid-row: 3; }
+        &--up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        &--left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        &--right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        &--down {
+            grid-column: 2;
+            grid-row: 3;
+        }
     }
 }
 </style>

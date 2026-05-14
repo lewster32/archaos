@@ -57,7 +57,7 @@ export function adaptClassic(
     units: Record<string, RawClassicUnit>,
     atlasFrames: Frame[],
     atlasSize: { w: number; h: number },
-    atlasUrl: string
+    atlasUrl: string,
 ): EditableSpell[] {
     const out: EditableSpell[] = [];
     for (const [originalId, spell] of Object.entries(spells)) {

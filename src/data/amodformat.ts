@@ -107,9 +107,7 @@ export function validateManifest(manifest: ModManifest): void {
         }
         spellIds.add(s.id);
         if (s.unitId !== undefined && !unitIds.has(s.unitId)) {
-            throw new AmodFormatError(
-                `Spell '${s.id}' references unitId='${s.unitId}' not in units[]`,
-            );
+            throw new AmodFormatError(`Spell '${s.id}' references unitId='${s.unitId}' not in units[]`);
         }
     }
 }
@@ -145,16 +143,10 @@ export interface PackOptions {
  * The JSON payload is the manifest wrapped: `{ "manifest": {...} }`,
  * UTF-8 encoded, 4-space indented for human inspection.
  */
-export function packAmod(
-    manifest: ModManifest,
-    pngBytes: Uint8Array,
-    options: PackOptions = {},
-): Uint8Array {
+export function packAmod(manifest: ModManifest, pngBytes: Uint8Array, options: PackOptions = {}): Uint8Array {
     validateManifest(manifest);
     if (options.gzipJson) {
-        throw new AmodFormatError(
-            "gzipJson is reserved but not supported in v1",
-        );
+        throw new AmodFormatError("gzipJson is reserved but not supported in v1");
     }
     const flags = 0;
     const jsonString = JSON.stringify({ manifest }, null, 4);
@@ -185,18 +177,14 @@ export interface DecodedAmod {
  */
 export function decodeAmod(bytes: Uint8Array): DecodedAmod {
     if (bytes.length < HEADER_SIZE) {
-        throw new AmodFormatError(
-            `Truncated: file is ${bytes.length} bytes, header alone is ${HEADER_SIZE}`,
-        );
+        throw new AmodFormatError(`Truncated: file is ${bytes.length} bytes, header alone is ${HEADER_SIZE}`);
     }
     for (let i = 0; i < 4; i++) {
         if (bytes[i] !== MAGIC[i]) {
             const hex = Array.from(bytes.slice(0, 4))
                 .map((b) => b.toString(16).padStart(2, "0"))
                 .join(" ");
-            throw new AmodFormatError(
-                `Bad magic: expected ${MAGIC_STR}, got ${hex}`,
-            );
+            throw new AmodFormatError(`Bad magic: expected ${MAGIC_STR}, got ${hex}`);
         }
     }
     const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -208,22 +196,16 @@ export function decodeAmod(bytes: Uint8Array): DecodedAmod {
     }
     const flags = dv.getUint16(6, true);
     if ((flags & FLAG_GZIP_JSON) !== 0) {
-        throw new AmodFormatError(
-            "gzip JSON payload is reserved but not supported in v1",
-        );
+        throw new AmodFormatError("gzip JSON payload is reserved but not supported in v1");
     }
     if ((flags & RESERVED_FLAGS_MASK) !== 0) {
-        throw new AmodFormatError(
-            `Reserved flag bits set: flags=0x${flags.toString(16).padStart(4, "0")}`,
-        );
+        throw new AmodFormatError(`Reserved flag bits set: flags=0x${flags.toString(16).padStart(4, "0")}`);
     }
     const jsonLen = dv.getUint32(8, true);
     const pngLen = dv.getUint32(12, true);
     const expectedTotal = HEADER_SIZE + jsonLen + pngLen;
     if (bytes.length !== expectedTotal) {
-        throw new AmodFormatError(
-            `Truncated: header declares ${expectedTotal} bytes total, file is ${bytes.length}`,
-        );
+        throw new AmodFormatError(`Truncated: header declares ${expectedTotal} bytes total, file is ${bytes.length}`);
     }
     const jsonEnd = HEADER_SIZE + jsonLen;
     const rawJson = bytes.slice(HEADER_SIZE, jsonEnd);
@@ -234,14 +216,8 @@ export function decodeAmod(bytes: Uint8Array): DecodedAmod {
     } catch (err) {
         throw new AmodFormatError("Invalid JSON payload", err);
     }
-    if (
-        !parsed
-        || typeof parsed !== "object"
-        || !("manifest" in parsed)
-    ) {
-        throw new AmodFormatError(
-            'JSON payload missing top-level "manifest" key',
-        );
+    if (!parsed || typeof parsed !== "object" || !("manifest" in parsed)) {
+        throw new AmodFormatError('JSON payload missing top-level "manifest" key');
     }
     const manifest = (parsed as { manifest: ModManifest }).manifest;
     validateManifest(manifest);

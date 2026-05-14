@@ -15,10 +15,7 @@ import { UnitType } from "./enums/unittype";
 import { GameSetupPlayerType } from "./interfaces/ui";
 import type { PieceConfig } from "./configs/piececonfig";
 import type { Spell } from "./spells/spell";
-import type {
-    EndSpellPickCommand,
-    PickSpellCommand,
-} from "./protocol/commands";
+import type { EndSpellPickCommand, PickSpellCommand } from "./protocol/commands";
 import { roundTrip } from "./protocol/wiresafety.testhelpers";
 
 function makeRules(): Rules {
@@ -1882,11 +1879,7 @@ function makeTestBoard(opts: MakeTestBoardOpts = {}): Board {
     return board;
 }
 
-function pickFor(
-    board: Board,
-    playerId: number,
-    commandId = `pick-${playerId}`,
-): PickSpellCommand {
+function pickFor(board: Board, playerId: number, commandId = `pick-${playerId}`): PickSpellCommand {
     const player = board.getPlayer(playerId);
     const spellId = player.spells[0].id;
     return {
@@ -1974,9 +1967,7 @@ describe("Board: barrier-mode spellbook phase", () => {
         await board.startGame();
         // Player 1 is current (serial mode); player 2's command is rejected.
         await board.handleCommand(2, roundTrip(skip("c2")));
-        expect(
-            board._rejectedCommandsForTests.find((r) => r.reason === "not-your-turn"),
-        ).toBeTruthy();
+        expect(board._rejectedCommandsForTests.find((r) => r.reason === "not-your-turn")).toBeTruthy();
     });
 
     it("auto-skips on timeout with timedOut: true", async () => {
@@ -2015,10 +2006,7 @@ interface CastingSpellOpts {
  * first slot. Returns once `_currentCastingPlayerId` has been set
  * (i.e. the per-player loop has begun).
  */
-async function makeTestBoardEnteringCasting(opts: {
-    players: number;
-    spells?: CastingSpellOpts[];
-}): Promise<Board> {
+async function makeTestBoardEnteringCasting(opts: { players: number; spells?: CastingSpellOpts[] }): Promise<Board> {
     const board = makeTestBoard({ players: opts.players });
     const spellOpts = opts.spells ?? [];
 
@@ -2056,13 +2044,16 @@ async function makeTestBoardEnteringCasting(opts: {
     for (let i = 1; i <= opts.players; i++) {
         const player = board.getPlayer(i);
         const spellId = player.spells[0].id;
-        await board.handleCommand(i, roundTrip({
-            type: "command",
-            commandId: `pick-${i}`,
-            token: "",
-            kind: "pick-spell",
-            spellId,
-        }));
+        await board.handleCommand(
+            i,
+            roundTrip({
+                type: "command",
+                commandId: `pick-${i}`,
+                token: "",
+                kind: "pick-spell",
+                spellId,
+            }),
+        );
     }
 
     // Flush microtasks until the casting phase opens its first slot.
@@ -2079,10 +2070,7 @@ async function makeTestBoardEnteringCasting(opts: {
 /**
  * Convenience wrapper for single-player multi-cast scenarios.
  */
-async function makeTestBoardEnteringCastingWithMultiCast(
-    _playerId: number,
-    castTimes: number,
-): Promise<Board> {
+async function makeTestBoardEnteringCastingWithMultiCast(_playerId: number, castTimes: number): Promise<Board> {
     return makeTestBoardEnteringCasting({
         players: 1,
         spells: [{ castTimes }],
@@ -2100,23 +2088,29 @@ describe("Board: casting phase", () => {
         expect(board.phase).toBe(BoardPhase.Casting);
         expect((board as any)._currentCastingPlayerId).toBe(1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c1",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
         // Slot advances to player 2.
         expect((board as any)._currentCastingPlayerId).toBe(2);
 
-        await board.handleCommand(2, roundTrip({
-            type: "command",
-            commandId: "c2",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 6, y: 6 } },
-        }));
+        await board.handleCommand(
+            2,
+            roundTrip({
+                type: "command",
+                commandId: "c2",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 6, y: 6 } },
+            }),
+        );
         await board.phaseFlow;
 
         // Casting phase complete; phase moved on (via existing CastingDone path).
@@ -2126,30 +2120,39 @@ describe("Board: casting phase", () => {
     it("re-opens the slot after a multi-cast intermediate cast", async () => {
         const board = await makeTestBoardEnteringCastingWithMultiCast(1, 3);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c1",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
         // Still player 1's slot.
         expect((board as any)._currentCastingPlayerId).toBe(1);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c2",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 6, y: 6 } },
-        }));
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c3",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 7, y: 7 } },
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c2",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 6, y: 6 } },
+            }),
+        );
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c3",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 7, y: 7 } },
+            }),
+        );
         await board.phaseFlow;
         // After 3 casts, slot advances (only player so the slot closes).
         expect((board as any)._currentCastingPlayerId).not.toBe(1);
@@ -2158,19 +2161,25 @@ describe("Board: casting phase", () => {
     it("cancel-cast forfeits remaining casts and advances the slot", async () => {
         const board = await makeTestBoardEnteringCastingWithMultiCast(1, 3);
 
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c1",
-            token: "",
-            kind: "cast-spell",
-            target: { point: { x: 5, y: 5 } },
-        }));
-        await board.handleCommand(1, roundTrip({
-            type: "command",
-            commandId: "c2",
-            token: "",
-            kind: "cancel-cast",
-        }));
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c1",
+                token: "",
+                kind: "cast-spell",
+                target: { point: { x: 5, y: 5 } },
+            }),
+        );
+        await board.handleCommand(
+            1,
+            roundTrip({
+                type: "command",
+                commandId: "c2",
+                token: "",
+                kind: "cancel-cast",
+            }),
+        );
         await board.phaseFlow;
         expect((board as any)._currentCastingPlayerId).not.toBe(1);
     });

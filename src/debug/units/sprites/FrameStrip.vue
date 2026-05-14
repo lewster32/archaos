@@ -7,13 +7,9 @@
             class="frame-strip__direction"
             :class="{ active: activeFrame.direction === dir }"
         >
-            <h3 class="frame-strip__label">{{ dir.toLowerCase() === 'l' ? 'Left' : 'Right' }}</h3>
+            <h3 class="frame-strip__label">{{ dir.toLowerCase() === "l" ? "Left" : "Right" }}</h3>
             <div class="frame-strip__row">
-                <div
-                    v-for="idx in animIndicesFor(dir)"
-                    :key="`${dir}-${idx}`"
-                    class="frame-strip__cell"
-                >
+                <div v-for="idx in animIndicesFor(dir)" :key="`${dir}-${idx}`" class="frame-strip__cell">
                     <button
                         type="button"
                         class="button button--small frame-strip__thumb"
@@ -36,14 +32,18 @@
                             :disabled="locked"
                             title="Duplicate this frame pair"
                             @click="emit('duplicateAnimFrame', idx)"
-                        >+</button>
+                        >
+                            +
+                        </button>
                         <button
                             type="button"
                             class="button button--small button--red frame-strip__action"
                             :disabled="locked"
                             title="Delete this frame pair"
                             @click="emit('removeAnimFrame', idx)"
-                        >x</button>
+                        >
+                            x
+                        </button>
                     </div>
                 </div>
                 <button
@@ -52,7 +52,9 @@
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('appendAnimFrame')"
-                >+ first frame</button>
+                >
+                    + first frame
+                </button>
             </div>
             <div class="frame-strip__row">
                 <div v-if="hasDeath(dir)" class="frame-strip__cell">
@@ -78,7 +80,9 @@
                             :disabled="locked"
                             title="Delete the death frame"
                             @click="emit('clearDeathFrame', dir)"
-                        >x</button>
+                        >
+                            x
+                        </button>
                     </div>
                 </div>
                 <button
@@ -87,7 +91,9 @@
                     class="button button--small button--cyan"
                     :disabled="locked"
                     @click="emit('addDeathFrame', dir)"
-                >+ corpse</button>
+                >
+                    + corpse
+                </button>
             </div>
         </section>
     </section>
@@ -95,13 +101,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, watch } from "vue";
-import {
-    frameBufferKey,
-    type Direction,
-    type FrameBuffers,
-    type FrameKey,
-    type FrameSlot,
-} from "../data/types";
+import { frameBufferKey, type Direction, type FrameBuffers, type FrameKey, type FrameSlot } from "../data/types";
 
 const props = defineProps<{
     buffers: FrameBuffers;
@@ -128,12 +128,7 @@ const tempCanvas = document.createElement("canvas");
 tempCanvas.width = 18;
 tempCanvas.height = 18;
 
-function registerThumb(
-    dir: Direction,
-    slot: FrameSlot,
-    index: number,
-    el: HTMLCanvasElement | null,
-): void {
+function registerThumb(dir: Direction, slot: FrameSlot, index: number, el: HTMLCanvasElement | null): void {
     const k = frameBufferKey(dir, slot, index);
     if (el) thumbs.set(k, el);
     else thumbs.delete(k);

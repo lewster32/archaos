@@ -4,9 +4,7 @@
         <ul class="status-multi-select__chips" v-if="modelValue.length">
             <li v-for="value in modelValue" :key="value" class="button button--yellow button--small">
                 <span>{{ value }}</span>
-                <button type="button" @click="remove(value)" aria-label="Remove status">
-                    &times;
-                </button>
+                <button type="button" @click="remove(value)" aria-label="Remove status">&times;</button>
             </li>
         </ul>
         <select v-if="availableToAdd.length" @change="onAdd($event)">
@@ -29,7 +27,7 @@ const props = withDefaults(
     }>(),
     {
         available: () => Object.values(UnitStatus),
-    }
+    },
 );
 
 const emit = defineEmits<{
@@ -41,9 +39,7 @@ const emit = defineEmits<{
  * kept as chips but excluded from the picker - the user can remove them
  * but not re-add them.
  */
-const availableToAdd = computed(() =>
-    props.available.filter((s) => !props.modelValue.includes(s))
-);
+const availableToAdd = computed(() => props.available.filter((s) => !props.modelValue.includes(s)));
 
 function onAdd(event: Event): void {
     const target = event.target as HTMLSelectElement;
@@ -54,7 +50,10 @@ function onAdd(event: Event): void {
 }
 
 function remove(value: string): void {
-    emit("update:modelValue", props.modelValue.filter((v) => v !== value));
+    emit(
+        "update:modelValue",
+        props.modelValue.filter((v) => v !== value),
+    );
 }
 </script>
 

@@ -1,8 +1,5 @@
 import type { EditableSpell, EditableUnit, Frame, Texture } from "./types";
-import type {
-    ModManifest,
-    SerialisedUnit as ManifestUnit,
-} from "../../../data/amodformat";
+import type { ModManifest, SerialisedUnit as ManifestUnit } from "../../../data/amodformat";
 
 /**
  * Intermediate output shape used by `buildManifest` to assemble the
@@ -125,17 +122,19 @@ export function buildManifest(spell: EditableSpell): ModManifest {
         id: unit.id,
         name: spell.name,
         modVersion: "1.0.0",
-        spells: [{
-            id: serialisedSpell.id,
-            name: serialisedSpell.name,
-            chance: serialisedSpell.chance,
-            balance: serialisedSpell.balance,
-            group: "enhanced",
-            description: serialisedSpell.description,
-            types: serialisedSpell.types,
-            spellFrame: serialisedSpell.spellFrame,
-            unitId: unit.id,
-        }],
+        spells: [
+            {
+                id: serialisedSpell.id,
+                name: serialisedSpell.name,
+                chance: serialisedSpell.chance,
+                balance: serialisedSpell.balance,
+                group: "enhanced",
+                description: serialisedSpell.description,
+                types: serialisedSpell.types,
+                spellFrame: serialisedSpell.spellFrame,
+                unitId: unit.id,
+            },
+        ],
         units: [unit],
     };
 }
@@ -155,4 +154,3 @@ export function downloadAmod(filename: string, bytes: Uint8Array): void {
         setTimeout(() => URL.revokeObjectURL(url), 0);
     }
 }
-

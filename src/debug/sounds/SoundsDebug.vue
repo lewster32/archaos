@@ -24,9 +24,7 @@
                         <td>{{ sound.pitch.join(", ") }}</td>
                         <td>{{ sound.increments.join(", ") }}</td>
                         <td>
-                            <button class="button button--small" :disabled="playing" @click="play(sound)">
-                                Play
-                            </button>
+                            <button class="button button--small" :disabled="playing" @click="play(sound)">Play</button>
                         </td>
                     </tr>
                 </tbody>

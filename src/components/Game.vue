@@ -147,9 +147,7 @@ const spellSelect = (spell: Spell | null) => {
                   token: "",
                   kind: "pick-spell",
                   spellId: spell.id,
-                  ...((spell as { illusion?: boolean }).illusion === true
-                      ? { illusion: true }
-                      : {}),
+                  ...((spell as { illusion?: boolean }).illusion === true ? { illusion: true } : {}),
               };
     dispatchCommand(cmd);
     // Transitional: keep the legacy spellbook callback path firing so

@@ -7,9 +7,7 @@ const manifest = {
     id: "test",
     name: "Test",
     modVersion: "1.0.0",
-    spells: [
-        { id: "test", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "test" },
-    ],
+    spells: [{ id: "test", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "test" }],
     units: [
         {
             id: "test",

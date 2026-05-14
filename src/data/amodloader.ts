@@ -26,16 +26,11 @@ export const enhancedAtlasInfo = reactive(new Map<string, UnitAtlasInfo>());
  * causing SpellImage's icon canvas to fall through to a deleted
  * legacy path).
  */
-export function populateEnhancedAtlasInfo(
-    manifest: ModManifest,
-    blobUrl: string,
-): void {
+export function populateEnhancedAtlasInfo(manifest: ModManifest, blobUrl: string): void {
     for (const unit of manifest.units) {
         const tex = unit.textures[0];
         if (!tex) continue;
-        const frames = new Map<string, SerialisedFrame["frame"]>(
-            tex.frames.map((f) => [f.filename, f.frame]),
-        );
+        const frames = new Map<string, SerialisedFrame["frame"]>(tex.frames.map((f) => [f.filename, f.frame]));
         enhancedAtlasInfo.set(unit.id, { imageUrl: blobUrl, frames });
     }
 }
@@ -67,11 +62,7 @@ export interface AmodRegistries {
  * step; the actual texture decode is Phaser's job once the load
  * queue runs.
  */
-export function decodeAndRegisterAmod(
-    scene: Phaser.Scene,
-    bytes: Uint8Array,
-    registries: AmodRegistries,
-): void {
+export function decodeAndRegisterAmod(scene: Phaser.Scene, bytes: Uint8Array, registries: AmodRegistries): void {
     const { manifest, pngBytes } = decodeAmod(bytes);
     const blob = new Blob([pngBytes as BlobPart], { type: "image/png" });
     const blobUrl = URL.createObjectURL(blob);
@@ -108,10 +99,7 @@ export function decodeAndRegisterAmod(
  * scene. Fetch + decode runs in parallel; one broken .amod logs and
  * is skipped, the rest still register.
  */
-export async function loadAmodsIntoScene(
-    scene: Phaser.Scene,
-    registries: AmodRegistries,
-): Promise<void> {
+export async function loadAmodsIntoScene(scene: Phaser.Scene, registries: AmodRegistries): Promise<void> {
     const amods = import.meta.glob("../../assets/amods/*.amod", {
         eager: true,
         query: "?url",

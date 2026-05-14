@@ -8,12 +8,7 @@ import {
     removeAnimFrame,
 } from "./framebuffers";
 import { cloneImageData, drawPixel, readPixel } from "./paintops";
-import {
-    frameBufferKey,
-    type EditableUnit,
-    type FrameBuffer,
-    type FrameBuffers,
-} from "./types";
+import { frameBufferKey, type EditableUnit, type FrameBuffer, type FrameBuffers } from "./types";
 
 const RED = [255, 0, 0, 255] as const;
 const BLUE = [0, 0, 255, 255] as const;
@@ -92,9 +87,7 @@ describe("appendAnimFrame", () => {
         const names = unit.textures[0].frames.map((f) => f.filename);
         expect(names).toContain("dwarf_l_1");
         expect(names).toContain("dwarf_r_1");
-        const lFrame = unit.textures[0].frames.find(
-            (f) => f.filename === "dwarf_l_1",
-        );
+        const lFrame = unit.textures[0].frames.find((f) => f.filename === "dwarf_l_1");
         expect(lFrame?.frame).toEqual({ x: 0, y: 0, w: 18, h: 18 });
         expect(lFrame?.sourceSize).toEqual({ w: 18, h: 18 });
         expect(lFrame?.trimmed).toBe(false);
@@ -243,9 +236,7 @@ describe("addDeathFrame", () => {
         addDeathFrame(buffers, unit, "l");
         const buf2 = buffers.get(frameBufferKey("l", "death", 0));
         expect(buf2).toBe(buf1);
-        expect(
-            unit.textures[0].frames.filter((f) => f.filename === "dwarf_l_d"),
-        ).toHaveLength(1);
+        expect(unit.textures[0].frames.filter((f) => f.filename === "dwarf_l_d")).toHaveLength(1);
     });
 });
 
@@ -256,9 +247,7 @@ describe("clearDeathFrame", () => {
         addDeathFrame(buffers, unit, "r");
         clearDeathFrame(buffers, unit, "r");
         expect(buffers.has(frameBufferKey("r", "death", 0))).toBe(false);
-        expect(
-            unit.textures[0].frames.find((f) => f.filename === "dwarf_r_d"),
-        ).toBeUndefined();
+        expect(unit.textures[0].frames.find((f) => f.filename === "dwarf_r_d")).toBeUndefined();
     });
 
     it("is a no-op when there is no death frame to clear", () => {
@@ -272,18 +261,8 @@ describe("mirrorDirection", () => {
     it("overwrites every destination anim buffer with a horizontally-flipped source clone", () => {
         const unit = makeUnit();
         const buffers = makeBuffers();
-        drawPixel(
-            buffers.get(frameBufferKey("l", "anim", 0)).data,
-            0,
-            0,
-            RED,
-        );
-        drawPixel(
-            buffers.get(frameBufferKey("r", "anim", 0)).data,
-            0,
-            0,
-            BLUE,
-        );
+        drawPixel(buffers.get(frameBufferKey("l", "anim", 0)).data, 0, 0, RED);
+        drawPixel(buffers.get(frameBufferKey("r", "anim", 0)).data, 0, 0, BLUE);
         mirrorDirection(buffers, unit, "l", "r");
         const destData = buffers.get(frameBufferKey("r", "anim", 0)).data;
         expect(readPixel(destData, 17, 0)).toEqual(RED);
@@ -293,15 +272,8 @@ describe("mirrorDirection", () => {
     it("pushes the pre-overwrite buffer onto the destination's undo stack", () => {
         const unit = makeUnit();
         const buffers = makeBuffers();
-        drawPixel(
-            buffers.get(frameBufferKey("r", "anim", 0)).data,
-            5,
-            5,
-            BLUE,
-        );
-        const preMirror = cloneImageData(
-            buffers.get(frameBufferKey("r", "anim", 0)).data,
-        );
+        drawPixel(buffers.get(frameBufferKey("r", "anim", 0)).data, 5, 5, BLUE);
+        const preMirror = cloneImageData(buffers.get(frameBufferKey("r", "anim", 0)).data);
         mirrorDirection(buffers, unit, "l", "r");
         const dst = buffers.get(frameBufferKey("r", "anim", 0));
         expect(dst.undoStack).toHaveLength(1);
@@ -312,12 +284,7 @@ describe("mirrorDirection", () => {
         const unit = makeUnit();
         const buffers = makeBuffers();
         addDeathFrame(buffers, unit, "l");
-        drawPixel(
-            buffers.get(frameBufferKey("l", "death", 0)).data,
-            0,
-            0,
-            RED,
-        );
+        drawPixel(buffers.get(frameBufferKey("l", "death", 0)).data, 0, 0, RED);
         mirrorDirection(buffers, unit, "l", "r");
         expect(buffers.has(frameBufferKey("r", "death", 0))).toBe(true);
         const rDeath = buffers.get(frameBufferKey("r", "death", 0)).data;
@@ -328,19 +295,8 @@ describe("mirrorDirection", () => {
         const unit = makeUnit();
         const buffers = makeBuffers();
         addDeathFrame(buffers, unit, "r");
-        drawPixel(
-            buffers.get(frameBufferKey("r", "death", 0)).data,
-            4,
-            4,
-            BLUE,
-        );
+        drawPixel(buffers.get(frameBufferKey("r", "death", 0)).data, 4, 4, BLUE);
         mirrorDirection(buffers, unit, "l", "r");
-        expect(
-            readPixel(
-                buffers.get(frameBufferKey("r", "death", 0)).data,
-                4,
-                4,
-            ),
-        ).toEqual(BLUE);
+        expect(readPixel(buffers.get(frameBufferKey("r", "death", 0)).data, 4, 4)).toEqual(BLUE);
     });
 });

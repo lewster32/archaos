@@ -10,9 +10,7 @@ const minimalManifest: ModManifest = {
     id: "test-mod",
     name: "Test",
     modVersion: "1.0.0",
-    spells: [
-        { id: "test-spell", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "test-unit" },
-    ],
+    spells: [{ id: "test-spell", name: "Test", chance: 1, balance: 0, group: "enhanced", unitId: "test-unit" }],
     units: [
         {
             id: "test-unit",
@@ -45,8 +43,7 @@ describe("validateManifest", () => {
     });
 
     it("rejects an empty id", () => {
-        expect(() => validateManifest({ ...minimalManifest, id: "" }))
-            .toThrow(/non-empty string/);
+        expect(() => validateManifest({ ...minimalManifest, id: "" })).toThrow(/non-empty string/);
     });
 
     it("rejects duplicate unit ids", () => {
@@ -114,13 +111,11 @@ describe("packAmod", () => {
     });
 
     it("throws AmodFormatError when manifest is invalid", () => {
-        expect(() => packAmod({ ...minimalManifest, id: "" }, makePng()))
-            .toThrow(AmodFormatError);
+        expect(() => packAmod({ ...minimalManifest, id: "" }, makePng())).toThrow(AmodFormatError);
     });
 
     it("throws AmodFormatError when gzipJson:true is requested in v1", () => {
-        expect(() => packAmod(minimalManifest, makePng(), { gzipJson: true }))
-            .toThrow(/gzip.*not.*supported/i);
+        expect(() => packAmod(minimalManifest, makePng(), { gzipJson: true })).toThrow(/gzip.*not.*supported/i);
     });
 });
 
@@ -179,8 +174,7 @@ describe("decodeAmod", () => {
         bytes[16] = 0x7b; // '{'
         bytes[17] = 0x7d; // '}'
         for (let i = 18; i < 16 + jsonLen; i++) bytes[i] = 0x20;
-        expect(() => decodeAmod(bytes))
-            .toThrow(/missing top-level "manifest" key/);
+        expect(() => decodeAmod(bytes)).toThrow(/missing top-level "manifest" key/);
     });
 
     it("rejects manifest with reference errors", () => {
@@ -188,12 +182,9 @@ describe("decodeAmod", () => {
             ...minimalManifest,
             spells: [{ ...minimalManifest.spells[0], unitId: "ghost" }],
         };
-        const bytes = packAmod({ ...minimalManifest }, makePng());
         // Patch JSON inline to inject the bad reference, recomputing
         // jsonLen so the header stays consistent.
-        const newJson = new TextEncoder().encode(
-            JSON.stringify({ manifest: bad }, null, 4),
-        );
+        const newJson = new TextEncoder().encode(JSON.stringify({ manifest: bad }, null, 4));
         const png = makePng();
         const out = new Uint8Array(16 + newJson.length + png.length);
         out.set(MAGIC, 0);

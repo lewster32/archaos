@@ -11,9 +11,7 @@ class StubImage {
     naturalHeight = 36;
     decode(): Promise<void> {
         lastRequestedSrc = this.src;
-        return nextLoadOutcome === "load"
-            ? Promise.resolve()
-            : Promise.reject(new Error("decode failed"));
+        return nextLoadOutcome === "load" ? Promise.resolve() : Promise.reject(new Error("decode failed"));
     }
 }
 
@@ -65,10 +63,7 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-function makeSpell(
-    overrides: Partial<EditableSpell> = {},
-    texturesOverride?: Texture[],
-): EditableSpell {
+function makeSpell(overrides: Partial<EditableSpell> = {}, texturesOverride?: Texture[]): EditableSpell {
     const textures: Texture[] = texturesOverride ?? [
         {
             image: "dwarf.png",
@@ -147,20 +142,14 @@ describe("loadFrameBuffers", () => {
         await loadFrameBuffers(spell);
         // First drawImage is the atlas blit (img -> atlas canvas). The
         // subsequent calls compose each frame onto the 18x18 buffer.
-        const calls = (
-            stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }
-        ).drawImage.mock.calls;
+        const calls = (stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }).drawImage.mock.calls;
         const composeCalls = calls.slice(1);
         // dwarf_l_0: atlas region (0, 0, 18, 18), no trim -> dest (0, 0).
         expect(composeCalls[0].slice(1)).toEqual([0, 0, 18, 18, 0, 0, 18, 18]);
         // dwarf_r_0: atlas region (18, 0, 18, 18), no trim -> dest (0, 0).
-        expect(composeCalls[1].slice(1)).toEqual([
-            18, 0, 18, 18, 0, 0, 18, 18,
-        ]);
+        expect(composeCalls[1].slice(1)).toEqual([18, 0, 18, 18, 0, 0, 18, 18]);
         // dwarf_l_d: atlas region (0, 18, 18, 18), no trim -> dest (0, 0).
-        expect(composeCalls[2].slice(1)).toEqual([
-            0, 18, 18, 18, 0, 0, 18, 18,
-        ]);
+        expect(composeCalls[2].slice(1)).toEqual([0, 18, 18, 18, 0, 0, 18, 18]);
     });
 
     it("produces canonical 18x18 buffers regardless of source frame size", async () => {
@@ -196,9 +185,7 @@ describe("loadFrameBuffers", () => {
         const buf = buffers.get(frameBufferKey("l", "anim", 0));
         expect(buf.data.width).toBe(18);
         expect(buf.data.height).toBe(18);
-        const calls = (
-            stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }
-        ).drawImage.mock.calls;
+        const calls = (stubCtx.ctx as { drawImage: ReturnType<typeof vi.fn> }).drawImage.mock.calls;
         // Skip the initial atlas blit; assert the compose drawImage
         // copied (1, 1, 12, 17) from the atlas to (3, 1, 12, 17) on
         // the compose canvas.

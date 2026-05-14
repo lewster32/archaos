@@ -16,12 +16,7 @@ export function readPixel(data: ImageData, x: number, y: number): Rgba {
 /**
  * Writes the RGBA tuple at (x, y). Out-of-bounds coords are a no-op.
  */
-export function drawPixel(
-    data: ImageData,
-    x: number,
-    y: number,
-    rgba: Rgba,
-): void {
+export function drawPixel(data: ImageData, x: number, y: number, rgba: Rgba): void {
     if (x < 0 || y < 0 || x >= data.width || y >= data.height) return;
     const i = (y * data.width + x) * 4;
     const a = data.data;
@@ -40,14 +35,7 @@ function rgbaEqual(a: Rgba, b: Rgba): boolean {
  * from (x0, y0) to (x1, y1) inclusive. Used to bridge pointer-sample
  * gaps on fast drags.
  */
-export function bresenhamLine(
-    data: ImageData,
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
-    rgba: Rgba,
-): void {
+export function bresenhamLine(data: ImageData, x0: number, y0: number, x1: number, y1: number, rgba: Rgba): void {
     let x = x0;
     let y = y0;
     const dx = Math.abs(x1 - x0);
@@ -76,12 +64,7 @@ export function bresenhamLine(
  * `rgba`. No-op when the seed pixel already matches `rgba`, or when
  * the start coords are out of bounds.
  */
-export function floodFill(
-    data: ImageData,
-    x: number,
-    y: number,
-    rgba: Rgba,
-): void {
+export function floodFill(data: ImageData, x: number, y: number, rgba: Rgba): void {
     if (x < 0 || y < 0 || x >= data.width || y >= data.height) return;
     const target = readPixel(data, x, y);
     if (rgbaEqual(target, rgba)) return;
@@ -122,11 +105,7 @@ export function mirrorHorizontal(data: ImageData): ImageData {
  * fall outside the buffer after the shift are dropped; vacated pixels
  * are fully transparent. Source is not modified.
  */
-export function shiftImageData(
-    data: ImageData,
-    dx: number,
-    dy: number,
-): ImageData {
+export function shiftImageData(data: ImageData, dx: number, dy: number): ImageData {
     const w = data.width;
     const h = data.height;
     const out = new ImageData(w, h);

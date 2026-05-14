@@ -2,27 +2,15 @@
     <div class="animated-preview">
         <div v-if="hasAnimation" class="animated-preview__row">
             <figure>
-                <canvas
-                    ref="lCanvas"
-                    :width="size"
-                    :height="size"
-                    class="animated-preview__canvas"
-                ></canvas>
+                <canvas ref="lCanvas" :width="size" :height="size" class="animated-preview__canvas"></canvas>
                 <figcaption>Left</figcaption>
             </figure>
             <figure>
-                <canvas
-                    ref="rCanvas"
-                    :width="size"
-                    :height="size"
-                    class="animated-preview__canvas"
-                ></canvas>
+                <canvas ref="rCanvas" :width="size" :height="size" class="animated-preview__canvas"></canvas>
                 <figcaption>Right</figcaption>
             </figure>
         </div>
-        <p v-else class="animated-preview__empty">
-            No animation frames configured.
-        </p>
+        <p v-else class="animated-preview__empty">No animation frames configured.</p>
     </div>
 </template>
 
@@ -56,10 +44,7 @@ tempCanvas.height = FRAME_SIZE;
 let tick = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 
-function drawDirection(
-    canvas: HTMLCanvasElement | null,
-    dir: Direction,
-): void {
+function drawDirection(canvas: HTMLCanvasElement | null, dir: Direction): void {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -104,12 +89,7 @@ function startAnim(): void {
 }
 
 watch(
-    () => [
-        props.animFrames,
-        props.animSpeed,
-        props.frameVersion,
-        props.buffers.size,
-    ],
+    () => [props.animFrames, props.animSpeed, props.frameVersion, props.buffers.size],
     () => {
         startAnim();
     },

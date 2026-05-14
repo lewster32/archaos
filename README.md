@@ -20,7 +20,7 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 - Up to 8 players (local only)
 - Computer-controlled opponents (they're a bit dim right now, but getting better)
 - All of the original spells and units
-- Some new spells and units!
+- **29** new spells and units!
 - Mobile support
 - Standalone client (via Tauri - not yet released, but can be built from source)
 - Tutorials
@@ -30,7 +30,7 @@ Nearly 25 years on, what we have now is a completely new, and far less grandiose
 ### Not yet features
 
 - Online multiplayer (lots of headway made towards this though)
-- The rest of the planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
+- Some of the planned new units/spells/scenarios (check the document mentioned earlier for where I may end up going with this stuff)
 
 ## Play now! 🔥
 
